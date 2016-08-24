@@ -26,6 +26,8 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.beans.Visibility;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -34,6 +36,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctionsFactory.EvalEnvCastNodeGen;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -119,25 +122,33 @@ public class EvalFunctions {
     @RBuiltin(name = "eval", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode {
 
-        @TruffleBoundary
-        protected Object doEvalBody(RCaller rCaller, Object exprArg, REnvironment envir) {
-            Object expr = RASTUtils.checkForRSymbol(exprArg);
-
-            if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) expr, envir, rCaller);
-            } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) expr, envir, rCaller);
-            } else {
-                // just return value
-                return expr;
-            }
-        }
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos, //
                         @Cached("createCast()") EvalEnvCast envCast) {
             // Note: fallback for invalid combinations of envir and enclos is in EvalEnvCastNode
-            return doEvalBody(RCaller.create(frame, getOriginalCall()), expr, envCast.execute(envir, enclos));
+            RCaller rCaller = RCaller.create(frame, getOriginalCall());
+            REnvironment envir1 = envCast.execute(envir, enclos);
+            Object expr1 = RASTUtils.checkForRSymbol(expr);
+
+            if (expr1 instanceof RExpression) {
+                try {
+                    return RContext.getEngine().eval((RExpression) expr1, envir1, rCaller);
+                } finally {
+                    visibility.executeAfterCall(frame);
+                }
+            } else if (expr1 instanceof RLanguage) {
+                try {
+                    return RContext.getEngine().eval((RLanguage) expr1, envir1, rCaller);
+                } finally {
+                    visibility.executeAfterCall(frame);
+                }
+            } else {
+                // just return value
+                visibility.execute(frame, true);
+                return expr1;
+            }
         }
 
         protected EvalEnvCast createCast() {

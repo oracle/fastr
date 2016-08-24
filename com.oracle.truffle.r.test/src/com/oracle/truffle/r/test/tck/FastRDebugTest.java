@@ -265,7 +265,7 @@ public class FastRDebugTest {
                 Assert.assertEquals(code, actualCode);
                 final MaterializedFrame frame = suspendedEvent.getFrame();
 
-                Assert.assertEquals(expectedFrame.length / 2, frame.getFrameDescriptor().getSize());
+                Assert.assertEquals(expectedFrame.length / 2, frameSize(frame));
 
                 for (int i = 0; i < expectedFrame.length; i = i + 2) {
                     final String expectedIdentifier = (String) expectedFrame[i];
@@ -276,6 +276,16 @@ public class FastRDebugTest {
                     Assert.assertEquals(expectedValue, actualValue);
                 }
                 run.removeFirst().run();
+            }
+
+            private int frameSize(MaterializedFrame frame) {
+                int cnt = 0;
+                for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+                    if (slot.getIdentifier() instanceof String) {
+                        cnt++;
+                    }
+                }
+                return cnt;
             }
         });
     }

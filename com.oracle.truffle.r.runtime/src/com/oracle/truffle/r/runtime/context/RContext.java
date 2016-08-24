@@ -51,19 +51,18 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -603,10 +602,18 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return engine;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * derived with {@code GetVisibilityNode}.
+     */
     public boolean isVisible() {
         return resultVisible;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * changed with {@code SetVisibilityNode}.
+     */
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
             /*
@@ -615,14 +622,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             if (initialContextInitialized || !embedded) {
                 resultVisible = v;
             }
-        }
-    }
-
-    public void setVisible(RVisibility visibility) {
-        if (visibility == RVisibility.ON) {
-            setVisible(true);
-        } else if (visibility == RVisibility.OFF) {
-            setVisible(false);
         }
     }
 

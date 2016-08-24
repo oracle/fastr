@@ -169,18 +169,10 @@ public final class RArguments {
         return frame.getArguments().length - INDEX_ARGUMENTS;
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        ArgumentsSignature formalSignature = ((HasSignature) functionObj.getRootNode()).getSignature();
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), dispatchArgs);
-    }
-
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
+    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        ArgumentsSignature formalSignature = ((HasSignature) function.getRootNode()).getSignature();
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, evaluatedArgs, suppliedSignature, functionObj.getEnclosingFrame(), dispatchArgs);
-    }
-
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
+        return create(function, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), function.getEnclosingFrame(), dispatchArgs);
     }
 
     /**
@@ -194,7 +186,7 @@ public final class RArguments {
      *         function as well as additional information like the parent frame or supplied
      *         signature.
      */
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
+    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
@@ -204,7 +196,7 @@ public final class RArguments {
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
         a[INDEX_ENVIRONMENT] = null;
-        a[INDEX_FUNCTION] = functionObj;
+        a[INDEX_FUNCTION] = function;
         a[INDEX_CALL] = call;
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
@@ -306,11 +298,6 @@ public final class RArguments {
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
         frame.getArguments()[INDEX_IS_IRREGULAR] = isIrregularFrame;
-    }
-
-    public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
-        assert arguments.length >= INDEX_ARGUMENTS;
-        arguments[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {

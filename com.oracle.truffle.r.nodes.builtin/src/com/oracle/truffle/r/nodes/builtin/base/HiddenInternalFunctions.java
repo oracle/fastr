@@ -11,7 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -31,8 +33,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.r.nodes.CallInlineCacheNode;
-import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -41,7 +41,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -187,7 +188,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"}, behavior = PURE)
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
+        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -254,8 +255,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
-                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
+                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -356,7 +356,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"}, behavior = COMPLEX)
     public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
+        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -378,8 +378,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
-                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
+                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                 }
             };
 

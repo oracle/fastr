@@ -77,7 +77,7 @@ def _installpkgs(args, **kwargs):
     '''
     script = _installpkgs_script()
     if _is_graalvm():
-        rscript = join(_graalvm(), 'bin', 'rscript')
+        rscript = join(_graalvm(), 'bin', 'Rscript')
         return mx.run([rscript, script] + args, **kwargs)
     else:
         return mx_fastr.rscript([script] + args, **kwargs)

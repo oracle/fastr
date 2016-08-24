@@ -22,8 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
-import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarStringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -403,7 +412,6 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object open(RConnection con, String open, @SuppressWarnings("unused") boolean blocking) {
-            RContext.getInstance().setVisible(false);
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
                 if (baseConn.isClosed()) {
@@ -536,7 +544,6 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -647,7 +654,7 @@ public abstract class ConnectionFunctions {
 
     }
 
-    @RBuiltin(name = "writeChar", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "sep", "useBytes"}, behavior = IO)
+    @RBuiltin(name = "writeChar", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "sep", "useBytes"}, behavior = IO)
     public abstract static class WriteChar extends InternalCloseHelper {
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -675,7 +682,6 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -986,7 +992,7 @@ public abstract class ConnectionFunctions {
 
     }
 
-    @RBuiltin(name = "writeBin", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
+    @RBuiltin(name = "writeBin", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
     public abstract static class WriteBin extends BinRBuiltinNode {
 
         @Override
@@ -1018,7 +1024,6 @@ public abstract class ConnectionFunctions {
                     throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
                 }
             }
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
 
@@ -1029,7 +1034,6 @@ public abstract class ConnectionFunctions {
             boolean useBytes = RRuntime.fromLogical(useBytesArg);
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
             buffer.flip();
-            RContext.getInstance().setVisible(false);
             return RDataFactory.createRawVector(buffer.array());
         }
     }

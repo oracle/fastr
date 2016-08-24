@@ -26,9 +26,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -46,6 +46,7 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     @Children protected final RNode[] sequence;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     public BlockNode(SourceSection src, RNode[] sequence) {
         super(src);
@@ -59,7 +60,7 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(true);
+        visibility.execute(frame, true);
         Object lastResult = RNull.instance;
         for (int i = 0; i < sequence.length; i++) {
             lastResult = sequence[i].execute(frame);

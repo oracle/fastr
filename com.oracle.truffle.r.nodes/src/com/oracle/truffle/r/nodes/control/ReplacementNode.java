@@ -29,6 +29,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -61,6 +62,7 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     @Children private final RNode[] updates;
     @Child private RemoveAndAnswerNode removeTemp;
     @Child private RemoveAndAnswerNode removeRhs;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     public ReplacementNode(SourceSection src, String operator, RSyntaxNode syntaxLhs, RSyntaxNode rhs, String rhsSymbol, RNode v, String tmpSymbol, List<RNode> updates) {
         super(src);
@@ -98,7 +100,11 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
             update.execute(frame);
         }
         removeTemp.execute(frame);
-        return removeRhs.execute(frame);
+        try {
+            return removeRhs.execute(frame);
+        } finally {
+            visibility.execute(frame, false);
+        }
     }
 
     @Override

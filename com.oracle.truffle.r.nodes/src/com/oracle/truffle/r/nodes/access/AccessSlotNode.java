@@ -50,9 +50,10 @@ public abstract class AccessSlotNode extends RNode {
 
     public abstract Object executeAccess(Object o, String name);
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile noSlot = BranchProfile.create();
     private final BranchProfile symbolValue = BranchProfile.create();
     private final boolean asOperator;
