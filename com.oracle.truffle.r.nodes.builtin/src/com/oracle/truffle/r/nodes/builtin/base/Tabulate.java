@@ -60,7 +60,7 @@ public abstract class Tabulate extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     @TruffleBoundary
-    protected RIntVector tabulate(Object bin, int nBins) {
+    protected RIntVector tabulate(Object bin, Object nBins) {
         throw RError.error(this, RError.Message.INVALID_INPUT);
     }
 }
