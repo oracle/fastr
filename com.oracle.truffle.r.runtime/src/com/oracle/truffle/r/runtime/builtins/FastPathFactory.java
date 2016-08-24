@@ -38,15 +38,40 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  * the function is invoked, the fast path is invoked first and only if it returns {@code null}, then
  * the original implementation is invoked.
  */
-@FunctionalInterface
 public interface FastPathFactory {
 
-    FastPathFactory EVALUATE_ARGS = () -> null;
+    FastPathFactory EVALUATE_ARGS = new FastPathFactory() {
+
+        @Override
+        public RFastPathNode create() {
+            return null;
+        }
+
+        @Override
+        public RVisibility getVisibility() {
+            return null;
+        }
+
+        @Override
+        public boolean evaluatesArgument(int index) {
+            return true;
+        }
+
+        @Override
+        public boolean forcedEagerPromise(int index) {
+            return false;
+        }
+    };
 
     FastPathFactory FORCED_EAGER_ARGS = new FastPathFactory() {
 
         @Override
         public RFastPathNode create() {
+            return null;
+        }
+
+        @Override
+        public RVisibility getVisibility() {
             return null;
         }
 
@@ -83,23 +108,46 @@ public interface FastPathFactory {
                 }
                 return true;
             }
+
+            @Override
+            public boolean forcedEagerPromise(int index) {
+                return false;
+            }
+        };
+    }
+
+    static FastPathFactory fromVisibility(RVisibility visibility, Supplier<RFastPathNode> factory) {
+        return new FastPathFactory() {
+            @Override
+            public RFastPathNode create() {
+                return factory.get();
+            }
+
+            @Override
+            public RVisibility getVisibility() {
+                return visibility;
+            }
+
+            @Override
+            public boolean evaluatesArgument(int index) {
+                return true;
+            }
+
+            @Override
+            public boolean forcedEagerPromise(int index) {
+                return false;
+            }
         };
     }
 
     RFastPathNode create();
 
-    default boolean evaluatesArgument(@SuppressWarnings("unused") int index) {
-        return true;
-    }
+    boolean evaluatesArgument(int index);
 
-    default boolean forcedEagerPromise(@SuppressWarnings("unused") int index) {
-        return false;
-    }
+    boolean forcedEagerPromise(int index);
 
     /**
      * Visibility of the output. This corresponds to {@link RBuiltin#visibility()}
      */
-    default RVisibility getVisibility() {
-        return RVisibility.ON;
-    }
+    RVisibility getVisibility();
 }

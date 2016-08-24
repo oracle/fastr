@@ -56,6 +56,9 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -344,6 +347,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
@@ -358,6 +362,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
         return evalNode(expr.getRep().asRSyntaxNode(), envir, caller);
     }
@@ -410,8 +415,7 @@ final class REngine implements Engine, Engine.Timings {
                 newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
-        return func.getTarget().call(rArgs);
+        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
     }
 
     private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {
@@ -472,6 +476,8 @@ final class REngine implements Engine, Engine.Timings {
         private final boolean topLevel;
 
         @Child private RNode body;
+        @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
+        @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
         protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
             super(TruffleRLanguage.class, null, new FrameDescriptor());
@@ -502,13 +508,14 @@ final class REngine implements Engine, Engine.Timings {
                 assert checkResult(result);
                 if (printResult && result != null) {
                     assert topLevel;
-                    if (context.isVisible()) {
+                    if (visibility.execute(vf, context)) {
                         printResult(result);
                     }
                 }
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
+                setVisibility.executeEndOfFunction(vf);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
@@ -572,7 +579,7 @@ final class REngine implements Engine, Engine.Timings {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null));
+            CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

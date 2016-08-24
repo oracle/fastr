@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -227,25 +228,28 @@ public class TraceFunctions {
      */
     @RBuiltin(name = "retracemem", kind = PRIMITIVE, visibility = CUSTOM, parameterNames = {"x", "previous"}, behavior = COMPLEX)
     public abstract static class Retracemem extends TracememBase {
+
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").mustBe(stringValue().or(missingValue()));
         }
 
         @Specialization
-        protected Object execute(Object x, @SuppressWarnings("unused") RNull previous) {
-            return getResult(x);
+        protected Object execute(VirtualFrame frame, Object x, @SuppressWarnings("unused") RNull previous) {
+            return getResult(frame, x);
         }
 
         @Specialization
-        protected Object execute(Object x, @SuppressWarnings("unused") RMissing previous) {
-            return getResult(x);
+        protected Object execute(VirtualFrame frame, Object x, @SuppressWarnings("unused") RMissing previous) {
+            return getResult(frame, x);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected Object execute(Object x, String previous) {
-            Object result = getResult(x);
+        protected Object execute(VirtualFrame frame, Object x, String previous) {
+            CompilerDirectives.transferToInterpreter();
+            Object result = getResult(frame, x);
             if (x != null && x != RNull.instance) {
                 startTracing(x);
                 printToStdout(String.format("tracemem[%s -> 0x%x]: %s", previous, x.hashCode(), getStackTrace()));
@@ -253,13 +257,12 @@ public class TraceFunctions {
             return result;
         }
 
-        @TruffleBoundary
-        private static Object getResult(Object x) {
+        private Object getResult(VirtualFrame frame, Object x) {
             if (!isRNull(x) && getTracedObjects().contains(x)) {
-                RContext.getInstance().setVisible(true);
+                visibility.execute(frame, true);
                 return formatHashCode(x);
             } else {
-                RContext.getInstance().setVisible(false);
+                visibility.execute(frame, false);
                 return RNull.instance;
             }
         }

@@ -23,7 +23,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -37,7 +36,6 @@ public abstract class DispatchGeneric extends RBaseNode {
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile equalsMethodRequired = BranchProfile.create();
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
     @Child private ExecuteMethod executeMethod = new ExecuteMethod();
 

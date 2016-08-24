@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.system;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
+@RBuiltin(name = "system", visibility = OFF, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
 public abstract class SystemFunction extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
