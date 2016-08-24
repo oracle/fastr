@@ -359,7 +359,7 @@ public abstract class Identical extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
-    protected byte doInternalIdenticalWrongTypes(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+    protected byte doInternalIdenticalWrongTypes(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         if (x.getClass() != y.getClass()) {
             return RRuntime.LOGICAL_FALSE;
         } else {
