@@ -35,39 +35,39 @@ import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
-import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
-public class RListMR {
+@MessageResolution(receiverType = REnvironment.class, language = TruffleRLanguage.class)
+public class REnvironmentMR {
 
     @Resolve(message = "IS_BOXED")
-    public abstract static class RListIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RList receiver) {
+    public abstract static class REnvironmentIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
             return false;
         }
     }
 
     @Resolve(message = "HAS_SIZE")
-    public abstract static class RListHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RList receiver) {
+    public abstract static class REnvironmentHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
             return true;
         }
     }
 
     @Resolve(message = "IS_NULL")
-    public abstract static class RListIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RList receiver) {
+    public abstract static class REnvironmentIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
             return false;
         }
     }
 
     @Resolve(message = "READ")
-    public abstract static class RListReadNode extends Node {
+    public abstract static class REnvironmentReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
-        protected Object access(VirtualFrame frame, RList receiver, String field) {
+        protected Object access(VirtualFrame frame, REnvironment receiver, String field) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 return extract.applyAccessField(frame, receiver, field);
             }
@@ -75,12 +75,12 @@ public class RListMR {
     }
 
     @Resolve(message = "WRITE")
-    public abstract static class RListWriteNode extends Node {
+    public abstract static class REnvironmentWriteNode extends Node {
         @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
-        protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
+        protected Object access(VirtualFrame frame, REnvironment receiver, String field, Object valueObj) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 Object value = valueObj;
                 if (value instanceof Short) {
@@ -103,10 +103,10 @@ public class RListMR {
     }
 
     @CanResolve
-    public abstract static class RListCheck extends Node {
+    public abstract static class REnvironmentCheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RList;
+            return receiver instanceof REnvironment;
         }
     }
 

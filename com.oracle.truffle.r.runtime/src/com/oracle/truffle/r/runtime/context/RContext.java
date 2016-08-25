@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -194,8 +193,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             PolyglotEngine vm = info.createVM();
             try {
                 setContext(vm.eval(GET_CONTEXT).as(RContext.class));
-            } catch (Exception e1) {
-                throw new RInternalError(e1, "error while initializing eval thread");
+            } catch (Throwable t) {
+                throw new RInternalError(t, "error while initializing eval thread");
             }
             try {
                 evalResult = run(vm, info, source);
@@ -216,17 +215,13 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             } catch (ParseException e) {
                 e.report(info.getConsoleHandler());
                 evalResult = createErrorResult(e.getMessage());
-            } catch (IOException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof ExitException) {
-                    // termination, treat this as "success"
-                    ExitException exitException = (ExitException) cause;
-                    evalResult = RDataFactory.createList(new Object[]{exitException.getStatus()});
-                } else {
-                    // some internal error
-                    RInternalError.reportErrorAndConsoleLog(cause, info.getConsoleHandler(), info.getId());
-                    evalResult = createErrorResult(cause.getClass().getSimpleName());
-                }
+            } catch (ExitException e) {
+                // termination, treat this as "success"
+                evalResult = RDataFactory.createList(new Object[]{e.getStatus()});
+            } catch (Throwable t) {
+                // some internal error
+                RInternalError.reportErrorAndConsoleLog(t, info.getConsoleHandler(), info.getId());
+                evalResult = createErrorResult(t.getClass().getSimpleName());
             }
             return evalResult;
         }
@@ -235,7 +230,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
          * The result is an {@link RList} contain the value, plus an "error" attribute if the
          * evaluation resulted in an error.
          */
-        private static RList createEvalResult(PolyglotEngine.Value resultValue) throws IOException {
+        private static RList createEvalResult(PolyglotEngine.Value resultValue) {
             Object result = resultValue.get();
             Object listResult = result;
             String error = null;
@@ -773,11 +768,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
 
+    public interface RCloseable extends Closeable {
+        @Override
+        void close();
+    }
+
     @TruffleBoundary
-    public static Closeable withinContext(RContext context) {
+    public static RCloseable withinContext(RContext context) {
         RContext oldContext = RContext.threadLocalContext.get();
         RContext.threadLocalContext.set(context);
-        return new Closeable() {
+        return new RCloseable() {
             @Override
             public void close() {
                 RContext.threadLocalContext.set(oldContext);

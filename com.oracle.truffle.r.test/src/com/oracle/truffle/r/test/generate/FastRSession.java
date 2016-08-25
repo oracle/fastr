@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -38,8 +37,8 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
@@ -161,12 +160,7 @@ public final class FastRSession implements RSession {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
             ContextInfo info = ContextInfo.create(params, ContextKind.SHARE_NOTHING, null, consoleHandler);
             main = info.createVM();
-            try {
-                mainContext = main.eval(GET_CONTEXT).as(RContext.class);
-                emitIO();
-            } catch (IOException e) {
-                throw new RuntimeException("error while retrieving test context", e);
-            }
+            mainContext = main.eval(GET_CONTEXT).as(RContext.class);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }
@@ -242,10 +236,18 @@ public final class FastRSession implements RSession {
                         while (input != null) {
                             Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
-                                vm.eval(source);
+                                try {
+                                    vm.eval(source);
+                                    // checked exceptions are wrapped in RuntimeExceptions
+                                } catch (RuntimeException e) {
+                                    if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
+                                        throw e.getCause().getCause();
+                                    } else {
+                                        throw e;
+                                    }
+                                }
                                 input = consoleHandler.readLine();
-                                emitIO();
-                            } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
+                            } catch (IncompleteSourceException e) {
                                 String additionalInput = consoleHandler.readLine();
                                 if (additionalInput == null) {
                                     throw e;
@@ -258,23 +260,16 @@ public final class FastRSession implements RSession {
                     }
                 } catch (ParseException e) {
                     e.report(consoleHandler);
+                } catch (RError e) {
+                    // nothing to do
                 } catch (Throwable t) {
-                    if (t instanceof IOException) {
-                        if (t.getCause() instanceof RError || t.getCause() instanceof RInternalError) {
-                            t = t.getCause();
+                    if (!TestBase.ProcessFailedTests) {
+                        if (t instanceof RInternalError) {
+                            RInternalError.reportError(t);
                         }
+                        t.printStackTrace();
                     }
-                    if (t instanceof RError) {
-                        // nothing to do
-                    } else {
-                        if (!TestBase.ProcessFailedTests) {
-                            if (t instanceof RInternalError) {
-                                RInternalError.reportError(t);
-                            }
-                            t.printStackTrace();
-                        }
-                        killedByException = t;
-                    }
+                    killedByException = t;
                 } finally {
                     exit.release();
                 }
@@ -285,9 +280,5 @@ public final class FastRSession implements RSession {
     @Override
     public String name() {
         return "FastR";
-    }
-
-    @SuppressWarnings("unused")
-    static void emitIO() throws IOException {
     }
 }

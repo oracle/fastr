@@ -302,7 +302,11 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
+        add(FastRInterop.HasSize.class, FastRInteropFactory.HasSizeNodeGen::create);
         add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);
+        add(FastRInterop.IsNull.class, FastRInteropFactory.IsNullNodeGen::create);
+        add(FastRInterop.IsExecutable.class, FastRInteropFactory.IsExecutableNodeGen::create);
+        add(FastRInterop.ToBoolean.class, FastRInteropFactory.ToBooleanNodeGen::create);
         add(FastRRefCountInfo.class, FastRRefCountInfoNodeGen::create);
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
         add(FastRProfAttr.class, FastRStatsFactory.FastRProfAttrNodeGen::create);

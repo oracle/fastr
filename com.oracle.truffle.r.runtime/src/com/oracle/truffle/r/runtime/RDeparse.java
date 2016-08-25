@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -343,7 +344,7 @@ public class RDeparse {
         public void fixupSources() {
             Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
             for (SourceSectionElement s : sources) {
-                s.element.setSourceSection(source.createSection(null, s.start, s.length));
+                s.element.setSourceSection(source.createSection(s.start, s.length));
             }
         }
 
@@ -636,6 +637,8 @@ public class RDeparse {
                     append("<pointer: 0x").append(Long.toHexString(((RExternalPtr) value).getAddr())).append('>');
                 } else if (value instanceof REnvironment) {
                     append("<environment>");
+                } else if (value instanceof TruffleObject) {
+                    append("<truffle object>");
                 } else {
                     throw RInternalError.shouldNotReachHere("unexpected: " + value);
                 }

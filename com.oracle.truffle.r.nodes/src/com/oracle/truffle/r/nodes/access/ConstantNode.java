@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -96,7 +97,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
             // this can be created during argument matching and "call"
             return new ConstantObjectNode(sourceSection, value);
         } else {
-            assert value instanceof RTypedValue && !(value instanceof RPromise) : value;
+            assert value instanceof TruffleObject || value instanceof RTypedValue && !(value instanceof RPromise) : value;
             return new ConstantObjectNode(sourceSection, value);
         }
     }

@@ -46,11 +46,11 @@ public abstract class Merge extends RBuiltinNode {
         addLogicalCast(casts, "all.y");
     }
 
-    private void addIntegerCast(CastBuilder casts, String name) {
+    private static void addIntegerCast(CastBuilder casts, String name) {
         casts.arg(name).mustBe(integerValue()).asIntegerVector().mustBe(notEmpty());
     }
 
-    private void addLogicalCast(CastBuilder casts, String name) {
+    private static void addLogicalCast(CastBuilder casts, String name) {
         casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").notNA().mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
     }
 

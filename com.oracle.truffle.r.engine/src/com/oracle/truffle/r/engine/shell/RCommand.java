@@ -224,16 +224,18 @@ public class RCommand {
                     StringBuffer sb = new StringBuffer(input);
                     Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                     while (true) {
-                        /*
-                         * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
-                         * exceptions that are <: Exception are converted to IOException, Error
-                         * subclasses pass through.
-                         */
                         lastStatus = 0;
                         try {
-                            vm.eval(source);
-                            emitIO();
-                        } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
+                            try {
+                                vm.eval(source);
+                                // checked exceptions are wrapped in RuntimeExceptions
+                            } catch (RuntimeException e) {
+                                if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
+                                    throw e.getCause().getCause();
+                                }
+                                throw e;
+                            }
+                        } catch (IncompleteSourceException e) {
                             // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();
@@ -246,32 +248,27 @@ public class RCommand {
                             continue;
                         } catch (ParseException e) {
                             e.report(consoleHandler);
-                        } catch (IOException e) {
-                            /*
-                             * We have to extract the underlying cause and handle the special cases
-                             * appropriately.
-                             */
                             lastStatus = 1;
-                            Throwable cause = e.getCause();
-                            if (cause instanceof RError) {
-                                // drop through to continue REPL and remember last eval was an error
-                            } else if (cause instanceof JumpToTopLevelException) {
-                                // drop through to continue REPL
-                            } else if (cause instanceof DebugExitException) {
-                                throw (RuntimeException) cause;
-                            } else if (cause instanceof ExitException) {
-                                // usually from quit
-                                int status = ((ExitException) cause).getStatus();
-                                if (contextInfo.getParent() == null) {
-                                    vm.dispose();
-                                    Utils.systemExit(status);
-                                } else {
-                                    return status;
-                                }
+                        } catch (RError e) {
+                            // drop through to continue REPL and remember last eval was an error
+                            lastStatus = 1;
+                        } catch (JumpToTopLevelException e) {
+                            // drop through to continue REPL
+                        } catch (DebugExitException e) {
+                            throw (RuntimeException) e.getCause();
+                        } catch (ExitException e) {
+                            // usually from quit
+                            int status = e.getStatus();
+                            if (contextInfo.getParent() == null) {
+                                vm.dispose();
+                                Utils.systemExit(status);
                             } else {
-                                RInternalError.reportErrorAndConsoleLog(cause, consoleHandler, 0);
-                                // We continue the repl even though the system may be broken
+                                return status;
                             }
+                        } catch (Throwable e) {
+                            RInternalError.reportErrorAndConsoleLog(e, consoleHandler, 0);
+                            // We continue the repl even though the system may be broken
+                            lastStatus = 1;
                         }
                         continue REPL;
                     }
@@ -286,15 +283,14 @@ public class RCommand {
                 vm.eval(QUIT_EOF);
             } catch (JumpToTopLevelException e) {
                 Utils.systemExit(0);
-            } catch (Throwable e) {
-                if (e.getCause() instanceof ExitException) {
-                    // normal quit, but with exit code based on lastStatus
-                    if (contextInfo.getParent() == null) {
-                        Utils.systemExit(lastStatus);
-                    } else {
-                        return lastStatus;
-                    }
+            } catch (ExitException e) {
+                // normal quit, but with exit code based on lastStatus
+                if (contextInfo.getParent() == null) {
+                    Utils.systemExit(lastStatus);
+                } else {
+                    return lastStatus;
                 }
+            } catch (Throwable e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         } finally {
@@ -304,29 +300,19 @@ public class RCommand {
     }
 
     private static boolean doEcho(PolyglotEngine vm) {
-        PolyglotEngine.Value echoValue;
-        try {
-            echoValue = vm.eval(GET_ECHO);
-            emitIO();
-            Object echo = echoValue.get();
-            if (echo instanceof TruffleObject) {
-                RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
-                return RRuntime.fromLogical(echoVec.getDataAt(0));
-            } else if (echo instanceof Byte) {
-                return RRuntime.fromLogical((Byte) echo);
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        } catch (IOException e) {
-            throw RInternalError.shouldNotReachHere(e);
+        PolyglotEngine.Value echoValue = vm.eval(GET_ECHO);
+        Object echo = echoValue.get();
+        if (echo instanceof TruffleObject) {
+            RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
+            return RRuntime.fromLogical(echoVec.getDataAt(0));
+        } else if (echo instanceof Byte) {
+            return RRuntime.fromLogical((Byte) echo);
+        } else {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
     private static String getContinuePrompt() {
         return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
-    }
-
-    @SuppressWarnings("unused")
-    private static void emitIO() throws IOException {
     }
 }

@@ -69,15 +69,11 @@ public class REmbedded {
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
         PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out);
-        try {
-            vm.eval(INIT);
-        } catch (Exception ex) {
-            Utils.rSuicideDefault("initializeR");
-        }
+        vm.eval(INIT);
         return vm;
     }
 
-    private static final Source INIT = RSource.fromTextInternal("1", RSource.Internal.GET_ECHO);
+    private static final Source INIT = RSource.fromTextInternal("invisible(1)", RSource.Internal.GET_ECHO);
 
     /**
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have

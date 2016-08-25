@@ -190,6 +190,6 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     static SourceSection createCallSourceSection() {
-        return CALL_SOURCE.createSection("", 0, CALL_SOURCE.getLength());
+        return CALL_SOURCE.createSection(0, CALL_SOURCE.getLength());
     }
 }

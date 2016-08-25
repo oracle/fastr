@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.IOException;
 import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
@@ -42,7 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
-    class ParseException extends IOException {
+    class ParseException extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         private final Source source;

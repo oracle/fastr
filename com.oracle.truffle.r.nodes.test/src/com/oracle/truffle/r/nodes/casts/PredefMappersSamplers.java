@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import java.util.Collections;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefMappers;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
