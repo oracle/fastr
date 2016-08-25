@@ -268,6 +268,8 @@ public final class CastBuilder {
 
         ValuePredicateArgumentFilter<Double> isFractional();
 
+        ValuePredicateArgumentFilter<Double> isFinite();
+
         ValuePredicateArgumentFilter<String> stringNA();
 
         ValuePredicateArgumentFilter<Integer> eq(int x);
@@ -434,12 +436,17 @@ public final class CastBuilder {
 
         @Override
         public ValuePredicateArgumentFilter<Double> doubleNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x));
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNAorNaN(x));
         }
 
         @Override
         public ValuePredicateArgumentFilter<Double> isFractional() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x));
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x));
+        }
+
+        @Override
+        public ValuePredicateArgumentFilter<Double> isFinite() {
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !Double.isInfinite(x));
         }
 
         @Override
@@ -939,6 +946,10 @@ public final class CastBuilder {
             return predefFilters().isFractional();
         }
 
+        public static ValuePredicateArgumentFilter<Double> isFinite() {
+            return predefFilters().isFinite();
+        }
+
         public static ValuePredicateArgumentFilter<String> stringNA() {
             return predefFilters().stringNA();
         }
@@ -1166,7 +1177,7 @@ public final class CastBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    interface ArgCastBuilder<T, THIS> {
+    public interface ArgCastBuilder<T, THIS> {
 
         ArgCastBuilderState state();
 

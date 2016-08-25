@@ -24,5 +24,10 @@ public class TestBuiltin_seq_len extends TestBase {
         assertEval("{ seq_len(5L) }");
         assertEval("{ seq_len(1:2) }");
         assertEval("{ seq_len(integer()) }");
+
+        assertEval("{ seq_len(NA) }");
+        assertEval("{ seq_len(-1) }");
+        assertEval("{ seq_len(NULL) }");
+        assertEval(Output.IgnoreWarningContext, "{ seq_len(\"foo\") }");
     }
 }
