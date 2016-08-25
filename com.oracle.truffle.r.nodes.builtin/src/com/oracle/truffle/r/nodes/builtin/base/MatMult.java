@@ -371,7 +371,7 @@ public abstract class MatMult extends RBuiltinNode {
                             na.check(x);
                         }
                         result[row << 1] = x.getRealPart();
-                        result[row << 1 + 1] = x.getImaginaryPart();
+                        result[(row << 1) + 1] = x.getImaginaryPart();
                     }
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, 1});
                 } else {
@@ -381,7 +381,7 @@ public abstract class MatMult extends RBuiltinNode {
                             RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
                             na.check(x);
                             result[(k * aRows + row) << 1] = x.getRealPart();
-                            result[(k * aRows + row) << 1 + 1] = x.getRealPart();
+                            result[((k * aRows + row) << 1) + 1] = x.getRealPart();
                         }
                     }
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
@@ -406,7 +406,7 @@ public abstract class MatMult extends RBuiltinNode {
                             na.check(x);
                         }
                         result[k << 1] = x.getRealPart();
-                        result[k << 1 + 1] = x.getImaginaryPart();
+                        result[(k << 1) + 1] = x.getImaginaryPart();
                     }
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{1, bCols});
                 } else {
@@ -416,7 +416,7 @@ public abstract class MatMult extends RBuiltinNode {
                             RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
                             na.check(x);
                             result[(k * a.getLength() + row) << 1] = x.getRealPart();
-                            result[(k * a.getLength() + row) << 1 + 1] = x.getImaginaryPart();
+                            result[((k * a.getLength() + row) << 1) + 1] = x.getImaginaryPart();
                         }
                     }
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
