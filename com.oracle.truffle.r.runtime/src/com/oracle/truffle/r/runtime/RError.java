@@ -720,7 +720,8 @@ public final class RError extends RuntimeException {
         DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
         ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
         ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
-        INCORRECT_ARG_TYPE("incorrect type for %s argument");
+        INCORRECT_ARG_TYPE("incorrect type for %s argument"),
+        INVALID_ARG_OF_LENGTH("invalid %s argument of length %d");
 
         public final String message;
         final boolean hasArgs;
