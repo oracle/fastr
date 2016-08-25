@@ -38,6 +38,12 @@ suite = {
         ],
    },
 
+  "repositories" : {
+    "snapshots" : {
+        "url" : "https://FASTR_SNAPSHOT_HOST/nexus/content/repositories/snapshots",
+    }
+  },
+
   "licenses" : {
     "GPLv2" : {
       "name" : "GNU General Public License, version 2",
@@ -375,8 +381,7 @@ suite = {
     "com.oracle.truffle.r.release" : {
       "sourceDirs" : ["src"],
       "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi", "com.oracle.truffle.r.native"],
-      "class" : "ReleaseProject",
-      "native" : "true",
+      "class" : "FastRReleaseProject",
       "output" : "com.oracle.truffle.r.release"
     },
   },
@@ -430,20 +435,16 @@ suite = {
 
     "FASTR_NATIVE_DEV": {
         "description" : "support for overriding the native project implementation in a separate suite",
-        "native" : "true",
-        "relpath" : "true",
         "dependencies" : ["com.oracle.truffle.r.native"],
         "exclude" : [
         "GNUR",
         "GNU_ICONV",
-        ]
+        ],
     },
 
     "FASTR_RELEASE": {
-        "description" : "a binary release of FastR",
-        "native" : "true",
-        "dependencies" : ["com.oracle.truffle.r.release"],
-        "relpath" : "true",
+      "description" : "a binary release of FastR",
+      "dependencies" : ["com.oracle.truffle.r.release"],
     },
 },
 

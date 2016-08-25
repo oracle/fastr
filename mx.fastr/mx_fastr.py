@@ -26,8 +26,8 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
+import mx_fastr_dists
 import os
-import shutil, string
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -487,142 +487,25 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-class FastRNativeProject(mx.NativeProject):
+class FastRNativeProject(mx_fastr_dists.DelFastRNativeProject):
     '''
     Custom class for building the com.oracle.truffle.r.native project.
-    The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
+    Delegates to mx_fastr_dists.DelFastRNativeProject to keep this file uncluttered
     '''
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx.NativeProject.__init__(self, suite, name, False, args['sourceDirs'], deps, workingSets, [], args['output'], join(suite.dir, name), theLicense)
+        mx_fastr_dists.DelFastRNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
-    def getResults(self):
-        gnur = join('gnur', r_version())
-        gnur_appl = join(gnur, 'src', 'appl')
-        rel_results = [
-            "platform.mk",
-            "fficall/src/common", "fficall/src/include", "fficall/src/variable_defs",
-            join(gnur_appl, 'pretty.c'), join(gnur_appl, 'interv.c')]
-
-        # just the .h files from 'include'
-        for root, _, files in os.walk(join(self.dir, 'include')):
-            for f in files:
-                ext = os.path.splitext(f)[1]
-                if ext == '.h':
-                    rel_results.append(os.path.relpath(join(root, f), self.dir))
-
-        # selected headers from GNU R source
-        with open(join(self.dir, 'fficall/src/include/gnurheaders.mk')) as f:
-            lines = f.readlines()
-            for line in lines:
-                if '$(GNUR_HOME)' in line:
-                    parts = line.split(' ')
-                    rel_results.append(parts[2].rstrip().replace('$(GNUR_HOME)', gnur))
-
-        # binary files from GNU R
-        for _, _, files in os.walk(join(self.dir, gnur_appl)):
-            for f in files:
-                ext = os.path.splitext(f)[1]
-                if f[0] == 'd' and ext == '.o':
-                    rel_results.append(join(gnur_appl, f))
-
-        return [join(self.dir, result) for result in rel_results]
-
-class ReleaseProject(mx.NativeProject):
+class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
     '''
     Custom class for creating the FastR release project, which supports the
     FASTR_RELEASE distribution.
+    Delegates to mx_fastr_dists.DelFastRReleaseProject to keep this file uncluttered
     '''
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx.NativeProject.__init__(self, suite, name, False, [], deps, workingSets, [], args['output'], join(suite.dir, name), theLicense)
+        mx_fastr_dists.DelFastRReleaseProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
-    def getResults(self):
-        rdirs = ['bin', 'lib', 'library', 'etc', 'share', 'doc']
-        return [join(self.suite.dir, self.output, rdir) for rdir in rdirs]
-
-    def getBuildTask(self, args):
-        return ReleaseBuildTask(self, args)
-
-class ReleaseBuildTask(mx.NativeBuildTask):
-    def __init__(self, project, args):
-        mx.NativeBuildTask.__init__(self, args, project)
-
-    def _template(self, source, target, dictionary):
-        class LauncherTemplate(string.Template):
-            delimiter = '%%'
-        with open(target, "w") as targetFile:
-            targetFile.write(LauncherTemplate(open(source).read()).substitute(dictionary))
-
-    def build(self):
-        if os.environ.has_key('FASTR_NO_RELEASE'):
-            mx.log('FastR: not updating release project')
-            return
-        # copy the release directories
-        output_dir = self.subject.dir
-        fastr_dir = _fastr_suite.dir
-        for d in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
-            target_dir = join(output_dir, d)
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-            shutil.copytree(join(fastr_dir, d), target_dir)
-        # canonicalize R_HOME_DIR in bin/R
-        bin_dir = join(output_dir, 'bin')
-        rcmd = join(bin_dir, 'R')
-        # R is the generic shell script (taken essentially verbatim from GNU R)
-        with open(rcmd) as f:
-            lines = f.readlines()
-        with open(rcmd, 'w') as f:
-            for line in lines:
-                if line.startswith('R_HOME_DIR='):
-                    f.write('R_HOME_DIR="$(dirname $0)/.."\n')
-                    # produces a canonical path
-                    line = 'R_HOME_DIR="$(unset CDPATH && cd ${R_HOME_DIR} && pwd)"\n'
-                f.write(line)
-        # jar files for the launchers
-        jars_dir = join(bin_dir, 'jjars')
-        if not os.path.exists(jars_dir):
-            os.mkdir(jars_dir)
-        fastr_classfiles = dict()
-
-        # visitor to collect/copy all the classes/jar files needed by the launchers
-        def dep_visit(dep, edge):
-            if isinstance(dep, mx.JARDistribution):
-                shutil.copy(join(dep.suite.dir, dep.path), jars_dir)
-            elif isinstance(dep, mx.Library):
-                jar_name = dep.name.lower() + '.jar'
-                shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
-            elif isinstance(dep, mx.JavaProject):
-                if 'com.oracle.truffle.r' in dep.name:
-                    classfiles_dir = dep.output_dir()
-                    for root, _, classfiles in os.walk(classfiles_dir):
-                        for classfile in classfiles:
-                            fastr_classfiles[os.path.relpath(join(root, classfile), classfiles_dir)] = join(root, classfile)
-
-        self.subject.walk_deps(visit=dep_visit)
-
-        # create the fastr.jar file
-        with mx.Archiver(join(jars_dir, 'fastr.jar')) as arc:
-            arc.zf.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")
-            for arcname, path in fastr_classfiles.iteritems():
-                with open(path, 'r') as f:
-                    contents = f.read()
-                arc.zf.writestr(arcname, contents)
-
-        # create the classpath string
-        classpath = []
-        for _, _, jars in os.walk(jars_dir):
-            for jar in jars:
-                classpath.append(join("$R_HOME/bin/jjars", jar))
-        classpath_string = ":".join(classpath)
-
-        # replace the mx exec scripts with native Java launchers, setting the classpath from above
-        bin_exec_dir = join(bin_dir, 'exec')
-        r_launcher = join(self.subject.dir, 'src', 'R_launcher')
-        template_dict = {'CLASSPATH': classpath_string}
-        self._template(r_launcher, join(bin_exec_dir, 'R'), template_dict)
-        shutil.rmtree(join(bin_dir, 'execRextras'))
-        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
-        self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
-
+def mx_post_parse_cmd_line(opts):
+    mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
 _commands = {
     'r' : [rshell, '[options]'],
