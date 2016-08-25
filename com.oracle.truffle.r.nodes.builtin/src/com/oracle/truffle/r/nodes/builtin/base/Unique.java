@@ -176,7 +176,7 @@ public abstract class Unique extends RBuiltinNode {
 
         public boolean contains(RComplex val) {
             for (int i = 0; i < index; i++) {
-                if (backingArray[i << 1] == val.getRealPart() && backingArray[i << 1 + 1] == val.getImaginaryPart()) {
+                if (backingArray[i << 1] == val.getRealPart() && backingArray[(i << 1) + 1] == val.getImaginaryPart()) {
                     return true;
                 }
             }
