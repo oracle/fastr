@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.IOException;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,7 +93,7 @@ public final class ContextInfo implements TruffleObject {
     public static ContextInfo getContextInfo(PolyglotEngine vm) {
         try {
             return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw RInternalError.shouldNotReachHere();
         }
     }
