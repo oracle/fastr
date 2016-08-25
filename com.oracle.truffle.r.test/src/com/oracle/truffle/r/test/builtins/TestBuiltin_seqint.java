@@ -29,7 +29,7 @@ public class TestBuiltin_seqint extends TestBase {
 
     @Test
     public void testseqint3() {
-        assertEval("argv <- list(FALSE);seq.int(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE);seq.int(argv[[1]]);");
     }
 
     @Test
