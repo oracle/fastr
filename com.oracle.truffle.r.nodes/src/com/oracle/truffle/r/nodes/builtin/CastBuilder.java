@@ -335,13 +335,13 @@ public final class CastBuilder {
 
         <T> ValuePredicateArgumentMapper<T, RNull> nullConstant();
 
-        ValuePredicateArgumentMapper<String, String> constant(String s);
+        <T> ValuePredicateArgumentMapper<T, String> constant(String s);
 
-        ValuePredicateArgumentMapper<Integer, Integer> constant(int i);
+        <T> ValuePredicateArgumentMapper<T, Integer> constant(int i);
 
-        ValuePredicateArgumentMapper<Double, Double> constant(double d);
+        <T> ValuePredicateArgumentMapper<T, Double> constant(double d);
 
-        ValuePredicateArgumentMapper<Byte, Byte> constant(byte l);
+        <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l);
 
         <T> ArgumentMapper<T, T> defaultValue(T defVal);
 
@@ -646,22 +646,22 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentMapper<String, String> constant(String s) {
-            return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s);
+        public <T> ValuePredicateArgumentMapper<T, String> constant(String s) {
+            return ValuePredicateArgumentMapper.fromLambda((T x) -> s);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
+        public <T> ValuePredicateArgumentMapper<T, Integer> constant(int i) {
             return ValuePredicateArgumentMapper.fromLambda(x -> i);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Double, Double> constant(double d) {
+        public <T> ValuePredicateArgumentMapper<T, Double> constant(double d) {
             return ValuePredicateArgumentMapper.fromLambda(x -> d);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
+        public <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l) {
             return ValuePredicateArgumentMapper.fromLambda(x -> l);
         }
 
@@ -1154,19 +1154,19 @@ public final class CastBuilder {
             return predefMappers().nullConstant();
         }
 
-        public static ValuePredicateArgumentMapper<String, String> constant(String s) {
+        public static <T> ValuePredicateArgumentMapper<T, String> constant(String s) {
             return predefMappers().constant(s);
         }
 
-        public static ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
+        public static <T> ValuePredicateArgumentMapper<T, Integer> constant(int i) {
             return predefMappers().constant(i);
         }
 
-        public static ValuePredicateArgumentMapper<Double, Double> constant(double d) {
+        public static <T> ValuePredicateArgumentMapper<T, Double> constant(double d) {
             return predefMappers().constant(d);
         }
 
-        public static ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
+        public static <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l) {
             return predefMappers().constant(l);
         }
 
