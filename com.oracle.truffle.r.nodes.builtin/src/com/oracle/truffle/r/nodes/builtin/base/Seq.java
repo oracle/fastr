@@ -66,12 +66,14 @@ public abstract class Seq extends RBuiltinNode {
     private final CastBuilder argCastBuilder = new CastBuilder();
     private final ConditionProfile isEmptyProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile oneElementProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile singleLogical = BranchProfile.create();
 
     @Children private final CastNode[] argCastNodes = new CastNode[5];
     @Child private SeqInternal seqInternal;
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        casts.arg("from").mapIf(missingValue().not(), asVector());
         casts.arg("to").mapIf(missingValue().not(), asVector());
     }
 
@@ -80,48 +82,79 @@ public abstract class Seq extends RBuiltinNode {
         // param is not originally double (unless its value is 0), but the checks have to be
         // performed on converted and "original" values; also "32" should be converted to int,
         // but TRUE should become double
+        //@formatter:off
         seqInternal = insert(SeqInternalNodeGen.create());
-        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleFrom = chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "from")).with(
-                        findFirst().doubleElement()).with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                        "from")).with(mapIf(isFractional().not().and(neq((double) 0)), chain(map(doubleToInt())).end())).end();
+        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleFrom =
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "from")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "from")).
+                        with(mapIf(isFractional().not().and(neq((double) 0)),
+                                        chain(map(doubleToInt())).
+                                        end())).
+                        end();
         argCastBuilder.arg(0).mapIf(missingValue().not().and(doubleValue().not().and(logicalValue().not())), castNonDoubleFrom).mapIf(doubleValue().or(logicalValue()),
-                        chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "from")).with(findFirst().doubleElement()).with(
-                                        mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "from")).end());
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "from")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "from")).
+                        end());
         argCastNodes[0] = insert(argCastBuilder.getCasts()[0]);
 
-        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleTo = chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "to")).with(
-                        findFirst().doubleElement()).with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                        "to")).with(mapIf(isFractional().not().and(neq((double) 0)), chain(map(doubleToInt())).end())).end();
+        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleTo =
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "to")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "to")).
+                        with(mapIf(isFractional().not().and(neq((double) 0)),
+                                        chain(map(doubleToInt())).
+                                        end())).
+                        end();
         argCastBuilder.arg(1).mapIf(missingValue().not().and(doubleValue().not()), castNonDoubleTo).mapIf(doubleValue().or(logicalValue()),
-                        chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "to")).with(findFirst().doubleElement()).with(
-                                        mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "from")).end());
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "to")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "from")).
+                        end());
         argCastNodes[1] = insert(argCastBuilder.getCasts()[1]);
 
-        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleStride = chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).with(
-                        findFirst().doubleElement()).with(
-                                        mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "by")).with(mapIf(isFractional().not().and(neq((double) 0)), chain(map(doubleToInt())).end())).end();
+        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleStride =
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "by")).
+                        with(mapIf(isFractional().not().and(neq((double) 0)),
+                                        chain(map(doubleToInt())).
+                                        end())).
+                        end();
         argCastBuilder.arg(2).mapIf(missingValue().not().and(doubleValue().not()), castNonDoubleTo).mapIf(doubleValue().or(logicalValue()),
-                        chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).with(findFirst().doubleElement()).with(
-                                        mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "by")).end());
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "by")).
+                        end());
         argCastNodes[2] = insert(argCastBuilder.getCasts()[2]);
 
-        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleLengthOut = chain(asDoubleVector()).with(
-                        mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).with(
-                                        findFirst().doubleElement()).with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "length.out")).with(mapIf(isFractional().not().and(neq((double) 0)), chain(map(doubleToInt())).end())).end();
+        Function<ArgCastBuilder<Object, ?>, CastNode> castNonDoubleLengthOut =
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "by")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "length.out")).
+                        with(mapIf(isFractional().not().and(neq((double) 0)),
+                                        chain(map(doubleToInt())).
+                                        end())).
+                        end();
         argCastBuilder.arg(3).mapIf(missingValue().not().and(doubleValue().not()), castNonDoubleTo).mapIf(doubleValue().or(logicalValue()),
-                        chain(asDoubleVector()).with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "length.out")).with(findFirst().doubleElement()).with(
-                                        mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID,
-                                                        "length.out")).end());
+                        chain(asDoubleVector()).
+                        with(mustBe(singleElement(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_SCALAR, "length.out")).
+                        with(findFirst().doubleElement()).
+                        with(mustBe(notDoubleNA().and(isFinite()), RError.SHOW_CALLER, false, RError.Message.CANNOT_BE_INVALID, "length.out")).
+                        end());
         argCastNodes[3] = insert(argCastBuilder.getCasts()[3]);
 
         argCastBuilder.arg(4).mapIf(missingValue().not(), asVector());
         argCastNodes[4] = insert(argCastBuilder.getCasts()[4]);
-
+        //@formatter:on
     }
 
     @Specialization
@@ -129,6 +162,13 @@ public abstract class Seq extends RBuiltinNode {
         if (isEmptyProfile.profile(start.getLength() == 0)) {
             return RDataFactory.createEmptyIntVector();
         } else if (oneElementProfile.profile(start.getLength() == 1)) {
+            if (start.getDataAtAsObject(0) instanceof Byte) {
+                // this is mostly to handle somewhat unintuitive:
+                // > seq.int(FALSE)
+                // [1] 1
+                singleLogical.enter();
+                return 1;
+            }
             initSeqInternal();
             Object newTo = argCastNodes[0].execute(start);
             // this is real:
