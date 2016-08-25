@@ -312,7 +312,10 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
             RList args = (RList) eval.get();
             return args;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
             // throw new RuntimeException(e);
             // todo: warning
             return null;

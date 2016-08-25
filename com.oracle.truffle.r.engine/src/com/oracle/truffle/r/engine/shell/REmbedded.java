@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -73,7 +71,7 @@ public class REmbedded {
         PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out);
         try {
             vm.eval(INIT);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Utils.rSuicideDefault("initializeR");
         }
         return vm;
