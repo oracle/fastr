@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Deque;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -1116,6 +1118,8 @@ public class RSerialize {
         private int size;
         private int offset;
 
+        private final WeakHashMap<String, WeakReference<String>> strings = RContext.getInstance().stringMap;
+
         XdrInputFormat(InputStream is) {
             super(is);
             if (is instanceof PByteArrayInputStream) {
@@ -1168,6 +1172,14 @@ public class RSerialize {
                 result = new String(buf, offset, len, StandardCharsets.UTF_8);
             }
             offset += len;
+            WeakReference<String> entry;
+            if ((entry = strings.get(result)) != null) {
+                String string = entry.get();
+                if (string != null) {
+                    return string;
+                }
+            }
+            strings.put(result, new WeakReference<>(result));
             return result;
         }
 
@@ -1282,20 +1294,35 @@ public class RSerialize {
 
         @Override
         void writeString(String value) throws IOException {
-            byte[] bytes = value.getBytes();
-            int bytesLen = bytes.length;
-            int totalLen = bytesLen + 4;
-            if (totalLen > buf.length) {
-                // too large to fit buffer
-                ensureSpace(4);
-                writeInt(bytesLen);
-                flushBuffer();
-                os.write(bytes);
+            boolean simple = true;
+            for (int i = 0; i < value.length(); i++) {
+                if (value.charAt(i) >= 0x80) {
+                    simple = false;
+                    break;
+                }
+            }
+            if (simple && value.length() <= buf.length) {
+                writeInt(value.length());
+                ensureSpace(value.length());
+                for (int i = 0; i < value.length(); i++) {
+                    buf[offset++] = (byte) value.charAt(i);
+                }
             } else {
-                ensureSpace(totalLen);
-                writeInt(bytesLen);
-                System.arraycopy(bytes, 0, buf, offset, bytesLen);
-                offset += bytesLen;
+                byte[] bytes = value.getBytes();
+                int bytesLen = bytes.length;
+                int totalLen = bytesLen + 4;
+                if (totalLen > buf.length) {
+                    // too large to fit buffer
+                    ensureSpace(4);
+                    writeInt(bytesLen);
+                    flushBuffer();
+                    os.write(bytes);
+                } else {
+                    ensureSpace(totalLen);
+                    writeInt(bytesLen);
+                    System.arraycopy(bytes, 0, buf, offset, bytesLen);
+                    offset += bytesLen;
+                }
             }
         }
 
