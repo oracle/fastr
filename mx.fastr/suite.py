@@ -396,6 +396,7 @@ suite = {
         "ANTLR-3.5",
         "ANTLR-C-3.5",
        ],
+       "maven" : "False",
 
     },
 
