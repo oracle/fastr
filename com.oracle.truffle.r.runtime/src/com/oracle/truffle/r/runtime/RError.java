@@ -509,6 +509,9 @@ public final class RError extends RuntimeException {
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
         INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
+        INVALID_TIES_FOR_RANK("invalid ties.method for rank() [should never happen]"),
+        UNIMPLEMENTED_TYPE_IN_GREATER("unimplemented type '%s' in greater"),
+        RANK_LARGE_N("parameter 'n' is greater than length(x), GnuR output is non-deterministic, FastR will use n=length(x)"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),
