@@ -22,42 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleNA;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleToInt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFractional;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNA;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarStringValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.function.Function;
 
@@ -87,10 +54,13 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -663,6 +633,28 @@ public class CastBuilderTest {
         Object r = cast(RRuntime.STRING_NA);
         assertTrue(r instanceof Double);
         assertTrue(RRuntime.isNA((double) r));
+    }
+
+    @Test
+    public void testSample18() {
+        cb.arg(0, "matrix").asDoubleVector(true, true, true).mustBe(squareMatrix());
+
+        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        Object res = cast(vec);
+        assertTrue(res instanceof RAbstractDoubleVector);
+        RAbstractDoubleVector dvec = (RAbstractDoubleVector) res;
+        assertNotNull(dvec.getDimensions());
+        assertEquals(2, dvec.getDimensions().length);
+        assertEquals(2, dvec.getDimensions()[0]);
+        assertEquals(2, dvec.getDimensions()[1]);
+    }
+
+    @Test
+    public void testSample19() {
+        cb.arg(0, "matrix").asDoubleVector(true, true, true).mustBe(dimGt(1, 0));
+
+        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        cast(vec);
     }
 
     @Test
