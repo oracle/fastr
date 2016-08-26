@@ -160,7 +160,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     @Fallback
     @SuppressWarnings("unused")
-    protected byte isUnsortedFallback(Object x, boolean strictly) {
+    protected byte isUnsortedFallback(Object x, Object strictly) {
         return RRuntime.LOGICAL_NA;
     }
 

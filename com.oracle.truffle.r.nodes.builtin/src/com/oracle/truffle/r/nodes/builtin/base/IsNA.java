@@ -188,8 +188,8 @@ public abstract class IsNA extends RBuiltinNode {
     // Note: all the primitive values have specialization, so we can only get RTypedValue in
     // fallback
     @Fallback
-    protected byte isNA(RTypedValue value) {
-        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+    protected byte isNA(Object value) {
+        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, ((RTypedValue) value).getRType().getName());
         return RRuntime.LOGICAL_FALSE;
     }
 
