@@ -476,6 +476,7 @@ public final class RError extends RuntimeException {
         EXACT_SINGULARITY("exact singularity in '%s'"),
         SINGULAR_SOLVE("singular matrix '%s' in solve"),
         SEED_TYPE(".Random.seed is not an integer vector but of type '%s'"),
+        INVALID_NORMAL_TYPE_IN_RGNKIND("invalid Normal type in 'RNGkind'"),
         INVALID_USE("invalid use of '%s'"),
         FORMAL_MATCHED_MULTIPLE("formal argument \"%s\" matched by multiple actual arguments"),
         ARGUMENT_MATCHES_MULTIPLE("argument %d matches multiple formal arguments"),
