@@ -46,8 +46,12 @@ public class DuplicatedFunctions {
         private final ConditionProfile incomparable = ConditionProfile.createBinaryProfile();
 
         protected void casts(CastBuilder casts) {
-            casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.GENERIC,
-                            "duplicated() applies only to vectors").asVector();
+            // these are similar to those in DuplicatedFunctions.java
+            casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS,
+                            "duplicated()").asVector();
+            // not much more can be done for incomparables as it is either a vector of incomparable
+            // values or a (single) logical value
+            casts.arg("incomparables").asVector(true);
             casts.arg("fromLast").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
@@ -76,7 +80,7 @@ public class DuplicatedFunctions {
         }
     }
 
-    @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"}, behavior = PURE)
+    @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
     public abstract static class Duplicated extends Adapter {
 
         @Override
@@ -123,7 +127,7 @@ public class DuplicatedFunctions {
         }
     }
 
-    @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"}, behavior = PURE)
+    @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast"}, behavior = PURE)
     public abstract static class AnyDuplicated extends Adapter {
 
         @Override
