@@ -54,12 +54,26 @@ class DelFastRNativeProject(FastRProjectAdapter):
     def getBuildTask(self, args):
         return mx.NativeBuildTask(args, self)
 
+    def _get_gnur_files(self, gnur_dir, files, results):
+        for f in files:
+            results.append(join(self.dir, gnur_dir, f))
+
     def getResults(self):
+        '''
+        Capture all the files from the com.oracle.truffle.r.native project that are needed
+        in an alternative implementation of the R FFI. This includes some files from GNU R.
+        This code has to be kept in sync with the FFI implementation.
+        '''
+        # plain files
+        results = [join(self.dir, "platform.mk")]
         gnur = join('gnur', mx_fastr.r_version())
         gnur_appl = join(gnur, 'src', 'appl')
-        # plain files
-        results = [join(self.dir, result) for result in ["platform.mk", join(gnur_appl, 'pretty.c'), join(gnur_appl, 'interv.c')]]
-
+        self._get_gnur_files(gnur_appl, ['pretty.c', 'interv.c'], results)
+        gnur_main = join(gnur, 'src', 'main')
+        self._get_gnur_files(gnur_main, ['colors.c', 'devices.c', 'engine.c', 'format.c', 'graphics.c',
+                                         'plot.c', 'plot3d.c', 'plotmath.c', 'rlocale.c', 'sort.c'], results)
+        # these files are not compiled, just "included"
+        self._get_gnur_files(gnur_main, ['xspline.c', 'rlocale_data.h'], results)
         # directories
         for d in ["fficall/src/common", "fficall/src/include", "fficall/src/variable_defs"]:
             self._get_files(d, results)

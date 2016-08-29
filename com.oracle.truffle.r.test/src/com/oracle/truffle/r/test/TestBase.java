@@ -234,6 +234,12 @@ public class TestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T doBeforeTest() {
+        beforeTest();
+        return (T) this;
+    }
+
     private static class ExpectedTestOutputManager extends TestOutputManager {
         private final boolean generate;
 

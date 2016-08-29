@@ -34,7 +34,7 @@ public abstract class ResourceHandlerFactory {
     public interface Handler {
         /**
          * See {@link java.lang.Class#getResource(String)}.
-         * 
+         *
          * @return The path component of the {@link java.net URL} returned by
          *         {@link java.lang.Class#getResource(String)}
          */
@@ -58,7 +58,7 @@ public abstract class ResourceHandlerFactory {
 
     private static ResourceHandlerFactory theInstance;
 
-    private static ResourceHandlerFactory getInstance() {
+    public static ResourceHandlerFactory getInstance() {
         return theInstance;
     }
 
