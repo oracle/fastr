@@ -1383,4 +1383,11 @@ public class CallRFFIHelper {
         return rCaller == RCaller.topLevel ? 1 : 0;
     }
 
+    public static int R_isEqual(Object x, Object y) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("isEqual", x, y);
+        }
+        return x == y ? 1 : 0;
+    }
+
 }

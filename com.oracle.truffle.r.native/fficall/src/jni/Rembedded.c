@@ -653,3 +653,9 @@ int R_isGlobal(CTXT context) {
 	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_isGlobal", "(Ljava/lang/Object;)I", 1);
     return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID, context);
 }
+
+int R_isEqual(void* x, void* y) {
+	JNIEnv *jniEnv = getEnv();
+	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_isEqual", "(Ljava/lang/Object;Ljava/lang/Object;)I", 1);
+    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID, x, y);
+}

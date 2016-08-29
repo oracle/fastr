@@ -13,6 +13,7 @@ extern SEXP R_getContextCall(CTXT);
 extern SEXP R_getContextSrcRef(CTXT);
 extern int R_insideBrowser();
 extern int R_isGlobal(CTXT);
+extern int R_isEqual(void*, void*);
 #else
 .
 +1
