@@ -726,7 +726,11 @@ public final class RError extends RuntimeException {
         ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
         ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
         INCORRECT_ARG_TYPE("incorrect type for %s argument"),
-        INVALID_ARG_OF_LENGTH("invalid %s argument of length %d");
+        INVALID_ARG_OF_LENGTH("invalid %s argument of length %d"),
+        INVALID_FILENAME_PATTERN("invalid filename pattern"),
+        INVALID_FILE_EXT("invalid file extension"),
+        NO("no '%s'"),
+        APPLIES_TO_VECTORS("%s applies only to vectors");
 
         public final String message;
         final boolean hasArgs;

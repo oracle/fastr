@@ -189,5 +189,10 @@ public class TestBuiltin_unique extends TestBase {
     @Test
     public void testUnique() {
         assertEval("{x<-factor(c(\"a\", \"b\", \"a\")); unique(x) }");
+
+        assertEval("{ x<-quote(f(7, 42)); unique(x) }");
+        assertEval("{ x<-function() 42; unique(x) }");
+        assertEval(Ignored.Unknown, "{ unique(c(1,2,1), incomparables=function() 42) }");
+
     }
 }

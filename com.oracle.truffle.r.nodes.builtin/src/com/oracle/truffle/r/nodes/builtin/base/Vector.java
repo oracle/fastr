@@ -47,7 +47,8 @@ public abstract class Vector extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("length").asIntegerVector().mustBe(singleElement()).findFirst();
+        casts.arg("mode").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "mode").asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("length").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "length").asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     protected RType modeToType(String mode) {
