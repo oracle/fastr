@@ -173,7 +173,7 @@ public class TestBuiltin_seq extends TestBase {
         assertEval("{ seq(0,0) }");
         assertEval("{ seq(0L,0L,0L) }");
         assertEval("{ seq(0L,0L) }");
-        assertEval(Ignored.MissingWarning, "{ seq(0,0,1i) }");
+        assertEval("{ seq(0,0,1i) }");
         assertEval(Output.IgnoreErrorContext, "{ seq(integer(), 7) }");
         assertEval(Output.MayIgnoreErrorContext, "{ seq(c(1,2), 7) }");
         assertEval(Output.IgnoreErrorContext, "{ seq(7, integer()) }");
