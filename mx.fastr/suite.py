@@ -434,6 +434,20 @@ suite = {
       ],
     },
 
+    "FASTR_UNIT_TESTS" : {
+      "description" : "unit tests",
+      "dependencies" : ["com.oracle.truffle.r.test"],
+      "exclude": ["mx:HAMCREST", "mx:JUNIT", "mx:JMH"],
+      "distDependencies" : [
+        "FASTR",
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DEBUG",
+        "TRUFFLE_R_PARSER_PROCESSOR",
+        "truffle:TRUFFLE_TCK",
+      ],
+
+    },
+
     "FASTR_NATIVE_DEV": {
         "description" : "support for overriding the native project implementation in a separate suite",
         "dependencies" : ["com.oracle.truffle.r.native"],
