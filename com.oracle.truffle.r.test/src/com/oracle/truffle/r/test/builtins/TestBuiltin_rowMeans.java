@@ -58,8 +58,8 @@ public class TestBuiltin_rowMeans extends TestBase {
         // Whichever value(NA or NaN) is first in the row will be returned for that row.
         assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
 
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
         // Error message mismatch
         assertEval(Ignored.Unknown, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
-        assertEval(Output.IgnoreErrorContext, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
     }
 }

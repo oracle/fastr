@@ -56,4 +56,13 @@ public class TestBuiltin_pmatch extends TestBase {
     public void testpmatch8() {
         assertEval("argv <- list(character(0), c('labels', 'col', 'alpha', 'adj', 'cex', 'lineheight', 'font'), NA_integer_, TRUE); .Internal(pmatch(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
+
+    @Test
+    public void testArgumentsCasts() {
+        assertEval("pmatch(NULL, 1)");
+        assertEval("pmatch(1, NULL)");
+        assertEval("pmatch(1:5, c(1,3), nomatch=NULL)");
+        assertEval(Output.IgnoreWarningContext, "pmatch(1:5, c(1,3), nomatch='str')");
+        assertEval("pmatch(1:5, c(1,3), duplicates.ok=42)");
+    }
 }
