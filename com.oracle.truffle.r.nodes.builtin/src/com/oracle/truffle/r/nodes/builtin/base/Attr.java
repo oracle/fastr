@@ -153,9 +153,9 @@ public abstract class Attr extends RBuiltinNode {
      */
     @Fallback
     @TruffleBoundary
-    protected Object attr(Object object, String name, boolean exact) {
+    protected Object attr(Object object, Object name, Object exact) {
         if (object instanceof RAttributable) {
-            return attrRA((RAttributable) object, intern(name), exact);
+            return attrRA((RAttributable) object, intern((String) name), (boolean) exact);
         } else {
             errorProfile.enter();
             throw RError.nyi(this, "object cannot be attributed");
