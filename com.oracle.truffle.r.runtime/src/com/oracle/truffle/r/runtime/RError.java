@@ -274,6 +274,7 @@ public final class RError extends RuntimeException {
         NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
+        INVALID_NA_PRINT_SPEC("invalid 'na.print' specification"),
         EMPTY_WHAT("empty 'what' specified"),
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
@@ -730,7 +731,8 @@ public final class RError extends RuntimeException {
         INVALID_FILENAME_PATTERN("invalid filename pattern"),
         INVALID_FILE_EXT("invalid file extension"),
         NO("no '%s'"),
-        APPLIES_TO_VECTORS("%s applies only to vectors");
+        APPLIES_TO_VECTORS("%s applies only to vectors"),
+        GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer");
 
         public final String message;
         final boolean hasArgs;

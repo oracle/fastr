@@ -22,6 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -36,6 +48,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -57,11 +70,25 @@ public class PrintFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            super.createCasts(casts);
-            casts.firstBoolean(2);
-            casts.firstBoolean(5);
-            casts.firstBoolean(7);
-            casts.firstBoolean(8);
+            casts.arg("digits").mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(), false)).with(
+                            mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)), false)).end());
+
+            casts.arg("quote").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).mapIf(nullValue().not(),
+                            chain(mustBe(stringValue(), false)).with(asStringVector()).with(findFirst().stringElement()).end());
+
+            casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).mapIf(nullValue().not(),
+                            chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(),
+                                            false)).with(mustBe(gte(0), false)).end());
+
+            casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("max").mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(), false)).with(mustBe(gte(0), false)).end());
+
+            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
         @TruffleBoundary
@@ -98,10 +125,17 @@ public class PrintFunctions {
 
         @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(instanceOf(RFunction.class));
+
+            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        }
+
         @SuppressWarnings("unused")
         @Specialization
-        protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), true, false);
+        protected RFunction printFunction(RFunction x, boolean useSource, RArgsValuesAndNames extra) {
+            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
             return x;
         }
     }
