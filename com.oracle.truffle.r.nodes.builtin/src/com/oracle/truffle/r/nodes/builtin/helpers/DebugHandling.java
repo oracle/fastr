@@ -232,13 +232,7 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            RCaller caller = RArguments.getCall(frame);
-            if (caller == null) {
-                caller = RCaller.topLevel;
-            }
-
-            // TODO: make sure that the caller correctly reflects the context
-            int exitMode = browserInteractNode.executeInteger(frame, caller);
+            int exitMode = (int) browserInteractNode.execute(frame);
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;

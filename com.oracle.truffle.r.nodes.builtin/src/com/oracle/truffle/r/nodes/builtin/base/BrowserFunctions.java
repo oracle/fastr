@@ -94,7 +94,7 @@ public class BrowserFunctions {
                     StackTraceElement[] s = Thread.currentThread().getStackTrace();
                     RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
                     RCaller browserCaller = RCaller.create(null, caller, this.asRSyntaxNode());
-                    browserInteractNode.executeInteger(frame, browserCaller);
+                    browserInteractNode.execute(frame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
                 }

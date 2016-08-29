@@ -27,6 +27,8 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.RASTBuilder;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -46,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * The interactive component of the {@code browser} function.
@@ -61,7 +64,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @NodeChild("browserCall")
 public abstract class BrowserInteractNode extends RNode {
 
-    public abstract int executeInteger(VirtualFrame frame, Object caller);
+    // it's never meant to be executed
+    private static final RSyntaxNode browserCall = new RASTBuilder().call(RSyntaxNode.INTERNAL, ReadVariableNode.create("browser"));
 
     public static final int STEP = 0;
     public static final int NEXT = 1;
@@ -69,7 +73,7 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int FINISH = 3;
 
     @Specialization
-    protected int interact(VirtualFrame frame, Object browserCaller) {
+    protected int interact(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();
         MaterializedFrame mFrame = frame.materialize();
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
@@ -79,8 +83,13 @@ public abstract class BrowserInteractNode extends RNode {
         RFunction caller = RArguments.getFunction(frame);
         boolean callerIsDebugged = DebugHandling.isDebugged(caller);
         int exitMode = NEXT;
+        RCaller currentCaller = RArguments.getCall(mFrame);
+        if (currentCaller == null) {
+            currentCaller = RCaller.topLevel;
+        }
+        RCaller browserCaller = RCaller.create(null, currentCaller, browserCall);
         try {
-            browserState.setInBrowser((RCaller) browserCaller);
+            browserState.setInBrowser(browserCaller);
             LW: while (true) {
                 String input = ch.readLine();
                 if (input != null) {
