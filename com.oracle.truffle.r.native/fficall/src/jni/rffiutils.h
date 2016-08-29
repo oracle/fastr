@@ -75,6 +75,8 @@ void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
 void updateNativeArrays(JNIEnv *env);
 
+SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
+
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
 void init_dynload(JNIEnv *env);

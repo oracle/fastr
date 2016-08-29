@@ -1167,6 +1167,7 @@ public class CallRFFIHelper {
     }
 
     public static Object getGlobalContext() {
+        Utils.warn("Potential memory leak (global context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalContext");
         }
@@ -1251,6 +1252,7 @@ public class CallRFFIHelper {
     // Checkstyle: stop method name check
 
     public static Object R_getGlobalFunctionContext() {
+        Utils.warn("Potential memory leak (global function context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalFunctionContext");
         }
@@ -1269,6 +1271,7 @@ public class CallRFFIHelper {
     }
 
     public static Object R_getParentFunctionContext(Object c) {
+        Utils.warn("Potential memory leak (parent function context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getParentFunctionContext");
         }

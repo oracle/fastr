@@ -602,7 +602,7 @@ CTXT R_getGlobalFunctionContext() {
 	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getGlobalFunctionContext", "()Ljava/lang/Object;", 1);
     CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID);
     result = checkRef(jniEnv, result);
-    return result == R_NilValue ? NULL : result;
+    return result == R_NilValue ? NULL : addGlobalRef(jniEnv, result, 0);
 }
 
 CTXT R_getParentFunctionContext(CTXT c) {
@@ -610,7 +610,7 @@ CTXT R_getParentFunctionContext(CTXT c) {
 	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getParentFunctionContext", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, c);
     result = checkRef(jniEnv, result);
-    return result == R_NilValue ? NULL : result;
+    return result == R_NilValue ? NULL : addGlobalRef(jniEnv, result, 0);
 }
 
 SEXP R_getContextEnv(CTXT context) {

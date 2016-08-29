@@ -356,7 +356,7 @@ static SEXP findCachedGlobalRef(JNIEnv *env, SEXP obj) {
 	return NULL;
 }
 
-static SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
+SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
 	SEXP gref;
 	if (cachedGlobalRefsHwm >= cachedGlobalRefsLength) {
 		int newLength = cachedGlobalRefsLength * 2;

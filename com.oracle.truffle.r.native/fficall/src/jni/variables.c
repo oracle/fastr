@@ -61,7 +61,8 @@ SEXP FASTR_NamespaceRegistry() {
 
 CTXT FASTR_GlobalContext() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
+	CTXT res = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
+    return addGlobalRef(env, res, 0);
 }
 
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
