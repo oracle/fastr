@@ -269,7 +269,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testSimpleRm() {
         assertEval("{ x <- 200 ; rm(\"x\") ; x }");
-        assertEval(Output.IgnoreWarningContext, "{ rm(\"ieps\") }");
+        assertEval("{ rm(\"ieps\") }");
+        assertEval("{ rm(\"sum\", envir=getNamespace(\"stats\")) }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");

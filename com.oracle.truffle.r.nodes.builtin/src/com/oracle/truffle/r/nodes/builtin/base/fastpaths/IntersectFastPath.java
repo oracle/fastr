@@ -32,8 +32,11 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public abstract class IntersectFastPath extends RFastPathNode {
+
+    private static final int[] EMPTY_INT_ARRAY = new int[0];
 
     @Specialization(guards = {"x.getLength() > 0", "y.getLength() > 0"})
     protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y, //
@@ -42,10 +45,11 @@ public abstract class IntersectFastPath extends RFastPathNode {
                     @Cached("createBinaryProfile()") ConditionProfile resultLengthMatchProfile) {
         int xLength = x.getLength();
         int yLength = y.getLength();
-        reportWork(xLength + yLength);
+        RNode.reportWork(this, xLength + yLength);
 
         int count = 0;
-        int[] result = new int[Math.min(xLength, yLength)];
+        int[] result = EMPTY_INT_ARRAY;
+        int maxResultLength = Math.min(xLength, yLength);
         if (isXSortedProfile.profile(isSorted(x))) {
             RAbstractIntVector tempY;
             if (!isYSortedProfile.profile(isSorted(y))) {
@@ -64,6 +68,9 @@ public abstract class IntersectFastPath extends RFastPathNode {
             int yValue = tempY.getDataAt(yPos);
             while (true) {
                 if (xValue == yValue) {
+                    if (count >= result.length) {
+                        result = Arrays.copyOf(result, Math.min(maxResultLength, Math.max(result.length * 2, 8)));
+                    }
                     result[count++] = xValue;
                     // advance over similar entries
                     while (true) {
@@ -107,11 +114,14 @@ public abstract class IntersectFastPath extends RFastPathNode {
                 int pos = Arrays.binarySearch(temp, value);
                 if (pos >= 0 && !used[pos]) {
                     used[pos] = true;
+                    if (count >= result.length) {
+                        result = Arrays.copyOf(result, Math.min(maxResultLength, Math.max(result.length * 2, 8)));
+                    }
                     result[count++] = value;
                 }
             }
         }
-        return RDataFactory.createIntVector(resultLengthMatchProfile.profile(count == xLength) ? result : Arrays.copyOf(result, count), x.isComplete() | y.isComplete());
+        return RDataFactory.createIntVector(resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count), x.isComplete() | y.isComplete());
     }
 
     private static boolean isSorted(RAbstractIntVector vector) {

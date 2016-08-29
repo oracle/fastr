@@ -42,7 +42,7 @@ public interface RSyntaxLookup extends RSyntaxElement {
      * section.
      */
     static RSyntaxLookup createDummyLookup(SourceSection originalSource, String identifier, boolean isFunctionLookup) {
-        SourceSection source = originalSource == null || originalSource.getSource() == null ? null : originalSource.getSource().createSection(null, originalSource.getCharIndex(), 1);
+        SourceSection source = originalSource == null || originalSource.getSource() == null ? null : originalSource.getSource().createSection(originalSource.getCharIndex(), 1);
         return new RSyntaxLookup() {
             @Override
             public SourceSection getSourceSection() {

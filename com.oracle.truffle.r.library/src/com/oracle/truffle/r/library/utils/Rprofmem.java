@@ -22,10 +22,9 @@
  */
 package com.oracle.truffle.r.library.utils;
 
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-
+import java.io.PrintStream;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -44,34 +43,29 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofmemState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 
 public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDataFactory.Listener {
-
-    private RprofmemState profmemState;
 
     @Specialization
     @TruffleBoundary
     public Object doRprofmem(RAbstractStringVector filenameVec, byte appendL, RAbstractDoubleVector thresholdVec) {
-        if (!RContext.getInstance().isInitial()) {
-            throw RError.error(this, RError.Message.GENERIC, "profiling not supported in created contexts");
-        }
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
             endProfiling();
         } else {
             // enable after ending any previous session
-            profmemState = RContext.getInstance().stateInstrumentation.getRprofmem();
-            if (profmemState.out() != null) {
+            RprofmemState profmemState = RprofmemState.get();
+            if (profmemState != null && profmemState.out() != null) {
                 endProfiling();
             }
             boolean append = RRuntime.fromLogical(appendL);
             try {
-                PrintWriter out = new PrintWriter(new FileWriter(filename, append));
+                PrintStream out = new PrintStream(new FileOutputStream(filename, append));
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(this);
-                RDataFactory.setAllocationTracing(true);
+                RDataFactory.setTracingState(true);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filename));
             }
@@ -79,12 +73,10 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
         return RNull.instance;
     }
 
-    private void endProfiling() {
-        if (profmemState != null) {
-            RDataFactory.setAllocationTracing(false);
-            profmemState.out().flush();
-            profmemState.out().close();
-            profmemState.setOut(null);
+    private static void endProfiling() {
+        RprofmemState profmemState = RprofmemState.get();
+        if (profmemState.out() != null) {
+            profmemState.cleanup(0);
         }
     }
 
@@ -119,6 +111,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
     public void reportAllocation(RTypedValue data) {
         // We could do some in memory buffering
         // TODO write out full stack
+        RprofmemState profmemState = RprofmemState.get();
         Frame frame = Utils.getActualCurrentFrame();
         if (frame == null) {
             // not an R evaluation, some internal use
@@ -132,18 +125,45 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
 
         long size = RObjectSize.getObjectSize(data, myIgnoreObjectHandler);
         if (data instanceof RAbstractVector && size >= LARGE_VECTOR) {
-            profmemState.out().printf("%d: %s\n", size, name);
+            if (size > profmemState.threshold) {
+                profmemState.out().printf("%d: %s\n", size, name);
+            }
         } else {
-            int pageCount = profmemState.pageCount();
+            int pageCount = profmemState.pageCount;
             long pcs = pageCount + size;
             if (pcs > PAGE_SIZE) {
                 profmemState.out().printf("new page: %s\n", name);
-                profmemState.setPageCount((int) (pcs - PAGE_SIZE));
+                profmemState.pageCount = (int) (pcs - PAGE_SIZE);
             } else {
-                profmemState.setPageCount((int) pcs);
+                profmemState.pageCount = (int) pcs;
             }
         }
 
+    }
+
+    private static final class RprofmemState extends RprofState {
+        private double threshold;
+        private int pageCount;
+
+        private static RprofmemState get() {
+            RprofmemState state = (RprofmemState) RContext.getInstance().stateInstrumentation.getRprofState("mem");
+            if (state == null) {
+                state = new RprofmemState();
+                RContext.getInstance().stateInstrumentation.setRprofState("mem", state);
+            }
+            return state;
+        }
+
+        public void initialize(PrintStream outA, double thresholdA) {
+            setOut(outA);
+            this.threshold = thresholdA;
+        }
+
+        @Override
+        public void cleanup(int status) {
+            RDataFactory.setTracingState(false);
+            closeAndResetOut();
+        }
     }
 
 }

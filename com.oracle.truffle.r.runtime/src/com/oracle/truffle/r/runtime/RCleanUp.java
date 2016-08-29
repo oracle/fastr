@@ -11,12 +11,21 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.ArrayList;
+
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 
 public class RCleanUp {
+
+    private static ArrayList<InstrumentationState.CleanupHandler> cleanupHandlers = new ArrayList<>();
+
+    public static void registerCleanupHandler(InstrumentationState.CleanupHandler cleanupHandler) {
+        cleanupHandlers.add(cleanupHandler);
+    }
 
     public static void cleanUp(SA_TYPE saveType, int status, boolean runLast) {
         if (RInterfaceCallbacks.R_CleanUp.isOverridden()) {
@@ -86,6 +95,14 @@ public class RCleanUp {
 
             case SUICIDE:
             default:
+
+        }
+        for (InstrumentationState.CleanupHandler cleanupHandler : cleanupHandlers) {
+            try {
+                cleanupHandler.cleanup(status);
+            } catch (Throwable t) {
+                RInternalError.reportError(t);
+            }
 
         }
         // TODO run exit finalizers (FFI)

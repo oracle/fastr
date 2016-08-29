@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -31,16 +32,21 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -64,7 +70,6 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.getpid", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class SysGetpid extends RBuiltinNode {
-
         @Specialization
         @TruffleBoundary
         protected Object sysGetPid() {
@@ -77,9 +82,15 @@ public class SysFunctions {
     public abstract static class SysGetenv extends RBuiltinNode {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
+            casts.arg("unset").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
-        protected Object sysGetEnv(RAbstractStringVector x, RAbstractStringVector unset) {
+        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
             Map<String, String> envMap = RContext.getInstance().stateREnvVars.getMap();
             int len = x.getLength();
             if (zeroLengthProfile.profile(len == 0)) {
@@ -100,8 +111,8 @@ public class SysFunctions {
                     if (value != null) {
                         data[i] = value;
                     } else {
-                        data[i] = unset.getDataAt(0);
-                        if (RRuntime.isNA(unset.getDataAt(0))) {
+                        data[i] = unset;
+                        if (RRuntime.isNA(unset)) {
                             complete = RDataFactory.INCOMPLETE_VECTOR;
                         }
                     }
@@ -110,11 +121,6 @@ public class SysFunctions {
             }
         }
 
-        @Specialization
-        protected Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.WRONG_TYPE);
-        }
     }
 
     /**
@@ -129,16 +135,20 @@ public class SysFunctions {
 
         protected void checkNSLoad(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
             if (names.getLength() == 1 && NS_LOAD.equals(names.getDataAt(0))) {
-                Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-                RFunction func = RArguments.getFunction(caller);
-                if (func.toString().equals(LOADNAMESPACE)) {
-                    if (setting) {
-                        RContext.getInstance().setNamespaceName(values.getDataAt(0));
-                    } else {
-                        // Now we can run the overrides
-                        RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
-                    }
-                    System.console();
+                doCheckNSLoad(frame.materialize(), values, setting);
+            }
+        }
+
+        @TruffleBoundary
+        private static void doCheckNSLoad(MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
+            Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+            RFunction func = RArguments.getFunction(caller);
+            if (func.toString().equals(LOADNAMESPACE)) {
+                if (setting) {
+                    RContext.getInstance().setNamespaceName(values.getDataAt(0));
+                } else {
+                    // Now we can run the overrides
+                    RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
                 }
             }
 
@@ -147,9 +157,17 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.setenv", visibility = OFF, kind = INTERNAL, parameterNames = {"nm", "values"}, behavior = MODIFIES_STATE)
     public abstract static class SysSetEnv extends LoadNamespaceAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("nm").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
+            casts.arg("values").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
+        }
 
         @Specialization
         protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values) {
+            if (names.getLength() != values.getLength()) {
+                throw RError.error(this, RError.Message.ARGUMENT_WRONG_LENGTH);
+            }
             checkNSLoad(frame, names, values, true);
             return doSysSetEnv(names, values);
         }
@@ -168,6 +186,10 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.unsetenv", visibility = OFF, kind = INTERNAL, parameterNames = {"x"}, behavior = READS_STATE)
     public abstract static class SysUnSetEnv extends LoadNamespaceAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
+        }
 
         @Specialization
         protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RAbstractStringVector names) {
@@ -189,6 +211,10 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.sleep", visibility = OFF, kind = INTERNAL, parameterNames = {"time"}, behavior = COMPLEX)
     public abstract static class SysSleep extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("time").asDoubleVector().findFirst().mustBe(gte(0.0).and(eq(Double.NaN).not()));
+        }
 
         @Specialization
         @TruffleBoundary
@@ -197,42 +223,8 @@ public class SysFunctions {
             return RNull.instance;
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object sysSleep(String secondsString) {
-            long millis = convertToMillis(checkValidString(secondsString));
-            sleep(millis);
-            return RNull.instance;
-        }
-
-        @Specialization(guards = "lengthOne(secondsVector)")
-        @TruffleBoundary
-        protected Object sysSleep(RStringVector secondsVector) {
-            long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
-            sleep(millis);
-            return RNull.instance;
-        }
-
-        protected static boolean lengthOne(RStringVector vec) {
-            return vec.getLength() == 1;
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object sysSleep(@SuppressWarnings("unused") Object arg) {
-            throw RError.error(this, RError.Message.INVALID_VALUE, "time");
-        }
-
         private static long convertToMillis(double d) {
             return (long) (d * 1000);
-        }
-
-        private double checkValidString(String s) {
-            try {
-                return Double.parseDouble(s);
-            } catch (NumberFormatException ex) {
-                throw RError.error(this, RError.Message.INVALID_VALUE, "time");
-            }
         }
 
         private static void sleep(long millis) {
@@ -249,16 +241,14 @@ public class SysFunctions {
      */
     @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"}, behavior = IO)
     public abstract static class SysReadlink extends RBuiltinNode {
-
-        @Specialization
-        @TruffleBoundary
-        protected Object sysReadlink(String path) {
-            return RDataFactory.createStringVector(doSysReadLink(path));
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("paths").mustBe(stringValue());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object sysReadlink(RStringVector vector) {
+        protected Object sysReadlink(RAbstractStringVector vector) {
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < paths.length; i++) {
@@ -289,19 +279,20 @@ public class SysFunctions {
             return s;
         }
 
-        @Specialization
-        protected Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "paths");
-        }
     }
 
-    // TODO implement
     @RBuiltin(name = "Sys.chmod", visibility = OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"}, behavior = IO)
     public abstract static class SysChmod extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("paths").mustBe(stringValue());
+            casts.arg("octmode").asIntegerVector().mustBe(notEmpty(), RError.Message.MODE_LENGTH_ONE);
+            casts.arg("use_umask").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") byte useUmask) {
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String path = Utils.tildeExpand(pathVec.getDataAt(i));
@@ -318,10 +309,15 @@ public class SysFunctions {
     // TODO implement
     @RBuiltin(name = "Sys.umask", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"octmode"}, behavior = COMPLEX)
     public abstract static class SysUmask extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("octmode").asIntegerVector().findFirst();
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object sysChmod(Object octmode) {
+        protected Object sysUmask(int octmode) {
             throw RError.nyi(this, "Sys.umask");
         }
     }
@@ -361,10 +357,15 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"}, behavior = IO)
     public abstract static class SysGlob extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("paths").mustBe(stringValue()).asStringVector();
+            casts.arg("dirmask").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") byte dirMask) {
+        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask) {
             ArrayList<String> matches = new ArrayList<>();
             // Sys.glob closure already called path.expand
             for (int i = 0; i < pathVec.getLength(); i++) {
@@ -378,6 +379,26 @@ public class SysFunctions {
             String[] data = new String[matches.size()];
             matches.toArray(data);
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = "setFileTime", kind = INTERNAL, parameterNames = {"path", "time"}, behavior = IO)
+    public abstract static class SysSetFileTime extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("time").asIntegerVector().findFirst().notNA();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected byte sysSetFileTime(String path, int time) {
+            try {
+                Files.setLastModifiedTime(FileSystems.getDefault().getPath(path), FileTime.from(time, TimeUnit.SECONDS));
+                return RRuntime.LOGICAL_TRUE;
+            } catch (IOException ex) {
+                return RRuntime.LOGICAL_FALSE;
+            }
         }
     }
 }

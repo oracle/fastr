@@ -10,23 +10,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.X_NUMERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -39,6 +39,8 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        casts.arg("X").mustBe(numericValue(), SHOW_CALLER, X_NUMERIC);
+
         casts.arg("m").asIntegerVector().findFirst().notNA();
 
         casts.arg("n").asIntegerVector().findFirst().notNA();
@@ -189,12 +191,4 @@ public abstract class RowMeans extends RBuiltinNode {
         }
         return RDataFactory.createDoubleVector(result, isComplete);
     }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector rowMeans(RAbstractStringVector x, int rowNum, int colNum, boolean naRm) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.X_NUMERIC);
-    }
-
 }

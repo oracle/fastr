@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -115,6 +116,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode dotDefinedSlot;
     @Child private FrameSlotNode dotTargetSlot;
     @Child private FrameSlotNode dotMethodsSlot;
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     @Child private PostProcessArgumentsNode argPostProcess;
 
@@ -287,6 +290,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
+            visibility.executeEndOfFunction(frame);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);

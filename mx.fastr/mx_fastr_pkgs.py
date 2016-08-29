@@ -49,6 +49,40 @@ def _log_step(state, step, rvariant):
     if not quiet:
         print "{0} {1} with {2}".format(state, step, rvariant)
 
+def _cran_test_project():
+    return 'com.oracle.truffle.r.test.cran'
+
+def _cran_test_project_dir():
+    return mx.project(_cran_test_project()).dir
+
+def installpkgs(args):
+    _installpkgs(args)
+
+def _installpkgs_script():
+    cran_test = _cran_test_project_dir()
+    return join(cran_test, 'r', 'install.cran.packages.R')
+
+def _is_graalvm():
+    return os.environ.has_key('GRAALVM_FASTR')
+
+def _graalvm():
+    return os.environ['GRAALVM_FASTR']
+
+def _installpkgs(args, **kwargs):
+    '''
+    Runs the R script that does package/installation and testing.
+    If we are running in a binary graalvm environment, which is indicated
+    by the GRAALVM_FASTR environment variable, we can't use mx to invoke
+    FastR, but instead have to invoke the command directly.
+    '''
+    script = _installpkgs_script()
+    if _is_graalvm():
+        rscript = join(_graalvm(), 'bin', 'Rscript')
+        return mx.run([rscript, script] + args, **kwargs)
+    else:
+        return mx_fastr.rscript([script] + args, **kwargs)
+
+
 def pkgtest(args):
     '''
     Package installation/testing.
@@ -56,7 +90,11 @@ def pkgtest(args):
     '''
 
     libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
-    stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
+
+    if _is_graalvm():
+        stacktrace_args = ['-J:-DR:-PrintErrorStacktracesToFile', '-J:-DR:+PrintErrorStacktraces']
+    else:
+        stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
     if "--quiet" in args:
         global quiet
         quiet = True
@@ -133,7 +171,7 @@ def pkgtest(args):
 
     _log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.cran.packages.R)
-    rc = mx_fastr._installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = _installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
         mx.abort(rc)
@@ -217,7 +255,7 @@ def _install_vignette_support(rvariant, env):
     _log_step('END', 'install vignette support', rvariant)
 
 def _gnur_installpkgs(args, env, **kwargs):
-    return mx.run(['Rscript', mx_fastr._installpkgs_script()] + args, env=env, **kwargs)
+    return mx.run(['Rscript', _installpkgs_script()] + args, env=env, **kwargs)
 
 def _gnur_install_test(pkgs):
     gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
@@ -226,9 +264,9 @@ def _gnur_install_test(pkgs):
             f.write(pkg)
             f.write('\n')
     # clone the cran test project into gnur
-    gnur_cran_test_project_dir = join(_mx_gnur().dir, mx_fastr._cran_test_project())
+    gnur_cran_test_project_dir = join(_mx_gnur().dir, _cran_test_project())
     if not exists(gnur_cran_test_project_dir):
-        shutil.copytree(mx_fastr._cran_test_project_dir(), gnur_cran_test_project_dir)
+        shutil.copytree(_cran_test_project_dir(), gnur_cran_test_project_dir)
     gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
     env = os.environ.copy()
     gnur = _mx_gnur().extensions

@@ -34,6 +34,6 @@ public class TestBuiltin_atanh extends TestBase {
 
     @Test
     public void testatanh4() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i));atanh(argv[[1]]);");
+        assertEval("argv <- list(c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i));atanh(argv[[1]]);");
     }
 }

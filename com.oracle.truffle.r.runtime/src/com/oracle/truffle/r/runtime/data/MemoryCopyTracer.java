@@ -26,8 +26,8 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -38,9 +38,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public final class MemoryCopyTracer {
     private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
-    @CompilationFinal private static boolean enabled;
+    private static boolean enabled;
 
-    private static final CyclicAssumption noMemoryCopyTracingAssumption = new CyclicAssumption("data copying");
+    private static final Assumption noMemoryCopyTracingAssumption = Truffle.getRuntime().createAssumption("data copy tracing");
 
     private MemoryCopyTracer() {
         // only static methods
@@ -59,7 +59,9 @@ public final class MemoryCopyTracer {
      */
     public static void setTracingState(boolean newState) {
         if (enabled != newState) {
-            noMemoryCopyTracingAssumption.invalidate();
+            if (newState) {
+                noMemoryCopyTracingAssumption.invalidate();
+            }
             enabled = newState;
         }
     }
@@ -69,7 +71,7 @@ public final class MemoryCopyTracer {
      * no-op.
      */
     public static void reportCopying(RAbstractVector source, RAbstractVector dest) {
-        if (enabled) {
+        if (!noMemoryCopyTracingAssumption.isValid() && enabled) {
             for (Listener listener : listeners) {
                 listener.reportCopying(source, dest);
             }

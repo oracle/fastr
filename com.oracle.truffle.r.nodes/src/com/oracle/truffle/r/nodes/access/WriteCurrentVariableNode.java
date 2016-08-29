@@ -26,9 +26,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -40,16 +40,17 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @NodeInfo(cost = NodeCost.NONE)
 public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall {
-    @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
-    protected WriteCurrentVariableNode(SourceSection src) {
+    @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
+    protected WriteCurrentVariableNode(SourceSection src, String name, RNode rhs) {
         super(src);
+        writeLocalFrameVariableNode = WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR);
     }
 
     static WriteCurrentVariableNode create(SourceSection src, String name, RNode rhs) {
-        WriteCurrentVariableNode result = new WriteCurrentVariableNode(src);
-        result.writeLocalFrameVariableNode = result.insert(WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR));
-        return result;
+        return new WriteCurrentVariableNode(src, name, rhs);
     }
 
     @Override
@@ -65,7 +66,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     @Override
     public Object execute(VirtualFrame frame) {
         Object result = writeLocalFrameVariableNode.execute(frame);
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         return result;
     }
 

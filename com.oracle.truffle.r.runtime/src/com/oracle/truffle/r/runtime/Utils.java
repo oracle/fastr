@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -173,11 +174,8 @@ public final class Utils {
      * This the real, final, non-overrideable, exit of the entire R system. TODO well, modulo how
      * quit() is interpreted when R is started implicitly from a Polyglot shell that is running
      * other languages.
-     *
-     * @param status
      */
     public static void systemExit(int status) {
-        RPerfStats.report();
         System.exit(status);
     }
 
@@ -305,6 +303,14 @@ public final class Utils {
      */
     public static String tildeExpand(String path) {
         return tildeExpand(path, false);
+    }
+
+    public static String unShQuote(String s) {
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
     }
 
     /**
@@ -880,4 +886,23 @@ public final class Utils {
         }
         return r;
     }
+
+    public static <T> T makeShared(T o) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (o instanceof RShareable) {
+            ((RShareable) o).makeSharedPermanent();
+        }
+        return o;
+    }
+
+    @TruffleBoundary
+    public static String intern(String s) {
+        return s.intern();
+    }
+
+    @TruffleBoundary
+    public static String toString(Object obj) {
+        return obj.toString();
+    }
+
 }

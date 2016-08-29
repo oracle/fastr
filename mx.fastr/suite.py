@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "bd163128ec958b97ebc68b33ac5b4fae376a37b5",
+               "version" : "1f58e18213f81758f48b04a08a098780e438b432",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -37,6 +37,12 @@ suite = {
 
         ],
    },
+
+  "repositories" : {
+    "snapshots" : {
+        "url" : "https://FASTR_SNAPSHOT_HOST/nexus/content/repositories/snapshots",
+    }
+  },
 
   "licenses" : {
     "GPLv2" : {
@@ -49,7 +55,8 @@ suite = {
 
   # libraries that we depend on
   # N.B. The first four with a "path" attribute must be located
-  # relative to the suite root and not the mx cache
+  # relative to the suite root and not the mx cache because they are
+  # explicitly referenced in the Parser annotation processor.
   "libraries" : {
     "GNUR" : {
         "path" : "libdownloads/R-3.2.4.tar.gz",
@@ -148,22 +155,14 @@ suite = {
     },
 
     "ASM" : {
-      "path" : "lib/asm-5.0.3.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
       ],
       "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
-      "sourcePath" : "lib/asm-5.0.3-sources.jar",
-      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
-      "sourceUrls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
-      ],
     },
 
     "ASM_ANALYSIS" : {
-      "path" : "lib/asm-analysis-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
@@ -172,7 +171,6 @@ suite = {
     },
 
     "ASM_COMMONS" : {
-      "path" : "lib/asm-commons-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
@@ -181,7 +179,6 @@ suite = {
     },
 
     "ASM_TREE" : {
-      "path" : "lib/asm-tree-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
@@ -190,7 +187,6 @@ suite = {
     },
 
     "ASM_UTIL" : {
-      "path" : "lib/asm-util-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
@@ -361,8 +357,8 @@ suite = {
         "GNU_ICONV",
       ],
       "native" : "true",
+      "class" : "FastRNativeProject",
       "output" : "com.oracle.truffle.r.native",
-      "results" : ["platform.mk"],
       "workingSets" : "FastR",
     },
 
@@ -382,10 +378,17 @@ suite = {
 
     },
 
+    "com.oracle.truffle.r.release" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi", "com.oracle.truffle.r.native"],
+      "class" : "FastRReleaseProject",
+      "output" : "com.oracle.truffle.r.release"
+    },
   },
 
   "distributions" : {
     "TRUFFLE_R_PARSER_PROCESSOR" : {
+      "description" : "internal support for generating the R parser",
       "subDir" : "truffle",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
@@ -393,9 +396,12 @@ suite = {
         "ANTLR-3.5",
         "ANTLR-C-3.5",
        ],
+       "maven" : "False",
 
     },
+
     "FASTR" : {
+      "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
@@ -428,16 +434,19 @@ suite = {
       ],
     },
 
-    "FASTR_NATIVE": {
-        "native" : True,
-        "path" : "mxbuild/dists/fastr.native.tar",
+    "FASTR_NATIVE_DEV": {
+        "description" : "support for overriding the native project implementation in a separate suite",
         "dependencies" : ["com.oracle.truffle.r.native"],
         "exclude" : [
         "GNUR",
         "GNU_ICONV",
-        ]
+        ],
+    },
 
-    }
-  },
+    "FASTR_RELEASE": {
+      "description" : "a binary release of FastR",
+      "dependencies" : ["com.oracle.truffle.r.release"],
+    },
+},
 
 }

@@ -112,6 +112,15 @@ public class TestS4 extends TestRBase {
 
     }
 
+    @Test
+    public void testStdGeneric() {
+        assertEval("{ standardGeneric(42) }");
+        assertEval("{ standardGeneric(character()) }");
+        assertEval("{ standardGeneric(\"\") }");
+        assertEval("{ standardGeneric(\"foo\", 42) }");
+        assertEval("{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
+    }
+
     @Override
     public String getTestDir() {
         return "S4";

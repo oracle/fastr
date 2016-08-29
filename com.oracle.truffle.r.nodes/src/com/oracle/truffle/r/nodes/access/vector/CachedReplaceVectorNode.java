@@ -538,8 +538,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return res;
     }
 
+    private final ConditionProfile updateNamesProfile = ConditionProfile.createBinaryProfile();
+
     private void updatePositionNames(RAbstractVector resultVector, RAbstractStringVector positionNames, Object[] positions) {
-        RTypedValue names = resultVector.getNames(positionNamesProfile);
+        RTypedValue originalNames = resultVector.getNames(positionNamesProfile);
+        RTypedValue names = originalNames;
         if (names == null) {
             String[] emptyVector = new String[resultVector.getLength()];
             Arrays.fill(emptyVector, "");
@@ -551,7 +554,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         assert copyPositionNames.isSupported(names, positions, positionNames);
         RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);
-        resultVector.setNames(newNames.materialize());
+        if (updateNamesProfile.profile(newNames != originalNames)) {
+            resultVector.setNames(newNames.materialize());
+        }
     }
 
     private static final class DeleteElementsNode extends Node {

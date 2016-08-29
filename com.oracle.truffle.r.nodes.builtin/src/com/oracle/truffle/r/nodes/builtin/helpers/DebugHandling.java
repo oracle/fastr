@@ -27,6 +27,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
@@ -143,6 +143,7 @@ public class DebugHandling {
         attachDebugHandler(RInstrumentation.getFunctionDefinitionNode(func), text, condition, once, implicit);
     }
 
+    @TruffleBoundary
     private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once, boolean implicit) {
         FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once, implicit);
         // First attach the main listener on the START_FUNCTION
@@ -192,7 +193,7 @@ public class DebugHandling {
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
-        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create(null);
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
 
         protected DebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
@@ -223,6 +224,7 @@ public class DebugHandling {
             }
         }
 
+        @TruffleBoundary
         protected static void print(String msg, boolean nl) {
             try {
                 StdConnections.getStdout().writeString(msg, nl);
@@ -245,8 +247,7 @@ public class DebugHandling {
                          * so hopefully only the one function will actually get instrumented - but
                          * will everything get invalidated?
                          */
-                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
-                                        new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
+                        attachStepInto();
                     }
                     break;
                 case BrowserInteractNode.CONTINUE:
@@ -268,11 +269,19 @@ public class DebugHandling {
             }
         }
 
+        @TruffleBoundary
+        private void attachStepInto() {
+            stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+                            new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
+
+        }
+
         private void doContinue() {
             FunctionStatementsEventListener fser = getFunctionStatementsEventListener(functionDefinitionNode);
             fser.setContinuing();
         }
 
+        @TruffleBoundary
         protected void clearStepInstrument() {
             if (stepIntoInstrument != null) {
                 stepIntoInstrument.dispose();
@@ -426,6 +435,7 @@ public class DebugHandling {
         }
     }
 
+    @TruffleBoundary
     private static void printNode(Node node, boolean startFunction) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         /*

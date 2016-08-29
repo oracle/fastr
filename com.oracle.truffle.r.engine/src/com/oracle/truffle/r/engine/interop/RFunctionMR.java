@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -42,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
@@ -69,16 +66,13 @@ public class RFunctionMR {
             VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
-            try (Closeable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 try {
                     dummyFrame.setObject(slot, actualArgs);
                     return call.execute(dummyFrame, receiver);
                 } finally {
                     dummyFrame.setObject(slot, null);
                 }
-            } catch (IOException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw new RuntimeException(e);
             }
         }
     }

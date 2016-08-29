@@ -22,23 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
-public abstract class ConditionalMapNode extends CastNode {
+public final class ConditionalMapNode extends CastNode {
 
-    private final ArgumentFilter argFilter;
+    private final ArgumentFilter<?, ?> argFilter;
+    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
-    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
+    private ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
         this.argFilter = argFilter;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
     }
 
-    public ArgumentFilter getFilter() {
+    public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
+        return new ConditionalMapNode(argFilter, trueBranch, falseBranch);
+    }
+
+    public ArgumentFilter<?, ?> getFilter() {
         return argFilter;
     }
 
@@ -50,17 +55,13 @@ public abstract class ConditionalMapNode extends CastNode {
         return falseBranch;
     }
 
-    protected boolean doMap(Object x) {
-        return argFilter.test(x);
-    }
-
-    @Specialization(guards = "doMap(x)")
-    protected Object map(Object x) {
-        return trueBranch == null ? x : trueBranch.execute(x);
-    }
-
-    @Specialization(guards = "!doMap(x)")
-    protected Object noMap(Object x) {
-        return falseBranch == null ? x : falseBranch.execute(x);
+    @Override
+    @SuppressWarnings("unchecked")
+    public Object execute(Object x) {
+        if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
+            return trueBranch == null ? x : trueBranch.execute(x);
+        } else {
+            return falseBranch == null ? x : falseBranch.execute(x);
+        }
     }
 }

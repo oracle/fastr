@@ -308,15 +308,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     private static RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
-        try {
-            Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
-            RList args = (RList) eval.get();
-            return args;
-        } catch (IOException e) {
-            // throw new RuntimeException(e);
-            // todo: warning
-            return null;
-        }
+        Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
+        RList args = (RList) eval.get();
+        return args;
     }
 
     private void sweepChimney() throws IOException {

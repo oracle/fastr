@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -52,6 +53,7 @@ public final class Download extends RExternalBuiltinNode {
     }
 
     @Override
+    @TruffleBoundary
     public Integer call(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();
         String url = isString(argValues[0]);

@@ -23,9 +23,11 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -35,6 +37,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
@@ -47,11 +50,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -62,6 +65,16 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true, behavior = COMPLEX)
 public abstract class Mapply extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // let's assume that mapply internal is never called directly, otherwise all hell ensues -
+        // even in GNU R .Internal(mapply(rep, 1:4, NULL)) causes a segfault
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class));
+        casts.arg("dots").mustBe(instanceOf(RAbstractListVector.class));
+        // if we could map to an empty list, we could get rid of an additional specialization
+        casts.arg("MoreArgs").mustBe(nullValue().or(instanceOf(RAbstractListVector.class)));
+    }
 
     protected static final class ElementNode extends Node {
         @Child private Length lengthNode;
@@ -83,7 +96,7 @@ public abstract class Mapply extends RBuiltinNode {
     @Child private MapplyInternalNode mapply = MapplyInternalNodeGen.create();
 
     @Specialization
-    protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RList moreArgs) {
+    protected Object mApply(VirtualFrame frame, RFunction fun, RAbstractListVector dots, RAbstractListVector moreArgs) {
         Object[] result = mapply.execute(frame, dots, fun, moreArgs);
         // set here else it gets overridden by the iterator evaluation
         return RDataFactory.createList(result);
@@ -91,7 +104,7 @@ public abstract class Mapply extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RNull moreArgs) {
+    protected Object mApply(VirtualFrame frame, RFunction fun, RAbstractListVector dots, RNull moreArgs) {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 
@@ -109,9 +122,9 @@ public abstract class Mapply extends RBuiltinNode {
             }
         }
 
-        public abstract Object[] execute(VirtualFrame frame, RList dots, RFunction function, RList additionalArguments);
+        public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
-        private static Object getVecElement(VirtualFrame frame, RList dots, int i, int listIndex, int[] lengths, AccessArraySubscriptBuiltin indexedLoadNode) {
+        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, AccessArraySubscriptBuiltin indexedLoadNode) {
             Object listElem = dots.getDataAt(listIndex);
             RAbstractContainer vec = null;
             if (listElem instanceof RAbstractContainer) {
@@ -144,9 +157,9 @@ public abstract class Mapply extends RBuiltinNode {
         @Specialization(limit = "5", guards = {"dots.getLength() == cachedDots.getLength()",
                         "moreArgs.getLength() == cachedMoreArgs.getLength()", "sameNames(dots, cachedDots)",
                         "sameNames(moreArgs, cachedMoreArgs)"})
-        protected Object[] cachedMApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
-                        @Cached("dots") RList cachedDots,
-                        @Cached("moreArgs") RList cachedMoreArgs,
+        protected Object[] cachedMApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
+                        @Cached("dots") RAbstractListVector cachedDots,
+                        @Cached("moreArgs") RAbstractListVector cachedMoreArgs,
                         @Cached("createElementNodeArray(cachedDots, cachedMoreArgs)") ElementNode[] cachedElementNodeArray,
                         @Cached("createCallNode(cachedElementNodeArray)") RCallNode callNode) {
             int dotsLength = dots.getLength();
@@ -179,7 +192,7 @@ public abstract class Mapply extends RBuiltinNode {
         }
 
         @Specialization(contains = "cachedMApply")
-        protected Object[] mApply(VirtualFrame frame, RList dots, RFunction function, RList moreArgs,
+        protected Object[] mApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
                         @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
                         @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode slotNode,
                         @Cached("create()") RLengthNode lengthNode,
@@ -227,11 +240,9 @@ public abstract class Mapply extends RBuiltinNode {
 
         /**
          * Creates the {@link RCallNode} for this target.
-         *
-         * TODO names and moreArgs
-         *
          */
         protected RCallNode createCallNode(ElementNode[] elementNodeArray) {
+            CompilerAsserts.neverPartOfCompilation();
             RSyntaxNode[] syntaxNodes = new RSyntaxNode[elementNodeArray.length];
             String[] names = new String[elementNodeArray.length];
             for (int i = 0; i < syntaxNodes.length; i++) {
@@ -242,7 +253,7 @@ public abstract class Mapply extends RBuiltinNode {
             return RCallNode.createCall(Lapply.createCallSourceSection(), null, ArgumentsSignature.get(names), syntaxNodes);
         }
 
-        protected ElementNode[] createElementNodeArray(RList dots, RList moreArgs) {
+        protected ElementNode[] createElementNodeArray(RAbstractListVector dots, RAbstractListVector moreArgs) {
             int length = dots.getLength() + moreArgs.getLength();
             ElementNode[] elementNodes = new ElementNode[length];
             RStringVector dotsNames = dots.getNames();
@@ -273,7 +284,7 @@ public abstract class Mapply extends RBuiltinNode {
             return InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null);
         }
 
-        protected boolean sameNames(RList list, RList cachedList) {
+        protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {
             if (list.getNames() == null && cachedList.getNames() == null) {
                 return true;
             } else if (list.getNames() == null || cachedList.getNames() == null) {

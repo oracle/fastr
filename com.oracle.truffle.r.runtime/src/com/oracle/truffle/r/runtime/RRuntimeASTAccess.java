@@ -181,14 +181,22 @@ public interface RRuntimeASTAccess {
      */
     boolean isTaggedWith(Node node, Class<?> tag);
 
-    RBaseNode createReadVariableNode(String name);
-
-    RBaseNode createConstantNode(Object o);
-
     boolean enableDebug(RFunction func, boolean once);
 
     boolean disableDebug(RFunction func);
 
     boolean isDebugged(RFunction func);
+
+    /*
+     * Support for R/RScript sessions ("processes") in an isolated RContext, see
+     * .fastr.context.r/rscript. The args are everything you might legally enter into a
+     * shell,including I/O redirection. The result is an integer status code if "intern==false",
+     * otherwise it is a character vector of the output, with a 'status' attribute containing the
+     * status code.
+     */
+
+    Object rcommandMain(String[] args, boolean intern);
+
+    Object rscriptMain(String[] args, boolean intern);
 
 }

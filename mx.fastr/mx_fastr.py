@@ -26,6 +26,7 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
+import mx_fastr_dists
 import os
 
 '''
@@ -486,22 +487,25 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-def _cran_test_project():
-    return 'com.oracle.truffle.r.test.cran'
+class FastRNativeProject(mx_fastr_dists.DelFastRNativeProject):
+    '''
+    Custom class for building the com.oracle.truffle.r.native project.
+    Delegates to mx_fastr_dists.DelFastRNativeProject to keep this file uncluttered
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        mx_fastr_dists.DelFastRNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
-def _cran_test_project_dir():
-    return mx.project(_cran_test_project()).dir
+class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
+    '''
+    Custom class for creating the FastR release project, which supports the
+    FASTR_RELEASE distribution.
+    Delegates to mx_fastr_dists.DelFastRReleaseProject to keep this file uncluttered
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        mx_fastr_dists.DelFastRReleaseProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
-def installpkgs(args):
-    _installpkgs(args)
-
-def _installpkgs_script():
-    cran_test = _cran_test_project_dir()
-    return join(cran_test, 'r', 'install.cran.packages.R')
-
-def _installpkgs(args, **kwargs):
-    script = _installpkgs_script()
-    return rscript([script] + args, **kwargs)
+def mx_post_parse_cmd_line(opts):
+    mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
 _commands = {
     'r' : [rshell, '[options]'],
@@ -520,12 +524,11 @@ _commands = {
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
     'rcmplib' : [rcmplib, ['options']],
-    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
-    'installpkgs' : [installpkgs, '[options]'],
-    'installcran' : [installpkgs, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
+    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
+    'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.grid;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 public class GridFunctions {
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected Object initGrid(REnvironment gridEvalEnv) {
             return RFFIFactory.getRFFI().getGridRFFI().initGrid(gridEvalEnv);
         }
@@ -41,6 +43,7 @@ public class GridFunctions {
 
     public static final class KillGrid extends RExternalBuiltinNode {
         @Override
+        @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
             return RFFIFactory.getRFFI().getGridRFFI().killGrid();
         }

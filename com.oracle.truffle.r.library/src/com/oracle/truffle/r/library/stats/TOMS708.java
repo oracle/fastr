@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT_PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.logspaceAdd;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -32,6 +33,7 @@ public class TOMS708 {
         // System.out.print(String.format(format, args));
     }
 
+    @TruffleBoundary
     private static void emitWarning(String format, Object... args) {
         RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format(format, args));
     }
@@ -130,25 +132,25 @@ public class TOMS708 {
         public static Bratio bratio(double a, double b, double x, double y, boolean logP) {
             /*
              * -----------------------------------------------------------------------
-             * 
+             *
              * Evaluation of the Incomplete Beta function I_x(a,b)
-             * 
+             *
              * --------------------
-             * 
+             *
              * It is assumed that a and b are nonnegative, and that x <= 1 and y = 1 - x. Bratio
              * assigns w and w1 the values
-             * 
+             *
              * w = I_x(a,b) w1 = 1 - I_x(a,b)
-             * 
+             *
              * ierr is a variable that reports the status of the results. If no input errors are
              * detected then ierr is set to 0 and w and w1 are computed. otherwise, if an error is
              * detected, then w and w1 are assigned the value 0 and ierr is set to one of the
              * following values ...
-             * 
+             *
              * ierr = 1 if a or b is negative ierr = 2 if a = b = 0 ierr = 3 if x < 0 or x > 1 ierr
              * = 4 if y < 0 or y > 1 ierr = 5 if x + y != 1 ierr = 6 if x = a = 0 ierr = 7 if y = b
              * = 0 ierr = 8 "error" in bgrat()
-             * 
+             *
              * -------------------- Written by Alfred H. Morris, Jr. Naval Surface Warfare Center
              * Dahlgren, Virginia Revised ... Nov 1991
              * -----------------------------------------------------------------------
@@ -558,7 +560,7 @@ public class TOMS708 {
              * Expansion for I_x(a,b) when a is larger than b. Compute w := w + I_x(a,b) It is
              * assumed a >= 15 and b <= 1. eps is the tolerance used. ierr is a variable that
              * reports the status of the results.
-             * 
+             *
              * if(log_w), *w itself must be in log-space; compute w := w + I_x(a,b) but return *w =
              * log(w): *w := log(exp(*w) + I_x(a,b)) = logspace_add(*w, log( I_x(a,b) ))
              * -----------------------------------------------------------------------
@@ -667,11 +669,11 @@ public class TOMS708 {
     private static double fpser(double a, double b, double x, double eps, boolean logP) {
         /*
          * ----------------------------------------------------------------------- *
-         * 
+         *
          * EVALUATION OF I (A,B) X
-         * 
+         *
          * FOR B < MIN(EPS, EPS*A) AND X <= 0.5
-         * 
+         *
          * -----------------------------------------------------------------------
          */
 
@@ -1335,7 +1337,7 @@ public class TOMS708 {
          * ----------------------------------------------------------------------- Scaled complement
          * of incomplete gamma ratio function grat_r(a,x,r) := Q(a,x) / r where Q(a,x) = pgamma(x,a,
          * lower.tail=false) and r = e^(-x)* x^a / Gamma(a) == exp(log_r)
-         * 
+         *
          * It is assumed that a <= 1. eps is the tolerance to be used.
          * -----------------------------------------------------------------------
          */
@@ -1911,13 +1913,13 @@ public class TOMS708 {
         double x = initialX;
         /*
          * ---------------------------------------------------------------------
-         * 
+         *
          * Evaluation of the Digamma function psi(x)
-         * 
+         *
          * -----------
-         * 
+         *
          * Psi(xx) is assigned the value 0 when the digamma function cannot be computed.
-         * 
+         *
          * The main computation involves evaluation of rational Chebyshev approximations published
          * in Math. Comp. 27, 123-127(1973) by Cody, Strecok and Thacher.
          */

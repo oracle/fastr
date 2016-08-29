@@ -254,6 +254,7 @@ public final class WriteTable extends RExternalBuiltinNode {
     }
 
     // Transcribed from GnuR, library/utils/src/io.c
+    @TruffleBoundary
     @Override
     public Object call(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
@@ -35,9 +36,9 @@ class StringConsoleHandler implements ConsoleHandler {
     private String prompt;
     private int currentLine;
 
-    StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
+    StringConsoleHandler(List<String> lines, OutputStream output, String inputDescription) {
         this.lines = lines;
-        this.output = output;
+        this.output = output instanceof PrintStream ? (PrintStream) output : new PrintStream(output);
         this.inputDescription = inputDescription;
     }
 

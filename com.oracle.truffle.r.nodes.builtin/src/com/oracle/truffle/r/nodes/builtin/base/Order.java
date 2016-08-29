@@ -12,6 +12,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -51,8 +54,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."}, behavior = PURE)
 public abstract class Order extends RPrecedenceBuiltinNode {
 
-    public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
-
     @Child private OrderVector1Node orderVector1Node;
     @Child private CastToVectorNode castVector;
     @Child private CastToVectorNode castVector2;
@@ -87,7 +88,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(0, "na.last").firstBoolean(1, "decreasing");
+        casts.arg("na.last").mustBe(numericValue(), INVALID_LOGICAL, "na.last").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("decreasing").mustBe(numericValue(), INVALID_LOGICAL, "decreasing").asLogicalVector().findFirst().map(toBoolean());
     }
 
     private int cmp(Object v, int i, int j, boolean naLast) {
@@ -109,6 +111,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
@@ -128,6 +131,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
@@ -154,6 +158,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
@@ -173,6 +178,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractComplexVector v = (RAbstractComplexVector) castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
@@ -210,6 +216,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractVector v = castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
         vectors[0] = v;
         int length = lengthProfile.profile(vectors.length);
         for (int i = 1; i < length; i++) {

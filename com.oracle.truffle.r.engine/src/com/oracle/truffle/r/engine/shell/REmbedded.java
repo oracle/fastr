@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -70,16 +68,12 @@ public class REmbedded {
     private static PolyglotEngine initializeR(String[] args) {
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
-        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true);
-        try {
-            vm.eval(INIT);
-        } catch (IOException ex) {
-            Utils.rSuicideDefault("initializeR");
-        }
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out);
+        vm.eval(INIT);
         return vm;
     }
 
-    private static final Source INIT = RSource.fromTextInternal("1", RSource.Internal.GET_ECHO);
+    private static final Source INIT = RSource.fromTextInternal("invisible(1)", RSource.Internal.GET_ECHO);
 
     /**
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have

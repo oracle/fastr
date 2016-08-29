@@ -45,7 +45,8 @@ public abstract class DPut extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstIntegerWithError(2, RError.Message.WRONG_LENGTH_ARG, "opts");
+        casts.arg("file").mustBe(RConnection.class);
+        casts.arg("opts").asIntegerVector().findFirst();
     }
 
     @Specialization

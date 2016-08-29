@@ -22,40 +22,46 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
+// TODO The base package manual says this is a primitive but GNU R implements it as .Internal.
+// That causes problems as the .Internal adds another layer of visibility setting that
+// gets the wrong result. I believe that the only way to handle it as a .Internal would be to
+// set noEvalArgs and evaluate the argument here and set the visibility explicitly.
 @RBuiltin(name = "withVisible", kind = PRIMITIVE, parameterNames = "x", behavior = COMPLEX)
 public abstract class WithVisible extends RBuiltinNode {
-    private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
 
-    @Specialization(guards = "!isRMissing(x)")
-    protected RList withVisible(Object x) {
-        // (LS) temporarily disabled to enable parallel benchmarks
-        // if (FastROptions.IgnoreVisibility.getBooleanValue()) {
-        // RError.warning(this, RError.Message.GENERIC, "using withVisible with IgnoreVisibility");
-        // }
+    private static final RStringVector LISTNAMES = (RStringVector) RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
 
-        Object[] data = new Object[]{x, RRuntime.asLogical(RContext.getInstance().isVisible())};
-        // Visibility is changed by the evaluation (else this code would not work),
-        // so we have to force it back on.
-        return RDataFactory.createList(data, LISTNAMES);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
     }
 
     @Specialization
-    protected RList withVisible(@SuppressWarnings("unused") RMissing x) {
-        throw RError.error(this, Message.ARGUMENT_MISSING, "x");
+    protected RList withVisible(VirtualFrame frame, Object x,
+                    @Cached("create()") GetVisibilityNode visibility) {
+        if (FastROptions.IgnoreVisibility.getBooleanValue()) {
+            RError.warning(this, RError.Message.GENERIC, "using withVisible with IgnoreVisibility");
+        }
+
+        Object[] data = new Object[]{x, RRuntime.asLogical(visibility.execute(frame))};
+        return RDataFactory.createList(data, LISTNAMES);
     }
 }

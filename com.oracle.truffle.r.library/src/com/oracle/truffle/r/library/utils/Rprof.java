@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.library.utils;
 
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -57,8 +57,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
-import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState.MemoryQuad;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -79,36 +78,32 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryCopyTracer.Listener {
 
-    private RprofState profState;
-
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     public Object doRprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
                     byte gcProfilingL, byte lineProfilingL, int numFiles, int bufSize) {
-        if (!RContext.getInstance().isInitial()) {
-            throw RError.error(this, RError.Message.GENERIC, "profiling not supported in created contexts");
-        }
-        profState = RContext.getInstance().stateInstrumentation.getRprof();
+        RprofState profState = RprofState.get();
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
             endProfiling();
         } else {
             // enable after ending any previous session
-            if (profState.out() != null) {
+            if (profState != null && profState.out() != null) {
                 endProfiling();
             }
             boolean append = RRuntime.fromLogical(appendL);
             boolean memProfiling = RRuntime.fromLogical(memProfilingL);
             boolean gcProfiling = RRuntime.fromLogical(gcProfilingL);
             try {
-                PrintWriter out = new PrintWriter(new FileWriter(filename, append));
+                PrintStream out = new PrintStream(new FileOutputStream(filename, append));
                 if (gcProfiling) {
                     RError.warning(this, RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
                 if (memProfiling) {
                     RDataFactory.addListener(this);
-                    RDataFactory.setAllocationTracing(true);
+                    RDataFactory.setTracingState(true);
                     MemoryCopyTracer.addListener(this);
                     MemoryCopyTracer.setTracingState(true);
                 }
@@ -129,15 +124,16 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
     @Override
     @TruffleBoundary
     public void reportAllocation(RTypedValue data) {
+        RprofState profState = RprofState.get();
         long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
         if (data instanceof RAbstractVector) {
             if (size >= Rprofmem.LARGE_VECTOR) {
-                profState.memoryQuad().largeV += size;
+                profState.memoryQuad.largeV += size;
             } else {
-                profState.memoryQuad().smallV += size;
+                profState.memoryQuad.smallV += size;
             }
         } else {
-            profState.memoryQuad().nodes += size;
+            profState.memoryQuad.nodes += size;
         }
 
     }
@@ -145,65 +141,15 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
     @Override
     @TruffleBoundary
     public void reportCopying(RAbstractVector source, RAbstractVector dest) {
-        profState.memoryQuad().copied += RObjectSize.getObjectSize(source, Rprofmem.myIgnoreObjectHandler);
+        RprofState profState = RprofState.get();
+        profState.memoryQuad.copied += RObjectSize.getObjectSize(source, Rprofmem.myIgnoreObjectHandler);
     }
 
-    private void endProfiling() {
-        ProfileThread profileThread = (ProfileThread) profState.profileThread();
-        profileThread.running = false;
-        HashMap<String, Integer> fileMap = null;
-        PrintWriter out = profState.out();
-        StatementListener statementListener = (StatementListener) profState.statementListener();
-        if (profState.memoryProfiling()) {
-            out.print("memory profiling: ");
+    private static void endProfiling() {
+        RprofState profState = RprofState.get();
+        if (profState.out() != null) {
+            profState.cleanup(0);
         }
-        if (profState.lineProfiling()) {
-            out.print("line profiling: ");
-        }
-        out.printf("sample.interval=%d\n", profState.intervalInMillis() * 1000);
-        if (profState.lineProfiling()) {
-            // scan stacks to find files
-            fileMap = new HashMap<>();
-            int fileIndex = 0;
-            for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
-                for (RSyntaxNode node : intervalStack) {
-                    String path = getPath(node);
-                    if (path != null && fileMap.get(path) == null) {
-                        fileMap.put(path, ++fileIndex);
-                        out.printf("#File %d: %s\n", fileIndex, path);
-                    }
-                }
-            }
-        }
-        int index = 0;
-        for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
-            if (profState.memoryProfiling()) {
-                MemoryQuad mq = statementListener.intervalMemory.get(index);
-                out.printf(":%d:%d:%d:%d:", mq.largeV, mq.smallV, mq.nodes, mq.copied);
-            }
-            for (RSyntaxNode node : intervalStack) {
-                RootNode rootNode = node.asRNode().getRootNode();
-                if (rootNode instanceof FunctionDefinitionNode) {
-                    String name = rootNode.getName();
-                    if (profState.lineProfiling()) {
-                        Integer fileIndex = fileMap.get(getPath(node));
-                        if (fileIndex != null) {
-                            out.printf("%d#%d ", fileIndex, node.getSourceSection().getStartLine());
-                        }
-                    }
-                    out.printf("\"%s\" ", name);
-                }
-            }
-            out.println();
-            index++;
-        }
-        out.close();
-        profState.setOut(null);
-        if (profState.memoryProfiling()) {
-            RDataFactory.setAllocationTracing(false);
-            MemoryCopyTracer.setTracingState(false);
-        }
-
     }
 
     private static String getPath(RSyntaxNode node) {
@@ -242,7 +188,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
      */
     private final class StatementListener implements ExecutionEventListener {
         private ArrayList<ArrayList<RSyntaxNode>> intervalStacks = new ArrayList<>();
-        private ArrayList<MemoryQuad> intervalMemory = new ArrayList<>();
+        private ArrayList<RprofState.MemoryQuad> intervalMemory = new ArrayList<>();
         private volatile boolean newInterval;
 
         private StatementListener() {
@@ -264,8 +210,9 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 stack.add((RSyntaxNode) context.getInstrumentedNode());
                 collectStack(stack);
                 intervalStacks.add(stack);
-                if (profState.memoryProfiling()) {
-                    intervalMemory.add(profState.memoryQuad().copyAndClear());
+                RprofState profState = RprofState.get();
+                if (profState.memoryProfiling) {
+                    intervalMemory.add(profState.memoryQuad.copyAndClear());
                 }
 
                 newInterval = false;
@@ -298,6 +245,117 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
 
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+        }
+
+    }
+
+    /**
+     * State used by {@code Rprof}.
+     *
+     */
+    private static final class RprofState extends InstrumentationState.RprofState {
+        private ProfileThread profileThread;
+        private StatementListener statementListener;
+        private long intervalInMillis;
+        private boolean lineProfiling;
+        private boolean memoryProfiling;
+        private MemoryQuad memoryQuad;
+
+        public static final class MemoryQuad {
+            public long smallV;
+            public long largeV;
+            public long nodes;
+            public long copied;
+
+            public MemoryQuad copyAndClear() {
+                MemoryQuad result = new MemoryQuad();
+                result.copied = copied;
+                result.largeV = largeV;
+                result.smallV = smallV;
+                result.nodes = nodes;
+                copied = 0;
+                largeV = 0;
+                smallV = 0;
+                nodes = 0;
+                return result;
+            }
+        }
+
+        private static RprofState get() {
+            RprofState state = (RprofState) RContext.getInstance().stateInstrumentation.getRprofState("prof");
+            if (state == null) {
+                state = new RprofState();
+                RContext.getInstance().stateInstrumentation.setRprofState("prof", state);
+            }
+            return state;
+        }
+
+        public void initialize(PrintStream outA, ProfileThread profileThreadA, StatementListener statementListenerA, long intervalInMillisA,
+                        boolean lineProfilingA, boolean memoryProfilingA) {
+            setOut(outA);
+            this.profileThread = profileThreadA;
+            this.statementListener = statementListenerA;
+            this.intervalInMillis = intervalInMillisA;
+            this.lineProfiling = lineProfilingA;
+            this.memoryProfiling = memoryProfilingA;
+            this.memoryQuad = memoryProfilingA ? new MemoryQuad() : null;
+        }
+
+        @Override
+        public void cleanup(int status) {
+            profileThread.running = false;
+            HashMap<String, Integer> fileMap = null;
+            PrintStream out = this.out();
+            if (this.memoryProfiling) {
+                out.print("memory profiling: ");
+            }
+            if (this.lineProfiling) {
+                out.print("line profiling: ");
+            }
+            out.printf("sample.interval=%d\n", this.intervalInMillis * 1000);
+            if (this.lineProfiling) {
+                // scan stacks to find files
+                fileMap = new HashMap<>();
+                int fileIndex = 0;
+                for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+                    for (RSyntaxNode node : intervalStack) {
+                        String path = getPath(node);
+                        if (path != null && fileMap.get(path) == null) {
+                            fileMap.put(path, ++fileIndex);
+                            out.printf("#File %d: %s\n", fileIndex, path);
+                        }
+                    }
+                }
+            }
+            int index = 0;
+            for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+                if (this.memoryProfiling) {
+                    RprofState.MemoryQuad mq = statementListener.intervalMemory.get(index);
+                    out.printf(":%d:%d:%d:%d:", mq.largeV, mq.smallV, mq.nodes, mq.copied);
+                }
+                for (RSyntaxNode node : intervalStack) {
+                    RootNode rootNode = node.asRNode().getRootNode();
+                    if (rootNode instanceof FunctionDefinitionNode) {
+                        String name = rootNode.getName();
+                        if (this.lineProfiling) {
+                            Integer fileIndex = fileMap.get(getPath(node));
+                            if (fileIndex != null) {
+                                out.printf("%d#%d ", fileIndex, node.getSourceSection().getStartLine());
+                            }
+                        }
+                        out.printf("\"%s\" ", name);
+                    }
+                }
+                out.println();
+                index++;
+            }
+            out.close();
+            this.setOut(null);
+            if (this.memoryProfiling) {
+                RDataFactory.setTracingState(false);
+                MemoryCopyTracer.setTracingState(false);
+            }
+
         }
 
     }

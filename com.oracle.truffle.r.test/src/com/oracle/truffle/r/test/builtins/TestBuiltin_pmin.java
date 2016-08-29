@@ -101,4 +101,12 @@ public class TestBuiltin_pmin extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ pmin(as.raw(42)) }");
         assertEval(Output.IgnoreErrorContext, "{ pmin(7+42i) }");
     }
+
+    @Test
+    public void testArgsCasting() {
+        assertEval("pmin(c(1,2), c(3,0), na.rm='asd')");
+        assertEval("pmin(c(1,2), c(3,0), na.rm=NA)");
+        assertEval("pmin(c(1,2), c(3,NA), na.rm=c(42, 0))");
+        assertEval(".Internal(pmin(3, quote(a)))");
+    }
 }

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -61,7 +60,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * </ol>
  *
  */
-@NodeChild("browserCall")
 public abstract class BrowserInteractNode extends RNode {
 
     // it's never meant to be executed
@@ -80,8 +78,9 @@ public abstract class BrowserInteractNode extends RNode {
         BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
-        RFunction caller = RArguments.getFunction(frame);
-        boolean callerIsDebugged = DebugHandling.isDebugged(caller);
+        RFunction callerFunction = RArguments.getFunction(frame);
+        // we may be at top level where there is not caller
+        boolean callerIsDebugged = callerFunction == null ? false : DebugHandling.isDebugged(callerFunction);
         int exitMode = NEXT;
         RCaller currentCaller = RArguments.getCall(mFrame);
         if (currentCaller == null) {
@@ -108,15 +107,17 @@ public abstract class BrowserInteractNode extends RNode {
                         break LW;
                     case "n":
                         exitMode = NEXT;
+                        // don't enable debugging if at top level
                         if (!callerIsDebugged) {
-                            DebugHandling.enableDebug(caller, "", "", true, true);
+                            DebugHandling.enableDebug(callerFunction, "", "", true, true);
                         }
                         browserState.setLastEmptyLineCommand("n");
                         break LW;
                     case "s":
                         exitMode = STEP;
+                        // don't enable debugging if at top level
                         if (!callerIsDebugged) {
-                            DebugHandling.enableDebug(caller, "", "", true, true);
+                            DebugHandling.enableDebug(callerFunction, "", "", true, true);
                         }
                         browserState.setLastEmptyLineCommand("s");
                         break LW;

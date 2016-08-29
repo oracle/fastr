@@ -22,31 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public abstract class MapNode extends CastNode {
+public final class MapNode extends CastNode {
 
     private final ArgumentMapper mapFn;
 
-    protected MapNode(ArgumentMapper<?, ?> mapFn) {
+    private MapNode(ArgumentMapper<?, ?> mapFn) {
         this.mapFn = mapFn;
+    }
+
+    public static MapNode create(ArgumentMapper<?, ?> mapFn) {
+        return new MapNode(mapFn);
     }
 
     public ArgumentMapper getMapper() {
         return mapFn;
     }
 
-    @Specialization
-    protected Object mapNull(RNull x) {
-        Object res = mapFn.map(null);
-        return res == null ? x : res;
-    }
-
-    @Specialization
-    protected Object map(Object x) {
+    @Override
+    public Object execute(Object x) {
         return mapFn.map(x);
     }
 }

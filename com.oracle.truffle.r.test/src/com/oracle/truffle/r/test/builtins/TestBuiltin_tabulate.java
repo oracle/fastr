@@ -59,5 +59,11 @@ public class TestBuiltin_tabulate extends TestBase {
         assertEval("{tabulate(c(-2,0,2,3,3,5))}");
         assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
         assertEval("{tabulate(factor(letters[1:10]))}");
+
+        assertEval("{ .Internal(tabulate(c(2,3,5), 7)) }");
+        assertEval("{ .Internal(tabulate(c(2L,3L,5L), c(7, 42))) }");
+        assertEval("{ .Internal(tabulate(c(2L,3L,5L), integer())) }");
+        assertEval("{ .Internal(tabulate(c(2L,3L,5L), -1)) }");
+        assertEval("{ .Internal(tabulate(c(2L,3L,5L), NA)) }");
     }
 }

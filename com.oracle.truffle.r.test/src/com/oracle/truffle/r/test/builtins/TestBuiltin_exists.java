@@ -21,5 +21,9 @@ public class TestBuiltin_exists extends TestBase {
     @Test
     public void testexists1() {
         assertEval("argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)");
+        assertEval("exists('somethingthatdoesnotexist123456789')");
+        assertEval("exists('.Device', inherit=FALSE)");
+        assertEval("x <- 42; exists('x', mode='numeric')");
+        assertEval("x <- '42'; exists('x', mode='numeric')");
     }
 }

@@ -25,49 +25,36 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
 public abstract class Quote extends RBuiltinNode {
 
+    protected static final int LIMIT = 3;
+
     public abstract Object execute(RPromise expr);
 
-    private final ConditionProfile rvn = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile rvcn = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile cn = ConditionProfile.createBinaryProfile();
-
-    @Specialization
-    protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    protected static Object createLanguage(Closure closure) {
+        return Utils.makeShared(RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode()));
     }
 
-    @Specialization
-    protected Object doQuote(RPromise expr) {
-        // GnuR creates symbols for simple variables and actual values for constants
-        RNode node = (RNode) expr.getRep();
-        RNode unode = (RNode) RASTUtils.unwrap(node);
-        if (rvn.profile(unode instanceof ReadVariableNode)) {
-            return RASTUtils.createRSymbol(unode);
-        } else if (cn.profile(unode instanceof ConstantNode)) {
-            ConstantNode cnode = (ConstantNode) unode;
-            return cnode.getValue();
-        } else if (rvcn.profile(unode instanceof ReadVariadicComponentNode)) {
-            return RASTUtils.createRSymbol(unode);
-        } else {
-            return RDataFactory.createLanguage(unode);
-        }
+    @SuppressWarnings("unused")
+    @Specialization(limit = "LIMIT", guards = "cachedClosure == expr.getClosure()")
+    protected Object quoteCached(RPromise expr,
+                    @Cached("expr.getClosure()") Closure cachedClosure,
+                    @Cached("createLanguage(cachedClosure)") Object language) {
+        return language;
+    }
+
+    @Specialization(contains = "quoteCached")
+    protected Object quote(RPromise expr) {
+        return RASTUtils.createLanguageElement(expr.getClosure().getExpr().asRSyntaxNode());
     }
 }

@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -30,8 +33,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.r.nodes.CallInlineCacheNode;
-import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -40,9 +41,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -55,13 +55,11 @@ import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -81,7 +79,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from GnuR {@code do_makeLazy} in src/main/builtin.c.
      */
-    @RBuiltin(name = "makeLazy", visibility = OFF, kind = INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"}, behavior = COMPLEX)
+    @RBuiltin(name = "makeLazy", visibility = OFF, kind = INTERNAL, parameterNames = {"names", "values", "expr", "eval.env", "assign.env"}, behavior = COMPLEX)
     public abstract static class MakeLazy extends RBuiltinNode {
         @Child private Eval eval;
 
@@ -90,6 +88,13 @@ public class HiddenInternalFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 eval = insert(EvalFunctionsFactory.EvalNodeGen.create(null));
             }
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("names").mustBe(stringValue()).asStringVector();
+            casts.arg("eval.env").mustBe(instanceOf(REnvironment.class));
+            casts.arg("assign.env").mustBe(instanceOf(REnvironment.class));
         }
 
         /**
@@ -138,8 +143,16 @@ public class HiddenInternalFunctions {
      * This function copies values of variables from one environment to another environment,
      * possibly with different names. Promises are not forced and active bindings are preserved.
      */
-    @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"}, behavior = COMPLEX)
+    @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impenv", "impnames", "expenv", "expnames"}, behavior = COMPLEX)
     public abstract static class ImportIntoEnv extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("impenv").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
+            casts.arg("expenv").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
+            casts.arg("impnames").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "names").asStringVector();
+            casts.arg("expnames").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "names").asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
@@ -161,7 +174,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(this, ex);
+                    throw RError.error(RError.SHOW_CALLER, ex);
                 }
 
             }
@@ -175,33 +188,19 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"}, behavior = PURE)
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
-        @Child private CastIntegerNode castIntNode;
+        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
-        private void initCast() {
-            if (castIntNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
-            }
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("compressed").asIntegerVector().findFirst();
         }
 
         /**
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
-            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed.getDataAt(0), envhook);
-        }
-
-        @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RDoubleVector compressed, RFunction envhook) {
-            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
-        }
-
-        @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
-            initCast();
-            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, int compressed, RFunction envhook) {
+            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook);
         }
 
         @TruffleBoundary
@@ -256,8 +255,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        Object[] callArgs = RArguments.create(envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
-                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook.getTarget(), callArgs);
+                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -358,11 +356,10 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"}, behavior = COMPLEX)
     public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
+        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            // TODO: not sure if the behavior is 100% compliant
             casts.arg("ascii").asIntegerVector().findFirst();
             casts.arg("compsxp").asIntegerVector().findFirst();
         }
@@ -381,8 +378,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
-                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook.getTarget(), callArgs);
+                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
                 }
             };
 
@@ -456,7 +452,7 @@ public class HiddenInternalFunctions {
                 out.write(cdata);
                 return result;
             } catch (IOException ex) {
-                throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
+                throw RError.ioError(this, ex);
             }
         }
     }
@@ -464,6 +460,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path", behavior = COMPLEX)
     public abstract static class LazyLoadDBFlush extends RBuiltinNode {
         @Specialization
+        @TruffleBoundary
         protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {
             RContext.getInstance().stateLazyDBCache.remove(dbPath.getDataAt(0));
             return RNull.instance;

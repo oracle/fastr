@@ -25,6 +25,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class Menu extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
+    @TruffleBoundary
     protected int menu(RAbstractStringVector choices) {
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         int first = choices.getLength() + 1;

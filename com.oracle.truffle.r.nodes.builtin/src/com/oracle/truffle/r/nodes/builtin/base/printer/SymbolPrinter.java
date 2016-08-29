@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
@@ -36,6 +37,7 @@ final class SymbolPrinter extends AbstractValuePrinter<RSymbol> {
     }
 
     @Override
+    @TruffleBoundary
     protected void printValue(RSymbol value, PrintContext printCtx) throws IOException {
         printCtx.output().print(RDeparse.deparse(value, RDeparse.DEFAULT_Cutoff, true, RDeparse.SIMPLEDEPARSE, -1));
     }

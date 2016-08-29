@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -24,6 +25,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -32,10 +34,11 @@ import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -63,6 +66,48 @@ public class GrepFunctions {
          * This profile is needed to satisfy API requirements.
          */
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        protected void castPattern(CastBuilder casts) {
+            // with default error message, NO_CALLER does not work
+            casts.arg("pattern").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
+                            "pattern");
+        }
+
+        protected void castText(CastBuilder casts, String textId) {
+            casts.arg(textId).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, textId);
+        }
+
+        protected void castIgnoreCase(CastBuilder casts) {
+            casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected void castPerl(CastBuilder casts) {
+            casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected void castFixed(CastBuilder casts, byte defaultValue) {
+            casts.arg("fixed").asLogicalVector().findFirst(defaultValue);
+        }
+
+        protected void castValue(CastBuilder casts) {
+            casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected void castUseBytes(CastBuilder casts) {
+            casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected void castInvert(CastBuilder casts) {
+            casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected void castCosts(CastBuilder casts) {
+            casts.arg("costs").asIntegerVector();
+        }
+
+        protected void castBounds(CastBuilder casts) {
+            casts.arg("bounds").asDoubleVector();
+        }
 
         /**
          * Temporary method that handles the check for the arguments that are common to the majority
@@ -267,8 +312,20 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"}, behavior = PURE)
+    @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class Grep extends GrepAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castValue(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+            castInvert(casts);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -278,8 +335,20 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
+    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class GrepL extends GrepAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castValue(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+            castInvert(casts);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -291,6 +360,12 @@ public class GrepFunctions {
     }
 
     protected abstract static class SubAdapter extends CommonCodeAdapter {
+
+        protected void castReplacement(CastBuilder casts) {
+            // with default error message, NO_CALLER does not work
+            casts.arg("replacement").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.NO_CALLER,
+                            RError.Message.INVALID_ARGUMENT, "replacement");
+        }
 
         protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte perlLogical,
                         byte fixedLogical, @SuppressWarnings("unused") byte useBytes, boolean gsub) {
@@ -540,8 +615,19 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
+    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Sub extends SubAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castReplacement(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -551,8 +637,19 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
+    @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class GSub extends SubAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castReplacement(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -564,6 +661,16 @@ public class GrepFunctions {
 
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+        }
 
         protected static final class IndexAndSize {
             protected int index;
@@ -633,6 +740,16 @@ public class GrepFunctions {
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexp {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castPerl(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+        }
+
         @Specialization
         @TruffleBoundary
         @Override
@@ -664,13 +781,26 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"}, behavior = PURE)
+    @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
     public abstract static class AGrep extends CommonCodeAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "x");
+            castIgnoreCase(casts);
+            castValue(casts);
+            castCosts(casts);
+            castBounds(casts);
+            castUseBytes(casts);
+            castFixed(casts, RRuntime.LOGICAL_TRUE);
+        }
 
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RAbstractIntVector costs, RAbstractDoubleVector bounds, byte useBytes,
+                        byte fixed) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             valueCheck(value);
@@ -768,13 +898,26 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"}, behavior = PURE)
+    @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
     public abstract static class AGrepL extends CommonCodeAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            castPattern(casts);
+            castText(casts, "x");
+            castIgnoreCase(casts);
+            castValue(casts);
+            castCosts(casts);
+            castBounds(casts);
+            castUseBytes(casts);
+            castFixed(casts, RRuntime.LOGICAL_TRUE);
+        }
 
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RAbstractIntVector costs, RAbstractDoubleVector bounds, byte useBytes,
+                        byte fixed) {
             // TODO implement properly, this only supports strict equality!
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             byte[] data = new byte[vector.getLength()];
@@ -788,6 +931,15 @@ public class GrepFunctions {
 
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends CommonCodeAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
+            casts.arg("split").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castPerl(casts);
+            castUseBytes(casts);
+        }
 
         private final NACheck na = NACheck.create();
 

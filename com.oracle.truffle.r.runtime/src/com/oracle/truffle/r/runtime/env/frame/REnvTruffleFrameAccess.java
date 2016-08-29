@@ -135,6 +135,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = getStringIdentifiers(fd);
@@ -157,6 +158,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public boolean bindingIsLocked(String key) {
         return lockedBindings != null && lockedBindings.contains(key);
     }
@@ -181,6 +183,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    @TruffleBoundary
     public void unlockBinding(String key) {
         if (lockedBindings != null) {
             lockedBindings.remove(key);

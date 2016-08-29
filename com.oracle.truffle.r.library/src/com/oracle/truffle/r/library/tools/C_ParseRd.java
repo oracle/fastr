@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.tools;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -49,6 +50,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
         return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, macros, warndupsL);
     }
 
+    @TruffleBoundary
     private Object doParseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
                     Object macros, byte warndupsL) {
         if (RRuntime.isNA(warningCallsL)) {

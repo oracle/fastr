@@ -31,8 +31,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.builtin.base.Inherits;
-import com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltin;
+import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsMethodsDispatchOn;
 import com.oracle.truffle.r.nodes.builtin.base.IsMethodsDispatchOnNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsS4;
@@ -52,7 +52,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
 
     @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create(null);
     @Child private IsList isListBuiltIn = IsListNodeGen.create(null);
-    @Child private Inherits inheritsBuiltIn = InheritsNodeGen.create(null);
+    @Child private InheritsBuiltin inheritsBuiltinBuiltIn = InheritsBuiltinNodeGen.create(null);
     @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create(null);
     @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create(null);
     @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null);
@@ -67,8 +67,8 @@ public abstract class ValuePrinterNode extends RBaseNode {
         return RRuntime.fromLogical(isListBuiltIn.execute(o));
     }
 
-    public boolean inherits(Object o, Object what, byte which) {
-        return RRuntime.fromLogical((Byte) inheritsBuiltIn.execute(o, what, which));
+    public boolean inherits(Object o, Object what) {
+        return RRuntime.fromLogical((Byte) inheritsBuiltinBuiltIn.execute(o, what, false));
     }
 
     public boolean isS4(Object o) {
@@ -93,6 +93,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
 
     public abstract Object executeString(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt);
 
+    @TruffleBoundary
     public Object prettyPrint(Object v, WriterFactory wf) {
         PrintParameters printParams = new PrintParameters();
         printParams.setDefaults();
@@ -102,7 +103,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
             ValuePrinters.INSTANCE.print(v, printCtx);
             return printCtx.output().getPrintReport();
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw RError.ioError(this, ex);
         } finally {
             PrintContext.leave();
         }
@@ -115,7 +116,7 @@ public abstract class ValuePrinterNode extends RBaseNode {
                             right, max, useSource, noOpt), RWriter::new);
             return null;
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw RError.ioError(this, ex);
         }
     }
 

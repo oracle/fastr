@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -34,6 +38,21 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "iconv", kind = INTERNAL, parameterNames = {"x", "from", "to", "sub", "mark", "toRaw"}, behavior = PURE)
 public abstract class IConv extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(stringValue(), RError.NO_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "x");
+        // with default error message, NO_CALLER does not work
+        casts.arg("from").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "from").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
+                        "from");
+        casts.arg("to").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "to").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
+                        "to");
+        casts.arg("sub").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub");
+        casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected RStringVector doIConv(RAbstractStringVector x, Object from, Object to, Object sub, byte mark, byte toRaw) {

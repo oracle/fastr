@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -42,7 +41,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -67,7 +65,9 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -75,9 +75,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
-import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
@@ -88,7 +85,9 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -295,14 +294,15 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(limit = "5", guards = {"isSpecialDispatch(function)", "cachedBuiltin == function.getRBuiltin()"})
-    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function, //
-                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin, //
-                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call) {
+    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function,
+                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin,
+                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call,
+                    @Cached("create()") SetVisibilityNode visibility) {
         if (explicitArgs != null) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.INVALID_USE, cachedBuiltin.getName());
         }
-        RContext.getInstance().setVisible(cachedBuiltin.getVisibility());
+        visibility.execute(frame, cachedBuiltin.getVisibility());
         return call.execute(frame);
     }
 
@@ -569,7 +569,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 return result;
             } catch (Throwable e) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+                throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }
     }
@@ -930,6 +930,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private RBuiltinNode builtin;
         @Child private PromiseCheckHelperNode promiseHelper;
         @Children private final CastNode[] casts;
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final BranchProfile emptyProfile = BranchProfile.create();
         private final BranchProfile varArgsProfile = BranchProfile.create();
@@ -1018,15 +1019,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             Object result = builtin.execute(frame, castArguments(frame, orderedArguments.getArguments()));
-            RContext.getInstance().setVisible(builtinDescriptor.getVisibility());
+            visibility.execute(frame, builtinDescriptor.getVisibility());
             return result;
         }
     }
 
     private static final class DispatchedCallNode extends LeafCallNode {
 
-        @Child private DirectCallNode call;
+        @Child private CallRFunctionNode call;
         @Child private RFastPathNode fastPath;
+        @Child private SetVisibilityNode visibility;
 
         private final RootCallTarget cachedTarget;
         private final FastPathFactory fastPathFactory;
@@ -1039,6 +1041,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.fastPathFactory = root.getFastPath();
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
+            this.visibility = fastPathFactory == null ? null : SetVisibilityNode.create();
             originalCall.needsCallerFrame |= root.containsDispatch();
         }
 
@@ -1047,25 +1050,26 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (fastPath != null) {
                 Object result = fastPath.execute(frame, orderedArguments.getArguments());
                 if (result != null) {
-                    RContext.getInstance().setVisible(this.fastPathVisibility);
+                    assert fastPathVisibility != null;
+                    visibility.execute(frame, fastPathVisibility);
                     return result;
                 }
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 fastPath = null;
+                visibility = null;
             }
 
             if (call == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                call = insert(Truffle.getRuntime().createDirectCallNode(cachedTarget));
+                call = insert(CallRFunctionNode.create(cachedTarget));
                 if (needsSplitting(cachedTarget)) {
-                    call.cloneCallTarget();
+                    call.getCallNode().cloneCallTarget();
                 }
             }
             MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = RArguments.create(function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
+            return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
                             function.getEnclosingFrame(), s3Args);
-            return call.call(frame, argsObject);
         }
     }
 

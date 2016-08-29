@@ -37,24 +37,23 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Debugger;
-import com.oracle.truffle.api.debug.ExecutionEvent;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.LineLocation;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.EventConsumer;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 
+@SuppressWarnings("deprecation")
 public class FastRDebugTest {
     private Debugger debugger;
     private final LinkedList<Runnable> run = new LinkedList<>();
     private SuspendedEvent suspendedEvent;
     private Throwable ex;
-    private ExecutionEvent executionEvent;
+    private com.oracle.truffle.api.debug.ExecutionEvent executionEvent;
     protected PolyglotEngine engine;
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected final ByteArrayOutputStream err = new ByteArrayOutputStream();
@@ -63,22 +62,23 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
         executionEvent = null;
-        engine = PolyglotEngine.newBuilder().setOut(out).setErr(err).onEvent(new EventConsumer<ExecutionEvent>(ExecutionEvent.class) {
-            @Override
-            protected void on(ExecutionEvent event) {
-                executionEvent = event;
-                debugger = executionEvent.getDebugger();
-                performWork();
-                executionEvent = null;
-            }
-        }).onEvent(new EventConsumer<SuspendedEvent>(SuspendedEvent.class) {
-            @Override
-            protected void on(SuspendedEvent event) {
-                suspendedEvent = event;
-                performWork();
-                suspendedEvent = null;
-            }
-        }).build();
+        engine = PolyglotEngine.newBuilder().setOut(out).setErr(err).onEvent(
+                        new com.oracle.truffle.api.vm.EventConsumer<com.oracle.truffle.api.debug.ExecutionEvent>(com.oracle.truffle.api.debug.ExecutionEvent.class) {
+                            @Override
+                            protected void on(com.oracle.truffle.api.debug.ExecutionEvent event) {
+                                executionEvent = event;
+                                debugger = executionEvent.getDebugger();
+                                performWork();
+                                executionEvent = null;
+                            }
+                        }).onEvent(new com.oracle.truffle.api.vm.EventConsumer<SuspendedEvent>(SuspendedEvent.class) {
+                            @Override
+                            protected void on(SuspendedEvent event) {
+                                suspendedEvent = event;
+                                performWork();
+                                suspendedEvent = null;
+                            }
+                        }).build();
         run.clear();
     }
 
@@ -265,7 +265,7 @@ public class FastRDebugTest {
                 Assert.assertEquals(code, actualCode);
                 final MaterializedFrame frame = suspendedEvent.getFrame();
 
-                Assert.assertEquals(expectedFrame.length / 2, frame.getFrameDescriptor().getSize());
+                Assert.assertEquals(expectedFrame.length / 2, frameSize(frame));
 
                 for (int i = 0; i < expectedFrame.length; i = i + 2) {
                     final String expectedIdentifier = (String) expectedFrame[i];
@@ -276,6 +276,16 @@ public class FastRDebugTest {
                     Assert.assertEquals(expectedValue, actualValue);
                 }
                 run.removeFirst().run();
+            }
+
+            private int frameSize(MaterializedFrame frame) {
+                int cnt = 0;
+                for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+                    if (slot.getIdentifier() instanceof String) {
+                        cnt++;
+                    }
+                }
+                return cnt;
             }
         });
     }

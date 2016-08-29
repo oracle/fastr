@@ -12,12 +12,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -30,14 +30,15 @@ import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "quit", visibility = OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"}, behavior = COMPLEX)
 public abstract class Quit extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.arg("save").mustBe(stringValue(), RError.Message.QUIT_ASK).asStringVector().findFirst();
+        casts.arg("status").asIntegerVector().findFirst();
+        casts.arg("runLast").asLogicalVector().findFirst();
     }
 
     private SA_TYPE checkSaveValue(String save) throws RError {
@@ -51,20 +52,20 @@ public abstract class Quit extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object doQuit(RAbstractStringVector saveArg, final int status, final byte runLastIn) {
+    protected Object doQuit(String save, final int status, final byte runLastIn) {
+        byte runLast = runLastIn;
         if (RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser()) {
             RError.warning(this, RError.Message.BROWSER_QUIT);
             return RNull.instance;
         }
-        String save = saveArg.getDataAt(0);
         RStartParams.SA_TYPE ask = checkSaveValue(save);
         if (ask == SA_TYPE.SAVEASK && !RContext.getInstance().getConsoleHandler().isInteractive()) {
             RError.warning(this, RError.Message.QUIT_ASK_INTERACTIVE);
         }
         if (status == RRuntime.INT_NA) {
             RError.warning(this, RError.Message.QUIT_INVALID_STATUS);
+            runLast = RRuntime.LOGICAL_FALSE;
         }
-        byte runLast = runLastIn;
         if (runLast == RRuntime.LOGICAL_NA) {
             RError.warning(this, RError.Message.QUIT_INVALID_RUNLAST);
             runLast = RRuntime.LOGICAL_FALSE;
@@ -73,12 +74,4 @@ public abstract class Quit extends RBuiltinNode {
         throw RInternalError.shouldNotReachHere("cleanup returned");
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object doQuit(Object saveArg, Object status, Object runLast) {
-        if (RRuntime.asString(saveArg) == null) {
-            throw RError.error(this, RError.Message.QUIT_ASK);
-        }
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
 }

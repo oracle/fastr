@@ -31,11 +31,11 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private LoopNode loop;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     /**
      * Also used for {@code repeat}, with a {@code TRUE} condition.
@@ -68,7 +69,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
     @Override
     public Object execute(VirtualFrame frame) {
         loop.executeLoop(frame);
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         return RNull.instance;
     }
 

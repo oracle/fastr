@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefMappers;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class PredefMappersSamplers implements PredefMappers {
 
@@ -37,6 +38,15 @@ public final class PredefMappersSamplers implements PredefMappers {
     public ValuePredicateArgumentMapperSampler<Byte, Boolean> toBoolean() {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> RRuntime.fromLogical(x), x -> RRuntime.asLogical(x), samples(RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA),
                         CastUtils.<Byte> samples(), Byte.class, Boolean.class);
+    }
+
+    @Override
+    public ValuePredicateArgumentMapperSampler<Double, Integer> doubleToInt() {
+        final NACheck naCheck = NACheck.create();
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> {
+            naCheck.enable(x);
+            return naCheck.convertDoubleToInt(x);
+        }, x -> x == null ? null : (double) x, Double.class, Integer.class);
     }
 
     @Override
@@ -62,28 +72,29 @@ public final class PredefMappersSamplers implements PredefMappers {
 
     @Override
     public <T> ValuePredicateArgumentMapperSampler<T, RNull> nullConstant() {
-        return ValuePredicateArgumentMapperSampler.<T, RNull> fromLambda((T x) -> RNull.instance, null, null, RNull.class);
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> RNull.instance, null, null, RNull.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<String, String> constant(String s) {
-        return ValuePredicateArgumentMapperSampler.<String, String> fromLambda((String x) -> s, (String x) -> s, CastUtils.<String> samples(), CastUtils.<String> samples(), String.class,
+    public <T> ValuePredicateArgumentMapperSampler<T, String> constant(String s) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> s, (String x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null,
                         String.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Integer, Integer> constant(int i) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> i, x -> i, CastUtils.<Integer> samples(), CastUtils.<Integer> samples(), Integer.class, Integer.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Integer> constant(int i) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> i, (Integer x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null,
+                        Integer.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Double, Double> constant(double d) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> d, x -> d, CastUtils.<Double> samples(), CastUtils.<Double> samples(), Double.class, Double.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Double> constant(double d) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> d, (Double x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, Double.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Byte, Byte> constant(byte l) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> l, x -> l, CastUtils.<Byte> samples(), CastUtils.<Byte> samples(), Byte.class, Byte.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Byte> constant(byte l) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> l, x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, Byte.class);
     }
 
     @Override
@@ -97,7 +108,7 @@ public final class PredefMappersSamplers implements PredefMappers {
 
             @Override
             public T map(T arg) {
-                if (profile.profile(arg == RNull.instance || arg == null)) {
+                if (profile.profile(arg == RNull.instance)) {
                     return defVal;
                 } else {
                     return arg;

@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -37,6 +33,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -184,11 +181,8 @@ public class TestUtilities {
 
         @SuppressWarnings("try")
         public Object call(Object... args) {
-            try (Closeable c = RContext.withinContext(TestBase.testVMContext)) {
+            try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
                 return target.call(RArguments.createUnitialized((Object) args));
-            } catch (IOException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw new RuntimeException(e);
             }
         }
     }

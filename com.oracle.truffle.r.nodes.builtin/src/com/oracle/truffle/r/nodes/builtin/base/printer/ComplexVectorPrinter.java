@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.base.Round;
 import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
@@ -343,10 +344,46 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
     private static RoundArithmetic round = new Round.RoundArithmetic();
 
+    private static final int MAX_DIGITS = 22;
+
     private static RComplex zprecr(RComplex x, int digits) {
-        return round.opd(x.getRealPart(), x.getImaginaryPart(), digits);
+        double m1 = Math.abs(x.getRealPart());
+        double m2 = Math.abs(x.getImaginaryPart());
+        double m = 0;
+        if (Double.isFinite(m1)) {
+            m = m1;
+        }
+        if (Double.isFinite(m2) && m2 > m) {
+            m = m2;
+        }
+        if (m == 0.0) {
+            return x;
+        }
+        if (!Double.isFinite(digits)) {
+            if (digits > 0) {
+                return x;
+            } else {
+                return RComplex.valueOf(0, 0);
+            }
+        }
+        int dig = (int) Math.floor(digits + 0.5);
+        if (dig > MAX_DIGITS) {
+            return x;
+        } else if (dig < 1) {
+            dig = 1;
+        }
+        int mag = (int) Math.floor(Math.log10(m));
+        dig = dig - mag - 1;
+        if (dig > 306) {
+            double pow10 = 1.0e4;
+            RComplex tmp = round.opd(pow10 * x.getRealPart(), pow10 * x.getImaginaryPart(), dig - 4);
+            return RComplex.valueOf(tmp.getRealPart() / pow10, tmp.getImaginaryPart() / pow10);
+        } else {
+            return round.opd(x.getRealPart(), x.getImaginaryPart(), dig);
+        }
     }
 
+    @TruffleBoundary
     static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
         if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
             return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -49,6 +50,12 @@ public abstract class CastToAttributableNode extends CastBaseNode {
     @SuppressWarnings("unused")
     protected RNull cast(RNull rnull) {
         return RNull.instance;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected RMissing cast(RMissing rmissing) {
+        return RMissing.instance;
     }
 
     @Specialization

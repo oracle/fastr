@@ -24,6 +24,8 @@ package com.oracle.truffle.r.engine.shell;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -42,9 +44,9 @@ class JLineConsoleHandler implements ConsoleHandler {
     private final boolean isInteractive;
     private final PrintWriter printWriter;
 
-    JLineConsoleHandler(RStartParams startParams) {
+    JLineConsoleHandler(RStartParams startParams, InputStream inStream, OutputStream outStream) {
         try {
-            console = new ConsoleReader(System.in, System.out);
+            console = new ConsoleReader(inStream, outStream);
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {

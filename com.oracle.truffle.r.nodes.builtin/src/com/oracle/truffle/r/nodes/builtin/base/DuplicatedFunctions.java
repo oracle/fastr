@@ -11,26 +11,30 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 public class DuplicatedFunctions {
@@ -39,8 +43,28 @@ public class DuplicatedFunctions {
         @Child protected CastTypeNode castTypeNode;
         @Child protected TypeofNode typeof;
 
-        protected boolean isIncomparable(byte incomparables) {
-            return incomparables == RRuntime.LOGICAL_TRUE;
+        private final ConditionProfile incomparable = ConditionProfile.createBinaryProfile();
+
+        protected void casts(CastBuilder casts) {
+            // these are similar to those in DuplicatedFunctions.java
+            casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS,
+                            "duplicated()").asVector();
+            // not much more can be done for incomparables as it is either a vector of incomparable
+            // values or a (single) logical value
+            casts.arg("incomparables").asVector(true);
+            casts.arg("fromLast").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        }
+
+        protected boolean isIncomparable(RAbstractVector incomparables) {
+            if (incomparable.profile(incomparables.getLength() == 1 && incomparables instanceof RLogicalVector && ((RAbstractLogicalVector) incomparables).getDataAt(0) == RRuntime.LOGICAL_FALSE)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        protected boolean notAbstractVector(Object o) {
+            return !(o instanceof RAbstractVector);
         }
 
         protected boolean empty(RAbstractContainer x) {
@@ -56,92 +80,88 @@ public class DuplicatedFunctions {
         }
     }
 
-    @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"}, behavior = PURE)
+    @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
     public abstract static class Duplicated extends Adapter {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toLogical(2).toInteger(3);
+            casts(casts);
+            // currently not supported and not tested, but NA is a correct value (the same for empty
+            // vectors) whereas 0 is not (throws an error)
+            casts.arg("nmax").asIntegerVector().findFirst(RRuntime.INT_NA);
         }
 
         @TruffleBoundary
-        protected static RLogicalVector analyzeAndCreateResult(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
+        protected static RLogicalVector analyzeAndCreateResult(RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
             DuplicationHelper ds = DuplicationHelper.analyze(x, incomparables, false, RRuntime.fromLogical(fromLast));
             return RDataFactory.createLogicalVector(ds.getDupVec(), RDataFactory.COMPLETE_VECTOR);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected RLogicalVector duplicated(RNull x, Object incomparables, byte fromLast, int nmax) {
-            return RDataFactory.createEmptyLogicalVector();
-        }
-
         @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
-        protected RLogicalVector duplicatedFalseIncomparables(RAbstractVector x, @SuppressWarnings("unused") byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
+        protected RLogicalVector duplicatedFalseIncomparables(RAbstractVector x, @SuppressWarnings("unused") RAbstractVector incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             return analyzeAndCreateResult(x, null, fromLast);
         }
 
         @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
-        protected RLogicalVector duplicatedTrueIncomparables(RAbstractVector x, byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
+        protected RLogicalVector duplicatedTrueIncomparables(RAbstractVector x, RAbstractVector incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             initChildren();
             RType xType = typeof.execute(x);
             RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(incomparables, xType));
             return analyzeAndCreateResult(x, vector, fromLast);
         }
 
-        @Specialization(guards = {"!empty(x)"})
-        protected RLogicalVector duplicated(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"notAbstractVector(incomparables)", "!empty(x)"})
+        protected RLogicalVector duplicatedTrueIncomparables(RAbstractVector x, Object incomparables, byte fromLast, int nmax) {
             initChildren();
             RType xType = typeof.execute(x);
-            return analyzeAndCreateResult(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), fromLast);
+            // TODO: this is not quite correct, as passing expression generated some obscure error
+            // message, but is it worth fixing
+            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "empty(x)")
-        protected RLogicalVector duplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, int nmax) {
-            return RDataFactory.createLogicalVector(0);
+        protected RLogicalVector duplicatedEmpty(RAbstractVector x, Object incomparables, byte fromLast, int nmax) {
+            return RDataFactory.createEmptyLogicalVector();
         }
     }
 
-    @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"}, behavior = PURE)
+    @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast"}, behavior = PURE)
     public abstract static class AnyDuplicated extends Adapter {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toLogical(2);
+            casts(casts);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
-        protected int anyDuplicatedFalseIncomparables(RAbstractVector x, byte incomparables, byte fromLast) {
+        protected int anyDuplicatedFalseIncomparables(RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
             return DuplicationHelper.analyze(x, null, true, RRuntime.fromLogical(fromLast)).getIndex();
         }
 
         @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
-        protected int anyDuplicatedTrueIncomparables(RAbstractVector x, byte incomparables, byte fromLast) {
+        protected int anyDuplicatedTrueIncomparables(RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
             initChildren();
             RType xType = typeof.execute(x);
-            RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(incomparables, xType));
-            return DuplicationHelper.analyze(x, vector, true, RRuntime.fromLogical(fromLast)).getIndex();
+            return DuplicationHelper.analyze(x, (RAbstractVector) (castTypeNode.execute(incomparables, xType)), true, RRuntime.fromLogical(fromLast)).getIndex();
         }
 
-        @Specialization(guards = {"!empty(x)"})
-        protected int anyDuplicated(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
+        @Specialization(guards = {"notAbstractVector(incomparables)", "!empty(x)"})
+        protected int anyDuplicatedTrueIncomparables(RAbstractVector x, Object incomparables, @SuppressWarnings("unused") byte fromLast) {
             initChildren();
             RType xType = typeof.execute(x);
-            return DuplicationHelper.analyze(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), true, RRuntime.fromLogical(fromLast)).getIndex();
+            // TODO: this is not quite correct, as passing expression generated some obscure error
+            // message, but is it worth fixing
+            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "empty(x)")
-        protected int anyDuplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
+        protected int anyDuplicatedEmpty(RAbstractVector x, Object incomparables, byte fromLast) {
             return 0;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected int anyDuplicatedNull(RNull x, RAbstractContainer incomparables, byte fromLast) {
-            return 0;
-        }
     }
 }

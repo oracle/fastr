@@ -35,8 +35,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.CallInlineCacheNode;
-import com.oracle.truffle.r.nodes.CallInlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
@@ -46,7 +44,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlotNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -65,7 +64,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.REnvironment.Function;
 
 /**
  * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
@@ -78,21 +76,24 @@ public class GetFunctions {
         @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
         @Child protected TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
+        @CompilationFinal private boolean firstExecution = true;
+
         public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
 
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
             if (modeType == RType.Any) {
-                throw RError.error(this, RError.Message.UNKNOWN_OBJECT, x);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
             } else {
-                throw RError.error(this, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
             }
         }
 
-        protected Object checkPromise(VirtualFrame frame, Object r, String identifier, boolean evaluateOnSlowPath) {
+        protected Object checkPromise(VirtualFrame frame, Object r, String identifier) {
             if (r instanceof RPromise) {
-                if (evaluateOnSlowPath) {
-                    CompilerDirectives.transferToInterpreter();
+                if (firstExecution) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    firstExecution = false;
                     return ReadVariableNode.evalPromiseSlowPathWithName(identifier, frame, (RPromise) r);
                 }
                 return promiseHelper.evaluate(frame, (RPromise) r);
@@ -107,7 +108,7 @@ public class GetFunctions {
 
         protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
             String x = xv.getDataAt(0);
-            Object obj = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+            Object obj = checkPromise(frame, env.get(x), x);
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
@@ -128,7 +129,7 @@ public class GetFunctions {
                 while (env != REnvironment.emptyEnv()) {
                     env = env.getParent();
                     if (env != REnvironment.emptyEnv()) {
-                        r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                        r = checkPromise(frame, env.get(x), x);
                         if (r != null && RRuntime.checkType(r, modeType)) {
                             break;
                         }
@@ -222,8 +223,7 @@ public class GetFunctions {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
-        @Child private RArgumentsNode argsNode;
+        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
         @CompilationFinal private boolean needsCallerFrame;
 
@@ -282,7 +282,7 @@ public class GetFunctions {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
                 RType modeType = typeFromMode.execute(mode.getDataAt(state.modeLength == 1 ? 0 : i));
-                Object r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                Object r = checkPromise(frame, env.get(x), x);
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
                 } else {
@@ -306,7 +306,7 @@ public class GetFunctions {
                     while (env != REnvironment.emptyEnv()) {
                         env = env.getParent();
                         if (env != REnvironment.emptyEnv()) {
-                            r = checkPromise(frame, env.get(x), x, !(env instanceof Function));
+                            r = checkPromise(frame, env.get(x), x);
                             if (r != null && RRuntime.checkType(r, modeType)) {
                                 break;
                             }
@@ -335,15 +335,11 @@ public class GetFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsCallerFrame = true;
             }
-            if (argsNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                argsNode = insert(RArgumentsNode.create());
-            }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            Object[] callArgs = argsNode.execute(ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(), null);
-            return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
+            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(),
+                            ifnFunc.getEnclosingFrame(), null);
         }
     }
 }

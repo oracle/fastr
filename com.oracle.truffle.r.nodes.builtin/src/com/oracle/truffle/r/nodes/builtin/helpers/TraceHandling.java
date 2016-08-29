@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
@@ -148,11 +149,16 @@ public class TraceHandling {
             RCaller caller = RArguments.getCall(frame);
             String callString;
             if (caller != null) {
-                callString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+                callString = getCallerSource(caller);
             } else {
                 callString = "<no source>";
             }
             return callString;
+        }
+
+        @TruffleBoundary
+        private static String getCallerSource(RCaller caller) {
+            return RContext.getRRuntimeASTAccess().getCallerSource(caller);
         }
     }
 
@@ -172,7 +178,7 @@ public class TraceHandling {
                     String callString = getCallSource(frame);
                     outputHandler.writeString("trace: " + callString, true);
                 } catch (IOException ex) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+                    throw RError.ioError(RError.SHOW_CALLER2, ex);
                 }
             }
         }
@@ -207,7 +213,7 @@ public class TraceHandling {
                         String callString = getCallSource(frame);
                         outputHandler.writeString("Tracing " + callString + " on entry", true);
                     } catch (IOException ex) {
-                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+                        throw RError.ioError(RError.SHOW_CALLER2, ex);
                     }
                 }
                 RContext.getEngine().eval(tracer, frame.materialize());
@@ -255,6 +261,7 @@ public class TraceHandling {
     private static class StdoutOutputHandler extends OutputHandler {
 
         @Override
+        @TruffleBoundary
         void writeString(String s, boolean nl) throws IOException {
             StdConnections.getStdout().writeString(s, nl);
         }
@@ -272,6 +279,7 @@ public class TraceHandling {
         }
 
         @Override
+        @TruffleBoundary
         void writeString(String s, boolean nl) throws IOException {
             fileWriter.append(s);
             if (nl) {

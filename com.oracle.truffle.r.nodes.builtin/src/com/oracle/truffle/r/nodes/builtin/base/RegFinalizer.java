@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -38,31 +38,27 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "reg.finalizer", kind = INTERNAL, parameterNames = {"e", "f", "onexit"}, behavior = COMPLEX)
 public abstract class RegFinalizer extends RBuiltinNode {
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("e").mustBe(instanceOf(REnvironment.class).or(instanceOf(RExternalPtr.class)), RError.Message.REG_FINALIZER_FIRST);
+        casts.arg("f").mustBe(instanceOf(RFunction.class), RError.Message.REG_FINALIZER_SECOND);
+        casts.arg("onexit").asLogicalVector().findFirst().notNA(RError.Message.REG_FINALIZER_THIRD).map(toBoolean());
+    }
+
     @Specialization
-    protected RNull doRegFinalizer(RExternalPtr ext, RFunction fun, byte onexit) {
+    protected RNull doRegFinalizer(RExternalPtr ext, RFunction fun, boolean onexit) {
         return doRegFinalizerEither(ext, fun, onexit);
     }
 
     @Specialization
-    protected RNull doRegFinalizer(REnvironment env, RFunction fun, byte onexit) {
+    protected RNull doRegFinalizer(REnvironment env, RFunction fun, boolean onexit) {
         return doRegFinalizerEither(env, fun, onexit);
     }
 
     @SuppressWarnings("unused")
-    private RNull doRegFinalizerEither(Object env, RFunction fun, byte onexit) {
-        if (onexit == RRuntime.LOGICAL_NA) {
-            throw RError.error(this, RError.Message.REG_FINALIZER_THIRD);
-        }
+    private static RNull doRegFinalizerEither(Object env, RFunction fun, boolean onexit) {
         // TODO the actual work
         return RNull.instance;
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected RNull doRegFinalizer(Object env, Object fun, byte onexit) {
-        if (fun instanceof RFunction) {
-            throw RError.error(this, RError.Message.REG_FINALIZER_FIRST);
-        }
-        throw RError.error(this, RError.Message.REG_FINALIZER_SECOND);
-    }
 }

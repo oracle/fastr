@@ -89,7 +89,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  */
 public class CallRFFIHelper {
 
-    private static final class CharSXPWrapper {
+    public static final class CharSXPWrapper {
         private final String contents;
 
         CharSXPWrapper(String contents) {

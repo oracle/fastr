@@ -368,7 +368,7 @@ public final class RCmdOptions {
 
     public static void printHelpAndExit(Client client) {
         printHelp(client);
-        System.exit(0);
+        throw new ExitException(0);
     }
 
     private static void printVersionAndExit() {

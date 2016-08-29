@@ -25,7 +25,9 @@ package com.oracle.truffle.r.runtime;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
@@ -43,13 +45,15 @@ public enum FastROptions {
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
-    PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
-    PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, true),
     Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
     PerformanceWarnings("Print FastR performance warning", false),
     LoadBase("Load base package", true),
     PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
     IgnoreVisibility("Ignore setting of the visibility flag", false),
+    /**
+     * See {@link RFrameSlot#Visibility}.
+     */
+    OptimizeVisibility("optimized setting of the visibility flag", true),
     LoadPkgSourcesIndex("Load R package sources index", true),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
@@ -84,6 +88,7 @@ public enum FastROptions {
         if (value instanceof Boolean) {
             return (Boolean) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("boolean option value expected with " + name() + " - forgot +/- ?");
             System.exit(2);
             return false;
@@ -96,6 +101,7 @@ public enum FastROptions {
         if (value == null || value instanceof String) {
             return (String) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("string option value expected with " + name());
             System.exit(2);
             return "";
@@ -104,10 +110,15 @@ public enum FastROptions {
 
     public int getNonNegativeIntValue() {
         assert !isBoolean;
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (value instanceof String) {
             try {
                 int res = Integer.decode((String) value);
                 if (res >= 0) {
+                    value = res;
                     return res;
                 } // else fall through to error message
             } catch (NumberFormatException x) {

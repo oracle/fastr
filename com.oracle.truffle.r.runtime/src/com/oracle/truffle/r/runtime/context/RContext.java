@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -51,19 +50,18 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -195,8 +193,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             PolyglotEngine vm = info.createVM();
             try {
                 setContext(vm.eval(GET_CONTEXT).as(RContext.class));
-            } catch (Exception e1) {
-                throw new RInternalError(e1, "error while initializing eval thread");
+            } catch (Throwable t) {
+                throw new RInternalError(t, "error while initializing eval thread");
             }
             try {
                 evalResult = run(vm, info, source);
@@ -217,17 +215,13 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             } catch (ParseException e) {
                 e.report(info.getConsoleHandler());
                 evalResult = createErrorResult(e.getMessage());
-            } catch (IOException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof ExitException) {
-                    // termination, treat this as "success"
-                    ExitException exitException = (ExitException) cause;
-                    evalResult = RDataFactory.createList(new Object[]{exitException.getStatus()});
-                } else {
-                    // some internal error
-                    RInternalError.reportErrorAndConsoleLog(cause, info.getConsoleHandler(), info.getId());
-                    evalResult = createErrorResult(cause.getClass().getSimpleName());
-                }
+            } catch (ExitException e) {
+                // termination, treat this as "success"
+                evalResult = RDataFactory.createList(new Object[]{e.getStatus()});
+            } catch (Throwable t) {
+                // some internal error
+                RInternalError.reportErrorAndConsoleLog(t, info.getConsoleHandler(), info.getId());
+                evalResult = createErrorResult(t.getClass().getSimpleName());
             }
             return evalResult;
         }
@@ -236,7 +230,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
          * The result is an {@link RList} contain the value, plus an "error" attribute if the
          * evaluation resulted in an error.
          */
-        private static RList createEvalResult(PolyglotEngine.Value resultValue) throws IOException {
+        private static RList createEvalResult(PolyglotEngine.Value resultValue) {
             Object result = resultValue.get();
             Object listResult = result;
             String error = null;
@@ -293,10 +287,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
      *
      * When a context is first created no threads are attached, to allow contexts to be used as
-     * values in the experimental {@code fastr.createcontext} function. Additional threads can be
+     * values in the experimental {@code fastr.context.xxx} functions. Additional threads can be
      * added by the {@link #attachThread} method.
      */
-    public static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
+    private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
 
     /**
      * Used by the MethodListDispatch class.
@@ -557,6 +551,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     @TruffleBoundary
+    public static RContext getThreadLocalInstance() {
+        return threadLocalContext.get();
+    }
+
+    @TruffleBoundary
+    public static void setThreadLocalInstance(RContext context) {
+        threadLocalContext.set(context);
+    }
+
+    @TruffleBoundary
     private static RContext getInstanceInternal() {
         RContext result = threadLocalContext.get();
         assert result != null;
@@ -593,10 +597,18 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return engine;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * derived with {@code GetVisibilityNode}.
+     */
     public boolean isVisible() {
         return resultVisible;
     }
 
+    /**
+     * This method should only be used under exceptional circumstances; the visibility can be
+     * changed with {@code SetVisibilityNode}.
+     */
     public void setVisible(boolean v) {
         if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
             /*
@@ -605,14 +617,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             if (initialContextInitialized || !embedded) {
                 resultVisible = v;
             }
-        }
-    }
-
-    public void setVisible(RVisibility visibility) {
-        if (visibility == RVisibility.ON) {
-            setVisible(true);
-        } else if (visibility == RVisibility.OFF) {
-            setVisible(false);
         }
     }
 
@@ -764,10 +768,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
 
-    public static Closeable withinContext(RContext context) {
+    public interface RCloseable extends Closeable {
+        @Override
+        void close();
+    }
+
+    @TruffleBoundary
+    public static RCloseable withinContext(RContext context) {
         RContext oldContext = RContext.threadLocalContext.get();
         RContext.threadLocalContext.set(context);
-        return new Closeable() {
+        return new RCloseable() {
             @Override
             public void close() {
                 RContext.threadLocalContext.set(oldContext);

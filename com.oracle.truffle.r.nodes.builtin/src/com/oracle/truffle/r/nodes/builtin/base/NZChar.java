@@ -22,32 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+@RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x", "keepNA"}, behavior = PURE)
 public abstract class NZChar extends RBuiltinNode {
-    @Child private CastStringNode convertString;
 
-    private String coerceContent(Object content) {
-        if (convertString == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeGen.create(false, false, false));
-        }
-        return (String) convertString.execute(content);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asStringVector();
+        casts.arg("keepNA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     private static byte isNonZeroLength(String s) {
@@ -55,42 +50,23 @@ public abstract class NZChar extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector rev(@SuppressWarnings("unused") RNull value) {
+    protected RLogicalVector rev(RNull value, boolean keepNA) {
         return RDataFactory.createEmptyLogicalVector();
     }
 
     @Specialization
-    protected byte rev(int value) {
-        return isNonZeroLength(coerceContent(value));
-    }
-
-    @Specialization
-    protected byte rev(double value) {
-        return isNonZeroLength(coerceContent(value));
-    }
-
-    @Specialization
-    protected byte rev(byte value) {
-        return isNonZeroLength(coerceContent(value));
-    }
-
-    @Specialization
-    protected RLogicalVector rev(RStringVector vector) {
+    protected RLogicalVector rev(RAbstractStringVector vector, boolean keepNA) {
         int len = vector.getLength();
         byte[] result = new byte[len];
+        boolean hasNA = false;
         for (int i = 0; i < len; i++) {
-            result[i] = isNonZeroLength(vector.getDataAt(i));
+            if (keepNA && RRuntime.isNA(vector.getDataAt(i))) {
+                result[i] = RRuntime.LOGICAL_NA;
+                hasNA = true;
+            } else {
+                result[i] = isNonZeroLength(vector.getDataAt(i));
+            }
         }
-        return RDataFactory.createLogicalVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization
-    protected RLogicalVector rev(RAbstractVector vector) {
-        int len = vector.getLength();
-        byte[] result = new byte[len];
-        for (int i = 0; i < len; i++) {
-            result[i] = isNonZeroLength(coerceContent(vector.getDataAtAsObject(i)));
-        }
-        return RDataFactory.createLogicalVector(result, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createLogicalVector(result, /* complete: */ keepNA && !hasNA);
     }
 }

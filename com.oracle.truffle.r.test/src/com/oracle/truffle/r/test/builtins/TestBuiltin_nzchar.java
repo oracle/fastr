@@ -59,8 +59,7 @@ public class TestBuiltin_nzchar extends TestBase {
 
     @Test
     public void testnzchar9() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('  \\036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.'));nzchar(argv[[1]]);");
+        assertEval("argv <- list(c('  \\036 The other major change was an error for asymmetric loss matrices,', '    prompted by a user query.  With L=loss asymmetric, the altered', '    priors were computed incorrectly - they were using L\\' instead of L.', '    Upshot - the tree would not not necessarily choose optimal splits', '    for the given loss matrix.  Once chosen, splits were evaluated', '    correctly.  The printed “improvement” values are of course the', '    wrong ones as well.  It is interesting that for my little test', '    case, with L quite asymmetric, the early splits in the tree are', '    unchanged - a good split still looks good.'));nzchar(argv[[1]]);");
     }
 
     @Test
@@ -71,5 +70,17 @@ public class TestBuiltin_nzchar extends TestBase {
     @Test
     public void testnzchar12() {
         assertEval("argv <- list('');do.call('nzchar', argv)");
+    }
+
+    @Test
+    public void keepNATests() {
+        assertEval("nzchar(c('asdasd', NA), keepNA=TRUE)");
+        assertEval("nzchar(c('asdasd', NA), keepNA=FALSE)");
+    }
+
+    @Test
+    public void nonStringArgs() {
+        assertEval("nzchar(list('x', 42, list('a'), list()))");
+        assertEval("nzchar(NULL)");
     }
 }

@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.util.zip.GZIPInputStream;
 
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -56,11 +58,16 @@ public class RCompression {
             return null;
         }
 
+        private static final byte GZIP_MAGIC1 = GZIPInputStream.GZIP_MAGIC & 0xFF;
+        private static final byte GZIP_MAGIC2 = (byte) ((GZIPInputStream.GZIP_MAGIC >> 8) & 0xFF);
+
         /**
          * Decode the compression type from the bytes in buf (which must be at least length 5).
          */
-        public static Type decodeBuf(byte[] buf) {
-            if (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h') {
+        private static Type decodeBuf(byte[] buf) {
+            if (buf[0] == GZIP_MAGIC1 && buf[1] == GZIP_MAGIC2) {
+                return RCompression.Type.GZIP;
+            } else if (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h') {
                 return RCompression.Type.BZIP2;
             } else if (buf[0] == (byte) 0xFD && buf[1] == '7' && buf[2] == 'z' && buf[3] == 'X' && buf[4] == 'Z') {
                 return RCompression.Type.LZMA;
@@ -68,6 +75,17 @@ public class RCompression {
                 return RCompression.Type.NONE;
             }
         }
+    }
+
+    public static Type getCompressionType(String path) throws IOException {
+        try (InputStream is = new FileInputStream(path)) {
+            byte[] buf = new byte[5];
+            int count = is.read(buf);
+            if (count == 5) {
+                return RCompression.Type.decodeBuf(buf);
+            }
+        }
+        return RCompression.Type.NONE;
     }
 
     public static boolean uncompress(Type type, byte[] udata, byte[] cdata) {

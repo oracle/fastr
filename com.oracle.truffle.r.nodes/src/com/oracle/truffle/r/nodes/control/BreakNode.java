@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     public BreakNode(SourceSection src) {
         super(src);
@@ -46,7 +48,7 @@ public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, 
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         throw BreakException.instance;
     }
 

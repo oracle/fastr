@@ -160,6 +160,7 @@ public class ForeignFunctions {
             return UNKNOWN_EXTERNAL_BUILTIN;
         }
 
+        @TruffleBoundary
         protected RuntimeException fallback(Object fobj) {
             String name = null;
             if (fobj instanceof RList) {
@@ -798,6 +799,7 @@ public class ForeignFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             long func = DLL.findSymbol(name, packageName, rns);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
-
-import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+package com.oracle.truffle.r.nodes.builtin.base.system;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,31 +28,28 @@ import java.lang.ProcessBuilder.Redirect;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
-public abstract class SystemFunction extends RBuiltinNode {
-    @Specialization
+public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
+
+    @Override
+    Object execute(VirtualFrame frame, String command, boolean intern) {
+        return execute(command, intern);
+    }
+
     @TruffleBoundary
-    protected Object system(RAbstractStringVector command, byte internLogical) {
+    private Object execute(String command, boolean intern) {
         Object result;
-        boolean intern = RRuntime.fromLogical(internLogical);
         String shell = RContext.getInstance().stateREnvVars.get("SHELL");
         if (shell == null) {
             shell = "/bin/sh";
         }
-        if (RContext.getInstance().stateREnvVars.getMap().get("FASTR_LOGCHILD") != null) {
-            System.out.printf("FastR system: %s -c %s%n", shell, command.getDataAt(0));
-        }
-        ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
+        log(String.format("%s -c %s", shell, command), "Process");
+        ProcessBuilder pb = new ProcessBuilder(shell, "-c", command);
         updateEnvironment(pb);
         pb.redirectInput(Redirect.INHERIT);
         if (intern) {
@@ -95,7 +88,6 @@ public abstract class SystemFunction extends RBuiltinNode {
         } catch (InterruptedException | IOException ex) {
             result = 127;
         }
-        RContext.getInstance().setVisible(false);
         return result;
     }
 

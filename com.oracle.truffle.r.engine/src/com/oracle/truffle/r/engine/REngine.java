@@ -39,8 +39,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -54,13 +54,16 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
-import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -279,7 +282,7 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
         List<RSyntaxNode> list = parseImpl(constants, source);
-        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node.asRNode())).toArray();
+        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
         return RDataFactory.createExpression(RDataFactory.createList(data));
     }
 
@@ -288,7 +291,9 @@ final class REngine implements Engine, Engine.Timings {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder(constants));
         FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RFunction func = RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
+        RInstrumentation.checkDebugRequested(func);
+        return func;
     }
 
     @Override
@@ -301,7 +306,7 @@ final class REngine implements Engine, Engine.Timings {
 
         private final List<RSyntaxNode> statements;
 
-        @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements) {
             super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RSource.Internal.REPL_WRAPPER.string), new FrameDescriptor());
@@ -315,12 +320,13 @@ final class REngine implements Engine, Engine.Timings {
          */
         @Override
         public Object execute(VirtualFrame frame) {
-            RContext oldContext = RContext.threadLocalContext.get();
-            RContext newContext = findContext.executeFindContext();
-            RContext.threadLocalContext.set(newContext);
+            RContext oldContext = RContext.getThreadLocalInstance();
+            RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
+            RContext.setThreadLocalInstance(newContext);
             try {
                 Object lastValue = RNull.instance;
-                for (RSyntaxNode node : statements) {
+                for (int i = 0; i < statements.size(); i++) {
+                    RSyntaxNode node = statements.get(i);
                     RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, true, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
@@ -335,12 +341,13 @@ final class REngine implements Engine, Engine.Timings {
             } catch (Throwable t) {
                 throw t;
             } finally {
-                RContext.threadLocalContext.set(oldContext);
+                RContext.setThreadLocalInstance(oldContext);
             }
         }
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
@@ -355,6 +362,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @TruffleBoundary
     public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
         return evalNode(expr.getRep().asRSyntaxNode(), envir, caller);
     }
@@ -390,7 +398,7 @@ final class REngine implements Engine, Engine.Timings {
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
             Frame current = Utils.getActualCurrentFrame();
-            if (current == null) {
+            if (current == null || !RArguments.isRFrame(current)) {
                 // special case, e.g. in parser and an error is thrown
                 actualFrame = REnvironment.globalEnv().getFrame();
             } else {
@@ -407,8 +415,7 @@ final class REngine implements Engine, Engine.Timings {
                 newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
             }
         }
-        Object[] rArgs = RArguments.create(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
-        return func.getTarget().call(rArgs);
+        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
     }
 
     private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {
@@ -469,6 +476,8 @@ final class REngine implements Engine, Engine.Timings {
         private final boolean topLevel;
 
         @Child private RNode body;
+        @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
+        @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
         protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
             super(TruffleRLanguage.class, null, new FrameDescriptor());
@@ -499,13 +508,14 @@ final class REngine implements Engine, Engine.Timings {
                 assert checkResult(result);
                 if (printResult && result != null) {
                     assert topLevel;
-                    if (context.isVisible()) {
+                    if (visibility.execute(vf, context)) {
                         printResult(result);
                     }
                 }
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
+                setVisibility.executeEndOfFunction(vf);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
@@ -569,7 +579,7 @@ final class REngine implements Engine, Engine.Timings {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            function.getTarget().call(RArguments.create(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null));
+            CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }

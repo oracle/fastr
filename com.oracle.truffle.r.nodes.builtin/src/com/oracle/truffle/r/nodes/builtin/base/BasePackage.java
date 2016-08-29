@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -44,12 +46,12 @@ import com.oracle.truffle.r.nodes.builtin.base.foreign.DotC;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.DotCNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.ForeignFunctionsFactory;
+import com.oracle.truffle.r.nodes.builtin.base.system.SystemFunction;
+import com.oracle.truffle.r.nodes.builtin.base.system.SystemFunctionNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionProfiler;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRFunctionProfilerFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentity;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentityNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
@@ -60,6 +62,10 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfoNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTrace;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTraceNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStats.FastRProfAttr;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStats.FastRProfFuncounts;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStats.FastRProfTypecounts;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRStatsFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowIt;
@@ -74,6 +80,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -276,6 +283,8 @@ public class BasePackage extends RBuiltinPackage {
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
+        add(FastRContext.R.class, FastRContextFactory.RNodeGen::create);
+        add(FastRContext.Rscript.class, FastRContextFactory.RscriptNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
@@ -289,17 +298,20 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.Join.class, FastRContextFactory.JoinNodeGen::create);
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
-        add(FastRFunctionProfiler.Create.class, FastRFunctionProfilerFactory.CreateNodeGen::create);
-        add(FastRFunctionProfiler.Get.class, FastRFunctionProfilerFactory.GetNodeGen::create);
-        add(FastRFunctionProfiler.Reset.class, FastRFunctionProfilerFactory.ResetNodeGen::create);
-        add(FastRFunctionProfiler.Clear.class, FastRFunctionProfilerFactory.ClearNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
+        add(FastRInterop.HasSize.class, FastRInteropFactory.HasSizeNodeGen::create);
         add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);
+        add(FastRInterop.IsNull.class, FastRInteropFactory.IsNullNodeGen::create);
+        add(FastRInterop.IsExecutable.class, FastRInteropFactory.IsExecutableNodeGen::create);
+        add(FastRInterop.ToBoolean.class, FastRInteropFactory.ToBooleanNodeGen::create);
         add(FastRRefCountInfo.class, FastRRefCountInfoNodeGen::create);
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
+        add(FastRProfAttr.class, FastRStatsFactory.FastRProfAttrNodeGen::create);
+        add(FastRProfTypecounts.class, FastRStatsFactory.FastRProfTypecountsNodeGen::create);
+        add(FastRProfFuncounts.class, FastRStatsFactory.FastRProfFuncountsNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
         add(FastRTrace.Trace.class, FastRTraceFactory.TraceNodeGen::create);
@@ -395,7 +407,7 @@ public class BasePackage extends RBuiltinPackage {
         add(InfixFunctions.UpdateArraySubsetBuiltin.class, InfixFunctionsFactory.UpdateArraySubsetBuiltinNodeGen::create);
         add(InfixFunctions.UpdateFieldBuiltin.class, InfixFunctionsFactory.UpdateFieldBuiltinNodeGen::create);
         add(InfixFunctions.WhileBuiltin.class, InfixFunctionsFactory.WhileBuiltinNodeGen::create);
-        add(Inherits.class, InheritsNodeGen::create);
+        add(InheritsBuiltin.class, InheritsBuiltinNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
         add(IntToBits.class, IntToBitsNodeGen::create);
@@ -566,6 +578,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SysFunctions.SysInfo.class, SysFunctionsFactory.SysInfoNodeGen::create);
         add(SysFunctions.SysReadlink.class, SysFunctionsFactory.SysReadlinkNodeGen::create);
         add(SysFunctions.SysSetEnv.class, SysFunctionsFactory.SysSetEnvNodeGen::create);
+        add(SysFunctions.SysSetFileTime.class, SysFunctionsFactory.SysSetFileTimeNodeGen::create);
         add(SysFunctions.SysSleep.class, SysFunctionsFactory.SysSleepNodeGen::create);
         add(SysFunctions.SysTime.class, SysFunctionsFactory.SysTimeNodeGen::create);
         add(SysFunctions.SysUmask.class, SysFunctionsFactory.SysUmaskNodeGen::create);
@@ -634,7 +647,11 @@ public class BasePackage extends RBuiltinPackage {
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
-    private static void addFastPath(MaterializedFrame baseFrame, String name, java.util.function.Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
+    private static void addFastPath(MaterializedFrame baseFrame, String name, Supplier<RFastPathNode> factory, RVisibility visibility) {
+        addFastPath(baseFrame, name, FastPathFactory.fromVisibility(visibility, factory));
+    }
+
+    private static void addFastPath(MaterializedFrame baseFrame, String name, Supplier<RFastPathNode> factory, Class<?> builtinNodeClass) {
         RBuiltin builtin = builtinNodeClass.getAnnotation(RBuiltin.class);
         addFastPath(baseFrame, name, FastPathFactory.fromRBuiltin(builtin, factory));
     }
@@ -642,16 +659,16 @@ public class BasePackage extends RBuiltinPackage {
     @Override
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
-        addFastPath(baseFrame, "matrix", () -> MatrixFastPathNodeGen.create(null), Matrix.class);
-        addFastPath(baseFrame, "setdiff", () -> SetDiffFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "get", () -> GetFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "exists", () -> ExistsFastPathNodeGen.create(null), Exists.class);
-        addFastPath(baseFrame, "assign", () -> AssignFastPathNodeGen.create(null), Assign.class);
-        addFastPath(baseFrame, "is.element", () -> IsElementFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "integer", () -> IntegerFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "numeric", () -> DoubleFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "double", () -> DoubleFastPathNodeGen.create(null));
-        addFastPath(baseFrame, "intersect", () -> IntersectFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "matrix", MatrixFastPathNodeGen::create, Matrix.class);
+        addFastPath(baseFrame, "setdiff", SetDiffFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "get", GetFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "exists", ExistsFastPathNodeGen::create, Exists.class);
+        addFastPath(baseFrame, "assign", AssignFastPathNodeGen::create, Assign.class);
+        addFastPath(baseFrame, "is.element", IsElementFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "integer", IntegerFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "numeric", DoubleFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "double", DoubleFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "intersect", IntersectFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "pmax", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);

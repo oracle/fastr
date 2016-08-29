@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -101,7 +102,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private String intern(String name) {
         if (cachedName == null) {
             // unoptimized case
-            return name.intern();
+            return Utils.intern(name);
         }
         if (cachedName == name) {
             // cached case
@@ -112,12 +113,12 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (cachedName == "") {
             // Checkstyle: resume StringLiteralEquality
             cachedName = name;
-            cachedInternedName = name.intern();
+            cachedInternedName = Utils.intern(name);
         } else {
             cachedName = null;
             cachedInternedName = null;
         }
-        return name.intern();
+        return Utils.intern(name);
     }
 
     @Specialization

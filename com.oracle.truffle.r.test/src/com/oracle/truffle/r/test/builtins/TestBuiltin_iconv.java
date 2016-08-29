@@ -63,4 +63,15 @@ public class TestBuiltin_iconv extends TestBase {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c('Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance'), .Names = c('Q1_MISSING_NONE', 'Q1_MISSING_1', 'Q1_MISSING_2', 'Q1_MISSING_3', 'Q1_MISSING_RANGE', 'Q1_MISSING_LOW', 'Q1_MISSING_HIGH', 'Q1_MISSING_RANGE_1', 'Q1_MISSING_LOW_1', 'Q1_MISSING_HIGH_1')), 'latin1', '', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
+
+    @Test
+    public void testIconv() {
+        assertEval("{ .Internal(iconv(7, \"latin1\", \"ASCII\", \"42\", T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", character(), \"ASCII\", \"42\", T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", c(\"latin1\", \"latin1\"), \"ASCII\", \"42\", T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", \"latin1\", c(\"ASCII\", \"ASCII\"), \"42\", T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", \"latin1\", character(), \"42\", T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", 42, T, F)) }");
+        assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", character(), T, F)) }");
+    }
 }
