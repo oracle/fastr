@@ -472,9 +472,7 @@ abstract class WriteIndexedVectorNode extends Node {
 
         private final boolean setListElementAsObject;
         private final boolean isReplace;
-        @CompilationFinal private ValueProfile rightValueProfile;
-        @CompilationFinal private ConditionProfile rightIsShared;
-        @CompilationFinal private ConditionProfile rightIsNotTemporary;
+        private final ConditionProfile isShareable = ConditionProfile.createBinaryProfile();
 
         WriteListAction(boolean setListElementAsObject, boolean isReplace) {
             this.setListElementAsObject = setListElementAsObject;
@@ -482,14 +480,8 @@ abstract class WriteIndexedVectorNode extends Node {
         }
 
         private Object copyValueOnAssignment(Object value) {
-            if (value instanceof RShareable && value instanceof RAbstractVector) {
-                RShareable val = (RShareable) value;
-                if (rightIsShared.profile(val.isShared())) {
-                    val = val.copy();
-                } else if (rightIsNotTemporary.profile(!val.isTemporary())) {
-                    val.incRefCount();
-                }
-                return val;
+            if (isShareable.profile(value instanceof RShareable)) {
+                ((RShareable) value).incRefCount();
             }
             return value;
         }
@@ -507,14 +499,7 @@ abstract class WriteIndexedVectorNode extends Node {
                 rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
             }
             if (isReplace && leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
-                if (rightValueProfile == null) {
-                    // acts as a branch profile
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    rightValueProfile = ValueProfile.createClassProfile();
-                    rightIsShared = ConditionProfile.createBinaryProfile();
-                    rightIsNotTemporary = ConditionProfile.createBinaryProfile();
-                }
-                rightValue = copyValueOnAssignment(rightValueProfile.profile(rightValue));
+                rightValue = copyValueOnAssignment(rightValue);
             }
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);
             valueNACheck.checkListElement(rightValue);

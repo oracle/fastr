@@ -31,6 +31,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+/**
+ * Important note: none of the methods, including e.g. {@link #copy()} do not handle
+ * {@link RShareable}. It is responsibility of the caller to increment refCount appropriately.
+ */
 public abstract class RListBase extends RVector implements RAbstractListVector {
 
     protected final Object[] data;
@@ -119,8 +123,11 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return RRuntime.toString(getDataAt(index));
     }
 
+    /*
+     * This method does not increment the reference count, it is responsibility of the caller.
+     */
     public final RListBase updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
-        assert !this.isShared();
+        assert !this.isShared() : "data in shared list must not be updated, make a copy";
         data[i] = right;
         return this;
     }
