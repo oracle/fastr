@@ -48,7 +48,7 @@ public abstract class Floor extends UnaryArithmeticBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(numericValue(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+        casts.arg("x").mustBe(numericValue(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Override
