@@ -35,7 +35,5 @@ public class TestBuiltin_sweep extends TestBase {
         // Correct output but warnings
         assertEval(Ignored.Unknown, "{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
         assertEval(Ignored.Unknown, "{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
-
-        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
     }
 }

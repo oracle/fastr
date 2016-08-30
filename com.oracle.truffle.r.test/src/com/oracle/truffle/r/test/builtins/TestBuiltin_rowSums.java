@@ -100,6 +100,6 @@ public class TestBuiltin_rowSums extends TestBase {
         // rowSums on array have correct values
         assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
 
-        assertEval(Output.IgnoreErrorContext, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
     }
 }
