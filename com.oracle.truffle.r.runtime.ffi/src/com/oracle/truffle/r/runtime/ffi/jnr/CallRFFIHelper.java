@@ -902,18 +902,19 @@ public class CallRFFIHelper {
         if (expr instanceof RPromise) {
             result = RContext.getRRuntimeASTAccess().forcePromise(null, expr);
         } else if (expr instanceof RExpression) {
-            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, topLevel);
+            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, RCaller.topLevel);
         } else if (expr instanceof RLanguage) {
-            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, topLevel);
+            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, RCaller.topLevel);
         } else if (expr instanceof RPairList) {
             RPairList l = (RPairList) expr;
             RFunction f = (RFunction) l.car();
             Object args = l.cdr();
             if (args == RNull.instance) {
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, null, new Object[0]);
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, null, new Object[0]);
             } else {
                 RList argsList = ((RPairList) args).toRList();
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), topLevel, argsList.getNames(), argsList.getDataNonShared());
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, argsList.getNames(),
+                                argsList.getDataNonShared());
             }
 
         } else {
@@ -1165,18 +1166,20 @@ public class CallRFFIHelper {
         return x;
     }
 
-    private static RCaller topLevel = RCaller.createInvalid(null);
-
     public static Object getGlobalContext() {
+        Utils.warn("Potential memory leak (global context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalContext");
         }
         Frame frame = Utils.getActualCurrentFrame();
         if (frame == null) {
-            return topLevel;
+            return RCaller.topLevel;
+        }
+        if (RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser()) {
+            return RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller();
         }
         RCaller rCaller = RArguments.getCall(frame);
-        return rCaller == null ? topLevel : rCaller;
+        return rCaller == null ? RCaller.topLevel : rCaller;
     }
 
     public static Object getGlobalEnv() {
@@ -1249,6 +1252,7 @@ public class CallRFFIHelper {
     // Checkstyle: stop method name check
 
     public static Object R_getGlobalFunctionContext() {
+        Utils.warn("Potential memory leak (global function context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getGlobalFunctionContext");
         }
@@ -1258,26 +1262,28 @@ public class CallRFFIHelper {
         }
         RCaller currentCaller = RArguments.getCall(frame);
         while (currentCaller != null) {
-            if (!currentCaller.isPromise() && currentCaller.isValidCaller()) {
+            if (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller()) {
                 break;
             }
             currentCaller = currentCaller.getParent();
         }
-        return currentCaller == null || currentCaller == topLevel ? RNull.instance : currentCaller;
+        return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
 
     public static Object R_getParentFunctionContext(Object c) {
+        Utils.warn("Potential memory leak (parent function context object)");
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("getParentFunctionContext");
         }
         RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
         while (true) {
             currentCaller = currentCaller.getParent();
-            if (currentCaller == null || (!currentCaller.isPromise() && currentCaller.isValidCaller())) {
+            if (currentCaller == null ||
+                            (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller())) {
                 break;
             }
         }
-        return currentCaller == null || currentCaller == topLevel ? RNull.instance : currentCaller;
+        return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
 
     public static Object R_getContextEnv(Object c) {
@@ -1285,7 +1291,7 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("getContextEnv", c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
-        if (rCaller == topLevel) {
+        if (rCaller == RCaller.topLevel) {
             return RContext.getInstance().stateREnvironment.getGlobalEnv();
         }
         Frame frame = Utils.getActualCurrentFrame();
@@ -1313,7 +1319,7 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("getContextEnv", c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
-        if (rCaller == topLevel) {
+        if (rCaller == RCaller.topLevel) {
             return RNull.instance;
         }
         Frame frame = Utils.getActualCurrentFrame();
@@ -1341,27 +1347,10 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("getContextEnv", c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
-        if (rCaller == topLevel) {
+        if (rCaller == RCaller.topLevel) {
             return RNull.instance;
         }
-        Frame frame = Utils.getActualCurrentFrame();
-        if (RArguments.getCall(frame) == rCaller) {
-            return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
-        } else {
-            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
-
-                @Override
-                public Object apply(Frame f) {
-                    RCaller currentCaller = RArguments.getCall(f);
-                    if (currentCaller == rCaller) {
-                        return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
-                    } else {
-                        return null;
-                    }
-                }
-            });
-            return result;
-        }
+        return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
     }
 
     public static Object R_getContextSrcRef(Object c) {
@@ -1384,4 +1373,21 @@ public class CallRFFIHelper {
     public static int R_insideBrowser() {
         return RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser() ? 1 : 0;
     }
+
+    public static int R_isGlobal(Object c) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("isGlobal", c);
+        }
+        RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
+
+        return rCaller == RCaller.topLevel ? 1 : 0;
+    }
+
+    public static int R_isEqual(Object x, Object y) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("isEqual", x, y);
+        }
+        return x == y ? 1 : 0;
+    }
+
 }

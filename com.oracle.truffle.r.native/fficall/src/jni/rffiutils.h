@@ -46,10 +46,14 @@ void *unimplemented(char *msg);
 void fatalError(char *msg);
 // makes a call to the VM with x as an argument (for debugger validation)
 void validate(SEXP x);
-// checks x against the list of canonical (named) refs, returning the canonical version if a match
+// checks x against the list of global JNI refs, returning the global version if x matches (IsSameObject)
 SEXP checkRef(JNIEnv *env, SEXP x);
-// creates a canonical (named) JNI global ref from x
-SEXP mkNamedGlobalRef(JNIEnv *env, SEXP x);
+// creates a global JNI global ref from x. If permanent is non-zero, calls to
+// releaseGlobalRef are ignored and the global ref persists for the entire execution
+// (used for the R global variables such as R_NilValue).
+SEXP createGlobalRef(JNIEnv *env, SEXP x, int permanent);
+// release a previously created JNI global ref
+void releaseGlobalRef(JNIEnv *env, SEXP x);
 // validate a JNI reference
 void validateRef(JNIEnv *env, SEXP x, const char *msg);
 
@@ -60,6 +64,7 @@ void callExit(JNIEnv *env);
 // called by callExit to deallocate transient memory
 void allocExit();
 
+// returns the jmp_buf at the current call depth
 jmp_buf *getErrorJmpBuf();
 
 // Given the x denotes an R vector type, return a pointer to
@@ -68,6 +73,9 @@ void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
 // Rare case where an operation changes the internal
 // data and thus the old C array should be invalidated
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
+void updateNativeArrays(JNIEnv *env);
+
+SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
