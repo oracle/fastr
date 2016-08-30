@@ -38,7 +38,7 @@ public abstract class GetText extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("domain").asStringVector().findFirst("");
-        casts.arg("args").asStringVector();
+        casts.arg("args").allowNull().asStringVector();
     }
 
     @Specialization

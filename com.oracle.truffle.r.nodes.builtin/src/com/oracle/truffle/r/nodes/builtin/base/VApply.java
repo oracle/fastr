@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
@@ -93,7 +94,10 @@ public abstract class VApply extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("X").asVector();
         casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
-        casts.arg("FUN.VALUE").mapIf(anyValue(), chain(asVector(true)).with(mustBe(abstractVectorValue(), RError.SHOW_CALLER, true, RError.Message.MUST_BE_VECTOR, "FUN.VALUE")).end());
+        // casts.arg("FUN.VALUE").mapIf(anyValue(),
+        // chain(asVector(true)).with(mustBe(abstractVectorValue(), RError.SHOW_CALLER, true,
+        // RError.Message.MUST_BE_VECTOR, "FUN.VALUE")).end());
+        casts.arg("FUN.VALUE").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR, "FUN.VALUE").asVector(true).mustBe(abstractVectorValue());
         casts.arg("USE.NAMES").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "USE.NAMES").mustBe(stringValue().not()).asLogicalVector().findFirst();
     }
 

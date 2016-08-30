@@ -57,7 +57,7 @@ public abstract class ColonNode extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // These casts should not be custom, but they are very hard to get right in a generic way.
         // Also, the proper warnings cannot be produced at the moment.
-        casts.custom(0, ColonCastNodeGen.create()).custom(1, ColonCastNodeGen.create());
+        casts.custom(0, () -> ColonCastNodeGen.create()).custom(1, () -> ColonCastNodeGen.create());
     }
 
     private void naCheck(boolean na) {

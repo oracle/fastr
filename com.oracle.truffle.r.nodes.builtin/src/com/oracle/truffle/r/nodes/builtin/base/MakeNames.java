@@ -48,7 +48,7 @@ public abstract class MakeNames extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("names").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER_NAMES);
-        casts.arg("allow_").asLogicalVector().findFirst(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "allow_").mustBe(notLogicalNA(), RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "allow_");
+        casts.arg("allow_").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "allow_").asLogicalVector().findFirst().mustBe(notLogicalNA());
     }
 
     @TruffleBoundary

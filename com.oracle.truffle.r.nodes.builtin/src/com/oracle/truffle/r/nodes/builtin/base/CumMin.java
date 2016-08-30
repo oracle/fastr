@@ -47,7 +47,8 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(complexValue().not(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(), asDoubleVector());
+        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(),
+                        asDoubleVector());
     }
 
     @Specialization

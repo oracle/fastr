@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -72,7 +71,7 @@ public class IsTypeFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
+            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
         }
 
     }
@@ -476,7 +475,7 @@ public class IsTypeFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
+            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
             casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1));
         }
 

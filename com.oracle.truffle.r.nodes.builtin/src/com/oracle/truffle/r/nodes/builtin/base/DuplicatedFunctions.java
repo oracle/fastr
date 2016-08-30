@@ -11,7 +11,8 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyList;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -33,8 +34,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 public class DuplicatedFunctions {
@@ -47,7 +48,8 @@ public class DuplicatedFunctions {
 
         protected void casts(CastBuilder casts) {
             // these are similar to those in DuplicatedFunctions.java
-            casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS,
+            casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.SHOW_CALLER,
+                            RError.Message.APPLIES_TO_VECTORS,
                             "duplicated()").asVector();
             // not much more can be done for incomparables as it is either a vector of incomparable
             // values or a (single) logical value

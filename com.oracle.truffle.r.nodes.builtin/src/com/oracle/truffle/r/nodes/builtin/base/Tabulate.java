@@ -32,7 +32,7 @@ public abstract class Tabulate extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("bin").mustBe(integerValue(), RError.NO_CALLER, RError.Message.INVALID_INPUT).asIntegerVector();
+        casts.arg("bin").defaultError(RError.NO_CALLER, RError.Message.INVALID_INPUT).mustBe(integerValue()).asIntegerVector();
         casts.arg("nbins").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "nbin").asIntegerVector().findFirst().mustBe(gte(0));
     }
 

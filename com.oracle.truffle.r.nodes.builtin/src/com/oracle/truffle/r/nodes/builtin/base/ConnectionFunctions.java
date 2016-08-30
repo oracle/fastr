@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -156,7 +155,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static void nchars(CastBuilder casts) {
-            casts.arg("nchars").asIntegerVector().mustBe(nullValue().not().and(notEmpty()));
+            casts.arg("nchars").asIntegerVector().mustBe(notEmpty());
         }
 
         private static void useBytes(CastBuilder casts) {
@@ -252,9 +251,9 @@ public abstract class ConnectionFunctions {
             // TODO how to have either a RNull or a String/RStringVector and have the latter coerced
             // to a
             // RAbstractStringVector to avoid the explicit handling in the specialization
-            casts.arg("text").mustBe(nullValue().or(stringValue()));
+            casts.arg("text").allowNull().mustBe(stringValue());
             Casts.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
-            casts.arg("env").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("encoding").asIntegerVector().findFirst().notNA();
         }
 
@@ -529,7 +528,7 @@ public abstract class ConnectionFunctions {
     public abstract static class WriteLines extends InternalCloseHelper {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("text").asStringVector().mustBe(nullValue().not().and(instanceOf(RAbstractStringVector.class)));
+            casts.arg("text").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
             Casts.connection(casts);
             casts.arg("sep").asStringVector().findFirst();
             Casts.useBytes(casts);
@@ -572,7 +571,7 @@ public abstract class ConnectionFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("data").asStringVector().mustBe(nullValue().not().and(instanceOf(RAbstractStringVector.class)));
+            casts.arg("data").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
             Casts.connection(casts);
             casts.arg("newLine").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("type").asIntegerVector().findFirst();
@@ -660,7 +659,7 @@ public abstract class ConnectionFunctions {
             casts.arg("object").asStringVector();
             casts.arg("con").mustBe(instanceOf(RConnection.class).or(instanceOf(RAbstractRawVector.class)));
             Casts.nchars(casts);
-            casts.arg("sep").mustBe(stringValue().or(nullValue()));
+            casts.arg("sep").allowNull().mustBe(stringValue());
             Casts.useBytes(casts);
         }
 
@@ -997,7 +996,7 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             // TODO atomic, i.e. not RList or RExpression
-            casts.arg("object").asVector().mustBe(nullValue().not().and(instanceOf(RAbstractVector.class)));
+            casts.arg("object").asVector().mustBe(instanceOf(RAbstractVector.class));
             Casts.connection(casts);
             size(casts);
             swap(casts);

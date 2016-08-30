@@ -38,7 +38,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarIntegerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
@@ -199,6 +198,7 @@ public class TestCasts extends TestBase {
     public void testMapDefaultValue() {
         class Root extends TestRootNode<CastNode> {
 
+            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, new CastBuilder().arg(0).map(defaultValue("X")).builder().getCasts()[0]);
             }
@@ -346,7 +346,7 @@ public class TestCasts extends TestBase {
 
             @SuppressWarnings("deprecation")
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
                                 ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
                                 Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
             }
@@ -446,7 +446,7 @@ public class TestCasts extends TestBase {
 
             @SuppressWarnings("deprecation")
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(
+                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
                                 instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(),
                                                 asInteger()).builder().getCasts()[0]);
             }

@@ -27,9 +27,18 @@ import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import java.util.Collections;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefMappers;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class PredefMappersSamplers implements PredefMappers {
@@ -76,6 +85,11 @@ public final class PredefMappersSamplers implements PredefMappers {
     }
 
     @Override
+    public <T> ValuePredicateArgumentMapperSampler<T, RMissing> missingConstant() {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> RMissing.instance, null, null, RMissing.class);
+    }
+
+    @Override
     public <T> ValuePredicateArgumentMapperSampler<T, String> constant(String s) {
         return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> s, (String x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null,
                         String.class);
@@ -98,6 +112,37 @@ public final class PredefMappersSamplers implements PredefMappers {
     }
 
     @Override
+    public <T> ValuePredicateArgumentMapperSampler<T, RIntVector> emptyIntegerVector() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createEmptyIntVector(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RIntVector.class);
+    }
+
+    @Override
+    public <T> ValuePredicateArgumentMapper<T, RDoubleVector> emptyDoubleVector() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createEmptyDoubleVector(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RDoubleVector.class);
+    }
+
+    @Override
+    public <T> ValuePredicateArgumentMapper<T, RLogicalVector> emptyLogicalVector() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createEmptyLogicalVector(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RLogicalVector.class);
+    }
+
+    @Override
+    public <T> ValuePredicateArgumentMapper<T, RComplexVector> emptyComplexVector() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createEmptyComplexVector(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RComplexVector.class);
+    }
+
+    @Override
+    public <T> ValuePredicateArgumentMapper<T, RStringVector> emptyStringVector() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createEmptyStringVector(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RStringVector.class);
+    }
+
+    @Override
+    public <T> ValuePredicateArgumentMapper<T, RList> emptyList() {
+        return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createList(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RList.class);
+    }
+
+    @Override
+    @Deprecated
     public <T> ArgumentMapperSampler<T, T> defaultValue(T defVal) {
 
         assert (defVal != null);

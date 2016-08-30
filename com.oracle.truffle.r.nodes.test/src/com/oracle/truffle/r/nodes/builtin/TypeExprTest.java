@@ -34,7 +34,10 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.oracle.truffle.r.nodes.casts.CastUtils;
+import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeConjunction;
+import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -53,6 +56,22 @@ public class TypeExprTest {
                         atom(String.class).not().and(atom(Integer.class).not()).normalize());
         Assert.assertEquals(toSet(), atom(String.class).not().and(atom(String.class)).normalize());
         Assert.assertEquals(toSet(TypeConjunction.create(RAbstractIntVector.class, RAbstractStringVector.class)), atom(RAbstractIntVector.class).and(atom(RAbstractStringVector.class)).normalize());
+    }
+
+    @Test
+    public void testContains() {
+        TypeExpr te = atom(String.class).or(atom(RNull.class).not());
+        Assert.assertTrue(te.contains(String.class));
+        Assert.assertTrue(te.contains(Not.negateType(RNull.class)));
+        Assert.assertFalse(te.contains(RNull.class));
+    }
+
+    @Test
+    public void testNot() {
+        TypeExpr from = atom(String.class).or(atom(RNull.class).not());
+        Assert.assertFalse(CastUtils.Casts.existsConvertibleActualType(from, RNull.class, false));
+        Assert.assertTrue(CastUtils.Casts.existsConvertibleActualType(from, String.class, false));
+        Assert.assertTrue(CastUtils.Casts.existsConvertibleActualType(from, Integer.class, false));
     }
 
     private static Set<Type> toSet(Type... classes) {

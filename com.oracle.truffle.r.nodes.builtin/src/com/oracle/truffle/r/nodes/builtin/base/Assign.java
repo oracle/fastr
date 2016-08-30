@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -95,7 +94,7 @@ public abstract class Assign extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").asStringVector().shouldBe(singleElement(), RError.Message.ONLY_FIRST_VARIABLE_NAME).findFirst(RError.Message.INVALID_FIRST_ARGUMENT);
 
-        casts.arg("envir").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
+        casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
 
         // this argument could be made Boolean unless there were AssignFastPath relying upon the
         // byte argument

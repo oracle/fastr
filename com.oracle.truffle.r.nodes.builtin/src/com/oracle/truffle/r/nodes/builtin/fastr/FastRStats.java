@@ -62,7 +62,7 @@ public class FastRStats {
 
     private static final class Casts {
         private static void filename(CastBuilder casts) {
-            casts.arg("filename").mustBe(stringValue().or(nullValue())).asStringVector();
+            casts.arg("filename").allowNull().mustBe(stringValue()).asStringVector();
         }
 
         private static void append(CastBuilder casts) {

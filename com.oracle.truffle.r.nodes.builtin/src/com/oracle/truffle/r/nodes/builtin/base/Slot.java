@@ -39,7 +39,7 @@ public abstract class Slot extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0).asAttributable(true, true, true);
+        casts.arg(0).allowNull().asAttributable(true, true, true);
     }
 
     private String getName(Object nameObj) {

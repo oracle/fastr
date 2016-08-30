@@ -73,7 +73,7 @@ public abstract class Mapply extends RBuiltinNode {
         casts.arg("FUN").mustBe(instanceOf(RFunction.class));
         casts.arg("dots").mustBe(instanceOf(RAbstractListVector.class));
         // if we could map to an empty list, we could get rid of an additional specialization
-        casts.arg("MoreArgs").mustBe(nullValue().or(instanceOf(RAbstractListVector.class)));
+        casts.arg("MoreArgs").allowNull().mustBe(instanceOf(RAbstractListVector.class));
     }
 
     protected static final class ElementNode extends Node {

@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public final class Samples<T> {
 
     private static final Samples<?> ANYTHING = new Samples<>("anything", Collections.emptySet(), Collections.emptySet(), x -> true);
+    private static final Samples<?> NOTHING = new Samples<>("nothing", Collections.emptySet(), Collections.emptySet(), x -> false);
 
     @SuppressWarnings("unchecked")
     public static <T> Samples<T> anything() {
@@ -41,6 +42,11 @@ public final class Samples<T> {
 
     public static <T> Samples<T> anything(T x) {
         return new Samples<>("anything(" + x + ")", Collections.singleton(x), Collections.emptySet(), xx -> true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Samples<T> nothing() {
+        return (Samples<T>) NOTHING;
     }
 
     private final Set<? extends T> posSamples;

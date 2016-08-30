@@ -22,16 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -70,21 +64,17 @@ public class PrintFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("digits").mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(), false)).with(
-                            mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)), false)).end());
+            casts.arg("digits").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
 
             casts.arg("quote").asLogicalVector().findFirst().notNA().map(toBoolean());
 
-            casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).mapIf(nullValue().not(),
-                            chain(mustBe(stringValue(), false)).with(asStringVector()).with(findFirst().stringElement()).end());
+            casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
 
-            casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).mapIf(nullValue().not(),
-                            chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(),
-                                            false)).with(mustBe(gte(0), false)).end());
+            casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
 
             casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().notNA().map(toBoolean());
 
-            casts.arg("max").mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().integerElement()).with(mustBe(notIntNA(), false)).with(mustBe(gte(0), false)).end());
+            casts.arg("max").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
 
             casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().notNA().map(toBoolean());
 

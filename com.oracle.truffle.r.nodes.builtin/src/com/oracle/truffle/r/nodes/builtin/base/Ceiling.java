@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -48,7 +48,7 @@ public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(numericValue(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        casts.arg("x").mustNotBeNull(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).asDoubleVector();
     }
 
     @Override

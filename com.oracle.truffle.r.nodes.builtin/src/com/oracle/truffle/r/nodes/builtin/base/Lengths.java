@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
@@ -56,7 +55,7 @@ public abstract class Lengths extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(abstractVectorValue().or(nullValue()), X_LIST_ATOMIC);
+        casts.arg("x").defaultError(X_LIST_ATOMIC).allowNull().mustBe(abstractVectorValue());
         casts.arg("use.names").mustBe(numericValue(), INVALID_VALUE, "USE.NAMES").asLogicalVector().findFirst().map(toBoolean());
     }
 

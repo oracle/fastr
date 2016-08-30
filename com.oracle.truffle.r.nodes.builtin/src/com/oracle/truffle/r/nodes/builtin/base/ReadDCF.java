@@ -54,8 +54,8 @@ public abstract class ReadDCF extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("conn").mustBe(RConnection.class);
-        casts.arg("fields").mapIf(nullValue(), asVector(false)).asStringVector();
-        casts.arg("keepwhite").mapIf(nullValue(), asVector(false)).asStringVector();
+        casts.arg("fields").mapNull(emptyStringVector()).asStringVector();
+        casts.arg("keepwhite").mapNull(emptyStringVector()).asStringVector();
     }
 
     @Specialization

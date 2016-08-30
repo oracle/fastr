@@ -44,8 +44,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.ATTEMPT_TO_REPLICATE_NO_VECTOR);
         // with default error message, SHOW_CALLER does not work
-        casts.arg("length.out").asIntegerVector().mustBe(size(1), RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "length.out").findFirst(1).mustBe(notIntNA(), RError.SHOW_CALLER,
-                        RError.Message.INVALID_VALUE, "length.out");
+        casts.arg("length.out").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "length.out").asIntegerVector().mustBe(size(1)).findFirst().mustBe(notIntNA());
     }
 
     @Specialization

@@ -65,8 +65,8 @@ public abstract class RepeatInternal extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         Function<Object, Object> argType = this::argType;
         casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER2, RError.Message.ATTEMPT_TO_REPLICATE, argType);
-        casts.arg("times").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.INCORRECT_ARG_TYPE, "second").asIntegerVector().mustBe(notEmpty(), RError.SHOW_CALLER,
-                        RError.Message.INVALID_VALUE, "times");
+        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
+                        RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "times");
     }
 
     @FunctionalInterface

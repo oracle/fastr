@@ -24,16 +24,22 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.CastNodeFactory;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {
 
+    private final CastNodeFactory firstCastFact;
+    private final CastNodeFactory secondCastFact;
+
     @Child private CastNode firstCast;
     @Child private CastNode secondCast;
 
-    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
-        this.firstCast = firstCast;
-        this.secondCast = secondCast;
+    public ChainedCastNode(CastNodeFactory firstCastFact, CastNodeFactory secondCastFact) {
+        this.firstCastFact = firstCastFact;
+        this.secondCastFact = secondCastFact;
+        this.firstCast = firstCastFact.create();
+        this.secondCast = secondCastFact.create();
     }
 
     @Override
@@ -47,5 +53,13 @@ public final class ChainedCastNode extends CastNode {
 
     public CastNode getSecondCast() {
         return secondCast;
+    }
+
+    public CastNodeFactory getFirstCastFact() {
+        return firstCastFact;
+    }
+
+    public CastNodeFactory getSecondCastFact() {
+        return secondCastFact;
     }
 }

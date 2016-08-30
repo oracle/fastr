@@ -200,7 +200,7 @@ public class OptionsFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "x").asStringVector().findFirst();
+            casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "x").mustBe(stringValue()).asStringVector().findFirst();
         }
 
         @TruffleBoundary

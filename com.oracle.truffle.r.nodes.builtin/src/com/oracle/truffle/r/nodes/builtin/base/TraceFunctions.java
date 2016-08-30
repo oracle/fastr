@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -211,7 +209,7 @@ public class TraceFunctions {
     public abstract static class Tracemem extends TracememBase {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(nullValue().not(), Message.TRACEMEM_NOT_NULL);
+            casts.arg("x").mustNotBeNull(Message.TRACEMEM_NOT_NULL);
         }
 
         @Specialization
@@ -233,7 +231,7 @@ public class TraceFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").mustBe(stringValue().or(missingValue()));
+            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue());
         }
 
         @Specialization

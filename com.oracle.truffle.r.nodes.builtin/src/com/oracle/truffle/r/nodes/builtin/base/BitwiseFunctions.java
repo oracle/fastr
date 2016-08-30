@@ -142,8 +142,8 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).asIntegerVector();
-            casts.arg("b").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).asIntegerVector();
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -164,8 +164,8 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).asIntegerVector();
-            casts.arg("b").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).asIntegerVector();
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -185,8 +185,8 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).asIntegerVector();
-            casts.arg("b").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).asIntegerVector();
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -206,7 +206,7 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTR.name).asIntegerVector();
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
             casts.arg("n").mapIf(stringValue(), asStringVector(), asIntegerVector());
         }
 
@@ -234,8 +234,10 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).asIntegerVector();
-            casts.arg("n").mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, false, RError.Message.NA_INTRODUCED_COERCION)).end(), asIntegerVector());
+            casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).mustBe(
+                            doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("n").allowNull().mapIf(stringValue(),
+                            chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, false, RError.Message.NA_INTRODUCED_COERCION)).end(), asIntegerVector());
         }
 
         @Specialization
@@ -262,7 +264,7 @@ public class BitwiseFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("a").mustBe(doubleValue().or(integerValue()), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.NOT.name).asIntegerVector();
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.NOT.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization

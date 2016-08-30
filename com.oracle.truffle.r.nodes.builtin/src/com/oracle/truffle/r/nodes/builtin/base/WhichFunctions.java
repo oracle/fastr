@@ -135,7 +135,7 @@ public class WhichFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(0, "x").asDoubleVector(true, false, false);
+            casts.arg(0, "x").allowNull().asDoubleVector(true, false, false);
         }
 
         @Specialization

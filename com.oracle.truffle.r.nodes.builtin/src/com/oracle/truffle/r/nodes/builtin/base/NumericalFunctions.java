@@ -64,7 +64,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_MATH);
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue()));
         }
 
         @Override
@@ -107,7 +107,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
         }
 
         @Override
@@ -150,7 +150,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
         }
 
         @Override
@@ -193,7 +193,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
         }
 
         @Override
@@ -226,7 +226,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
         }
 
         @Override
@@ -269,7 +269,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(numericValue(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+            casts.arg("x").defaultError(RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue());
         }
 
         @Override
@@ -298,7 +298,7 @@ public class NumericalFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+            casts.arg("x").defaultError(RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue().or(complexValue()));
         }
 
         @Override

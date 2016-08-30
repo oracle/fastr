@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -45,8 +45,8 @@ public abstract class Complex extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("length.out").asIntegerVector().findFirst(Message.INVALID_LENGTH);
-        casts.arg("real").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
-        casts.arg("imaginary").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
+        casts.arg("real").mapNull(emptyDoubleVector()).asDoubleVector();
+        casts.arg("imaginary").mapNull(emptyDoubleVector()).asDoubleVector();
     }
 
     @Specialization

@@ -115,16 +115,19 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
 
     @Override
     public TypeExpr resultTypes(TypeExpr inputType) {
+        TypeExpr rt;
         if (elementClass == null || elementClass == Object.class) {
             if (inputType.isAnything()) {
-                return TypeExpr.atom(RAbstractVector.class).not();
+                rt = TypeExpr.atom(RAbstractVector.class).not();
             } else {
                 Set<Type> resTypes = inputType.classify().stream().map(c -> CastUtils.elementType(c)).collect(Collectors.toSet());
-                return TypeExpr.union(resTypes);
+                rt = TypeExpr.union(resTypes);
             }
         } else {
-            return TypeExpr.atom(elementClass);
+            rt = TypeExpr.atom(elementClass);
         }
+
+        return rt;
     }
 
 }

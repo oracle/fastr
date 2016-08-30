@@ -53,8 +53,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -104,9 +104,9 @@ public abstract class Parse extends RBuiltinNode {
         // Note: string is captured by the R wrapper and transformed to a file, other types not
         casts.arg("conn").mustBe(RConnection.class, MUST_BE_STRING_OR_CONNECTION, "file");
         casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).mapIf(RRuntime::isNA, constant(-1));
-        casts.arg("text").mapIf(nullValue().not(), asStringVector());
+        casts.arg("text").allowNull().asStringVector();
         casts.arg("prompt").asStringVector().findFirst("?");
-        casts.arg("encoding").mustBe(nullValue().not().and(stringValue())).asStringVector().findFirst();
+        casts.arg("encoding").mustBe(stringValue()).asStringVector().findFirst();
     }
 
     @TruffleBoundary

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -70,7 +69,7 @@ public abstract class Matrix extends RBuiltinNode {
         casts.arg("nrow").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
         casts.arg("ncol").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
         casts.arg("byrow").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("dimnames").mustBe(nullValue().or(instanceOf(RAbstractListVector.class)));
+        casts.arg("dimnames").allowNull().mustBe(instanceOf(RAbstractListVector.class));
         casts.arg("missingNr").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("missingNc").asLogicalVector().findFirst().map(toBoolean());
     }

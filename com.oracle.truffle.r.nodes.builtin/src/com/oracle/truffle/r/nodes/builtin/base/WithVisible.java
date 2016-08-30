@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -51,7 +50,7 @@ public abstract class WithVisible extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "x");
+        casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_MISSING, "x");
     }
 
     @Specialization

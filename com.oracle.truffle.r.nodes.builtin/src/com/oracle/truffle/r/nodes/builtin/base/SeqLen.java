@@ -44,8 +44,8 @@ public abstract class SeqLen extends RBuiltinNode {
         // seq_len(c("7", "b"))
         // GNU R (presumably) gets the first element before doing a coercion but I don't think we
         // can do it with our API
-        casts.arg("length.out").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA).mustBe(gte(0),
-                        RError.Message.MUST_BE_COERCIBLE_INTEGER);
+        casts.arg("length.out").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
+                        RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(gte(0), RError.Message.MUST_BE_COERCIBLE_INTEGER);
     }
 
     @Specialization

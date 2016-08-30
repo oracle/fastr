@@ -58,14 +58,6 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
-    public <T, R extends T> TypePredicateArgumentFilterSampler<T, R> nullValue() {
-        // return TypePredicateArgumentFilterSampler.fromLambda(x -> x == RNull.instance || x ==
-        // null, CastUtils.<R> samples(null), CastUtils.<R> samples(), RNull.class);
-        return new TypePredicateArgumentFilterSampler<>("nullValue()", x -> x == RNull.instance || x == null, CastUtils.<R> samples(null), CastUtils.<R> samples(), Collections.singleton(RNull.class),
-                        true);
-    }
-
-    @Override
     public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> notEmpty() {
         return new VectorPredicateArgumentFilterSampler<>("notEmpty()", x -> x.getLength() > 0, false, 0);
     }
@@ -322,11 +314,6 @@ public final class PredefFiltersSamplers implements PredefFilters {
     @Override
     public TypePredicateArgumentFilterSampler<Object, RComplex> scalarComplexValue() {
         return TypePredicateArgumentFilterSampler.fromLambda(x -> x instanceof RComplex, RComplex.class);
-    }
-
-    @Override
-    public TypePredicateArgumentFilterSampler<Object, RMissing> missingValue() {
-        return TypePredicateArgumentFilterSampler.fromLambda(x -> RMissing.instance == x, RMissing.class);
     }
 
     private static String sampleString(int len) {

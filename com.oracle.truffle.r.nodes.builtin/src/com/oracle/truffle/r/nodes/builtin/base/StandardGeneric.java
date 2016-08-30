@@ -92,7 +92,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         casts.arg("f").defaultError(RError.Message.GENERIC, "argument to 'standardGeneric' must be a non-empty character string").mustBe(
                         stringValue()).asStringVector().findFirst().mustBe(lengthGt(0));
         Function<Object, Object> argClass = this::argClass;
-        casts.arg("fdef").asAttributable(true, true, true).mustBe(missingValue().or(instanceOf(RFunction.class)), RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass);
+        casts.arg("fdef").defaultError(RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass).allowMissing().asAttributable(true, true, true).mustBe(instanceOf(RFunction.class));
     }
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {
