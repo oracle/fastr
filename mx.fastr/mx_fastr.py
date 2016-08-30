@@ -507,6 +507,8 @@ class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
+import mx_fastr_mkgramrd
+
 _commands = {
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
@@ -529,6 +531,7 @@ _commands = {
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
+    'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

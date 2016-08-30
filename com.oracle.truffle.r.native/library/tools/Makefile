@@ -24,12 +24,23 @@
 OBJ = lib
 
 GNUR_C_FILES = init.c
+GRAMRD_C = gramRd.c
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o))
 
+LIB_PKG_PRE = $(SRC)/$(GRAMRD_C)
+
+CLEAN_PKG = rm_gramRd
+
 include ../lib.mk
+
+$(SRC)/$(GRAMRD_C): $(GNUR_SRC)/$(GRAMRD_C)
+	mx mkgramrd $(GNUR_SRC)/$(GRAMRD_C) $(SRC)/$(GRAMRD_C)
 
 $(C_OBJECTS): | $(OBJ)
 
 $(OBJ)/%.o: $(GNUR_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+rm_gramRd:
+	rm -f $(SRC)/$(GRAMRD_C)
