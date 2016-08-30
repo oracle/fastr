@@ -41,6 +41,7 @@ suite = {
   "repositories" : {
     "snapshots" : {
         "url" : "https://FASTR_SNAPSHOT_HOST/nexus/content/repositories/snapshots",
+        "licenses" : ["GPLv2"]
     }
   },
 
