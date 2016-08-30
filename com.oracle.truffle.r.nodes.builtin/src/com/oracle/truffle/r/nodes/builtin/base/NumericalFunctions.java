@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RDispatch.COMPLEX_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -58,6 +60,11 @@ public class NumericalFunctions {
 
         public Abs() {
             super(RType.Integer, RError.Message.NON_NUMERIC_MATH, null);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_MATH);
         }
 
         @Override
@@ -99,6 +106,11 @@ public class NumericalFunctions {
         }
 
         @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        }
+
+        @Override
         public RType calculateResultType(RType argumentType) {
             switch (argumentType) {
                 case Complex:
@@ -134,6 +146,11 @@ public class NumericalFunctions {
 
         public Im() {
             super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Override
@@ -175,6 +192,11 @@ public class NumericalFunctions {
         }
 
         @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        }
+
+        @Override
         public int op(byte op) {
             return op;
         }
@@ -200,6 +222,11 @@ public class NumericalFunctions {
 
         public Mod() {
             super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("z").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Override
@@ -241,6 +268,11 @@ public class NumericalFunctions {
         }
 
         @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(numericValue(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+        }
+
+        @Override
         public int op(byte op) {
             return op == RRuntime.LOGICAL_TRUE ? 1 : 0;
         }
@@ -262,6 +294,11 @@ public class NumericalFunctions {
 
         public Sqrt() {
             super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
 
         @Override
