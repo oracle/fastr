@@ -56,15 +56,6 @@ static int Rconn_fgetc(Rconnection con) {
     return -1;
 }
 
-extern JNIEnv *getEnv();
-static jmethodID getcMethodID;
-
-'''
-
-    fastr_getc = '''
-    JNIEnv *env = getEnv();
-    jclass klass = (*env)->FindClass(env, "com/oracle/truffle/r/runtime/conn/RConnection");
-    getcMethodID = (*env)->GetMethodID(env, klass, "getc", "()I");
 '''
 
     c_parserd = '''
@@ -123,17 +114,13 @@ SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename
             elif '#include <Rmath.h>' in sline:
                 line = '//' + line
                 f.write(line)
-                f.write('#include <jni.h>\n')
+                f.write('#include "gramRd_fastr.h"\n')
             elif sline == '#include "Rconnections.h"':
                 line = '//' + line
                 f.write(line)
                 f.write(connect_defs)
             elif 'c = Rconn_fgetc(con_parse);' in sline:
-                f.write('    JNIEnv *env = getEnv();\n')
-                f.write('    c = (*env)->CallIntMethod(env, con_parse, getcMethodID, con_parse);\n')
-            elif 'ptr_getc = con_getc;' in line:
-                f.write(fastr_getc)
-                f.write(line)
+                f.write('    c = callGetCMethod(con_parse);\n')
             elif sline == 'static void con_cleanup(void *data)':
                 # skip
                 i = i + 5

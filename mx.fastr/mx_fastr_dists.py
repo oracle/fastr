@@ -91,7 +91,7 @@ class DelFastRNativeProject(FastRProjectAdapter):
         gnur_tools_src = join(gnur, 'src', 'library', 'tools', 'src')
         for f in ['gramRd.c', 'init.c', 'tools.h']:
             results.append(join(self.dir, gnur_tools_src, f))
-        for f in ['lib.mk', 'Makefile', 'tools/src/tools_dummy.c', 'tools/Makefile']:
+        for f in ['lib.mk', 'Makefile', 'tools/src/tools_dummy.c', 'tools/src/gramRd_fastr.h', 'tools/Makefile']:
             results.append(join(self.dir, 'library', f))
 
         # selected headers from GNU R source
