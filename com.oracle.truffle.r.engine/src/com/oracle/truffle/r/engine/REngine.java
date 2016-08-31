@@ -321,6 +321,7 @@ final class REngine implements Engine, Engine.Timings {
 
         PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection) {
             super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
+            // can't print if initializing the system in embedded mode (no builtins yet)
             this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string);
             this.statements = statements;
         }
