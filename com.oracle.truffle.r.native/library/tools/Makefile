@@ -25,22 +25,26 @@ OBJ = lib
 
 GNUR_C_FILES = init.c
 GRAMRD_C = gramRd.c
+GRAMRD_OBJ := $(addprefix $(OBJ)/, gramRd.o)
 
-GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o))
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o)) $(GRAMRD_OBJ)
 
-LIB_PKG_PRE = $(SRC)/$(GRAMRD_C)
+LIB_PKG_PRE = $(GRAMRD_OBJ)
 
 CLEAN_PKG = rm_gramRd
 
 include ../lib.mk
 
-$(SRC)/$(GRAMRD_C): $(GNUR_SRC)/$(GRAMRD_C)
-	mx mkgramrd $(GNUR_SRC)/$(GRAMRD_C) $(SRC)/$(GRAMRD_C)
+# in case already generated
+C_OBJECTS := $(filter-out $(GRAMRD_OBJ), $(C_OBJECTS))
 
 $(C_OBJECTS): | $(OBJ)
+
+$(SRC)/gramRd.c: $(GNUR_SRC)/gramRd.c
+	mx mkgramrd $(GNUR_SRC)/gramRd.c $(SRC)/gramRd.c
 
 $(OBJ)/%.o: $(GNUR_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 rm_gramRd:
-	rm -f $(SRC)/$(GRAMRD_C)
+	rm -f $(SRC)/gramRd.c
