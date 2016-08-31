@@ -335,7 +335,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
-    protected RRawVector pMinMaxRaw(Object naRm, RArgsValuesAndNames args) {
+    protected RRawVector pMinMaxRaw(Object naRm, Object args) {
         throw RError.error(NO_CALLER, RError.Message.INVALID_INPUT_TYPE);
     }
 
