@@ -111,7 +111,7 @@ public abstract class REnvironment extends RAttributeStorage {
         return implicitClass;
     }
 
-    public static class ContextStateImpl implements RContext.ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         private SearchPath searchPath;
         private final MaterializedFrame globalFrame;
         private Base baseEnv;
