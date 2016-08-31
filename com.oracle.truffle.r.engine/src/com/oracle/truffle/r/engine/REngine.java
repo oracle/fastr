@@ -299,17 +299,30 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
         List<RSyntaxNode> statements = parseImpl(null, source);
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements));
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(statements)));
+    }
+
+    private static SourceSection createSourceSection(List<RSyntaxNode> statements) {
+        // All statements come from the same "Source"
+        if (statements.size() == 1) {
+            return statements.get(0).getSourceSection();
+        } else {
+            Source source = statements.get(0).getSourceSection().getSource();
+            return source.createSection(0, statements.get(statements.size() - 1).getSourceSection().getCharEndIndex());
+        }
     }
 
     private final class PolyglotEngineRootNode extends RootNode {
 
         private final List<RSyntaxNode> statements;
+        private final boolean printResult;
 
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineRootNode(List<RSyntaxNode> statements) {
-            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", RSource.Internal.REPL_WRAPPER.string), new FrameDescriptor());
+        PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection) {
+            super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
+            // can't print if initializing the system in embedded mode (no builtins yet)
+            this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string);
             this.statements = statements;
         }
 
@@ -327,7 +340,7 @@ final class REngine implements Engine, Engine.Timings {
                 Object lastValue = RNull.instance;
                 for (int i = 0; i < statements.size(); i++) {
                     RSyntaxNode node = statements.get(i);
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, true, true);
+                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true);
                     lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
                 }
                 return lastValue;
