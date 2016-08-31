@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.VectorPredicateArgumentFilter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -99,6 +100,26 @@ public final class PredefFiltersSamplers implements PredefFilters {
     @Override
     public VectorPredicateArgumentFilterSampler<RAbstractLogicalVector> elementAt(int index, byte value) {
         return new VectorPredicateArgumentFilterSampler<>("elementAt", x -> index < x.getLength() && value == (byte) (x.getDataAtAsObject(index)), false, 0, index);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> matrix() {
+        return new VectorPredicateArgumentFilterSampler<>("matrix", x -> x.isMatrix(), false);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> squareMatrix() {
+        return new VectorPredicateArgumentFilterSampler<>("squareMatrix", x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1], false, 3);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> dimEq(int dim, int x) {
+        return new VectorPredicateArgumentFilterSampler<>("dimGt", v -> v.isMatrix() && v.getDimensions().length == dim && v.getDimensions()[dim] > x, false, dim - 1);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> dimGt(int dim, int x) {
+        return new VectorPredicateArgumentFilterSampler<>("dimGt", v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] > x, false, dim - 1);
     }
 
     @Override

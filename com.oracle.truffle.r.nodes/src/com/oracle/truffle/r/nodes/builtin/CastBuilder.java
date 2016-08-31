@@ -252,6 +252,14 @@ public final class CastBuilder {
 
         VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value);
 
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix();
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix();
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x);
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x);
+
         ValuePredicateArgumentFilter<Boolean> trueValue();
 
         ValuePredicateArgumentFilter<Boolean> falseValue();
@@ -402,6 +410,26 @@ public final class CastBuilder {
         @Override
         public VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value) {
             return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (byte) (x.getDataAtAsObject(index)), false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix() {
+            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix(), false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix() {
+            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1], false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x) {
+            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] == x, false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x) {
+            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] > x, false);
         }
 
         @Override
@@ -719,6 +747,18 @@ public final class CastBuilder {
             return predefMappers;
         }
 
+        public static <T> ArgumentValueFilter<T> not(ArgumentValueFilter<T> filter) {
+            return filter.not();
+        }
+
+        public static <T> ArgumentValueFilter<T> and(ArgumentValueFilter<T> filter1, ArgumentValueFilter<T> filter2) {
+            return filter1.and(filter2);
+        }
+
+        public static <T> ArgumentValueFilter<T> or(ArgumentValueFilter<T> filter1, ArgumentValueFilter<T> filter2) {
+            return filter1.or(filter2);
+        }
+
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
             return phaseBuilder -> FilterNode.create(argFilter, false, callObj, message, messageArgs, boxPrimitives);
         }
@@ -900,6 +940,22 @@ public final class CastBuilder {
 
         public static VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value) {
             return predefFilters().elementAt(index, value);
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix() {
+            return predefFilters().matrix();
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix() {
+            return predefFilters().squareMatrix();
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x) {
+            return predefFilters().dimEq(dim, x);
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x) {
+            return predefFilters().dimGt(dim, x);
         }
 
         public static ValuePredicateArgumentFilter<Boolean> trueValue() {
@@ -1520,9 +1576,13 @@ public final class CastBuilder {
             return asDoubleVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
-            state().castBuilder().toLogical(state().index());
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            state().castBuilder().insert(state().index(), CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
             return state().factory.newCoercedPhaseBuilder(this, Byte.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector() {
+            return asLogicalVector(false, false, false);
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
