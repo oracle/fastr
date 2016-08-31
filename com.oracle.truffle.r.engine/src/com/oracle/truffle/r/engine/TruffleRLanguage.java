@@ -77,13 +77,13 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RVersionInfo.initialize();
             TempPathName.initialize();
             RPackageSource.initialize();
-            RContext.initialize(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
+
         } catch (Throwable t) {
             Utils.rSuicide("error during R language initialization");
         }
     }
 
-    private static boolean initialized;
+    private static boolean systemInitialized;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
@@ -98,12 +98,20 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    protected RContext createContext(Env env) {
-        boolean initialContext = !initialized;
-        if (!initialized) {
+    protected void initializeContext(RContext context) throws Exception {
+        if (!systemInitialized) {
             FastROptions.initialize();
             initialize();
-            initialized = true;
+            systemInitialized = true;
+        }
+        context.initializeContext();
+    }
+
+    @Override
+    protected RContext createContext(Env env) {
+        boolean initialContext = !systemInitialized;
+        if (initialContext) {
+            RContext.initializeGlobalState(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         }
         RContext result = RContext.create(env, env.lookup(Instrumenter.class), initialContext);
         return result;

@@ -100,7 +100,7 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
  * <p>
  * The logic for implementing the three different forms of
  * {@link com.oracle.truffle.r.runtime.context.RContext.ContextKind} is encapsulated in the
- * {@link #createContext} method.
+ * {@link #setupContext} method.
  */
 public abstract class REnvironment extends RAttributeStorage {
 
@@ -118,15 +118,18 @@ public abstract class REnvironment extends RAttributeStorage {
         private REnvironment namespaceRegistry;
         private MaterializedFrame parentGlobalFrame; // SHARED_PARENT_RW only
 
-        ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath) {
+        private ContextStateImpl(MaterializedFrame globalFrame) {
             this.globalFrame = globalFrame;
-            this.searchPath = searchPath;
         }
 
-        ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath, Base baseEnv, REnvironment namespaceRegistry) {
-            this(globalFrame, searchPath);
-            this.baseEnv = baseEnv;
-            this.namespaceRegistry = namespaceRegistry;
+        private void initialize(SearchPath searchPathA) {
+            this.searchPath = searchPathA;
+        }
+
+        private void initialize(SearchPath searchPathA, Base baseEnvA, REnvironment namespaceRegistryA) {
+            this.searchPath = searchPathA;
+            this.baseEnv = baseEnvA;
+            this.namespaceRegistry = namespaceRegistryA;
         }
 
         public REnvironment getGlobalEnv() {
@@ -166,12 +169,19 @@ public abstract class REnvironment extends RAttributeStorage {
         }
 
         @Override
+        public RContext.ContextState initialize(RContext context) {
+            setupContext(this, context, globalFrame);
+            return this;
+
+        }
+
+        @Override
         public void beforeDestroy(RContext context) {
             beforeDestroyContext(context, this);
         }
 
-        public static ContextStateImpl newContext(RContext context) {
-            return createContext(context, RRuntime.createNonFunctionFrame("global"));
+        public static ContextStateImpl newContextState() {
+            return new ContextStateImpl(RRuntime.createNonFunctionFrame("global"));
         }
     }
 
@@ -311,7 +321,7 @@ public abstract class REnvironment extends RAttributeStorage {
      * N.B. {@link RContext#stateREnvironment} accesses the new, as yet uninitialized
      * {@link ContextStateImpl} object
      */
-    private static ContextStateImpl createContext(RContext context, MaterializedFrame globalFrame) {
+    private static void setupContext(ContextStateImpl contextState, RContext context, MaterializedFrame globalFrame) {
         switch (context.getKind()) {
             case SHARE_PARENT_RW: {
                 /*
@@ -331,9 +341,9 @@ public abstract class REnvironment extends RAttributeStorage {
                 SearchPath searchPath = initSearchList(prevGlobalEnv);
                 searchPath.updateGlobal(newGlobalEnv);
                 parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
-                ContextStateImpl result = new ContextStateImpl(globalFrame, searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
-                result.parentGlobalFrame = prevGlobalFrame;
-                return result;
+                contextState.initialize(searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
+                contextState.parentGlobalFrame = prevGlobalFrame;
+                break;
             }
 
             case SHARE_PARENT_RO: {
@@ -359,12 +369,14 @@ public abstract class REnvironment extends RAttributeStorage {
                 newNamespaceRegistry.safePut("base", newBaseEnv.namespaceEnv);
                 newBaseEnv.safePut(".GlobalEnv", newGlobalEnv);
                 SearchPath newSearchPath = initSearchList(newGlobalEnv);
-                return new ContextStateImpl(globalFrame, newSearchPath, newBaseEnv, newNamespaceRegistry);
+                contextState.initialize(newSearchPath, newBaseEnv, newNamespaceRegistry);
+                break;
             }
 
             case SHARE_NOTHING: {
                 // SHARE_NOTHING: baseInitialize takes care of everything
-                return new ContextStateImpl(globalFrame, new SearchPath());
+                contextState.initialize(new SearchPath());
+                break;
             }
 
             default:

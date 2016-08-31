@@ -51,25 +51,27 @@ public class StdConnections {
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
-        private final StdinConnection stdin;
-        private final StdoutConnection stdout;
-        private final StderrConnection stderr;
+        private StdinConnection stdin;
+        private StdoutConnection stdout;
+        private StderrConnection stderr;
         private final Diversion[] diversions = new Diversion[20];
         private int top = -1;
 
-        private ContextStateImpl(StdinConnection stdin, StdoutConnection stdout, StderrConnection stderr) {
-            this.stdin = stdin;
-            this.stdout = stdout;
-            this.stderr = stderr;
+        public static ContextStateImpl newContextState() {
+            return new ContextStateImpl();
         }
 
-        public static ContextStateImpl newContext(RContext context) {
+        @Override
+        public RContext.ContextState initialize(RContext context) {
             ConsoleHandler consoleHandler = context.getConsoleHandler();
             try {
-                return new ContextStateImpl(new StdinConnection(), new StdoutConnection(consoleHandler), new StderrConnection(consoleHandler));
+                stdin = new StdinConnection();
+                stdout = new StdoutConnection(consoleHandler);
+                stderr = new StderrConnection(consoleHandler);
             } catch (IOException ex) {
                 throw Utils.rSuicide("failed to open stdconnections:");
             }
+            return this;
         }
     }
 

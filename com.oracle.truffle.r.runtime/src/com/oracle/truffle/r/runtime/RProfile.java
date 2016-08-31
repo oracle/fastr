@@ -38,7 +38,14 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 public final class RProfile implements RContext.ContextState {
 
-    private RProfile(RContext context, REnvVars envVars) {
+    private final REnvVars envVars;
+
+    private RProfile(REnvVars envVars) {
+        this.envVars = envVars;
+    }
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
         Source newSiteProfile = null;
@@ -77,10 +84,11 @@ public final class RProfile implements RContext.ContextState {
         }
         siteProfile = newSiteProfile;
         userProfile = newUserProfile;
+        return this;
     }
 
-    private final Source siteProfile;
-    private final Source userProfile;
+    private Source siteProfile;
+    private Source userProfile;
 
     public static Source systemProfile() {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
@@ -108,7 +116,7 @@ public final class RProfile implements RContext.ContextState {
         }
     }
 
-    public static RProfile newContext(RContext context, REnvVars envVars) {
-        return new RProfile(context, envVars);
+    public static RProfile newContextState(REnvVars envVars) {
+        return new RProfile(envVars);
     }
 }

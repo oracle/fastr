@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * choice of factory is made by the R engine and set here by the call to {@link #setRFFIFactory}.
  *
  * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link #newContext(RContext)} method. However, since we don't know exactly which
+ * must support the {@link #newContextState()} method. However, since we don't know exactly which
  * factory will be used, {@link RContext} references the {@link RFFIContextStateFactory} class.
  */
 public abstract class RFFIFactory {
@@ -110,5 +110,5 @@ public abstract class RFFIFactory {
         throw Utils.rSuicide(ffi + " FFI not implemented");
     }
 
-    public abstract ContextState newContext(RContext context);
+    public abstract ContextState newContextState();
 }

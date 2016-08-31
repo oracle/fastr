@@ -45,7 +45,11 @@ public final class REnvVars implements RContext.ContextState {
 
     private final Map<String, String> envVars = new HashMap<>(System.getenv());
 
-    private REnvVars(RContext context) {
+    private REnvVars() {
+    }
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
         // set the standard vars defined by R
         String rHome = System.getenv("R_HOME");
         // Always read the system file
@@ -101,10 +105,11 @@ public final class REnvVars implements RContext.ContextState {
                 System.setProperty("http.proxyPort", port);
             }
         }
+        return this;
     }
 
-    public static REnvVars newContext(RContext context) {
-        return new REnvVars(context);
+    public static REnvVars newContextState() {
+        return new REnvVars();
     }
 
     private String getEitherCase(String var) {

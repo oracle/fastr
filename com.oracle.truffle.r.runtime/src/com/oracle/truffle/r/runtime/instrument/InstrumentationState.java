@@ -278,7 +278,7 @@ public final class InstrumentationState implements RContext.ContextState {
         return debugGloballyDisabled;
     }
 
-    public static InstrumentationState newContext(@SuppressWarnings("unused") RContext context, Instrumenter instrumenter) {
+    public static InstrumentationState newContextState(Instrumenter instrumenter) {
         return new InstrumentationState(instrumenter);
     }
 }

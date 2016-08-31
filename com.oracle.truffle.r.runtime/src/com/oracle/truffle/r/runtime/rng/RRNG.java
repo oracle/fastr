@@ -128,11 +128,19 @@ public class RRNG {
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
 
-        private ContextStateImpl(RandomNumberGenerator rng, NormKind currentNormKind) {
-            this.currentGenerator = rng;
-            this.currentNormKind = currentNormKind;
+        private ContextStateImpl() {
+            this.currentNormKind = DEFAULT_NORM_KIND;
             this.allGenerators = new RandomNumberGenerator[Kind.VALUES.length];
+        }
+
+        @Override
+        public RContext.ContextState initialize(RContext context) {
+            int seed = timeToSeed();
+            RandomNumberGenerator rng = DEFAULT_KIND.create();
+            initGenerator(rng, seed);
+            this.currentGenerator = rng;
             this.allGenerators[rng.getKind().ordinal()] = rng;
+            return this;
         }
 
         /*
@@ -180,11 +188,8 @@ public class RRNG {
             }
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
-            int seed = timeToSeed();
-            RandomNumberGenerator rng = DEFAULT_KIND.create();
-            initGenerator(rng, seed);
-            return new ContextStateImpl(rng, DEFAULT_NORM_KIND);
+        public static ContextStateImpl newContextState() {
+            return new ContextStateImpl();
         }
 
     }
