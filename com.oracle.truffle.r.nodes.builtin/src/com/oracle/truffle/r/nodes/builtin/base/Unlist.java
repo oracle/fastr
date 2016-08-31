@@ -176,7 +176,7 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
-    protected Object unlist(Object o, boolean recursive, boolean useNames) {
+    protected Object unlist(Object o, Object recursive, Object useNames) {
         return o;
     }
 
