@@ -1364,7 +1364,8 @@ public class CallRFFIHelper {
             RFunction f = (RFunction) o;
             SourceSection ss = f.getRootNode().getSourceSection();
             String path = ss.getSource().getPath();
-            return RSrcref.createLloc(ss, path);
+            // TODO: is it correct to pass "" if path is null?
+            return RSrcref.createLloc(ss, path == null ? "" : path);
 
         }
 
