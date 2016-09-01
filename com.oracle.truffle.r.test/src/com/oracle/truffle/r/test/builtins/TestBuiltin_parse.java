@@ -31,6 +31,7 @@ public class TestBuiltin_parse extends TestBase {
     @Test
     public void testParseVector() {
         assertEval("parse(text=deparse(c(1, 2, 3)))");
+        assertEval("{ parse(text=c(\"for (i in 1:10) {\", \"    x[i] <- i\", \"}\")) }");
     }
 
     @Test
