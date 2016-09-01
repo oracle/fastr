@@ -23,9 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RError.Message.MUST_BE_STRING_OR_CONNECTION;
@@ -106,14 +104,14 @@ public abstract class Parse extends RBuiltinNode {
         // Note: string is captured by the R wrapper and transformed to a file, other types not
         casts.arg("conn").mustBe(RConnection.class, MUST_BE_STRING_OR_CONNECTION, "file");
         casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).mapIf(RRuntime::isNA, constant(-1));
-        casts.arg("text").mapIf(nullValue().not(), chain(asStringVector()).with(findFirst().stringElement()).end());
+        casts.arg("text").mapIf(nullValue().not(), asStringVector());
         casts.arg("prompt").asStringVector().findFirst("?");
         casts.arg("encoding").mustBe(nullValue().not().and(stringValue())).asStringVector().findFirst();
     }
 
     @TruffleBoundary
     @Specialization
-    protected Object parse(RConnection conn, int n, RNull text, String prompt, Object srcFile, String encoding) {
+    protected Object parse(RConnection conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
         String[] lines;
         if (conn == StdConnections.getStdin()) {
             throw RError.nyi(this, "parse from stdin not implemented");
@@ -132,6 +130,7 @@ public abstract class Parse extends RBuiltinNode {
         return doParse(conn, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
     }
 
+    @SuppressWarnings("unused")
     private Object doParse(RConnection conn, int n, String[] lines, String prompt, Object srcFile, String encoding) {
         String coalescedLines = coalesce(lines);
         if (coalescedLines.length() == 0 || n == 0) {
@@ -140,7 +139,7 @@ public abstract class Parse extends RBuiltinNode {
         try {
             Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
             RExpression exprs = RContext.getEngine().parse(null, source);
-            if (n > 0 && n > exprs.getLength()) {
+            if (n > 0 && n < exprs.getLength()) {
                 RList list = exprs.getList();
                 Object[] listData = list.getDataCopy();
                 Object[] subListData = new Object[n];
