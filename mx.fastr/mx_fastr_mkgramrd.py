@@ -126,7 +126,7 @@ SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename
                 i = i + 5
             elif '.External2(C_parseRd' in sline:
                 f.write(line)
-                f.write(c_parserd);
+                f.write(c_parserd)
                 break
             else:
                 f.write(line)
