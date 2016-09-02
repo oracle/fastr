@@ -128,7 +128,7 @@ public class MethodsListDispatch {
 
         @SuppressWarnings("unused")
         @Fallback
-        protected Object callGetClassFromCache(Object klass, REnvironment table) {
+        protected Object callGetClassFromCache(Object klass, Object table) {
             throw RError.error(this, RError.Message.GENERIC, "class should be either a character-string name or a class definition");
         }
     }

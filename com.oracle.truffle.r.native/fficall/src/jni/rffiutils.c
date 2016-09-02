@@ -43,14 +43,18 @@ jmethodID createSymbolMethodID;
 static jmethodID validateMethodID;
 
 static JNIEnv *curenv = NULL;
-jmp_buf *callErrorJmpBuf;
 
 // default for trace output when enabled
 FILE *traceFile = NULL;
 
-static int alwaysUseGlobal = 0;
+typedef struct globalRefTable_struct {
+	int permanent;
+	SEXP gref;         // The jobject (SEXP) global ref
+} GlobalRefElem;
+
 #define CACHED_GLOBALREFS_INITIAL_SIZE 64
-static SEXP *cachedGlobalRefs;
+static GlobalRefElem *cachedGlobalRefs;
+static int cachedGlobalRefsHwm;
 static int cachedGlobalRefsLength;
 
 // Data structure for managing the required copying of
@@ -71,7 +75,7 @@ static NativeArrayElem *nativeArrayTable;
 // hwm of nativeArrayTable
 static int nativeArrayTableHwm;
 static int nativeArrayTableLength;
-static void releaseNativeArray(JNIEnv *env, int index);
+static void releaseNativeArray(JNIEnv *env, int index, int freedata);
 
 static int isEmbedded = 0;
 void setEmbedded() {
@@ -79,10 +83,14 @@ void setEmbedded() {
 }
 
 // native down call depth, indexes nativeArrayTableHwmStack
-int callDepth;
+int callDepth = 0;
 
-#define NATIVE_ARRAY_TABLE_HWM_STACK_SIZE 16
-int nativeArrayTableHwmStack[NATIVE_ARRAY_TABLE_HWM_STACK_SIZE] ;
+#define CALLDEPTH_STACK_SIZE 16
+static int nativeArrayTableHwmStack[CALLDEPTH_STACK_SIZE];
+
+// stack of jmp_buf ptrs for non-local control transfer on error
+static jmp_buf* callErrorJmpBufTable[CALLDEPTH_STACK_SIZE];
+
 
 void init_utils(JNIEnv *env) {
 	curenv = env;
@@ -113,8 +121,9 @@ void init_utils(JNIEnv *env) {
 	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);
 	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbolInterned", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
     validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(SEXP));
+    cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(GlobalRefElem));
     cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
+    cachedGlobalRefsHwm = 0;
 	nativeArrayTable = calloc(NATIVE_ARRAY_TABLE_INITIAL_SIZE, sizeof(NativeArrayElem));
 	nativeArrayTableLength = NATIVE_ARRAY_TABLE_INITIAL_SIZE;
 	nativeArrayTableHwm = 0;
@@ -134,8 +143,9 @@ const char *stringToChars(JNIEnv *jniEnv, jstring string) {
 
 void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {
 	setEnv(env);
-	callErrorJmpBuf = jmpbuf;
-	if (callDepth >= NATIVE_ARRAY_TABLE_HWM_STACK_SIZE) {
+	//printf("callEnter: callDepth %d, jmpbufptr %p\n", callDepth, jmpbuf);
+	callErrorJmpBufTable[callDepth] = jmpbuf;
+	if (callDepth >= CALLDEPTH_STACK_SIZE) {
 		fatalError("call stack overflow\n");
 	}
 	nativeArrayTableHwmStack[callDepth] = nativeArrayTableHwm;
@@ -143,27 +153,27 @@ void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {
 }
 
 jmp_buf *getErrorJmpBuf() {
-	return callErrorJmpBuf;
+	// printf("getErrorJmpBuf: callDepth %d, jmpbufptr %p\n", callDepth, callErrorJmpBufTable[callDepth - 1]);
+	return callErrorJmpBufTable[callDepth - 1];
 }
 
 void callExit(JNIEnv *env) {
 	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
 	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
-		releaseNativeArray(env, i);
+               releaseNativeArray(env, i, 1);
 	}
 	nativeArrayTableHwm = oldHwm;
 	callDepth--;
 }
 
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
-	int i;
-	for (i = 0; i < nativeArrayTableHwm; i++) {
+	for (int i = 0; i < nativeArrayTableHwm; i++) {
 		NativeArrayElem cv = nativeArrayTable[i];
 		if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
 #if TRACE_NATIVE_ARRAYS
 			fprintf(traceFile, "invalidateNativeArray(%p): found\n", oldObj);
 #endif
-			releaseNativeArray(env, &cv);
+			releaseNativeArray(env, i, 1);
 			nativeArrayTable[i].obj = NULL;
 		}
 	}
@@ -171,6 +181,14 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 	fprintf(traceFile, "invalidateNativeArray(%p): not found\n", oldObj);
 #endif
 }
+
+void updateNativeArrays(JNIEnv *env) {
+	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
+	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
+        releaseNativeArray(env, i, 0);
+	}
+}
+
 
 static void *findNativeArray(JNIEnv *env, SEXP x) {
 	int i;
@@ -270,16 +288,16 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 	return data;
 }
 
-static void releaseNativeArray(JNIEnv *env, int i) {
+static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 	NativeArrayElem cv = nativeArrayTable[i];
 #if TRACE_NATIVE_ARRAYS
-		fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d)\n", cv.obj, i);
+               fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, freedata=%d)\n", cv.obj, i, freedata);
 #endif
 	if (cv.obj != NULL) {
 		switch (cv.type) {
 		case INTSXP: {
 			jintArray intArray = (jintArray) cv.jArray;
-			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 		}
 
@@ -293,78 +311,109 @@ static void releaseNativeArray(JNIEnv *env, int i) {
 				internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
 			}
 			(*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-			free(data); // was malloc'ed in addNativeArray
+                       if (freedata){
+                           free(data); // was malloc'ed in addNativeArray
+                       }
 			break;
 		}
 
 		case REALSXP: {
 			jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 
 		}
 
 		case RAWSXP: {
 			jbyteArray byteArray = (jbyteArray) cv.jArray;
-			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, freedata ? 0 : JNI_COMMIT);
 			break;
 
 		}
 		default:
 			fatalError("releaseNativeArray type");
 		}
-		// free up the slot
-		cv.obj = NULL;
+               if (freedata) {
+                   // free up the slot
+		    cv.obj = NULL;
+               }
 	}
 }
 
-static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj, int useGlobal) {
-	int i;
-	for (i = 0; i < cachedGlobalRefsLength; i++) {
-		SEXP ref = cachedGlobalRefs[i];
-		if (ref == NULL) {
-			break;
+static SEXP findCachedGlobalRef(JNIEnv *env, SEXP obj) {
+	for (int i = 0; i < cachedGlobalRefsHwm; i++) {
+		GlobalRefElem elem = cachedGlobalRefs[i];
+		if (elem.gref == NULL) {
+			continue;
 		}
-		if ((*env)->IsSameObject(env, ref, obj)) {
+		if ((*env)->IsSameObject(env, elem.gref, obj)) {
 #if TRACE_REF_CACHE
 			fprintf(traceFile, "gref: cache hit: %d\n", i);
 #endif
-			return ref;
+			return elem.gref;
 		}
 	}
-	SEXP result;
-	if (useGlobal) {
-		if (i >= cachedGlobalRefsLength) {
-			int newLength = cachedGlobalRefsLength * 2;
+	return NULL;
+}
+
+SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
+	SEXP gref;
+	if (cachedGlobalRefsHwm >= cachedGlobalRefsLength) {
+		int newLength = cachedGlobalRefsLength * 2;
 #if TRACE_REF_CACHE
-			fprintf(traceFile, "gref: extending table to %d\n", newLength);
+		fprintf(traceFile, "gref: extending table to %d\n", newLength);
 #endif
-			SEXP newCachedGlobalRefs = calloc(newLength, sizeof(SEXP));
-			if (newCachedGlobalRefs == NULL) {
-				fatalError("FFI global refs table expansion failure");
-			}
-			memcpy(newCachedGlobalRefs, cachedGlobalRefs, cachedGlobalRefsLength * sizeof(SEXP));
-			free(cachedGlobalRefs);
-			cachedGlobalRefs = newCachedGlobalRefs;
-			cachedGlobalRefsLength = newLength;
+		SEXP newCachedGlobalRefs = calloc(newLength, sizeof(GlobalRefElem));
+		if (newCachedGlobalRefs == NULL) {
+			fatalError("FFI global refs table expansion failure");
 		}
-		result = (*env)->NewGlobalRef(env, obj);
-		cachedGlobalRefs[i] = result;
-	} else {
-		result = obj;
+		memcpy(newCachedGlobalRefs, cachedGlobalRefs, cachedGlobalRefsLength * sizeof(GlobalRefElem));
+		free(cachedGlobalRefs);
+		cachedGlobalRefs = newCachedGlobalRefs;
+		cachedGlobalRefsLength = newLength;
 	}
-	return result;
+	gref = (*env)->NewGlobalRef(env, obj);
+	cachedGlobalRefs[cachedGlobalRefsHwm].gref = gref;
+	cachedGlobalRefs[cachedGlobalRefsHwm].permanent = permanent;
+#if TRACE_REF_CACHE
+			fprintf(traceFile, "gref: add: index %d, ref %p\n", cachedGlobalRefsHwm), gref;
+#endif
+	cachedGlobalRefsHwm++;
+	return gref;
 }
 
 SEXP checkRef(JNIEnv *env, SEXP obj) {
-	SEXP result = checkCachedGlobalRef(env, obj, alwaysUseGlobal);
-	TRACE(TARGp, result);
-	return result;
+	SEXP gref = findCachedGlobalRef(env, obj);
+	TRACE(TARGpp, obj, global);
+	if (gref == NULL) {
+		return obj;
+	} else {
+	    return gref;
+	}
 }
 
-SEXP mkNamedGlobalRef(JNIEnv *env, SEXP obj) {
-	SEXP result = checkCachedGlobalRef(env, obj, 1);
-	return result;
+SEXP createGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
+	SEXP gref = findCachedGlobalRef(env, obj);
+	if (gref == NULL) {
+		gref = addGlobalRef(env, obj, permanent);
+	}
+	return gref;
+}
+
+void releaseGlobalRef(JNIEnv *env, SEXP obj) {
+	for (int i = 0; i < cachedGlobalRefsHwm; i++) {
+		GlobalRefElem elem = cachedGlobalRefs[i];
+		if (elem.gref == NULL || elem.permanent) {
+			continue;
+		}
+		if ((*env)->IsSameObject(env, elem.gref, obj)) {
+#if TRACE_REF_CACHE
+			fprintf(traceFile, "gref: release: index %d, gref: %p\n", i, elem.gref);
+#endif
+			(*env)->DeleteGlobalRef(env, elem.gref);
+			cachedGlobalRefs[i].gref = NULL;
+		}
+	}
 }
 
 void validateRef(JNIEnv *env, SEXP x, const char *msg) {

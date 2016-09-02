@@ -17,24 +17,26 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestBuiltin_setseed extends TestBase {
 
+    // Note: all the unimplemented tests fail on unimplemented RNG of given kind (2nd argument)
+
     @Test
     public void testsetseed1() {
-        assertEval(Ignored.Unknown, "argv <- list(1000, 0L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(1000, 0L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testsetseed2() {
-        assertEval(Ignored.Unknown, "argv <- list(77, 2L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(77, 2L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testsetseed3() {
-        assertEval(Ignored.Unknown, "argv <- list(123, 6L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(123, 6L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testsetseed4() {
-        assertEval(Ignored.Unknown, "argv <- list(77, 4L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(77, 4L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -49,11 +51,17 @@ public class TestBuiltin_setseed extends TestBase {
 
     @Test
     public void testsetseed7() {
-        assertEval(Ignored.Unknown, "argv <- list(123, 7L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(123, 7L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testsetseed8() {
         assertEval("argv <- list(NULL, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testArgCasts() {
+        assertEval(Output.IgnoreErrorMessage, "set.seed('hello world')");
+        assertEval("set.seed(FALSE)");
     }
 }

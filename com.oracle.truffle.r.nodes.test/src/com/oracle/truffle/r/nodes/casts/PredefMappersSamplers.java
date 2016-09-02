@@ -72,28 +72,29 @@ public final class PredefMappersSamplers implements PredefMappers {
 
     @Override
     public <T> ValuePredicateArgumentMapperSampler<T, RNull> nullConstant() {
-        return ValuePredicateArgumentMapperSampler.<T, RNull> fromLambda((T x) -> RNull.instance, null, null, RNull.class);
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> RNull.instance, null, null, RNull.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<String, String> constant(String s) {
-        return ValuePredicateArgumentMapperSampler.<String, String> fromLambda((String x) -> s, (String x) -> s, CastUtils.<String> samples(), CastUtils.<String> samples(), String.class,
+    public <T> ValuePredicateArgumentMapperSampler<T, String> constant(String s) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> s, (String x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null,
                         String.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Integer, Integer> constant(int i) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> i, x -> i, CastUtils.<Integer> samples(), CastUtils.<Integer> samples(), Integer.class, Integer.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Integer> constant(int i) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> i, (Integer x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null,
+                        Integer.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Double, Double> constant(double d) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> d, x -> d, CastUtils.<Double> samples(), CastUtils.<Double> samples(), Double.class, Double.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Double> constant(double d) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> d, (Double x) -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, Double.class);
     }
 
     @Override
-    public ValuePredicateArgumentMapperSampler<Byte, Byte> constant(byte l) {
-        return ValuePredicateArgumentMapperSampler.fromLambda(x -> l, x -> l, CastUtils.<Byte> samples(), CastUtils.<Byte> samples(), Byte.class, Byte.class);
+    public <T> ValuePredicateArgumentMapperSampler<T, Byte> constant(byte l) {
+        return ValuePredicateArgumentMapperSampler.fromLambda((T x) -> l, x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, Byte.class);
     }
 
     @Override

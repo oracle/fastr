@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PredefFilters;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.VectorPredicateArgumentFilter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -102,6 +103,26 @@ public final class PredefFiltersSamplers implements PredefFilters {
     }
 
     @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> matrix() {
+        return new VectorPredicateArgumentFilterSampler<>("matrix", x -> x.isMatrix(), false);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> squareMatrix() {
+        return new VectorPredicateArgumentFilterSampler<>("squareMatrix", x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1], false, 3);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> dimEq(int dim, int x) {
+        return new VectorPredicateArgumentFilterSampler<>("dimGt", v -> v.isMatrix() && v.getDimensions().length == dim && v.getDimensions()[dim] > x, false, dim - 1);
+    }
+
+    @Override
+    public <T extends RAbstractVector> VectorPredicateArgumentFilterSampler<T> dimGt(int dim, int x) {
+        return new VectorPredicateArgumentFilterSampler<>("dimGt", v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] > x, false, dim - 1);
+    }
+
+    @Override
     public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilterSampler<T> size(int s) {
         if (s == 0) {
             return new VectorPredicateArgumentFilterSampler<>("size(int)", x -> x.getLength() == s, false, s - 1, s + 1);
@@ -145,12 +166,17 @@ public final class PredefFiltersSamplers implements PredefFilters {
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> doubleNA() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> RRuntime.isNA(x), samples(RRuntime.DOUBLE_NA), samples(0d));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> RRuntime.isNAorNaN(x), samples(RRuntime.DOUBLE_NA), samples(0d));
     }
 
     @Override
     public ValuePredicateArgumentFilterSampler<Double> isFractional() {
-        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x), samples(0d), samples(RRuntime.DOUBLE_NA));
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x), samples(0d), samples(RRuntime.DOUBLE_NA));
+    }
+
+    @Override
+    public ValuePredicateArgumentFilterSampler<Double> isFinite() {
+        return ValuePredicateArgumentFilterSampler.fromLambdaWithSamples((Double x) -> !Double.isInfinite(x), samples(0d), samples(RRuntime.DOUBLE_NA));
     }
 
     @Override

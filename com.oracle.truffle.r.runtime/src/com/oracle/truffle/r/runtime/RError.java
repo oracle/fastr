@@ -274,6 +274,7 @@ public final class RError extends RuntimeException {
         NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
+        INVALID_NA_PRINT_SPEC("invalid 'na.print' specification"),
         EMPTY_WHAT("empty 'what' specified"),
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
@@ -318,6 +319,7 @@ public final class RError extends RuntimeException {
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
+        MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),
         MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),
@@ -348,6 +350,7 @@ public final class RError extends RuntimeException {
         FIRST_ARGUMENT_NOT_CHARVEC("first argument must be a character vector"),
         FIRST_ARGUMENT_NOT_FILENAME("first argument must be a filename"),
         ASCII_NOT_LOGICAL("'ascii' must be logical"),
+        MUST_BE_LOGICAL("argument '%s' must be logical"),
         LIST_NAMES_SAME_LENGTH("names(x) must be a character vector of the same length as x"),
         DIMS_CONTAIN_NEGATIVE_VALUES("the dims contain negative values"),
         NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED("negative length vectors are not allowed"),
@@ -463,6 +466,7 @@ public final class RError extends RuntimeException {
         ROWS_NOT_MULTIPLE("number of rows of result is not a multiple of vector length (arg %d)"),
         ARG_ONE_OF("'%s' should be one of %s"),
         MUST_BE_SQUARE_MATRIX("'%s' must be a square matrix"),
+        MUST_BE_SQUARE_MATRIX_SPEC("'%s' (%d x %d) must be square"),
         NON_MATRIX("non-matrix argument to '%s'"),
         NON_NUMERIC_ARGUMENT_TO("non-numeric argument to '%s'"),
         DIMS_GT_ZERO("'%s' must have dims > 0"),
@@ -475,6 +479,7 @@ public final class RError extends RuntimeException {
         EXACT_SINGULARITY("exact singularity in '%s'"),
         SINGULAR_SOLVE("singular matrix '%s' in solve"),
         SEED_TYPE(".Random.seed is not an integer vector but of type '%s'"),
+        INVALID_NORMAL_TYPE_IN_RGNKIND("invalid Normal type in 'RNGkind'"),
         INVALID_USE("invalid use of '%s'"),
         FORMAL_MATCHED_MULTIPLE("formal argument \"%s\" matched by multiple actual arguments"),
         ARGUMENT_MATCHES_MULTIPLE("argument %d matches multiple formal arguments"),
@@ -508,6 +513,9 @@ public final class RError extends RuntimeException {
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
         INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
+        INVALID_TIES_FOR_RANK("invalid ties.method for rank() [should never happen]"),
+        UNIMPLEMENTED_TYPE_IN_GREATER("unimplemented type '%s' in greater"),
+        RANK_LARGE_N("parameter 'n' is greater than length(x), GnuR output is non-deterministic, FastR will use n=length(x)"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),
@@ -720,7 +728,13 @@ public final class RError extends RuntimeException {
         DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
         ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
         ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
-        INCORRECT_ARG_TYPE("incorrect type for %s argument");
+        INCORRECT_ARG_TYPE("incorrect type for %s argument"),
+        INVALID_ARG_OF_LENGTH("invalid %s argument of length %d"),
+        INVALID_FILENAME_PATTERN("invalid filename pattern"),
+        INVALID_FILE_EXT("invalid file extension"),
+        NO("no '%s'"),
+        APPLIES_TO_VECTORS("%s applies only to vectors"),
+        GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer");
 
         public final String message;
         final boolean hasArgs;

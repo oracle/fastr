@@ -35,6 +35,7 @@ import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.tools.Profiler;
@@ -134,16 +135,16 @@ public final class InstrumentationState implements RContext.ContextState {
             }
         }
 
-        private boolean inBrowser;
+        private RCaller caller;
         private String lastEmptyLineCommand = "n";
         private ArrayList<HelperState> helperStateList = new ArrayList<>();
 
-        public void setInBrowser(boolean state) {
-            this.inBrowser = state;
+        public void setInBrowser(RCaller caller) {
+            this.caller = caller;
         }
 
         public boolean inBrowser() {
-            return inBrowser;
+            return caller != null;
         }
 
         public void setLastEmptyLineCommand(String s) {
@@ -152,6 +153,10 @@ public final class InstrumentationState implements RContext.ContextState {
 
         public String lastEmptyLineCommand() {
             return lastEmptyLineCommand;
+        }
+
+        public RCaller getInBrowserCaller() {
+            return caller;
         }
 
         @TruffleBoundary

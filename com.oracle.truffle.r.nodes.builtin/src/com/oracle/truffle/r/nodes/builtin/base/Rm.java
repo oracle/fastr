@@ -22,6 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_FIRST_ARGUMENT;
+import static com.oracle.truffle.r.runtime.RError.Message.USE_NULL_ENV_DEFUNCT;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -32,6 +40,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,15 +52,26 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
+/**
+ * Note: remove is invoked from builtin wrappers 'rm' and 'remove' that are identical.
+ */
 @RBuiltin(name = "remove", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "envir", "inherits"}, behavior = COMPLEX)
 public abstract class Rm extends RBuiltinNode {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("list").mustBe(stringValue(), SHOW_CALLER, INVALID_FIRST_ARGUMENT);
+        casts.arg("envir").mustBe(nullValue().not(), SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
+        casts.arg("inherits").mustBe(numericValue(), SHOW_CALLER, INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     // this specialization is for internal use only
+    // TODO: what internal use? Does it still apply?
     @Specialization
     @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, String name, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, String name, RMissing envir, boolean inherits) {
         removeFromFrame(frame, name);
         return RNull.instance;
     }
@@ -59,7 +79,7 @@ public abstract class Rm extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     @SuppressWarnings("unused")
-    protected Object rm(RAbstractStringVector list, REnvironment envir, byte inherits) {
+    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits) {
         try {
             for (int i = 0; i < list.getLength(); i++) {
                 if (envir == REnvironment.globalEnv()) {
@@ -69,7 +89,7 @@ public abstract class Rm extends RBuiltinNode {
                 }
             }
         } catch (PutException ex) {
-            throw RError.error(RError.SHOW_CALLER, ex);
+            throw RError.error(SHOW_CALLER, ex);
         }
         return RNull.instance;
     }
@@ -85,7 +105,7 @@ public abstract class Rm extends RBuiltinNode {
             }
         }
         if (fs == null) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
+            RError.warning(SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);

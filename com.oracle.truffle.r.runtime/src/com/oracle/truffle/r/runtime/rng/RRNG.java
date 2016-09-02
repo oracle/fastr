@@ -286,7 +286,7 @@ public class RRNG {
     }
 
     private static Kind intToKind(int kindAsInt) {
-        if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
+        if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length || !Kind.VALUES[kindAsInt].isAvailable()) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_NOT_IMPL_KIND, kindAsInt);
         }
         return Kind.VALUES[kindAsInt];

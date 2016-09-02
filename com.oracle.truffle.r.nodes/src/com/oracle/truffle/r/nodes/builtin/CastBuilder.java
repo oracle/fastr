@@ -252,6 +252,14 @@ public final class CastBuilder {
 
         VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value);
 
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix();
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix();
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x);
+
+        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x);
+
         ValuePredicateArgumentFilter<Boolean> trueValue();
 
         ValuePredicateArgumentFilter<Boolean> falseValue();
@@ -267,6 +275,8 @@ public final class CastBuilder {
         ValuePredicateArgumentFilter<Double> doubleNA();
 
         ValuePredicateArgumentFilter<Double> isFractional();
+
+        ValuePredicateArgumentFilter<Double> isFinite();
 
         ValuePredicateArgumentFilter<String> stringNA();
 
@@ -333,13 +343,13 @@ public final class CastBuilder {
 
         <T> ValuePredicateArgumentMapper<T, RNull> nullConstant();
 
-        ValuePredicateArgumentMapper<String, String> constant(String s);
+        <T> ValuePredicateArgumentMapper<T, String> constant(String s);
 
-        ValuePredicateArgumentMapper<Integer, Integer> constant(int i);
+        <T> ValuePredicateArgumentMapper<T, Integer> constant(int i);
 
-        ValuePredicateArgumentMapper<Double, Double> constant(double d);
+        <T> ValuePredicateArgumentMapper<T, Double> constant(double d);
 
-        ValuePredicateArgumentMapper<Byte, Byte> constant(byte l);
+        <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l);
 
         <T> ArgumentMapper<T, T> defaultValue(T defVal);
 
@@ -403,6 +413,26 @@ public final class CastBuilder {
         }
 
         @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix() {
+            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix(), false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix() {
+            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1], false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x) {
+            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] == x, false);
+        }
+
+        @Override
+        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x) {
+            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] > x, false);
+        }
+
+        @Override
         public ValuePredicateArgumentFilter<Boolean> trueValue() {
             return ValuePredicateArgumentFilter.fromLambda(x -> x);
         }
@@ -434,12 +464,17 @@ public final class CastBuilder {
 
         @Override
         public ValuePredicateArgumentFilter<Double> doubleNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNA(x));
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNAorNaN(x));
         }
 
         @Override
         public ValuePredicateArgumentFilter<Double> isFractional() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNA(x) && !Double.isInfinite(x) && x != Math.floor(x));
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x));
+        }
+
+        @Override
+        public ValuePredicateArgumentFilter<Double> isFinite() {
+            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !Double.isInfinite(x));
         }
 
         @Override
@@ -639,22 +674,22 @@ public final class CastBuilder {
         }
 
         @Override
-        public ValuePredicateArgumentMapper<String, String> constant(String s) {
-            return ValuePredicateArgumentMapper.<String, String> fromLambda((String x) -> s);
+        public <T> ValuePredicateArgumentMapper<T, String> constant(String s) {
+            return ValuePredicateArgumentMapper.fromLambda((T x) -> s);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
+        public <T> ValuePredicateArgumentMapper<T, Integer> constant(int i) {
             return ValuePredicateArgumentMapper.fromLambda(x -> i);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Double, Double> constant(double d) {
+        public <T> ValuePredicateArgumentMapper<T, Double> constant(double d) {
             return ValuePredicateArgumentMapper.fromLambda(x -> d);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
+        public <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l) {
             return ValuePredicateArgumentMapper.fromLambda(x -> l);
         }
 
@@ -710,6 +745,18 @@ public final class CastBuilder {
 
         private static PredefMappers predefMappers() {
             return predefMappers;
+        }
+
+        public static <T> ArgumentValueFilter<T> not(ArgumentValueFilter<T> filter) {
+            return filter.not();
+        }
+
+        public static <T> ArgumentValueFilter<T> and(ArgumentValueFilter<T> filter1, ArgumentValueFilter<T> filter2) {
+            return filter1.and(filter2);
+        }
+
+        public static <T> ArgumentValueFilter<T> or(ArgumentValueFilter<T> filter1, ArgumentValueFilter<T> filter2) {
+            return filter1.or(filter2);
         }
 
         public static <T> Function<ArgCastBuilder<T, ?>, CastNode> mustBe(ArgumentFilter<?, ?> argFilter, RBaseNode callObj, boolean boxPrimitives, RError.Message message, Object... messageArgs) {
@@ -895,6 +942,22 @@ public final class CastBuilder {
             return predefFilters().elementAt(index, value);
         }
 
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix() {
+            return predefFilters().matrix();
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix() {
+            return predefFilters().squareMatrix();
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x) {
+            return predefFilters().dimEq(dim, x);
+        }
+
+        public static <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x) {
+            return predefFilters().dimGt(dim, x);
+        }
+
         public static ValuePredicateArgumentFilter<Boolean> trueValue() {
             return predefFilters().trueValue();
         }
@@ -937,6 +1000,10 @@ public final class CastBuilder {
 
         public static ValuePredicateArgumentFilter<Double> isFractional() {
             return predefFilters().isFractional();
+        }
+
+        public static ValuePredicateArgumentFilter<Double> isFinite() {
+            return predefFilters().isFinite();
         }
 
         public static ValuePredicateArgumentFilter<String> stringNA() {
@@ -1143,19 +1210,19 @@ public final class CastBuilder {
             return predefMappers().nullConstant();
         }
 
-        public static ValuePredicateArgumentMapper<String, String> constant(String s) {
+        public static <T> ValuePredicateArgumentMapper<T, String> constant(String s) {
             return predefMappers().constant(s);
         }
 
-        public static ValuePredicateArgumentMapper<Integer, Integer> constant(int i) {
+        public static <T> ValuePredicateArgumentMapper<T, Integer> constant(int i) {
             return predefMappers().constant(i);
         }
 
-        public static ValuePredicateArgumentMapper<Double, Double> constant(double d) {
+        public static <T> ValuePredicateArgumentMapper<T, Double> constant(double d) {
             return predefMappers().constant(d);
         }
 
-        public static ValuePredicateArgumentMapper<Byte, Byte> constant(byte l) {
+        public static <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l) {
             return predefMappers().constant(l);
         }
 
@@ -1166,7 +1233,7 @@ public final class CastBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    interface ArgCastBuilder<T, THIS> {
+    public interface ArgCastBuilder<T, THIS> {
 
         ArgCastBuilderState state();
 
@@ -1509,9 +1576,13 @@ public final class CastBuilder {
             return asDoubleVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
-            state().castBuilder().toLogical(state().index());
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            state().castBuilder().insert(state().index(), CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
             return state().factory.newCoercedPhaseBuilder(this, Byte.class);
+        }
+
+        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector() {
+            return asLogicalVector(false, false, false);
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
@@ -1596,6 +1667,7 @@ public final class CastBuilder {
          * no warning message.
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue) {
+            assert defaultValue != null : "defaultValue cannot be null";
             state().castBuilder().insert(state().index(), FindFirstNodeGen.create(elementClass(), defaultValue));
             return state().factory.newHeadPhaseBuilder(this);
         }

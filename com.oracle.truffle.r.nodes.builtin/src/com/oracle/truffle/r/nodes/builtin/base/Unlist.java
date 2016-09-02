@@ -11,11 +11,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -47,8 +49,8 @@ public abstract class Unlist extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1);
-        casts.firstBoolean(2);
+        casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean());
+        casts.arg("use.names").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean());
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
@@ -144,20 +146,8 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isVectorList(vector)")
-    protected RAbstractVector unlistVector(RAbstractVector vector, boolean recursive, boolean useNames) {
-        return vector;
-    }
-
-    @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty(list)")
-    protected RNull unlistEmptyList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
-        return RNull.instance;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isOneNull(list)")
-    protected RNull unlistOneNullList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
+    protected RNull unlistEmptyList(RList list, boolean recursive, boolean useNames) {
         return RNull.instance;
     }
 
@@ -182,6 +172,12 @@ public abstract class Unlist extends RBuiltinNode {
         } else {
             return unlistHelper(list, recursive, useNames, precedence, totalSize);
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object unlist(Object o, Object recursive, Object useNames) {
+        return o;
     }
 
     @TruffleBoundary

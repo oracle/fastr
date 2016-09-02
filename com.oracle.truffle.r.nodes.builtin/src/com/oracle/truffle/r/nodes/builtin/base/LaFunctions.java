@@ -11,13 +11,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.matrix;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.or;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.Function;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -37,8 +46,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -70,23 +78,21 @@ public class LaFunctions {
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
+            casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
-        protected Object doRg(RDoubleVector matrix, byte onlyValues) {
-            if (!matrix.isMatrix()) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
-            }
+        protected Object doRg(RDoubleVector matrix, boolean onlyValues) {
             int[] dims = matrix.getDimensions();
-            if (onlyValues == RRuntime.LOGICAL_NA) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "only.values");
-            }
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             double[] a = matrix.getDataCopy();
             char jobVL = 'N';
             char jobVR = 'N';
-            boolean vectors = onlyValues == RRuntime.LOGICAL_FALSE;
+            boolean vectors = !onlyValues;
             if (vectors) {
                 // TODO fix
                 RError.nyi(this, "\"only.values == FALSE\"");
@@ -154,13 +160,14 @@ public class LaFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("in").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
+        }
+
         @Specialization
-        protected RList doQr(RAbstractVector aIn) {
+        protected RList doQr(RAbstractDoubleVector aIn) {
             // This implementation is sufficient for B25 matcal-5.
-            if (!aIn.isMatrix()) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
-            }
             if (!(aIn instanceof RDoubleVector)) {
                 RError.nyi(this, "non-real vectors not supported (yet)");
             }
@@ -209,15 +216,12 @@ public class LaFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(1, false, true, false);
+            casts.arg("q").mustBe(instanceOf(RList.class));
+            casts.arg("b").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
         }
 
         @Specialization
         protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
-            if (!bIn.isMatrix()) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
-            }
             // If bIn was coerced this extra copy is unnecessary
             RDoubleVector b = (RDoubleVector) bIn.copy();
 
@@ -273,22 +277,28 @@ public class LaFunctions {
         private final ConditionProfile infoGreaterZero = ConditionProfile.createBinaryProfile();
         private final ConditionProfile doUseLog = ConditionProfile.createBinaryProfile();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            //@formatter:off
+            casts.arg("a").asDoubleVector(false, true, false).
+                mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
+                mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a");
+
+            casts.arg("uselog").defaultError(RError.Message.MUST_BE_LOGICAL, "logarithm").
+                asLogicalVector().
+                findFirst().
+                notNA().
+                map(toBoolean());
+            //@formatter:on
+        }
+
         @Specialization
-        protected RList doDetGeReal(RDoubleVector aIn, byte useLogIn) {
-            if (!aIn.isMatrix()) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
-            }
+        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = aIn.getDimensions();
             int n = aDims[0];
-            if (n != aDims[1]) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_SQUARE_MATRIX, "a");
-            }
             int[] ipiv = new int[n];
             double modulus = 0;
-            boolean useLog = RRuntime.fromLogical(useLogIn);
             double[] aData = a.getDataWithoutCopying();
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
             int sign = 1;
@@ -326,7 +336,7 @@ public class LaFunctions {
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
-            modulusVec.setAttr("logarithm", useLogIn);
+            modulusVec.setAttr("logarithm", RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
             RVector.setVectorClassAttr(result, DET_CLASS);
             return result;
@@ -339,20 +349,30 @@ public class LaFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            //@formatter:off
+            casts.arg("a").asDoubleVector(false, true, false).
+                mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
+                mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a").
+                mustBe(dimGt(1, 0), RError.Message.DIMS_GT_ZERO, "a");
+
+            casts.arg("pivot").asLogicalVector().
+                findFirst().
+                notNA().
+                map(toBoolean());
+
+            casts.arg("tol").asDoubleVector().
+                findFirst(RRuntime.DOUBLE_NA);
+            //@formatter:on
+        }
+
         @Specialization
-        protected RDoubleVector doDetGeReal(RDoubleVector aIn, byte pivot, double tol) {
+        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = aIn.getDimensions();
             int n = aDims[0];
             int m = aDims[1];
-            if (n != m) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_SQUARE_MATRIX, "a");
-            }
-            if (m <= 0) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.DIMS_GT_ZERO, "a");
-            }
             double[] aData = a.getDataWithoutCopying();
             /* zero the lower triangle */
             for (int j = 0; j < n; j++) {
@@ -360,7 +380,6 @@ public class LaFunctions {
                     aData[i + n * j] = 0;
                 }
             }
-            boolean piv = RRuntime.fromLogical(pivot);
             int info;
             if (noPivot.profile(!piv)) {
                 info = RFFIFactory.getRFFI().getLapackRFFI().dpotrf('U', m, aData, m);
@@ -379,7 +398,7 @@ public class LaFunctions {
                     // TODO informative error message (aka GnuR)
                     throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
-                a.setAttr("pivot", pivot);
+                a.setAttr("pivot", RRuntime.asLogical(piv));
                 a.setAttr("rank", rank[0]);
                 RList dn = a.getDimNames();
                 if (dn != null && dn.getDataAt(0) != null) {
@@ -400,18 +419,27 @@ public class LaFunctions {
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);
 
+        private static Function<RAbstractDoubleVector, Object> getDimVal(int dim) {
+            return vec -> vec.getDimensions()[dim];
+        }
+
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(1, false, true, false);
-            casts.toDouble(2, false, false, false);
+            //@formatter:off
+            casts.arg("a").mustBe(numericValue()).asVector().
+                mustBe(matrix(), RError.ROOTNODE, RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
+                mustBe(not(dimEq(0, 0)), RError.ROOTNODE, RError.Message.GENERIC, "'a' is 0-diml").
+                mustBe(squareMatrix(), RError.ROOTNODE, RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
+
+            casts.arg("bin").asDoubleVector(false, true, false).
+                mustBe(or(not(matrix()), not(dimEq(1, 0))), RError.ROOTNODE, RError.Message.GENERIC, "no right-hand side in 'b'");
+
+            casts.arg("tolin").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
+            //@formatter:on
         }
 
         @Specialization
-        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, RAbstractDoubleVector tolin) {
-            double tol = tolin.getLength() == 0 ? RRuntime.DOUBLE_NA : tolin.getDataAt(0);
-            if (!(a.isMatrix() && (a instanceof RAbstractDoubleVector || a instanceof RAbstractIntVector || a instanceof RAbstractLogicalVector))) {
-                throw RError.error(this, RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
-            }
+        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol) {
             int[] aDims = a.getDimensions();
             int n = aDims[0];
             if (n == 0) {
@@ -496,10 +524,5 @@ public class LaFunctions {
             return b;
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected RDoubleVector laSolve(Object a, Object bin, Object tol) {
-            throw RError.error(this, RError.Message.INCORRECT_ARG);
-        }
     }
 }

@@ -350,6 +350,7 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 SEXP Rf_eval(SEXP expr, SEXP env) {
 	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
@@ -849,7 +850,7 @@ SEXP CADR(SEXP e) {
 }
 
 SEXP CDDR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
     return checkRef(thisenv, result);
@@ -1455,6 +1456,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
 	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
@@ -1609,12 +1611,13 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
 }
 
-void R_PreserveObject(SEXP x) {
-	// Not applicable
+SEXP R_PreserveObject(SEXP x) {
+	// convert to a JNI global ref until explicitly released
+	return createGlobalRef(getEnv(), x, 0);
 }
 
 void R_ReleaseObject(SEXP x) {
-	// Not applicable
+	releaseGlobalRef(getEnv(), x);
 }
 
 void R_dot_Last(void) {

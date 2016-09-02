@@ -74,7 +74,8 @@ public class RSource {
         DEPARSE_ERROR("<package_deparse_error>"),
         LAPPLY("<lapply>"),
         R_PARSEVECTOR("<R_ParseVector>"),
-        PAIRLIST_DEPARSE("<pairlist deparse>");
+        PAIRLIST_DEPARSE("<pairlist deparse>"),
+        INIT_EMBEDDED("<init embedded>");
 
         public final String string;
 
@@ -88,14 +89,10 @@ public class RSource {
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}. The simulates the behavior of {@link #fromFile}.
      */
-    public static Source fromFileName(String text, String path) {
+    public static Source fromFileName(String text, String path) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
-        try {
-            URI uri = new URI("file://" + file.getAbsolutePath());
-            return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
-        } catch (URISyntaxException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        URI uri = new URI("file://" + file.getAbsolutePath());
+        return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
     }
 
     /**

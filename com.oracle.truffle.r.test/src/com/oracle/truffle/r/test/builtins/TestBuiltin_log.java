@@ -31,5 +31,7 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ round( log(10,), digits = 5 ) }");
         assertEval("{ round( log(10,2), digits = 5 ) }");
         assertEval("{ round( log(10,10), digits = 5 ) }");
+        assertEval("{ log(c(2,3), NA) } ");
+        assertEval("{ log(c(2,3), 0/0) } ");
     }
 }
