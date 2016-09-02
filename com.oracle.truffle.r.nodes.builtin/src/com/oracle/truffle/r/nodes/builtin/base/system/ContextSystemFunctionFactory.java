@@ -103,7 +103,12 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     private static String[] checkRCommand(String command) {
         String[] parts = command.split(" ");
         String rcommand = isFastR(parts[0]);
-        return rcommand == null ? null : parts;
+        if (rcommand == null) {
+            return null;
+        } else {
+            parts[0] = rcommand;
+            return parts;
+        }
 
     }
 
