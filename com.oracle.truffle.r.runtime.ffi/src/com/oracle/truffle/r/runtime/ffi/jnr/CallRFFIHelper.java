@@ -348,7 +348,7 @@ public class CallRFFIHelper {
 
     public static void Rf_setAttrib(Object obj, Object name, Object val) {
         if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_setAttrib", obj, name);
+            RFFIUtils.traceUpCall("Rf_setAttrib", obj, name, val);
         }
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
