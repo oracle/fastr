@@ -828,6 +828,10 @@ public class TestBase {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                if (fastROutputManager == null) {
+                    // static block evaluated in an AOT context
+                    return;
+                }
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");
                     for (String test : new TreeSet<>(unexpectedSuccessfulMicroTests)) {
