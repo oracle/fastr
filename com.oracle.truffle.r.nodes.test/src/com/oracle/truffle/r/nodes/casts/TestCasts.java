@@ -278,6 +278,27 @@ public class TestCasts extends TestBase {
     }
 
     @Test
+    public void optimizedBypass() {
+        class Root extends TestRootNode<CastNode> {
+
+            private final Object constant;
+
+            protected Root(String name, Object constant) {
+                super(name, new CastBuilder().arg(0).mustBe(integerValue()).asIntegerVector().findFirst().builder().getCasts()[0]);
+                this.constant = constant;
+            }
+
+            @Override
+            protected Object execute(VirtualFrame frame, Object value) {
+                int result = (int) node.execute(constant);
+                CompilerAsserts.compilationConstant(result);
+                return null;
+            }
+        }
+        testCompilation(new Object[]{1}, new Root("optimizeBypass1", 1));
+    }
+
+    @Test
     public void testConditionalMapChainWithConstant() {
         class Root extends TestRootNode<CastNode> {
 
