@@ -52,7 +52,7 @@ public class TestConnections extends TestBase {
     @AfterClass
     public static void teardownTestDir() {
         if (!deleteDir(testDir.testDirPath)) {
-            throw new AssertionError();
+            System.err.println("WARNING: error deleting : " + testDir.testDirPath);
         }
     }
 

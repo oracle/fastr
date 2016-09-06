@@ -150,8 +150,7 @@ public abstract class TestRPackages extends TestBase {
         Path packageDir = installDir().resolve(packageName);
         try {
             deleteDir(packageDir);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
             return false;
         }
         return true;
@@ -205,7 +204,7 @@ public abstract class TestRPackages extends TestBase {
         if (!checkOnly()) {
             for (String p : testPackages) {
                 if (!uninstallPackage(p)) {
-                    throw new AssertionError();
+                    System.err.println("WARNING: error deleting package: " + p);
                 }
             }
         }

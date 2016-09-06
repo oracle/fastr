@@ -850,7 +850,7 @@ public class TestBase {
     protected static boolean deleteDir(Path dir) {
         try {
             Files.walkFileTree(dir, DELETE_VISITOR);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return false;
         }
         return true;
