@@ -111,6 +111,42 @@ class DelFastRNativeProject(FastRProjectAdapter):
 
         return results
 
+class DelFastRTestNativeProject(FastRProjectAdapter):
+    '''
+    Custom class for building the com.oracle.truffle.r.native project.
+    The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        FastRProjectAdapter.__init__(self, suite, name, deps, workingSets, theLicense)
+
+    def getBuildTask(self, args):
+        return mx.NativeBuildTask(args, self)
+
+    def getResults(self):
+        '''
+        Capture all the files from the com.oracle.truffle.r.test.native project that are needed
+        for running unit tests in an alternate implementation.
+        '''
+        # plain files
+        results = []
+
+        self._get_files(join('packages', 'recommended'), results)
+
+        fastr_packages = []
+        fastr_packages_dir = join(self.dir, 'packages')
+        for root, dirs, _ in os.walk(fastr_packages_dir):
+            for d in dirs:
+                if d == 'recommended':
+                    continue
+                if os.path.isdir(join(root, d)):
+                    fastr_packages.append(d)
+            break
+        for p in fastr_packages:
+            results.append(join(fastr_packages_dir, p, 'lib', p + '.tar'))
+
+        results.append(join(self.dir, 'urand', 'lib', 'liburand.so'))
+        return results
+
 class DelFastRReleaseProject(FastRProjectAdapter):
     '''
     Custom class for creating the FastR release project, which supports the

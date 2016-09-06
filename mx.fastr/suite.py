@@ -279,6 +279,7 @@ suite = {
     "com.oracle.truffle.r.test.native" : {
       "sourceDirs" : [],
       "dependencies" : ["com.oracle.truffle.r.native"],
+      "class" : "FastRTestNativeProject",
       "native" : "true",
       "workingSets" : "FastR",
     },
@@ -447,6 +448,14 @@ suite = {
         "truffle:TRUFFLE_TCK",
       ],
 
+
+    },
+
+    "FASTR_UNIT_TESTS_NATIVE" : {
+      "description" : "unit tests support (from test.native project)",
+      "dependencies" : ["com.oracle.truffle.r.test.native"],
+      "distDependencies" : ["FASTR_NATIVE_DEV"],
+      "exclude" : ["GNUR", "GNU_ICONV"],
     },
 
     "FASTR_NATIVE_DEV": {

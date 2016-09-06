@@ -462,6 +462,7 @@ public class TestBase {
     }
 
     private static final String TEST_PROJECT = "com.oracle.truffle.r.test";
+    private static final String TEST_NATIVE_PROJECT = "com.oracle.truffle.r.test.native";
 
     /**
      * Returns a path to {@code baseName}, assumed to be nested in {@link #testProjectOutputDir}.
@@ -471,6 +472,11 @@ public class TestBase {
         Path baseNamePath = Paths.get(TEST_PROJECT.replace('.', '/'), baseName.toString());
         Path result = relativize(testProjectOutputDir.resolve(baseNamePath));
         return result;
+    }
+
+    public static Path getNativeProjectFile(Path baseName) {
+        Path path = Paths.get(TEST_NATIVE_PROJECT, baseName.toString());
+        return path;
     }
 
     private static void microTestFailed() {

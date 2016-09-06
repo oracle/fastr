@@ -29,6 +29,13 @@ R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
 GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
 GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
 
+# We have to copy the GNU R recommended packages into this project
+# to keep the mx archiver happy, which asserts that every path
+# is inside the project.
+
+# WARNING: If you add/delete anything in this project you must update mx_fastr_dists.py
+# to reflect the changes, e.g., adding a new SUBDIR
+
 all: make_subdirs copy_recommended
 
 make_subdirs:
@@ -37,7 +44,8 @@ make_subdirs:
 	done
 
 copy_recommended:
-	cp $(GNUR_RECOMMENDED) $(MX_OUTPUT_DIR)/packages
+	mkdir -p recommended
+	cp $(GNUR_RECOMMENDED) recommended
 	touch copy_recommended
 
 clean: clean_subdirs clean_recommended
@@ -46,13 +54,6 @@ clean_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
-
-clean_recommended:
-	for f in $(notdir $(GNUR_RECOMMENDED)); do \
-		rm -f $(MX_OUTPUT_DIR)/packages/$$f; \
-	done
-	rm -f copy_recommended
-
-
-
 	
+clean_recommended:
+	rm -f recommended clean_recommended

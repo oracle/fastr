@@ -38,7 +38,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestUserRNG extends TestBase {
     @Test
     public void testUserRNG() {
-        Path libPath = TestBase.getProjectFile(Paths.get("urand", "liburand.so"));
+        Path libPath = TestBase.getNativeProjectFile(Paths.get("urand", "lib", "liburand.so"));
         assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{libPath.toString()}));
     }
 }

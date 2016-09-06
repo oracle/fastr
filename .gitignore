@@ -25,7 +25,8 @@
 /com.oracle.truffle.r.native/include/R_ext/*.h
 /com.oracle.truffle.r.native/include/linked
 /com.oracle.truffle.r.test.native/packages/copy_recommended
-/com.oracle.truffle.r.test/rpackages/testrlibs_user
+/com.oracle.truffle.r.test.native/packages/recommended
+/com.oracle.truffle.r.test.native/packages/*/lib/*
 /com.oracle.truffle.r.test.native/urand/lib/liburand.so
 /tmptest/
 /com.oracle.truffle.r.release/lib/

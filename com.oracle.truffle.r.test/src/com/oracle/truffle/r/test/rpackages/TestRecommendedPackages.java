@@ -50,7 +50,7 @@ public class TestRecommendedPackages extends TestRPackages {
         setupInstallTestPackages(OK_PACKAGES, new Resolver() {
             @Override
             Path getPath(String p) {
-                return TestBase.getProjectFile(Paths.get("packages")).resolve(p + ".tgz");
+                return TestBase.getNativeProjectFile(Paths.get("packages")).resolve("recommended").resolve(p + ".tgz");
             }
         });
     }

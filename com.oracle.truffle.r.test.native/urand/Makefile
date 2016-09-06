@@ -33,7 +33,7 @@ endif
 
 .PHONY: all clean
 
-OBJ = $(MX_OUTPUT_DIR)/urand
+OBJ = lib
 SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
 # Since this library is loaded explicitly we keep a consistent

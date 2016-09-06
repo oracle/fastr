@@ -494,6 +494,14 @@ class FastRNativeProject(mx_fastr_dists.DelFastRNativeProject):
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
         mx_fastr_dists.DelFastRNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
+class FastRTestNativeProject(mx_fastr_dists.DelFastRTestNativeProject):
+    '''
+    Custom class for building the com.oracle.truffle.r.test.native project.
+    Delegates to mx_fastr_dists.DelFastRTestNativeProject to keep this file uncluttered
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        mx_fastr_dists.DelFastRTestNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
+
 class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
     '''
     Custom class for creating the FastR release project, which supports the

@@ -161,12 +161,12 @@ public abstract class TestRPackages extends TestBase {
      */
     protected static class Resolver {
         Path getPath(String p) {
-            return testNativePath().resolve(p + ".tar");
+            return testNativePath().resolve(p).resolve("lib").resolve(p + ".tar");
         }
     }
 
     private static Path testNativePath() {
-        Path p = TestBase.getProjectFile(Paths.get("packages"));
+        Path p = TestBase.getNativeProjectFile(Paths.get("packages"));
         return p;
     }
 
