@@ -21,21 +21,38 @@
 # questions.
 #
 
-.PHONY: all clean make_subdirs clean_subdirs
+.PHONY: all clean make_subdirs clean_subdirs clean_recommended
 
-SUBDIRS = testrffi vanilla
+SUBDIRS = testrffi vanilla tests4
+NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
+R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
+GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
+GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
 
-all: make_subdirs
+all: make_subdirs copy_recommended
 
 make_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
 
-clean: clean_subdirs
+copy_recommended:
+	cp $(GNUR_RECOMMENDED) $(MX_OUTPUT_DIR)/packages
+	touch copy_recommended
+
+clean: clean_subdirs clean_recommended
 
 clean_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
+
+clean_recommended:
+	for f in $(notdir $(GNUR_RECOMMENDED)); do \
+		rm -f $(MX_OUTPUT_DIR)/packages/$$f; \
+	done
+	rm -f copy_recommended
+
+
+
 	

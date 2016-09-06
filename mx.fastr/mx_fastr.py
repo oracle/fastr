@@ -303,6 +303,9 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
 #        runlistener_arg = add_arg_separator()
 #        runlistener_arg = 'test-methods=' + args.test_methods
 
+    runlistener_arg = add_arg_separator()
+    runlistener_arg += 'test-project-output-dir=' + mx.project('com.oracle.truffle.r.test').output_dir()
+
     # use a custom junit.RunListener
     runlistener = 'com.oracle.truffle.r.test.TestBase$RunListener'
     if len(runlistener_arg) > 0:
@@ -409,10 +412,6 @@ def testgen(args):
         except subprocess.CalledProcessError:
             mx.abort('RVersionNumber.main failed')
 
-    # clean the test project to invoke the test analyzer AP
-    testOnly = ['--projects', 'com.oracle.truffle.r.test']
-    mx.clean(['--no-dist', ] + testOnly)
-    mx.build(testOnly)
     # now just invoke junit with the appropriate options
     mx.log("generating expected output for packages: ")
     for pkg in args.tests.split(','):

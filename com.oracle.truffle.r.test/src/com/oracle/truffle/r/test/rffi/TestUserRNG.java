@@ -27,7 +27,6 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.test.TestBase;
 
@@ -39,9 +38,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestUserRNG extends TestBase {
     @Test
     public void testUserRNG() {
-        Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/lib/liburand.so");
-        Path relLibPath = cwd.relativize(libPath);
-        assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{relLibPath.toString()}));
+        Path libPath = TestBase.getProjectFile(Paths.get("urand", "liburand.so"));
+        assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{libPath.toString()}));
     }
 }

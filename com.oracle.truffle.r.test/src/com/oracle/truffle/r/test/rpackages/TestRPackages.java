@@ -137,7 +137,7 @@ public abstract class TestRPackages extends TestBase {
 
     private static Path installDir() {
         if (installDir == null) {
-            installDir = TestBase.relativize(Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages", "testrlibs_user"));
+            installDir = TestBase.createTestDir("com.oracle.truffle.r.test.rpackages");
         }
         return installDir;
     }
@@ -162,12 +162,13 @@ public abstract class TestRPackages extends TestBase {
      */
     protected static class Resolver {
         Path getPath(String p) {
-            return testNativePath().resolve(p).resolve("lib").resolve(p + ".tar");
+            return testNativePath().resolve(p + ".tar");
         }
     }
 
     private static Path testNativePath() {
-        return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
+        Path p = TestBase.getProjectFile(Paths.get("packages"));
+        return p;
     }
 
     private static PackagePaths getPackagePaths(String pkg, Path path) {

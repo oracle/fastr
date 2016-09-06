@@ -29,30 +29,28 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Test the installation of the "recommended" packages that come with GnuR. N.B. There are no
  * specific tests beyond install/load as that is handled separately in the package testing
  * framework. We are primarily concerned with detecting installation regressions.
+ *
+ * N.B. The package 'tgz' files have been copied to the com.oracle.truffle.r.test project output
+ * directory by the com.oracle.truffle.r.test.native Makefile. to allow them to be packaged into a
+ * distribution and avoid any dependency on source paths.
  */
 public class TestRecommendedPackages extends TestRPackages {
     private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
                     "rpart"};
     @SuppressWarnings("unused") private static final String[] PROBLEM_PACKAGES = new String[]{};
 
-    private static Path getRecommendedPath() {
-        return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.native", "gnur", RVersionNumber.R_HYPHEN_FULL, "src", "library", "Recommended");
-    }
-
     @BeforeClass
     public static void setupInstallMyTestPackages() {
         setupInstallTestPackages(OK_PACKAGES, new Resolver() {
             @Override
             Path getPath(String p) {
-                return getRecommendedPath().resolve(p + ".tgz");
+                return TestBase.getProjectFile(Paths.get("packages")).resolve(p + ".tgz");
             }
         });
     }

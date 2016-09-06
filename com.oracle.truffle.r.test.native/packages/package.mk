@@ -23,17 +23,19 @@
 
 # This "builds" a test package, resulting in a tar file,
 # which is then loaded by the unit tests in TestRPackages.
+# To facilitate location relative to the mx "output" directory
+# of this project, the tar file is created in that location
 
 .PHONY: all
 
 PKG_FILES = $(shell find $(PACKAGE)/ -type f -name '*')
 
-PKG_TAR = lib/$(PACKAGE).tar
+PKG_TAR = $(MX_OUTPUT_DIR)/packages/$(PACKAGE).tar
 
 all: $(PKG_TAR)
 
 $(PKG_TAR): $(PKG_FILES)
-	mkdir -p lib
+	mkdir -p $(MX_OUTPUT_DIR)/packages
 	tar cf $(PKG_TAR) $(PACKAGE)
 
 clean:
