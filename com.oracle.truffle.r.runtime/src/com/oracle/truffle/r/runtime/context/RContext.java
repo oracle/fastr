@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.ExecutionContext;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -143,6 +144,15 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * interface.
      */
     public interface ContextState {
+        /**
+         * Initialize the state. The initial creation should involve minimal computation; any
+         * significant computation should be handled in this method.
+         */
+        @SuppressWarnings("unused")
+        default ContextState initialize(RContext context) {
+            return this;
+        }
+
         /**
          * Called in response to the {@link RContext#destroy} method. Provides a hook for finalizing
          * any state before the context is destroyed.
@@ -333,7 +343,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initialize(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup, RForeignAccessFactory rForeignAccessFactory) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup, RForeignAccessFactory rForeignAccessFactory) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
         RContext.builtinLookup = rBuiltinLookup;
@@ -368,19 +378,23 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * could do this more dynamically with a registration process, perhaps driven by an annotation
      * processor, but the set is relatively small, so we just enumerate them here.
      */
-    public REnvVars stateREnvVars;
-    public RProfile stateRProfile;
-    public ROptions.ContextStateImpl stateROptions;
+    public final REnvVars stateREnvVars;
+    public final RProfile stateRProfile;
+    public final StdConnections.ContextStateImpl stateStdConnections;
+    public final ROptions.ContextStateImpl stateROptions;
     public final REnvironment.ContextStateImpl stateREnvironment;
     public final RErrorHandling.ContextStateImpl stateRErrorHandling;
     public final ConnectionSupport.ContextStateImpl stateRConnection;
-    public final StdConnections.ContextStateImpl stateStdConnections;
     public final RRNG.ContextStateImpl stateRNG;
-    public final ContextState stateRFFI;
     public final RSerialize.ContextStateImpl stateRSerialize;
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
     public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
+    /**
+     * RFFI implementation state. Cannot be final as choice of FFI implementation is not made at the
+     * time the constructor is called.
+     */
+    private ContextState stateRFFI;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
@@ -395,6 +409,13 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return embedded;
     }
 
+    /**
+     * Sets the fields that do not depend on complex initialization.
+     *
+     * @param env values passed from {@link TruffleLanguage#createContext}
+     * @param instrumenter value passed from {@link TruffleLanguage#createContext}
+     * @param isInitial {@code true} if this is the initial (primordial) context.
+     */
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
@@ -408,7 +429,27 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.info = initialInfo;
         }
         this.initial = isInitial;
+        this.env = env;
+        this.stateREnvVars = REnvVars.newContextState();
+        this.stateROptions = ROptions.ContextStateImpl.newContextState(stateREnvVars);
+        this.stateRProfile = RProfile.newContextState(stateREnvVars);
+        this.stateStdConnections = StdConnections.ContextStateImpl.newContextState();
+        this.stateREnvironment = REnvironment.ContextStateImpl.newContextState();
+        this.stateRErrorHandling = RErrorHandling.ContextStateImpl.newContextState();
+        this.stateRConnection = ConnectionSupport.ContextStateImpl.newContextState();
+        this.stateRNG = RRNG.ContextStateImpl.newContextState();
+        this.stateRSerialize = RSerialize.ContextStateImpl.newContextState();
+        this.stateLazyDBCache = LazyDBCache.ContextStateImpl.newContextState();
+        this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
+        this.stateInternalCode = ContextStateImpl.newContextState();
+        this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
+    }
 
+    /**
+     * Performs the real initialization of the context, invoked from
+     * {@link TruffleLanguage#initializeContext}.
+     */
+    public RContext initializeContext() {
         // this must happen before engine activation in the code below
         if (info.getKind() == ContextKind.SHARE_NOTHING) {
             if (info.getParent() == null) {
@@ -423,7 +464,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             }
         }
 
-        this.env = env;
         if (info.getConsoleHandler() == null) {
             throw Utils.rSuicide("no console handler set");
         }
@@ -436,7 +476,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                 singleContextAssumption.invalidate();
             }
         }
-        engine = RContext.getRRuntimeASTAccess().createEngine(this);
 
         /*
          * Activate the context by attaching the current thread and initializing the {@link
@@ -453,16 +492,19 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         if (!embedded) {
             doEnvOptionsProfileInitialization();
         }
-        stateREnvironment = REnvironment.ContextStateImpl.newContext(this);
-        stateRErrorHandling = RErrorHandling.ContextStateImpl.newContext(this);
-        stateRConnection = ConnectionSupport.ContextStateImpl.newContext(this);
-        stateStdConnections = StdConnections.ContextStateImpl.newContext(this);
-        stateRNG = RRNG.ContextStateImpl.newContext(this);
-        stateRFFI = RFFIContextStateFactory.newContext(this);
-        stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
-        stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
-        stateInstrumentation = InstrumentationState.newContext(this, instrumenter);
-        stateInternalCode = ContextStateImpl.newContext(this);
+
+        stateREnvironment.initialize(this);
+        stateRErrorHandling.initialize(this);
+        stateRConnection.initialize(this);
+        stateStdConnections.initialize(this);
+        stateRNG.initialize(this);
+        this.stateRFFI = RFFIContextStateFactory.newContextState().initialize(this);
+
+        stateRFFI.initialize(this);
+        stateRSerialize.initialize(this);
+        stateLazyDBCache.initialize(this);
+        stateInstrumentation.initialize(this);
+        stateInternalCode.initialize(this);
 
         if (!embedded) {
             validateContextStates();
@@ -478,20 +520,21 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             // that methods package is loaded
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
-        if (isInitial && !embedded) {
+        if (initial && !embedded) {
             RFFIFactory.getRFFI().getCallRFFI().setInteractive(isInteractive());
             initialContextInitialized = true;
         }
+        return this;
     }
 
     /**
      * Factored out for embedded setup, where this initialization may be customized after the
-     * context is created but before VM really starts execution.
+     * context is initialized but before VM really starts execution.
      */
     private void doEnvOptionsProfileInitialization() {
-        stateREnvVars = REnvVars.newContext(this);
-        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
-        stateRProfile = RProfile.newContext(this, stateREnvVars);
+        stateREnvVars.initialize(this);
+        stateROptions.initialize(this);
+        stateRProfile.initialize(this);
     }
 
     public void completeEmbeddedInitialization() {
