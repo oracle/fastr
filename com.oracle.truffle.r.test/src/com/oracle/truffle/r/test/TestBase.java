@@ -799,7 +799,6 @@ public class TestBase {
             // unit test mode
             String expected = expectedOutputManager.getOutput(input);
             if (expected == null) {
-                System.out.println("lookup failed");
                 // get the expected output dynamically (but do not update the file)
                 expectedOutputManager.createRSession();
                 expected = genTestResult(input);
