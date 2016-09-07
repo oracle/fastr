@@ -49,6 +49,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
+    private static final String TEST_TIMEOUT_PROPERTY = "FastRTestTimeout";
+    private static final String DISABLE_TIMEOUT_PROPERTY = "DisableTestTimeout"; // legacy
     private static int timeoutValue = 10000;
     private static int longTimeoutValue = 60000;
 
@@ -155,9 +157,13 @@ public final class FastRSession implements RSession {
     }
 
     private FastRSession() {
-        if (System.getProperty("DisableTestTimeout") != null) {
+        if (System.getProperty(DISABLE_TIMEOUT_PROPERTY) != null) {
             timeoutValue = Integer.MAX_VALUE;
             longTimeoutValue = Integer.MAX_VALUE;
+        } else if (System.getProperty(TEST_TIMEOUT_PROPERTY) != null) {
+            int timeoutGiven = Integer.parseInt(System.getProperty(TEST_TIMEOUT_PROPERTY));
+            timeoutValue = timeoutGiven * 1000;
+            longTimeoutValue = timeoutValue * 6;
         }
         consoleHandler = new TestConsoleHandler();
         try {
@@ -253,7 +259,6 @@ public final class FastRSession implements RSession {
                     PolyglotEngine vm = actualContextInfo.createVM();
                     consoleHandler.setInput(expression.split("\n"));
                     try {
-                        // System.out.println("eval: " + actualContextInfo.getId());
                         String input = consoleHandler.readLine();
                         while (input != null) {
                             Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
