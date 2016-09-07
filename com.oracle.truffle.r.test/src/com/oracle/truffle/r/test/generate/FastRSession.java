@@ -138,7 +138,7 @@ public final class FastRSession implements RSession {
 
     public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
-    public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
+    public ContextInfo checkContext(ContextInfo contextInfoArg) {
         create();
         ContextInfo contextInfo;
         if (contextInfoArg == null) {
@@ -146,7 +146,7 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.createVM();
+        return contextInfo;
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
@@ -211,6 +211,12 @@ public final class FastRSession implements RSession {
         private final Semaphore exit = new Semaphore(0);
         private final ContextInfo contextInfo;
 
+        /**
+         * Create an evaluation thread (to handle timeouts)
+         *
+         * @param contextInfo {@code null} for a lightweight test context, else an existing one to
+         *            use.
+         */
         EvalThread(ContextInfo contextInfo) {
             super(null);
             this.contextInfo = contextInfo;
@@ -243,9 +249,11 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    PolyglotEngine vm = createTestContext(contextInfo);
+                    ContextInfo actualContextInfo = checkContext(contextInfo);
+                    PolyglotEngine vm = actualContextInfo.createVM();
                     consoleHandler.setInput(expression.split("\n"));
                     try {
+                        // System.out.println("eval: " + actualContextInfo.getId());
                         String input = consoleHandler.readLine();
                         while (input != null) {
                             Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);

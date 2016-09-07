@@ -270,7 +270,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     private Set<RList> extractValidArgsForBuiltin() {
-        final PolyglotEngine vm = diagSuite.fastRSession.createTestContext(null);
+        final PolyglotEngine vm = diagSuite.fastRSession.checkContext(null).createVM();
 
         try {
             String snippetAnchor;

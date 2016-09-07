@@ -53,7 +53,7 @@ class DefaultArgsExtractor {
     }
 
     Map<String, Samples<?>> extractDefaultArgs(String functionName) {
-        final PolyglotEngine vm = fastRSession.createTestContext(null);
+        final PolyglotEngine vm = fastRSession.checkContext(null).createVM();
 
         try {
             HashMap<String, Samples<?>> samplesMap = new HashMap<>();

@@ -38,7 +38,7 @@ public class TestBase {
 
     @BeforeClass
     public static void setupClass() {
-        testVM = FastRSession.create().createTestContext(null);
+        testVM = FastRSession.create().checkContext(null).createVM();
         testVMContext = testVM.eval(FastRSession.GET_CONTEXT).as(RContext.class);
     }
 
