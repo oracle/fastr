@@ -179,7 +179,7 @@ public class ConnectionSupport {
             }
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+        public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
     }

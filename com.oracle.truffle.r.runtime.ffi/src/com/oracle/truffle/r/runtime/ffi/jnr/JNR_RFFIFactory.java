@@ -83,7 +83,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     }
 
     @Override
-    public ContextState newContext(RContext context) {
+    public ContextState newContextState() {
         return new ContextStateImpl();
     }
 

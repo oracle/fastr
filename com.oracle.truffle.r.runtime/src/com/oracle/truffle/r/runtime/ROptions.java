@@ -51,9 +51,11 @@ public class ROptions {
          * The current values for a given context.
          */
         private final HashMap<String, Object> map;
+        private final REnvVars envVars;
 
-        private ContextStateImpl(HashMap<String, Object> map) {
+        private ContextStateImpl(HashMap<String, Object> map, REnvVars envVars) {
             this.map = map;
+            this.envVars = envVars;
             // cannot call updateDotOptions here
         }
 
@@ -95,14 +97,19 @@ public class ROptions {
         }
 
         @TruffleBoundary
-        public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
+        public static ContextStateImpl newContextState(REnvVars envVars) {
             HashMap<String, Object> map = new HashMap<>();
+            return new ContextStateImpl(map, envVars);
+        }
+
+        @Override
+        public RContext.ContextState initialize(RContext context) {
             if (context.getKind() == ContextKind.SHARE_NOTHING) {
                 applyDefaults(map, context.getStartParams(), envVars);
             } else {
                 map.putAll(context.getParent().stateROptions.map);
             }
-            return new ContextStateImpl(map);
+            return this;
         }
 
         /**
