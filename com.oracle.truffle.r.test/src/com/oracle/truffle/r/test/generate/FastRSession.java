@@ -189,6 +189,7 @@ public final class FastRSession implements RSession {
             if (!thread.await(longTimeout ? longTimeoutValue : timeoutValue)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
+                evalThread.ensureContextDestroyed();
                 evalThread = null;
                 throw new TimeoutException();
             }
@@ -222,6 +223,15 @@ public final class FastRSession implements RSession {
 
         public boolean await(int millisTimeout) throws InterruptedException {
             return exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
+        }
+
+        /**
+         * In case the vm is not disposed by the {@code finally} clause in run (which should not
+         * happen), we explicitly destroy the context, to avoid subsequent errors relating to
+         * multiple children of a single SHARED_RW context
+         */
+        public void ensureContextDestroyed() {
+            context.destroy();
         }
 
         @Override

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -139,6 +140,36 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     }
 
     /**
+     * Defines the life cycle of an {@link RContext}.
+     */
+    private enum State {
+        /**
+         * The {@link RContext} object has been constructed, but not initialized.
+         */
+        CONSTRUCTED,
+        /**
+         * The thread has been attached, so {@link #getInstance} may be called, but initialization
+         * has not completed.
+         */
+        ATTACHED,
+        /**
+         * The {@link RContext} object has been initialized by the {@link #initializeContext}
+         * method, but is not active in the sense that the associated {@link Engine} instance has
+         * been activated.
+         */
+        INITIALIZED,
+        /**
+         * The associated {@link Engine} instance has been activated.
+         */
+        ACTIVE,
+        /**
+         * The {@link RContext} object has been destroyed by the {@link #destroy} method. All
+         * subsequent operations ideally should throw {@link IllegalStateException}.
+         */
+        DESTROYED
+    }
+
+    /**
      * Tagging interface denoting a (usually inner-) class that carries the context-specific state
      * for a class that has context-specific state. The class specific state must implement this
      * interface.
@@ -167,7 +198,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * A thread that is explicitly associated with a context for efficient lookup.
      */
     public abstract static class ContextThread extends Thread {
-        private RContext context;
+        protected RContext context;
 
         public ContextThread(RContext context) {
             this.context = context;
@@ -311,7 +342,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private boolean nullS4Object = false;
 
-    private boolean active;
+    private EnumSet<State> state = EnumSet.noneOf(State.class);
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
 
@@ -443,6 +474,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
+        state.add(State.CONSTRUCTED);
     }
 
     /**
@@ -486,9 +518,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
          * state creation but it is a finely balanced decision and risks incorrectly accessing the
          * parent state.
          */
-        assert !active;
-        active = true;
         attachThread();
+        state.add(State.ATTACHED);
+
         if (!embedded) {
             doEnvOptionsProfileInitialization();
         }
@@ -505,10 +537,12 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
+        state.add(State.INITIALIZED);
 
         if (!embedded) {
             validateContextStates();
             engine.activate(stateREnvironment);
+            state.add(State.ACTIVE);
         }
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
@@ -541,13 +575,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         doEnvOptionsProfileInitialization();
         validateContextStates();
         engine.activate(stateREnvironment);
+        state.add(State.ACTIVE);
         stateROptions.updateDotOptions();
         initialContextInitialized = true;
     }
 
     private void validateContextStates() {
-        for (ContextState state : contextStates()) {
-            assert state != null;
+        for (ContextState contextState : contextStates()) {
+            assert contextState != null;
         }
     }
 
@@ -563,17 +598,22 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * Destroy this context.
      */
-    public void destroy() {
-        for (ContextState state : contextStates()) {
-            state.beforeDestroy(this);
-        }
-        if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
-            info.getParent().sharedChild = null;
-        }
-        if (info.getParent() == null) {
-            threadLocalContext.set(null);
-        } else {
-            threadLocalContext.set(info.getParent());
+    public synchronized void destroy() {
+        if (!state.contains(State.DESTROYED)) {
+            if (state.contains(State.INITIALIZED)) {
+                for (ContextState contextState : contextStates()) {
+                    contextState.beforeDestroy(this);
+                }
+            }
+            if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
+                info.getParent().sharedChild = null;
+            }
+            if (info.getParent() == null) {
+                threadLocalContext.set(null);
+            } else {
+                threadLocalContext.set(info.getParent());
+            }
+            state = EnumSet.of(State.DESTROYED);
         }
     }
 
@@ -607,7 +647,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private static RContext getInstanceInternal() {
         RContext result = threadLocalContext.get();
         assert result != null;
-        assert result.active;
+        assert result.state.contains(State.ATTACHED);
         return result;
     }
 
