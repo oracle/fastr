@@ -49,8 +49,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final int DEFAULT_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
-    private static final int LONG_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 60000;
+    private static int timeoutValue = 10000;
+    private static int longTimeoutValue = 60000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -155,6 +155,10 @@ public final class FastRSession implements RSession {
     }
 
     private FastRSession() {
+        if (System.getProperty("DisableTestTimeout") != null) {
+            timeoutValue = Integer.MAX_VALUE;
+            longTimeoutValue = Integer.MAX_VALUE;
+        }
         consoleHandler = new TestConsoleHandler();
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
@@ -182,7 +186,7 @@ public final class FastRSession implements RSession {
         thread.push(expression);
 
         try {
-            if (!thread.await(longTimeout ? LONG_TIMEOUT : DEFAULT_TIMEOUT)) {
+            if (!thread.await(longTimeout ? longTimeoutValue : timeoutValue)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
                 evalThread = null;
