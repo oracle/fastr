@@ -183,6 +183,7 @@ public class TestBase {
                 }
                 expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
+                addOutputHook();
             } catch (Throwable ex) {
                 throw new AssertionError("R initialization failure", ex);
             }
@@ -233,6 +234,7 @@ public class TestBase {
                 try {
                     expectedOutputManager = new ExpectedTestOutputManager(new File(expectedTestOutputURL.getPath()), false, false, false);
                     fastROutputManager = new FastRTestOutputManager(null);
+                    addOutputHook();
                 } catch (IOException ex) {
                     Assert.fail("error reading: " + expectedTestOutputURL.getPath() + ": " + ex);
                 }
@@ -882,14 +884,10 @@ public class TestBase {
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
 
-    static {
+    private static void addOutputHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                if (fastROutputManager == null) {
-                    // static block evaluated in an AOT context
-                    return;
-                }
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");
                     for (String test : new TreeSet<>(unexpectedSuccessfulMicroTests)) {
