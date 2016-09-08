@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -205,8 +204,8 @@ public class RChannel {
         RAttributable attributable = (RAttributable) msg;
         RAttributes attr = attributable.getAttributes();
         RAttributes newAttr = createShareableSlow(attr);
-        if (attributable instanceof RAbstractVector) {
-            attributable = ((RAbstractVector) msg).copy();
+        if (newAttr != attr && attributable instanceof RShareable) {
+            attributable = (RAttributable) ((RShareable) msg).copy();
         }
         // see convertListAttributesToPrivate() why it is OK to use initAttributes() here
         attributable.initAttributes(newAttr);
@@ -235,8 +234,13 @@ public class RChannel {
             // by different threads
             makeShared(o);
             if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
-                return convertObjectAttributesToPrivate(o);
+                Object newObj = convertObjectAttributesToPrivate(o);
+                if (newObj == o) {
+                    makeShared(o);
+                } // otherwise a copy has been created to store new attributes
+                return newObj;
             } else {
+                makeShared(o);
                 return o;
             }
         } else {
