@@ -153,7 +153,7 @@ public final class FastRSession implements RSession {
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[0], false), false);
-        return ContextInfo.create(params, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
+        return ContextInfo.create(params, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
     }
 
     private FastRSession() {
@@ -238,9 +238,9 @@ public final class FastRSession implements RSession {
         }
 
         /**
-         * In case the vm is not disposed by the {@code finally} clause in run (which should not
-         * happen), we explicitly destroy the context, to avoid subsequent errors relating to
-         * multiple children of a single SHARED_RW context
+         * In case the vm is not disposed by the {@code finally} clause in run after a timeout,
+         * (which should not happen), we explicitly destroy the context, to avoid subsequent errors
+         * relating to multiple children of a single SHARED_RW context
          */
         public void ensureContextDestroyed() {
             context.destroy();

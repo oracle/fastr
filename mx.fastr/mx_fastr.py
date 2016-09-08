@@ -352,6 +352,9 @@ def junit_simple(args):
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
 
+def junit_nopkgs(args):
+    return mx.command_function('junit')(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
+
 def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
@@ -535,6 +538,7 @@ _commands = {
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
     'junitnoapps' : [junit_noapps, ['options']],
+    'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],

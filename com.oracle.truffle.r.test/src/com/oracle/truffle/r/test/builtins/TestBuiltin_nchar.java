@@ -82,7 +82,7 @@ public class TestBuiltin_nchar extends TestBase {
         assertEval("{ nchar(c(\"hello\", \"hi\")) }");
         assertEval("{ nchar(c(\"hello\", \"hi\", 10, 130)) }");
         assertEval("{ nchar(c(10,130)) }");
-        assertEval("{ .Internal(nchar(c(10,130), 'chars', FALSE) }");
-        assertEval("{ .Internal(nchar('ff', 'chars', FALSE) }");
+        assertEval("{ .Internal(nchar(c(10,130), 'chars', FALSE)) }");
+        assertEval("{ .Internal(nchar('ff', 'chars', FALSE)) }");
     }
 }

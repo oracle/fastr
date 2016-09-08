@@ -249,7 +249,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
         assertEval(Output.IgnoreWarningContext, "is.na(quote(x()))");
-        assertEval("is.na(is.na))");
+        assertEval("is.na(is.na)");
 
         // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error
         // Probably the same error as in testisna13

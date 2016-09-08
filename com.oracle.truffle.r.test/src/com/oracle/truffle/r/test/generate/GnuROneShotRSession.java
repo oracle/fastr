@@ -87,8 +87,8 @@ public class GnuROneShotRSession implements RSession {
 
         }
         ProcessBuilder pb = new ProcessBuilder(GNUR_COMMANDLINE);
-        // fix time zone to "CET" (to create consistent expected output)
-        pb.environment().put("TZ", "CET");
+        // fix time zone to "GMT" (to create consistent expected output)
+        pb.environment().put("TZ", "GMT");
         pb.environment().remove("R_HOME"); // don't confuse GnuR with FastR!
         pb.redirectErrorStream(true);
         Process p = pb.start();
