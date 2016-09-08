@@ -40,8 +40,14 @@ public interface RShareable extends RTypedValue {
         return copy();
     }
 
+    /**
+     * It is invalid to invoke this method on 'shared permanent' shareables.
+     */
     void incRefCount();
 
+    /**
+     * It is invalid to invoke this method on 'temporary' shareables.
+     */
     void decRefCount();
 
     boolean isSharedPermanent();

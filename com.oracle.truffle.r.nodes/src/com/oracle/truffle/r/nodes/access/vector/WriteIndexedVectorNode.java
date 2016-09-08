@@ -32,6 +32,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractListElement.UpdateStateOfListElement;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -43,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -473,17 +474,17 @@ abstract class WriteIndexedVectorNode extends Node {
         private final boolean setListElementAsObject;
         private final boolean isReplace;
         private final ConditionProfile isShareable = ConditionProfile.createBinaryProfile();
+        @Child private UpdateStateOfListElement updateStateOfListElement;
+        @Child private ShareObjectNode shareObjectNode;
 
         WriteListAction(boolean setListElementAsObject, boolean isReplace) {
             this.setListElementAsObject = setListElementAsObject;
             this.isReplace = isReplace;
-        }
-
-        private Object copyValueOnAssignment(Object value) {
-            if (isShareable.profile(value instanceof RShareable)) {
-                ((RShareable) value).incRefCount();
+            if (!isReplace) {
+                updateStateOfListElement = insert(UpdateStateOfListElement.create());
+            } else {
+                shareObjectNode = insert(ShareObjectNode.create());
             }
-            return value;
         }
 
         @Override
@@ -498,9 +499,17 @@ abstract class WriteIndexedVectorNode extends Node {
             } else {
                 rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
             }
-            if (isReplace && leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
-                rightValue = copyValueOnAssignment(rightValue);
+
+            if (isReplace) {
+                // we are replacing within the same list
+                if (leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
+                    shareObjectNode.execute(rightValue);
+                }
+            } else {
+                // we are writing into a list data that are being read from possibly another list
+                updateStateOfListElement.execute(rightAccess, rightValue);
             }
+
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);
             valueNACheck.checkListElement(rightValue);
         }

@@ -41,6 +41,7 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
 
     @Override
     public final void incRefCount() {
+        assert refCount != SHARED_PERMANENT_VAL : "cannot incRefCount of shared permanent value";
         refCount++;
     }
 

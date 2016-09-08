@@ -120,6 +120,7 @@ public class TestSimpleLists extends TestBase {
         // lists returned from built-ins
         assertEval("r <- split(1,1); r[[1]] / 2; r;");
         assertEval("r <- split(1,1); x <- r; r[[1]] <- 42; x;");
+        assertEval("x <- c(1,2,3); l <- list(x); x[[1]] <- 42; l;");
 
         // (potential) cycles
         assertEval(Ignored.Unimplemented, "l <- list(list(list())); l[[1]][[1]] <- l; l");

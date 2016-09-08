@@ -244,16 +244,21 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 return wrapResult(vector, repType);
             }
             vector = resizeVector(vector, maxOutOfBounds);
+        } else {
+            vector = vector.materialize();
         }
-        vector = vector.materialize();
 
-        if (originalVector != vector && vector instanceof RShareable) {
-            RShareable shareable = (RShareable) vector;
-            // we created a new object, and this needs to be non-temporary
-            if (shareable.isTemporary()) {
-                shareable.incRefCount();
-            }
-        }
+        // Note: the refCount of elements inside lists can stay the same. If we are replacing in a
+        // what was originally shared list, we made a shallow copy of it, but all its elements must
+        // be in shared state already anyway. If we are replacing in non-shared list and we just
+        // threw it away to replace it with larger one, the elements are in non-shared or temporary
+        // state, which is again OK.
+        //
+        // The refcount of the list/vector itself: if the write node in "v <- `$<-`(...)" sees that
+        // we are assigning the same object that 'v' already contains, it is going to skip the
+        // assignment and skip the refCount increment. If we created a new object by
+        // resizing/materializing 'vector', it will be marked as 'temporary' and its refCount
+        // incremented during the assignment step.
 
         vectorLength = targetLengthProfile.profile(vector.getLength());
 
@@ -487,7 +492,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
                 assert shareable.isTemporary();
-                shareable.incRefCount();
             }
         }
         returnVector = sharedClassProfile.profile(returnVector);
