@@ -6,7 +6,7 @@ if (length(grep("FastR", R.Version()$version.string)) == 1) {
     cx <- .fastr.context.spawn(code)
     y<-list(c(42))
     .fastr.channel.send(ch, y)
-    x<-fastr.channel.receive(ch)
+    x<-.fastr.channel.receive(ch)
     .fastr.context.join(cx)
     .fastr.channel.close(ch)
     print(c(x,y))
