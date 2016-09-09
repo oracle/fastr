@@ -27,22 +27,29 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RShareable;
 
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
 public abstract class Quote extends RBuiltinNode {
 
     protected static final int LIMIT = 3;
 
+    private final ConditionProfile shareableProfile = ConditionProfile.createBinaryProfile();
+
     public abstract Object execute(RPromise expr);
 
-    protected static Object createLanguage(Closure closure) {
-        return Utils.makeShared(RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode()));
+    protected final Object createLanguage(Closure closure) {
+        Object o = RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode());
+        if (shareableProfile.profile(o instanceof RShareable)) {
+            ((RShareable) o).makeSharedPermanent();
+        }
+        return o;
     }
 
     @SuppressWarnings("unused")
@@ -55,6 +62,6 @@ public abstract class Quote extends RBuiltinNode {
 
     @Specialization(contains = "quoteCached")
     protected Object quote(RPromise expr) {
-        return RASTUtils.createLanguageElement(expr.getClosure().getExpr().asRSyntaxNode());
+        return createLanguage(expr.getClosure());
     }
 }
