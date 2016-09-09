@@ -170,35 +170,6 @@ public class RCompression {
             int n;
             while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
                 totalRead += n;
-<<<<<<< HEAD
-            }
-            return totalRead == udata.length;
-        } catch (IOException ex) {
-            return false;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean lzmaUncompress(byte[] udata, byte[] data) {
-        int rc;
-        ProcessBuilder pb = new ProcessBuilder("xz", "--decompress", "--format=raw", "--lzma2", "--stdout");
-        pb.redirectError(Redirect.INHERIT);
-        try {
-            Process p = pb.start();
-            OutputStream os = p.getOutputStream();
-            InputStream is = p.getInputStream();
-            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, udata);
-            readThread.start();
-            os.write(data);
-            os.close();
-            rc = p.waitFor();
-            if (rc == 0) {
-                readThread.join();
-                if (readThread.totalRead != udata.length) {
-                    return false;
-                }
-=======
->>>>>>> 05d1b6fec4d7eed96d57567a139370ea98f90a0c
             }
             return totalRead == udata.length;
         } catch (IOException ex) {
