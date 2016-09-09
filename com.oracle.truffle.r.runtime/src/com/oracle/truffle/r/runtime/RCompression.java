@@ -22,19 +22,22 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
+import org.tukaani.xz.LZMA2InputStream;
+
 /**
- * Abstracts the implementation of the various forms of compression used in R. Since the C API for
- * LZMA is very complex (as used by GnuR), we use an 'xz' subprocess to do the work.
+ * Abstracts the implementation of the various forms of compression used in R.
  */
 public class RCompression {
     public enum Type {
@@ -98,7 +101,8 @@ public class RCompression {
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
             case LZMA:
-                return lzmaUncompress(udata, cdata);
+                byte[] udataCopy = Arrays.copyOf(udata, udata.length);
+                return lzmaUncompressInternal(udataCopy, cdata);
             default:
                 assert false;
                 return false;
@@ -158,6 +162,20 @@ public class RCompression {
         }
         return rc == 0;
 
+    }
+
+    private static boolean lzmaUncompressInternal(byte[] udata, byte[] data) {
+        int dictSize = udata.length < LZMA2InputStream.DICT_SIZE_MIN ? LZMA2InputStream.DICT_SIZE_MIN : udata.length;
+        try (LZMA2InputStream lzmaStream = new LZMA2InputStream(new ByteArrayInputStream(data), dictSize)) {
+            int totalRead = 0;
+            int n;
+            while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
+                totalRead += n;
+            }
+            return totalRead == udata.length;
+        } catch (IOException ex) {
+            return false;
+        }
     }
 
     private static boolean lzmaUncompress(byte[] udata, byte[] data) {

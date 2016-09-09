@@ -73,6 +73,16 @@ suite = {
         "resource" : "true"
     },
 
+    "APACHE-COMMONS-COMPRESS" : {
+        "urls" : ["http://central.maven.org/maven2/org/apache/commons/commons-compress/1.12/commons-compress-1.12.jar"],
+        "sha1" : "84caa68576e345eb5e7ae61a0e5a9229eb100d7b"
+    },
+
+    "TUKAANI_XZ" : {
+        "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.5/xz-1.5.jar"],
+        "sha1" : "9c64274b7dbb65288237216e3fae7877fd3f2bee",
+    },
+
     "ANTLR-3.5" : {
       "path" : "libdownloads/antlr-runtime-3.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
@@ -315,6 +325,8 @@ suite = {
       "dependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
+        "APACHE-COMMONS-COMPRESS",
+        "TUKAANI_XZ",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
