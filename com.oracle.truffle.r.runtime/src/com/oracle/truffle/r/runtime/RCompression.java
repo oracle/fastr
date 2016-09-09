@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,9 +33,10 @@ import java.util.zip.GZIPInputStream;
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
+import org.tukaani.xz.LZMA2InputStream;
+
 /**
- * Abstracts the implementation of the various forms of compression used in R. Since the C API for
- * LZMA is very complex (as used by GnuR), we use an 'xz' subprocess to do the work.
+ * Abstracts the implementation of the various forms of compression used in R.
  */
 public class RCompression {
     public enum Type {
@@ -98,7 +100,7 @@ public class RCompression {
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
             case LZMA:
-                return lzmaUncompress(udata, cdata);
+                return lzmaUncompressInternal(udata, cdata);
             default:
                 assert false;
                 return false;
@@ -160,29 +162,18 @@ public class RCompression {
 
     }
 
-    private static boolean lzmaUncompress(byte[] udata, byte[] data) {
-        int rc;
-        ProcessBuilder pb = new ProcessBuilder("xz", "--decompress", "--format=raw", "--lzma2", "--stdout");
-        pb.redirectError(Redirect.INHERIT);
-        try {
-            Process p = pb.start();
-            OutputStream os = p.getOutputStream();
-            InputStream is = p.getInputStream();
-            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, udata);
-            readThread.start();
-            os.write(data);
-            os.close();
-            rc = p.waitFor();
-            if (rc == 0) {
-                readThread.join();
-                if (readThread.totalRead != udata.length) {
-                    return false;
-                }
+    private static boolean lzmaUncompressInternal(byte[] udata, byte[] data) {
+        int dictSize = udata.length < LZMA2InputStream.DICT_SIZE_MIN ? LZMA2InputStream.DICT_SIZE_MIN : udata.length;
+        try (LZMA2InputStream lzmaStream = new LZMA2InputStream(new ByteArrayInputStream(data), dictSize)) {
+            int totalRead = 0;
+            int n;
+            while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
+                totalRead += n;
             }
-        } catch (InterruptedException | IOException ex) {
+            return totalRead == udata.length;
+        } catch (IOException ex) {
             return false;
         }
-        return rc == 0;
     }
 
     /**
