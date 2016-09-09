@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import com.oracle.truffle.r.nodes.builtin.casts.CastStep.MapStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 
 /**
  * Represents mapping used in {@link MapStep}.
@@ -74,13 +74,19 @@ public abstract class Mapper {
 
     public static final class MapToCharAt extends Mapper {
         private final int index;
+        private final char defaultValue;
 
-        public MapToCharAt(int index) {
+        public MapToCharAt(int index, char defaultValue) {
             this.index = index;
+            this.defaultValue = defaultValue;
         }
 
         public int getIndex() {
             return index;
+        }
+
+        public char getDefaultValue() {
+            return defaultValue;
         }
 
         @Override

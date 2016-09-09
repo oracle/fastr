@@ -1412,7 +1412,7 @@ public final class CastBuilder {
 
     }
 
-    static class ArgCastBuilderState {
+    public static class ArgCastBuilderState {
         private final DefaultError defaultDefaultError;
 
         private final int argumentIndex;
@@ -1423,7 +1423,7 @@ public final class CastBuilder {
         private DefaultError defError;
         private DefaultError defWarning;
 
-        ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, boolean boxPrimitives) {
+        public ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, boolean boxPrimitives) {
             this.argumentIndex = argumentIndex;
             this.argumentName = argumentName;
             this.factory = fact;

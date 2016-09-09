@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import static com.oracle.truffle.r.nodes.builtin.casts.CastStep.FilterStep;
-import static com.oracle.truffle.r.nodes.builtin.casts.CastStep.MapStep;
+import static com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
+import static com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.RType;
@@ -33,7 +33,17 @@ import com.oracle.truffle.r.runtime.RType;
  */
 public abstract class Filter {
 
+    private final MessageData message;
+
+    protected Filter(MessageData message) {
+        this.message = message;
+    }
+
     public abstract <T> T accept(FilterVisitor<T> visitor);
+
+    public final MessageData getMessage() {
+        return message;
+    }
 
     public interface FilterVisitor<T> {
         T visit(TypeFilter filter);
@@ -58,7 +68,8 @@ public abstract class Filter {
         private final Class<?> type;
         private final ArgumentFilter<Object, Boolean> instanceOfLambda;
 
-        public TypeFilter(Class<?> type, ArgumentFilter<Object, Boolean> instanceOfLambda) {
+        public TypeFilter(Class<?> type, ArgumentFilter<Object, Boolean> instanceOfLambda, MessageData message) {
+            super(message);
             this.type = type;
             this.instanceOfLambda = instanceOfLambda;
         }
@@ -87,7 +98,8 @@ public abstract class Filter {
     public static final class RTypeFilter extends Filter {
         private final RType type;
 
-        public RTypeFilter(RType type) {
+        public RTypeFilter(RType type, MessageData message) {
+            super(message);
             assert type.isVector() && type != RType.List : "RTypeFilter supports only vector types minus list.";
             this.type = type;
         }
@@ -103,6 +115,10 @@ public abstract class Filter {
     }
 
     public static final class NumericFilter extends Filter {
+        public NumericFilter(MessageData message) {
+            super(message);
+        }
+
         @Override
         public <T> T accept(FilterVisitor<T> visitor) {
             return visitor.visit(this);
@@ -123,7 +139,8 @@ public abstract class Filter {
         private final byte operation;
         private final Object value;
 
-        public CompareFilter(byte operation, Object value) {
+        public CompareFilter(byte operation, Object value, MessageData message) {
+            super(message);
             assert operation <= LE : "wrong operation value";
             this.operation = operation;
             this.value = value;
@@ -147,7 +164,8 @@ public abstract class Filter {
         private final Filter left;
         private final Filter right;
 
-        public AndFilter(Filter left, Filter right) {
+        public AndFilter(Filter left, Filter right, MessageData message) {
+            super(message);
             this.left = left;
             this.right = right;
         }
@@ -170,7 +188,8 @@ public abstract class Filter {
         private final Filter left;
         private final Filter right;
 
-        public OrFilter(Filter left, Filter right) {
+        public OrFilter(Filter left, Filter right, MessageData message) {
+            super(message);
             this.left = left;
             this.right = right;
         }
@@ -192,7 +211,8 @@ public abstract class Filter {
     public static final class NotFilter extends Filter {
         private final Filter filter;
 
-        public NotFilter(Filter filter) {
+        public NotFilter(Filter filter, MessageData message) {
+            super(message);
             this.filter = filter;
         }
 
