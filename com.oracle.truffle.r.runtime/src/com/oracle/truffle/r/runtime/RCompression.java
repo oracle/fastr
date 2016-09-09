@@ -101,8 +101,7 @@ public class RCompression {
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
             case LZMA:
-                byte[] udataCopy = Arrays.copyOf(udata, udata.length);
-                return lzmaUncompressInternal(udataCopy, cdata);
+                return lzmaUncompressInternal(udata, cdata);
             default:
                 assert false;
                 return false;
@@ -171,6 +170,7 @@ public class RCompression {
             int n;
             while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
                 totalRead += n;
+<<<<<<< HEAD
             }
             return totalRead == udata.length;
         } catch (IOException ex) {
@@ -197,11 +197,13 @@ public class RCompression {
                 if (readThread.totalRead != udata.length) {
                     return false;
                 }
+=======
+>>>>>>> 05d1b6fec4d7eed96d57567a139370ea98f90a0c
             }
-        } catch (InterruptedException | IOException ex) {
+            return totalRead == udata.length;
+        } catch (IOException ex) {
             return false;
         }
-        return rc == 0;
     }
 
     /**

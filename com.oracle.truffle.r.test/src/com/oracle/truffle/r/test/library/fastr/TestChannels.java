@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import org.junit.Test;
+
 import com.oracle.truffle.r.test.TestRBase;
 
 public class TestChannels extends TestRBase {
@@ -29,5 +31,13 @@ public class TestChannels extends TestRBase {
     @Override
     public String getTestDir() {
         return "channels";
+    }
+
+    /**
+     * Needs to include a dummy test, otherwise JUnit does not pick it up for execution.
+     */
+    @Test
+    public void dummyTest() {
+        assertEval("42");
     }
 }
