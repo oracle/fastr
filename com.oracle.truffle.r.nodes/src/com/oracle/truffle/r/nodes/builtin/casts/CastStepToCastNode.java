@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.CastStep.AsVectorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.CastStep.CastStepVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.CastStep.FilterStep;
@@ -66,6 +67,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class CastStepToCastNode {
 
     public static CastNode convert(PipelineConfStep firstStep) {
+        PipelineConfigBuilder configBuilder = firstStep.getConfigBuilder();
+
         CastNodeFactory nodeFactory = new CastNodeFactory(null, null, null, true); // TODO: default
                                                                                    // error instead
                                                                                    // of nulls
@@ -82,7 +85,7 @@ public final class CastStepToCastNode {
 
             currCastStep = currCastStep.getNext();
         }
-        return BypassNode.create(firstStep.getConfigBuilder(), prevCastNode);
+        return BypassNode.create(configBuilder, prevCastNode);
     }
 
     private static final class CastNodeFactory implements CastStepVisitor<CastNode> {
