@@ -178,6 +178,7 @@ public class RCompression {
         }
     }
 
+    @SuppressWarnings("unused")
     private static boolean lzmaUncompress(byte[] udata, byte[] data) {
         int rc;
         ProcessBuilder pb = new ProcessBuilder("xz", "--decompress", "--format=raw", "--lzma2", "--stdout");
