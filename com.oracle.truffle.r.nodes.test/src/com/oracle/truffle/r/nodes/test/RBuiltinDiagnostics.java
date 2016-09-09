@@ -27,6 +27,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +36,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.imageio.metadata.IIOInvalidTreeException;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -222,11 +226,33 @@ public class RBuiltinDiagnostics {
             System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
             System.out.println("");
 
+            printDeadSpecs();
+
             if (diagSuite.diagConfig.verbose) {
                 for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
                     System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
                 }
             }
+        }
+
+        private void printDeadSpecs() {
+            System.out.println("Dead specializations: ");
+            for (Map.Entry<Method, List<Set<Cast>>> resTpPerSpec : convResultTypePerSpec.entrySet()) {
+                List<Set<Cast>> argsCasts = resTpPerSpec.getValue();
+                List<Integer> missingCasts = new ArrayList<>();
+                for (int i = 0; i < argsCasts.size(); i++) {
+                    Set<Cast> argCasts = argsCasts.get(i);
+                    if (argCasts.isEmpty()) {
+                        missingCasts.add(i);
+                    }
+                }
+
+                if (!missingCasts.isEmpty()) {
+                    System.out.println("   " + methodName(resTpPerSpec.getKey(), missingCasts));
+                }
+            }
+
+            System.out.println("");
         }
 
         protected void diagnosePipeline(int i) {
@@ -243,7 +269,7 @@ public class RBuiltinDiagnostics {
                 argCastInSpec.stream().forEach(
                                 partialCast -> {
                                     System.out.println("   " + partialCast.coverage() + " (" + typeName(partialCast.inputType()) + "->" + typeName(partialCast.resultType()) + ")" + " in " +
-                                                    methodName(entry.getKey(), curParIndex));
+                                                    methodName(entry.getKey(), Collections.singleton(curParIndex)));
                                     unboundArgTypes.remove(partialCast.inputType());
                                 });
             }
@@ -296,13 +322,13 @@ public class RBuiltinDiagnostics {
         }
     }
 
-    private static String methodName(Method m, int markedParamIndex) {
-        final int markedParamRealIndex = getRealParamIndex(m.getParameterTypes(), markedParamIndex);
+    private static String methodName(Method m, Collection<Integer> markedParamIndices) {
+        final Set<Integer> markedParamRealIndices = markedParamIndices.stream().map(markedParamIndex -> getRealParamIndex(m.getParameterTypes(), markedParamIndex)).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
         int i = 0;
         for (Class<?> pt : m.getParameterTypes()) {
             final String tn;
-            if (i == markedParamRealIndex) {
+            if (markedParamRealIndices.contains(i)) {
                 tn = "*" + typeName(pt) + "*";
             } else {
                 tn = typeName(pt);
