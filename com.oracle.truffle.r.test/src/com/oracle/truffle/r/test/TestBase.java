@@ -243,6 +243,11 @@ public class TestBase {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * A connvenience builder-pattern style method for a non-JUnit implementation.
+     * 
+     * @return
+     */
     public <T> T doBeforeTest() {
         beforeTest();
         return (T) this;
