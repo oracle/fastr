@@ -305,6 +305,10 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
         runlistener_arg = add_arg_separator()
         runlistener_arg += 'gen-diff=' + args.gen_diff_output
 
+    if args.trace_tests:
+        runlistener_arg = add_arg_separator()
+        runlistener_arg += 'trace-tests'
+
 #    if args.test_methods:
 #        runlistener_arg = add_arg_separator()
 #        runlistener_arg = 'test-methods=' + args.test_methods
@@ -339,6 +343,7 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
+    parser.add_argument('--trace-tests', action='store_true', help='trace the actual @Test methods as they are executed')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):

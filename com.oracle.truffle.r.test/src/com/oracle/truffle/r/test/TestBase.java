@@ -129,6 +129,7 @@ public class TestBase {
         private static final String GEN_FASTR = "gen-fastr=";
         private static final String GEN_DIFFS = "gen-diff=";
         private static final String KEEP_TRAILING_WHITESPACE = "keep-trailing-whitespace";
+        private static final String TRACE_TESTS = "trace-tests";
         private static final String TEST_METHODS = "test-methods=";
         /**
          * The dir where 'mx' puts the output from building this project.
@@ -169,6 +170,8 @@ public class TestBase {
                             checkExpected = true;
                         } else if (directive.equals(KEEP_TRAILING_WHITESPACE)) {
                             keepTrailingWhiteSpace = true;
+                        } else if (directive.equals(TRACE_TESTS)) {
+                            traceTests = true;
                         } else if (directive.startsWith(TEST_PROJECT_OUTPUT_DIR)) {
                             testProjectOutputDir = Paths.get(directive.replace(TEST_PROJECT_OUTPUT_DIR, ""));
                         } else if (directive.equals(TEST_METHODS)) {
@@ -218,6 +221,9 @@ public class TestBase {
         @Override
         public void testStarted(Description description) {
             testElementName = description.getClassName() + "." + description.getMethodName();
+            if (traceTests) {
+                System.out.println(testElementName);
+            }
             failedMicroTests = new ArrayList<>();
         }
     }
@@ -225,8 +231,11 @@ public class TestBase {
     @Before
     public void beforeTest() {
         if (expectedOutputManager == null) {
-            // assume we are running a unit test in an IDE and the RunListener was not invoked.
-            // In this case we can expect the test output file to exist and open it as a resource
+            /*
+             * Assume we are running a unit test in an IDE/non-JUnit setup and therefore the
+             * RunListener was not invoked. In this case we can expect the test output file to exist
+             * and open it as a resource.
+             */
             URL expectedTestOutputURL = ResourceHandlerFactory.getHandler().getResource(TestBase.class, TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
             if (expectedTestOutputURL == null) {
                 Assert.fail("cannot find " + TestOutputManager.TEST_EXPECTED_OUTPUT_FILE + " resource");
@@ -242,15 +251,25 @@ public class TestBase {
         }
     }
 
-    @SuppressWarnings("unchecked")
     /**
-     * A connvenience builder-pattern style method for a non-JUnit implementation.
-     * 
-     * @return
+     * Method for non-JUnit implementation to set test tracing.
      */
-    public <T> T doBeforeTest() {
+    public static void setTraceTests() {
+        traceTests = true;
+    }
+
+    /**
+     * Set the test context explicitly (for non-JUnit implementation). N.B. The {@code lineno} is
+     * not the micro-test line, but that of the method declaration.
+     */
+    public void doBeforeTest(String className, int lineno, String methodName) {
+        testElementName = className + "." + methodName;
+        failedMicroTests = new ArrayList<>();
+        explicitTestContext = String.format("%s:%d (%s)", className, lineno, methodName);
+        if (traceTests) {
+            System.out.println(testElementName);
+        }
         beforeTest();
-        return (T) this;
     }
 
     private static class ExpectedTestOutputManager extends TestOutputManager {
@@ -360,6 +379,11 @@ public class TestBase {
      * {@code true} if expected output is not discarding trailing whitespace.
      */
     private static boolean keepTrailingWhiteSpace;
+
+    /**
+     * Trace the test methods as they are executed (debugging).
+     */
+    private static boolean traceTests;
 
     private static Path testProjectOutputDir;
 
@@ -518,7 +542,7 @@ public class TestBase {
             String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
             return context;
         } catch (NullPointerException npe) {
-            return "no context available";
+            return "no test context available";
         }
     }
 
