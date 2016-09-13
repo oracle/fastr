@@ -61,6 +61,9 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             RInternalCode internalCode = RInternalCode.lookup(context, basePackage, code);
             this.function = internalCode.lookupFunction(functionName);
+            if (this.function == null) {
+                throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
+            }
         }
 
         return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, functionName, null);
