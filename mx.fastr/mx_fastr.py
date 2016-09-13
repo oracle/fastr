@@ -463,6 +463,7 @@ def rbdiag(args):
     --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
 
 	If no builtin is specified, all registered builtins are diagnosed.
+	An external builtin is specified by the fully qualified name of its node class.
 
 	Examples:
 
@@ -470,6 +471,7 @@ def rbdiag(args):
 		mx rbdiag colSums colMeans -v
 		mx rbdiag scan -m -n
     	mx rbdiag colSums --sweep
+    	mx rbdiag com.oracle.truffle.r.library.stats.Rnorm
     '''
     cp = mx.classpath('com.oracle.truffle.r.nodes.test')
 

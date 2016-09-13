@@ -190,7 +190,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         }
     }
 
-    private static String[] getStringIdentifiers(FrameDescriptor fd) {
+    public static String[] getStringIdentifiers(FrameDescriptor fd) {
         return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).toArray(String[]::new);
     }
 }

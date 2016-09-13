@@ -1528,7 +1528,7 @@ void R_SetExternalPtrTag(SEXP s, SEXP tag) {
 	(*thisenv)->CallObjectMethod(thisenv, s, externalPtrSetTagMethodID, tag);
 }
 
-void R_SetExternalPtrProt(SEXP s, SEXP p) {
+void R_SetExternalPtrProtected(SEXP s, SEXP p) {
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallObjectMethod(thisenv, s, externalPtrSetProtMethodID, p);
 }

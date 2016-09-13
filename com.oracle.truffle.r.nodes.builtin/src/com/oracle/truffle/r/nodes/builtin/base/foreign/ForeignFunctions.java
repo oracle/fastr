@@ -404,7 +404,6 @@ public class ForeignFunctions {
                 case "binomial_dev_resids":
                 case "rWishart":
                 case "Cdist":
-                case "updateform":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
@@ -446,8 +445,12 @@ public class ForeignFunctions {
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
 
+                case "updateform":
+                    return getExternalModelBuiltinNode("updateform");
+
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+
                 case "dnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 
