@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RType;
  * {@link #setNext(PipelineStep)}. The order of steps should be the same as the order of cast
  * pipeline API invocations.
  */
-public abstract class PipelineStep {
+public abstract class PipelineStep<T, R> {
 
     private PipelineStep next;
 
@@ -48,26 +48,26 @@ public abstract class PipelineStep {
     public abstract <T> T accept(PipelineStepVisitor<T> visitor);
 
     public interface PipelineStepVisitor<T> {
-        T visit(FindFirstStep step);
+        T visit(FindFirstStep<?, ?> step);
 
-        T visit(AsVectorStep step);
+        T visit(CoercionStep<?, ?> step);
 
-        T visit(MapStep step);
+        T visit(MapStep<?, ?> step);
 
-        T visit(MapIfStep step);
+        T visit(MapIfStep<?, ?> step);
 
-        T visit(FilterStep step);
+        T visit(FilterStep<?, ?> step);
 
-        T visit(NotNAStep step);
+        T visit(NotNAStep<?> step);
 
-        T visit(DefaultErrorStep step);
+        T visit(DefaultErrorStep<?> step);
     }
 
     /**
      * Changes the current default error, which is used by steps/filters that do not have error
      * message set explicitly.
      */
-    public static final class DefaultErrorStep extends PipelineStep {
+    public static final class DefaultErrorStep<T> extends PipelineStep<T, T> {
         private final MessageData defaultMessage;
 
         public DefaultErrorStep(MessageData defaultMessage) {
@@ -86,20 +86,16 @@ public abstract class PipelineStep {
 
     /**
      * If the replacement is set (!= null), then maps NA values to the replacement, otherwise raises
-     * given error on NA value of any type.
+     * given error on NA value of any type. If both the replacement and the message are set, then
+     * the replacement is accompanied by a warning.
      */
-    public static final class NotNAStep extends PipelineStep {
+    public static final class NotNAStep<T> extends PipelineStep<T, T> {
         private final MessageData message;
         private final Object replacement;
 
-        public NotNAStep(Object replacement) {
-            this.message = null;
+        public NotNAStep(Object replacement, MessageData message) {
             this.replacement = replacement;
-        }
-
-        public NotNAStep(MessageData message) {
             this.message = message;
-            this.replacement = null;
         }
 
         public MessageData getMessage() {
@@ -120,7 +116,7 @@ public abstract class PipelineStep {
      * Takes the first element of a vector. If the vector is empty, null or missing, then either
      * raises an error or returns default value if set.
      */
-    public static final class FindFirstStep extends PipelineStep {
+    public static final class FindFirstStep<V, E> extends PipelineStep<V, E> {
         private final MessageData error;
         private final Object defaultValue;
         private final Class<?> elementClass;
@@ -152,12 +148,30 @@ public abstract class PipelineStep {
     /**
      * Converts the value to a vector of given {@link RType}. Null and missing values are forwarded.
      */
-    public static final class AsVectorStep extends PipelineStep {
-        private final RType type;
+    public static final class CoercionStep<T, V> extends PipelineStep<T, V> {
+        public final RType type;
+        public final boolean preserveNames;
+        public final boolean preserveDimensions;
+        public final boolean preserveAttributes;
+        public final boolean preserveNonVector;
+        public final boolean vectorCoercion;
 
-        public AsVectorStep(RType type) {
+        public CoercionStep(RType type, boolean vectorCoercion) {
+            this(type, vectorCoercion, false, false, false, true);
+        }
+
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
+        }
+
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
             assert type.isVector() && type != RType.List : "AsVectorStep supports only vector types minus list.";
             this.type = type;
+            this.vectorCoercion = vectorCoercion;
+            this.preserveNames = preserveNames;
+            this.preserveAttributes = preserveAttributes;
+            this.preserveDimensions = preserveDimensions;
+            this.preserveNonVector = preserveNonVector;
         }
 
         public RType getType() {
@@ -170,7 +184,7 @@ public abstract class PipelineStep {
         }
     }
 
-    public static final class MapStep extends PipelineStep {
+    public static final class MapStep<T, R> extends PipelineStep<T, R> {
         private final Mapper mapper;
 
         public MapStep(Mapper mapper) {
@@ -190,7 +204,7 @@ public abstract class PipelineStep {
     /**
      * Allows to execute on of given pipeline chains depending on the condition.
      */
-    public static final class MapIfStep extends PipelineStep {
+    public static final class MapIfStep<T, R> extends PipelineStep<T, R> {
         private final Filter filter;
         private final PipelineStep trueBranch;
         private final PipelineStep falseBranch;
@@ -222,20 +236,33 @@ public abstract class PipelineStep {
     /**
      * Raises an error if the value does not conform to the given filter.
      */
-    public static final class FilterStep extends PipelineStep {
+    public static final class FilterStep<T, R extends T> extends PipelineStep<T, R> {
         private final Filter filter;
+        private final MessageData message;
+        private final boolean isWarning;
 
-        public FilterStep(Filter filter) {
+        public FilterStep(Filter filter, MessageData message, boolean isWarning) {
             this.filter = filter;
+            this.message = message;
+            this.isWarning = isWarning;
         }
 
         public Filter getFilter() {
             return filter;
         }
 
+        public MessageData getMessage() {
+            return message;
+        }
+
+        public boolean isWarning() {
+            return isWarning;
+        }
+
         @Override
         public <T> T accept(PipelineStepVisitor<T> visitor) {
             return visitor.visit(this);
         }
+
     }
 }

@@ -25,36 +25,34 @@ package com.oracle.truffle.r.nodes.builtin;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleToInt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFractional;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalTrue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarIntegerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarStringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.trueValue;
-import static com.oracle.truffle.r.nodes.casts.CastUtils.samples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -70,16 +68,11 @@ import org.junit.Test;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.InitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
 import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
 import com.oracle.truffle.r.nodes.casts.Samples;
-import com.oracle.truffle.r.nodes.casts.ValuePredicateArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -89,9 +82,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -115,8 +106,7 @@ public class CastBuilderTest {
 
     @Test
     public void testError() {
-        cb.arg(0).mustBe(
-                        ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, String.class),
+        cb.arg(0).mustBe(instanceOf(String.class),
                         RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
@@ -132,7 +122,7 @@ public class CastBuilderTest {
 
     @Test
     public void testErrorWithAttachedPredicate() {
-        cb.arg(0).mustBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class), Message.SEED_NOT_VALID_INT);
+        cb.arg(0).mustBe(integerValue(), Message.SEED_NOT_VALID_INT);
         testPipeline();
 
         RAbstractIntVector v = RDataFactory.createIntVectorFromScalar(1);
@@ -147,7 +137,7 @@ public class CastBuilderTest {
 
     @Test
     public void testWarning() {
-        cb.arg(0).shouldBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof String, Object.class), RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
+        cb.arg(0).shouldBe(instanceOf(String.class), RError.Message.DLL_LOAD_ERROR, Function.identity(), "123");
         testPipeline();
 
         assertEquals("A", cast("A"));
@@ -168,11 +158,11 @@ public class CastBuilderTest {
 
     @Test
     public void testDefaultError() {
-        cb.arg(0, "arg0").mustBe(ValuePredicateArgumentFilterSampler.fromLambdaWithSamples(x -> false, samples(), samples(true, false), Boolean.class));
+        cb.arg(0, "arg0").mustBe(scalarLogicalValue().and(logicalTrue()));
         testPipeline(false);
 
         try {
-            cast(Boolean.FALSE);
+            cast(RRuntime.LOGICAL_FALSE);
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(String.format(RError.Message.INVALID_ARGUMENT.message, "arg0"), e.getMessage());
@@ -370,36 +360,6 @@ public class CastBuilderTest {
         assertEquals("A", cast(RRuntime.DOUBLE_NA));
     }
 
-    @SuppressWarnings("deprecation")
-    public InitialPhaseBuilder<String> matchStringArg(InitialPhaseBuilder<Object> phaseBuilder, String... optValues) {
-        ArgumentValueFilter<String> opts = null;
-        for (String opt : optValues) {
-            opts = opts == null ? equalTo(opt) : opts.or(equalTo(opt));
-        }
-        return phaseBuilder.mustBe(scalarStringValue().and(opts));
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testMatchArg() {
-
-        cb.arg(0, "foo").mapNull(constant("a")).mustBe(scalarStringValue().and(equalTo("a").or(equalTo("b").or(equalTo("c")))), RError.Message.GENERIC, "Invalid option");
-
-        cb.arg(0, "foo").alias(pb -> matchStringArg(pb, "a", "b", "c")).mapIf(equalTo("c"), constant("sss"));
-
-        assertEquals("a", cast("a"));
-        assertEquals("b", cast("b"));
-        assertEquals("sss", cast("c"));
-        assertEquals("a", cast(RNull.instance));
-
-        try {
-            cast("d");
-            fail();
-        } catch (IllegalArgumentException e) {
-            // ok
-        }
-    }
-
     @Test
     public void testSample0() {
         cb.arg(0, "x").asIntegerVector().shouldBe(singleElement()).findFirst(0);
@@ -449,8 +409,7 @@ public class CastBuilderTest {
     @Test
     public void testSample4() {
         // the predicate is attached to the error message
-        cb.arg(0).mustBe(ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof RAbstractIntVector || x instanceof Integer, Object.class),
-                        Message.SEED_NOT_VALID_INT).asIntegerVector();
+        cb.arg(0).mustBe(integerValue(), Message.SEED_NOT_VALID_INT).asIntegerVector();
         testPipeline();
 
         cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
@@ -465,10 +424,8 @@ public class CastBuilderTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testSample5() {
-        ArgumentTypeFilter<Object, Object> complexOrExpr = integerValue().or(doubleValue()).or(complexValue()).or(logicalValue());
-        Assert.assertTrue(complexOrExpr instanceof ArgumentFilterSampler);
         cb.arg(0).defaultError(RError.Message.INVALID_ARGUMENT, "fill").mustBe(numericValue().or(logicalValue())).asVector().mustBe(singleElement()).findFirst().shouldBe(
-                        ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0), Message.NON_POSITIVE_FILL).mapIf(
+                        scalarLogicalValue().or(scalarIntegerValue().and(gt(0))), Message.NON_POSITIVE_FILL).mapIf(
                                         scalarLogicalValue(), toBoolean());
         testPipeline();
 
@@ -499,7 +456,7 @@ public class CastBuilderTest {
     @Test
     @SuppressWarnings("deprecation")
     public void testSample6() {
-        cb.arg(0).map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "labels").asStringVector();
+        cb.arg(0).mapNull(emptyStringVector()).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "labels").asStringVector();
         testPipeline();
 
         assertEquals("abc", cast("abc"));
@@ -539,7 +496,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample8() {
-        cb.arg(0, "blocking").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean()).mustBe(trueValue(), RError.Message.NYI, "non-blocking mode not supported");
+        cb.arg(0, "blocking").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
         cast(RNull.instance);
     }
 
@@ -570,8 +527,8 @@ public class CastBuilderTest {
                   with(findFirst().logicalElement()).
                   with(notNA()).
                   with(map(toBoolean())).
-                  with(mustBe(instanceOf(Boolean.class), false)).
-                  with(shouldBe(instanceOf(Object.class), false)).
+                  with(mustBe(instanceOf(Boolean.class))).
+                  with(shouldBe(instanceOf(Object.class))).
                   end());
 
         RList list = RDataFactory.createList();
@@ -603,15 +560,6 @@ public class CastBuilderTest {
         assertEquals(true, cast(1));
     }
 
-    @Test
-    public void testSample13() {
-        cb.arg(0, "arg").mapIf(numericValue(), () -> BoxPrimitiveNodeGen.create());
-
-        Object res = cast(1);
-        Assert.assertTrue(res instanceof RInteger);
-        res = cast(RRuntime.LOGICAL_TRUE);
-        Assert.assertTrue(res instanceof RLogical);
-    }
     //@formatter:on
 
     @Test
@@ -627,7 +575,7 @@ public class CastBuilderTest {
     public void testSample15() {
         // cb.arg(0, "dim").asIntegerVector().mustBe(Predef.notEmpty());
 
-        cb.arg(0, "open").mustBe(instanceOf(RAbstractStringVector.class).and(singleElement()).and(elementAt(0, RRuntime.STRING_NA).not()));
+        cb.arg(0, "open").mustBe(instanceOf(RAbstractStringVector.class).and(singleElement()).and(not(elementAt(0, RRuntime.STRING_NA))));
 
         cast(RDataFactory.createStringVector(new String[]{"abc"}, true));
         try {
@@ -660,7 +608,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample17() {
-        cb.arg(0, "from").asDoubleVector().findFirst().mapIf(doubleNA().not().and(isFractional().not()), doubleToInt());
+        cb.arg(0, "from").asDoubleVector().findFirst().mapIf(doubleNA().not().and(not(isFractional())), doubleToInt());
 
         assertEquals(42, cast("42"));
         assertEquals(42.2, cast("42.2"));

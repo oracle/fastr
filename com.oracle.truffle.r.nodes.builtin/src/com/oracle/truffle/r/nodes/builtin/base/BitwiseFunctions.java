@@ -237,7 +237,7 @@ public class BitwiseFunctions {
             casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
             casts.arg("n").allowNull().mapIf(stringValue(),
-                            chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, false, RError.Message.NA_INTRODUCED_COERCION)).end(), asIntegerVector());
+                            chain(asStringVector()).with(shouldBe(anyValue(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(), asIntegerVector());
         }
 
         @Specialization

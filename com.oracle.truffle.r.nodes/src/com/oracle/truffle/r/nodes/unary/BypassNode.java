@@ -28,6 +28,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.DefaultError;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -78,11 +80,11 @@ public abstract class BypassNode extends CastNode {
     @Child private CastNode afterFindFirst;
 
     protected BypassNode(PipelineConfigBuilder pcb, CastNode wrappedHead, FindFirstNode directFindFirstNode, CastNode afterFindFirst) {
-        this.nullMapFn = pcb.getNullMapper();
+        this.nullMapFn = PipelineToCastNode.convert(pcb.getNullMapper());
         this.isRNullBypassed = this.nullMapFn != null;
         this.nullMsg = pcb.getNullMessage() == null ? null : pcb.getNullMessage().fixCallObj(this);
 
-        this.missingMapFn = pcb.getMissingMapper();
+        this.missingMapFn = PipelineToCastNode.convert(pcb.getMissingMapper());
         this.isRMissingBypassed = this.missingMapFn != null;
         this.missingMsg = pcb.getMissingMessage() == null ? null : pcb.getMissingMessage().fixCallObj(this);
 

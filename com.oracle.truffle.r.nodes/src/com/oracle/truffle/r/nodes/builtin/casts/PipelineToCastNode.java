@@ -24,13 +24,17 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.NarrowingArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.FilterVisitor;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
-import com.oracle.truffle.r.nodes.builtin.casts.Filter.NumericFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
@@ -39,7 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AsVectorStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
@@ -55,6 +59,8 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.ConditionalMapNode;
 import com.oracle.truffle.r.nodes.unary.FilterNode;
@@ -75,10 +81,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public final class PipelineToCastNode {
 
-    public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep lastStep) {
+    public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep) {
         // TODO: where to get the caller node? argument to this method? and default error?
         CastNodeFactory nodeFactory = new CastNodeFactory(new MessageData(null, null, null), true);
-        CastNode headNode = convert(lastStep, nodeFactory);
+        CastNode headNode = convert(firstStep, nodeFactory);
         return BypassNode.create(configBuilder, headNode);
     }
 
@@ -87,13 +93,13 @@ public final class PipelineToCastNode {
      * {@code PipelineConfStep} anymore. This method is also invoked when we build mapIf node to
      * convert {@code trueBranch} and {@code falseBranch}.
      */
-    private static CastNode convert(PipelineStep firstStep, CastNodeFactory nodeFactory) {
+    private static CastNode convert(PipelineStep<?, ?> firstStep, CastNodeFactory nodeFactory) {
         if (firstStep == null) {
             return null;
         }
 
         CastNode prevCastNode = null;
-        PipelineStep currCastStep = firstStep;
+        PipelineStep<?, ?> currCastStep = firstStep;
         while (currCastStep != null) {
             CastNode node = nodeFactory.create(currCastStep);
             if (node != null) {
@@ -110,74 +116,82 @@ public final class PipelineToCastNode {
         return prevCastNode;
     }
 
+    public static ArgumentFilter<?, ?> convert(Filter<?, ?> filter) {
+        return filter == null ? null : ArgumentFilterFactory.create(filter);
+    }
+
+    public static ArgumentMapper<?, ?> convert(Mapper<?, ?> mapper) {
+        return mapper == null ? null : MapperNodeFactory.create(mapper);
+    }
+
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {
         private MessageData defaultMessage;
-        private final boolean boxPrimitives;
+        private boolean boxPrimitives;
 
-        public CastNodeFactory(MessageData defaultMessage, boolean boxPrimitives) {
+        CastNodeFactory(MessageData defaultMessage, boolean boxPrimitives) {
             this.defaultMessage = defaultMessage;
             this.boxPrimitives = boxPrimitives;
         }
 
-        public CastNode create(PipelineStep step) {
+        public CastNode create(PipelineStep<?, ?> step) {
             return step.accept(this);
         }
 
         @Override
-        public CastNode visit(DefaultErrorStep step) {
+        public CastNode visit(DefaultErrorStep<?> step) {
             defaultMessage = step.getDefaultMessage();
             return null;
         }
 
         @Override
-        public CastNode visit(FindFirstStep step) {
+        public CastNode visit(FindFirstStep<?, ?> step) {
+            boxPrimitives = false;
             return FindFirstNodeGen.create(step.getElementClass(), step.getDefaultValue());
         }
 
         @Override
-        public CastNode visit(FilterStep step) {
+        public CastNode visit(FilterStep<?, ?> step) {
             ArgumentFilter<Object, Boolean> filter = ArgumentFilterFactory.create(step.getFilter());
-            MessageData msg = getDefaultIfNull(step.getFilter().getMessage());
-            return FilterNode.create(filter, /* TODO: isWarning?? */false, msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives);
+            MessageData msg = getDefaultIfNull(step.getMessage());
+            return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives);
         }
 
         @Override
-        public CastNode visit(NotNAStep step) {
-            Object replacement = step.getReplacement();
-            if (replacement != null) {
-                return NonNANodeGen.create(replacement);
-            } else {
-                MessageData message = step.getMessage();
-                return NonNANodeGen.create(message.getCallObj(), message.getMessage(), message.getMessageArgs(), null);
-            }
+        public CastNode visit(NotNAStep<?> step) {
+            MessageData message = step.getMessage();
+            return NonNANodeGen.create(message.getCallObj(), message.getMessage(), message.getMessageArgs(), step.getReplacement());
         }
 
         @Override
-        public CastNode visit(AsVectorStep step) {
+        public CastNode visit(CoercionStep<?, ?> step) {
+            boxPrimitives = true;
+
             RType type = step.getType();
             if (type == RType.Integer) {
-                return CastIntegerNodeGen.create(false, false, false);
+                return CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
             } else if (type == RType.Double) {
-                return CastDoubleNodeGen.create(false, false, false);
+                return CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
             } else if (type == RType.Character) {
-                return CastStringNodeGen.create(false, false, false);
+                return CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
             } else if (type == RType.Complex) {
-                return CastComplexNodeGen.create(false, false, false);
+                return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
             } else if (type == RType.Logical) {
-                return CastLogicalNodeGen.create(false, false, false);
+                return CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
             } else if (type == RType.Raw) {
-                return CastRawNodeGen.create(false, false, false);
+                return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+            } else if (type == RType.Any) {
+                return CastToVectorNodeGen.create(step.preserveNonVector);
             }
             throw RInternalError.shouldNotReachHere(String.format("Unexpected type '%s' in AsVectorStep.", type.getName()));
         }
 
         @Override
-        public CastNode visit(MapStep step) {
+        public CastNode visit(MapStep<?, ?> step) {
             return MapNode.create(MapperNodeFactory.create(step.getMapper()));
         }
 
         @Override
-        public CastNode visit(MapIfStep step) {
+        public CastNode visit(MapIfStep<?, ?> step) {
             ArgumentFilter<Object, Boolean> condition = ArgumentFilterFactory.create(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
@@ -187,9 +201,10 @@ public final class PipelineToCastNode {
         private MessageData getDefaultIfNull(MessageData message) {
             return message == null ? defaultMessage : message;
         }
+
     }
 
-    private static final class ArgumentFilterFactory implements FilterVisitor<ArgumentFilter<Object, Boolean>> {
+    private static final class ArgumentFilterFactory implements FilterVisitor<ArgumentFilter<Object, Object>> {
 
         private static final ArgumentFilterFactory INSTANCE = new ArgumentFilterFactory();
 
@@ -197,17 +212,17 @@ public final class PipelineToCastNode {
             // singleton
         }
 
-        public static ArgumentFilter<Object, Boolean> create(Filter filter) {
+        public static ArgumentFilter<Object, Object> create(Filter<?, ?> filter) {
             return filter.accept(INSTANCE);
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(TypeFilter filter) {
+        public ArgumentFilter<Object, Object> visit(TypeFilter<?, ?> filter) {
             return filter.getInstanceOfLambda();
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(RTypeFilter filter) {
+        public ArgumentFilter<Object, Object> visit(RTypeFilter<?> filter) {
             if (filter.getType() == RType.Integer) {
                 return x -> x instanceof Integer || x instanceof RAbstractIntVector;
             } else if (filter.getType() == RType.Double) {
@@ -218,36 +233,63 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(NumericFilter filter) {
-            return x -> x instanceof Integer || x instanceof RAbstractIntVector || x instanceof Double || x instanceof RAbstractDoubleVector || x instanceof Byte ||
-                            x instanceof RAbstractLogicalVector;
-        }
-
-        @Override
-        public ArgumentFilter<Object, Boolean> visit(CompareFilter filter) {
+        public ArgumentFilter<Object, Object> visit(CompareFilter<?> filter) {
             return null;
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(AndFilter filter) {
+        public ArgumentFilter<Object, Object> visit(AndFilter<?, ?> filter) {
+            ArgumentFilter<Object, Object> leftFilter = filter.getLeft().accept(this);
+            ArgumentFilter<Object, Object> rightFilter = filter.getRight().accept(this);
+            return new ArgumentTypeFilter<Object, Object>() {
+
+                @SuppressWarnings({"unchecked"})
+                @Override
+                public boolean test(Object arg) {
+                    if (!leftFilter.test(arg)) {
+                        return false;
+                    } else {
+                        return rightFilter.test(arg);
+                    }
+                }
+
+            };
+        }
+
+        @Override
+        public ArgumentFilter<Object, Object> visit(OrFilter<?> filter) {
             ArgumentFilter<Object, Boolean> leftFilter = filter.getLeft().accept(this);
             ArgumentFilter<Object, Boolean> rightFilter = filter.getRight().accept(this);
-            // TODO: create and filter...
-            return null;
+            return new ArgumentTypeFilter<Object, Object>() {
+
+                @Override
+                public boolean test(Object arg) {
+                    if (leftFilter.test(arg)) {
+                        return true;
+                    } else {
+                        return rightFilter.test(arg);
+                    }
+                }
+
+            };
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(OrFilter filter) {
-            ArgumentFilter<Object, Boolean> leftFilter = filter.getLeft().accept(this);
-            ArgumentFilter<Object, Boolean> rightFilter = filter.getRight().accept(this);
-            // TODO: create or filter
-            return null;
-        }
-
-        @Override
-        public ArgumentFilter<Object, Boolean> visit(NotFilter filter) {
+        public ArgumentFilter<Object, Boolean> visit(NotFilter<?> filter) {
             ArgumentFilter<Object, Boolean> toNegate = filter.accept(this);
             // TODO: create not filter
+            return null;
+        }
+
+        @Override
+        public ArgumentFilter<Object, Boolean> visit(MatrixFilter<?> filter) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public ArgumentFilter<Object, Boolean> visit(DoubleFilter filter) {
+            // TODO Auto-generated method stub
             return null;
         }
     }
@@ -259,12 +301,12 @@ public final class PipelineToCastNode {
             // singleton
         }
 
-        public static ValuePredicateArgumentMapper<Object, Object> create(Mapper mapper) {
+        public static ValuePredicateArgumentMapper<Object, Object> create(Mapper<?, ?> mapper) {
             return mapper.accept(MapperNodeFactory.INSTANCE);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Object, Object> visit(MapToValue mapper) {
+        public ValuePredicateArgumentMapper<Object, Object> visit(MapToValue<?, ?> mapper) {
             final Object value = mapper.getValue();
             return ValuePredicateArgumentMapper.fromLambda(x -> value);
         }
@@ -286,16 +328,14 @@ public final class PipelineToCastNode {
 
         @Override
         public ValuePredicateArgumentMapper<Object, Object> visit(MapToCharAt mapper) {
-            final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-            final ConditionProfile profile2 = ConditionProfile.createBinaryProfile();
-            final char defaultValue = mapper.getDefaultValue();
+            final int defaultValue = mapper.getDefaultValue();
             final int index = mapper.getIndex();
             return ValuePredicateArgumentMapper.fromLambda(x -> {
                 String str = (String) x;
-                if (profile.profile(x == null || str.isEmpty())) {
+                if (x == null || str.isEmpty()) {
                     return defaultValue;
                 } else {
-                    if (profile2.profile(x == RRuntime.STRING_NA)) {
+                    if (x == RRuntime.STRING_NA) {
                         return RRuntime.INT_NA;
                     } else {
                         return (int) str.charAt(index);

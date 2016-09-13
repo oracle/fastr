@@ -141,36 +141,4 @@ public final class PredefMappersSamplers implements PredefMappers {
         return ValuePredicateArgumentMapperSampler.fromLambda(x -> RDataFactory.createList(), x -> null, CastUtils.<T> samples(), CastUtils.<T> samples(), null, RList.class);
     }
 
-    @Override
-    @Deprecated
-    public <T> ArgumentMapperSampler<T, T> defaultValue(T defVal) {
-
-        assert (defVal != null);
-
-        return new ArgumentMapperSampler<T, T>() {
-
-            final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-
-            @Override
-            public T map(T arg) {
-                if (profile.profile(arg == RNull.instance)) {
-                    return defVal;
-                } else {
-                    return arg;
-                }
-            }
-
-            @Override
-            public TypeExpr resultTypes(TypeExpr inputTypes) {
-                return inputTypes.and(TypeExpr.atom(RNull.class).not());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public Samples<T> collectSamples(Samples<T> downStreamSamples) {
-                Samples<Object> nullOnly = new Samples<>("RNullOnly", Collections.singleton(RNull.instance), Collections.emptySet(), x -> x == RNull.instance);
-                return (Samples<T>) nullOnly.or(Samples.anything(defVal).and(downStreamSamples));
-            }
-        };
-    }
 }

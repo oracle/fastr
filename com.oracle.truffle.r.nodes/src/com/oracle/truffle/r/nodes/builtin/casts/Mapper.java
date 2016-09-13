@@ -27,21 +27,21 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 /**
  * Represents mapping used in {@link MapStep}.
  */
-public abstract class Mapper {
+public abstract class Mapper<T, R> {
 
-    public abstract <T> T accept(MapperVisitor<T> visitor);
+    public abstract <D> D accept(MapperVisitor<D> visitor);
 
-    public interface MapperVisitor<T> {
-        T visit(MapToValue mapper);
+    public interface MapperVisitor<D> {
+        D visit(MapToValue<?, ?> mapper);
 
-        T visit(MapByteToBoolean mapper);
+        D visit(MapByteToBoolean mapper);
 
-        T visit(MapDoubleToInt mapper);
+        D visit(MapDoubleToInt mapper);
 
-        T visit(MapToCharAt mapper);
+        D visit(MapToCharAt mapper);
     }
 
-    public static final class MapToValue extends Mapper {
+    public static final class MapToValue<T, R> extends Mapper<T, R> {
         private final Object value;
 
         public MapToValue(Object value) {
@@ -53,30 +53,43 @@ public abstract class Mapper {
         }
 
         @Override
-        public <T> T accept(MapperVisitor<T> visitor) {
+        public <D> D accept(MapperVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
 
-    public static final class MapByteToBoolean extends Mapper {
+    public static final class MapByteToBoolean extends Mapper<Byte, Boolean> {
+
+        public static final MapByteToBoolean INSTANCE = new MapByteToBoolean();
+
+        private MapByteToBoolean() {
+
+        }
+
         @Override
-        public <T> T accept(MapperVisitor<T> visitor) {
+        public <D> D accept(MapperVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
 
-    public static final class MapDoubleToInt extends Mapper {
+    public static final class MapDoubleToInt extends Mapper<Double, Integer> {
+
+        public static final MapDoubleToInt INSTANCE = new MapDoubleToInt();
+
+        private MapDoubleToInt() {
+        }
+
         @Override
-        public <T> T accept(MapperVisitor<T> visitor) {
+        public <D> D accept(MapperVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
 
-    public static final class MapToCharAt extends Mapper {
+    public static final class MapToCharAt extends Mapper<String, Integer> {
         private final int index;
-        private final char defaultValue;
+        private final int defaultValue;
 
-        public MapToCharAt(int index, char defaultValue) {
+        public MapToCharAt(int index, int defaultValue) {
             this.index = index;
             this.defaultValue = defaultValue;
         }
@@ -85,12 +98,12 @@ public abstract class Mapper {
             return index;
         }
 
-        public char getDefaultValue() {
+        public int getDefaultValue() {
             return defaultValue;
         }
 
         @Override
-        public <T> T accept(MapperVisitor<T> visitor) {
+        public <D> D accept(MapperVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }

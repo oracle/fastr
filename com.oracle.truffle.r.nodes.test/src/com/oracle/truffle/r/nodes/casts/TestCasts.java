@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVec
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.charAt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
@@ -63,6 +62,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.sun.tools.internal.xjc.model.CPluginCustomization;
 
 /*
  *
@@ -200,7 +200,7 @@ public class TestCasts extends TestBase {
 
             @SuppressWarnings("deprecation")
             protected Root(String name) {
-                super(name, new CastBuilder().arg(0).map(defaultValue("X")).builder().getCasts()[0]);
+                super(name, new CastBuilder().arg(0).mapNull(constant("X")).builder().getCasts()[0]);
             }
 
             @Override
@@ -359,29 +359,6 @@ public class TestCasts extends TestBase {
         testCompilation(new Object[]{"abc", RDataFactory.createStringVector(new String[]{"", "xyz"},
                         true),
                         RDataFactory.createStringVectorFromScalar("abc")}, new Root("ConditionalMapChainFedByString2"), 1.1, 1, RRuntime.LOGICAL_FALSE);
-    }
-
-    @Test
-    public void testComplexPipeline1() {
-        class Root extends TestRootNode<CastNode> {
-
-            @SuppressWarnings("deprecation")
-            protected Root(String name) {
-                super(name, new CastBuilder().arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
-                                ValuePredicateArgumentFilterSampler.fromLambdaWithResTypes(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Object.class),
-                                Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger()).builder().getCasts()[0]);
-            }
-
-            @Override
-            protected Object execute(VirtualFrame frame, Object value) {
-                @SuppressWarnings("unused")
-                Object res = node.execute(value);
-                return null;
-            }
-        }
-        testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(77)}, new Root("ComplexPipeline1Integer"));
-        testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(77), RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE)}, new Root("ComplexPipeline1IntegerLogical"));
-        testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(77), RDataFactory.createDoubleVectorFromScalar(77.77)}, new Root("ComplexPipeline1IntegerDouble"));
     }
 
     @Test

@@ -101,7 +101,7 @@ public abstract class Parse extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // Note: string is captured by the R wrapper and transformed to a file, other types not
         casts.arg("conn").mustBe(RConnection.class, MUST_BE_STRING_OR_CONNECTION, "file");
-        casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).mapIf(RRuntime::isNA, constant(-1));
+        casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).notNA(-1);
         casts.arg("text").allowNull().asStringVector();
         casts.arg("prompt").asStringVector().findFirst("?");
         casts.arg("encoding").mustBe(stringValue()).asStringVector().findFirst();
