@@ -600,7 +600,9 @@ public class TestBase {
                 } else {
                     failedInputCount++;
                     microTestFailed();
-                    System.out.print('E');
+                    if (inputs.length > 1) {
+                        System.out.print('E');
+                    }
                 }
                 allOk &= ok;
                 afterMicroTest();
@@ -749,7 +751,8 @@ public class TestBase {
             try {
                 String message = matcher.group("msg" + i);
                 Matcher messageMatcher = warningMessagePattern.matcher(message);
-                assert messageMatcher.matches() : "unexpected format in warning message: " + message;
+                boolean messageMatches = messageMatcher.matches();
+                assert messageMatches : "unexpected format in warning message: " + message;
                 str.append(messageMatcher.group("m").trim()).append('|');
             } catch (IllegalArgumentException e) {
                 break;
