@@ -47,10 +47,11 @@ modelmatrixdefault <- eval(parse(text=body))
 # check function compares the results
 check <- function(expected, actual, name) {
 	if (try(identical(expected, actual)) != TRUE) {
-		cat(name, ": FAIL\n")
+		cat(name, ": FAIL  expected:\n\n")
 		print(expected)
 		cat("\n>>>>>>>>>actual:\n\n")
 		print(actual)
+		cat("\n-------------\n")
 	}
 	else { cat(name, ": OK\n") }
 }
@@ -120,3 +121,27 @@ check(terms.formula(t, data=mtcars), termsform(t, NULL, mtcars, FALSE, FALSE), "
 t <- cyl~mufun(mpg)+.
 print(t)
 check(terms.formula(t, specials=c('myfun'), data=mtcars), termsform(t, c('myfun'), mtcars, FALSE, FALSE), "termsform with specials and expandDots")
+
+
+# ------------------------------------
+# tests for update formula
+
+body <- deparse(update.formula)
+idx <- which(grepl(".Call", body))
+body[[idx]] <- gsub("C_updateform,", "", gsub(".Call", "updateform", body[[idx]]))
+updateformula <- eval(parse(text=body))
+
+test.update.formula <- function(old, new) {
+    print(old);
+    print(new);
+    check(update.formula(old, new), updateformula(old, new), "update.formula test")
+}
+
+test.update.formula(y ~ x, ~ . + x2)
+test.update.formula(y ~ x, log(.) ~ . )
+test.update.formula(. ~ u+v, res  ~ . )
+test.update.formula(~ u+v, res  ~ . )
+test.update.formula(~ u+v, ~ . )
+test.update.formula(~ u+v, . ~ . )
+test.update.formula(~ u+v, ~ x*. )
+test.update.formula(~ u+v, ~ x:. )

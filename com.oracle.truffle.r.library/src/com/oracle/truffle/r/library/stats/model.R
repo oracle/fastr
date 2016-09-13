@@ -494,19 +494,27 @@ TermCode <- function(formula, callIdx, varIndex) {
 }
 
 # gets the formula as parameter and returns the same formula, where
-# dot symbol is replaced with (a+b+c+...) where a,b,c.. are framenames.
-ExpandDots <- function(x) {
+# the dot symbol is replaced with the 'replacement'
+replaceDots <- function(x, replacement) {
     if (is.symbol(x)) {
         if (identical(x, quote(`.`))) {
-            return(parse(text=paste(framenames, collapse="+"))[[1]])
+            return(replacement)
         }
         return(x)
     }
 
     for (i in seq_along(x)) {
-        x[[i]] <- ExpandDots(x[[i]]);
+        x[[i]] <- replaceDots(x[[i]], replacement);
     }
     x
+}
+
+# gets the formula as parameter and returns the same formula, where
+# the dot symbol is replaced with (a+b+c+...) where a,b,c.. are framenames.
+# Note: this version is not equivalent of the GnuR C version as it expects
+# variable names as the second argument. replaceDots is closer to the GnuR C version.
+ExpandDots <- function(x, framenames) {
+    replaceDots(x, parse(text=paste(framenames, collapse="+"))[[1]]);
 }
 
 
@@ -666,7 +674,7 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     # Step 6: Fix up the formula by substituting for dot, which should be
     # the framenames joined by +
     if (haveDot) {
-      x <- ExpandDots(x)
+      x <- ExpandDots(x, framenames)
     }
     
     attr(x, "order") <- ord
@@ -1247,6 +1255,43 @@ modelmatrix <- function(formula, modelframe) {
     x
 }
 
+# =============================================================
+# Implementation of updateform
 
+# PUBLIC updateform
+#
+# Replaces all occurences of dot symbol '.' in the lsh/rhs of 'new' formula with
+# lhs/rhs of the 'old' formula. The result is stripped off of all attributes and
+# gets .Environment attribute from the 'old' formula.
+updateform <- function(old, new) {
+    is.formula <- function (x) is.language(x) && x[[1L]] == quote(`~`);
+    if (!is.formula(old) || !is.formula(new)) {
+        error("formula expected")
+    }
 
+    if (length(old) == 3) {
+        lhs <- old[[2L]]
+        rhs <- old[[3L]]
+        # We now check that new formula has a valid lhs. If it doesn't,
+        # we add one and set it to the rhs of the old formula.
+        if (length(new) == 2) {
+            tmp <- new[[2L]]
+            new[[2L]] <- lhs
+            new[[3L]] <- tmp
+        }
+        # Note: we are probably getting away with not parenthesizing thanks to R
+        new[[2L]] <- replaceDots(new[[2L]], lhs)
+        new[[3L]] <- replaceDots(new[[3L]], rhs)
+    } else {
+        # the old formula has no lhs, we only expand rhs
+        if (length(new) == 3) {
+            new[[3L]] <- replaceDots(new[[3L]], old[[2L]])
+        } else {
+            new[[2L]] <- replaceDots(new[[2L]], old[[2L]])
+        }
+    }
 
+    attributes(new) <- NULL
+    attr(new, '.Environment') <- attr(old, '.Environment')
+    new
+}
