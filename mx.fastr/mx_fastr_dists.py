@@ -190,7 +190,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             shutil.copytree(join(fastr_dir, d), target_dir)
 
         # copyrights
-        copyrights_dir = join(fastr_dir,'mx.fastr', 'copyrights')
+        copyrights_dir = join(fastr_dir, 'mx.fastr', 'copyrights')
         with open(join(output_dir, 'COPYRIGHT'), 'w') as outfile:
             for copyright_file in os.listdir(copyrights_dir):
                 basename = os.path.basename(copyright_file)
