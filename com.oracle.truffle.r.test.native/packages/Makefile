@@ -56,4 +56,4 @@ clean_subdirs:
 	done
 	
 clean_recommended:
-	rm -f recommended clean_recommended
+	rm -rf recommended clean_recommended
