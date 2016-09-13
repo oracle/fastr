@@ -43,7 +43,7 @@ class FastRProjectAdapter(mx.ArchivableProject):
                     results.append(join(root, f))
 
 
-class DelFastRNativeProject(FastRProjectAdapter):
+class FastRNativeProject(FastRProjectAdapter):
     '''
     Custom class for building the com.oracle.truffle.r.native project.
     The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
@@ -111,7 +111,7 @@ class DelFastRNativeProject(FastRProjectAdapter):
 
         return results
 
-class DelFastRTestNativeProject(FastRProjectAdapter):
+class FastRTestNativeProject(FastRProjectAdapter):
     '''
     Custom class for building the com.oracle.truffle.r.native project.
     The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
@@ -147,7 +147,7 @@ class DelFastRTestNativeProject(FastRProjectAdapter):
         results.append(join(self.dir, 'urand', 'lib', 'liburand.so'))
         return results
 
-class DelFastRReleaseProject(FastRProjectAdapter):
+class FastRReleaseProject(FastRProjectAdapter):
     '''
     Custom class for creating the FastR release project, which supports the
     FASTR_RELEASE distribution.
@@ -159,6 +159,7 @@ class DelFastRReleaseProject(FastRProjectAdapter):
         results = []
         for rdir in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
             self._get_files(rdir, results)
+        results.append(join(self.dir, 'LICENSE.FASTR'))
         return results
 
     def getBuildTask(self, args):
@@ -186,6 +187,18 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             shutil.copytree(join(fastr_dir, d), target_dir)
+
+        # copyrights
+        copyrights_dir = join(fastr_dir,'mx.fastr', 'copyrights')
+        with open(join(output_dir, 'LICENSE.FASTR'), 'w') as outfile:
+            for copyright_file in os.listdir(copyrights_dir):
+                basename = os.path.basename(copyright_file)
+                if not basename.endswith('copyright.star') and not basename.endswith('copyright.hash'):
+                    continue
+                with open(join(copyrights_dir, copyright_file)) as infile:
+                    data = infile.read()
+                    outfile.write(data)
+
         # canonicalize R_HOME_DIR in bin/R
         bin_dir = join(output_dir, 'bin')
         rcmd = join(bin_dir, 'R')
@@ -256,7 +269,7 @@ class FastRArchiveParticipant:
             # Since we have already encapsulated the class files in 'jjars/fastr.jar' we
             # suppress their inclusion here by resetting the deps filed. A bit of a hack.
         if self.dist.name == "FASTR_RELEASE":
-            assert isinstance(self.dist.deps[0], DelFastRReleaseProject)
+            assert isinstance(self.dist.deps[0], FastRReleaseProject)
             self.dist.deps[0].deps = []
 
     def __add__(self, arcname, contents):

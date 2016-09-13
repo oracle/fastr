@@ -27,6 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
+from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
 import os
 
 '''
@@ -499,31 +500,6 @@ def rcmplib(args):
 
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
-
-class FastRNativeProject(mx_fastr_dists.DelFastRNativeProject):
-    '''
-    Custom class for building the com.oracle.truffle.r.native project.
-    Delegates to mx_fastr_dists.DelFastRNativeProject to keep this file uncluttered
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx_fastr_dists.DelFastRNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
-
-class FastRTestNativeProject(mx_fastr_dists.DelFastRTestNativeProject):
-    '''
-    Custom class for building the com.oracle.truffle.r.test.native project.
-    Delegates to mx_fastr_dists.DelFastRTestNativeProject to keep this file uncluttered
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx_fastr_dists.DelFastRTestNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
-
-class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
-    '''
-    Custom class for creating the FastR release project, which supports the
-    FASTR_RELEASE distribution.
-    Delegates to mx_fastr_dists.DelFastRReleaseProject to keep this file uncluttered
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx_fastr_dists.DelFastRReleaseProject.__init__(self, suite, name, deps, workingSets, theLicense)
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
