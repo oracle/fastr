@@ -226,6 +226,7 @@ public final class FastRSession implements RSession {
         EvalThread(ContextInfo contextInfo) {
             super(null);
             this.contextInfo = contextInfo;
+            setDaemon(true);
         }
 
         public void push(String exp) {
