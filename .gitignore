@@ -31,6 +31,8 @@
 /tmptest/
 /com.oracle.truffle.r.release/lib/
 /com.oracle.truffle.r.release/library/
+/com.oracle.truffle.r.release/LICENSE
+/com.oracle.truffle.r.release/COPYRIGHT
 /DEPARSE_ERROR
 /Rpkgsource/*
 /install.cran.logs/

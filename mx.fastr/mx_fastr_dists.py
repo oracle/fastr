@@ -159,7 +159,8 @@ class FastRReleaseProject(FastRProjectAdapter):
         results = []
         for rdir in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
             self._get_files(rdir, results)
-        results.append(join(self.dir, 'LICENSE.FASTR'))
+        results.append(join(self.dir, 'LICENSE'))
+        results.append(join(self.dir, 'COPYRIGHT'))
         return results
 
     def getBuildTask(self, args):
@@ -190,14 +191,17 @@ class ReleaseBuildTask(mx.NativeBuildTask):
 
         # copyrights
         copyrights_dir = join(fastr_dir,'mx.fastr', 'copyrights')
-        with open(join(output_dir, 'LICENSE.FASTR'), 'w') as outfile:
+        with open(join(output_dir, 'COPYRIGHT'), 'w') as outfile:
             for copyright_file in os.listdir(copyrights_dir):
                 basename = os.path.basename(copyright_file)
-                if not basename.endswith('copyright.star') and not basename.endswith('copyright.hash'):
-                    continue
-                with open(join(copyrights_dir, copyright_file)) as infile:
-                    data = infile.read()
-                    outfile.write(data)
+                if basename.endswith('copyright.star'):
+                    with open(join(copyrights_dir, copyright_file)) as infile:
+                        data = infile.read()
+                        outfile.write(data)
+        # license
+        with open(join(output_dir, 'LICENSE'), 'w') as outfile:
+            with open(join(fastr_dir, 'LICENSE')) as infile:
+                outfile.write(infile.read())
 
         # canonicalize R_HOME_DIR in bin/R
         bin_dir = join(output_dir, 'bin')
