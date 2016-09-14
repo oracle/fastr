@@ -533,6 +533,7 @@ ExpandDots <- function(x, framenames) {
 # "order", "intercept", "response": 1
 termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     
+    attributes(x) <- NULL
     if (!isLanguage(x)
         || !identical(x[[1]], quote(`~`))
         || length(x) != 2L && length(x) != 3L) {
@@ -655,8 +656,8 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     if (nterm > 0L) {
       dimnames(pattern) <- list(varnames, termlabs)
     }
-    attr(x, "term.labels") <- termlabs
     attr(x, "factors") <- pattern
+    attr(x, "term.labels") <- termlabs
     
     if (!is.null(specials)) {
         specialsAttr <- vector("pairlist", length(specials))
@@ -680,7 +681,7 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     attr(x, "order") <- ord
     attr(x, "intercept") <- as.integer(intercept)
     attr(x, "response") <- as.integer(response)
-    class(x) <- c("terms", "formula")
+    class(x) <- c("terms")
     return(x)
 }
 
