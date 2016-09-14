@@ -44,11 +44,9 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
     @TruffleBoundary
     private Object execute(String command, boolean intern) {
         Object result;
-        String shell = RContext.getInstance().stateREnvVars.get("SHELL");
-        if (shell == null) {
-            shell = "/bin/sh";
-        }
-        log(String.format("%s -c %s", shell, command), "Process");
+        // GNU R uses popen which always invokes /bin/sh
+        String shell = "/bin/sh";
+        log(String.format("%s -c \"%s\"", shell, command), "Process");
         ProcessBuilder pb = new ProcessBuilder(shell, "-c", command);
         updateEnvironment(pb);
         pb.redirectInput(Redirect.INHERIT);
@@ -91,6 +89,13 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
         return result;
     }
 
+    /**
+     * Any environment variables that have been added to this session must be forwarded to the
+     * process (Java does not provide a {@code setenv} call, so {@code Sys.setenv} calls only affect
+     * {@code stateEnvVars}. Any explicit settings in the command call (arising from the {@code env}
+     * argument to the {@code system2} call, will override these by virtue of being explicitly set
+     * in the new shell.
+     */
     private static void updateEnvironment(ProcessBuilder pb) {
         Map<String, String> pEnv = pb.environment();
         Map<String, String> rEnv = RContext.getInstance().stateREnvVars.getMap();
