@@ -34,7 +34,6 @@ import java.util.Map;
 
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -89,9 +88,6 @@ public abstract class TestRPackages extends TestBase {
             ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
             env.put("R_LIBS", installDir().toString());
-            if (!generatingExpected()) {
-                env.put("R_INSTALL_TAR", RContext.getInstance().stateREnvVars.get("TAR"));
-            }
             try {
                 if (FastROptions.debugMatches("TestRPackages")) {
                     pb.inheritIO();
