@@ -2363,5 +2363,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
 
+        assertEval("{ x<-quote(foo(42)); x[character(0)]<-list(); typeof(x) }");
+        assertEval("{ x<-as.pairlist(list(7,42)); x[character(0)]<-list(); typeof(x) }");
+        assertEval("{ x<-expression(y, z, 7 + 42); x[character(0)]<-list(); typeof(x) }");
+
     }
 }
