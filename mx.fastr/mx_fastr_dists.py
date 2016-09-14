@@ -161,6 +161,7 @@ class FastRReleaseProject(FastRProjectAdapter):
             self._get_files(rdir, results)
         results.append(join(self.dir, 'LICENSE'))
         results.append(join(self.dir, 'COPYRIGHT'))
+        results.append(join(self.dir, 'README.md'))
         return results
 
     def getBuildTask(self, args):
@@ -198,10 +199,9 @@ class ReleaseBuildTask(mx.NativeBuildTask):
                     with open(join(copyrights_dir, copyright_file)) as infile:
                         data = infile.read()
                         outfile.write(data)
-        # license
-        with open(join(output_dir, 'LICENSE'), 'w') as outfile:
-            with open(join(fastr_dir, 'LICENSE')) as infile:
-                outfile.write(infile.read())
+        # license/README
+        shutil.copy(join(fastr_dir, 'LICENSE'), output_dir)
+        shutil.copy(join(fastr_dir, 'README.md'), output_dir)
 
         # canonicalize R_HOME_DIR in bin/R
         bin_dir = join(output_dir, 'bin')
@@ -217,7 +217,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
                     line = 'R_HOME_DIR="$(unset CDPATH && cd ${R_HOME_DIR} && pwd)"\n'
                 f.write(line)
         # jar files for the launchers
-        jars_dir = join(bin_dir, 'jjars')
+        jars_dir = join(bin_dir, 'fastr_jars')
         if not os.path.exists(jars_dir):
             os.mkdir(jars_dir)
         fastr_classfiles = dict()
@@ -250,7 +250,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         classpath = []
         for _, _, jars in os.walk(jars_dir):
             for jar in jars:
-                classpath.append(join("$R_HOME/bin/jjars", jar))
+                classpath.append(join("$R_HOME/bin/fastr_jars", jar))
         classpath_string = ":".join(classpath)
 
         # replace the mx exec scripts with native Java launchers, setting the classpath from above
@@ -270,7 +270,7 @@ class FastRArchiveParticipant:
             # The release project states dependencies on the java projects in order
             # to ensure they are built first. Therefore, the JarDistribution code
             # will include all their class files at the top-level of the jar by default.
-            # Since we have already encapsulated the class files in 'jjars/fastr.jar' we
+            # Since we have already encapsulated the class files in 'fastr_jars/fastr.jar' we
             # suppress their inclusion here by resetting the deps filed. A bit of a hack.
         if self.dist.name == "FASTR_RELEASE":
             assert isinstance(self.dist.deps[0], FastRReleaseProject)
