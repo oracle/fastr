@@ -1,6 +1,14 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 #java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
 java8 : {name : labsjdk, version : "8u92-jvmci-0.20", platformspecific: true}
+logfiles : [
+    "fastr_errors.log"
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
+    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
+  ]
 
 common : {
   packages : {
@@ -14,14 +22,7 @@ common : {
   }
   environment : {
   }
-  logs : [
-    "fastr_errors.log"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
-    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
-  ]
+  logs: ${logfiles}
   timelimit : "1:00:00"
 }
 
@@ -37,6 +38,24 @@ java8Downloads : {
 }
 
 gateTest : ${common} ${java8Downloads} {
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
+  ]
+}
+
+gateTestDarwin : ${java8Downloads} {
+  packages : {
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+    "xz" : ""
+  }
+  environment : ${common.environment} {
+    PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
+    F77: "/usr/local/bin/gfortran-4.9"
+  }
+  logs: ${logfiles}
+  timelimit : "1:00:00"
+
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
@@ -71,6 +90,7 @@ rbcheck : ${common} ${java8Downloads} {
 builds = [
   ${gateTest}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
+  ${gateTestDarwin} {capabilities : [darwin, amd64],   targets : [gate, post-merge],  name: "gate-test-darwin-amd64"}
   ${rbcheck}        {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-rbcheck-linux-amd64"}
 #  ${gateTest}      {capabilities : [linux, sparcv9], targets : [gate, post-merge],  name: "gate-test-linux-sparcv9"}
 ]
