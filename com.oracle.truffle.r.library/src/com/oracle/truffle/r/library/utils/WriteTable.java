@@ -62,8 +62,8 @@ public final class WriteTable extends RExternalBuiltinNode {
                     // R_CheckUserInterrupt();
                 }
                 if (!(rnames instanceof RNull)) {
-                    StringBuffer sb = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep);
-                    con.writeString(sb.toString(), false);
+                    con.writeString(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec), false);
+                    con.writeString(csep, false);
                 }
                 for (int j = 0; j < nc; j++) {
                     if (j > 0) {
@@ -190,7 +190,7 @@ public final class WriteTable extends RExternalBuiltinNode {
             return RRuntime.isNA(v) ? cna : RRuntime.complexToStringNoCheck(v);
         } else if (o instanceof RRaw) {
             RRaw v = (RRaw) o;
-            return RRuntime.rawToString(v);
+            return RRuntime.rawToHexString(v);
         }
         throw RInternalError.unimplemented();
     }
@@ -233,7 +233,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         }
         if (x instanceof RAbstractRawVector) {
             RAbstractRawVector v = (RAbstractRawVector) x;
-            return RRuntime.rawToString(v.getDataAt(indx));
+            return RRuntime.rawToHexString(v.getDataAt(indx));
         }
         throw RInternalError.unimplemented();
     }

@@ -328,6 +328,12 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
+    public static String rawToHexString(RRaw operand) {
+        int value = raw2int(operand);
+        char[] digits = new char[]{Character.forDigit((value & 0xF0) >> 4, 16), Character.forDigit(value & 0x0F, 16)};
+        return new String(digits);
+    }
+
     @TruffleBoundary
     public static String rawToString(RRaw operand) {
         return intToString(raw2int(operand));
