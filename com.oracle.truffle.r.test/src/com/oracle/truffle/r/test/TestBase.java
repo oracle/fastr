@@ -230,6 +230,10 @@ public class TestBase {
 
     @Before
     public void beforeTest() {
+        checkOutputManagersInitialized();
+    }
+
+    private static void checkOutputManagersInitialized() {
         if (expectedOutputManager == null) {
             /*
              * Assume we are running a unit test in an IDE/non-JUnit setup and therefore the
@@ -252,6 +256,13 @@ public class TestBase {
     }
 
     /**
+     * Method for non-JUnit implementation to emulate important behavior of {@link RunListener}.
+     */
+    public static void emulateRunListener() {
+        checkOutputManagersInitialized();
+    }
+
+    /**
      * Method for non-JUnit implementation to set test tracing.
      */
     public static void setTraceTests() {
@@ -269,7 +280,6 @@ public class TestBase {
         if (traceTests) {
             System.out.println(testElementName);
         }
-        beforeTest();
     }
 
     private static class ExpectedTestOutputManager extends TestOutputManager {
