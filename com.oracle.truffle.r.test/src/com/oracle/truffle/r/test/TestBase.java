@@ -820,6 +820,19 @@ public class TestBase {
     }
 
     /**
+     * Used only for package installation to avoid explicitly using {@link ProcessBuilder}. Instead
+     * we go via the {@code system2} R function (which may call {@link ProcessBuilder} internally).
+     *
+     */
+    protected static Object evalInstallPackage(String system2Command) throws Throwable {
+        if (generatingExpected()) {
+            return expectedOutputManager.getRSession().eval(system2Command, null, true);
+        } else {
+            return fastROutputManager.fastRSession.evalAsObject(system2Command, null, true);
+        }
+    }
+
+    /**
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */

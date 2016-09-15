@@ -52,7 +52,11 @@ public final class FastRSession implements RSession {
     private static final String TEST_TIMEOUT_PROPERTY = "FastRTestTimeout";
     private static final String DISABLE_TIMEOUT_PROPERTY = "DisableTestTimeout"; // legacy
     private static int timeoutValue = 10000;
-    private static int longTimeoutValue = 60000;
+    /**
+     * The long timeout is used for package installation and currently needs to be 5 mins for the
+     * {@code Matrix} package.
+     */
+    private static int longTimeoutValue = 300000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -163,7 +167,7 @@ public final class FastRSession implements RSession {
         } else if (System.getProperty(TEST_TIMEOUT_PROPERTY) != null) {
             int timeoutGiven = Integer.parseInt(System.getProperty(TEST_TIMEOUT_PROPERTY));
             timeoutValue = timeoutGiven * 1000;
-            longTimeoutValue = timeoutValue * 6;
+            // no need to scale longTimeoutValue
         }
         consoleHandler = new TestConsoleHandler();
         try {
@@ -177,10 +181,19 @@ public final class FastRSession implements RSession {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
-        consoleHandler.reset();
+        evalAsObject(expression, contextInfo, longTimeout);
+        return consoleHandler.buffer.toString();
+    }
 
+    /**
+     * Returns the actual object from evaluating expression. Used (and result ignored) by
+     * {@link #eval} but also used for package installation via the {@code system2} command, where
+     * the result is used to check whether the installation succeeded.
+     */
+    @SuppressWarnings("deprecation")
+    public Object evalAsObject(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
+        consoleHandler.reset();
         EvalThread thread = evalThread;
         if (thread == null || !thread.isAlive() || contextInfo != thread.contextInfo) {
             thread = new EvalThread(contextInfo);
@@ -206,7 +219,7 @@ public final class FastRSession implements RSession {
             evalThread = null;
             throw thread.killedByException;
         }
-        return consoleHandler.buffer.toString();
+        return evalThread.result;
     }
 
     private final class EvalThread extends RContext.ContextThread {
@@ -216,6 +229,7 @@ public final class FastRSession implements RSession {
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
         private final ContextInfo contextInfo;
+        private Object result;
 
         /**
          * Create an evaluation thread (to handle timeouts).
@@ -265,7 +279,7 @@ public final class FastRSession implements RSession {
                             Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 try {
-                                    vm.eval(source);
+                                    result = vm.eval(source).get();
                                     // checked exceptions are wrapped in RuntimeExceptions
                                 } catch (RuntimeException e) {
                                     if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {

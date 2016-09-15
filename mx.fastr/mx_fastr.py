@@ -431,6 +431,7 @@ def testgen(args):
     mx.log("generating expected output for packages: ")
     for pkg in args.tests.split(','):
         mx.log("    " + str(pkg))
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
     junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
 
 def unittest(args):

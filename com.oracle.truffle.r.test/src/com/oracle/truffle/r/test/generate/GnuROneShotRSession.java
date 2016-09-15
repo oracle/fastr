@@ -29,6 +29,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -96,29 +97,27 @@ public class GnuROneShotRSession implements RSession {
         return p;
     }
 
-    protected String readAvailable(InputStream gnuRoutput) throws IOException {
-        int n = gnuRoutput.available();
-        byte[] data = new byte[n];
-        gnuRoutput.read(data);
-        return new String(data);
-    }
-
     @Override
     public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
-            System.out.println("LIBRARY LOADING WHILE CREATING EXPECTED OUTPUT");
+            System.out.println("LIBRARY LOADING WHEN NOT GENERATING EXPECTED OUTPUT");
             System.out.println("creating expected output for these tests only works during test output");
             System.out.println("generation (mx rtestgen), and will otherwise create corrupted output.");
         }
         Process p = createGnuR();
         InputStream gnuRoutput = p.getInputStream();
         OutputStream gnuRinput = p.getOutputStream();
+        ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable("gnur eval", gnuRoutput);
+        readThread.start();
         send(gnuRinput, expression.getBytes(), NL, QUIT);
-        if (!p.waitFor(timeoutMins, TimeUnit.MINUTES)) {
+        int thisTimeout = longTimeout ? timeoutMins * 2 : timeoutMins;
+        if (!p.waitFor(thisTimeout, TimeUnit.MINUTES)) {
             throw new RuntimeException(String.format("GNU R process timed out on: '%s'\n", expression));
         }
-        return readAvailable(gnuRoutput);
+        readThread.join();
+        return new String(readThread.getData(), 0, readThread.getTotalRead());
+
     }
 
     protected void send(OutputStream gnuRinput, byte[]... data) throws IOException {
