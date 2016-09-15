@@ -191,11 +191,6 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
-        return false;
-    }
-
-    @Override
     public RLanguage copy() {
         RLanguage l = new RLanguage(getRep(), this.length);
         if (this.attributes != null) {
