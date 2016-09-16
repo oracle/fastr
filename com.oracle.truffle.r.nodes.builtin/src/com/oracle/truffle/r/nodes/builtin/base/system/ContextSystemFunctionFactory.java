@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -33,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFacto
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -135,9 +139,25 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
             Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),
                             RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern);
             return result;
+        } else if (isMv(command)) {
+            return 0;
         } else {
             throw cannotExecute(command);
         }
+    }
+
+    private static boolean isMv(String command) {
+        String[] parts = command.split(" ");
+        if (Utils.unShQuote(parts[0]).equals("mv")) {
+            // during package installation backup, R uses mv to rename a directory
+            try {
+                Files.move(Paths.get(Utils.unShQuote(parts[1])), Paths.get(Utils.unShQuote(parts[2])));
+            } catch (IOException ex) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     private static RError cannotExecute(String command) throws RError {
