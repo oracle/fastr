@@ -23,13 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
@@ -46,12 +43,15 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
-import com.oracle.truffle.r.nodes.unary.BypassNode;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -62,11 +62,9 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
-import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
 import com.oracle.truffle.r.nodes.unary.FirstIntNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
-import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -93,17 +91,14 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class CastBuilder {
 
     private static final CastNodeFactory[] EMPTY_CAST_FACT_ARRAY = new CastNodeFactory[0];
-    private static final PipelineConfigBuilder[] EMPTY_PIPELINE_CFG_BUILDER_ARRAY = new PipelineConfigBuilder[0];
 
     private final RBuiltinNode builtinNode;
 
     private CastNodeFactory[] castFactories = EMPTY_CAST_FACT_ARRAY;
-    private PipelineConfigBuilder[] pipelineCfgBuilders = EMPTY_PIPELINE_CFG_BUILDER_ARRAY;
     private CastNode[] castsWrapped = null;
 
     public CastBuilder(RBuiltinNode builtinNode) {
@@ -134,16 +129,11 @@ public final class CastBuilder {
 
     public CastNode[] getCasts() {
         if (castsWrapped == null) {
-            int len = Math.max(castFactories.length, pipelineCfgBuilders.length);
-            castsWrapped = new CastNode[len];
-            for (int i = 0; i < len; i++) {
+            castsWrapped = new CastNode[castFactories.length];
+            for (int i = 0; i < castFactories.length; i++) {
                 CastNodeFactory cnf = i < castFactories.length ? castFactories[i] : null;
                 CastNode cn = cnf == null ? null : cnf.create();
-                if (i < pipelineCfgBuilders.length && pipelineCfgBuilders[i] != null) {
-                    castsWrapped[i] = BypassNode.create(pipelineCfgBuilders[i], cnf == null ? null : cn);
-                } else {
-                    castsWrapped[i] = cn;
-                }
+                castsWrapped[i] = cn;
             }
         }
 
@@ -273,536 +263,7 @@ public final class CastBuilder {
         return newMsgArgs;
     }
 
-    public interface PredefFilters {
-
-        <T> ValuePredicateArgumentFilter<T> sameAs(T x);
-
-        <T> ValuePredicateArgumentFilter<T> equalTo(T x);
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> notEmpty();
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> singleElement();
-
-        <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s);
-
-        VectorPredicateArgumentFilter<RAbstractStringVector> elementAt(int index, String value);
-
-        VectorPredicateArgumentFilter<RAbstractIntVector> elementAt(int index, int value);
-
-        VectorPredicateArgumentFilter<RAbstractDoubleVector> elementAt(int index, double value);
-
-        VectorPredicateArgumentFilter<RAbstractComplexVector> elementAt(int index, RComplex value);
-
-        VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value);
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix();
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix();
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x);
-
-        <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x);
-
-        ValuePredicateArgumentFilter<Boolean> trueValue();
-
-        ValuePredicateArgumentFilter<Boolean> falseValue();
-
-        ValuePredicateArgumentFilter<Byte> logicalTrue();
-
-        ValuePredicateArgumentFilter<Byte> logicalFalse();
-
-        ValuePredicateArgumentFilter<Integer> intNA();
-
-        ValuePredicateArgumentFilter<Byte> logicalNA();
-
-        ValuePredicateArgumentFilter<Double> doubleNA();
-
-        ValuePredicateArgumentFilter<Double> isFractional();
-
-        ValuePredicateArgumentFilter<Double> isFinite();
-
-        ValuePredicateArgumentFilter<String> stringNA();
-
-        ValuePredicateArgumentFilter<Integer> eq(int x);
-
-        ValuePredicateArgumentFilter<Double> eq(double x);
-
-        ValuePredicateArgumentFilter<String> eq(String x);
-
-        ValuePredicateArgumentFilter<Integer> gt(int x);
-
-        ValuePredicateArgumentFilter<Double> gt(double x);
-
-        ValuePredicateArgumentFilter<Double> gte(double x);
-
-        ValuePredicateArgumentFilter<Integer> lt(int x);
-
-        ValuePredicateArgumentFilter<Double> lt(double x);
-
-        ValuePredicateArgumentFilter<Double> lte(double x);
-
-        ValuePredicateArgumentFilter<String> length(int l);
-
-        ValuePredicateArgumentFilter<String> lengthGt(int l);
-
-        ValuePredicateArgumentFilter<String> lengthLt(int l);
-
-        <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls);
-
-        <R extends RAbstractIntVector> TypePredicateArgumentFilter<Object, R> integerValue();
-
-        <R extends RAbstractStringVector> TypePredicateArgumentFilter<Object, R> stringValue();
-
-        <R extends RAbstractDoubleVector> TypePredicateArgumentFilter<Object, R> doubleValue();
-
-        <R extends RAbstractLogicalVector> TypePredicateArgumentFilter<Object, R> logicalValue();
-
-        <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue();
-
-        <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue();
-
-        <R> TypePredicateArgumentFilter<Object, R> anyValue();
-
-        TypePredicateArgumentFilter<Object, String> scalarStringValue();
-
-        TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue();
-
-        TypePredicateArgumentFilter<Object, Double> scalarDoubleValue();
-
-        TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue();
-
-        TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue();
-
-    }
-
-    public interface PredefMappers {
-        ValuePredicateArgumentMapper<Byte, Boolean> toBoolean();
-
-        ValuePredicateArgumentMapper<Double, Integer> doubleToInt();
-
-        ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue);
-
-        <T> ValuePredicateArgumentMapper<T, RNull> nullConstant();
-
-        <T> ValuePredicateArgumentMapper<T, RMissing> missingConstant();
-
-        <T> ValuePredicateArgumentMapper<T, String> constant(String s);
-
-        <T> ValuePredicateArgumentMapper<T, Integer> constant(int i);
-
-        <T> ValuePredicateArgumentMapper<T, Double> constant(double d);
-
-        <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l);
-
-        <T> ValuePredicateArgumentMapper<T, RIntVector> emptyIntegerVector();
-
-        <T> ValuePredicateArgumentMapper<T, RDoubleVector> emptyDoubleVector();
-
-        <T> ValuePredicateArgumentMapper<T, RLogicalVector> emptyLogicalVector();
-
-        <T> ValuePredicateArgumentMapper<T, RComplexVector> emptyComplexVector();
-
-        <T> ValuePredicateArgumentMapper<T, RStringVector> emptyStringVector();
-
-        <T> ValuePredicateArgumentMapper<T, RList> emptyList();
-
-    }
-
-    public static final class DefaultPredefFilters implements PredefFilters {
-
-        @Override
-        public <T> ValuePredicateArgumentFilter<T> sameAs(T x) {
-            return ValuePredicateArgumentFilter.fromLambda(arg -> arg == x);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentFilter<T> equalTo(T x) {
-            return ValuePredicateArgumentFilter.fromLambda(arg -> Objects.equals(arg, x));
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> notEmpty() {
-            return new VectorPredicateArgumentFilter<>(x -> x.getLength() > 0, false);
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> singleElement() {
-            return new VectorPredicateArgumentFilter<>(x -> x.getLength() == 1, false);
-        }
-
-        @Override
-        public <T extends RAbstractVector, R extends T> VectorPredicateArgumentFilter<T> size(int s) {
-            return new VectorPredicateArgumentFilter<>(x -> x.getLength() == s, false);
-        }
-
-        @Override
-        public VectorPredicateArgumentFilter<RAbstractStringVector> elementAt(int index, String value) {
-            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false);
-        }
-
-        @Override
-        public VectorPredicateArgumentFilter<RAbstractIntVector> elementAt(int index, int value) {
-            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (int) x.getDataAtAsObject(index), false);
-        }
-
-        @Override
-        public VectorPredicateArgumentFilter<RAbstractDoubleVector> elementAt(int index, double value) {
-            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (double) x.getDataAtAsObject(index), false);
-        }
-
-        @Override
-        public VectorPredicateArgumentFilter<RAbstractComplexVector> elementAt(int index, RComplex value) {
-            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value.equals(x.getDataAtAsObject(index)), false);
-        }
-
-        @Override
-        public VectorPredicateArgumentFilter<RAbstractLogicalVector> elementAt(int index, byte value) {
-            return new VectorPredicateArgumentFilter<>(x -> index < x.getLength() && value == (byte) (x.getDataAtAsObject(index)), false);
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> matrix() {
-            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix(), false);
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> squareMatrix() {
-            return new VectorPredicateArgumentFilter<>(x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1], false);
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimEq(int dim, int x) {
-            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] == x, false);
-        }
-
-        @Override
-        public <T extends RAbstractVector> VectorPredicateArgumentFilter<T> dimGt(int dim, int x) {
-            return new VectorPredicateArgumentFilter<>(v -> v.isMatrix() && v.getDimensions().length > dim && v.getDimensions()[dim] > x, false);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Boolean> trueValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Boolean> falseValue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Byte> logicalTrue() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_TRUE == x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Byte> logicalFalse() {
-            return ValuePredicateArgumentFilter.fromLambda(x -> RRuntime.LOGICAL_FALSE == x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> intNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Integer x) -> RRuntime.isNA(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Byte> logicalNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Byte x) -> RRuntime.isNA(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> doubleNA() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> RRuntime.isNAorNaN(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> isFractional() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> isFinite() {
-            return ValuePredicateArgumentFilter.fromLambda((Double x) -> !Double.isInfinite(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> stringNA() {
-            return ValuePredicateArgumentFilter.fromLambda((String x) -> RRuntime.isNA(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> eq(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg.intValue() == x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> eq(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg.doubleValue() == x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> eq(String x) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.equals(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> gt(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg > x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> gt(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg > x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> gte(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg != null && arg >= x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Integer> lt(int x) {
-            return ValuePredicateArgumentFilter.fromLambda((Integer arg) -> arg != null && arg < x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> lt(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg < x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<Double> lte(double x) {
-            return ValuePredicateArgumentFilter.fromLambda((Double arg) -> arg <= x);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> length(int l) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() == l);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> lengthGt(int l) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() > l);
-        }
-
-        @Override
-        public ValuePredicateArgumentFilter<String> lengthLt(int l) {
-            return ValuePredicateArgumentFilter.fromLambda((String arg) -> arg != null && arg.length() < l);
-        }
-
-        @Override
-        public <R> TypePredicateArgumentFilter<Object, R> instanceOf(Class<R> cls) {
-            assert cls != RNull.class : "cannot handle RNull.class with an isNullable=false filter";
-            return TypePredicateArgumentFilter.fromLambda(x -> cls.isInstance(x));
-        }
-
-        @Override
-        public <R extends RAbstractIntVector> TypePredicateArgumentFilter<Object, R> integerValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer || x instanceof RAbstractIntVector);
-        }
-
-        @Override
-        public <R extends RAbstractStringVector> TypePredicateArgumentFilter<Object, R> stringValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String || x instanceof RAbstractStringVector);
-        }
-
-        @Override
-        public <R extends RAbstractDoubleVector> TypePredicateArgumentFilter<Object, R> doubleValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double || x instanceof RAbstractDoubleVector);
-        }
-
-        @Override
-        public <R extends RAbstractLogicalVector> TypePredicateArgumentFilter<Object, R> logicalValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte || x instanceof RAbstractLogicalVector);
-        }
-
-        @Override
-        public <R extends RAbstractComplexVector> TypePredicateArgumentFilter<Object, R> complexValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RAbstractComplexVector);
-        }
-
-        @Override
-        public <R extends RAbstractRawVector> TypePredicateArgumentFilter<Object, R> rawValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RAbstractRawVector);
-        }
-
-        @Override
-        public <R> TypePredicateArgumentFilter<Object, R> anyValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> true);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        @Override
-        public TypePredicateArgumentFilter<Object, String> scalarStringValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof String);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        @Override
-        public TypePredicateArgumentFilter<Object, Integer> scalarIntegerValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Integer);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        @Override
-        public TypePredicateArgumentFilter<Object, Double> scalarDoubleValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Double);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        @Override
-        public TypePredicateArgumentFilter<Object, Byte> scalarLogicalValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof Byte);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        @Override
-        public TypePredicateArgumentFilter<Object, RComplex> scalarComplexValue() {
-            return TypePredicateArgumentFilter.fromLambda(x -> x instanceof RComplex);
-        }
-
-    }
-
-    public static final class DefaultPredefMappers implements PredefMappers {
-
-        @Override
-        public ValuePredicateArgumentMapper<Byte, Boolean> toBoolean() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical(x));
-        }
-
-        @Override
-        public ValuePredicateArgumentMapper<Double, Integer> doubleToInt() {
-            final NACheck naCheck = NACheck.create();
-            return ValuePredicateArgumentMapper.fromLambda(x -> {
-                naCheck.enable(x);
-                return naCheck.convertDoubleToInt(x);
-            });
-        }
-
-        @Override
-        public ValuePredicateArgumentMapper<String, Integer> charAt0(int defaultValue) {
-            final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-            final ConditionProfile profile2 = ConditionProfile.createBinaryProfile();
-            return ValuePredicateArgumentMapper.fromLambda(x -> {
-                if (profile.profile(x == null || x.isEmpty())) {
-                    return defaultValue;
-                } else {
-                    if (profile2.profile(x == RRuntime.STRING_NA)) {
-                        return RRuntime.INT_NA;
-                    } else {
-                        return (int) x.charAt(0);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RNull> nullConstant() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RNull.instance);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RMissing> missingConstant() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RMissing.instance);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, String> constant(String s) {
-            return ValuePredicateArgumentMapper.fromLambda((T x) -> s);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, Integer> constant(int i) {
-            return ValuePredicateArgumentMapper.fromLambda(x -> i);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, Double> constant(double d) {
-            return ValuePredicateArgumentMapper.fromLambda(x -> d);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, Byte> constant(byte l) {
-            return ValuePredicateArgumentMapper.fromLambda(x -> l);
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RIntVector> emptyIntegerVector() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createEmptyIntVector());
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RDoubleVector> emptyDoubleVector() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createEmptyDoubleVector());
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RLogicalVector> emptyLogicalVector() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createEmptyLogicalVector());
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RComplexVector> emptyComplexVector() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createEmptyComplexVector());
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RStringVector> emptyStringVector() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createEmptyStringVector());
-        }
-
-        @Override
-        public <T> ValuePredicateArgumentMapper<T, RList> emptyList() {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RDataFactory.createList());
-        }
-
-    }
-
     public static final class Predef {
-
-        private static PredefFilters predefFilters = new DefaultPredefFilters();
-        private static PredefMappers predefMappers = new DefaultPredefMappers();
-
-        /**
-         * Invoked from tests only.
-         *
-         * @param pf
-         */
-        public static void setPredefFilters(PredefFilters pf) {
-            predefFilters = pf;
-        }
-
-        /**
-         * Invoked from tests only.
-         *
-         * @param pm
-         */
-        public static void setPredefMappers(PredefMappers pm) {
-            predefMappers = pm;
-        }
-
-        private static PredefFilters predefFilters() {
-            return predefFilters;
-        }
-
-        private static PredefMappers predefMappers() {
-            return predefMappers;
-        }
 
         @SuppressWarnings("unchecked")
         public static <T> NotFilter<T> not(Filter<? super T, ? extends T> filter) {
@@ -838,12 +299,12 @@ public final class CastBuilder {
             return new MapStep<>(mapper);
         }
 
-        public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<S, R> trueBranch, PipelineStep<T, T> falseBranch) {
+        public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
             return new MapIfStep<>(filter, trueBranch, falseBranch);
         }
 
-        public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<S, R> trueBranch) {
-            return mapIf(filter, trueBranch);
+        public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch) {
+            return mapIf(filter, trueBranch, null);
         }
 
         public static <T> ChainBuilder<T> chain(PipelineStep<T, ?> firstStep) {
@@ -851,59 +312,59 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, Integer> asInteger() {
-            return new CoercionStep<>(RType.Integer, false);
+            return new CoercionStep<>(TargetType.Integer, false);
         }
 
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector() {
-            return new CoercionStep<>(RType.Integer, true);
+            return new CoercionStep<>(TargetType.Integer, true);
         }
 
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(TargetType.Integer, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
-            return new CoercionStep<>(RType.Double, false);
+            return new CoercionStep<>(TargetType.Double, false);
         }
 
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector() {
-            return new CoercionStep<>(RType.Double, true);
+            return new CoercionStep<>(TargetType.Double, true);
         }
 
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(TargetType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, String> asString() {
-            return new CoercionStep<>(RType.Character, false);
+            return new CoercionStep<>(TargetType.Character, false);
         }
 
         public static <T> PipelineStep<T, RAbstractStringVector> asStringVector() {
-            return new CoercionStep<>(RType.Character, true);
+            return new CoercionStep<>(TargetType.Character, true);
         }
 
         public static <T> PipelineStep<T, RAbstractStringVector> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(TargetType.Character, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, RAbstractComplexVector> asComplexVector() {
-            return new CoercionStep<>(RType.Complex, true);
+            return new CoercionStep<>(TargetType.Complex, true);
         }
 
         public static <T> PipelineStep<T, RAbstractRawVector> asRawVector() {
-            return new CoercionStep<>(RType.Raw, true);
+            return new CoercionStep<>(TargetType.Raw, true);
         }
 
         public static <T> PipelineStep<T, Byte> asLogical() {
-            return new CoercionStep<>(RType.Logical, false);
+            return new CoercionStep<>(TargetType.Logical, false);
         }
 
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector() {
-            return new CoercionStep<>(RType.Logical, true);
+            return new CoercionStep<>(TargetType.Logical, true);
         }
 
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
+            return new CoercionStep<>(TargetType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
         }
 
         public static PipelineStep<Byte, Boolean> asBoolean() {
@@ -911,11 +372,11 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector() {
-            return new CoercionStep<>(RType.Any, true);
+            return new CoercionStep<>(TargetType.Any, true);
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {
-            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector);
+            return new CoercionStep<>(TargetType.Any, true, false, false, false, preserveNonVector);
         }
 
         public static <V extends RAbstractVector> FindFirstNodeBuilder<V> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -947,11 +408,11 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, T> notNA(T naReplacement) {
-            return new NotNAStep<>(naReplacement, new MessageData(null, null, null));
+            return new NotNAStep<>(naReplacement, null);
         }
 
         public static <T> PipelineStep<T, T> notNA() {
-            return new NotNAStep<>(null, new MessageData(null, null, null));
+            return new NotNAStep<>(null, null);
         }
 
         public static <T> CompareFilter<T> sameAs(T x) {
@@ -974,23 +435,23 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.VectorSize(s));
         }
 
-        public static <T extends RAbstractVector> CompareFilter<T> elementAt(int index, String value) {
+        public static <T extends RAbstractStringVector> CompareFilter<T> elementAt(int index, String value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Character));
         }
 
-        public static <T extends RAbstractVector> CompareFilter<T> elementAt(int index, int value) {
+        public static <T extends RAbstractIntVector> CompareFilter<T> elementAt(int index, int value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Integer));
         }
 
-        public static <T extends RAbstractVector> CompareFilter<T> elementAt(int index, double value) {
+        public static <T extends RAbstractDoubleVector> CompareFilter<T> elementAt(int index, double value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Double));
         }
 
-        public static <T extends RAbstractVector> CompareFilter<T> elementAt(int index, RComplex value) {
+        public static <T extends RAbstractComplexVector> CompareFilter<T> elementAt(int index, RComplex value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Complex));
         }
 
-        public static <T extends RAbstractVector> CompareFilter<T> elementAt(int index, byte value) {
+        public static <T extends RAbstractLogicalVector> CompareFilter<T> elementAt(int index, byte value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Logical));
         }
 
@@ -1011,15 +472,15 @@ public final class CastBuilder {
         }
 
         public static CompareFilter<Byte> logicalTrue() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.LOGICAL_TRUE, RType.Logical));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(RRuntime.LOGICAL_TRUE, RType.Logical));
         }
 
         public static CompareFilter<Byte> logicalFalse() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.LOGICAL_FALSE, RType.Logical));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(RRuntime.LOGICAL_FALSE, RType.Logical));
         }
 
         public static CompareFilter<Integer> intNA() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.INT_NA, RType.Integer));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.NATest(RType.Integer));
         }
 
         public static NotFilter<Integer> notIntNA() {
@@ -1027,7 +488,7 @@ public final class CastBuilder {
         }
 
         public static CompareFilter<Byte> logicalNA() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.LOGICAL_NA, RType.Logical));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.NATest(RType.Logical));
         }
 
         public static NotFilter<Byte> notLogicalNA() {
@@ -1035,7 +496,7 @@ public final class CastBuilder {
         }
 
         public static CompareFilter<Double> doubleNA() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.DOUBLE_NA, RType.Double));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.NATest(RType.Double));
         }
 
         public static NotFilter<Double> notDoubleNA() {
@@ -1043,11 +504,19 @@ public final class CastBuilder {
         }
 
         public static CompareFilter<String> stringNA() {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(RRuntime.STRING_NA, RType.Character));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.NATest(RType.Character));
         }
 
         public static NotFilter<String> notStringNA() {
             return new NotFilter<>(stringNA());
+        }
+
+        public static CompareFilter<RComplex> complexNA() {
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.NATest(RType.Complex));
+        }
+
+        public static NotFilter<RComplex> notComplexNA() {
+            return new NotFilter<>(complexNA());
         }
 
         public static DoubleFilter isFractional() {
@@ -1210,6 +679,10 @@ public final class CastBuilder {
             return new TypeFilter<>(x -> x instanceof String, String.class);
         }
 
+        public static Filter<Object, Integer> atomicIntegerValue() {
+            return new TypeFilter<>(x -> x instanceof String, String.class);
+        }
+
         /**
          * @deprecated tests for scalar types are dangerous
          */
@@ -1223,6 +696,10 @@ public final class CastBuilder {
          */
         @Deprecated
         public static Filter<Object, Byte> scalarLogicalValue() {
+            return new TypeFilter<>(x -> x instanceof Byte, Byte.class);
+        }
+
+        public static Filter<Object, Byte> atomicLogicalValue() {
             return new TypeFilter<>(x -> x instanceof Byte, Byte.class);
         }
 
@@ -1340,7 +817,7 @@ public final class CastBuilder {
         }
 
         default THIS shouldBe(Filter<? super T, ?> argFilter) {
-            return shouldBe(argFilter, state().defaultWarning().callObj, state().defaultWarning().message, state().defaultWarning().args);
+            return shouldBe(argFilter, state().defaultWarning().getCallObj(), state().defaultWarning().getMessage(), state().defaultWarning().getMessageArgs());
         }
 
         default <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
@@ -1361,38 +838,40 @@ public final class CastBuilder {
 
     }
 
-    public static class DefaultError {
-        public final RBaseNode callObj;
-        public final RError.Message message;
-        public final Object[] args;
-
-        DefaultError(RBaseNode callObj, RError.Message message, Object... args) {
-            this.callObj = callObj;
-            this.message = message;
-            this.args = args;
-        }
-
-        public DefaultError fixCallObj(RBaseNode callObjFix) {
-            if (callObj == null) {
-                return new DefaultError(callObjFix, message, args);
-            } else {
-                return this;
-            }
-        }
-
-    }
+// public static class DefaultError {
+// public final RBaseNode callObj;
+// public final RError.Message message;
+// public final Object[] args;
+//
+// DefaultError(RBaseNode callObj, RError.Message message, Object... args) {
+// this.callObj = callObj;
+// this.message = message;
+// this.args = args;
+// }
+//
+// public DefaultError fixCallObj(RBaseNode callObjFix) {
+// if (callObj == null) {
+// return new DefaultError(callObjFix, message, args);
+// } else {
+// return this;
+// }
+// }
+//
+// }
 
     public static class ArgCastBuilderState {
-        private final DefaultError defaultDefaultError;
+        private final MessageData defaultDefaultError;
 
         private final int argumentIndex;
         private final String argumentName;
         final ArgCastBuilderFactory factory;
         private final CastBuilder cb;
+        private final PipelineConfigBuilder pcb;
         private final PipelineBuilder pb;
+
         final boolean boxPrimitives;
-        private DefaultError defError;
-        private DefaultError defWarning;
+        private MessageData defError;
+        private MessageData defWarning;
 
         public ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, boolean boxPrimitives) {
             this.argumentIndex = argumentIndex;
@@ -1400,8 +879,9 @@ public final class CastBuilder {
             this.factory = fact;
             this.cb = cb;
             this.boxPrimitives = boxPrimitives;
-            this.defaultDefaultError = new DefaultError(null, RError.Message.INVALID_ARGUMENT, argumentName);
-            this.pb = new PipelineBuilder();
+            this.defaultDefaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
+            this.pcb = new PipelineConfigBuilder(this);
+            this.pb = new PipelineBuilder(this.pcb);
         }
 
         ArgCastBuilderState(ArgCastBuilderState prevState, boolean boxPrimitives) {
@@ -1412,8 +892,9 @@ public final class CastBuilder {
             this.boxPrimitives = boxPrimitives;
             this.defError = prevState.defError;
             this.defWarning = prevState.defWarning;
-            this.defaultDefaultError = new DefaultError(null, RError.Message.INVALID_ARGUMENT, argumentName);
-            this.pb = new PipelineBuilder();
+            this.defaultDefaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
+            this.pcb = prevState.pcb;
+            this.pb = prevState.pb;
         }
 
         public int index() {
@@ -1441,43 +922,43 @@ public final class CastBuilder {
         }
 
         void setDefaultError(RBaseNode callObj, RError.Message message, Object... args) {
-            defError = new DefaultError(callObj, message, args);
+            defError = new MessageData(callObj, message, args);
         }
 
         void setDefaultError(RError.Message message, Object... args) {
-            defError = new DefaultError(null, message, args);
+            defError = new MessageData(null, message, args);
         }
 
         void setDefaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
-            defWarning = new DefaultError(callObj, message, args);
+            defWarning = new MessageData(callObj, message, args);
         }
 
         void setDefaultWarning(RError.Message message, Object... args) {
-            defWarning = new DefaultError(null, message, args);
+            defWarning = new MessageData(null, message, args);
         }
 
-        DefaultError defaultError() {
+        MessageData defaultError() {
             return defError == null ? defaultDefaultError : defError;
         }
 
-        DefaultError defaultError(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defError == null ? new DefaultError(callObj, defaultDefaultMessage, defaultDefaultArgs) : defError;
+        MessageData defaultError(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defError == null ? new MessageData(callObj, defaultDefaultMessage, defaultDefaultArgs) : defError;
         }
 
-        DefaultError defaultError(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defError == null ? new DefaultError(null, defaultDefaultMessage, defaultDefaultArgs) : defError;
+        MessageData defaultError(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defError == null ? new MessageData(null, defaultDefaultMessage, defaultDefaultArgs) : defError;
         }
 
-        DefaultError defaultWarning() {
+        MessageData defaultWarning() {
             return defWarning == null ? defaultDefaultError : defWarning;
         }
 
-        DefaultError defaultWarning(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defWarning == null ? new DefaultError(callObj, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
+        MessageData defaultWarning(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defWarning == null ? new MessageData(callObj, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
         }
 
-        DefaultError defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defWarning == null ? new DefaultError(null, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
+        MessageData defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
+            return defWarning == null ? new MessageData(null, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
         }
 
         void mustBe(Filter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -1485,7 +966,7 @@ public final class CastBuilder {
         }
 
         void mustBe(Filter<?, ?> argFilter) {
-            mustBe(argFilter, defaultError().callObj, defaultError().message, defaultError().args);
+            mustBe(argFilter, defaultError().getCallObj(), defaultError().getMessage(), defaultError().getMessageArgs());
         }
 
         void shouldBe(Filter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -1493,7 +974,7 @@ public final class CastBuilder {
         }
 
         void shouldBe(Filter<?, ?> argFilter) {
-            shouldBe(argFilter, defaultWarning().callObj, defaultWarning().message, defaultWarning().args);
+            shouldBe(argFilter, defaultWarning().getCallObj(), defaultWarning().getMessage(), defaultWarning().getMessageArgs());
         }
 
     }
@@ -1525,7 +1006,7 @@ public final class CastBuilder {
         }
 
         default <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
         }
 
         default <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -1568,48 +1049,43 @@ public final class CastBuilder {
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, T> falseBranchMapper) {
+        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
             state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, ?> trueBranch) {
+        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
             state().pipelineBuilder().appendMapIf(argFilter, trueBranch);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, R> trueBranch, PipelineStep<T, ?> falseBranch) {
+        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
             state().pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
             return state().factory.newInitialPhaseBuilder(this);
         }
 
         default InitialPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(callObj, message, messageArgs, null));
-            state().pipelineBuilder().appendNotNA(callObj, message, messageArgs);
+            state().pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(null, message, messageArgs, null));
-            state().pipelineBuilder().appendNotNA(message, messageArgs);
+            state().pipelineBuilder().appendNotNA(null, null, message, messageArgs);
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(callObj, message, messageArgs, naReplacement));
             state().pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(null, message, messageArgs, naReplacement));
-            state().pipelineBuilder().appendNotNA(naReplacement, message, messageArgs);
+            state().pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
             return this;
         }
 
         default InitialPhaseBuilder<T> notNA(T naReplacement) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(naReplacement));
-            state().pipelineBuilder().appendNotNA(naReplacement);
+            state().pipelineBuilder().appendNotNA(naReplacement, null, null, null);
             return this;
         }
 
@@ -1618,13 +1094,11 @@ public final class CastBuilder {
          * Example: {@code casts.arg("x").notNA()}.
          */
         default InitialPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
-            state().pipelineBuilder().appendNotNA();
+            state().pipelineBuilder().appendNotNA(null, null, null, null);
             return this;
         }
 
         default CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().castBuilder().toInteger(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
             state().pipelineBuilder().appendAsIntegerVector(preserveNames, dimensionsPreservation, attrPreservation);
             return state().factory.newCoercedPhaseBuilder(this, Integer.class);
         }
@@ -1634,7 +1108,6 @@ public final class CastBuilder {
         }
 
         default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().castBuilder().toDouble(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
             state().pipelineBuilder().appendAsDoubleVector(preserveNames, dimensionsPreservation, attrPreservation);
             return state().factory.newCoercedPhaseBuilder(this, Double.class);
         }
@@ -1644,7 +1117,6 @@ public final class CastBuilder {
         }
 
         default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().castBuilder().insert(state().index(), () -> CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
             state().pipelineBuilder().appendAsLogicalVector(preserveNames, dimensionsPreservation, attrPreservation);
             return state().factory.newCoercedPhaseBuilder(this, Byte.class);
         }
@@ -1654,42 +1126,36 @@ public final class CastBuilder {
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().castBuilder().toCharacter(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
             state().pipelineBuilder().appendAsStringVector(preserveNames, dimensionsPreservation, attrPreservation);
             return state().factory.newCoercedPhaseBuilder(this, String.class);
         }
 
         default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
-            state().castBuilder().toCharacter(state().index());
+            state().pipelineBuilder().appendAsStringVector();
             return state().factory.newCoercedPhaseBuilder(this, String.class);
         }
 
         default CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector() {
-            state().castBuilder().toComplex(state().index());
             state().pipelineBuilder().appendAsComplexVector();
             return state().factory.newCoercedPhaseBuilder(this, RComplex.class);
         }
 
         default CoercedPhaseBuilder<RAbstractRawVector, RRaw> asRawVector() {
-            state().castBuilder().toRaw(state().index());
             state().pipelineBuilder().appendAsRawVector();
             return state().factory.newCoercedPhaseBuilder(this, RRaw.class);
         }
 
         default CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
-            state().castBuilder().toVector(state().index());
             state().pipelineBuilder().appendAsVector();
             return state().factory.newCoercedPhaseBuilder(this, Object.class);
         }
 
         default CoercedPhaseBuilder<RAbstractVector, Object> asVector(boolean preserveNonVector) {
-            state().castBuilder().toVector(state().index(), preserveNonVector);
             state().pipelineBuilder().appendAsVector(preserveNonVector);
             return state().factory.newCoercedPhaseBuilder(this, Object.class);
         }
 
         default HeadPhaseBuilder<RAttributable> asAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().castBuilder().toAttributable(state().index(), preserveNames, dimensionsPreservation, attrPreservation);
             state().pipelineBuilder().appendAsAttributable(preserveNames, dimensionsPreservation, attrPreservation);
             return state().factory.newHeadPhaseBuilder(this);
         }
@@ -1700,7 +1166,6 @@ public final class CastBuilder {
 
         default InitialPhaseBuilder<T> conf(Function<PipelineConfigBuilder, PipelineConfigBuilder> cfgLambda) {
             cfgLambda.apply(getPipelineConfigBuilder());
-            state().pipelineBuilder().appendConf(cfgLambda);
             return this;
         }
 
@@ -1709,7 +1174,7 @@ public final class CastBuilder {
         }
 
         default InitialPhaseBuilder<T> mustNotBeNull() {
-            return conf(c -> c.mustNotBeNull(state().defaultError().callObj, state().defaultError().message, state().defaultError().args));
+            return conf(c -> c.mustNotBeNull(state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs()));
         }
 
         default InitialPhaseBuilder<T> mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
@@ -1729,7 +1194,7 @@ public final class CastBuilder {
         }
 
         default InitialPhaseBuilder<T> mustNotBeMissing() {
-            return conf(c -> c.mustNotBeMissing(state().defaultError().callObj, state().defaultError().message, state().defaultError().args));
+            return conf(c -> c.mustNotBeMissing(state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs()));
         }
 
         default InitialPhaseBuilder<T> mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
@@ -1783,14 +1248,12 @@ public final class CastBuilder {
          * reports the warning message.
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> FindFirstNodeGen.create(elementClass(), null, message, messageArgs, defaultValue));
-            state().pipelineBuilder().appendFindFirst(defaultValue, message, messageArgs);
+            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), null, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
         default HeadPhaseBuilder<S> findFirst(S defaultValue, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> FindFirstNodeGen.create(elementClass(), callObj, message, messageArgs, defaultValue));
-            state().pipelineBuilder().appendFindFirst(defaultValue, callObj, message, messageArgs);
+            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), callObj, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1798,14 +1261,12 @@ public final class CastBuilder {
          * The inserted cast node raises an error if the input vector is empty.
          */
         default HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> FindFirstNodeGen.create(elementClass(), null, message, messageArgs, null));
-            state().pipelineBuilder().appendFindFirst(message, messageArgs);
+            state().pipelineBuilder().appendFindFirst(null, elementClass(), null, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
         default HeadPhaseBuilder<S> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> FindFirstNodeGen.create(elementClass(), callObj, message, messageArgs, null));
-            state().pipelineBuilder().appendFindFirst(callObj, message, messageArgs);
+            state().pipelineBuilder().appendFindFirst(null, elementClass(), callObj, message, messageArgs);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1814,10 +1275,8 @@ public final class CastBuilder {
          * RError.Message.LENGTH_ZERO error if the input vector is empty.
          */
         default HeadPhaseBuilder<S> findFirst() {
-            DefaultError err = state().isDefaultErrorDefined() ? state().defaultError() : new DefaultError(null, RError.Message.LENGTH_ZERO);
-            state().castBuilder().insert(state().index(),
-                            () -> FindFirstNodeGen.create(elementClass(), err.callObj, err.message, err.args, null));
-            state().pipelineBuilder().appendFindFirst();
+            MessageData err = state().isDefaultErrorDefined() ? state().defaultError() : new MessageData(null, RError.Message.LENGTH_ZERO);
+            state().pipelineBuilder().appendFindFirst(null, elementClass(), err.getCallObj(), err.getMessage(), err.getMessageArgs());
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1827,8 +1286,7 @@ public final class CastBuilder {
          */
         default HeadPhaseBuilder<S> findFirst(S defaultValue) {
             assert defaultValue != null : "defaultValue cannot be null";
-            state().castBuilder().insert(state().index(), () -> FindFirstNodeGen.create(elementClass(), defaultValue));
-            state().pipelineBuilder().appendFindFirst(defaultValue);
+            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), null, null, null);
             return state().factory.newHeadPhaseBuilder(this);
         }
 
@@ -1845,7 +1303,7 @@ public final class CastBuilder {
         }
 
         default CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter) {
-            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
         }
 
     }
@@ -1863,7 +1321,7 @@ public final class CastBuilder {
             return state().factory.newHeadPhaseBuilder(this);
         }
 
-        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, T> falseBranchMapper) {
+        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
             state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
             return state().factory.newHeadPhaseBuilder(this);
         }
@@ -1889,7 +1347,7 @@ public final class CastBuilder {
         }
 
         default <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().callObj, state().defaultError().message, state().defaultError().args);
+            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
         }
 
         default <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
@@ -1918,38 +1376,32 @@ public final class CastBuilder {
         }
 
         default HeadPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(callObj, message, messageArgs, null));
-            state().pipelineBuilder().appendNotNA(callObj, message, messageArgs);
+            state().pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(null, message, messageArgs, null));
-            state().pipelineBuilder().appendNotNA(message, messageArgs);
+            state().pipelineBuilder().appendNotNA(null, null, message, messageArgs);
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(callObj, message, messageArgs, naReplacement));
             state().pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(null, message, messageArgs, naReplacement));
-            state().pipelineBuilder().appendNotNA(naReplacement, message, messageArgs);
+            state().pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA() {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(state().defaultError().callObj, state().defaultError().message, state().defaultError().args, null));
-            state().pipelineBuilder().appendNotNA();
+            state().pipelineBuilder().appendNotNA(null, null, null, null);
             return this;
         }
 
         default HeadPhaseBuilder<T> notNA(T naReplacement) {
-            state().castBuilder().insert(state().index(), () -> NonNANodeGen.create(naReplacement));
-            state().pipelineBuilder().appendNotNA(naReplacement);
+            state().pipelineBuilder().appendNotNA(naReplacement, null, null, null);
             return this;
         }
 
@@ -1996,17 +1448,12 @@ public final class CastBuilder {
 
             PreinitialPhaseBuilderImpl() {
                 super(new ArgCastBuilderState(argumentIndex, argumentName, ArgCastBuilderFactoryImpl.this, CastBuilder.this, false));
-
-                if (argumentIndex >= pipelineCfgBuilders.length) {
-                    pipelineCfgBuilders = Arrays.copyOf(pipelineCfgBuilders, argumentIndex + 1);
-                }
-
-                pipelineCfgBuilders[argumentIndex] = new PipelineConfigBuilder(state());
+                insert(argumentIndex, state().pipelineBuilder());
             }
 
             @Override
             public PipelineConfigBuilder getPipelineConfigBuilder() {
-                return pipelineCfgBuilders[argumentIndex];
+                return state().pcb;
             }
 
         }
@@ -2035,27 +1482,32 @@ public final class CastBuilder {
     }
 
     public static final class ChainBuilder<T> {
-        private final PipelineStep firstStep;
+        private final PipelineStep<?, ?> firstStep;
+        private PipelineStep<?, ?> lastStep;
 
-        private ChainBuilder(PipelineStep firstStep) {
+        private ChainBuilder(PipelineStep<?, ?> firstStep) {
             this.firstStep = firstStep;
+            this.lastStep = firstStep;
         }
 
-        private PipelineStep makeChain(PipelineStep secondStep) {
-            return firstStep.setNext(secondStep);
-        }
-
-        @SuppressWarnings("overloads")
-        public ChainBuilder<T> with(PipelineStep secondStep) {
-            return new ChainBuilder<>(makeChain(secondStep));
+        private void addStep(PipelineStep<?, ?> nextStep) {
+            lastStep.setNext(nextStep);
+            lastStep = nextStep;
         }
 
         @SuppressWarnings("overloads")
-        public ChainBuilder<T> with(Mapper mapper) {
-            return with(mapper);
+        public ChainBuilder<T> with(PipelineStep<?, ?> nextStep) {
+            addStep(nextStep);
+            return this;
         }
 
-        public PipelineStep end() {
+        @SuppressWarnings("overloads")
+        public ChainBuilder<T> with(Mapper<?, ?> mapper) {
+            addStep(new MapStep<>(mapper));
+            return this;
+        }
+
+        public PipelineStep<?, ?> end() {
             return firstStep;
         }
 
@@ -2073,7 +1525,7 @@ public final class CastBuilder {
         }
 
         private <V, E> PipelineStep<V, E> create(Class<?> elementClass, Object defaultValue) {
-            return new FindFirstStep(defaultValue, elementClass, new MessageData(callObj, message, messageArgs));
+            return new FindFirstStep<>(defaultValue, elementClass, new MessageData(callObj, message, messageArgs));
         }
 
         public PipelineStep<RAbstractLogicalVector, Byte> logicalElement() {
@@ -2132,13 +1584,15 @@ public final class CastBuilder {
 
         private Mapper<? super RMissing, ?> missingMapper = null;
         private Mapper<? super RNull, ?> nullMapper = null;
-        private DefaultError missingMsg;
-        private DefaultError nullMsg;
+        private MessageData missingMsg;
+        private MessageData nullMsg;
 
         public PipelineConfigBuilder(ArgCastBuilderState state) {
             this.state = state;
-            missingMsg = state.defaultError();
-            nullMsg = state.defaultError();
+        }
+
+        public MessageData getDefaultDefaultMessage() {
+            return state.defaultDefaultError;
         }
 
         public String getArgName() {
@@ -2153,17 +1607,17 @@ public final class CastBuilder {
             return nullMapper;
         }
 
-        public DefaultError getMissingMessage() {
+        public MessageData getMissingMessage() {
             return missingMsg;
         }
 
-        public DefaultError getNullMessage() {
+        public MessageData getNullMessage() {
             return nullMsg;
         }
 
         public PipelineConfigBuilder mustNotBeMissing(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
             missingMapper = null;
-            missingMsg = new DefaultError(callObj, errorMsg, msgArgs);
+            missingMsg = new MessageData(callObj, errorMsg, msgArgs);
             return this;
         }
 
@@ -2175,7 +1629,7 @@ public final class CastBuilder {
 
         public PipelineConfigBuilder mapMissing(Mapper<? super RMissing, ?> mapper, RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
             missingMapper = mapper;
-            missingMsg = new DefaultError(callObj, warningMsg, msgArgs);
+            missingMsg = new MessageData(callObj, warningMsg, msgArgs);
             return this;
         }
 
@@ -2189,7 +1643,7 @@ public final class CastBuilder {
 
         public PipelineConfigBuilder mustNotBeNull(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
             nullMapper = null;
-            nullMsg = new DefaultError(callObj, errorMsg, msgArgs);
+            nullMsg = new MessageData(callObj, errorMsg, msgArgs);
             return this;
         }
 
@@ -2201,7 +1655,7 @@ public final class CastBuilder {
 
         public PipelineConfigBuilder mapNull(Mapper<? super RNull, ?> mapper, RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
             nullMapper = mapper;
-            nullMsg = new DefaultError(callObj, warningMsg, msgArgs);
+            nullMsg = new MessageData(callObj, warningMsg, msgArgs);
             return this;
         }
 
@@ -2220,103 +1674,69 @@ public final class CastBuilder {
 
     }
 
-    private static final class PipelineBuilder {
+    private static final class PipelineBuilder implements CastNodeFactory {
 
-        public void appendConf(Function<PipelineConfigBuilder, PipelineConfigBuilder> cfgLambda) {
-            // TODO Auto-generated method stub
+        private final PipelineConfigBuilder pcb;
+        private ChainBuilder<?> chainBuilder;
 
+        PipelineBuilder(PipelineConfigBuilder pcb) {
+            this.pcb = pcb;
         }
 
-        public void appendFindFirst(Object defaultValue) {
-            appendFindFirst(defaultValue, null, null, null);
-
+        private void append(PipelineStep<?, ?> step) {
+            if (chainBuilder == null) {
+                chainBuilder = new ChainBuilder<>(step);
+            } else {
+                chainBuilder.addStep(step);
+            }
         }
 
-        public void appendFindFirst() {
-            appendFindFirst(null, null, null, null);
-        }
-
-        public void appendFindFirst(Message message, Object[] messageArgs) {
-            appendFindFirst(null, null, message, messageArgs);
-        }
-
-        public void appendFindFirst(Object defaultValue, RBaseNode callObj, Message message, Object[] messageArgs) {
-            // TODO Auto-generated method stub
-
-        }
-
-        public void appendFindFirst(Object defaultValue, Message message, Object[] messageArgs) {
-            appendFindFirst(defaultValue, null, message, messageArgs);
+        public void appendFindFirst(Object defaultValue, Class<?> elementClass, RBaseNode callObj, Message message, Object[] messageArgs) {
+            append(new FindFirstStep<>(defaultValue, elementClass, message == null ? null : new MessageData(callObj, message, messageArgs)));
         }
 
         public void appendAsAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Attributable, false, preserveNames, dimensionsPreservation, attrPreservation));
         }
 
         public void appendAsVector(boolean preserveNonVector) {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Any, true, false, false, false, preserveNonVector));
         }
 
         public void appendAsVector() {
-            // TODO Auto-generated method stub
-
+            appendAsVector(false);
         }
 
         public void appendAsRawVector() {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Raw, true, false, false, false));
         }
 
         public void appendAsComplexVector() {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Complex, true, false, false, false));
         }
 
         public void appendAsStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            // TODO Auto-generated method stub
+            append(new CoercionStep<>(TargetType.Character, true, preserveNames, dimensionsPreservation, attrPreservation));
+        }
 
+        public void appendAsStringVector() {
+            append(new CoercionStep<>(TargetType.Character, true, false, false, false));
         }
 
         public void appendAsLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Logical, true, preserveNames, dimensionsPreservation, attrPreservation));
         }
 
         public void appendAsDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            // TODO Auto-generated method stub
-
+            append(new CoercionStep<>(TargetType.Double, true, preserveNames, dimensionsPreservation, attrPreservation));
         }
 
         public void appendAsIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            // TODO Auto-generated method stub
-
-        }
-
-        public void appendNotNA() {
-            appendNotNA(null, null, null, null);
-        }
-
-        public void appendNotNA(Object naReplacement) {
-            appendNotNA(naReplacement, null, null, null);
-        }
-
-        public void appendNotNA(Object naReplacement, Message message, Object[] messageArgs) {
-            appendNotNA(naReplacement, null, message, messageArgs);
+            append(new CoercionStep<>(TargetType.Integer, true, preserveNames, dimensionsPreservation, attrPreservation));
         }
 
         public void appendNotNA(Object naReplacement, RBaseNode callObj, Message message, Object[] messageArgs) {
-            // TODO Auto-generated method stub
-
-        }
-
-        public void appendNotNA(Message message, Object[] messageArgs) {
-            appendNotNA(null, null, message, messageArgs);
-        }
-
-        public void appendNotNA(RBaseNode callObj, Message message, Object[] messageArgs) {
-            appendNotNA(null, callObj, message, messageArgs);
+            append(new NotNAStep<>(naReplacement, message == null ? null : new MessageData(callObj, message, messageArgs)));
         }
 
         public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper) {
@@ -2324,25 +1744,23 @@ public final class CastBuilder {
         }
 
         public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper, Mapper<?, ?> falseBranchMapper) {
-            // TODO Auto-generated method stub
+            appendMapIf(argFilter, new MapStep<>(trueBranchMapper), falseBranchMapper == null ? null : new MapStep<>(falseBranchMapper));
         }
 
         public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch) {
-            // TODO Auto-generated method stub
+            appendMapIf(argFilter, trueBranch, null);
         }
 
-        public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranchMapper) {
-            // TODO Auto-generated method stub
+        public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
+            append(new MapIfStep<>(argFilter, trueBranch, falseBranch));
         }
 
         public void appendMap(Mapper<?, ?> mapFn) {
-            // TODO Auto-generated method stub
-
+            append(new MapStep<>(mapFn));
         }
 
         public void appendMustBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-            // TODO Auto-generated method stub
-
+            append(new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), false));
         }
 
         public void appendShouldBeStep(Filter<?, ?> argFilter, Message message, Object[] messageArgs) {
@@ -2350,8 +1768,7 @@ public final class CastBuilder {
         }
 
         public void appendShouldBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-            // TODO Auto-generated method stub
-
+            append(new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), true));
         }
 
         public void appendDefaultWarningStep(Message message, Object[] args) {
@@ -2359,8 +1776,7 @@ public final class CastBuilder {
         }
 
         public void appendDefaultWarningStep(RBaseNode callObj, Message message, Object[] args) {
-            // TODO Auto-generated method stub
-
+            append(new DefaultWarningStep<>(new MessageData(callObj, message, args)));
         }
 
         public void appendDefaultErrorStep(Message message, Object[] args) {
@@ -2368,8 +1784,12 @@ public final class CastBuilder {
         }
 
         public void appendDefaultErrorStep(RBaseNode callObj, Message message, Object[] args) {
-            // TODO Auto-generated method stub
+            append(new DefaultErrorStep<>(new MessageData(callObj, message, args)));
+        }
 
+        @Override
+        public CastNode create() {
+            return PipelineToCastNode.convert(pcb, chainBuilder == null ? null : chainBuilder.firstStep);
         }
 
     }

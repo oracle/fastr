@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.NarrowingArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.Dim;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.ElementAt;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.NATest;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.ScalarValue;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.StringLength;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.VectorSize;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.FilterVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
@@ -44,7 +48,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -53,13 +59,17 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.PipelineStepVisitor;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastStringBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.ConditionalMapNode;
@@ -70,10 +80,13 @@ import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -82,10 +95,14 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public final class PipelineToCastNode {
 
     public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep) {
-        // TODO: where to get the caller node? argument to this method? and default error?
-        CastNodeFactory nodeFactory = new CastNodeFactory(new MessageData(null, null, null), true);
-        CastNode headNode = convert(firstStep, nodeFactory);
-        return BypassNode.create(configBuilder, headNode);
+        if (firstStep == null) {
+            return BypassNode.create(configBuilder, null);
+        } else {
+            // TODO: where to get the caller node? argument to this method? and default error?
+            CastNodeFactory nodeFactory = new CastNodeFactory(configBuilder.getDefaultDefaultMessage());
+            CastNode headNode = convert(firstStep, nodeFactory);
+            return BypassNode.create(configBuilder, headNode);
+        }
     }
 
     /**
@@ -125,12 +142,18 @@ public final class PipelineToCastNode {
     }
 
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {
-        private MessageData defaultMessage;
-        private boolean boxPrimitives;
+        private final CastNodeFactory parentFactory;
+        private MessageData defaultErrorMessage;
+        private MessageData defaultWarningMessage;
+        private boolean boxPrimitives = false;
 
-        CastNodeFactory(MessageData defaultMessage, boolean boxPrimitives) {
-            this.defaultMessage = defaultMessage;
-            this.boxPrimitives = boxPrimitives;
+        CastNodeFactory(MessageData defaultMessage) {
+            this(null, defaultMessage);
+        }
+
+        CastNodeFactory(CastNodeFactory parentFactory, MessageData defaultMessage) {
+            this.parentFactory = parentFactory;
+            this.defaultErrorMessage = defaultMessage;
         }
 
         public CastNode create(PipelineStep<?, ?> step) {
@@ -139,50 +162,84 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(DefaultErrorStep<?> step) {
-            defaultMessage = step.getDefaultMessage();
+            defaultErrorMessage = step.getDefaultMessage();
+            return null;
+        }
+
+        @Override
+        public CastNode visit(DefaultWarningStep<?> step) {
+            defaultWarningMessage = step.getDefaultMessage();
             return null;
         }
 
         @Override
         public CastNode visit(FindFirstStep<?, ?> step) {
             boxPrimitives = false;
-            return FindFirstNodeGen.create(step.getElementClass(), step.getDefaultValue());
+
+            if (step.getDefaultValue() == null) {
+                MessageData msg = getDefaultIfNull(step.getError(), false);
+                return FindFirstNodeGen.create(step.getElementClass(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getDefaultValue());
+            } else {
+                MessageData msg = step.getError();
+                if (msg == null) {
+                    return FindFirstNodeGen.create(step.getElementClass(), step.getDefaultValue());
+                } else {
+                    return FindFirstNodeGen.create(step.getElementClass(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getDefaultValue());
+                }
+            }
         }
 
         @Override
         public CastNode visit(FilterStep<?, ?> step) {
-            ArgumentFilter<Object, Boolean> filter = ArgumentFilterFactory.create(step.getFilter());
-            MessageData msg = getDefaultIfNull(step.getMessage());
+            ArgumentFilter<?, ?> filter = ArgumentFilterFactory.create(step.getFilter());
+            MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
             return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives);
         }
 
         @Override
         public CastNode visit(NotNAStep<?> step) {
-            MessageData message = step.getMessage();
-            return NonNANodeGen.create(message.getCallObj(), message.getMessage(), message.getMessageArgs(), step.getReplacement());
+            if (step.getReplacement() == null) {
+                MessageData msg = getDefaultIfNull(step.getMessage(), false);
+                return NonNANodeGen.create(msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getReplacement());
+            } else {
+                MessageData msg = step.getMessage();
+                if (msg == null) {
+                    return NonNANodeGen.create(null, null, null, step.getReplacement());
+                } else {
+                    return NonNANodeGen.create(msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getReplacement());
+                }
+            }
         }
 
         @Override
         public CastNode visit(CoercionStep<?, ?> step) {
             boxPrimitives = true;
 
-            RType type = step.getType();
-            if (type == RType.Integer) {
-                return CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Double) {
-                return CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Character) {
-                return CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Complex) {
-                return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Logical) {
-                return CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Raw) {
-                return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
-            } else if (type == RType.Any) {
-                return CastToVectorNodeGen.create(step.preserveNonVector);
+            TargetType type = step.getType();
+            switch (type) {
+                case Integer:
+                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Double:
+                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Character:
+                    return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Logical:
+                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Complex:
+                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Raw:
+                    return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                case Any:
+                    return CastToVectorNodeGen.create(step.preserveNonVector);
+                case Attributable:
+                    return CastToAttributableNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                default:
+                    throw RInternalError.shouldNotReachHere(String.format("Unexpected type '%s' in AsVectorStep.", type));
             }
-            throw RInternalError.shouldNotReachHere(String.format("Unexpected type '%s' in AsVectorStep.", type.getName()));
         }
 
         @Override
@@ -192,19 +249,20 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(MapIfStep<?, ?> step) {
-            ArgumentFilter<Object, Boolean> condition = ArgumentFilterFactory.create(step.getFilter());
+            ArgumentFilter<?, ?> condition = ArgumentFilterFactory.create(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
             return ConditionalMapNode.create(condition, trueCastNode, falseCastNode);
         }
 
-        private MessageData getDefaultIfNull(MessageData message) {
-            return message == null ? defaultMessage : message;
+        private MessageData getDefaultIfNull(MessageData message, boolean isWarning) {
+            return message == null ? (isWarning ? defaultWarningMessage : defaultErrorMessage) : message;
         }
 
     }
 
-    private static final class ArgumentFilterFactory implements FilterVisitor<ArgumentFilter<Object, Object>> {
+    private static final class ArgumentFilterFactory implements FilterVisitor<ArgumentFilter<?, ?>>, MatrixFilter.OperationVisitor<ArgumentFilter<RAbstractVector, RAbstractVector>>,
+                    DoubleFilter.OperationVisitor<ArgumentFilter<Double, Double>>, CompareFilter.SubjectVisitor<ArgumentFilter<?, ?>> {
 
         private static final ArgumentFilterFactory INSTANCE = new ArgumentFilterFactory();
 
@@ -212,38 +270,45 @@ public final class PipelineToCastNode {
             // singleton
         }
 
-        public static ArgumentFilter<Object, Object> create(Filter<?, ?> filter) {
+        public static ArgumentFilter<?, ?> create(Filter<?, ?> filter) {
             return filter.accept(INSTANCE);
         }
 
         @Override
-        public ArgumentFilter<Object, Object> visit(TypeFilter<?, ?> filter) {
+        public ArgumentFilter<?, ?> visit(TypeFilter<?, ?> filter) {
             return filter.getInstanceOfLambda();
         }
 
         @Override
-        public ArgumentFilter<Object, Object> visit(RTypeFilter<?> filter) {
+        public ArgumentFilter<?, ?> visit(RTypeFilter<?> filter) {
             if (filter.getType() == RType.Integer) {
                 return x -> x instanceof Integer || x instanceof RAbstractIntVector;
             } else if (filter.getType() == RType.Double) {
-                return x -> x instanceof Double || x instanceof RDoubleVector;
+                return x -> x instanceof Double || x instanceof RAbstractDoubleVector;
+            } else if (filter.getType() == RType.Logical) {
+                return x -> x instanceof Byte || x instanceof RAbstractLogicalVector;
+            } else if (filter.getType() == RType.Complex) {
+                return x -> x instanceof RAbstractComplexVector;
+            } else if (filter.getType() == RType.Character) {
+                return x -> x instanceof String || x instanceof RAbstractStringVector;
             } else {
                 throw RInternalError.unimplemented("TODO: more types here");
             }
         }
 
         @Override
-        public ArgumentFilter<Object, Object> visit(CompareFilter<?> filter) {
-            return null;
+        public ArgumentFilter<?, ?> visit(CompareFilter<?> filter) {
+            return filter.getSubject().accept(this, filter.getOperation());
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
-        public ArgumentFilter<Object, Object> visit(AndFilter<?, ?> filter) {
-            ArgumentFilter<Object, Object> leftFilter = filter.getLeft().accept(this);
-            ArgumentFilter<Object, Object> rightFilter = filter.getRight().accept(this);
+        public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter) {
+            ArgumentFilter leftFilter = filter.getLeft().accept(this);
+            ArgumentFilter rightFilter = filter.getRight().accept(this);
             return new ArgumentTypeFilter<Object, Object>() {
 
-                @SuppressWarnings({"unchecked"})
+                @SuppressWarnings("unchecked")
                 @Override
                 public boolean test(Object arg) {
                     if (!leftFilter.test(arg)) {
@@ -256,12 +321,14 @@ public final class PipelineToCastNode {
             };
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
-        public ArgumentFilter<Object, Object> visit(OrFilter<?> filter) {
-            ArgumentFilter<Object, Boolean> leftFilter = filter.getLeft().accept(this);
-            ArgumentFilter<Object, Boolean> rightFilter = filter.getRight().accept(this);
+        public ArgumentFilter<?, ?> visit(OrFilter<?> filter) {
+            ArgumentFilter leftFilter = filter.getLeft().accept(this);
+            ArgumentFilter rightFilter = filter.getRight().accept(this);
             return new ArgumentTypeFilter<Object, Object>() {
 
+                @SuppressWarnings("unchecked")
                 @Override
                 public boolean test(Object arg) {
                     if (leftFilter.test(arg)) {
@@ -274,27 +341,228 @@ public final class PipelineToCastNode {
             };
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
-        public ArgumentFilter<Object, Boolean> visit(NotFilter<?> filter) {
-            ArgumentFilter<Object, Boolean> toNegate = filter.accept(this);
-            // TODO: create not filter
-            return null;
+        public ArgumentFilter<?, ?> visit(NotFilter<?> filter) {
+            ArgumentFilter toNegate = filter.getFilter().accept(this);
+            return new ArgumentFilter<Object, Object>() {
+
+                @SuppressWarnings("unchecked")
+                @Override
+                public boolean test(Object arg) {
+                    return !toNegate.test(arg);
+                }
+
+            };
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(MatrixFilter<?> filter) {
-            // TODO Auto-generated method stub
-            return null;
+        public ArgumentFilter<?, ?> visit(MatrixFilter<?> filter) {
+            return filter.acceptOperation(this);
         }
 
         @Override
-        public ArgumentFilter<Object, Boolean> visit(DoubleFilter filter) {
-            // TODO Auto-generated method stub
-            return null;
+        public ArgumentFilter<?, ?> visit(DoubleFilter filter) {
+            return filter.acceptOperation(this);
         }
+
+        @Override
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsMatrix() {
+            return x -> x.isMatrix();
+        }
+
+        @Override
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsSquareMatrix() {
+            return x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1];
+        }
+
+        @Override
+        public ArgumentFilter<Double, Double> visitIsFinite() {
+            return x -> !Double.isInfinite(x);
+        }
+
+        @Override
+        public ArgumentFilter<Double, Double> visitIsFractional() {
+            return x -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x);
+        }
+
+        @Override
+        public ArgumentFilter<?, ?> visit(ScalarValue scalarValue, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    switch (scalarValue.type) {
+                        case Character:
+                            return (String arg) -> arg.equals(scalarValue.value);
+                        case Integer:
+                            return (Integer arg) -> arg == (int) scalarValue.value;
+                        case Double:
+                            return (Double arg) -> arg == (double) scalarValue.value;
+                        case Logical:
+                            return (Byte arg) -> arg == (byte) scalarValue.value;
+                        case Any:
+                            return arg -> arg.equals(scalarValue.value);
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here ");
+                    }
+                case CompareFilter.GT:
+                    switch (scalarValue.type) {
+                        case Integer:
+                            return (Integer arg) -> arg > (int) scalarValue.value;
+                        case Double:
+                            return (Double arg) -> arg > (double) scalarValue.value;
+                        case Logical:
+                            return (Byte arg) -> arg > (byte) scalarValue.value;
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                case CompareFilter.LT:
+                    switch (scalarValue.type) {
+                        case Integer:
+                            return (Integer arg) -> arg < (int) scalarValue.value;
+                        case Double:
+                            return (Double arg) -> arg < (double) scalarValue.value;
+                        case Logical:
+                            return (Byte arg) -> arg < (byte) scalarValue.value;
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                case CompareFilter.GE:
+                    switch (scalarValue.type) {
+                        case Integer:
+                            return (Integer arg) -> arg >= (int) scalarValue.value;
+                        case Double:
+                            return (Double arg) -> arg >= (double) scalarValue.value;
+                        case Logical:
+                            return (Byte arg) -> arg >= (byte) scalarValue.value;
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                case CompareFilter.LE:
+                    switch (scalarValue.type) {
+                        case Integer:
+                            return (Integer arg) -> arg <= (int) scalarValue.value;
+                        case Double:
+                            return (Double arg) -> arg <= (double) scalarValue.value;
+                        case Logical:
+                            return (Byte arg) -> arg <= (byte) scalarValue.value;
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                case CompareFilter.SAME:
+                    return arg -> arg == scalarValue.value;
+
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
+        @Override
+        public ArgumentFilter<?, ?> visit(NATest naTest, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    switch (naTest.type) {
+                        case Integer:
+                            return arg -> RRuntime.isNA((int) arg);
+                        case Double:
+                            return arg -> RRuntime.isNAorNaN((double) arg);
+                        case Logical:
+                            return arg -> RRuntime.isNA((byte) arg);
+                        case Character:
+                            return arg -> RRuntime.isNA((String) arg);
+                        case Complex:
+                            return arg -> RRuntime.isNA((RComplex) arg);
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
+        @Override
+        public ArgumentFilter<String, String> visit(StringLength stringLength, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    return arg -> arg.length() == stringLength.length;
+
+                case CompareFilter.GT:
+                    return arg -> arg.length() > stringLength.length;
+
+                case CompareFilter.LT:
+                    return arg -> arg.length() < stringLength.length;
+
+                case CompareFilter.GE:
+                    return arg -> arg.length() >= stringLength.length;
+
+                case CompareFilter.LE:
+                    return arg -> arg.length() <= stringLength.length;
+
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
+        @Override
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(VectorSize vectorSize, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    return arg -> arg.getLength() == vectorSize.size;
+
+                case CompareFilter.GT:
+                    return arg -> arg.getLength() > vectorSize.size;
+
+                case CompareFilter.LT:
+                    return arg -> arg.getLength() < vectorSize.size;
+
+                case CompareFilter.GE:
+                    return arg -> arg.getLength() >= vectorSize.size;
+
+                case CompareFilter.LE:
+                    return arg -> arg.getLength() <= vectorSize.size;
+
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
+        @Override
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(ElementAt elementAt, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    switch (elementAt.type) {
+                        case Integer:
+                            return arg -> elementAt.index < arg.getLength() && (int) elementAt.value == (int) arg.getDataAtAsObject(elementAt.index);
+                        case Double:
+                            return arg -> elementAt.index < arg.getLength() && (double) elementAt.value == (double) arg.getDataAtAsObject(elementAt.index);
+                        case Logical:
+                            return arg -> elementAt.index < arg.getLength() && (byte) elementAt.value == (byte) arg.getDataAtAsObject(elementAt.index);
+                        case Character:
+                        case Complex:
+                            return arg -> elementAt.index < arg.getLength() && elementAt.value.equals(arg.getDataAtAsObject(elementAt.index));
+                        default:
+                            throw RInternalError.unimplemented("TODO: more types here");
+                    }
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
+        @Override
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(Dim dim, byte operation) {
+            switch (operation) {
+                case CompareFilter.EQ:
+                    return v -> v.isMatrix() && v.getDimensions().length > dim.dimIndex && v.getDimensions()[dim.dimIndex] == dim.dimSize;
+                case CompareFilter.GT:
+                    return v -> v.isMatrix() && v.getDimensions().length > dim.dimIndex && v.getDimensions()[dim.dimIndex] > dim.dimSize;
+                default:
+                    throw RInternalError.unimplemented("TODO: more operations here");
+            }
+        }
+
     }
 
     private static final class MapperNodeFactory implements MapperVisitor<ValuePredicateArgumentMapper<Object, Object>> {
+
         private static final MapperNodeFactory INSTANCE = new MapperNodeFactory();
 
         private MapperNodeFactory() {

@@ -83,9 +83,6 @@ public class RBuiltinDiagnostics {
     }
 
     public static void main(String[] args) throws Throwable {
-        Predef.setPredefFilters(new PredefFiltersSamplers());
-        Predef.setPredefMappers(new PredefMappersSamplers());
-
         RBuiltinDiagnostics rbDiag = ChimneySweepingSuite.createChimneySweepingSuite(args).orElseGet(() -> createRBuiltinDiagnostics(args));
 
         List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());

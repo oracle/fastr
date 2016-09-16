@@ -32,45 +32,48 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNode;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class PipelineToCastNodeTests {
     @Test
     public void asLogicalVector() {
-        CastNode pipeline = createPipeline(new CoercionStep(RType.Logical));
+        CastNode pipeline = createPipeline(new CoercionStep<>(TargetType.Logical, false));
         CastNode castNode = assertBypassNode(pipeline);
-        assertTrue(castNode instanceof CastLogicalNode);
+        assertTrue(castNode instanceof CastLogicalBaseNode);
     }
 
     @Test
     public void asStringVectorFindFirst() {
-        CastNode pipeline = createPipeline(new CoercionStep(RType.Character).setNext(new FindFirstStep("hello", String.class, null)));
+        CastNode pipeline = createPipeline(new CoercionStep<>(TargetType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null)));
         CastNode chain = assertBypassNode(pipeline);
-        assertChainedCast(chain, CastStringNode.class, FindFirstNode.class);
+        assertChainedCast(chain, CastStringBaseNode.class, FindFirstNode.class);
         FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) chain).getSecondCast();
         assertEquals("hello", findFirst.getDefaultValue());
     }
 
     @Test
     public void mustBeREnvironmentAsIntegerVectorFindFirst() {
-        CastNode pipeline = createPipeline(new FilterStep(new TypeFilter(REnvironment.class, x -> x instanceof REnvironment), null, false).setNext(
-                        new CoercionStep(RType.Integer).setNext(new FindFirstStep("hello", String.class, null))));
+        CastNode pipeline = createPipeline(new FilterStep<>(new TypeFilter<>(x -> x instanceof REnvironment, REnvironment.class), null, false).setNext(
+                        new CoercionStep<>(TargetType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))));
         CastNode chain = assertBypassNode(pipeline);
         assertChainedCast(chain, ChainedCastNode.class, FindFirstNode.class);
         CastNode next = ((ChainedCastNode) chain).getFirstCast();
-        assertChainedCast(next, FilterNode.class, CastIntegerNode.class);
+        assertChainedCast(next, FilterNode.class, CastIntegerBaseNode.class);
         FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) chain).getSecondCast();
         assertEquals("hello", findFirst.getDefaultValue());
     }
@@ -86,7 +89,7 @@ public class PipelineToCastNodeTests {
         assertTrue(expectedSecond.isInstance(((ChainedCastNode) node).getSecondCast()));
     }
 
-    private static CastNode createPipeline(PipelineStep lastStep) {
+    private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder(new ArgCastBuilderState(0, "x", null, null, true));
         return PipelineToCastNode.convert(configBuilder, lastStep);
     }

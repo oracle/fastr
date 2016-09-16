@@ -22,18 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import static com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
-import static com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
-
-import java.util.concurrent.Callable;
-
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentValueFilter;
-import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.InverseArgumentFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RString;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -81,9 +73,9 @@ public abstract class Filter<T, R extends T> {
      */
     public static final class TypeFilter<T, R extends T> extends Filter<T, R> {
         private final Class<?>[] type;
-        private final ArgumentFilter<Object, Boolean> instanceOfLambda;
+        private final ArgumentFilter<Object, Object> instanceOfLambda;
 
-        public TypeFilter(ArgumentFilter<Object, Boolean> instanceOfLambda, Class<?>... type) {
+        public TypeFilter(ArgumentFilter<Object, Object> instanceOfLambda, Class<?>... type) {
             this.type = type;
             this.instanceOfLambda = instanceOfLambda;
         }
@@ -92,7 +84,7 @@ public abstract class Filter<T, R extends T> {
             return type;
         }
 
-        public ArgumentFilter<Object, Boolean> getInstanceOfLambda() {
+        public ArgumentFilter<Object, Object> getInstanceOfLambda() {
             return instanceOfLambda;
         }
 
@@ -130,19 +122,21 @@ public abstract class Filter<T, R extends T> {
     public static final class CompareFilter<T> extends Filter<T, T> {
 
         public interface Subject {
-            <D> D accept(SubjectVisitor<D> visitor);
+            <D> D accept(SubjectVisitor<D> visitor, byte operation);
         }
 
         public interface SubjectVisitor<D> {
-            D visit(ScalarValue scalarValue);
+            D visit(ScalarValue scalarValue, byte operation);
 
-            D visit(StringLength stringLength);
+            D visit(NATest naTest, byte operation);
 
-            D visit(VectorSize vectorSize);
+            D visit(StringLength stringLength, byte operation);
 
-            D visit(ElementAt elementAt);
+            D visit(VectorSize vectorSize, byte operation);
 
-            D visit(Dim dim);
+            D visit(ElementAt elementAt, byte operation);
+
+            D visit(Dim dim, byte operation);
         }
 
         public static final class ScalarValue implements Subject {
@@ -155,8 +149,22 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor) {
-                return visitor.visit(this);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
+            }
+
+        }
+
+        public static final class NATest implements Subject {
+            final RType type;
+
+            public NATest(RType type) {
+                this.type = type;
+            }
+
+            @Override
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
             }
 
         }
@@ -169,8 +177,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor) {
-                return visitor.visit(this);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
             }
         }
 
@@ -182,8 +190,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor) {
-                return visitor.visit(this);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
             }
         }
 
@@ -199,8 +207,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor) {
-                return visitor.visit(this);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
             }
         }
 
@@ -214,8 +222,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor) {
-                return visitor.visit(this);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
+                return visitor.visit(this, operation);
             }
         }
 
@@ -249,10 +257,26 @@ public abstract class Filter<T, R extends T> {
         }
     }
 
-    public static final class MatrixFilter<T extends RAbstractVector> extends Filter<T, T> {
+    public abstract static class MatrixFilter<T extends RAbstractVector> extends Filter<T, T> {
 
-        private static final MatrixFilter<RAbstractVector> IS_MATRIX = new MatrixFilter<>((byte) 0);
-        private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<>((byte) 1);
+        private static final MatrixFilter<RAbstractVector> IS_MATRIX = new MatrixFilter<RAbstractVector>() {
+            @Override
+            public <D> D acceptOperation(OperationVisitor<D> visitor) {
+                return visitor.visitIsMatrix();
+            }
+        };
+        private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<RAbstractVector>() {
+            @Override
+            public <D> D acceptOperation(OperationVisitor<D> visitor) {
+                return visitor.visitIsSquareMatrix();
+            }
+        };
+
+        public interface OperationVisitor<D> {
+            D visitIsMatrix();
+
+            D visitIsSquareMatrix();
+        }
 
         @SuppressWarnings("unchecked")
         public static <T extends RAbstractVector> MatrixFilter<T> isMatrixFilter() {
@@ -264,15 +288,10 @@ public abstract class Filter<T, R extends T> {
             return (MatrixFilter<T>) IS_SQUARE_MATRIX;
         }
 
-        private final byte operation;
-
-        private MatrixFilter(byte operation) {
-            this.operation = operation;
+        private MatrixFilter() {
         }
 
-        public byte getOperation() {
-            return operation;
-        }
+        public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
 
         @Override
         public <D> D accept(FilterVisitor<D> visitor) {
@@ -280,20 +299,32 @@ public abstract class Filter<T, R extends T> {
         }
     }
 
-    public static final class DoubleFilter extends Filter<Double, Double> {
+    public abstract static class DoubleFilter extends Filter<Double, Double> {
 
-        public static final DoubleFilter IS_FINITE = new DoubleFilter((byte) 0);
-        public static final DoubleFilter IS_FRACTIONAL = new DoubleFilter((byte) 1);
+        public static final DoubleFilter IS_FINITE = new DoubleFilter() {
+            @Override
+            public <D> D acceptOperation(OperationVisitor<D> visitor) {
+                return visitor.visitIsFinite();
+            }
+        };
+        public static final DoubleFilter IS_FRACTIONAL = new DoubleFilter() {
+            @Override
+            public <D> D acceptOperation(OperationVisitor<D> visitor) {
+                return visitor.visitIsFractional();
+            }
+        };
 
-        private final byte operation;
+        public interface OperationVisitor<D> {
+            D visitIsFinite();
 
-        private DoubleFilter(byte operation) {
-            this.operation = operation;
+            D visitIsFractional();
         }
 
-        public byte getOperation() {
-            return operation;
+        private DoubleFilter() {
+
         }
+
+        public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
 
         @Override
         public <D> D accept(FilterVisitor<D> visitor) {
@@ -302,19 +333,19 @@ public abstract class Filter<T, R extends T> {
     }
 
     public static final class AndFilter<T, R extends T> extends Filter<T, R> {
-        private final Filter left;
-        private final Filter right;
+        private final Filter<?, ?> left;
+        private final Filter<?, ?> right;
 
-        public AndFilter(Filter left, Filter right) {
+        public AndFilter(Filter<?, ?> left, Filter<?, ?> right) {
             this.left = left;
             this.right = right;
         }
 
-        public Filter getLeft() {
+        public Filter<?, ?> getLeft() {
             return left;
         }
 
-        public Filter getRight() {
+        public Filter<?, ?> getRight() {
             return right;
         }
 
@@ -325,19 +356,19 @@ public abstract class Filter<T, R extends T> {
     }
 
     public static final class OrFilter<T> extends Filter<T, T> {
-        private final Filter left;
-        private final Filter right;
+        private final Filter<?, ?> left;
+        private final Filter<?, ?> right;
 
-        public OrFilter(Filter left, Filter right) {
+        public OrFilter(Filter<?, ?> left, Filter<?, ?> right) {
             this.left = left;
             this.right = right;
         }
 
-        public Filter getLeft() {
+        public Filter<?, ?> getLeft() {
             return left;
         }
 
-        public Filter getRight() {
+        public Filter<?, ?> getRight() {
             return right;
         }
 
@@ -348,13 +379,13 @@ public abstract class Filter<T, R extends T> {
     }
 
     public static final class NotFilter<T> extends Filter<T, T> {
-        private final Filter filter;
+        private final Filter<?, ?> filter;
 
-        public NotFilter(Filter filter) {
+        public NotFilter(Filter<?, ?> filter) {
             this.filter = filter;
         }
 
-        public Filter getFilter() {
+        public Filter<?, ?> getFilter() {
             return filter;
         }
 

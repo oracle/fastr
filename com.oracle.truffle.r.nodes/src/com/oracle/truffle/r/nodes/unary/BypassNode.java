@@ -26,8 +26,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.DefaultError;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
@@ -55,11 +55,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class BypassNode extends CastNode {
 
     private final boolean isRNullBypassed;
-    private final DefaultError nullMsg;
+    private final MessageData nullMsg;
     private final ArgumentMapper nullMapFn;
 
     private final boolean isRMissingBypassed;
-    private final DefaultError missingMsg;
+    private final MessageData missingMsg;
     private final ArgumentMapper missingMapFn;
     private final boolean noHead;
 
@@ -90,9 +90,6 @@ public abstract class BypassNode extends CastNode {
 
         this.wrappedHead = wrappedHead;
         this.noHead = wrappedHead == null;
-
-        assert this.nullMsg != null || this.isRNullBypassed;
-        assert this.missingMsg != null || this.isRMissingBypassed;
 
         this.directFindFirstNode = insertIfNotNull(directFindFirstNode);
         this.afterFindFirst = insertIfNotNull(afterFindFirst);
@@ -134,13 +131,16 @@ public abstract class BypassNode extends CastNode {
     public Object bypassRNull(RNull x) {
         if (isRNullBypassed) {
             if (nullMsg != null) {
-                handleArgumentWarning(x, nullMsg.callObj, nullMsg.message, nullMsg.args);
+                handleArgumentWarning(x, nullMsg.getCallObj(), nullMsg.getMessage(), nullMsg.getMessageArgs());
             }
             return nullMapFn.map(x);
         } else if (directFindFirstNode != null) {
             return executeFindFirstPipeline(x);
+        } else if (nullMsg == null) {
+            // go to the pipeline
+            return handleOthers(x);
         } else {
-            handleArgumentError(x, nullMsg.callObj, nullMsg.message, nullMsg.args);
+            handleArgumentError(x, nullMsg.getCallObj(), nullMsg.getMessage(), nullMsg.getMessageArgs());
             return x;
         }
     }
@@ -149,13 +149,16 @@ public abstract class BypassNode extends CastNode {
     public Object bypassRMissing(RMissing x) {
         if (isRMissingBypassed) {
             if (missingMsg != null) {
-                handleArgumentWarning(x, missingMsg.callObj, missingMsg.message, missingMsg.args);
+                handleArgumentWarning(x, missingMsg.getCallObj(), missingMsg.getMessage(), missingMsg.getMessageArgs());
             }
             return missingMapFn.map(x);
         } else if (directFindFirstNode != null) {
             return executeFindFirstPipeline(x);
+        } else if (missingMsg == null) {
+            // go to the pipeline
+            return handleOthers(x);
         } else {
-            handleArgumentError(x, missingMsg.callObj, missingMsg.message, missingMsg.args);
+            handleArgumentError(x, missingMsg.getCallObj(), missingMsg.getMessage(), missingMsg.getMessageArgs());
             return x;
         }
     }

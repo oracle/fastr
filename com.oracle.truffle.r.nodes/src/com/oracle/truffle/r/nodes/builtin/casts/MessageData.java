@@ -36,7 +36,7 @@ public final class MessageData {
     private final RError.Message message;
     private final Object[] messageArgs;
 
-    public MessageData(RBaseNode callObj, Message message, Object[] messageArgs) {
+    public MessageData(RBaseNode callObj, Message message, Object... messageArgs) {
         this.callObj = callObj;
         this.message = message;
         this.messageArgs = messageArgs;
@@ -52,5 +52,13 @@ public final class MessageData {
 
     public Object[] getMessageArgs() {
         return messageArgs;
+    }
+
+    public MessageData fixCallObj(RBaseNode callObjFix) {
+        if (callObj == null) {
+            return new MessageData(callObjFix, message, messageArgs);
+        } else {
+            return this;
+        }
     }
 }

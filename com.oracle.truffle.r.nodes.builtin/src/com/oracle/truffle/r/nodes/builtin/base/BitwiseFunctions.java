@@ -22,6 +22,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -236,8 +238,8 @@ public class BitwiseFunctions {
         protected void createCasts(CastBuilder casts) {
             casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("n").allowNull().mapIf(stringValue(),
-                            chain(asStringVector()).with(shouldBe(anyValue(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(), asIntegerVector());
+            casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
+                            asIntegerVector());
         }
 
         @Specialization

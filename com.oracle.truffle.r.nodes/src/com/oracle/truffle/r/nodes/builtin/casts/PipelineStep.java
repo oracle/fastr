@@ -34,18 +34,18 @@ import com.oracle.truffle.r.runtime.RType;
  */
 public abstract class PipelineStep<T, R> {
 
-    private PipelineStep next;
+    private PipelineStep<?, ?> next;
 
-    public final PipelineStep getNext() {
+    public final PipelineStep<?, ?> getNext() {
         return next;
     }
 
-    public final PipelineStep setNext(PipelineStep next) {
+    public final PipelineStep<?, ?> setNext(PipelineStep<?, ?> next) {
         this.next = next;
         return this;
     }
 
-    public abstract <T> T accept(PipelineStepVisitor<T> visitor);
+    public abstract <D> D accept(PipelineStepVisitor<D> visitor);
 
     public interface PipelineStepVisitor<T> {
         T visit(FindFirstStep<?, ?> step);
@@ -61,16 +61,18 @@ public abstract class PipelineStep<T, R> {
         T visit(NotNAStep<?> step);
 
         T visit(DefaultErrorStep<?> step);
+
+        T visit(DefaultWarningStep<?> step);
     }
 
     /**
      * Changes the current default error, which is used by steps/filters that do not have error
      * message set explicitly.
      */
-    public static final class DefaultErrorStep<T> extends PipelineStep<T, T> {
+    public abstract static class DefaultMessageStep<T> extends PipelineStep<T, T> {
         private final MessageData defaultMessage;
 
-        public DefaultErrorStep(MessageData defaultMessage) {
+        public DefaultMessageStep(MessageData defaultMessage) {
             this.defaultMessage = defaultMessage;
         }
 
@@ -78,8 +80,28 @@ public abstract class PipelineStep<T, R> {
             return defaultMessage;
         }
 
+    }
+
+    public static final class DefaultErrorStep<T> extends DefaultMessageStep<T> {
+
+        public DefaultErrorStep(MessageData defaultMessage) {
+            super(defaultMessage);
+        }
+
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
+    }
+
+    public static final class DefaultWarningStep<T> extends DefaultMessageStep<T> {
+
+        public DefaultWarningStep(MessageData defaultMessage) {
+            super(defaultMessage);
+        }
+
+        @Override
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
@@ -107,7 +129,7 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
@@ -140,7 +162,7 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
@@ -149,23 +171,33 @@ public abstract class PipelineStep<T, R> {
      * Converts the value to a vector of given {@link RType}. Null and missing values are forwarded.
      */
     public static final class CoercionStep<T, V> extends PipelineStep<T, V> {
-        public final RType type;
+        public final TargetType type;
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
         public final boolean preserveNonVector;
         public final boolean vectorCoercion;
 
-        public CoercionStep(RType type, boolean vectorCoercion) {
+        public enum TargetType {
+            Integer,
+            Double,
+            Character,
+            Complex,
+            Logical,
+            Raw,
+            Any,
+            Attributable
+        }
+
+        public CoercionStep(TargetType type, boolean vectorCoercion) {
             this(type, vectorCoercion, false, false, false, true);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public CoercionStep(TargetType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
-            assert type.isVector() && type != RType.List : "AsVectorStep supports only vector types minus list.";
+        public CoercionStep(TargetType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
@@ -174,29 +206,29 @@ public abstract class PipelineStep<T, R> {
             this.preserveNonVector = preserveNonVector;
         }
 
-        public RType getType() {
+        public TargetType getType() {
             return type;
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
 
     public static final class MapStep<T, R> extends PipelineStep<T, R> {
-        private final Mapper mapper;
+        private final Mapper<?, ?> mapper;
 
-        public MapStep(Mapper mapper) {
+        public MapStep(Mapper<?, ?> mapper) {
             this.mapper = mapper;
         }
 
-        public Mapper getMapper() {
+        public Mapper<?, ?> getMapper() {
             return mapper;
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
@@ -205,30 +237,30 @@ public abstract class PipelineStep<T, R> {
      * Allows to execute on of given pipeline chains depending on the condition.
      */
     public static final class MapIfStep<T, R> extends PipelineStep<T, R> {
-        private final Filter filter;
-        private final PipelineStep trueBranch;
-        private final PipelineStep falseBranch;
+        private final Filter<?, ?> filter;
+        private final PipelineStep<?, ?> trueBranch;
+        private final PipelineStep<?, ?> falseBranch;
 
-        public MapIfStep(Filter filter, PipelineStep trueBranch, PipelineStep falseBranch) {
+        public MapIfStep(Filter<?, ?> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
             this.filter = filter;
             this.trueBranch = trueBranch;
             this.falseBranch = falseBranch;
         }
 
-        public Filter getFilter() {
+        public Filter<?, ?> getFilter() {
             return filter;
         }
 
-        public PipelineStep getTrueBranch() {
+        public PipelineStep<?, ?> getTrueBranch() {
             return trueBranch;
         }
 
-        public PipelineStep getFalseBranch() {
+        public PipelineStep<?, ?> getFalseBranch() {
             return falseBranch;
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
     }
@@ -237,17 +269,17 @@ public abstract class PipelineStep<T, R> {
      * Raises an error if the value does not conform to the given filter.
      */
     public static final class FilterStep<T, R extends T> extends PipelineStep<T, R> {
-        private final Filter filter;
+        private final Filter<?, ?> filter;
         private final MessageData message;
         private final boolean isWarning;
 
-        public FilterStep(Filter filter, MessageData message, boolean isWarning) {
+        public FilterStep(Filter<?, ?> filter, MessageData message, boolean isWarning) {
             this.filter = filter;
             this.message = message;
             this.isWarning = isWarning;
         }
 
-        public Filter getFilter() {
+        public Filter<?, ?> getFilter() {
             return filter;
         }
 
@@ -260,7 +292,7 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <T> T accept(PipelineStepVisitor<T> visitor) {
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
 

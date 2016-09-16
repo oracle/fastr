@@ -22,10 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-public final class ConditionalMapNode extends CastNode {
+public abstract class ConditionalMapNode extends CastNode {
 
     private final ArgumentFilter<?, ?> argFilter;
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
@@ -33,14 +36,15 @@ public final class ConditionalMapNode extends CastNode {
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
-    private ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
+    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
         this.argFilter = argFilter;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
     }
 
-    public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
-        return new ConditionalMapNode(argFilter, trueBranch, falseBranch);
+    public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch,
+                    CastNode falseBranch) {
+        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch);
     }
 
     public ArgumentFilter<?, ?> getFilter() {
@@ -55,9 +59,19 @@ public final class ConditionalMapNode extends CastNode {
         return falseBranch;
     }
 
-    @Override
+    @Specialization
+    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
+        return RNull.instance;
+    }
+
+    @Specialization
+    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
+        return RMissing.instance;
+    }
+
     @SuppressWarnings("unchecked")
-    public Object execute(Object x) {
+    @Specialization
+    protected Object executeRest(Object x) {
         if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
             return trueBranch == null ? x : trueBranch.execute(x);
         } else {
