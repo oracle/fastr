@@ -94,47 +94,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         log(command, "Context");
         CommandInfo commandInfo = checkRCommand(command);
         if (commandInfo != null) {
-            // check for and emulate R CMD cmd
-            if (commandInfo.args.length > 0) {
-                if (commandInfo.args[0].equals("CMD")) {
-                    switch (commandInfo.args[1]) {
-                        case "INSTALL":
-                            // INSTALL pipes in "tools:::.install_packages()"
-                            // We use "-e tools:::.install_packages()" as its simpler
-                            ArrayList<String> newArgsList = new ArrayList<>();
-                            newArgsList.add("--no-restore");
-                            newArgsList.add("--slave");
-                            newArgsList.add("-e");
-                            newArgsList.add("tools:::.install_packages()");
-                            newArgsList.add("--args");
-                            StringBuffer sb = new StringBuffer();
-                            int i = 2;
-                            while (i < commandInfo.args.length) {
-                                String arg = commandInfo.args[i];
-                                if (arg.equals("<") || arg.contains(">")) {
-                                    break;
-                                }
-                                sb.append("nextArg");
-                                sb.append(arg);
-                                i++;
-                            }
-                            if (sb.length() > 0) {
-                                newArgsList.add(sb.toString());
-                            }
-                            while (i < commandInfo.args.length) {
-                                newArgsList.add(commandInfo.args[i]);
-                                i++;
-                            }
-                            String[] newArgs = new String[newArgsList.size()];
-                            newArgsList.toArray(newArgs);
-                            commandInfo.args = newArgs;
-                            break;
-
-                        default:
-                            throw cannotExecute(command);
-                    }
-                }
-            }
+            checkCmd(command, commandInfo);
             ContextSystemFunctionNode node = commandInfo.command.equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
             Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),
                             RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern);
@@ -146,6 +106,53 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
     }
 
+    @TruffleBoundary
+    private static void checkCmd(String command, CommandInfo commandInfo) {
+        // check for and emulate R CMD cmd
+        if (commandInfo.args.length > 0) {
+            if (commandInfo.args[0].equals("CMD")) {
+                switch (commandInfo.args[1]) {
+                    case "INSTALL":
+                        // INSTALL pipes in "tools:::.install_packages()"
+                        // We use "-e tools:::.install_packages()" as its simpler
+                        ArrayList<String> newArgsList = new ArrayList<>();
+                        newArgsList.add("--no-restore");
+                        newArgsList.add("--slave");
+                        newArgsList.add("-e");
+                        newArgsList.add("tools:::.install_packages()");
+                        newArgsList.add("--args");
+                        StringBuffer sb = new StringBuffer();
+                        int i = 2;
+                        while (i < commandInfo.args.length) {
+                            String arg = commandInfo.args[i];
+                            if (arg.equals("<") || arg.contains(">")) {
+                                break;
+                            }
+                            sb.append("nextArg");
+                            sb.append(arg);
+                            i++;
+                        }
+                        if (sb.length() > 0) {
+                            newArgsList.add(sb.toString());
+                        }
+                        while (i < commandInfo.args.length) {
+                            newArgsList.add(commandInfo.args[i]);
+                            i++;
+                        }
+                        String[] newArgs = new String[newArgsList.size()];
+                        newArgsList.toArray(newArgs);
+                        commandInfo.args = newArgs;
+                        break;
+
+                    default:
+                        throw cannotExecute(command);
+                }
+            }
+        }
+
+    }
+
+    @TruffleBoundary
     private static boolean isMv(String command) {
         String[] parts = command.split(" ");
         if (Utils.unShQuote(parts[0]).equals("mv")) {
