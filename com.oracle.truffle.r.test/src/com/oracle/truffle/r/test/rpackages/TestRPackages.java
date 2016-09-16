@@ -55,7 +55,7 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public abstract class TestRPackages extends TestBase {
 
-    private static final String SYSTEM2_COMMAND = "system2('%s', c('CMD', 'INSTALL', '%s'), env='R_LIBS_USER=%s', stdout=T, stderr=T)";
+    private static final String SYSTEM2_COMMAND = "system2('%s', c('CMD', 'INSTALL', '%s'), env='R_LIBS=%s', stdout=T, stderr=T)";
 
     private static final class PackagePath {
         /**
