@@ -657,16 +657,16 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object rcommandMain(String[] args, boolean intern) {
+    public Object rcommandMain(String[] args, String[] env, boolean intern) {
         IORedirect redirect = handleIORedirect(args, intern);
-        Object result = RCommand.doMain(redirect.args, false, redirect.in, redirect.out);
+        Object result = RCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
         return redirect.getInternResult(result);
     }
 
     @Override
-    public Object rscriptMain(String[] args, boolean intern) {
+    public Object rscriptMain(String[] args, String[] env, boolean intern) {
         IORedirect redirect = handleIORedirect(args, intern);
-        Object result = RscriptCommand.doMain(redirect.args, false, redirect.in, redirect.out);
+        Object result = RscriptCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
         return redirect.getInternResult(result);
     }
 
@@ -688,7 +688,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 int status = (int) result;
                 ByteArrayOutputStream bos = (ByteArrayOutputStream) out;
                 String s = new String(bos.toByteArray());
-                RStringVector sresult = s.length() == 0 ? RDataFactory.createEmptyStringVector() : RDataFactory.createStringVectorFromScalar(s);
+                RStringVector sresult;
+                if (s.length() == 0) {
+                    sresult = RDataFactory.createEmptyStringVector();
+                } else {
+                    String[] lines = s.split("\n");
+                    sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
+                }
                 if (status != 0) {
                     sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
                 }

@@ -157,7 +157,7 @@ public final class FastRSession implements RSession {
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[0], false), false);
-        return ContextInfo.create(params, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
+        return ContextInfo.create(params, null, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
     }
 
     private FastRSession() {
@@ -172,7 +172,7 @@ public final class FastRSession implements RSession {
         consoleHandler = new TestConsoleHandler();
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
-            ContextInfo info = ContextInfo.create(params, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            ContextInfo info = ContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, consoleHandler);
             main = info.createVM();
             mainContext = main.eval(GET_CONTEXT).as(RContext.class);
         } finally {

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
+import java.util.ArrayList;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     private abstract static class ContextSystemFunctionNode extends RBaseNode {
-        public abstract Object execute(VirtualFrame frame, Object command, Object intern);
+        public abstract Object execute(VirtualFrame frame, Object args, Object env, Object intern);
 
     }
 
@@ -57,9 +59,9 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, boolean intern) {
+        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRNode();
-            Object result = contextRNode.execute(frame, args, intern);
+            Object result = contextRNode.execute(frame, args, env, intern);
             return result;
         }
     }
@@ -76,9 +78,9 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, boolean intern) {
+        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRscriptNode();
-            Object result = contextRscriptNode.execute(frame, args, intern);
+            Object result = contextRscriptNode.execute(frame, args, env, intern);
             return result;
         }
     }
@@ -86,28 +88,93 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     @Override
     Object execute(VirtualFrame frame, String command, boolean intern) {
         log(command, "Context");
-        String[] parts = checkRCommand(command);
-        if (parts != null) {
-            String[] args = new String[parts.length - 1];
-            System.arraycopy(parts, 1, args, 0, args.length);
-            ContextSystemFunctionNode node = parts[0].equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
-            Object result = node.execute(frame, RDataFactory.createStringVector(args, RDataFactory.COMPLETE_VECTOR), intern);
+        CommandInfo commandInfo = checkRCommand(command);
+        if (commandInfo != null) {
+            // check for and emulate R CMD cmd
+            if (commandInfo.args.length > 0) {
+                if (commandInfo.args[0].equals("CMD")) {
+                    switch (commandInfo.args[1]) {
+                        case "INSTALL":
+                            // INSTALL pipes in "tools:::.install_packages()"
+                            // We use "-e tools:::.install_packages()" as its simpler
+                            ArrayList<String> newArgsList = new ArrayList<>();
+                            int n = 0;
+                            newArgsList.add("--no-restore");
+                            newArgsList.add("--slave");
+                            newArgsList.add("-e");
+                            newArgsList.add("tools:::.install_packages()");
+                            newArgsList.add("--args");
+                            StringBuffer sb = new StringBuffer();
+                            int i = 2;
+                            while (i < commandInfo.args.length) {
+                                String arg = commandInfo.args[i];
+                                if (arg.equals("<") || arg.contains(">")) {
+                                    break;
+                                }
+                                sb.append("nextArg");
+                                sb.append(arg);
+                                i++;
+                            }
+                            if (sb.length() > 0) {
+                                newArgsList.add(sb.toString());
+                            }
+                            while (i < commandInfo.args.length) {
+                                newArgsList.add(commandInfo.args[i]);
+                                i++;
+                            }
+                            String[] newArgs = new String[newArgsList.size()];
+                            newArgsList.toArray(newArgs);
+                            commandInfo.args = newArgs;
+                            break;
+
+                        default:
+                            throw cannotExecute(command);
+                    }
+                }
+            }
+            ContextSystemFunctionNode node = commandInfo.command.equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
+            Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),
+                            RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern);
             return result;
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
+            throw cannotExecute(command);
         }
     }
 
+    private static RError cannotExecute(String command) throws RError {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
+    }
+
+    private static class CommandInfo {
+        private String[] envDefs;
+        private String command;
+        private String[] args;
+    }
+
     @TruffleBoundary
-    private static String[] checkRCommand(String command) {
+    private static CommandInfo checkRCommand(String command) {
         String[] parts = command.split(" ");
-        String rcommand = isFastR(parts[0]);
+        /* The actual command may be prefixed by environment variable settings of the form X=Y */
+        int i = 0;
+        while (parts[i].contains("=")) {
+            i++;
+        }
+        String rcommand = isFastR(parts[i]);
         if (rcommand == null) {
             return null;
         } else {
-            parts[0] = rcommand;
-            return parts;
+            CommandInfo result = new CommandInfo();
+            result.command = rcommand;
+            result.envDefs = new String[i];
+            if (i != 0) {
+                System.arraycopy(parts, 0, result.envDefs, 0, i);
+            }
+            result.args = new String[parts.length - i - 1];
+            if (result.args.length > 0) {
+                System.arraycopy(parts, i + 1, result.args, 0, result.args.length);
+            }
+            return result;
         }
 
     }

@@ -217,58 +217,77 @@ public class FastRContext {
 
     }
 
-    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "intern"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
     public abstract static class R extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
         }
 
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("args").mustBe(missingValue().or(stringValue()));
+            casts.arg("env").mustBe(missingValue().or(stringValue()));
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RAbstractStringVector args, boolean intern) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(args.materialize().getDataCopy(), intern);
+        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
             return rc;
         }
 
         @Specialization
-        protected Object r(@SuppressWarnings("unused") RMissing arg, boolean intern) {
-            return r(RDataFactory.createEmptyStringVector(), intern);
+        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern) {
+            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern);
         }
 
+        @Specialization
+        @TruffleBoundary
+        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
+            return r(RDataFactory.createEmptyStringVector(), env, intern);
+        }
     }
 
-    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "intern"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
     public abstract static class Rscript extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
         }
 
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("args").mustBe(stringValue(), RError.Message.GENERIC, "usage: /path/to/Rscript [--options] [-e expr [-e expr2 ...] | file] [args]").asStringVector();
+            casts.arg("env").mustBe(missingValue().or(stringValue()));
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RAbstractStringVector args, boolean intern) {
-            Object rc = RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), intern);
+        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+            Object rc = RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
             return rc;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern) {
+            return rscript(args, RDataFactory.createEmptyStringVector(), intern);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object rscript(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
+            return rscript(RDataFactory.createEmptyStringVector(), env, intern);
         }
 
     }
 
     private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
         RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, EMPTY, false), false);
-        ContextInfo info = ContextInfo.create(startParams, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+        ContextInfo info = ContextInfo.create(startParams, null, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
         return info;
     }
 

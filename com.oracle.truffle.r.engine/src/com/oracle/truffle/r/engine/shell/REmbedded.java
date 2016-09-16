@@ -69,7 +69,7 @@ public class REmbedded {
     private static PolyglotEngine initializeR(String[] args) {
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
-        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out);
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out, null);
         vm.eval(INIT);
         return vm;
     }

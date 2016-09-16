@@ -454,8 +454,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
              * This implies that FastR is being invoked initially from another Truffle language and
              * not via RCommand/RscriptCommand.
              */
-            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[0], false), false), ContextKind.SHARE_NOTHING, null,
-                            new DefaultConsoleHandler(env.in(), env.out()));
+            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[0], false), false), null,
+                            ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
         }
@@ -798,6 +798,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public RStartParams getStartParams() {
         return info.getStartParams();
+    }
+
+    public String[] getEnvSettings() {
+        return info.getEnv();
     }
 
     @Override
