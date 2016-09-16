@@ -496,7 +496,7 @@ public class TestBase {
         Path dir = Paths.get(getCwd().toString(), TEST_OUTPUT, name);
         if (!dir.toFile().exists()) {
             if (!dir.toFile().mkdirs()) {
-                throw new AssertionError();
+                Assert.fail("failed to create dir: " + dir.toString());
             }
         }
         return relativize(dir);

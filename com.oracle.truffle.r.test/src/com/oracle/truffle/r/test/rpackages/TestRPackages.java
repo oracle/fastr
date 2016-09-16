@@ -27,6 +27,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
+
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -173,7 +175,7 @@ public abstract class TestRPackages extends TestBase {
                 System.out.printf(".pkg: %s.", p);
                 PackagePath packagePath = getPackagePaths(p, resolver.getPath(p));
                 if (!installPackage(packagePath)) {
-                    throw new AssertionError();
+                    Assert.fail(String.format("package %s failed to install", p));
                 }
             }
             System.out.printf(".end install.");

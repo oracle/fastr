@@ -98,7 +98,6 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
                             // INSTALL pipes in "tools:::.install_packages()"
                             // We use "-e tools:::.install_packages()" as its simpler
                             ArrayList<String> newArgsList = new ArrayList<>();
-                            int n = 0;
                             newArgsList.add("--no-restore");
                             newArgsList.add("--slave");
                             newArgsList.add("-e");
