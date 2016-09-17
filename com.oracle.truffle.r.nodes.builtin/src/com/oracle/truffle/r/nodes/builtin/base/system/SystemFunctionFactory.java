@@ -116,7 +116,7 @@ public abstract class SystemFunctionFactory {
             if (args.length > 0) {
                 System.arraycopy(parts, i + 1, args, 0, args.length);
             }
-            commandInfo = new CommandInfo(envDefs, command, args);
+            commandInfo = new CommandInfo(envDefs, rcommand, args);
         }
         // check for and emulate selected R CMD cmd commands
         if (commandInfo.args.length > 0) {
