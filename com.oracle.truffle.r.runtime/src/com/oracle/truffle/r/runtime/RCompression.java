@@ -35,6 +35,7 @@ import java.util.zip.GZIPInputStream;
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.tukaani.xz.LZMA2InputStream;
 import org.tukaani.xz.XZInputStream;
 
@@ -179,64 +180,44 @@ public class RCompression {
         }
     }
 
-    /**
-     * This is used by {@link GZIPRConnection}.
-     */
+    @FunctionalInterface
+    private interface CreateInStream<T extends InputStream> {
+        InputStream create(InputStream base) throws IOException;
+    }
+
     public static byte[] lzmaUncompressFromFile(String path) {
         try {
-            byte[] data = Files.readAllBytes(Paths.get(path));
-            byte[] buffer = new byte[data.length * 4];
-            try (XZInputStream lzmaStream = new XZInputStream(new ByteArrayInputStream(data))) {
-                int totalRead = 0;
-                int n;
-                while ((n = lzmaStream.read(buffer, totalRead, buffer.length - totalRead)) > 0) {
-                    totalRead += n;
-                    if (totalRead == buffer.length) {
-                        byte[] newbuffer = new byte[buffer.length * 2];
-                        System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
-                        buffer = newbuffer;
-                    }
-                }
-                byte[] result = new byte[totalRead];
-                System.arraycopy(buffer, 0, result, 0, totalRead);
-                return result;
-            }
-
+            return genericUncompressFromFile(path, (is) -> new XZInputStream(is));
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
     public static byte[] bzipUncompressFromFile(String path) {
-        return genericUncompressFromFile(new String[]{"bzip2", "-dc", path});
-    }
-
-    private static byte[] genericUncompressFromFile(String[] command) {
-        int rc;
-        ProcessBuilder pb = new ProcessBuilder(command);
-        pb.redirectError(Redirect.INHERIT);
         try {
-            Process p = pb.start();
-            InputStream is = p.getInputStream();
-            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
-            readThread.start();
-            rc = p.waitFor();
-            if (rc == 0) {
-                readThread.join();
-                return readThread.getData();
-            }
-        } catch (InterruptedException | IOException ex) {
-            // fall through
+            return genericUncompressFromFile(path, (is) -> new BZip2CompressorInputStream(is));
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
-        throw RInternalError.shouldNotReachHere(join(command));
     }
 
-    private static String join(String[] args) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : args) {
-            sb.append(s);
-            sb.append(' ');
+    private static <T extends InputStream> byte[] genericUncompressFromFile(String path, CreateInStream<T> creator) throws IOException {
+        byte[] data = Files.readAllBytes(Paths.get(path));
+        byte[] buffer = new byte[data.length * 4];
+        try (InputStream in = creator.create(new ByteArrayInputStream(data))) {
+            int totalRead = 0;
+            int n;
+            while ((n = in.read(buffer, totalRead, buffer.length - totalRead)) > 0) {
+                totalRead += n;
+                if (totalRead == buffer.length) {
+                    byte[] newbuffer = new byte[buffer.length * 2];
+                    System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
+                    buffer = newbuffer;
+                }
+            }
+            byte[] result = new byte[totalRead];
+            System.arraycopy(buffer, 0, result, 0, totalRead);
+            return result;
         }
-        return sb.toString();
     }
 }
