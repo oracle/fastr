@@ -157,7 +157,7 @@ class FastRReleaseProject(FastRProjectAdapter):
 
     def getResults(self):
         results = []
-        for rdir in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
+        for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
             self._get_files(rdir, results)
         results.append(join(self.dir, 'LICENSE'))
         results.append(join(self.dir, 'COPYRIGHT'))
@@ -184,7 +184,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         # copy the release directories
         output_dir = self.subject.dir
         fastr_dir = mx_fastr._fastr_suite.dir
-        for d in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
+        for d in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
