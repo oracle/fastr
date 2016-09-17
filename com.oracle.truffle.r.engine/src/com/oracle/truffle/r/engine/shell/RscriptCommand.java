@@ -115,6 +115,7 @@ public class RscriptCommand {
     }
 
     private static void printVersionAndExit() {
+        // TODO Not ok in nested context
         System.out.print("R scripting front-end version ");
         System.out.println(RVersionNumber.FULL);
         System.exit(0);

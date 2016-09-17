@@ -37,8 +37,7 @@ public abstract class SystemFunctionFactory {
     private static SystemFunctionFactory theInstance;
 
     static {
-        kind = System.getProperty("fastr.systemfunction.factory.kind", "Process");
-        String className = "com.oracle.truffle.r.nodes.builtin.base.system." + kind + "SystemFunctionFactory";
+        String className = System.getProperty("fastr.systemfunction.factory.class", "com.oracle.truffle.r.nodes.builtin.base.system.ProcessSystemFunctionFactory");
         try {
             theInstance = (SystemFunctionFactory) Class.forName(className).newInstance();
         } catch (Exception ex) {
