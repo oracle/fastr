@@ -105,6 +105,9 @@ public class TestBuiltin_colMeans extends TestBase {
         assertEval("{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
         assertEval("{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}");
 
-        assertEval(Ignored.Unknown, "{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        // Following fails not because of colMeans implementation, but because following code does
+        // not work:
+        // x <- c(NaN, 3+2i); xre <- Re(x); xim <- (0+1i) * Im(x); xre + xim
+        assertEval(Ignored.ImplementationError, "{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
 }
