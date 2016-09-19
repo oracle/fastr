@@ -292,6 +292,9 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class Environment extends RBuiltinNode {
 
+        private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();
+        private final ConditionProfile attributable = ConditionProfile.createBinaryProfile();
+
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun, //
                         @Cached("new()") GetCallerFrameNode callerFrame, //
@@ -329,9 +332,14 @@ public class EnvFunctions {
         }
 
         @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
-        protected Object environment(@SuppressWarnings("unused") Object fun) {
-            // Not an error according to GnuR
-            return RNull.instance;
+        protected Object environment(Object fun) {
+            if (attributable.profile(fun instanceof RAttributable)) {
+                Object attr = ((RAttributable) fun).getAttr(attributeProfile, RRuntime.DOT_ENVIRONMENT);
+                return attr == null ? RNull.instance : attr;
+            } else {
+                // Not an error according to GnuR
+                return RNull.instance;
+            }
         }
     }
 
