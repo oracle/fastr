@@ -271,9 +271,10 @@ class FastRArchiveParticipant:
             # to ensure they are built first. Therefore, the JarDistribution code
             # will include all their class files at the top-level of the jar by default.
             # Since we have already encapsulated the class files in 'fastr_jars/fastr.jar' we
-            # suppress their inclusion here by resetting the deps filed. A bit of a hack.
+            # suppress their inclusion here by resetting the deps field. A bit of a hack.
         if self.dist.name == "FASTR_RELEASE":
             assert isinstance(self.dist.deps[0], FastRReleaseProject)
+            self.release_project = self.dist.deps[0]
             self.dist.deps[0].deps = []
 
     def __add__(self, arcname, contents):
@@ -283,7 +284,13 @@ class FastRArchiveParticipant:
         return False
 
     def __closing__(self):
-        pass
+        if self.dist.name == "FASTR_RELEASE":
+            # the files copied  in can be confused as source files by
+            # e.g., mx copyright, so delete them, specifically thne
+            # include dir
+            include_dir = join(self.release_project.dir, 'include')
+            shutil.rmtree(include_dir)
+
 
 def mx_post_parse_cmd_line(opts):
     for dist in mx_fastr._fastr_suite.dists:
