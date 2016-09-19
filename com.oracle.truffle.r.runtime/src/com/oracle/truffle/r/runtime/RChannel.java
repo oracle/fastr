@@ -23,20 +23,27 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 
@@ -191,6 +198,32 @@ public class RChannel {
         }
     }
 
+    private static class SerializedPromise {
+
+        Object env;
+        Object value;
+        byte[] serializedExpr;
+
+        public SerializedPromise(Object env, Object value, byte[] serializedExpr) {
+            this.env = env;
+            this.value = value;
+            this.serializedExpr = serializedExpr;
+        }
+
+        public Object getEnv() {
+            return env;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public Object getSerializedExpr() {
+            return serializedExpr;
+        }
+
+    }
+
     private static void makeShared(Object o) {
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
@@ -264,6 +297,18 @@ public class RChannel {
         }
     }
 
+    private static SerializedPromise convertPrivatePromise(Object msg) throws IOException {
+        RPromise p = (RPromise) msg;
+        byte[] serializedPromiseRep = RSerialize.serializePromiseRep(p);
+        if (p.isEvaluated()) {
+            return new SerializedPromise(RNull.instance, p.getValue(), serializedPromiseRep);
+        } else {
+            REnvironment env = p.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(p.getFrame());
+            return new SerializedPromise(convertPrivate(env), RUnboundValue.instance, serializedPromiseRep);
+        }
+
+    }
+
     private static boolean shareableEnv(Object o) {
         if (o instanceof REnvironment) {
             REnvironment env = (REnvironment) o;
@@ -287,8 +332,11 @@ public class RChannel {
             return convertPrivateListSlow(o);
         } else if (shareableEnv(o)) {
             return new SerializedEnv(convertPrivateEnv(o), convertPrivateSlow(((REnvironment) o).getParent()));
+        } else if (o instanceof RPromise) {
+            return convertPrivatePromise(o);
         } else if (!serializeObject(o)) {
-            // we need to make internal values (permanently) shared to avoid updates to ref count
+            // we need to make internal values (permanently) shared to avoid updates to ref
+            // count
             // by different threads
             makeShared(o);
             if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
@@ -302,7 +350,11 @@ public class RChannel {
                 return o;
             }
         } else {
-            return RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+            System.out.println(o.toString());
+            System.out.println("CLASS " + o.getClass());
+            Object ret = RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+            System.out.println("DONE " + o.getClass());
+            return ret;
         }
     }
 
@@ -325,7 +377,8 @@ public class RChannel {
 
     @TruffleBoundary
     private static REnvironment createShareable(REnvironment e) throws IOException {
-        // always create a new environment as another context cannot be allowed to modify current
+        // always create a new environment as another context cannot be allowed to modify
+        // current
         // one's bindings
         REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
         String[] bindings = REnvTruffleFrameAccess.getStringIdentifiers(e.getFrame().getFrameDescriptor());
@@ -383,6 +436,12 @@ public class RChannel {
             } catch (IOException x) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable environment");
             }
+        } else if (msg instanceof RPromise) {
+            try {
+                msg = convertPrivatePromise(msg);
+            } catch (IOException x) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable promise");
+            }
         } else if (!serializeObject(msg)) {
             // make sure that what's passed through the channel will be copied on the first
             // update
@@ -413,6 +472,8 @@ public class RChannel {
             ret = elList;
         } else if (el instanceof SerializedEnv) {
             ret = unserializeEnv((SerializedEnv) el);
+        } else if (el instanceof SerializedPromise) {
+            ret = unserializePromise((SerializedPromise) el);
         } else if (el instanceof byte[]) {
             processAttributes = false;
             ret = RSerialize.unserialize((byte[]) el, null, null, null);
@@ -450,6 +511,15 @@ public class RChannel {
     }
 
     @TruffleBoundary
+    private static RPromise unserializePromise(SerializedPromise p) throws IOException {
+        Map<String, Object> constants = new HashMap<>();
+        String deparse = RDeparse.deparseDeserialize(constants, unserializeObject(p.getSerializedExpr()));
+        Source source = RSource.fromPackageTextInternal(deparse, null);
+        RExpression expr = RContext.getEngine().parse(constants, source);
+        return RSerialize.unserializePromise(expr, p.getEnv(), p.getValue());
+    }
+
+    @TruffleBoundary
     private static void unserializeListSlow(RList list) throws IOException {
         unserializeList(list);
     }
@@ -460,7 +530,8 @@ public class RChannel {
             Object val = a.getValue();
             Object newVal = unserializeObject(val);
             if (newVal != val) {
-                // TODO: this is a bit brittle as it relies on the iterator to work correctly in the
+                // TODO: this is a bit brittle as it relies on the iterator to work correctly in
+                // the
                 // face of updates (which it does under current implementation of attributes)
                 attr.put(a.getName(), newVal);
             }
@@ -478,8 +549,9 @@ public class RChannel {
                 unserializeList(list);
                 ret = list;
             } else if (msg instanceof SerializedEnv) {
-                REnvironment env = unserializeEnv((SerializedEnv) msg);
-                ret = env;
+                ret = unserializeEnv((SerializedEnv) msg);
+            } else if (msg instanceof SerializedPromise) {
+                ret = unserializePromise((SerializedPromise) msg);
             } else if (msg instanceof byte[]) {
                 processAttributes = false;
                 ret = RSerialize.unserialize((byte[]) msg, null, null, null);
