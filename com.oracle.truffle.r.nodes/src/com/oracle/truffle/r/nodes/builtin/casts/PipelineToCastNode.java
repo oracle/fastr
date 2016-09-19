@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
@@ -85,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -95,13 +97,17 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public final class PipelineToCastNode {
 
     public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep) {
+        return convert(configBuilder, firstStep, PipelineConfigBuilder.getFilterFactory(), PipelineConfigBuilder.getMapperFactory());
+    }
+
+    public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
         if (firstStep == null) {
-            return BypassNode.create(configBuilder, null);
+            return BypassNode.create(configBuilder, null, filterFactory, mapperFactory);
         } else {
-            // TODO: where to get the caller node? argument to this method? and default error?
-            CastNodeFactory nodeFactory = new CastNodeFactory(configBuilder.getDefaultDefaultMessage());
+            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, configBuilder.getDefaultDefaultMessage());
             CastNode headNode = convert(firstStep, nodeFactory);
-            return BypassNode.create(configBuilder, headNode);
+
+            return BypassNode.create(configBuilder, headNode, filterFactory, mapperFactory);
         }
     }
 
@@ -133,26 +139,16 @@ public final class PipelineToCastNode {
         return prevCastNode;
     }
 
-    public static ArgumentFilter<?, ?> convert(Filter<?, ?> filter) {
-        return filter == null ? null : ArgumentFilterFactory.create(filter);
-    }
-
-    public static ArgumentMapper<?, ?> convert(Mapper<?, ?> mapper) {
-        return mapper == null ? null : MapperNodeFactory.create(mapper);
-    }
-
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {
-        private final CastNodeFactory parentFactory;
+        private final ArgumentFilterFactory filterFactory;
+        private final ArgumentMapperFactory mapperFactory;
         private MessageData defaultErrorMessage;
         private MessageData defaultWarningMessage;
         private boolean boxPrimitives = false;
 
-        CastNodeFactory(MessageData defaultMessage) {
-            this(null, defaultMessage);
-        }
-
-        CastNodeFactory(CastNodeFactory parentFactory, MessageData defaultMessage) {
-            this.parentFactory = parentFactory;
+        CastNodeFactory(ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, MessageData defaultMessage) {
+            this.filterFactory = filterFactory;
+            this.mapperFactory = mapperFactory;
             this.defaultErrorMessage = defaultMessage;
         }
 
@@ -191,7 +187,7 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(FilterStep<?, ?> step) {
-            ArgumentFilter<?, ?> filter = ArgumentFilterFactory.create(step.getFilter());
+            ArgumentFilter<?, ?> filter = filterFactory.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
             return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives);
         }
@@ -244,12 +240,12 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(MapStep<?, ?> step) {
-            return MapNode.create(MapperNodeFactory.create(step.getMapper()));
+            return MapNode.create(mapperFactory.createMapper(step.getMapper()));
         }
 
         @Override
         public CastNode visit(MapIfStep<?, ?> step) {
-            ArgumentFilter<?, ?> condition = ArgumentFilterFactory.create(step.getFilter());
+            ArgumentFilter<?, ?> condition = filterFactory.createFilter(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
             return ConditionalMapNode.create(condition, trueCastNode, falseCastNode);
@@ -261,17 +257,23 @@ public final class PipelineToCastNode {
 
     }
 
-    private static final class ArgumentFilterFactory implements FilterVisitor<ArgumentFilter<?, ?>>, MatrixFilter.OperationVisitor<ArgumentFilter<RAbstractVector, RAbstractVector>>,
+    public interface ArgumentFilterFactory {
+        ArgumentFilter<?, ?> createFilter(Filter<?, ?> filter);
+    }
+
+    public static final class ArgumentFilterFactoryImpl
+                    implements ArgumentFilterFactory, FilterVisitor<ArgumentFilter<?, ?>>, MatrixFilter.OperationVisitor<ArgumentFilter<RAbstractVector, RAbstractVector>>,
                     DoubleFilter.OperationVisitor<ArgumentFilter<Double, Double>>, CompareFilter.SubjectVisitor<ArgumentFilter<?, ?>> {
 
-        private static final ArgumentFilterFactory INSTANCE = new ArgumentFilterFactory();
+        public static final ArgumentFilterFactoryImpl INSTANCE = new ArgumentFilterFactoryImpl();
 
-        private ArgumentFilterFactory() {
+        private ArgumentFilterFactoryImpl() {
             // singleton
         }
 
-        public static ArgumentFilter<?, ?> create(Filter<?, ?> filter) {
-            return filter.accept(INSTANCE);
+        @Override
+        public ArgumentFilter<?, ?> createFilter(Filter<?, ?> filter) {
+            return filter.accept(this);
         }
 
         @Override
@@ -291,6 +293,8 @@ public final class PipelineToCastNode {
                 return x -> x instanceof RAbstractComplexVector;
             } else if (filter.getType() == RType.Character) {
                 return x -> x instanceof String || x instanceof RAbstractStringVector;
+            } else if (filter.getType() == RType.Raw) {
+                return x -> x instanceof RAbstractRawVector;
             } else {
                 throw RInternalError.unimplemented("TODO: more types here");
             }
@@ -561,16 +565,21 @@ public final class PipelineToCastNode {
 
     }
 
-    private static final class MapperNodeFactory implements MapperVisitor<ValuePredicateArgumentMapper<Object, Object>> {
+    public interface ArgumentMapperFactory {
+        ArgumentMapper<?, ?> createMapper(Mapper<?, ?> mapper);
+    }
 
-        private static final MapperNodeFactory INSTANCE = new MapperNodeFactory();
+    public static final class ArgumentMapperFactoryImpl implements ArgumentMapperFactory, MapperVisitor<ValuePredicateArgumentMapper<Object, Object>> {
 
-        private MapperNodeFactory() {
+        public static final ArgumentMapperFactoryImpl INSTANCE = new ArgumentMapperFactoryImpl();
+
+        private ArgumentMapperFactoryImpl() {
             // singleton
         }
 
-        public static ValuePredicateArgumentMapper<Object, Object> create(Mapper<?, ?> mapper) {
-            return mapper.accept(MapperNodeFactory.INSTANCE);
+        @Override
+        public ArgumentMapper<Object, Object> createMapper(Mapper<?, ?> mapper) {
+            return mapper.accept(this);
         }
 
         @Override

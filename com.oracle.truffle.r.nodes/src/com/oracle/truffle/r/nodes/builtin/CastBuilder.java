@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
@@ -52,6 +53,10 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactory;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactoryImpl;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactory;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactoryImpl;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -222,6 +227,8 @@ public final class CastBuilder {
         arg(index).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
         return this;
     }
+
+    // The cast-pipelines API starts here
 
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
         return new ArgCastBuilderFactoryImpl(argumentIndex, argumentName).newPreinitialPhaseBuilder();
@@ -627,28 +634,28 @@ public final class CastBuilder {
             return new TypeFilter<>(x -> cls.isInstance(x), cls);
         }
 
-        public static <R extends RAbstractIntVector> TypeFilter<Object, R> integerValue() {
-            return new TypeFilter<>(x -> x instanceof Integer || x instanceof RAbstractIntVector, Integer.class, RAbstractIntVector.class);
+        public static <R extends RAbstractIntVector> Filter<Object, R> integerValue() {
+            return new RTypeFilter<>(RType.Integer);
         }
 
-        public static <R extends RAbstractStringVector> TypeFilter<Object, R> stringValue() {
-            return new TypeFilter<>(x -> x instanceof String || x instanceof RAbstractStringVector, String.class, RAbstractStringVector.class);
+        public static <R extends RAbstractStringVector> Filter<Object, R> stringValue() {
+            return new RTypeFilter<>(RType.Character);
         }
 
-        public static <R extends RAbstractDoubleVector> TypeFilter<Object, R> doubleValue() {
-            return new TypeFilter<>(x -> x instanceof Double || x instanceof RAbstractDoubleVector, Double.class, RAbstractDoubleVector.class);
+        public static <R extends RAbstractDoubleVector> Filter<Object, R> doubleValue() {
+            return new RTypeFilter<>(RType.Double);
         }
 
-        public static <R extends RAbstractLogicalVector> TypeFilter<Object, R> logicalValue() {
-            return new TypeFilter<>(x -> x instanceof Byte || x instanceof RAbstractLogicalVector, Byte.class, RAbstractLogicalVector.class);
+        public static <R extends RAbstractLogicalVector> Filter<Object, R> logicalValue() {
+            return new RTypeFilter<>(RType.Logical);
         }
 
-        public static <R extends RAbstractComplexVector> TypeFilter<Object, R> complexValue() {
-            return new TypeFilter<>(x -> x instanceof RAbstractComplexVector, RAbstractComplexVector.class);
+        public static <R extends RAbstractComplexVector> Filter<Object, R> complexValue() {
+            return new RTypeFilter<>(RType.Complex);
         }
 
         public static <R extends RAbstractRawVector> Filter<Object, R> rawValue() {
-            return new TypeFilter<>(x -> x instanceof RAbstractRawVector, RAbstractRawVector.class);
+            return new RTypeFilter<>(RType.Raw);
         }
 
         public static <R> TypeFilter<Object, R> anyValue() {
@@ -837,27 +844,6 @@ public final class CastBuilder {
         <T> HeadPhaseBuilder<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder);
 
     }
-
-// public static class DefaultError {
-// public final RBaseNode callObj;
-// public final RError.Message message;
-// public final Object[] args;
-//
-// DefaultError(RBaseNode callObj, RError.Message message, Object... args) {
-// this.callObj = callObj;
-// this.message = message;
-// this.args = args;
-// }
-//
-// public DefaultError fixCallObj(RBaseNode callObjFix) {
-// if (callObj == null) {
-// return new DefaultError(callObjFix, message, args);
-// } else {
-// return this;
-// }
-// }
-//
-// }
 
     public static class ArgCastBuilderState {
         private final MessageData defaultDefaultError;
@@ -1164,7 +1150,7 @@ public final class CastBuilder {
 
     public interface PreinitialPhaseBuilder<T> extends InitialPhaseBuilder<T> {
 
-        default InitialPhaseBuilder<T> conf(Function<PipelineConfigBuilder, PipelineConfigBuilder> cfgLambda) {
+        default PreinitialPhaseBuilder<T> conf(Function<PipelineConfigBuilder, PipelineConfigBuilder> cfgLambda) {
             cfgLambda.apply(getPipelineConfigBuilder());
             return this;
         }
@@ -1580,6 +1566,9 @@ public final class CastBuilder {
 
     public static final class PipelineConfigBuilder {
 
+        private static ArgumentFilterFactory filterFactory = ArgumentFilterFactoryImpl.INSTANCE;
+        private static ArgumentMapperFactory mapperFactory = ArgumentMapperFactoryImpl.INSTANCE;
+
         private final ArgCastBuilderState state;
 
         private Mapper<? super RMissing, ?> missingMapper = null;
@@ -1672,9 +1661,25 @@ public final class CastBuilder {
             nullMsg = state.defaultError();
         }
 
+        public static ArgumentFilterFactory getFilterFactory() {
+            return filterFactory;
+        }
+
+        public static ArgumentMapperFactory getMapperFactory() {
+            return mapperFactory;
+        }
+
+        public static void setFilterFactory(ArgumentFilterFactory ff) {
+            filterFactory = ff;
+        }
+
+        public static void setMapperFactory(ArgumentMapperFactory mf) {
+            mapperFactory = mf;
+        }
+
     }
 
-    private static final class PipelineBuilder implements CastNodeFactory {
+    public static final class PipelineBuilder implements CastNodeFactory {
 
         private final PipelineConfigBuilder pcb;
         private ChainBuilder<?> chainBuilder;

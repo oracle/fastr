@@ -28,12 +28,12 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 
 public class TypePredicateArgumentFilter<T, R extends T> extends AbstractPredicateArgumentFilter<T, R> implements ArgumentTypeFilter<T, R> {
 
-    public TypePredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
-        super(valuePredicate, isNullable);
+    public TypePredicateArgumentFilter(Predicate<? super T> valuePredicate) {
+        super(valuePredicate);
     }
 
     public static <T, R extends T> TypePredicateArgumentFilter<T, R> fromLambda(Predicate<? super T> predicate) {
-        return new TypePredicateArgumentFilter<>(predicate, false);
+        return new TypePredicateArgumentFilter<>(predicate);
     }
 
 }

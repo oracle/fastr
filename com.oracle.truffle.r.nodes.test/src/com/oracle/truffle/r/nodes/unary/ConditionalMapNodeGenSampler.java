@@ -28,13 +28,13 @@ import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class ConditionalMapNodeSampler extends CastNodeSampler<ConditionalMapNode> {
+public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMapNodeGen> {
 
     private final ArgumentFilterSampler argFilter;
     private final CastNodeSampler trueBranch;
     private final CastNodeSampler falseBranch;
 
-    public ConditionalMapNodeSampler(ConditionalMapNode castNode) {
+    public ConditionalMapNodeGenSampler(ConditionalMapNodeGen castNode) {
         super(castNode);
         argFilter = (ArgumentFilterSampler) castNode.getFilter();
         trueBranch = createSampler(castNode.getTrueBranch());

@@ -36,17 +36,18 @@ import java.util.stream.Collectors;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;
+import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
+import com.oracle.truffle.r.nodes.casts.MapperSamplerFactory;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
 import com.oracle.truffle.r.nodes.casts.Not;
-import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
-import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -63,6 +64,11 @@ public class RBuiltinDiagnostics {
         boolean ignoreRNull;
         boolean ignoreRMissing;
         long maxTotalCombinations = 500L;
+    }
+
+    static {
+        PipelineConfigBuilder.setFilterFactory(FilterSamplerFactory.INSTANCE);
+        PipelineConfigBuilder.setMapperFactory(MapperSamplerFactory.INSTANCE);
     }
 
     private final DiagConfig diagConfig;

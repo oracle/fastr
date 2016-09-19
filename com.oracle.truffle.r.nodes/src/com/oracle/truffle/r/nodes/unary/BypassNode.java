@@ -28,8 +28,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactory;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactory;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -37,19 +37,26 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * The node wraps cast pipeline and handles {@code RNull} and {@code RMissing} according to
- * {@link PipelineConfigBuilder}. If the pipeline contains {@code findFirst} step and RNull/RMissing
- * is allowed in the config, then RNull/RMissing is routed to the logic of {@code findFirst}, i.e.
- * without defaultValue, it gives error, with defaultValue, returns the defaultValue. Any mappers
- * after findFirst will be applied too.
+ * {@link PipelineConfigBuilder}. If that object does not specify any behavior for RNull/RMissing,
+ * then the RNull/RMissing are processed by the pipeline as usual. Otherwise those values are either
+ * blocked or sent directly to the pipeline output (they bypass the pipeline). In the latter case,
+ * RNull/RMissing can be mapped to a constant.
  *
- * The factory method {@link #create(PipelineConfigBuilder, CastNode)} creates either directly
- * {@link BypassNode} or one of its protected subclasses that can also bypass single atomic values
- * (these are also, like RNull/RMissing, routed to findFirst and any consecutive mappers). The
- * subclasses correspond to subclasses of {@link CastBaseNode}. The idea is that if the pipeline
- * until 'findFirst' contains only one 'asXYVector' step and no 'map' or 'mapIf', then we can assume
- * that any atomic value of type XY can be passed directly to the 'findFirst' step (although mustBe
- * could disallow values of type XY, we assume that this will not happen when asXYVector is used,
- * and any checks of the value will be done after findFirst).
+ * When RNull/RMissing are neither blocked nor bypassing the pipeline, the argument value are
+ * subjected to a couple of optimizations. For example, if the pipeline contains {@code findFirst}
+ * step, then RNull/RMissing is routed to the logic of {@code findFirst}, i.e. without defaultValue,
+ * it gives error, with defaultValue, returns the defaultValue. Any mappers after findFirst will be
+ * applied too.
+ *
+ * The factory method
+ * {@link #create(PipelineConfigBuilder, CastNode, ArgumentFilterFactory, ArgumentMapperFactory)}
+ * creates either directly {@link BypassNode} or one of its protected subclasses that can also
+ * bypass single atomic values (these are also, like RNull/RMissing, routed to findFirst and any
+ * consecutive mappers). The subclasses correspond to subclasses of {@link CastBaseNode}. The idea
+ * is that if the pipeline until 'findFirst' contains only one 'asXYVector' step and no 'map' or
+ * 'mapIf', then we can assume that any atomic value of type XY can be passed directly to the
+ * 'findFirst' step (although mustBe could disallow values of type XY, we assume that this will not
+ * happen when asXYVector is used, and any checks of the value will be done after findFirst).
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class BypassNode extends CastNode {
@@ -79,12 +86,13 @@ public abstract class BypassNode extends CastNode {
      */
     @Child private CastNode afterFindFirst;
 
-    protected BypassNode(PipelineConfigBuilder pcb, CastNode wrappedHead, FindFirstNode directFindFirstNode, CastNode afterFindFirst) {
-        this.nullMapFn = PipelineToCastNode.convert(pcb.getNullMapper());
+    protected BypassNode(PipelineConfigBuilder pcb, CastNode wrappedHead, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, FindFirstNode directFindFirstNode,
+                    CastNode afterFindFirst) {
+        this.nullMapFn = pcb.getNullMapper() == null ? null : mapperFactory.createMapper(pcb.getNullMapper());
         this.isRNullBypassed = this.nullMapFn != null;
         this.nullMsg = pcb.getNullMessage() == null ? null : pcb.getNullMessage().fixCallObj(this);
 
-        this.missingMapFn = PipelineToCastNode.convert(pcb.getMissingMapper());
+        this.missingMapFn = pcb.getMissingMapper() == null ? null : mapperFactory.createMapper(pcb.getMissingMapper());
         this.isRMissingBypassed = this.missingMapFn != null;
         this.missingMsg = pcb.getMissingMessage() == null ? null : pcb.getMissingMessage().fixCallObj(this);
 
@@ -173,9 +181,9 @@ public abstract class BypassNode extends CastNode {
      * {@link BypassNode} possibly optimized for a pattern found in the pipeline. See
      * {@link BypassNode} doc for details.
      */
-    public static CastNode create(PipelineConfigBuilder pcb, CastNode wrappedHead) {
+    public static CastNode create(PipelineConfigBuilder pcb, CastNode wrappedHead, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
         if (wrappedHead == null) {
-            return BypassNodeGen.create(pcb, wrappedHead, null, null);
+            return BypassNodeGen.create(pcb, null, filterFactory, mapperFactory, null, null);
         }
 
         // Here we traverse the cast chain looking for FindFirstNode, if we find it, we continue
@@ -213,29 +221,32 @@ public abstract class BypassNode extends CastNode {
         }
 
         if (singleCastBaseNodeClass == null || !foundFindFirst) {
-            return BypassNodeGen.create(pcb, wrappedHead, directFindFirstNode, afterFindFirstNode);
+            return BypassNodeGen.create(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirstNode);
         }
 
-        return createBypassByClass(pcb, wrappedHead, directFindFirstNode, afterFindFirstNode, singleCastBaseNodeClass);
+        return createBypassByClass(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirstNode, singleCastBaseNodeClass);
     }
 
     /**
      * Depending on the {@code bypassClass} parameter creates corresponding {@code BypassXYNode}
      * instance.
      */
-    private static BypassNode createBypassByClass(PipelineConfigBuilder pcb, CastNode wrappedHead, FindFirstNode directFindFirstNode, CastNode afterFindFirstNode, Class castNodeClass) {
+    private static BypassNode createBypassByClass(PipelineConfigBuilder pcb, CastNode wrappedHead, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory,
+                    FindFirstNode directFindFirstNode, CastNode afterFindFirstNode,
+                    Class castNodeClass) {
         if (castNodeClass == CastIntegerNode.class) {
-            return BypassIntegerNodeGen.create(pcb, wrappedHead, directFindFirstNode, afterFindFirstNode);
+            return BypassIntegerNodeGen.create(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirstNode);
         } else if (castNodeClass == CastDoubleBaseNode.class) {
-            return BypassDoubleNodeGen.create(pcb, wrappedHead, directFindFirstNode, afterFindFirstNode);
+            return BypassDoubleNodeGen.create(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirstNode);
         } else {
-            return BypassNodeGen.create(pcb, wrappedHead, directFindFirstNode, afterFindFirstNode);
+            return BypassNodeGen.create(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirstNode);
         }
     }
 
     protected abstract static class BypassIntegerNode extends BypassNode {
-        protected BypassIntegerNode(PipelineConfigBuilder pcb, CastNode wrappedHead, FindFirstNode directFindFirstNode, CastNode afterFindFirst) {
-            super(pcb, wrappedHead, directFindFirstNode, afterFindFirst);
+        protected BypassIntegerNode(PipelineConfigBuilder pcb, CastNode wrappedHead, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, FindFirstNode directFindFirstNode,
+                        CastNode afterFindFirst) {
+            super(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirst);
         }
 
         @Specialization
@@ -245,8 +256,9 @@ public abstract class BypassNode extends CastNode {
     }
 
     protected abstract static class BypassDoubleNode extends BypassNode {
-        protected BypassDoubleNode(PipelineConfigBuilder pcb, CastNode wrappedHead, FindFirstNode directFindFirstNode, CastNode afterFindFirst) {
-            super(pcb, wrappedHead, directFindFirstNode, afterFindFirst);
+        protected BypassDoubleNode(PipelineConfigBuilder pcb, CastNode wrappedHead, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, FindFirstNode directFindFirstNode,
+                        CastNode afterFindFirst) {
+            super(pcb, wrappedHead, filterFactory, mapperFactory, directFindFirstNode, afterFindFirst);
         }
 
         @Specialization

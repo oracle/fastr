@@ -36,6 +36,11 @@ public abstract class Filter<T, R extends T> {
     protected Filter() {
     }
 
+    /**
+     * @return true if this filter narrows the input type to a sub-type
+     */
+    public abstract boolean isNarrowing();
+
     public abstract <D> D accept(FilterVisitor<D> visitor);
 
     public <S extends R> AndFilter<T, S> and(Filter<? super R, S> other) {
@@ -84,6 +89,11 @@ public abstract class Filter<T, R extends T> {
             return type;
         }
 
+        @Override
+        public boolean isNarrowing() {
+            return true;
+        }
+
         public ArgumentFilter<Object, Object> getInstanceOfLambda() {
             return instanceOfLambda;
         }
@@ -97,7 +107,7 @@ public abstract class Filter<T, R extends T> {
     /**
      * Filters specified set of type in R sense, supports only vector types minus list.
      */
-    public static final class RTypeFilter<T extends RAbstractVector> extends Filter<T, T> {
+    public static final class RTypeFilter<T extends RAbstractVector> extends Filter<Object, T> {
         private final RType type;
 
         public RTypeFilter(RType type) {
@@ -107,6 +117,11 @@ public abstract class Filter<T, R extends T> {
 
         public RType getType() {
             return type;
+        }
+
+        @Override
+        public boolean isNarrowing() {
+            return true;
         }
 
         @Override
@@ -140,8 +155,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class ScalarValue implements Subject {
-            final Object value;
-            final RType type;
+            public final Object value;
+            public final RType type;
 
             public ScalarValue(Object value, RType type) {
                 this.value = value;
@@ -156,7 +171,7 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class NATest implements Subject {
-            final RType type;
+            public final RType type;
 
             public NATest(RType type) {
                 this.type = type;
@@ -170,7 +185,7 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class StringLength implements Subject {
-            final int length;
+            public final int length;
 
             public StringLength(int length) {
                 this.length = length;
@@ -183,7 +198,7 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class VectorSize implements Subject {
-            final int size;
+            public final int size;
 
             public VectorSize(int size) {
                 this.size = size;
@@ -196,9 +211,9 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class ElementAt implements Subject {
-            final int index;
-            final Object value;
-            final RType type;
+            public final int index;
+            public final Object value;
+            public final RType type;
 
             public ElementAt(int index, Object value, RType type) {
                 this.index = index;
@@ -213,8 +228,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         public static final class Dim implements Subject {
-            final int dimIndex;
-            final int dimSize;
+            public final int dimIndex;
+            public final int dimSize;
 
             public Dim(int dimIndex, int dimSize) {
                 this.dimIndex = dimIndex;
@@ -243,6 +258,11 @@ public abstract class Filter<T, R extends T> {
             this.subject = subject;
         }
 
+        @Override
+        public boolean isNarrowing() {
+            return false;
+        }
+
         public Subject getSubject() {
             return subject;
         }
@@ -265,6 +285,7 @@ public abstract class Filter<T, R extends T> {
                 return visitor.visitIsMatrix();
             }
         };
+
         private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<RAbstractVector>() {
             @Override
             public <D> D acceptOperation(OperationVisitor<D> visitor) {
@@ -291,6 +312,11 @@ public abstract class Filter<T, R extends T> {
         private MatrixFilter() {
         }
 
+        @Override
+        public boolean isNarrowing() {
+            return false;
+        }
+
         public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
 
         @Override
@@ -307,6 +333,7 @@ public abstract class Filter<T, R extends T> {
                 return visitor.visitIsFinite();
             }
         };
+
         public static final DoubleFilter IS_FRACTIONAL = new DoubleFilter() {
             @Override
             public <D> D acceptOperation(OperationVisitor<D> visitor) {
@@ -324,6 +351,11 @@ public abstract class Filter<T, R extends T> {
 
         }
 
+        @Override
+        public boolean isNarrowing() {
+            return false;
+        }
+
         public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
 
         @Override
@@ -339,6 +371,11 @@ public abstract class Filter<T, R extends T> {
         public AndFilter(Filter<?, ?> left, Filter<?, ?> right) {
             this.left = left;
             this.right = right;
+        }
+
+        @Override
+        public boolean isNarrowing() {
+            return left.isNarrowing() || right.isNarrowing();
         }
 
         public Filter<?, ?> getLeft() {
@@ -364,6 +401,11 @@ public abstract class Filter<T, R extends T> {
             this.right = right;
         }
 
+        @Override
+        public boolean isNarrowing() {
+            return false;
+        }
+
         public Filter<?, ?> getLeft() {
             return left;
         }
@@ -383,6 +425,11 @@ public abstract class Filter<T, R extends T> {
 
         public NotFilter(Filter<?, ?> filter) {
             this.filter = filter;
+        }
+
+        @Override
+        public boolean isNarrowing() {
+            return false;
         }
 
         public Filter<?, ?> getFilter() {

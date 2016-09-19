@@ -670,6 +670,10 @@ public class CastUtils {
         return te.normalize().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
+    public static Set<?> sampleValuesForClases(Class<?>[] classes) {
+        return Arrays.stream(classes).flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
+    }
+
     public static Set<?> sampleValuesForType(Type t) {
         HashSet<Object> samples = new HashSet<>();
 
@@ -785,21 +789,20 @@ public class CastUtils {
 
     @SuppressWarnings("varargs")
     @SafeVarargs
-    public static <T> Set<? extends T> samples(T samplesHead, T... samplesTail) {
+    public static <T> Set<T> samples(T samplesHead, T... samplesTail) {
         HashSet<T> sampleSet = new HashSet<>(Arrays.asList(samplesTail));
         sampleSet.add(samplesHead);
         return sampleSet;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> Set<? extends T> samples(T s) {
+    public static <T> Set<T> samples(T s) {
         if (s == null) {
-            return Collections.singleton((T) RNull.instance);
+            return Collections.emptySet();
         }
         return Collections.singleton(s);
     }
 
-    public static <T> Set<? extends T> samples() {
+    public static <T> Set<T> samples() {
         return Collections.emptySet();
     }
 
