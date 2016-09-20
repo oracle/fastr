@@ -200,9 +200,9 @@ public class RChannel {
 
     private static class SerializedPromise {
 
-        Object env;
-        Object value;
-        byte[] serializedExpr;
+        private Object env;
+        private Object value;
+        private byte[] serializedExpr;
 
         public SerializedPromise(Object env, Object value, byte[] serializedExpr) {
             this.env = env;
@@ -218,7 +218,7 @@ public class RChannel {
             return value;
         }
 
-        public Object getSerializedExpr() {
+        public byte[] getSerializedExpr() {
             return serializedExpr;
         }
 
@@ -324,7 +324,7 @@ public class RChannel {
     }
 
     private static boolean serializeObject(Object o) {
-        return o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage || o instanceof RPromise;
+        return o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage;
     }
 
     private static Object convertPrivate(Object o) throws IOException {
@@ -350,11 +350,7 @@ public class RChannel {
                 return o;
             }
         } else {
-            System.out.println(o.toString());
-            System.out.println("CLASS " + o.getClass());
-            Object ret = RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
-            System.out.println("DONE " + o.getClass());
-            return ret;
+            return RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
         }
     }
 
@@ -513,10 +509,14 @@ public class RChannel {
     @TruffleBoundary
     private static RPromise unserializePromise(SerializedPromise p) throws IOException {
         Map<String, Object> constants = new HashMap<>();
-        String deparse = RDeparse.deparseDeserialize(constants, unserializeObject(p.getSerializedExpr()));
+        String deparse = RDeparse.deparseDeserialize(constants, RSerialize.unserialize(p.getSerializedExpr(), null, null, null));
         Source source = RSource.fromPackageTextInternal(deparse, null);
         RExpression expr = RContext.getEngine().parse(constants, source);
-        return RSerialize.unserializePromise(expr, p.getEnv(), p.getValue());
+        Object env = p.getEnv();
+        if (env != RNull.instance) {
+            env = unserializeObject(env);
+        }
+        return RSerialize.unserializePromise(expr, env, p.getValue());
     }
 
     @TruffleBoundary

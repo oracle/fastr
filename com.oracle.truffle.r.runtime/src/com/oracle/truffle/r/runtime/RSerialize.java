@@ -2220,8 +2220,11 @@ public class RSerialize {
             RSyntaxNode node = RContext.getRRuntimeASTAccess().unwrapPromiseRep(promise);
             state.openPairList();
             node.serializeImpl(state);
-            Object pairList = state.closePairList();
-            output.serialize(state, pairList);
+            Object res = state.closePairList();
+            if (res instanceof RPairList) {
+                state.convertUnboundValues((RPairList) res);
+            }
+            output.serialize(state, res);
             return out.toByteArray();
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere();
