@@ -689,9 +689,9 @@ public abstract class GammaFunctions {
         /*
          * PR# 2214 : From: Morten Welinder <terra@diku.dk>, Fri, 25 Oct 2002 16:50 -------- To:
          * R-bugs@biostat.ku.dk Subject: qgamma precision
-         * 
+         *
          * With a final Newton step, double accuracy, e.g. for (p= 7e-4; nu= 0.9)
-         * 
+         *
          * Improved (MM): - only if rel.Err > EPS_N (= 1e-15); - also for lower_tail = FALSE or
          * log_p = TRUE - optionally *iterate* Newton
          */
@@ -753,7 +753,7 @@ public abstract class GammaFunctions {
     /*
      * Continued fraction for calculation of 1/i + x/(i+d) + x^2/(i+2*d) + x^3/(i+3*d) + ... =
      * sum_{k=0}^Inf x^k/(i+k*d)
-     * 
+     *
      * auxilary in log1pmx() and lgamma1p()
      */
     private static double logcf(double x, double i, double d, double eps /* ~ relative tolerance */) {
@@ -850,7 +850,7 @@ public abstract class GammaFunctions {
          * Abramowitz & Stegun 6.1.33 : for |x| < 2, <==> log(gamma(1+x)) = -(log(1+x) - x) -
          * gamma*x + x^2 * \sum_{n=0}^\infty c_n (-x)^n where c_n := (Zeta(n+2) - 1)/(n+2) =
          * coeffs[n]
-         * 
+         *
          * Here, another convergence acceleration trick is used to compute lgam(x) := sum_{n=0..Inf}
          * c_n (-x)^n
          */
@@ -1076,17 +1076,17 @@ public abstract class GammaFunctions {
 
     /*
      * Compute the following ratio with higher accuracy that would be had from doing it directly.
-     * 
+     *
      * dnorm (x, 0, 1, FALSE) ---------------------------------- pnorm (x, 0, 1, lower_tail, FALSE)
-     * 
+     *
      * Abramowitz & Stegun 26.2.12
      */
     private static double dpnorm(double x, boolean lowerTail, double lp) {
         /*
          * So as not to repeat a pnorm call, we expect
-         * 
+         *
          * lp == pnorm (x, 0, 1, lower_tail, TRUE)
-         * 
+         *
          * but use it only in the non-critical case where either x is small or p==exp(lp) is close
          * to 1.
          */
@@ -1254,7 +1254,7 @@ public abstract class GammaFunctions {
         }
     }
 
-    private static double pgamma(double x, double alph, double scale, boolean lowerTail, boolean logp) {
+    public static double pgamma(double x, double alph, double scale, boolean lowerTail, boolean logp) {
         double localX = x;
         if (Double.isNaN(localX) || Double.isNaN(alph) || Double.isNaN(scale)) {
             return localX + alph + scale;
@@ -1555,24 +1555,24 @@ public abstract class GammaFunctions {
             /*
              * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
              * lower=T, log=F Particularly *not* for log_p !
-             * 
+             *
              * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-             * 
+             *
              * Note that we do want symmetry(0), lower/upper -> hence use y
              */
         } else if ((logp && y < 1e170) /* avoid underflow below */
         /*
          * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make use of Abramowitz
          * & Stegun, 26.2.13, something like
-         * 
+         *
          * xsq = x*x;
-         * 
+         *
          * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) / (xsq+2.); else
          * del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) + log1p(-del);ccum = log1p(-exp(*cum));
          * /.* ~ log(1) = 0 *./
-         * 
+         *
          * swap_tail;
-         * 
+         *
          * [Yes, but xsq might be infinite.]
          */
                         || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {
