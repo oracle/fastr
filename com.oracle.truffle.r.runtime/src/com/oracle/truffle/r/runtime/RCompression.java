@@ -22,25 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 
 import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
-import org.tukaani.xz.LZMA2InputStream;
-import org.tukaani.xz.XZInputStream;
-
 /**
- * Abstracts the implementation of the various forms of compression used in R.
+ * Abstracts the implementation of the various forms of compression used in R. Since the C API for
+ * LZMA is very complex (as used by GnuR), we use an 'xz' subprocess to do the work.
  */
 public class RCompression {
     public enum Type {
@@ -104,7 +98,7 @@ public class RCompression {
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
             case LZMA:
-                return lzmaUncompressInternal(udata, cdata);
+                return lzmaUncompress(udata, cdata);
             default:
                 assert false;
                 return false;
@@ -166,58 +160,68 @@ public class RCompression {
 
     }
 
-    private static boolean lzmaUncompressInternal(byte[] udata, byte[] data) {
-        int dictSize = udata.length < LZMA2InputStream.DICT_SIZE_MIN ? LZMA2InputStream.DICT_SIZE_MIN : udata.length;
-        try (LZMA2InputStream lzmaStream = new LZMA2InputStream(new ByteArrayInputStream(data), dictSize)) {
-            int totalRead = 0;
-            int n;
-            while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
-                totalRead += n;
+    private static boolean lzmaUncompress(byte[] udata, byte[] data) {
+        int rc;
+        ProcessBuilder pb = new ProcessBuilder("xz", "--decompress", "--format=raw", "--lzma2", "--stdout");
+        pb.redirectError(Redirect.INHERIT);
+        try {
+            Process p = pb.start();
+            OutputStream os = p.getOutputStream();
+            InputStream is = p.getInputStream();
+            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, udata);
+            readThread.start();
+            os.write(data);
+            os.close();
+            rc = p.waitFor();
+            if (rc == 0) {
+                readThread.join();
+                if (readThread.totalRead != udata.length) {
+                    return false;
+                }
             }
-            return totalRead == udata.length;
-        } catch (IOException ex) {
+        } catch (InterruptedException | IOException ex) {
             return false;
         }
+        return rc == 0;
     }
 
-    @FunctionalInterface
-    private interface CreateInStream<T extends InputStream> {
-        InputStream create(InputStream base) throws IOException;
-    }
-
+    /**
+     * This is used by {@link GZIPRConnection}.
+     */
     public static byte[] lzmaUncompressFromFile(String path) {
-        try {
-            return genericUncompressFromFile(path, (is) -> new XZInputStream(is));
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        return genericUncompressFromFile(new String[]{"xz", "--decompress", "--lzma2", "--stdout", path});
     }
 
     public static byte[] bzipUncompressFromFile(String path) {
-        try {
-            return genericUncompressFromFile(path, (is) -> new BZip2CompressorInputStream(is));
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        return genericUncompressFromFile(new String[]{"bzip2", "-dc", path});
     }
 
-    private static <T extends InputStream> byte[] genericUncompressFromFile(String path, CreateInStream<T> creator) throws IOException {
-        byte[] data = Files.readAllBytes(Paths.get(path));
-        byte[] buffer = new byte[data.length * 4];
-        try (InputStream in = creator.create(new ByteArrayInputStream(data))) {
-            int totalRead = 0;
-            int n;
-            while ((n = in.read(buffer, totalRead, buffer.length - totalRead)) > 0) {
-                totalRead += n;
-                if (totalRead == buffer.length) {
-                    byte[] newbuffer = new byte[buffer.length * 2];
-                    System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
-                    buffer = newbuffer;
-                }
+    private static byte[] genericUncompressFromFile(String[] command) {
+        int rc;
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectError(Redirect.INHERIT);
+        try {
+            Process p = pb.start();
+            InputStream is = p.getInputStream();
+            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
+            readThread.start();
+            rc = p.waitFor();
+            if (rc == 0) {
+                readThread.join();
+                return readThread.getData();
             }
-            byte[] result = new byte[totalRead];
-            System.arraycopy(buffer, 0, result, 0, totalRead);
-            return result;
+        } catch (InterruptedException | IOException ex) {
+            // fall through
         }
+        throw RInternalError.shouldNotReachHere(join(command));
+    }
+
+    private static String join(String[] args) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : args) {
+            sb.append(s);
+            sb.append(' ');
+        }
+        return sb.toString();
     }
 }
