@@ -22,4 +22,10 @@ public class TestBuiltin_assign extends TestBase {
     public void testassign1() {
         assertEval("argv <- structure(list(x = '`', value = TRUE), .Names = c('x',     'value'));do.call('assign', argv)");
     }
+
+    @Test
+    public void testassign() {
+        assertEval("x <- c(1,2,4); e <- new.env(); assign('foo', x, e); x[[1]] <- 5; x; get('foo', e)");
+        assertEval("x <- c(1,2,4); e <- new.env(); assign('foo', x, e, inherits=0); x[[1]] <- 5; x; get('foo', e)");
+    }
 }
