@@ -33,6 +33,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -45,7 +47,7 @@ public abstract class SetVisibilityNode extends Node {
 
     public abstract void execute(VirtualFrame frame, RVisibility visibility);
 
-    public abstract void executeAfterCall(VirtualFrame frame);
+    public abstract void executeAfterCall(VirtualFrame frame, RCaller caller);
 
     public abstract void executeEndOfFunction(VirtualFrame frame);
 
@@ -75,7 +77,7 @@ public abstract class SetVisibilityNode extends Node {
         }
 
         @Override
-        public void executeAfterCall(VirtualFrame frame) {
+        public void executeAfterCall(VirtualFrame frame, RCaller caller) {
             // nothing to do
         }
 
@@ -102,7 +104,7 @@ public abstract class SetVisibilityNode extends Node {
         }
 
         @Override
-        public void executeAfterCall(VirtualFrame frame) {
+        public void executeAfterCall(VirtualFrame frame, RCaller caller) {
             // nothing to do
         }
 
@@ -119,12 +121,16 @@ public abstract class SetVisibilityNode extends Node {
 
         @CompilationFinal private FrameSlot frameSlot;
 
-        @Override
-        public void execute(Frame frame, boolean value) {
+        private void ensureFrameSlot(Frame frame) {
             if (frameSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
             }
+        }
+
+        @Override
+        public void execute(Frame frame, boolean value) {
+            ensureFrameSlot(frame);
             frame.setObject(frameSlot, value);
         }
 
@@ -138,24 +144,18 @@ public abstract class SetVisibilityNode extends Node {
         }
 
         @Override
-        public void executeAfterCall(VirtualFrame frame) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
-            }
-            frame.setObject(frameSlot, null);
+        public void executeAfterCall(VirtualFrame frame, RCaller caller) {
+            ensureFrameSlot(frame);
+            frame.setObject(frameSlot, caller.getVisibility());
         }
 
         @Override
         public void executeEndOfFunction(VirtualFrame frame) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
-            }
+            ensureFrameSlot(frame);
             try {
                 Object visibility = frame.getObject(frameSlot);
                 if (visibility != null) {
-                    RContext.getInstance().setVisible(visibility == Boolean.TRUE);
+                    RArguments.getCall(frame).setVisibility(visibility == Boolean.TRUE);
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere(e);

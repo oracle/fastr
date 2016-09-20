@@ -66,7 +66,7 @@ public final class RInternalCode {
             evaluatedEnvironment.setParent(statsPackage);
             // caller is put into arguments by eval, internal code is assumed to be well-behaved and
             // not accessing it
-            context.getThisEngine().eval(parsedCode, evaluatedEnvironment, /* caller: */null);
+            context.getThisEngine().eval(parsedCode, evaluatedEnvironment, RCaller.createInvalid(null));
             return evaluatedEnvironment;
         } catch (ParseException e) {
             throw e.throwAsRError();

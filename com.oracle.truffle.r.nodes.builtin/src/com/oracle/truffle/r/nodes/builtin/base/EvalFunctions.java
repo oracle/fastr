@@ -134,13 +134,13 @@ public class EvalFunctions {
                 try {
                     return RContext.getEngine().eval((RExpression) expr1, envir1, rCaller);
                 } finally {
-                    visibility.executeAfterCall(frame);
+                    visibility.executeAfterCall(frame, rCaller);
                 }
             } else if (expr1 instanceof RLanguage) {
                 try {
                     return RContext.getEngine().eval((RLanguage) expr1, envir1, rCaller);
                 } finally {
-                    visibility.executeAfterCall(frame);
+                    visibility.executeAfterCall(frame, rCaller);
                 }
             } else {
                 // just return value

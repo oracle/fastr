@@ -57,7 +57,7 @@ public final class CallRFunctionNode extends Node {
         try {
             return callNode.call(frame, callArgs);
         } finally {
-            visibility.executeAfterCall(frame);
+            visibility.executeAfterCall(frame, call);
         }
     }
 
