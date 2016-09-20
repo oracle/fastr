@@ -160,5 +160,7 @@ public class TestBuiltin_order extends TestBase {
         assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
 
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
+
+        assertEval("order(c('40 50', '405', '40 51', '4028', '40 20', '40 30', '404'))");
     }
 }
