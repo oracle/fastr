@@ -11,7 +11,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.DecimalFormat;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -329,6 +328,12 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
+    public static String rawToHexString(RRaw operand) {
+        int value = raw2int(operand);
+        char[] digits = new char[]{Character.forDigit((value & 0xF0) >> 4, 16), Character.forDigit(value & 0x0F, 16)};
+        return new String(digits);
+    }
+
     @TruffleBoundary
     public static String rawToString(RRaw operand) {
         return intToString(raw2int(operand));
@@ -564,11 +569,6 @@ public class RRuntime {
             return STRING_NaN;
         }
 
-        /*
-         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
-         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
-         * format.format(operand);
-         */
         if (operand < 1000000000000L && ((long) operand) == operand) {
             return Long.toString((long) operand);
         }
@@ -579,16 +579,15 @@ public class RRuntime {
         // // not quite correct but better than nothing for now...
         // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
         // }
-        if (digitsBehindDot == -1) {
-            return Double.toString(operand);
-        } else {
-            StringBuilder sb = new StringBuilder("#.");
-            for (int i = 0; i < digitsBehindDot; i++) {
-                sb.append('#');
-            }
-            DecimalFormat df = new DecimalFormat(sb.toString());
-            return df.format(operand);
-        }
+
+        // We want to print the number without scientific notation and without trailing zeros after
+        // the decimal point. This is achieved by setting the maximum digits to a large enough
+        // number.
+        java.text.DecimalFormat format = new java.text.DecimalFormat();
+        format.setMaximumIntegerDigits(32);
+        format.setMaximumFractionDigits(digitsBehindDot == -1 ? 32 : digitsBehindDot);
+        format.setGroupingUsed(false);
+        return format.format(operand);
     }
 
     public static String doubleToStringNoCheck(double operand) {
