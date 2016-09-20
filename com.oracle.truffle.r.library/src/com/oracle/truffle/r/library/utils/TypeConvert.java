@@ -58,7 +58,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     private static RIntVector readIntVector(RAbstractStringVector x, int firstPos, int firstVal, RAbstractStringVector naStrings) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.INT_NA);
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        boolean complete = canBeComplete(firstPos);
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
@@ -72,7 +72,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     private static RDoubleVector readDoubleVector(RAbstractStringVector x, int firstPos, double firstVal, RAbstractStringVector naStrings) {
         double[] data = new double[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.DOUBLE_NA);
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        boolean complete = canBeComplete(firstPos);
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
@@ -86,7 +86,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     private static RLogicalVector readLogicalVector(RAbstractStringVector x, int firstPos, byte firstVal, RAbstractStringVector naStrings) {
         byte[] data = new byte[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.LOGICAL_NA);
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        boolean complete = canBeComplete(firstPos);
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
@@ -97,6 +97,10 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         return RDataFactory.createLogicalVector(data, complete);
     }
 
+    private static boolean canBeComplete(int firstNonNAPos) {
+        return firstNonNAPos == 0 ? RDataFactory.COMPLETE_VECTOR : RDataFactory.INCOMPLETE_VECTOR;
+    }
+
     @Specialization
     protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
         if (x.getLength() == 0) {
@@ -104,7 +108,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         }
 
         int i = 0;
-        while (isNA(x.getDataAt(i), naStrings) && i < x.getLength()) {
+        while (i < x.getLength() && isNA(x.getDataAt(i), naStrings)) {
             i++;
         }
 

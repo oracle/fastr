@@ -12,7 +12,6 @@
 package com.oracle.truffle.r.library.utils;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -45,10 +44,9 @@ public final class WriteTable extends RExternalBuiltinNode {
     @TruffleBoundary
     private static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn)
                     throws IOException, IllegalArgumentException {
-        OutputStream os = con.getOutputStream();
         String tmp = null;
         if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
-            executeDataFrame(os, (RVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
+            executeDataFrame(con, (RVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
         } else { /* A matrix */
 
             // if (!isVectorAtomic(x))
@@ -64,11 +62,12 @@ public final class WriteTable extends RExternalBuiltinNode {
                     // R_CheckUserInterrupt();
                 }
                 if (!(rnames instanceof RNull)) {
-                    os.write(new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString().getBytes());
+                    con.writeString(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec), false);
+                    con.writeString(csep, false);
                 }
                 for (int j = 0; j < nc; j++) {
                     if (j > 0) {
-                        os.write(csep.getBytes());
+                        con.writeString(csep, false);
                     }
                     if (isna(x, i + j * nr)) {
                         tmp = cna;
@@ -76,16 +75,16 @@ public final class WriteTable extends RExternalBuiltinNode {
                         tmp = encodeElement2(x, i + j * nr, quoteCol[j], qmethod, cdec);
                         /* if(cdec) change_dec(tmp, cdec, TYPEOF(x)); */
                     }
-                    os.write(tmp.getBytes());
+                    con.writeString(tmp, false);
                 }
-                os.write(ceol.getBytes());
+                con.writeString(ceol, false);
             }
 
         }
         return RNull.instance;
     }
 
-    private static void executeDataFrame(OutputStream os, RVector x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
+    private static void executeDataFrame(RConnection con, RVector x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
                     boolean quoteRn)
                     throws IOException {
         String tmp;
@@ -114,12 +113,12 @@ public final class WriteTable extends RExternalBuiltinNode {
             // R_CheckUserInterrupt();
             if (!(rnames instanceof RNull)) {
                 tmp = new StringBuffer(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep).toString();
-                os.write(tmp.getBytes());
+                con.writeString(tmp, false);
             }
             for (int j = 0; j < nc; j++) {
                 Object xjObj = x.getDataAtAsObject(j);
                 if (j > 0) {
-                    os.write(csep.getBytes());
+                    con.writeString(csep, false);
                 }
                 if (xjObj instanceof RAbstractContainer) {
                     RAbstractContainer xj = (RAbstractContainer) xjObj;
@@ -137,9 +136,9 @@ public final class WriteTable extends RExternalBuiltinNode {
                     tmp = encodePrimitiveElement(xjObj, cna, quoteRn, qmethod);
                     /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
                 }
-                os.write(tmp.getBytes());
+                con.writeString(tmp, false);
             }
-            os.write(ceol.getBytes());
+            con.writeString(ceol, false);
         }
     }
 
@@ -191,7 +190,7 @@ public final class WriteTable extends RExternalBuiltinNode {
             return RRuntime.isNA(v) ? cna : RRuntime.complexToStringNoCheck(v);
         } else if (o instanceof RRaw) {
             RRaw v = (RRaw) o;
-            return RRuntime.rawToString(v);
+            return RRuntime.rawToHexString(v);
         }
         throw RInternalError.unimplemented();
     }
@@ -234,7 +233,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         }
         if (x instanceof RAbstractRawVector) {
             RAbstractRawVector v = (RAbstractRawVector) x;
-            return RRuntime.rawToString(v.getDataAt(indx));
+            return RRuntime.rawToHexString(v.getDataAt(indx));
         }
         throw RInternalError.unimplemented();
     }
