@@ -180,21 +180,41 @@ public class RChannel {
 
     private static class SerializedEnv {
 
-        private REnvironment env;
-        // parent can be SerializedEnv or byte[]
-        private Object parent;
+        public static class Bindings {
+            private String[] names;
+            private Object[] values;
 
-        SerializedEnv(REnvironment env, Object parent) {
-            this.env = env;
-            this.parent = parent;
+            public Bindings(String[] names, Object[] values) {
+                this.names = names;
+                this.values = values;
+            }
         }
 
-        public REnvironment getEnv() {
-            return env;
+        private Bindings bindings;
+        // parent can be SerializedEnv or byte[]
+        private Object parent;
+        private RAttributes attributes;
+
+        SerializedEnv(Bindings bindings, Object parent, RAttributes attributes) {
+            this.bindings = bindings;
+            this.parent = parent;
+            this.attributes = attributes;
+        }
+
+        public String[] getNames() {
+            return bindings.names;
+        }
+
+        public Object[] getValues() {
+            return bindings.values;
         }
 
         public Object getParent() {
             return parent;
+        }
+
+        public RAttributes getAttributes() {
+            return attributes;
         }
     }
 
@@ -255,16 +275,6 @@ public class RChannel {
     }
 
     @TruffleBoundary
-    private static REnvironment convertEnvAttributesToPrivate(REnvironment env, REnvironment shareableEnv) throws IOException {
-        RAttributes attr = env.getAttributes();
-        RAttributes newAttr = createShareableSlow(attr);
-        if (newAttr != attr) {
-            shareableEnv.initAttributes(newAttr);
-        }
-        return shareableEnv;
-    }
-
-    @TruffleBoundary
     private static Object convertObjectAttributesToPrivate(Object msg) throws IOException {
         RAttributable attributable = (RAttributable) msg;
         RAttributes attr = attributable.getAttributes();
@@ -287,14 +297,15 @@ public class RChannel {
         }
     }
 
-    private static REnvironment convertPrivateEnv(Object msg) throws IOException {
+    private static SerializedEnv convertPrivateEnv(Object msg) throws IOException {
         REnvironment env = (REnvironment) msg;
-        REnvironment newEnv = createShareable(env);
-        if (env.getAttributes() != null) {
-            return convertEnvAttributesToPrivate(env, newEnv);
-        } else {
-            return newEnv;
+        RAttributes attributes = env.getAttributes();
+        if (attributes != null) {
+            attributes = createShareableSlow(attributes, true);
         }
+        SerializedEnv.Bindings bindings = createShareable(env);
+
+        return new SerializedEnv(bindings, convertPrivateSlow(env.getParent()), attributes);
     }
 
     private static SerializedPromise convertPrivatePromise(Object msg) throws IOException {
@@ -331,7 +342,7 @@ public class RChannel {
         if (o instanceof RList) {
             return convertPrivateListSlow(o);
         } else if (shareableEnv(o)) {
-            return new SerializedEnv(convertPrivateEnv(o), convertPrivateSlow(((REnvironment) o).getParent()));
+            return convertPrivateEnv(o);
         } else if (o instanceof RPromise) {
             return convertPrivatePromise(o);
         } else if (!serializeObject(o)) {
@@ -372,17 +383,14 @@ public class RChannel {
     }
 
     @TruffleBoundary
-    private static REnvironment createShareable(REnvironment e) throws IOException {
-        // always create a new environment as another context cannot be allowed to modify
-        // current
-        // one's bindings
-        REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
-        String[] bindings = REnvTruffleFrameAccess.getStringIdentifiers(e.getFrame().getFrameDescriptor());
-        for (String binding : bindings) {
-            Object value = convertPrivate(e.get(binding));
-            env.safePut(binding, value);
+    private static SerializedEnv.Bindings createShareable(REnvironment e) throws IOException {
+        String[] names = REnvTruffleFrameAccess.getStringIdentifiers(e.getFrame().getFrameDescriptor());
+        Object[] values = new Object[names.length];
+        int ind = 0;
+        for (String n : names) {
+            values[ind++] = convertPrivate(e.get(n));
         }
-        return env;
+        return new SerializedEnv.Bindings(names, values);
     }
 
     /*
@@ -428,7 +436,7 @@ public class RChannel {
             }
         } else if (shareableEnv(msg)) {
             try {
-                msg = new SerializedEnv(convertPrivateEnv(msg), convertPrivate(((REnvironment) msg).getParent()));
+                msg = convertPrivateEnv(msg);
             } catch (IOException x) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable environment");
             }
@@ -492,17 +500,21 @@ public class RChannel {
 
     @TruffleBoundary
     private static REnvironment unserializeEnv(SerializedEnv e) throws IOException {
-        REnvironment env = e.getEnv();
-        String[] bindings = REnvTruffleFrameAccess.getStringIdentifiers(env.getFrame().getFrameDescriptor());
-        for (String binding : bindings) {
-            Object value = env.get(binding);
-            Object newValue = unserializeObject(value);
-            if (newValue != value) {
-                env.safePut(binding, newValue);
-            }
+        Object[] values = e.getValues();
+        String[] names = e.getNames();
+        assert values.length == names.length;
+        REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
+        int ind = 0;
+        for (String n : names) {
+            Object newValue = unserializeObject(values[ind++]);
+            env.safePut(n, newValue);
         }
         REnvironment parent = (REnvironment) unserializeObject(e.getParent());
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
+        RAttributes attributes = e.getAttributes();
+        if (attributes != null) {
+            env.initAttributes(attributes);
+        }
         return env;
     }
 
