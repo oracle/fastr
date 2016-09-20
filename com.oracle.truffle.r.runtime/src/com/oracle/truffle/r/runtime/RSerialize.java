@@ -216,21 +216,9 @@ public class RSerialize {
         return i >> 8;
     }
 
-    private abstract static class Common {
-
+    public abstract static class RefCounter {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
-        protected final CallHook hook;
-        protected final ContextStateImpl contextState;
-
-        protected Common(CallHook hook) {
-            this.hook = hook;
-            this.contextState = getContextState();
-        }
-
-        protected static IOException formatError(byte format, boolean ok) throws IOException {
-            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
-        }
 
         protected Object addReadRef(Object item) {
             assert item != null;
@@ -254,6 +242,22 @@ public class RSerialize {
             }
             return -1;
         }
+    }
+
+    private abstract static class Common extends RefCounter {
+
+        protected final CallHook hook;
+        protected final ContextStateImpl contextState;
+
+        protected Common(CallHook hook) {
+            this.hook = hook;
+            this.contextState = getContextState();
+        }
+
+        protected static IOException formatError(byte format, boolean ok) throws IOException {
+            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
+        }
+
     }
 
     public static final int DEFAULT_VERSION = 2;
