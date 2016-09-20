@@ -88,7 +88,7 @@ public final class MapperSamplerFactory implements ArgumentMapperFactory, Mapper
             if (x == null) {
                 return defaultValue == RRuntime.INT_NA ? RRuntime.STRING_NA : "" + (char) defaultValue;
             } else {
-                return x == RRuntime.INT_NA ? RRuntime.STRING_NA : "" + (char) x.intValue();
+                return x.equals(RRuntime.INT_NA) ? RRuntime.STRING_NA : x.toString();
             }
         }, samples(defaultValue == RRuntime.INT_NA ? RRuntime.STRING_NA : "" + (char) defaultValue), CastUtils.<String> samples(), String.class, Integer.class);
     }

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.ValuePredicateArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
