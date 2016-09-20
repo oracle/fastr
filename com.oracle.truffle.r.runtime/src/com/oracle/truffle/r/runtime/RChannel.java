@@ -33,6 +33,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -244,6 +245,26 @@ public class RChannel {
 
     }
 
+    private static class SerializedAttributable {
+
+        private RAttributes attributes;
+        private byte[] serializedAttributable;
+
+        public SerializedAttributable(RAttributes attributes, byte[] serializedAttributable) {
+            this.attributes = attributes;
+            this.serializedAttributable = serializedAttributable;
+        }
+
+        public RAttributes getAttributes() {
+            return attributes;
+        }
+
+        public byte[] getSerializedAttributable() {
+            return serializedAttributable;
+        }
+
+    }
+
     private static void makeShared(Object o) {
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
@@ -254,7 +275,7 @@ public class RChannel {
     @TruffleBoundary
     private static Object convertListAttributesToPrivate(RList l, Object shareableList) throws IOException {
         RAttributes attr = l.getAttributes();
-        RAttributes newAttr = createShareableSlow(attr);
+        RAttributes newAttr = createShareableSlow(attr, false);
         if (newAttr != attr) {
             RList newList;
             if (shareableList == l) {
@@ -278,7 +299,7 @@ public class RChannel {
     private static Object convertObjectAttributesToPrivate(Object msg) throws IOException {
         RAttributable attributable = (RAttributable) msg;
         RAttributes attr = attributable.getAttributes();
-        RAttributes newAttr = createShareableSlow(attr);
+        RAttributes newAttr = createShareableSlow(attr, false);
         if (newAttr != attr && attributable instanceof RShareable) {
             attributable = (RAttributable) ((RShareable) msg).copy();
         }
@@ -318,6 +339,25 @@ public class RChannel {
             return new SerializedPromise(convertPrivate(env), RUnboundValue.instance, serializedPromiseRep);
         }
 
+    }
+
+    private static SerializedAttributable convertPrivateAttributable(Object msg) throws IOException {
+        // do full serialization but handle attributes separately (no reason to serialize them
+        // unconditionally)
+        RAttributable attributable = (RAttributable) msg;
+        RAttributes attributes = attributable.getAttributes();
+        if (attributes != null) {
+            assert attributable instanceof RAttributeStorage;
+            // TODO: we assume that the following call will reset attributes without clearing them -
+            // should we define a new method to be used here?
+            attributable.initAttributes(null);
+        }
+        byte[] serializedAttributable = RSerialize.serialize(attributable, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+        if (attributes != null) {
+            attributable.initAttributes(attributes);
+            attributes = createShareableSlow(attributes, true);
+        }
+        return new SerializedAttributable(attributes, serializedAttributable);
     }
 
     private static boolean shareableEnv(Object o) {
@@ -361,7 +401,8 @@ public class RChannel {
                 return o;
             }
         } else {
-            return RSerialize.serialize(o, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+            assert o instanceof RAttributable;
+            return convertPrivateAttributable(o);
         }
     }
 
@@ -407,15 +448,15 @@ public class RChannel {
     }
 
     @TruffleBoundary
-    private static RAttributes createShareableSlow(RAttributes attr) throws IOException {
-        RAttributes newAttr = attr;
+    private static RAttributes createShareableSlow(RAttributes attr, boolean forceCopy) throws IOException {
+        RAttributes newAttr = forceCopy ? RAttributes.create(attr) : attr;
         for (RAttribute a : attr) {
             Object val = a.getValue();
             Object newVal = convertPrivate(val);
             if (val != newVal) {
                 // conversion happened update element
-                if (attr == newAttr) {
-                    // create a shallow copy
+                if (attr == newAttr && !forceCopy) {
+                    // create a shallow copy if not already created
                     newAttr = attr.copy();
                 }
                 newAttr.put(a.getName(), newVal);
@@ -458,7 +499,12 @@ public class RChannel {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
             }
         } else {
-            msg = RSerialize.serialize(msg, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+            assert msg instanceof RAttributable;
+            try {
+                msg = convertPrivateAttributable(msg);
+            } catch (IOException x) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable attributable");
+            }
         }
         try {
             (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
@@ -469,7 +515,6 @@ public class RChannel {
 
     private static Object unserializeObject(Object el) throws IOException {
         Object ret = el;
-        boolean processAttributes = true;
         if (el instanceof SerializedList) {
             RList elList = ((SerializedList) el).getList();
             unserializeListSlow(elList);
@@ -478,11 +523,10 @@ public class RChannel {
             ret = unserializeEnv((SerializedEnv) el);
         } else if (el instanceof SerializedPromise) {
             ret = unserializePromise((SerializedPromise) el);
-        } else if (el instanceof byte[]) {
-            processAttributes = false;
-            ret = RSerialize.unserialize((byte[]) el, null, null, null);
+        } else if (el instanceof SerializedAttributable) {
+            ret = unserializeAttributable((SerializedAttributable) el);
         }
-        if (processAttributes && ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
+        if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
             unserializeAttributes(((RAttributable) ret).getAttributes());
         }
         return ret;
@@ -532,6 +576,17 @@ public class RChannel {
     }
 
     @TruffleBoundary
+    private static RAttributable unserializeAttributable(SerializedAttributable a) throws IOException {
+        RAttributes attributes = a.getAttributes();
+        RAttributable attributable = (RAttributable) RSerialize.unserialize(a.getSerializedAttributable(), null, null, null);
+        if (attributes != null) {
+            assert attributable.getAttributes() == null;
+            attributable.initAttributes(attributes);
+        }
+        return attributable;
+    }
+
+    @TruffleBoundary
     private static void unserializeListSlow(RList list) throws IOException {
         unserializeList(list);
     }
@@ -553,7 +608,6 @@ public class RChannel {
     private static Object processedReceivedMessage(Object msg) {
         try {
             Object ret = msg;
-            boolean processAttributes = true;
             if (msg instanceof SerializedList) {
                 RList list = ((SerializedList) msg).getList();
                 // list and attributes are already private (shallow copies - do the appropriate
@@ -564,11 +618,10 @@ public class RChannel {
                 ret = unserializeEnv((SerializedEnv) msg);
             } else if (msg instanceof SerializedPromise) {
                 ret = unserializePromise((SerializedPromise) msg);
-            } else if (msg instanceof byte[]) {
-                processAttributes = false;
-                ret = RSerialize.unserialize((byte[]) msg, null, null, null);
+            } else if (msg instanceof SerializedAttributable) {
+                ret = unserializeAttributable((SerializedAttributable) msg);
             }
-            if (processAttributes && ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
+            if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
                 unserializeAttributes(((RAttributable) ret).getAttributes());
             }
             return ret;
