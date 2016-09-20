@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -66,6 +67,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "as.function.default", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class AsFunction extends RBuiltinNode {
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(RExpression.class)), RError.SHOW_CALLER2, RError.Message.TYPE_EXPECTED, RType.List.getName());
@@ -74,7 +77,7 @@ public abstract class AsFunction extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RFunction asFunction(RAbstractListVector x, REnvironment envir) {
+    protected RFunction asFunction(RAbstractVector x, REnvironment envir) {
         if (x.getLength() == 0) {
             throw RError.error(this, RError.Message.GENERIC, "argument must have length at least 1");
         }
@@ -85,15 +88,15 @@ public abstract class AsFunction extends RBuiltinNode {
             saveArguments = SaveArgumentsNode.NO_ARGS;
             formals = FormalArguments.NO_ARGS;
         } else {
-            assert x.getNames() != null;
-            RStringVector names = x.getNames();
+            assert x.getNames(attrProfiles) != null;
+            RStringVector names = x.getNames(attrProfiles);
             String[] argumentNames = new String[x.getLength() - 1];
             RNode[] defaultValues = new RNode[x.getLength() - 1];
             AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[x.getLength() - 1];
             RNode[] init = new RNode[x.getLength() - 1];
             for (int i = 0; i < x.getLength() - 1; i++) {
                 final RNode defaultValue;
-                Object arg = x.getDataAt(i);
+                Object arg = x.getDataAtAsObject(i);
                 if (arg == RMissing.instance) {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
@@ -129,9 +132,9 @@ public abstract class AsFunction extends RBuiltinNode {
         }
 
         RBaseNode body;
-        Object bodyObject = x.getDataAt(x.getLength() - 1);
+        Object bodyObject = x.getDataAtAsObject(x.getLength() - 1);
         if (bodyObject instanceof RLanguage) {
-            body = ((RLanguage) x.getDataAt(x.getLength() - 1)).getRep();
+            body = ((RLanguage) x.getDataAtAsObject(x.getLength() - 1)).getRep();
         } else if (bodyObject instanceof RSymbol) {
             body = ReadVariableNode.create(((RSymbol) bodyObject).getName());
         } else {
@@ -148,11 +151,5 @@ public abstract class AsFunction extends RBuiltinNode {
         RDeparse.ensureSourceSection(rootNode);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame());
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RFunction asFunction(RExpression x, REnvironment envir) {
-        return asFunction(x.getList(), envir);
     }
 }

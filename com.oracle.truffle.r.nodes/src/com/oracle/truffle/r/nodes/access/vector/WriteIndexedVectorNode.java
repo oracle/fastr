@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -469,7 +469,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListVector, RTypedValue> {
+    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListBaseVector, RTypedValue> {
 
         private final boolean setListElementAsObject;
         private final boolean isReplace;
@@ -487,7 +487,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
 
         @Override
-        void apply(RAbstractListVector leftAccess, Object leftStore, int leftIndex, RTypedValue rightAccess, Object rightStore, int rightIndex) {
+        void apply(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex, RTypedValue rightAccess, Object rightStore, int rightIndex) {
             Object rightValue;
             if (setListElementAsObject) {
                 rightValue = rightAccess;

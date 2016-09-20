@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RSharingAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
+public abstract class RVector extends RSharingAttributeStorage implements RAbstractVector, RFFIAccess {
 
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);

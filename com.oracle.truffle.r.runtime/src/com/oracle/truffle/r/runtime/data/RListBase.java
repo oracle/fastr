@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * {@code ExtractListElement}, which is a node that can extract an element of a list or abstract
  * vector and put it in the consistent sharing state.
  */
-public abstract class RListBase extends RVector implements RAbstractListVector {
+public abstract class RListBase extends RVector implements RAbstractListBaseVector {
 
     protected final Object[] data;
 

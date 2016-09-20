@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -163,8 +162,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
         final RVector extractedVector;
         switch (vectorType) {
-            case Language:
             case Expression:
+                extractedVector = RType.Expression.create(extractedVectorLength, false);
+                break;
+            case Language:
             case PairList:
                 extractedVector = RType.List.create(extractedVectorLength, false);
                 break;
@@ -194,7 +195,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
             switch (vectorType) {
                 case Expression:
-                    return new RExpression((RList) extractedVector);
+                    return extractedVector;
                 case Language:
                     return materializeLanguage(extractedVector);
                 default:

@@ -141,11 +141,7 @@ public abstract class Combine extends RBuiltinNode {
 
         RNode.reportWork(this, size);
 
-        if (cachedPrecedence == EXPRESSION_PRECEDENCE) {
-            return RDataFactory.createExpression((RList) result);
-        } else {
-            return result;
-        }
+        return result;
     }
 
     @ExplodeLoop
@@ -345,6 +341,7 @@ public abstract class Combine extends RBuiltinNode {
             case RAW_PRECEDENCE:
                 return RDataFactory.createRawVector(new byte[size], names);
             case EXPRESSION_PRECEDENCE:
+                return RDataFactory.createExpression(new Object[size], names);
             case LIST_PRECEDENCE:
                 return RDataFactory.createList(new Object[size], names);
             case NO_PRECEDENCE:

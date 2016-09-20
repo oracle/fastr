@@ -215,10 +215,16 @@ public enum RType {
                 return RDataFactory.createComplexVector(length, fillNA);
             case Character:
                 return RDataFactory.createStringVector(length, fillNA);
-            case List:
+            case Expression: {
+                Object[] data = new Object[length];
+                Arrays.fill(data, RNull.instance);
+                return RDataFactory.createExpression(data);
+            }
+            case List: {
                 Object[] data = new Object[length];
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
+            }
             case Raw:
                 return RDataFactory.createRawVector(length);
             default:

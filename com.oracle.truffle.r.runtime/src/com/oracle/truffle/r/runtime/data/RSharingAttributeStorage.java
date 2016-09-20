@@ -53,18 +53,18 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
     }
 
     @Override
-    public boolean isSharedPermanent() {
+    public final boolean isSharedPermanent() {
         return refCount == SHARED_PERMANENT_VAL;
     }
 
     @Override
-    public RSharingAttributeStorage makeSharedPermanent() {
+    public final RSharingAttributeStorage makeSharedPermanent() {
         refCount = SHARED_PERMANENT_VAL;
         return this;
     }
 
     @Override
-    public RTypedValue getNonShared() {
+    public final RTypedValue getNonShared() {
         if (isShared()) {
             RShareable res = copy();
             assert res.isTemporary();

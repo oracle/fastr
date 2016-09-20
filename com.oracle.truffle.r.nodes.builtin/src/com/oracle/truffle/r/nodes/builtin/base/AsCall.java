@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
@@ -78,13 +79,15 @@ public abstract class AsCall extends RBuiltinNode {
             RLanguage l = (RLanguage) x.getDataAt(0);
             f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getIdentifier();
         }
-        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x.getList()));
+        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x));
     }
 
-    private RArgsValuesAndNames makeNamesAndValues(RList x) {
+    private RArgsValuesAndNames makeNamesAndValues(RAbstractContainer x) {
         int length = x.getLength() - 1;
         Object[] values = new Object[length];
-        System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
+        for (int i = 0; i < length; i++) {
+            values[i] = x.getDataAtAsObject(i + 1);
+        }
         ArgumentsSignature signature;
         if (nullNamesProfile.profile(x.getNames(attrProfiles) == null)) {
             signature = ArgumentsSignature.empty(values.length);

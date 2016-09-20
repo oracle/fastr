@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -134,17 +133,17 @@ public abstract class Parse extends RBuiltinNode {
     private Object doParse(RConnection conn, int n, String[] lines, String prompt, Object srcFile, String encoding) {
         String coalescedLines = coalesce(lines);
         if (coalescedLines.length() == 0 || n == 0) {
-            return RDataFactory.createExpression(RDataFactory.createList());
+            return RDataFactory.createExpression(new Object[0]);
         }
         try {
             Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
             RExpression exprs = RContext.getEngine().parse(null, source);
             if (n > 0 && n < exprs.getLength()) {
-                RList list = exprs.getList();
-                Object[] listData = list.getDataCopy();
                 Object[] subListData = new Object[n];
-                System.arraycopy(listData, 0, subListData, 0, n);
-                exprs = RDataFactory.createExpression(RDataFactory.createList(subListData));
+                for (int i = 0; i < n; i++) {
+                    subListData[i] = exprs.getDataAt(i);
+                }
+                exprs = RDataFactory.createExpression(subListData);
             }
             // Handle the required R attributes
             if (srcFile instanceof REnvironment) {

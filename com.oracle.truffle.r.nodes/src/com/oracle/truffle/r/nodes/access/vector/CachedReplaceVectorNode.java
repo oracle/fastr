@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -192,9 +191,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
                     vector.initAttributes(attrs.copy());
                 }
-                break;
-            case Expression:
-                vector = ((RExpression) castVector).getList();
                 break;
             default:
                 vector = (RAbstractVector) castVector;

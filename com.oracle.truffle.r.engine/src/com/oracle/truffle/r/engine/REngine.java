@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -283,7 +284,7 @@ final class REngine implements Engine, Engine.Timings {
     public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
         List<RSyntaxNode> list = parseImpl(constants, source);
         Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
-        return RDataFactory.createExpression(RDataFactory.createList(data));
+        return RDataFactory.createExpression(data);
     }
 
     @Override
@@ -382,6 +383,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object eval(RExpression expr, MaterializedFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
             result = expr.getDataAt(i);
@@ -395,6 +397,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object eval(RLanguage expr, MaterializedFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         RNode n = (RNode) expr.getRep();
         // TODO perhaps this ought to be being checked earlier
         if (n instanceof ConstantNode) {

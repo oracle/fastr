@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -123,6 +124,8 @@ public abstract class Mapply extends RBuiltinNode {
                 INDEX_CACHE[i] = new RArgsValuesAndNames(new Object[]{i + 1}, I_INDEX);
             }
         }
+
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
@@ -213,13 +216,13 @@ public abstract class Mapply extends RBuiltinNode {
             }
             Object[] values = new Object[dotsLength + moreArgsLength];
             String[] names = new String[dotsLength + moreArgsLength];
-            RStringVector dotsNames = dots.getNames();
+            RStringVector dotsNames = dots.getNames(attrProfiles);
             if (dotsNames != null) {
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
                     names[listIndex] = dotsNames.getDataAt(listIndex).isEmpty() ? null : dotsNames.getDataAt(listIndex);
                 }
             }
-            RStringVector moreArgsNames = moreArgs.getNames();
+            RStringVector moreArgsNames = moreArgs.getNames(attrProfiles);
             for (int listIndex = dotsLength; listIndex < dotsLength + moreArgsLength; listIndex++) {
                 values[listIndex] = moreArgs.getDataAt(listIndex - dotsLength);
                 names[listIndex] = moreArgsNames == null ? null : (moreArgsNames.getDataAt(listIndex - dotsLength).isEmpty() ? null : moreArgsNames.getDataAt(listIndex - dotsLength));
@@ -258,11 +261,11 @@ public abstract class Mapply extends RBuiltinNode {
         protected ElementNode[] createElementNodeArray(RAbstractListVector dots, RAbstractListVector moreArgs) {
             int length = dots.getLength() + moreArgs.getLength();
             ElementNode[] elementNodes = new ElementNode[length];
-            RStringVector dotsNames = dots.getNames();
+            RStringVector dotsNames = dots.getNames(attrProfiles);
             for (int i = 0; i < dots.getLength(); i++) {
                 elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : (dotsNames.getDataAt(i).isEmpty() ? null : dotsNames.getDataAt(i))));
             }
-            RStringVector moreArgsNames = moreArgs.getNames();
+            RStringVector moreArgsNames = moreArgs.getNames(attrProfiles);
             for (int i = dots.getLength(); i < dots.getLength() + moreArgs.getLength(); i++) {
                 elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1),
                                 moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength()).isEmpty() ? null : moreArgsNames.getDataAt(i - dots.getLength())));
@@ -287,14 +290,14 @@ public abstract class Mapply extends RBuiltinNode {
         }
 
         protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {
-            if (list.getNames() == null && cachedList.getNames() == null) {
+            if (list.getNames(attrProfiles) == null && cachedList.getNames(attrProfiles) == null) {
                 return true;
-            } else if (list.getNames() == null || cachedList.getNames() == null) {
+            } else if (list.getNames(attrProfiles) == null || cachedList.getNames(attrProfiles) == null) {
                 return false;
             } else {
                 for (int i = 0; i < list.getLength(); i++) {
-                    String name = list.getNames().getDataAt(i);
-                    String cachedName = cachedList.getNames().getDataAt(i);
+                    String name = list.getNames(attrProfiles).getDataAt(i);
+                    String cachedName = cachedList.getNames(attrProfiles).getDataAt(i);
 
                     if (name == cachedName) {
                         continue;

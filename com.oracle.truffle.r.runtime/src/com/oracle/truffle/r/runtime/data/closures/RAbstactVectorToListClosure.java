@@ -22,10 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -68,10 +66,5 @@ final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbs
     @Override
     public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
-    }
-
-    @Override
-    public RStringVector getNames() {
-        throw RInternalError.shouldNotReachHere();
     }
 }
