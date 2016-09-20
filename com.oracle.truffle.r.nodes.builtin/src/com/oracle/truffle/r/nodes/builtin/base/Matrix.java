@@ -93,7 +93,7 @@ public abstract class Matrix extends RBuiltinNode {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         transpose = insert(TransposeNodeGen.create(null));
                     }
-                    res = (RVector) transpose.execute(res);
+                    res = (RVector<?>) transpose.execute(res);
                 }
                 if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
                     res = updateDimNames(res, dimnames);
@@ -109,7 +109,7 @@ public abstract class Matrix extends RBuiltinNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     transpose = insert(TransposeNodeGen.create(null));
                 }
-                res = (RVector) transpose.execute(res);
+                res = (RVector<?>) transpose.execute(res);
             }
             if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
                 res = updateDimNames(res, dimnames);

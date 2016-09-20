@@ -84,7 +84,7 @@ public class RowsumFunctions {
             int offsetg = 0;
 
             boolean isInt = xv instanceof RIntVector;
-            RVector result;
+            RVector<?> result;
             na.enable(xv);
             boolean complete = xv.isComplete();
 

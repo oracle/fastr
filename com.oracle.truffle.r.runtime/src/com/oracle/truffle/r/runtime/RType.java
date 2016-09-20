@@ -182,7 +182,7 @@ public enum RType {
         }
     }
 
-    public RVector getEmpty() {
+    public RVector<?> getEmpty() {
         switch (this) {
             case Double:
                 return RDataFactory.createEmptyDoubleVector();
@@ -203,7 +203,7 @@ public enum RType {
         }
     }
 
-    public RVector create(int length, boolean fillNA) {
+    public RVector<?> create(int length, boolean fillNA) {
         switch (this) {
             case Logical:
                 return RDataFactory.createLogicalVector(length, fillNA);

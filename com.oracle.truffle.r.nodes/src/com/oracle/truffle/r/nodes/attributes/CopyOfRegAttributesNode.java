@@ -40,7 +40,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
-    public abstract void execute(RAbstractVector source, RVector target);
+    public abstract void execute(RAbstractVector source, RVector<?> target);
 
     public static CopyOfRegAttributesNode create() {
         return CopyOfRegAttributesNodeGen.create();
@@ -48,7 +48,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(RAbstractVector source, RVector target) {
+    protected void copyNoAttributes(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
@@ -59,7 +59,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyAttributes(source)", contains = "copyNoAttributes")
-    protected void copyEmptyAttributes(RAbstractVector source, RVector target) {
+    protected void copyEmptyAttributes(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
@@ -70,7 +70,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(RAbstractVector source, RVector target) {
+    protected void copyDimOnly(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
@@ -81,7 +81,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(RAbstractVector source, RVector target) {
+    protected void copyNamesOnly(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
@@ -91,12 +91,12 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAbstractVector source, RVector target) {
+    protected void copyClassOnly(RAbstractVector source, RVector<?> target) {
         target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValueAtIndex(0)}));
     }
 
     @Specialization
-    protected void copyGeneric(RAbstractVector source, RVector target) {
+    protected void copyGeneric(RAbstractVector source, RVector<?> target) {
         RAttributes orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Object newRowNames = null;

@@ -137,7 +137,7 @@ public abstract class Combine extends RBuiltinNode {
         RStringVector namesVector = hasNamesProfile.profile(signatureHasNames || hasNames(elements)) ? foldNames(naNameBranch, naNameCheck, elements, size, cachedSignature) : null;
 
         // get the actual contents of the result
-        RVector result = foldContents(cachedPrecedence, elements, size, namesVector);
+        RVector<?> result = foldContents(cachedPrecedence, elements, size, namesVector);
 
         RNode.reportWork(this, size);
 
@@ -244,8 +244,8 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    private RVector foldContents(int cachedPrecedence, Object[] elements, int size, RStringVector namesVector) {
-        RVector result = createResultVector(cachedPrecedence, size, namesVector);
+    private RVector<?> foldContents(int cachedPrecedence, Object[] elements, int size, RStringVector namesVector) {
+        RVector<?> result = createResultVector(cachedPrecedence, size, namesVector);
         int pos = 0;
         for (Object element : elements) {
             pos += processContentElement(result, pos, element);
@@ -253,7 +253,7 @@ public abstract class Combine extends RBuiltinNode {
         return result;
     }
 
-    private int processContentElement(RVector result, int pos, Object element) {
+    private int processContentElement(RVector<?> result, int pos, Object element) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
             for (int i = 0; i < v.getLength(); i++) {
@@ -326,7 +326,7 @@ public abstract class Combine extends RBuiltinNode {
         return CombineNodeGen.create(null);
     }
 
-    private static RVector createResultVector(int precedence, int size, RStringVector names) {
+    private static RVector<?> createResultVector(int precedence, int size, RStringVector names) {
         switch (precedence) {
             case COMPLEX_PRECEDENCE:
                 return RDataFactory.createComplexVector(new double[size * 2], true, names);
@@ -434,8 +434,8 @@ public abstract class Combine extends RBuiltinNode {
         protected RAbstractVector noCopy(RAbstractVector vector, //
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile, //
                         @Cached("createBinaryProfile()") ConditionProfile hasDimNamesProfile) {
-            RVector materialized = vector.materialize();
-            RVector result = materialized.copyDropAttributes();
+            RVector<?> materialized = vector.materialize();
+            RVector<?> result = materialized.copyDropAttributes();
 
             RStringVector vecNames = materialized.getInternalNames();
             if (hasNamesProfile.profile(vecNames != null)) {

@@ -64,7 +64,7 @@ final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbs
     }
 
     @Override
-    public RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
     }
 }

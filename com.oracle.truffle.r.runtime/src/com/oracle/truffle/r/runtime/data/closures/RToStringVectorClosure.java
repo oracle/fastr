@@ -35,7 +35,7 @@ abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstr
     }
 
     @Override
-    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createStringVector(new String[newLength], newIsComplete);
     }
 

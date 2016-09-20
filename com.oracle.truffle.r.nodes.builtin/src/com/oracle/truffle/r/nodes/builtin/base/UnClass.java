@@ -46,7 +46,7 @@ public abstract class UnClass extends RBuiltinNode {
 
     @TruffleBoundary
     private static Object unClassVector(RAbstractVector arg) {
-        RVector resultVector = arg.materialize();
+        RVector<?> resultVector = arg.materialize();
         if (!resultVector.isTemporary()) {
             resultVector = resultVector.copy();
             resultVector.incRefCount();

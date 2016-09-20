@@ -156,7 +156,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
         RAbstractVector input = handleEach(x, each);
         RStringVector names = (RStringVector) handleEach(x.getNames(attrProfiles), each);
-        RVector r;
+        RVector<?> r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             names = (RStringVector) handleLengthOut(names, lengthOut, false);
             r = handleLengthOut(input, lengthOut, false);
@@ -174,7 +174,7 @@ public abstract class Repeat extends RBuiltinNode {
                     @Cached("create()") InitAttributesNode initAttributes,
                     @Cached("createNames()") PutAttributeNode putNames) {
         RStringVector names;
-        RVector r;
+        RVector<?> r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
             r = handleLengthOut(x, lengthOut, true);
@@ -190,8 +190,8 @@ public abstract class Repeat extends RBuiltinNode {
     /**
      * Prepare the input vector by replicating its elements.
      */
-    private static RVector handleEach(RAbstractVector x, int each) {
-        RVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
+    private static RVector<?> handleEach(RAbstractVector x, int each) {
+        RVector<?> r = x.createEmptySameType(x.getLength() * each, x.isComplete());
         for (int i = 0; i < x.getLength(); i++) {
             for (int j = i * each; j < (i + 1) * each; j++) {
                 r.transferElementSameType(j, x, i);
@@ -203,9 +203,9 @@ public abstract class Repeat extends RBuiltinNode {
     /**
      * Extend or truncate the vector to a specified length.
      */
-    private static RVector handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
+    private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
         if (x.getLength() == lengthOut) {
-            return (RVector) (copyIfSameSize ? x.copy() : x);
+            return (RVector<?>) (copyIfSameSize ? x.copy() : x);
         }
         return x.copyResized(lengthOut, false);
     }
@@ -213,7 +213,7 @@ public abstract class Repeat extends RBuiltinNode {
     /**
      * Replicate the vector a given number of times.
      */
-    private RVector handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
+    private RVector<?> handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
         if (oneTimeGiven.profile(times.getLength() == 1)) {
             // only one times value is given
             final int howManyTimes = times.getDataAt(0);
@@ -222,7 +222,7 @@ public abstract class Repeat extends RBuiltinNode {
                 throw invalidTimes();
             }
             if (replicateOnce.profile(howManyTimes == 1)) {
-                return (RVector) (copyIfSameSize ? x.copy() : x);
+                return (RVector<?>) (copyIfSameSize ? x.copy() : x);
             } else {
                 return x.copyResized(x.getLength() * howManyTimes, false);
             }
@@ -243,7 +243,7 @@ public abstract class Repeat extends RBuiltinNode {
                 resultLength += t;
             }
             // create and populate result vector
-            RVector r = x.createEmptySameType(resultLength, x.isComplete());
+            RVector<?> r = x.createEmptySameType(resultLength, x.isComplete());
             int wp = 0; // write pointer
             for (int i = 0; i < x.getLength(); i++) {
                 for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {

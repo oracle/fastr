@@ -68,7 +68,7 @@ public abstract class APerm extends RBuiltinNode {
         int[] dim = vector.getDimensions();
         final int diml = dim.length;
 
-        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         if (mustResize.profile(resize == RRuntime.LOGICAL_TRUE)) {
             int[] pDim = new int[diml];
@@ -111,7 +111,7 @@ public abstract class APerm extends RBuiltinNode {
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
 
-        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         result.setDimensions(resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 

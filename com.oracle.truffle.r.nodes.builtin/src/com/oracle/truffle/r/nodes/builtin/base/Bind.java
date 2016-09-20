@@ -445,18 +445,18 @@ public abstract class Bind extends RBaseNode {
             dimNamesB = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
         }
 
-        RVector res = (RVector) vec.copyWithNewDimensions(dims);
+        RVector<?> res = (RVector<?>) vec.copyWithNewDimensions(dims);
         res.setDimNames(RDataFactory.createList(type == BindType.cbind ? new Object[]{dimNamesA, dimNamesB} : new Object[]{dimNamesB, dimNamesA}));
         res.copyRegAttributesFrom(vec);
         return res;
     }
 
-    public RVector genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, boolean complete, String[] vecNames, boolean vecNamesComplete, int deparseLevel) {
+    public RVector<?> genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, boolean complete, String[] vecNames, boolean vecNamesComplete, int deparseLevel) {
 
         int[] resultDimensions = new int[2];
         int[] secondDims = new int[vectors.length];
         boolean notEqualRows = getResultDimensions(vectors, resultDimensions, secondDims);
-        RVector result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
+        RVector<?> result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
 
         int ind = 0;
         Object rowDimResultNames = RNull.instance;
@@ -531,12 +531,12 @@ public abstract class Bind extends RBaseNode {
         }
     }
 
-    public RVector genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, boolean complete, String[] vecNames, boolean vecNamesComplete, int deparseLevel) {
+    public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, boolean complete, String[] vecNames, boolean vecNamesComplete, int deparseLevel) {
 
         int[] resultDimensions = new int[2];
         int[] firstDims = new int[vectors.length];
         boolean notEqualColumns = getResultDimensions(vectors, resultDimensions, firstDims);
-        RVector result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
+        RVector<?> result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
 
         Object colDimResultNames = RNull.instance;
         String[] rowDimNamesArray = new String[resultDimensions[0]];

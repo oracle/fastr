@@ -35,7 +35,7 @@ abstract class RToIntVectorClosure extends RToVectorClosure implements RAbstract
     }
 
     @Override
-    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 

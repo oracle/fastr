@@ -150,7 +150,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
             ((RShareable) a).incRefCount();
         }
 
-        RVector aMaterialized = a.copy().materialize();
+        RVector<?> aMaterialized = a.copy().materialize();
         aMaterialized.setAttr("a", "a");
         assertAttributes(executeArithmetic(factory, aMaterialized.copy()), "a");
     }

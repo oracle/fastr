@@ -160,7 +160,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        final RVector extractedVector;
+        final RVector<?> extractedVector;
         switch (vectorType) {
             case Expression:
                 extractedVector = RType.Expression.create(extractedVectorLength, false);
@@ -278,7 +278,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
-    private void applyDimensions(RAbstractContainer originalTarget, RVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
+    private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
         int dimCount = countDimensions(positionProfile);
 
@@ -406,7 +406,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private void setNames(RVector vector, Object newNames) {
+    private void setNames(RVector<?> vector, Object newNames) {
         if (setNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setNamesNode = insert(SetNamesNodeGen.create());
@@ -416,10 +416,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
-        public abstract void execute(RVector container, Object newNames);
+        public abstract void execute(RVector<?> container, Object newNames);
 
         @Specialization
-        protected void setNames(RVector container, RAbstractStringVector newNames) {
+        protected void setNames(RVector<?> container, RAbstractStringVector newNames) {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
             assert container.getInternalDimensions() == null;
@@ -438,13 +438,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         @Specialization
-        protected void setNames(RVector container, String newNames) {
+        protected void setNames(RVector<?> container, String newNames) {
             // TODO: why materialize()?
             setNames(container, RString.valueOf(newNames).materialize());
         }
 
         @Specialization
-        protected void setNames(RVector container, @SuppressWarnings("unused") RNull newNames) {
+        protected void setNames(RVector<?> container, @SuppressWarnings("unused") RNull newNames) {
             assert container.getAttributes() == null;
         }
     }

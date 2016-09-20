@@ -331,7 +331,7 @@ public abstract class RConnection extends RAttributeStorage implements AutoClose
     public abstract boolean isOpen();
 
     /*
-     * Methods from the RAbstractContainer interface, which is implemented to allow an RVector to
+     * Methods from the RAbstractContainer interface, which is implemented to allow an RVector<?>to
      * transform to an RConnection via a class update.
      */
 

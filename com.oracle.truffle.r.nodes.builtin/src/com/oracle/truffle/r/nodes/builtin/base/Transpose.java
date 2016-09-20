@@ -70,7 +70,7 @@ public abstract class Transpose extends RBuiltinNode {
         void apply(A array, T vector, int i, int j);
     }
 
-    protected <T extends RAbstractVector, A> RVector transposeInternal(T vector, Function<Integer, A> createArray, WriteArray<T, A> writeArray, BiFunction<A, Boolean, RVector> createResult) {
+    protected <T extends RAbstractVector, A> RVector<?> transposeInternal(T vector, Function<Integer, A> createArray, WriteArray<T, A> writeArray, BiFunction<A, Boolean, RVector<?>> createResult) {
         int length = lengthProfile.profile(vector.getLength());
         int firstDim;
         int secondDim;
@@ -92,7 +92,7 @@ public abstract class Transpose extends RBuiltinNode {
             }
             writeArray.apply(array, vector, i, j);
         }
-        RVector r = createResult.apply(array, vector.isComplete());
+        RVector<?> r = createResult.apply(array, vector.isComplete());
         // copy attributes
         copyRegAttributes.execute(vector, r);
         // set new dimensions
@@ -112,22 +112,22 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization
-    protected RVector transpose(RAbstractIntVector x) {
+    protected RVector<?> transpose(RAbstractIntVector x) {
         return transposeInternal(x, l -> new int[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createIntVector);
     }
 
     @Specialization
-    protected RVector transpose(RAbstractLogicalVector x) {
+    protected RVector<?> transpose(RAbstractLogicalVector x) {
         return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createLogicalVector);
     }
 
     @Specialization
-    protected RVector transpose(RAbstractDoubleVector x) {
+    protected RVector<?> transpose(RAbstractDoubleVector x) {
         return transposeInternal(x, l -> new double[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createDoubleVector);
     }
 
     @Specialization
-    protected RVector transpose(RAbstractComplexVector x) {
+    protected RVector<?> transpose(RAbstractComplexVector x) {
         return transposeInternal(x, l -> new double[l * 2], (a, v, i, j) -> {
             RComplex d = v.getDataAt(j);
             a[i * 2] = d.getRealPart();
@@ -136,22 +136,22 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization
-    protected RVector transpose(RAbstractStringVector x) {
+    protected RVector<?> transpose(RAbstractStringVector x) {
         return transposeInternal(x, l -> new String[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createStringVector);
     }
 
     @Specialization
-    protected RVector transpose(RAbstractListVector x) {
+    protected RVector<?> transpose(RAbstractListVector x) {
         return transposeInternal(x, l -> new Object[l], (a, v, i, j) -> a[i] = v.getDataAt(j), (a, c) -> RDataFactory.createList(a));
     }
 
     @Specialization
-    protected RVector transpose(RAbstractRawVector x) {
+    protected RVector<?> transpose(RAbstractRawVector x) {
         return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getRawDataAt(j), (a, c) -> RDataFactory.createRawVector(a));
     }
 
     @Fallback
-    protected RVector transpose(@SuppressWarnings("unused") Object x) {
+    protected RVector<?> transpose(@SuppressWarnings("unused") Object x) {
         throw RError.error(RError.SHOW_CALLER, Message.ARGUMENT_NOT_MATRIX);
     }
 }

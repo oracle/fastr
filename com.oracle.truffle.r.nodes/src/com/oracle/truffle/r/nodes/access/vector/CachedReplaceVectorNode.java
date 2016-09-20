@@ -507,9 +507,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // TODO (chumer) this is way to complicated at the moment
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
-    private RVector resizeVector(RAbstractVector vector, int size) {
+    private RVector<?> resizeVector(RAbstractVector vector, int size) {
         RStringVector oldNames = vector.getNames(vectorNamesProfile);
-        RVector res = vector.copyResized(size, true).materialize();
+        RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
             res.copyAttributesFrom(positionNamesProfile, vector);
         }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RIntVector extends RVector implements RAbstractIntVector {
+public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Integer.getClazz());
 
@@ -129,6 +129,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return true;
     }
 
+    @Override
     public int[] getDataCopy() {
         return Arrays.copyOf(data, data.length);
     }
@@ -137,29 +138,9 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public int[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public int[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public int[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override

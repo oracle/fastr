@@ -128,7 +128,7 @@ public class LaFunctions {
                     break;
                 }
             }
-            RVector values = null;
+            RVector<?> values = null;
             Object vectorValues = RNull.instance;
             if (hasComplexValues.profile(complexValues)) {
                 double[] data = new double[n * 2];

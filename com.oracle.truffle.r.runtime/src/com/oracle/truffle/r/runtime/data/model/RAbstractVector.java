@@ -43,17 +43,17 @@ public interface RAbstractVector extends RAbstractContainer {
         return copy();
     }
 
-    RVector copyResized(int size, boolean fillNA);
+    RVector<?> copyResized(int size, boolean fillNA);
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
-    RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA);
+    RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA);
 
     RAbstractVector copyDropAttributes();
 
-    RVector createEmptySameType(int newLength, boolean newIsComplete);
+    RVector<?> createEmptySameType(int newLength, boolean newIsComplete);
 
-    RVector materialize();
+    RVector<?> materialize();
 
     boolean isMatrix();
 

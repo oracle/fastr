@@ -56,7 +56,7 @@ public abstract class Quote extends RBuiltinNode {
         return result;
     }
 
-    protected static final Object createLanguage(Closure closure) {
+    protected static Object createLanguage(Closure closure) {
         return RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode());
     }
 

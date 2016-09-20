@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * {@code ExtractListElement}, which is a node that can extract an element of a list or abstract
  * vector and put it in the consistent sharing state.
  */
-public abstract class RListBase extends RVector implements RAbstractListBaseVector {
+public abstract class RListBase extends RVector<Object[]> implements RAbstractListBaseVector {
 
     protected final Object[] data;
 
@@ -99,35 +99,16 @@ public abstract class RListBase extends RVector implements RAbstractListBaseVect
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public final Object[] getDataWithoutCopying() {
         return data;
     }
 
+    @Override
     public final Object[] getDataCopy() {
         Object[] copy = new Object[data.length];
         System.arraycopy(data, 0, copy, 0, data.length);
         return copy;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public final Object[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public final Object[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     /**

@@ -79,7 +79,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
-        RVector result = target.materialize();
+        RVector<?> result = target.materialize();
 
         if (copyAllAttributes) {
             copyOfReg.execute(source, result);

@@ -960,9 +960,9 @@ public class RSerialize {
                 if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
                     ((RShareable) attrValue).incRefCount();
                 }
-                if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (result instanceof RVector<?> && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;
-                    result = ((RVector) result).setClassAttr(classes);
+                    result = ((RVector<?>) result).setClassAttr(classes);
                 } else {
                     rAttributable.setAttr(tag, attrValue);
                 }

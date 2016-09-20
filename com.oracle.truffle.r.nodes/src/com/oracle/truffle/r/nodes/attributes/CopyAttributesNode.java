@@ -126,7 +126,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: ==");
             countEquals++;
         }
-        RVector result = target.materialize();
+        RVector<?> result = target.materialize();
         if (copyAllAttributes) {
             if (result != right) {
                 copyOfRegRight.execute(right, result);
@@ -210,7 +210,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             countSmaller++;
         }
         boolean rightNotResult = rightNotResultProfile.profile(right != target);
-        RVector result = target.materialize();
+        RVector<?> result = target.materialize();
         if (copyAllAttributes && rightNotResult) {
             copyOfReg.execute(right, result);
         }
@@ -264,7 +264,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: >");
             countLarger++;
         }
-        RVector result = target.materialize();
+        RVector<?> result = target.materialize();
         if (copyAllAttributes && result != left) {
             copyOfReg.execute(left, result);
         }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RComplexVector extends RVector implements RAbstractComplexVector {
+public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Complex.getClazz());
 
@@ -117,39 +117,18 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return true;
     }
 
+    @Override
     public double[] getDataCopy() {
-        double[] copy = new double[data.length];
-        System.arraycopy(data, 0, copy, 0, data.length);
-        return copy;
+        return Arrays.copyOf(data, data.length);
     }
 
     /**
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public double[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public double[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public double[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override
