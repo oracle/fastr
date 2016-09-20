@@ -344,14 +344,20 @@ public class RRuntime {
     @TruffleBoundary
     public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
+        int result;
         try {
-            return Integer.decode(s);  // decode supports hex constants
+            result = Integer.decode(s);  // decode supports hex constants
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;
             }
+            return INT_NA;
         }
-        return INT_NA;
+
+        if (result == INT_NA && exceptionOnFail) {
+            throw new NumberFormatException();
+        }
+        return result;
     }
 
     @TruffleBoundary
