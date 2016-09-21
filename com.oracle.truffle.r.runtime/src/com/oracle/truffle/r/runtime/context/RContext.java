@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -395,6 +397,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * time the constructor is called.
      */
     private ContextState stateRFFI;
+
+    public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
