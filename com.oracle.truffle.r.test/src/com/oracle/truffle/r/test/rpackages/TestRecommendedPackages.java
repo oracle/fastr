@@ -41,13 +41,29 @@ import com.oracle.truffle.r.test.TestBase;
  * distribution and avoid any dependency on source paths.
  */
 public class TestRecommendedPackages extends TestRPackages {
-    private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
+    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
                     "rpart"};
-    @SuppressWarnings("unused") private static final String[] PROBLEM_PACKAGES = new String[]{};
+    private static String[] packages = DEFAULT_PACKAGES;
+
+    /**
+     * Allows an external agent to ignore certain packages that are known to fail.
+     */
+    public static void ignorePackages(String[] ignoredPackages) {
+        packages = new String[DEFAULT_PACKAGES.length - ignoredPackages.length];
+        int k = 0;
+        for (int i = 0; i < DEFAULT_PACKAGES.length; i++) {
+            for (int j = 0; j < ignoredPackages.length; j++) {
+                if (DEFAULT_PACKAGES[i].equals(ignoredPackages[j])) {
+                    continue;
+                }
+                ignoredPackages[k++] = DEFAULT_PACKAGES[i];
+            }
+        }
+    }
 
     @BeforeClass
     public static void setupInstallMyTestPackages() {
-        setupInstallTestPackages(OK_PACKAGES, new Resolver() {
+        setupInstallTestPackages(packages, new Resolver() {
             @Override
             Path getPath(String p) {
                 return TestBase.getNativeProjectFile(Paths.get("packages")).resolve("recommended").resolve(p + ".tgz");
@@ -57,13 +73,13 @@ public class TestRecommendedPackages extends TestRPackages {
 
     @AfterClass
     public static void tearDownUninstallMyTestPackages() {
-        tearDownUninstallTestPackages(OK_PACKAGES);
+        tearDownUninstallTestPackages(packages);
     }
 
     @Test
     public void testLoad() {
         // This is perhaps redundant as package installation tests whether the package will load.
         assertEval(Ignored.OutputFormatting, Context.NonShared, Context.LongTimeout,
-                        TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }", new String[]{TestRPackages.libLoc()}, OK_PACKAGES));
+                        TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }", new String[]{TestRPackages.libLoc()}, packages));
     }
 }
