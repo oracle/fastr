@@ -24,8 +24,7 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.ArrayList;
 
-import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -39,20 +38,18 @@ public enum RFrameSlot {
      */
     OnExit,
     /**
-     * This frame slot is used to track result visibility when
-     * {@link FastROptions#OptimizeVisibility} is enabled. It can contain one of three values:
+     * This frame slot is used to track result visibility. It can contain one of three values:
      * <ul>
      * <li>{@link Boolean#TRUE} if the result is currently visible</li>
      * <li>{@link Boolean#FALSE} if the result is currently not visible</li>
-     * <li>{@code null} if the visibility needs to be determined via{@link RContext#isVisible()}
-     * </li>
+     * <li>{@code null} if the visibility was not set yet</li>
      * </ul>
      *
      * Whenever an {@RBuiltinNode} is called via {@code RCallNode}, the resulting visibility is
      * stored in the current frame. At the end of a {@code FunctionDefinitionNode}, the current
-     * state is stored into {@link RContext#setVisible(boolean)} if it is non-{@code null}.
-     * Additionally, the frame-local state stored in this frame slot is set to {@code null} after
-     * each call to a non-builtin function.
+     * state is stored into {@link RCaller#setVisibility(boolean)} if it is non-{@code null}. After
+     * each call site, the value of {@link RCaller#getVisibility()} is extracted and stored into the
+     * frame slot.
      */
     Visibility;
 }

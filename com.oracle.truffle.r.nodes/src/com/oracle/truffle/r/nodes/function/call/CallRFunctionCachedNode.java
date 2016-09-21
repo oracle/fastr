@@ -53,28 +53,28 @@ public abstract class CallRFunctionCachedNode extends Node {
 
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, dispatchArgs);
-        return execute(frame, function.getTarget(), callArgs);
+        return execute(frame, function.getTarget(), callArgs, call);
     }
 
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
-        return execute(frame, function.getTarget(), callArgs);
+        return execute(frame, function.getTarget(), callArgs, call);
     }
 
-    protected abstract Object execute(VirtualFrame frame, CallTarget target, Object[] arguments);
+    protected abstract Object execute(VirtualFrame frame, CallTarget target, Object[] arguments, RCaller caller);
 
     protected static DirectCallNode createDirectCallNode(CallTarget target) {
         return Truffle.getRuntime().createDirectCallNode(target);
     }
 
     @Specialization(guards = "target == callNode.getCallTarget()", limit = "cacheLimit")
-    protected Object call(VirtualFrame frame, @SuppressWarnings("unused") CallTarget target, Object[] arguments,
+    protected Object call(VirtualFrame frame, @SuppressWarnings("unused") CallTarget target, Object[] arguments, RCaller caller,
                     @Cached("createDirectCallNode(target)") DirectCallNode callNode) {
         try {
             return callNode.call(frame, arguments);
         } finally {
-            visibility.executeAfterCall(frame);
+            visibility.executeAfterCall(frame, caller);
         }
     }
 
@@ -83,12 +83,12 @@ public abstract class CallRFunctionCachedNode extends Node {
     }
 
     @Specialization
-    protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments,
+    protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, RCaller caller,
                     @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
         try {
             return callNode.call(frame, target, arguments);
         } finally {
-            visibility.executeAfterCall(frame);
+            visibility.executeAfterCall(frame, caller);
         }
     }
 }

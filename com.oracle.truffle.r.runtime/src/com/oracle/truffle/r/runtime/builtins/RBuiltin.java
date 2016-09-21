@@ -63,7 +63,7 @@ public @interface RBuiltin {
     /**
      * The visibility of the output of the builtin. If the visibility is set to
      * {@link RVisibility#CUSTOM}, then it is responsibility of the execute method/specializations
-     * to set the visibility in {@link com.oracle.truffle.r.runtime.context.RContext}.
+     * to set the visibility in using {@code SetVisibilityNode}.
      */
     RVisibility visibility() default RVisibility.ON;
 

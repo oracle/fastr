@@ -521,7 +521,7 @@ final class REngine implements Engine, Engine.Timings {
                 assert checkResult(result);
                 if (printResult && result != null) {
                     assert topLevel;
-                    if (visibility.execute(vf, context)) {
+                    if (visibility.execute(vf)) {
                         printResult(result);
                     }
                 }
