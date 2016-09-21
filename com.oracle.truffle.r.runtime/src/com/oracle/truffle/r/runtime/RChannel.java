@@ -315,11 +315,12 @@ public class RChannel {
 
     private static class Output extends TransmitterCommon {
 
-        private static void makeShared(Object o) {
+        private static Object makeShared(Object o) {
             if (o instanceof RShareable) {
                 RShareable shareable = (RShareable) o;
                 shareable.makeSharedPermanent();
             }
+            return o;
         }
 
         @TruffleBoundary
@@ -340,7 +341,10 @@ public class RChannel {
                 newList.initAttributes(newAttr);
                 return newList;
             } else {
-                // shareable attributes are the same - no need for any changes
+                if (shareableList != l) {
+                    // shareableList is "fresh" (not shared) and needs its own attribute object
+                    ((SerializedList) shareableList).getList().initAttributes(newAttr);
+                } // else list and attribute objects haven't changed
                 return shareableList;
             }
         }
@@ -443,9 +447,7 @@ public class RChannel {
                 return convertPrivatePromise(o);
             } else if (!serializeObject(o)) {
                 // we need to make internal values (permanently) shared to avoid updates to ref
-                // count
-                // by different threads
-                makeShared(o);
+                // count by different threads
                 if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
                     Object newObj = convertObjectAttributesToPrivate(o);
                     if (newObj == o) {
@@ -453,8 +455,7 @@ public class RChannel {
                     } // otherwise a copy has been created to store new attributes
                     return newObj;
                 } else {
-                    makeShared(o);
-                    return o;
+                    return makeShared(o);
                 }
             } else {
                 assert o instanceof RAttributable;
@@ -476,7 +477,7 @@ public class RChannel {
                     newList.updateDataAt(i, newEl, null);
                 }
             }
-            return list == newList ? list : new SerializedList(newList);
+            return list == newList ? makeShared(list) : new SerializedList(newList);
         }
 
         @TruffleBoundary
@@ -548,7 +549,13 @@ public class RChannel {
                 makeShared(msg);
                 try {
                     if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
-                        msg = convertObjectAttributesToPrivate(msg);
+                        Object newMsg = convertObjectAttributesToPrivate(msg);
+                        if (newMsg == msg) {
+                            makeShared(msg);
+                        } // otherwise a copy has been created to store new attributes
+                        return newMsg;
+                    } else {
+                        return makeShared(msg);
                     }
                 } catch (IOException x) {
                     throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
