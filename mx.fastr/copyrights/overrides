@@ -37,6 +37,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/MathConstant
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/MathInit.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pbeta.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pbinom.java,gnu_r_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pf.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pnorm.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Qbinom.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Qnorm.java,gnu_r_ihaka.copyright

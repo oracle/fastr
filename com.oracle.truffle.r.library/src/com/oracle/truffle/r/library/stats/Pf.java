@@ -4,8 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (C) 1998 Ross Ihaka
- * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2007, The R Foundation
+ * Copyright (c) 1998--2008, The R Core Team
  * Copyright (c) 2016, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.

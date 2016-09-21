@@ -232,7 +232,7 @@ public class RChannel {
                 private String[] names;
                 private Object[] values;
 
-                public Bindings(String[] names, Object[] values) {
+                Bindings(String[] names, Object[] values) {
                     this.names = names;
                     this.values = values;
                 }
