@@ -44,7 +44,6 @@ public abstract class RowSumsBase extends ColSumsBase {
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
 
-    private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
     private final ConditionProfile remainderProfile = ConditionProfile.createBinaryProfile();
     private final LoopConditionProfile outerProfile = LoopConditionProfile.createCountingProfile();
     private final LoopConditionProfile innerProfile = LoopConditionProfile.createCountingProfile();

@@ -37,8 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.imageio.metadata.IIOInvalidTreeException;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
