@@ -531,8 +531,10 @@ ExpandDots <- function(x, framenames) {
 #    y  1
 # "term.labels": y
 # "order", "intercept", "response": 1
-termsform <- function (x, specials, data, keep.order, allowDotAsName) {
+termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     
+    x <- x.in # make a copy, FastR invokes this without incrementing the ref-count for arguments
+    attributes(x) <- NULL
     if (!isLanguage(x)
         || !identical(x[[1]], quote(`~`))
         || length(x) != 2L && length(x) != 3L) {
@@ -655,8 +657,8 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     if (nterm > 0L) {
       dimnames(pattern) <- list(varnames, termlabs)
     }
-    attr(x, "term.labels") <- termlabs
     attr(x, "factors") <- pattern
+    attr(x, "term.labels") <- termlabs
     
     if (!is.null(specials)) {
         specialsAttr <- vector("pairlist", length(specials))
@@ -680,7 +682,7 @@ termsform <- function (x, specials, data, keep.order, allowDotAsName) {
     attr(x, "order") <- ord
     attr(x, "intercept") <- as.integer(intercept)
     attr(x, "response") <- as.integer(response)
-    class(x) <- c("terms", "formula")
+    class(x) <- c("terms")
     return(x)
 }
 

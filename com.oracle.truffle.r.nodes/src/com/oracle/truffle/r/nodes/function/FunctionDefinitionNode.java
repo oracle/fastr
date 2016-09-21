@@ -303,18 +303,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                     }
                     ArrayList<Object> current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
-                    // Preserve the visibility state as may be changed by the on.exit
-                    boolean isVisible = RContext.getInstance().isVisible();
-                    try {
-                        for (Object expr : current) {
-                            if (!(expr instanceof RNode)) {
-                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
-                            }
-                            RNode node = (RNode) expr;
-                            onExitExpressionCache.execute(frame, node);
+                    /*
+                     * We do not need to preserve visibility, since visibility.executeEndOfFunction
+                     * was already called.
+                     */
+                    for (Object expr : current) {
+                        if (!(expr instanceof RNode)) {
+                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
                         }
-                    } finally {
-                        RContext.getInstance().setVisible(isVisible);
+                        RNode node = (RNode) expr;
+                        onExitExpressionCache.execute(frame, node);
                     }
                 }
             }

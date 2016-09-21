@@ -59,7 +59,8 @@ public class TestBuiltin_rowMeans extends TestBase {
         assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
 
         assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
-        // Error message mismatch
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Internal error in matrix(NA, NA, NA)
         assertEval(Ignored.Unknown, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
     }
 }

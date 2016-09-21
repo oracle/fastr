@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -386,6 +387,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 print("debugging in: ", false);
                 printCall(frame);
                 /*
@@ -402,6 +404,7 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup(frame);
             }
         }
@@ -409,6 +412,7 @@ public class DebugHandling {
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup(frame);
             }
         }
@@ -468,6 +472,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 // in case we did a step into that never called a function
                 clearStepInstrument();
                 RBaseNode node = (RBaseNode) context.getInstrumentedNode();
@@ -519,6 +524,7 @@ public class DebugHandling {
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
         }
@@ -526,6 +532,7 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
         }
@@ -562,6 +569,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
+                CompilerDirectives.transferToInterpreter();
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
                 ensureSingleStep(fdn);
                 functionStatementsEventListener.clearStepInstrument();

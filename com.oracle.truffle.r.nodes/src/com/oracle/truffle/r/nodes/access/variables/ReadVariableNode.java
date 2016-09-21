@@ -932,12 +932,17 @@ abstract class CheckTypeNode extends RBaseNode {
         return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
     }
 
+    @Specialization(guards = "isExternalObject(o)")
+    boolean checkType(@SuppressWarnings("unused") TruffleObject o) {
+        return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
+    }
+
+    protected static boolean isExternalObject(TruffleObject o) {
+        return !(o instanceof RTypedValue);
+    }
+
     @Fallback
-    boolean checkType(Object o) {
-        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
-            return o instanceof TruffleObject && !(o instanceof RTypedValue);
-        } else {
-            return false;
-        }
+    boolean checkType(@SuppressWarnings("unused") Object o) {
+        return false;
     }
 }

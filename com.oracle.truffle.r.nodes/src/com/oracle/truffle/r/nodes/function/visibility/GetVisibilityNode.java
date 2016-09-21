@@ -32,86 +32,39 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
+/**
+ * See {@link RFrameSlot#Visibility}.
+ */
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class GetVisibilityNode extends Node {
+public final class GetVisibilityNode extends Node {
 
-    public abstract boolean execute(Frame frame);
-
-    public abstract boolean execute(Frame frame, RContext context);
+    @CompilationFinal private FrameSlot frameSlot;
+    private final ConditionProfile isUninitializedProfile = ConditionProfile.createBinaryProfile();
 
     private GetVisibilityNode() {
     }
 
     public static GetVisibilityNode create() {
-        if (FastROptions.IgnoreVisibility.getBooleanValue()) {
-            return new GetVisibilityNoopNode();
-        } else if (FastROptions.OptimizeVisibility.getBooleanValue()) {
-            return new GetVisibilityOptimizedNode();
-        } else {
-            return new GetVisibilityDefaultNode();
-        }
+        return new GetVisibilityNode();
     }
 
-    private static final class GetVisibilityNoopNode extends GetVisibilityNode {
-
-        @Override
-        public boolean execute(Frame frame) {
-            return false;
+    public boolean execute(Frame frame) {
+        if (frameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
         }
-
-        @Override
-        public boolean execute(Frame frame, RContext context) {
-            return false;
-        }
-    }
-
-    private static final class GetVisibilityDefaultNode extends GetVisibilityNode {
-
-        @Override
-        public boolean execute(Frame frame) {
-            return execute(frame, RContext.getInstance());
-        }
-
-        @Override
-        public boolean execute(Frame frame, RContext context) {
-            return context.isVisible();
-        }
-    }
-
-    /**
-     * See {@link RFrameSlot#Visibility}.
-     */
-    private static final class GetVisibilityOptimizedNode extends GetVisibilityNode {
-
-        @CompilationFinal private FrameSlot frameSlot;
-        private final ConditionProfile isCustomProfile = ConditionProfile.createBinaryProfile();
-
-        @Override
-        public boolean execute(Frame frame) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
+        try {
+            Object visibility = frame.getObject(frameSlot);
+            if (isUninitializedProfile.profile(visibility == null)) {
+                return false;
+            } else {
+                return visibility == Boolean.TRUE;
             }
-            try {
-                Object visibility = frame.getObject(frameSlot);
-                if (isCustomProfile.profile(visibility == null)) {
-                    return RContext.getInstance().isVisible();
-                } else {
-                    return visibility == Boolean.TRUE;
-                }
-            } catch (FrameSlotTypeException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
-        }
-
-        @Override
-        public boolean execute(Frame frame, RContext context) {
-            return execute(frame);
+        } catch (FrameSlotTypeException e) {
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 }

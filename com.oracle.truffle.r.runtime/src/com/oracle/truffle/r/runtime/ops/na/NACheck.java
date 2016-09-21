@@ -195,6 +195,8 @@ public final class NACheck {
         if (checkNAorNaN(value)) {
             // Special case here NaN does not enable the NA check.
             this.enable(true);
+            // Note: GnuR seems to convert NaN to NaN + 0i and NA to NA, but doing it here breaks
+            // other things
             return RRuntime.createComplexNA();
         }
         return RDataFactory.createComplex(value, 0);
