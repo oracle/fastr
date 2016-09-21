@@ -148,16 +148,16 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 }
                 result.setInternalDimensions(null);
 
-                if (result != left) {
-                    RStringVector vecNames = left.getNames(attrLeftProfiles);
-                    if (hasNamesLeft.profile(vecNames != null)) {
+                RStringVector vecNames = left.getNames(attrLeftProfiles);
+                if (hasNamesLeft.profile(vecNames != null)) {
+                    if (result != left) {
                         putNames.execute(initAttributes.execute(result), vecNames);
                         result.setInternalNames(vecNames);
-                        return result;
                     }
+                    return result;
                 }
                 if (result != right) {
-                    RStringVector vecNames = right.getNames(attrRightProfiles);
+                    vecNames = right.getNames(attrRightProfiles);
                     if (hasNamesRight.profile(vecNames != null)) {
                         putNames.execute(initAttributes.execute(result), vecNames);
                         result.setInternalNames(vecNames);
