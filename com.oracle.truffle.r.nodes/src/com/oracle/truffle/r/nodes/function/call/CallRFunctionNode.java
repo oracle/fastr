@@ -51,13 +51,13 @@ public final class CallRFunctionNode extends Node {
         return new CallRFunctionNode(callTarget);
     }
 
-    public Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
+    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        Object[] callArgs = RArguments.create(function, caller, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         try {
             return callNode.call(frame, callArgs);
         } finally {
-            visibility.executeAfterCall(frame, call);
+            visibility.executeAfterCall(frame, caller);
         }
     }
 
@@ -65,12 +65,12 @@ public final class CallRFunctionNode extends Node {
         return callNode;
     }
 
-    public static Object executeSlowpath(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, dispatchArgs);
+    public static Object executeSlowpath(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, caller, callerFrame, evaluatedArgs, dispatchArgs);
         try {
             return function.getTarget().call(callArgs);
         } finally {
-            SetVisibilityNode.executeAfterCallSlowPath(callerFrame);
+            SetVisibilityNode.executeAfterCallSlowPath(callerFrame, caller);
         }
     }
 }

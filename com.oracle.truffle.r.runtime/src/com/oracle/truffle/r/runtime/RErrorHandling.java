@@ -573,17 +573,13 @@ public class RErrorHandling {
     private static void warningCallInvoke(Object call, RStringVector warningMessage) {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
-         * destroy any visibility setting made by the calling builtin prior to this call. So we save
-         * and restore it across the call.
+         * destroy any visibility setting made by the calling builtin prior to this call.
+         *
+         * TODO: it's not clear whether this is still the case with the optimized visibility scheme
          */
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
-        boolean visibility = RContext.getInstance().isVisible();
-        try {
-            RFunction f = errorHandlingState.getDotSignalSimpleWarning();
-            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
-        } finally {
-            RContext.getInstance().setVisible(visibility);
-        }
+        RFunction f = errorHandlingState.getDotSignalSimpleWarning();
+        RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
     }
 
     private static void warningcallDfltWithCall(Object call, Message msg, Object... args) {
