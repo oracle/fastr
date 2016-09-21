@@ -23,9 +23,9 @@ public final class Pf implements StatsFunctions.Function3_2 {
 
     @Override
     public double evaluate(double x, double df1, double df2, boolean lowerTail, boolean logP) {
-// if (Double.isNaN(x) || Double.isNaN(df1) || Double.isNaN(df2)) {
-// return x + df2 + df1;
-// }
+        if (Double.isNaN(x) || Double.isNaN(df1) || Double.isNaN(df2)) {
+            return x + df2 + df1;
+        }
 
         if (df1 <= 0 || df2 <= 0) {
             // TODO ML_ERR_return_NAN
