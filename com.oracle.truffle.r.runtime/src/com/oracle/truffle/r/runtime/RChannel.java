@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 
@@ -584,7 +585,7 @@ public class RChannel {
                     ret = unserializeAttributable((SerializedAttributable) el);
                 }
                 if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
-                    unserializeAttributes(((RAttributable) ret).getAttributes());
+                    unserializeAttributes((RAttributable) ret);
                 }
             }
             return ret;
@@ -652,15 +653,18 @@ public class RChannel {
         }
 
         @TruffleBoundary
-        private void unserializeAttributes(RAttributes attr) throws IOException {
+        private void unserializeAttributes(RAttributable attributable) throws IOException {
+            RAttributes attr = attributable.getAttributes();
             for (RAttribute a : attr) {
                 Object val = a.getValue();
                 Object newVal = unserializeObject(val);
                 if (newVal != val) {
+                    // class attribute is a string vector which should be always shared
+                    assert !a.getName().equals(RRuntime.CLASS_ATTR_KEY);
                     // TODO: this is a bit brittle as it relies on the iterator to work correctly in
                     // the
                     // face of updates (which it does under current implementation of attributes)
-                    attr.put(a.getName(), newVal);
+                    attributable.setAttr(a.getName(), newVal);
                 }
             }
         }
@@ -682,7 +686,7 @@ public class RChannel {
                     ret = unserializeAttributable((SerializedAttributable) msg);
                 }
                 if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
-                    unserializeAttributes(((RAttributable) ret).getAttributes());
+                    unserializeAttributes((RAttributable) ret);
                 }
                 return ret;
             } catch (IOException x) {
