@@ -21,4 +21,9 @@ public class TestBuiltin_primUntrace extends TestBase {
     public void testprimUntrace1() {
         assertEval("argv <- list(.Primitive('sum'));.primUntrace(argv[[1]]);");
     }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval(".primUntrace(42)");
+    }
 }

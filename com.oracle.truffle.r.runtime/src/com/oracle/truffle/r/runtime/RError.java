@@ -352,6 +352,7 @@ public final class RError extends RuntimeException {
         FIRST_ARGUMENT_NOT_NAMED_LIST("first argument must be a named list"),
         FIRST_ARGUMENT_NOT_CHARVEC("first argument must be a character vector"),
         FIRST_ARGUMENT_NOT_FILENAME("first argument must be a filename"),
+        ARG_MUST_BE_FUNCTION("argument must be a function"),
         ASCII_NOT_LOGICAL("'ascii' must be logical"),
         MUST_BE_LOGICAL("argument '%s' must be logical"),
         LIST_NAMES_SAME_LENGTH("names(x) must be a character vector of the same length as x"),

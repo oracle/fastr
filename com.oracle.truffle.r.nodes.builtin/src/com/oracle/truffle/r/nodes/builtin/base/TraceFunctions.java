@@ -22,9 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -64,8 +69,16 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class TraceFunctions {
 
-    private abstract static class Helper extends RBuiltinNode {
+    private abstract static class PrimTraceAdapter extends RBuiltinNode {
         @Child private GetFunctions.Get getNode;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            // @formatter:off
+            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).
+                    mapIf(stringValue(), chain(asStringVector()).with(findFirst().stringElement()).end());
+            // @formatter:on
+        }
 
         protected Object getFunction(VirtualFrame frame, String funcName) {
             if (getNode == null) {
@@ -77,7 +90,7 @@ public class TraceFunctions {
     }
 
     @RBuiltin(name = ".primTrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
-    public abstract static class PrimTrace extends Helper {
+    public abstract static class PrimTrace extends PrimTraceAdapter {
 
         @Specialization
         protected RNull primTrace(VirtualFrame frame, RAbstractStringVector funcName) {
@@ -97,7 +110,7 @@ public class TraceFunctions {
     }
 
     @RBuiltin(name = ".primUntrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
-    public abstract static class PrimUnTrace extends Helper {
+    public abstract static class PrimUnTrace extends PrimTraceAdapter {
 
         @Specialization
         protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
