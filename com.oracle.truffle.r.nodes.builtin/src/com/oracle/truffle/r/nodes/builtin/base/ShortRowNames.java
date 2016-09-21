@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -49,42 +50,27 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 
-    public abstract Object executeObject(VirtualFrame frame, Object operand, Object type);
-
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.arg("type").asIntegerVector().findFirst().mustBe(gte0().and(lte(2)));
     }
 
     private final IntValueProfile typeProfile = IntValueProfile.createIdentityProfile();
 
     @Specialization
-    protected Object getNames(Object originalOperand, RAbstractIntVector originalType) {
-
-        if (originalType.getLength() == 0) {
-            errorProfile.enter();
-            throw typeError();
-        }
-        int type = typeProfile.profile(originalType.getDataAt(0));
-
-        if (type < 0 || type > 2) {
-            errorProfile.enter();
-            throw typeError();
-        }
-
+    protected Object getNames(Object originalOperand, int originalType) {
         Object operand = operandTypeProfile.profile(originalOperand);
         Object rowNames;
         if (operand instanceof RAbstractContainer) {
             rowNames = ((RAbstractContainer) operand).getRowNames(attrProfiles);
         } else if (operand instanceof REnvironment) {
             rowNames = ((REnvironment) operand).getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
-        } else if (operand instanceof RNull) {
-            return 0;
         } else {
-            errorProfile.enter();
-            throw typeError();
+            // for any other type GnuR returns 0
+            return 0;
         }
 
+        int type = typeProfile.profile(originalType);
         if (type >= 1) {
             int n = calculateN(rowNames);
             rowNames = type == 1 ? n : Math.abs(n);
