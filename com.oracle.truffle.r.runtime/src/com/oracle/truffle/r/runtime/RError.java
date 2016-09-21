@@ -503,7 +503,6 @@ public final class RError extends RuntimeException {
         EXPR_NOT_LENGTH_ONE("EXPR must be a length 1 vector"),
         EXPR_MISSING("'EXPR' is missing"),
         INVALID_STORAGE_MODE_UPDATE("invalid to change the storage mode of a factor"),
-        NULL_VALUE("'value' must be non-null character string"),
         USE_DEFUNCT("use of '%s' is defunct: use %s instead"),
         NCOL_ZERO("nc(0 for non-null data"),
         NROW_ZERO("nr(0 for non-null data"),

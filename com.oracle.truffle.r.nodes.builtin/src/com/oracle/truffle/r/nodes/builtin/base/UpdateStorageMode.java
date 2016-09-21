@@ -121,6 +121,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Specialization
     protected Object update(Object x, Object value) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.NULL_VALUE);
+        throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "value");
     }
 }
