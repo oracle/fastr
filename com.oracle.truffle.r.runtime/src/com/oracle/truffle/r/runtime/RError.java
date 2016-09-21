@@ -331,6 +331,7 @@ public final class RError extends RuntimeException {
         COMPARISON_COMPLEX("invalid comparison with complex values"),
         NON_NUMERIC_BINARY("non-numeric argument to binary operator"),
         RAW_SORT("raw vectors cannot be sorted"),
+        ONLY_ATOMIC_CAN_BE_SORTED("only atomic vectors can be sorted"),
         INVALID_UNNAMED_ARGUMENT("invalid argument"),
         INVALID_UNNAMED_VALUE("invalid value"),
         NAMES_NONVECTOR("names() applied to a non-vector"),
