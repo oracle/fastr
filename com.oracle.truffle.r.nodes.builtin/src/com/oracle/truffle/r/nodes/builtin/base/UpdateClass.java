@@ -24,7 +24,6 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,7 +49,6 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;
-    @Child private ReuseNonSharedNode reuseNode;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -188,12 +186,8 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T reuseNonShared(T obj) {
-        if (reuseNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            reuseNode = insert(ReuseNonSharedNode.create());
-        }
-        return (T) reuseNode.execute(obj);
+    private <T extends RAbstractContainer> T reuseNonShared(T obj) {
+        return (T) obj.getNonShared();
     }
 
     private void initCastTypeNode() {
