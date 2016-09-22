@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -21,9 +22,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -35,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -49,33 +49,21 @@ public abstract class UpdateClass extends RBuiltinNode {
     protected static final int CACHE_LIMIT = 2;
 
     @Child private CastTypeNode castTypeNode;
-    @Child private CastStringNode castStringNode;
     @Child private TypeofNode typeof;
+    @Child private ReuseNonSharedNode reuseNode;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "!isStringVector(className)")
-    protected Object setClass(RAbstractContainer arg, RAbstractVector className) {
-        if (className.getLength() == 0) {
-            return setClass(arg, RNull.instance);
-        }
-        initCastStringNode();
-        Object result = castStringNode.execute(className);
-        return setClass(arg, (RStringVector) result);
-    }
-
-    private void initCastStringNode() {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, false, false));
-        }
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(nullValue().not());
+        casts.arg("value").asStringVector();
     }
 
     @Specialization
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
-
-        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
+        RAbstractContainer result = reuseNonShared(arg);
         return result.setClassAttr(null);
     }
 
@@ -109,7 +97,7 @@ public abstract class UpdateClass extends RBuiltinNode {
                 return setClass((RAbstractVector) result, RNull.instance);
             }
         }
-        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
+        RAbstractContainer result = reuseNonShared(arg);
         if (result instanceof RAbstractVector) {
             RAbstractVector resultVector = (RAbstractVector) result;
             if (RType.Matrix.getName().equals(className)) {
@@ -135,7 +123,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
-        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
+        RAbstractContainer result = reuseNonShared(arg);
         return result.setClassAttr(className);
     }
 
@@ -199,6 +187,15 @@ public abstract class UpdateClass extends RBuiltinNode {
         return arg;
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> T reuseNonShared(T obj) {
+        if (reuseNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            reuseNode = insert(ReuseNonSharedNode.create());
+        }
+        return (T) reuseNode.execute(obj);
+    }
+
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -211,9 +208,5 @@ public abstract class UpdateClass extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofNodeGen.create());
         }
-    }
-
-    protected boolean isStringVector(RAbstractVector className) {
-        return className.getElementClass() == RString.class;
     }
 }
