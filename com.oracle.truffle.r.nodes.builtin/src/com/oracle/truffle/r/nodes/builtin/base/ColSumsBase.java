@@ -63,7 +63,7 @@ public abstract class ColSumsBase extends RBuiltinNode {
 
     @Specialization(guards = {"rowNum == 0", "colNum == 0"})
     @SuppressWarnings("unused")
-    protected final RDoubleVector doEmptyMatrix(Object x, int rowNum, int colNum, boolean naRm) {
+    protected static RDoubleVector doEmptyMatrix(Object x, int rowNum, int colNum, boolean naRm) {
         return RDataFactory.createEmptyDoubleVector();
     }
 
