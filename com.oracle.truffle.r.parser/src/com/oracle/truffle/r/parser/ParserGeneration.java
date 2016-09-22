@@ -82,6 +82,7 @@ public class ParserGeneration {
         "use RComplex.createNA()",
         "inlined ParseUtils",
         "properly throw errors in lexer",
-        "remove deprecated calls to SourceSection functions"
+        "remove deprecated calls to SourceSection functions",
+        "remove deprecated calls to Source functions"
     };
 }

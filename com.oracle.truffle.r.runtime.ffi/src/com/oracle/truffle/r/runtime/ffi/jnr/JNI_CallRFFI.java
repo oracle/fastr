@@ -119,6 +119,8 @@ public class JNI_CallRFFI implements CallRFFI {
 
     private static native void nativeSetInteractive(boolean interactive);
 
+    private static native double exactSumFunc(double[] values, boolean hasNa, boolean naRm);
+
     private static native Object call(long address, Object[] args);
 
     private static native Object call0(long address);
@@ -192,4 +194,17 @@ public class JNI_CallRFFI implements CallRFFI {
         }
     }
 
+    @Override
+    public double exactSum(double[] values, boolean hasNa, boolean naRm) {
+        if (traceEnabled()) {
+            traceDownCall("exactSum");
+        }
+        try {
+            return exactSumFunc(values, hasNa, naRm);
+        } finally {
+            if (traceEnabled()) {
+                traceDownCallReturn("exactSum", null);
+            }
+        }
+    }
 }

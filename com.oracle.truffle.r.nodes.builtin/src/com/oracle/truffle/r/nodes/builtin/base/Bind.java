@@ -147,7 +147,7 @@ public abstract class Bind extends RBaseNode {
 
     private static final RStringVector DATA_FRAME_CLASS = RDataFactory.createStringVectorFromScalar("data.frame");
 
-    @Specialization(guards = {"args.length > 1", "isDataFrame(args)"})
+    @Specialization(guards = {"args.length > 0", "isDataFrame(args)"})
     protected Object allDataFrame(VirtualFrame frame, int deparseLevel, @SuppressWarnings("unused") Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

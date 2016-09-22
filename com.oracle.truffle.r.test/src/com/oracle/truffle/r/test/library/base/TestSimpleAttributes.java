@@ -48,6 +48,17 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ f<-function(y) attr(y, \"foo\")<-NULL; x<-function() 42; attr(x, \"foo\")<-\"foo\"; s<-\"bar\"; switch(s, f(x)); x }");
 
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
+
+        assertEval("{ x<-42; attributes(x)<-list(.Environment=globalenv()); environment(x) }");
+        assertEval("{ x<-42; attributes(x)<-list(.Environment=globalenv()); attributes(x) }");
+        assertEval("{ x<-42; attributes(x)<-list(.Environment=globalenv()); attributes(x)<-NULL; environment(x) }");
+        assertEval("{ x<-42; attr(x, '.Environment')<-globalenv(); environment(x) }");
+        assertEval("{ x<-42; attr(x, '.Environment')<-globalenv(); attr(x, '.Environment') }");
+        assertEval("{ x<-42; attr(x, '.Environment')<-globalenv(); attr(x, '.Environment')<-NULL; environment(x) }");
+        assertEval("{ f<-function() 42; attributes(f)<-list(.Environment=baseenv()); environment(f) }");
+        assertEval("{ f<-function() 42; attributes(f)<-list(.Environment=baseenv()); attributes(f) }");
+        assertEval("{ f<-function() 42; attr(f, '.Environment')<-baseenv(); environment(f) }");
+        assertEval("{ f<-function() 42; attr(f, '.Environment')<-baseenv(); attr(f, '.Environment') }");
     }
 
     @Test

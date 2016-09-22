@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.Assumption;
@@ -42,7 +44,6 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -276,12 +277,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private final Engine engine;
 
     /**
-     * Denote whether the result of an expression should be printed in the shell or not. This value
-     * will be modified by many operations like builtins, block statements, etc.
-     */
-    private boolean resultVisible = false;
-
-    /**
      * A context-specific value that is checked in {@code HiddenInternalFunctions} to avoid an error
      * report on a {@code SUBSTITUTE} builtin. Not worth promoting to a {@link ContextState}.
      */
@@ -314,12 +309,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private boolean active;
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
-
-    /**
-     * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
-     * benchmarks. Set across all contexts.
-     */
-    @CompilationFinal private static boolean ignoreVisibility;
 
     /**
      * Set to {@code true} when in embedded mode to allow other parts of the system to determine
@@ -395,6 +384,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * time the constructor is called.
      */
     private ContextState stateRFFI;
+
+    public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
@@ -638,29 +629,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     public Engine getThisEngine() {
         return engine;
-    }
-
-    /**
-     * This method should only be used under exceptional circumstances; the visibility can be
-     * derived with {@code GetVisibilityNode}.
-     */
-    public boolean isVisible() {
-        return resultVisible;
-    }
-
-    /**
-     * This method should only be used under exceptional circumstances; the visibility can be
-     * changed with {@code SetVisibilityNode}.
-     */
-    public void setVisible(boolean v) {
-        if (!FastROptions.IgnoreVisibility.getBooleanValue()) {
-            /*
-             * Prevent printing the dummy expression used to force creation of initial context
-             */
-            if (initialContextInitialized || !embedded) {
-                resultVisible = v;
-            }
-        }
     }
 
     public boolean isMethodTableDispatchOn() {

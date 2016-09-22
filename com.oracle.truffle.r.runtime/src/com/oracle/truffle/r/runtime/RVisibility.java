@@ -23,8 +23,6 @@
 
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.context.RContext;
-
 /**
  * Denotes the visibility of an output of a built-in.
  */
@@ -33,9 +31,9 @@ public enum RVisibility {
     OFF,
     /**
      * In GnuR this means by default ON, but C code can change the visibility. In FastR this means
-     * that is it left up to the built-in whether and how to call
-     * {@link RContext#setVisible(boolean)}. For example, {@code do.call} and similar built-ins do
-     * not change the visibility set by the 'inner' node.
+     * that is it left up to the built-in whether and how to use {@code SetVisibilityNode}. For
+     * example, {@code do.call} and similar built-ins do not change the visibility set by the
+     * 'inner' node.
      */
     CUSTOM,
 }

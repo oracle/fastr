@@ -38,6 +38,7 @@ public final class RCaller {
     private static final Object PROMISE_MARKER = new Object();
 
     private final int depth;
+    private boolean visibility;
     private final RCaller parent;
     /**
      * payload can be an RSyntaxNode, a {@link Supplier}, or an PROMISE_MARKER.
@@ -115,5 +116,13 @@ public final class RCaller {
 
     public static RCaller createForPromise(RCaller original, int newDepth) {
         return new RCaller(newDepth, original, PROMISE_MARKER);
+    }
+
+    public boolean getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(boolean visibility) {
+        this.visibility = visibility;
     }
 }

@@ -1919,6 +1919,14 @@ public class TestBuiltin_operators extends TestBase {
     }
 
     @Test
+    public void testNames() {
+        assertEval("data <- c(1,2,3,4); names(data) <- c('a','b','c','d'); " +
+                        "data[c('a','b')] + data[c('c','d')]; data[c('a','b')] + data[c('c')]; data[c('a')] + data[c('c','d')]; data[c('a')] + data[c('c')]; " +
+                        "data[c('a')] + 1; 1 + data[c('a')]; data[c('a')] + c(1,2); c(1,2) + data[c('a')]; " +
+                        "data[c('a','b')] + 1; 1 + data[c('a','b')]; data[c('a','b')] + c(1,2); c(1,2) + data[c('a','b')]");
+    }
+
+    @Test
     public void testOperators() {
         assertEval("{ `+`(1,2) }");
         assertEval("{ `-`(1,2) }");

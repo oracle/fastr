@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -47,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
+@RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateDimNames extends RBuiltinNode {
 
     protected static final String DIMNAMES_ATTR_KEY = RRuntime.DIMNAMES_ATTR_KEY;
@@ -96,13 +97,13 @@ public abstract class UpdateDimNames extends RBuiltinNode {
                     @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
-            RVector vector = (RVector) container;
+            RVector vector = (RVector) result;
             if (vector.getInternalDimNames() != null) {
                 vector.setInternalDimNames(null);
                 remove.execute(vector.getAttributes());
             }
         } else {
-            container.setDimNames(null);
+            result.setDimNames(null);
         }
         return result;
     }

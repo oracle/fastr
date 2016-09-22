@@ -79,7 +79,7 @@ public abstract class Rank extends RBuiltinNode {
 
     private Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create());
+            orderVector1Node = insert(OrderVector1NodeGen.create(false));
         }
         return orderVector1Node;
     }

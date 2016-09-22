@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -56,10 +55,6 @@ public abstract class WithVisible extends RBuiltinNode {
     @Specialization
     protected RList withVisible(VirtualFrame frame, Object x,
                     @Cached("create()") GetVisibilityNode visibility) {
-        if (FastROptions.IgnoreVisibility.getBooleanValue()) {
-            RError.warning(this, RError.Message.GENERIC, "using withVisible with IgnoreVisibility");
-        }
-
         Object[] data = new Object[]{x, RRuntime.asLogical(visibility.execute(frame))};
         return RDataFactory.createList(data, LISTNAMES);
     }

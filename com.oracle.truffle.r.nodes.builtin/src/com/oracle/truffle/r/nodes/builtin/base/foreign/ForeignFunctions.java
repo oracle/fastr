@@ -45,6 +45,7 @@ import com.oracle.truffle.r.library.stats.Covcor;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.Pbinom;
+import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
@@ -366,6 +367,8 @@ public class ForeignFunctions {
                     return RbinomNodeGen.create();
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
+                case "pf":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
                 case "cutree":
                 case "isoreg":
                 case "monoFC_m":
@@ -404,7 +407,6 @@ public class ForeignFunctions {
                 case "binomial_dev_resids":
                 case "rWishart":
                 case "Cdist":
-                case "updateform":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
@@ -446,8 +448,12 @@ public class ForeignFunctions {
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
 
+                case "updateform":
+                    return getExternalModelBuiltinNode("updateform");
+
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+
                 case "dnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 

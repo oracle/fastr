@@ -19,6 +19,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -34,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -64,8 +67,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 
     private OrderVector1Node initOrderVector1() {
-        if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create());
+        return initOrderVector1(false);
+    }
+
+    private OrderVector1Node initOrderVector1(boolean needsStringCollation) {
+        if (orderVector1Node == null || needsStringCollation && !orderVector1Node.needsStringCollation) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            orderVector1Node = insert(OrderVector1NodeGen.create(needsStringCollation));
         }
         return orderVector1Node;
     }
@@ -154,18 +162,32 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
-    Object orderString(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderString(boolean naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @Cached("create()") BranchProfile collationProfile) {
         Object[] vectors = args.getArguments();
         RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
         int n = v.getLength();
         reportWork(n);
+
+        boolean needsCollation = false;
+        outer: for (int i = 0; i < n; i++) {
+            String str = v.getDataAt(i);
+            for (int i2 = 0; i2 < str.length(); i2++) {
+                char c = str.charAt(i2);
+                if (c > 127) {
+                    collationProfile.enter();
+                    needsCollation = true;
+                    break outer;
+                }
+            }
+        }
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, v, naLast, decreasing, null);
+        initOrderVector1(needsCollation).execute(indxVec, v, naLast, decreasing, null);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -291,6 +313,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      */
     abstract static class OrderVector1Node extends RBaseNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
+
+        private final boolean needsStringCollation;
+
+        protected OrderVector1Node(boolean needsStringCollation) {
+            this.needsStringCollation = needsStringCollation;
+        }
 
         public abstract Object execute(Object v, Object dv, boolean naLast, boolean dec, Object rho);
 
@@ -525,7 +553,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     while (j >= lo + h) {
                         int a = indx[j - h];
                         int b = itmp;
-                        int c = compare(collator, dv.getDataAt(a), dv.getDataAt(b));
+                        int c = compareString(collator, dv.getDataAt(a), dv.getDataAt(b));
                         if (decProfile.profile(dec)) {
                             if (!(c < 0 || (c == 0 && a > b))) {
                                 break;
@@ -543,14 +571,32 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
+        private int compareString(Collator collator, String dataAt, String dataAt2) {
+            if (needsStringCollation) {
+                return compare(collator, dataAt, dataAt2);
+            } else {
+                return dataAt.compareToIgnoreCase(dataAt2);
+            }
+        }
+
         @TruffleBoundary
         private static int compare(Collator collator, String dataAt, String dataAt2) {
             return collator.compare(dataAt, dataAt2);
         }
 
         @TruffleBoundary
-        private static Collator createCollator() {
-            return Collator.getInstance();
+        private Collator createCollator() {
+            if (!needsStringCollation) {
+                return null;
+            }
+            // add rule for space before '_'
+            Collator collator = Collator.getInstance();
+            String rules = ((RuleBasedCollator) collator).getRules();
+            try {
+                return new RuleBasedCollator(rules.replaceAll("<'\u005f'", "<' '<'\u005f'"));
+            } catch (ParseException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
         }
 
         private static boolean lt(RComplex a, RComplex b) {

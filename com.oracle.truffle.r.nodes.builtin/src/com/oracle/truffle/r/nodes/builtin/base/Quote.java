@@ -27,34 +27,49 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RShareable;
 
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
 public abstract class Quote extends RBuiltinNode {
 
     protected static final int LIMIT = 3;
 
+    private final ConditionProfile shareableProfile = ConditionProfile.createBinaryProfile();
+
     public abstract Object execute(RPromise expr);
 
-    protected static Object createLanguage(Closure closure) {
-        return Utils.makeShared(RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode()));
+    /**
+     * Creates a shared permanent language so that it can be cached and repeatedly returned as the
+     * result.
+     */
+    protected final Object cachedCreateLanguage(Closure closure) {
+        Object result = createLanguage(closure);
+        if (shareableProfile.profile(result instanceof RShareable)) {
+            ((RShareable) result).makeSharedPermanent();
+        }
+        return result;
+    }
+
+    protected final Object createLanguage(Closure closure) {
+        return RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode());
     }
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LIMIT", guards = "cachedClosure == expr.getClosure()")
     protected Object quoteCached(RPromise expr,
                     @Cached("expr.getClosure()") Closure cachedClosure,
-                    @Cached("createLanguage(cachedClosure)") Object language) {
+                    @Cached("cachedCreateLanguage(cachedClosure)") Object language) {
         return language;
     }
 
     @Specialization(contains = "quoteCached")
     protected Object quote(RPromise expr) {
-        return RASTUtils.createLanguageElement(expr.getClosure().getExpr().asRSyntaxNode());
+        return createLanguage(expr.getClosure());
     }
 }

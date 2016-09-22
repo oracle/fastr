@@ -32,138 +32,76 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
+/**
+ * See {@link RFrameSlot#Visibility}.
+ */
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class SetVisibilityNode extends Node {
+public final class SetVisibilityNode extends Node {
 
-    public abstract void execute(Frame frame, boolean value);
-
-    public abstract void execute(VirtualFrame frame, RVisibility visibility);
-
-    public abstract void executeAfterCall(VirtualFrame frame);
-
-    public abstract void executeEndOfFunction(VirtualFrame frame);
+    @CompilationFinal private FrameSlot frameSlot;
 
     private SetVisibilityNode() {
     }
 
     public static SetVisibilityNode create() {
-        if (FastROptions.IgnoreVisibility.getBooleanValue()) {
-            return new SetVisibilityNoopNode();
-        } else if (FastROptions.OptimizeVisibility.getBooleanValue()) {
-            return new SetVisibilityOptimizedNode();
-        } else {
-            return new SetVisibilityDefaultNode();
+        return new SetVisibilityNode();
+    }
+
+    private void ensureFrameSlot(Frame frame) {
+        if (frameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
         }
     }
 
-    private static final class SetVisibilityNoopNode extends SetVisibilityNode {
-
-        @Override
-        public void execute(Frame frame, boolean value) {
-            // nothing to do
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, RVisibility visibility) {
-            // nothing to do
-        }
-
-        @Override
-        public void executeAfterCall(VirtualFrame frame) {
-            // nothing to do
-        }
-
-        @Override
-        public void executeEndOfFunction(VirtualFrame frame) {
-            // nothing to do
-        }
+    public void execute(Frame frame, boolean value) {
+        ensureFrameSlot(frame);
+        frame.setObject(frameSlot, value);
     }
 
-    private static final class SetVisibilityDefaultNode extends SetVisibilityNode {
-
-        @Override
-        public void execute(Frame frame, boolean value) {
-            RContext.getInstance().setVisible(value);
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, RVisibility visibility) {
-            if (visibility == RVisibility.ON) {
-                execute(frame, true);
-            } else if (visibility == RVisibility.OFF) {
-                execute(frame, false);
-            }
-        }
-
-        @Override
-        public void executeAfterCall(VirtualFrame frame) {
-            // nothing to do
-        }
-
-        @Override
-        public void executeEndOfFunction(VirtualFrame frame) {
-            // nothing to do
+    public void execute(VirtualFrame frame, RVisibility visibility) {
+        if (visibility == RVisibility.ON) {
+            execute(frame, true);
+        } else if (visibility == RVisibility.OFF) {
+            execute(frame, false);
         }
     }
 
     /**
-     * See {@link RFrameSlot#Visibility}.
+     * Needs to be called after each call site, so that the visibility is transferred from the
+     * {@link RCaller} to the current frame.
      */
-    private static final class SetVisibilityOptimizedNode extends SetVisibilityNode {
+    public void executeAfterCall(VirtualFrame frame, RCaller caller) {
+        ensureFrameSlot(frame);
+        frame.setObject(frameSlot, caller.getVisibility());
+    }
 
-        @CompilationFinal private FrameSlot frameSlot;
-
-        @Override
-        public void execute(Frame frame, boolean value) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
+    /**
+     * Needs to be called at the end of each function, so that the visibility is transferred from
+     * the current frame into the {@link RCaller}.
+     */
+    public void executeEndOfFunction(VirtualFrame frame) {
+        ensureFrameSlot(frame);
+        try {
+            Object visibility = frame.getObject(frameSlot);
+            if (visibility != null) {
+                RArguments.getCall(frame).setVisibility(visibility == Boolean.TRUE);
             }
-            frame.setObject(frameSlot, value);
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, RVisibility visibility) {
-            if (visibility == RVisibility.ON) {
-                execute(frame, true);
-            } else if (visibility == RVisibility.OFF) {
-                execute(frame, false);
-            }
-        }
-
-        @Override
-        public void executeAfterCall(VirtualFrame frame) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
-            }
-            frame.setObject(frameSlot, null);
-        }
-
-        @Override
-        public void executeEndOfFunction(VirtualFrame frame) {
-            if (frameSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
-            }
-            try {
-                Object visibility = frame.getObject(frameSlot);
-                if (visibility != null) {
-                    RContext.getInstance().setVisible(visibility == Boolean.TRUE);
-                }
-            } catch (FrameSlotTypeException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+        } catch (FrameSlotTypeException e) {
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 
-    public static void executeAfterCallSlowPath(Frame frame) {
-        frame.setObject(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object), null);
+    /**
+     * Slow-path version of {@link #executeAfterCall(VirtualFrame, RCaller)}.
+     */
+    public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
+        frame.setObject(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object), caller.getVisibility());
     }
 }

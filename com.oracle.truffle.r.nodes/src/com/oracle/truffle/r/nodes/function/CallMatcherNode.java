@@ -252,7 +252,11 @@ public abstract class CallMatcherNode extends RBaseNode {
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
-                    return call.execute(frame, cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
+                    try {
+                        return call.execute(frame, cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
+                    } finally {
+                        visibility.executeAfterCall(frame, caller);
+                    }
                 } else {
                     applyCasts(reorderedArgs);
                     Object result = builtin.execute(frame, reorderedArgs);
@@ -327,6 +331,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @Child private CallRFunctionCachedNode call = CallRFunctionCachedNodeGen.create(0);
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
@@ -338,7 +343,11 @@ public abstract class CallMatcherNode extends RBaseNode {
             RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
                             : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
-            return call.execute(frame, function, caller, null, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
+            try {
+                return call.execute(frame, function, caller, null, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
+            } finally {
+                visibility.executeAfterCall(frame, caller);
+            }
         }
 
         @Override

@@ -43,10 +43,10 @@ import org.junit.Assert;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.DiagConfig;
+import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.RIntBuiltinDiagFactory;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.SingleBuiltinDiagnostics;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -129,8 +130,12 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
 
         @Override
-        public SingleBuiltinDiagnostics createBuiltinDiagnostics(RBuiltinFactory bf) {
-            return new ChimneySweeping(this, bf);
+        public SingleBuiltinDiagnostics createBuiltinDiagnostics(RBuiltinDiagFactory bf) {
+            if (bf instanceof RIntBuiltinDiagFactory) {
+                return new ChimneySweeping(this, (RIntBuiltinDiagFactory) bf);
+            } else {
+                throw new UnsupportedOperationException("Only non-external builtins supported for chimney-sweeping atm");
+            }
         }
 
         private static TestOutputManager loadTestOutputManager() throws IOException {
@@ -151,16 +156,18 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     private final List<Samples<?>> argSamples;
     private final ChimneySweepingSuite diagSuite;
     private final Set<RList> validArgsList;
+    private final RBuiltinKind kind;
 
     private final Set<List<String>> printedOutputPairs = new HashSet<>();
     private final Set<String> printedErrors = new HashSet<>();
     private int sweepCounter = 0;
 
-    ChimneySweeping(ChimneySweepingSuite diagSuite, RBuiltinFactory builtinFactory) {
+    ChimneySweeping(ChimneySweepingSuite diagSuite, RIntBuiltinDiagFactory builtinFactory) {
         super(diagSuite, builtinFactory);
         this.diagSuite = diagSuite;
         this.validArgsList = extractValidArgsForBuiltin();
         this.argSamples = createSamples();
+        this.kind = builtinFactory.getBuiltinKind();
     }
 
     @Override
@@ -274,7 +281,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         try {
             String snippetAnchor;
-            switch (annotation.kind()) {
+            switch (kind) {
                 case INTERNAL:
                     snippetAnchor = ".Internal(" + builtinName + "(";
                     break;
@@ -385,7 +392,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
 
             String call;
-            switch (annotation.kind()) {
+            switch (kind) {
                 case INTERNAL:
                     call = ".Internal(" + builtinName + "(" + sb + "))";
                     break;

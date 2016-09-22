@@ -73,4 +73,32 @@ public class TestBuiltin_sample extends TestBase {
         assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
         assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
     }
+
+    @Test
+    public void testArgsCasts() {
+        // x
+        assertEval("set.seed(42); sample(-1)");
+        assertEval("set.seed(42); .Internal(sample(4.5e20, 4.5e20, FALSE, NULL))");
+        assertEval("set.seed(42); .Internal(sample(NA, NA, FALSE, NULL))");
+        assertEval("set.seed(42); .Internal(sample(NaN, NaN, FALSE, NULL))");
+        // Note: we treat Infinity in NaN check
+        assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(1/0, 1, FALSE, NULL))");
+        // size
+        assertEval("set.seed(42); sample(3, '2')");
+        assertEval("set.seed(42); sample(3, 2.0)");
+        assertEval("set.seed(42); sample(3, c(2,3))");
+        assertEval("set.seed(42); sample(3, TRUE)");
+        assertEval("set.seed(42); sample(3, -3)");
+        assertEval("set.seed(42); sample(3, NA)");
+        assertEval("set.seed(42); sample(2, 0)");
+        assertEval("set.seed(42); sample(0, 0)");
+        // replace
+        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, replace=c(T,F))");
+        assertEval("set.seed(42); sample(4, replace=1)");
+        assertEval("set.seed(42); sample(4, replace=1.2)");
+        assertEval(Output.IgnoreErrorMessage, "set.seed(42); sample(4, replace='s')");
+        // prob
+        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, prob=c(1,2))");
+        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, prob=c(-1,1,1,2))");
+    }
 }

@@ -50,7 +50,7 @@ public abstract class NZChar extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector rev(RNull value, boolean keepNA) {
+    protected RLogicalVector rev(@SuppressWarnings("unused") RNull value, @SuppressWarnings("unused") boolean keepNA) {
         return RDataFactory.createEmptyLogicalVector();
     }
 

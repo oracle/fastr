@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Deque;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -216,21 +218,9 @@ public class RSerialize {
         return i >> 8;
     }
 
-    private abstract static class Common {
-
+    public abstract static class RefCounter {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
-        protected final CallHook hook;
-        protected final ContextStateImpl contextState;
-
-        protected Common(CallHook hook) {
-            this.hook = hook;
-            this.contextState = getContextState();
-        }
-
-        protected static IOException formatError(byte format, boolean ok) throws IOException {
-            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
-        }
 
         protected Object addReadRef(Object item) {
             assert item != null;
@@ -254,6 +244,22 @@ public class RSerialize {
             }
             return -1;
         }
+    }
+
+    private abstract static class Common extends RefCounter {
+
+        protected final CallHook hook;
+        protected final ContextStateImpl contextState;
+
+        protected Common(CallHook hook) {
+            this.hook = hook;
+            this.contextState = getContextState();
+        }
+
+        protected static IOException formatError(byte format, boolean ok) throws IOException {
+            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
+        }
+
     }
 
     public static final int DEFAULT_VERSION = 2;
@@ -309,6 +315,26 @@ public class RSerialize {
         Input instance = trace() ? new TracingInput(is, hook, packageName, functionName) : new Input(is, hook, packageName, functionName);
         Object result = instance.unserialize();
         return result;
+    }
+
+    @TruffleBoundary
+    public static RPromise unserializePromise(RExpression expr, Object e, Object value) {
+        assert expr.getLength() == 1;
+        RBaseNode rep;
+        if (expr.getDataAt(0) instanceof RLanguage) {
+            RLanguage lang = (RLanguage) expr.getDataAt(0);
+            rep = lang.getRep();
+        } else if (expr.getDataAt(0) instanceof RSymbol) {
+            rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
+        } else {
+            rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
+        }
+        if (value == RUnboundValue.instance) {
+            REnvironment env = e == RNull.instance ? REnvironment.baseEnv() : (REnvironment) e;
+            return RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
+        } else {
+            return RDataFactory.createEvaluatedPromise(Closure.create(rep), value);
+        }
     }
 
     private static class Input extends Common {
@@ -611,21 +637,7 @@ public class RSerialize {
                             String deparse = RDeparse.deparseDeserialize(constants, pl.cdr());
                             RExpression expr = parse(constants, deparse);
                             assert expr.getLength() == 1;
-                            RBaseNode rep;
-                            if (expr.getDataAt(0) instanceof RLanguage) {
-                                RLanguage lang = (RLanguage) expr.getDataAt(0);
-                                rep = lang.getRep();
-                            } else if (expr.getDataAt(0) instanceof RSymbol) {
-                                rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
-                            } else {
-                                rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
-                            }
-                            if (pl.car() == RUnboundValue.instance) {
-                                REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                                result = RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
-                            } else {
-                                result = RDataFactory.createEvaluatedPromise(Closure.create(rep), pl.car());
-                            }
+                            result = unserializePromise(expr, pl.getTag(), pl.car());
                             break;
                         }
 
@@ -1116,6 +1128,8 @@ public class RSerialize {
         private int size;
         private int offset;
 
+        private final WeakHashMap<String, WeakReference<String>> strings = RContext.getInstance().stringMap;
+
         XdrInputFormat(InputStream is) {
             super(is);
             if (is instanceof PByteArrayInputStream) {
@@ -1168,6 +1182,14 @@ public class RSerialize {
                 result = new String(buf, offset, len, StandardCharsets.UTF_8);
             }
             offset += len;
+            WeakReference<String> entry;
+            if ((entry = strings.get(result)) != null) {
+                String string = entry.get();
+                if (string != null) {
+                    return string;
+                }
+            }
+            strings.put(result, new WeakReference<>(result));
             return result;
         }
 
@@ -1282,20 +1304,35 @@ public class RSerialize {
 
         @Override
         void writeString(String value) throws IOException {
-            byte[] bytes = value.getBytes();
-            int bytesLen = bytes.length;
-            int totalLen = bytesLen + 4;
-            if (totalLen > buf.length) {
-                // too large to fit buffer
-                ensureSpace(4);
-                writeInt(bytesLen);
-                flushBuffer();
-                os.write(bytes);
+            boolean simple = true;
+            for (int i = 0; i < value.length(); i++) {
+                if (value.charAt(i) >= 0x80) {
+                    simple = false;
+                    break;
+                }
+            }
+            if (simple && value.length() <= buf.length) {
+                writeInt(value.length());
+                ensureSpace(value.length());
+                for (int i = 0; i < value.length(); i++) {
+                    buf[offset++] = (byte) value.charAt(i);
+                }
             } else {
-                ensureSpace(totalLen);
-                writeInt(bytesLen);
-                System.arraycopy(bytes, 0, buf, offset, bytesLen);
-                offset += bytesLen;
+                byte[] bytes = value.getBytes();
+                int bytesLen = bytes.length;
+                int totalLen = bytesLen + 4;
+                if (totalLen > buf.length) {
+                    // too large to fit buffer
+                    ensureSpace(4);
+                    writeInt(bytesLen);
+                    flushBuffer();
+                    os.write(bytes);
+                } else {
+                    ensureSpace(totalLen);
+                    writeInt(bytesLen);
+                    System.arraycopy(bytes, 0, buf, offset, bytesLen);
+                    offset += bytesLen;
+                }
             }
         }
 
@@ -2199,6 +2236,26 @@ public class RSerialize {
             Output output = new Output(out, type, version, (CallHook) refhook);
             State state = new PLState(output);
             output.serialize(state, obj);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
+    public static byte[] serializePromiseRep(RPromise promise) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, XDR, DEFAULT_VERSION, null);
+            State state = new PLState(output);
+            RSyntaxNode node = RContext.getRRuntimeASTAccess().unwrapPromiseRep(promise);
+            state.openPairList();
+            node.serializeImpl(state);
+            Object res = state.closePairList();
+            if (res instanceof RPairList) {
+                state.convertUnboundValues((RPairList) res);
+            }
+            output.serialize(state, res);
             return out.toByteArray();
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere();
