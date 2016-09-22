@@ -55,7 +55,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     /**
      * Creates a shared permanent vector so that it can be re-used for every list(...) with the same
-     * arguments
+     * arguments.
      */
     protected final RStringVector cachedArgNameVector(ArgumentsSignature signature) {
         RStringVector result = argNameVector(signature);
