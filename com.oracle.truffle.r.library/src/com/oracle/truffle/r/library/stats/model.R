@@ -1266,7 +1266,7 @@ modelmatrix <- function(formula, modelframe) {
 # lhs/rhs of the 'old' formula. The result is stripped off of all attributes and
 # gets .Environment attribute from the 'old' formula.
 updateform <- function(old, new) {
-    is.formula <- function (x) is.language(x) && x[[1L]] == quote(`~`);
+    is.formula <- function (x) is.language(x) && identical(x[[1L]], quote(`~`));
     if (!is.formula(old) || !is.formula(new)) {
         error("formula expected")
     }

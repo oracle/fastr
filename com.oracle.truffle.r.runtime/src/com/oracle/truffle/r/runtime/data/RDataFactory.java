@@ -411,7 +411,7 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(state, closure, argumentValue));
     }
 
-    public static Object createEvaluatedPromise(Closure closure, Object value) {
+    public static RPromise createEvaluatedPromise(Closure closure, Object value) {
         return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
     }
 
