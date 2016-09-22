@@ -247,7 +247,7 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testWorkingDirectory() {
         assertEval("{ cur <- getwd(); cur1 <- setwd(getwd()) ; cur2 <- getwd() ; cur == cur1 && cur == cur2 }");
-        assertEval(Output.IgnoreErrorContext, "{ setwd(1) }");
+        assertEval("{ setwd(1) }");
         assertEval(Output.IgnoreErrorContext, "{ setwd(character()) }");
         assertEval("{ cur <- getwd(); cur1 <- setwd(c(cur, \"dummy\")) ; cur2 <- getwd() ; cur == cur1  }");
     }
