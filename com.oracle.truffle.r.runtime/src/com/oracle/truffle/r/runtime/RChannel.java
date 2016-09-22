@@ -204,7 +204,7 @@ public class RChannel {
     private static class TransmitterCommon extends RSerialize.RefCounter {
 
         protected static class SerializedRef {
-            private int index;
+            private final int index;
 
             public SerializedRef(int index) {
                 this.index = index;
@@ -217,7 +217,7 @@ public class RChannel {
 
         protected static class SerializedList {
 
-            private RList list;
+            private final RList list;
 
             SerializedList(RList list) {
                 this.list = list;
@@ -231,8 +231,8 @@ public class RChannel {
         protected static class SerializedEnv {
 
             public static class Bindings {
-                private String[] names;
-                private Object[] values;
+                private final String[] names;
+                private final Object[] values;
 
                 Bindings(String[] names, Object[] values) {
                     this.names = names;
@@ -270,9 +270,9 @@ public class RChannel {
 
         protected static class SerializedPromise {
 
-            private Object env;
-            private Object value;
-            private byte[] serializedExpr;
+            private final Object env;
+            private final Object value;
+            private final byte[] serializedExpr;
 
             public SerializedPromise(Object env, Object value, byte[] serializedExpr) {
                 this.env = env;
@@ -295,9 +295,9 @@ public class RChannel {
         }
 
         protected static class SerializedFunction {
-            private RAttributes attributes;
-            private Object env;
-            private byte[] serializedDef;
+            private final RAttributes attributes;
+            private final Object env;
+            private final byte[] serializedDef;
 
             public SerializedFunction(RAttributes attributes, Object env, byte[] serializedDef) {
                 this.attributes = attributes;
@@ -320,8 +320,8 @@ public class RChannel {
 
         protected static class SerializedAttributable {
 
-            private RAttributes attributes;
-            private byte[] serializedAttributable;
+            private final RAttributes attributes;
+            private final byte[] serializedAttributable;
 
             public SerializedAttributable(RAttributes attributes, byte[] serializedAttributable) {
                 this.attributes = attributes;
