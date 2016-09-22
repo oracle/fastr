@@ -95,11 +95,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
             return ((RAbstractContainer) rowNames).getLength();
         } else {
             errorProfile.enter();
-            throw typeError();
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
         }
-    }
-
-    private RError typeError() {
-        return RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
     }
 }
