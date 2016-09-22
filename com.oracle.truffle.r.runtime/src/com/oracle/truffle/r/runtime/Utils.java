@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -885,14 +884,6 @@ public final class Utils {
             // @formatter:on
         }
         return r;
-    }
-
-    public static <T> T makeShared(T o) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (o instanceof RShareable) {
-            ((RShareable) o).makeSharedPermanent();
-        }
-        return o;
     }
 
     @TruffleBoundary
