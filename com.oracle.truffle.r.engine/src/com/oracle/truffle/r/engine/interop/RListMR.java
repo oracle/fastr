@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 
 @MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
@@ -98,6 +99,19 @@ public class RListMR {
                 }
                 Object x = extract.apply(frame, receiver, new Object[]{field}, value);
                 return x;
+            }
+        }
+    }
+
+    @Resolve(message = "KEYS")
+    public abstract static class RListKeysNode extends Node {
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @SuppressWarnings("try")
+        protected Object access(RList receiver) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                return receiver.getNames(attrProfiles);
             }
         }
     }

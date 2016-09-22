@@ -28,7 +28,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
+import com.oracle.truffle.api.interop.ForeignAccess.Factory18;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public final class RAbstractVectorAccessFactory implements Factory10 {
+public final class RAbstractVectorAccessFactory implements Factory18 {
 
     static class VectorSizeNode extends RootNode {
 
@@ -175,6 +175,11 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
     @Override
     @SuppressWarnings("all")
     public CallTarget accessNew(int argumentsLength) {
+        return null;
+    }
+
+    @Override
+    public CallTarget accessKeys() {
         return null;
     }
 }
