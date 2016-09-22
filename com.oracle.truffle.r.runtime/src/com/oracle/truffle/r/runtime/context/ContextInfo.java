@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -72,9 +73,15 @@ public final class ContextInfo implements TruffleObject {
         return newVM;
     }
 
+    public PolyglotEngine createVM(Function<PolyglotEngine.Builder, PolyglotEngine.Builder> build) {
+        PolyglotEngine newVM = build.apply(PolyglotEngine.newBuilder()).globalSymbol(GLOBAL_SYMBOL, this).build();
+        this.vm = newVM;
+        return newVM;
+    }
+
     /**
      * Create a context configuration object.
-     * 
+     *
      * @param startParams the start parameters passed this R session
      * @param env TODO
      * @param kind defines the degree to which this context shares base and package environments

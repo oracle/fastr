@@ -38,7 +38,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -47,7 +46,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -66,7 +64,7 @@ public class PrintFunctions {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+        @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -91,10 +89,9 @@ public class PrintFunctions {
             casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        @TruffleBoundary
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-            valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            valuePrinter.execute(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             return o;
         }
 
@@ -102,7 +99,6 @@ public class PrintFunctions {
             return ReadVariableNode.lookupFunction("show", frame);
         }
 
-        @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt, //
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
@@ -110,7 +106,7 @@ public class PrintFunctions {
                 // S4 should only be called in case noOpt is true
                 RContext.getEngine().evalFunction(showFunction, null, null, null, o);
             } else {
-                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+                printDefault(frame, showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             }
             return null;
         }
@@ -123,7 +119,7 @@ public class PrintFunctions {
     @RBuiltin(name = "print.function", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."}, behavior = IO)
     public abstract static class PrintFunction extends RBuiltinNode {
 
-        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+        @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -134,8 +130,8 @@ public class PrintFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RFunction printFunction(RFunction x, boolean useSource, RArgsValuesAndNames extra) {
-            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
+        protected RFunction printFunction(VirtualFrame frame, RFunction x, boolean useSource, RArgsValuesAndNames extra) {
+            valuePrinter.execute(frame, x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
             return x;
         }
     }

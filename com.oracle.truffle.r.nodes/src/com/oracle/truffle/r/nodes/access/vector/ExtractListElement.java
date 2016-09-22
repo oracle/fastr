@@ -118,7 +118,7 @@ public abstract class ExtractListElement extends Node {
             // reference semantics (e.g. REnvironment)
         }
 
-        protected final boolean isFallback(Object owner, Object value) {
+        protected static boolean isFallback(Object owner, Object value) {
             return !(value instanceof RShareable) || !(owner instanceof RListBase);
         }
     }

@@ -44,4 +44,37 @@ public class TestInterop extends TestBase {
         assertEvalFastR(".fastr.interop.export('foo', 1:100)", "invisible()");
         assertEvalFastR(".fastr.interop.export('foo', new.env())", "invisible()");
     }
+
+    @Test
+    public void testPrinting() {
+        assertEvalFastR("v <- .fastr.interop.import('testPOJO'); print(v)", "cat('$intValue\\n" +
+                        "[1] 1\\n" +
+                        "\\n" +
+                        "$longValue\\n" +
+                        "[1] 123412341234\\n" +
+                        "\\n" +
+                        "$charValue\\n" +
+                        "[1] \"R\"\\n" +
+                        "\\n" +
+                        "$shortValue\\n" +
+                        "[1] -100\\n" +
+                        "\\n" +
+                        "$booleanValue\\n" +
+                        "[1] TRUE\\n" +
+                        "\\n" +
+                        "$stringValue\\n" +
+                        "[1] \"foo\"\\n" +
+                        "\\n" +
+                        "attr(,\"is.truffle.object\")\\n" +
+                        "[1] TRUE\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testStringArray'); print(v)", "cat('[1] \"a\"   \"\"    \"foo\"\\n" +
+                        "attr(,\"is.truffle.object\")\\n" +
+                        "[1] TRUE\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); print(v)", "cat('[1]   1  -5 199\\n" +
+                        "attr(,\"is.truffle.object\")\\n" +
+                        "[1] TRUE\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); v", "cat('[1]   1  -5 199\\n" +
+                        "attr(,\"is.truffle.object\")\\n" +
+                        "[1] TRUE\\n')");
+    }
 }

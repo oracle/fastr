@@ -16,12 +16,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.AnyVectorToStringVectorWriter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
-    @Child protected ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+    @Child protected ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 
@@ -98,17 +98,17 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     // TODO: even though format's arguments are not used at this point, their processing mirrors
@@ -134,17 +134,17 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(RAbstractComplexVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractComplexVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     @SuppressWarnings("unused")
