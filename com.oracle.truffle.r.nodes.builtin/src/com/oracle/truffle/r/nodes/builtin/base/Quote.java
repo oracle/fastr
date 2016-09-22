@@ -44,19 +44,27 @@ public abstract class Quote extends RBuiltinNode {
 
     public abstract Object execute(RPromise expr);
 
-    protected final Object createLanguage(Closure closure) {
-        Object o = RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode());
-        if (shareableProfile.profile(o instanceof RShareable)) {
-            ((RShareable) o).makeSharedPermanent();
+    /**
+     * Creates a shared permanent language so that it can be cached and repeatedly returned as the
+     * result.
+     */
+    protected final Object cachedCreateLanguage(Closure closure) {
+        Object result = createLanguage(closure);
+        if (shareableProfile.profile(result instanceof RShareable)) {
+            ((RShareable) result).makeSharedPermanent();
         }
-        return o;
+        return result;
+    }
+
+    protected final Object createLanguage(Closure closure) {
+        return RASTUtils.createLanguageElement(closure.getExpr().asRSyntaxNode());
     }
 
     @SuppressWarnings("unused")
     @Specialization(limit = "LIMIT", guards = "cachedClosure == expr.getClosure()")
     protected Object quoteCached(RPromise expr,
                     @Cached("expr.getClosure()") Closure cachedClosure,
-                    @Cached("createLanguage(cachedClosure)") Object language) {
+                    @Cached("cachedCreateLanguage(cachedClosure)") Object language) {
         return language;
     }
 

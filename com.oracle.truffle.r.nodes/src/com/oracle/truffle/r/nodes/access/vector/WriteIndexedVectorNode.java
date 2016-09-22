@@ -473,7 +473,6 @@ abstract class WriteIndexedVectorNode extends Node {
 
         private final boolean setListElementAsObject;
         private final boolean isReplace;
-        private final ConditionProfile isShareable = ConditionProfile.createBinaryProfile();
         @Child private UpdateStateOfListElement updateStateOfListElement;
         @Child private ShareObjectNode shareObjectNode;
 
@@ -481,9 +480,9 @@ abstract class WriteIndexedVectorNode extends Node {
             this.setListElementAsObject = setListElementAsObject;
             this.isReplace = isReplace;
             if (!isReplace) {
-                updateStateOfListElement = insert(UpdateStateOfListElement.create());
+                updateStateOfListElement = UpdateStateOfListElement.create();
             } else {
-                shareObjectNode = insert(ShareObjectNode.create());
+                shareObjectNode = ShareObjectNode.create();
             }
         }
 

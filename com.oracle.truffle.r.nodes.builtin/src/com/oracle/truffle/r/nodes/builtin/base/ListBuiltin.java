@@ -53,7 +53,19 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     @CompilationFinal private RStringVector suppliedSignatureArgNames;
 
-    protected RStringVector argNameVector(ArgumentsSignature signature) {
+    /**
+     * Creates a shared permanent vector so that it can be re-used for every list(...) with the same
+     * arguments
+     */
+    protected final RStringVector cachedArgNameVector(ArgumentsSignature signature) {
+        RStringVector result = argNameVector(signature);
+        if (result != null) {
+            result.makeSharedPermanent();
+        }
+        return result;
+    }
+
+    protected final RStringVector argNameVector(ArgumentsSignature signature) {
         if (namesNull.profile(signature.getNonNullCount() == 0)) {
             return null;
         }
@@ -63,9 +75,6 @@ public abstract class ListBuiltin extends RBuiltinNode {
             names[i] = (orgName == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : orgName);
         }
         RStringVector result = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
-        // this is going to be a cached vector re-used for every list(...) with the same arguments,
-        // it has to be shared.
-        result.makeSharedPermanent();
         return result;
     }
 
@@ -81,7 +90,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     protected RList listCached(RArgsValuesAndNames args, //
                     @Cached("args.getLength()") int cachedLength, //
                     @SuppressWarnings("unused") @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
-                    @Cached("argNameVector(cachedSignature)") RStringVector cachedArgNames) {
+                    @Cached("cachedArgNameVector(cachedSignature)") RStringVector cachedArgNames) {
         Object[] argArray = args.getArguments();
         for (int i = 0; i < cachedLength; i++) {
             getShareObjectNode(i).execute(argArray[i]);
