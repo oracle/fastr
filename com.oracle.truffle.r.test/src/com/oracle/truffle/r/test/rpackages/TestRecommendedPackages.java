@@ -49,16 +49,18 @@ public class TestRecommendedPackages extends TestRPackages {
      * Allows an external agent to ignore certain packages that are known to fail.
      */
     public static void ignorePackages(String[] ignoredPackages) {
-        packages = new String[DEFAULT_PACKAGES.length - ignoredPackages.length];
+        String[] testPackages = new String[DEFAULT_PACKAGES.length - ignoredPackages.length];
         int k = 0;
-        for (int i = 0; i < DEFAULT_PACKAGES.length; i++) {
+        outer: for (int i = 0; i < DEFAULT_PACKAGES.length; i++) {
             for (int j = 0; j < ignoredPackages.length; j++) {
                 if (DEFAULT_PACKAGES[i].equals(ignoredPackages[j])) {
-                    continue;
+                    continue outer;
                 }
-                ignoredPackages[k++] = DEFAULT_PACKAGES[i];
             }
+            testPackages[k] = DEFAULT_PACKAGES[i];
+            k++;
         }
+        packages = testPackages;
     }
 
     @BeforeClass
