@@ -42,6 +42,37 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_nativeSetTempDir(JNIEnv 
 	setTempDir(env, tempDir);
 }
 
+JNIEXPORT jdouble JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_exactSumFunc(JNIEnv *env, jclass c, jdoubleArray values, jboolean hasNa, jboolean naRm) {
+	jint length = (*env)->GetArrayLength(env, values);
+	jdouble* contents = (jdouble*) (*env)->GetPrimitiveArrayCritical(env, values, NULL);
+
+	long double sum = 0;
+	int i = 0;
+	if (!hasNa) {
+		for (; i < length - 3; i+= 4) {
+			sum += contents[i];
+			sum += contents[i + 1];
+			sum += contents[i + 2];
+			sum += contents[i + 3];
+		}
+	}
+	for (; i < length; i++) {
+		jdouble value = contents[i];
+		if (R_IsNA(value)) {
+			if (!naRm) {
+				(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+				return R_NaReal;
+			}
+		} else {
+			sum += value;
+		}
+	}
+
+	(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+	return sum;
+}
+
 // Boilerplate methods for the actual calls
 
 typedef SEXP (*call0func)();
