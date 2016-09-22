@@ -1147,8 +1147,7 @@ public class CallRFFIHelper {
         return env.ls(all, null, sorted);
     }
 
-    @SuppressWarnings("unused")
-    private static String R_HomeDir() {
+    public static String R_HomeDir() {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("R_HomeDir");
         }
