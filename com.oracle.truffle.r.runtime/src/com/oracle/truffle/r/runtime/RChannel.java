@@ -560,57 +560,11 @@ public class RChannel {
         }
 
         public Object processOutgoingMessage(Object data) {
-            Object msg = data;
-            if (msg instanceof RList) {
-                try {
-                    msg = convertPrivateList(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable list");
-                }
-            } else if (shareableEnv(msg)) {
-                try {
-                    msg = convertPrivateEnv(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable environment");
-                }
-            } else if (msg instanceof RPromise) {
-                try {
-                    msg = convertPrivatePromise(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable promise");
-                }
-            } else if (msg instanceof RFunction) {
-                try {
-                    msg = convertPrivateFunction(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable function");
-                }
-            } else if (!serializeObject(msg)) {
-                // make sure that what's passed through the channel will be copied on the first
-                // update
-                makeShared(msg);
-                try {
-                    if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
-                        Object newMsg = convertObjectAttributesToPrivate(msg);
-                        if (newMsg == msg) {
-                            makeShared(msg);
-                        } // otherwise a copy has been created to store new attributes
-                        return newMsg;
-                    } else {
-                        return makeShared(msg);
-                    }
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
-                }
-            } else {
-                assert msg instanceof RAttributable;
-                try {
-                    msg = convertPrivateAttributable(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable attributable");
-                }
+            try {
+                return convertPrivate(data);
+            } catch (IOException x) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error serializing message for channel transmission");
             }
-            return msg;
         }
 
     }
@@ -731,9 +685,11 @@ public class RChannel {
                 if (newVal != val) {
                     // class attribute is a string vector which should be always shared
                     assert !a.getName().equals(RRuntime.CLASS_ATTR_KEY);
-                    // TODO: this is a bit brittle as it relies on the iterator to work correctly in
+                    // TODO: this is a bit brittle as it relies on the iterator to work
+                    // correctly in
                     // the
-                    // face of updates (which it does under current implementation of attributes)
+                    // face of updates (which it does under current implementation of
+                    // attributes)
                     attributable.setAttr(a.getName(), newVal);
                 }
             }
@@ -741,26 +697,7 @@ public class RChannel {
 
         public Object processedReceivedMessage(Object msg) {
             try {
-                Object ret = msg;
-                if (msg instanceof SerializedList) {
-                    RList list = ((SerializedList) msg).getList();
-                    // list and attributes are already private (shallow copies - do the appropriate
-                    // changes in place)
-                    unserializeList(list);
-                    ret = list;
-                } else if (msg instanceof SerializedEnv) {
-                    ret = unserializeEnv((SerializedEnv) msg);
-                } else if (msg instanceof SerializedPromise) {
-                    ret = unserializePromise((SerializedPromise) msg);
-                } else if (msg instanceof SerializedFunction) {
-                    ret = unserializeFunction((SerializedFunction) msg);
-                } else if (msg instanceof SerializedAttributable) {
-                    ret = unserializeAttributable((SerializedAttributable) msg);
-                }
-                if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
-                    unserializeAttributes((RAttributable) ret);
-                }
-                return ret;
+                return unserializeObject(msg);
             } catch (IOException x) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error unserializing msg from the channel");
             }
