@@ -107,19 +107,20 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right,
-                    @SuppressWarnings("unused") int rightLength, //
-                    @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft, //
-                    @Cached("create()") CopyOfRegAttributesNode copyOfRegRight, //
-                    @Cached("createDim()") RemoveAttributeNode removeDim, //
-                    @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //
-                    @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createNames()") PutAttributeNode putNames, //
-                    @Cached("createDim()") PutAttributeNode putDim, //
-                    @Cached("create()") BranchProfile leftHasDimensions, //
-                    @Cached("create()") BranchProfile rightHasDimensions, //
-                    @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesLeft, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesRight, //
+                    @SuppressWarnings("unused") int rightLength,
+                    @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft,
+                    @Cached("create()") CopyOfRegAttributesNode copyOfRegRight,
+                    @Cached("createBinaryProfile()") ConditionProfile hasAttributes,
+                    @Cached("createDim()") RemoveAttributeNode removeDim,
+                    @Cached("createDimNames()") RemoveAttributeNode removeDimNames,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") PutAttributeNode putNames,
+                    @Cached("createDim()") PutAttributeNode putDim,
+                    @Cached("create()") BranchProfile leftHasDimensions,
+                    @Cached("create()") BranchProfile rightHasDimensions,
+                    @Cached("create()") BranchProfile noDimensions,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesLeft,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesRight,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
         if (LOG) {
             log("copyAttributes: ==");
@@ -141,7 +142,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             if (newDimensions == null) {
                 noDimensions.enter();
                 RAttributes attributes = result.getAttributes();
-                if (attributes != null) {
+                if (hasAttributes.profile(attributes != null)) {
                     removeDim.execute(attributes);
                     removeDimNames.execute(attributes);
                     result.setInternalDimNames(null);

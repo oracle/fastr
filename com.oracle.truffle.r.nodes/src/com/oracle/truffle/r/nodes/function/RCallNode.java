@@ -839,7 +839,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             FormalArguments formals = root.getFormalArguments();
             if (root instanceof RBuiltinRootNode) {
                 RBuiltinRootNode builtinRoot = (RBuiltinRootNode) root;
-                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall);
+                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall, explicitArgs);
             } else {
                 return new DispatchedCallNode(cachedTarget, originalCall);
             }
@@ -928,36 +928,54 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     private static final class BuiltinCallNode extends LeafCallNode {
 
         @Child private RBuiltinNode builtin;
-        @Child private PromiseCheckHelperNode promiseHelper;
+        @Child private PromiseCheckHelperNode varArgsPromiseHelper;
+        @Children private final PromiseHelperNode[] promiseHelpers;
         @Children private final CastNode[] casts;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-        private final BranchProfile emptyProfile = BranchProfile.create();
-        private final BranchProfile varArgsProfile = BranchProfile.create();
-        private final ConditionProfile wrapProfile = ConditionProfile.createBinaryProfile();
+        // not using profiles to save overhead
+        private final boolean[] argEmptySeen;
+        private final boolean[] varArgSeen;
+        private final boolean[] nonWrapSeen;
+        private final boolean[] wrapSeen;
+
         private final FormalArguments formals;
         private final RBuiltinDescriptor builtinDescriptor;
+        private boolean explicitArgs;
 
-        BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall) {
+        BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);
             this.builtin = builtin;
             this.builtinDescriptor = builtinDescriptor;
+            this.explicitArgs = explicitArgs;
             this.casts = builtin.getCasts();
             this.formals = formalArguments;
+            promiseHelpers = new PromiseHelperNode[formals.getLength()];
+            argEmptySeen = new boolean[formals.getLength()];
+            varArgSeen = new boolean[formals.getLength()];
+            nonWrapSeen = new boolean[formals.getLength()];
+            wrapSeen = new boolean[formals.getLength()];
         }
 
         @ExplodeLoop
         public Object[] castArguments(VirtualFrame frame, Object[] args) {
             int argCount = formals.getLength();
+            int varArgIndex = formals.getSignature().getVarArgIndex();
             Object[] result = new Object[argCount];
             for (int i = 0; i < argCount; i++) {
                 Object arg = args[i];
-                if (arg == REmpty.instance) {
-                    emptyProfile.enter();
+                if (explicitArgs && arg == REmpty.instance) {
+                    if (!argEmptySeen[i]) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        argEmptySeen[i] = true;
+                    }
                     arg = formals.getInternalDefaultArgumentAt(i);
                 }
-                if (arg instanceof RArgsValuesAndNames) {
-                    varArgsProfile.enter();
+                if (varArgIndex == i && arg instanceof RArgsValuesAndNames) {
+                    if (!varArgSeen[i]) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        varArgSeen[i] = true;
+                    }
                     RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
                     if (builtinDescriptor.evaluatesArg(i)) {
                         forcePromises(frame, varArgs);
@@ -967,12 +985,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 } else {
                     if (builtinDescriptor.evaluatesArg(i)) {
                         if (arg instanceof RPromise) {
-                            if (promiseHelper == null) {
+                            if (promiseHelpers[i] == null) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                                promiseHelper = insert(new PromiseCheckHelperNode());
+                                promiseHelpers[i] = insert(new PromiseHelperNode());
                             }
-                            arg = promiseHelper.checkEvaluate(frame, arg);
-
+                            arg = promiseHelpers[i].evaluate(frame, (RPromise) arg);
                         }
                         if (i < casts.length && casts[i] != null) {
                             assert builtinDescriptor.evaluatesArg(i);
@@ -980,7 +997,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                         }
                     } else {
                         assert casts.length <= i || casts[i] == null : "no casts allowed on non-evaluated arguments";
-                        if (wrapProfile.profile(!(arg instanceof RPromise || arg instanceof RMissing))) {
+                        if (arg instanceof RPromise || arg instanceof RMissing) {
+                            if (!nonWrapSeen[i]) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                nonWrapSeen[i] = true;
+                            }
+                        } else {
+                            if (!wrapSeen[i]) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                wrapSeen[i] = true;
+                            }
                             arg = createPromise(arg);
                         }
                     }
@@ -993,11 +1019,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private void forcePromises(VirtualFrame frame, RArgsValuesAndNames varArgs) {
             Object[] array = varArgs.getArguments();
             for (int i = 0; i < array.length; i++) {
-                if (promiseHelper == null) {
+                if (varArgsPromiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseHelper = insert(new PromiseCheckHelperNode());
+                    varArgsPromiseHelper = insert(new PromiseCheckHelperNode());
                 }
-                array[i] = promiseHelper.checkEvaluate(frame, array[i]);
+                array[i] = varArgsPromiseHelper.checkEvaluate(frame, array[i]);
             }
         }
 

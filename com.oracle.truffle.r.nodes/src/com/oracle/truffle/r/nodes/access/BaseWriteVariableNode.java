@@ -51,7 +51,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isSharedPermanent = ConditionProfile.createBinaryProfile();
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -96,11 +96,11 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                 if (mode == Mode.COPY) {
                     return rShareable.copy();
                 } else {
-                    if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
+                    if (!isSharedPermanent.profile(rShareable.isSharedPermanent())) {
                         if (isSuper) {
                             // if non-local assignment, increment conservatively
                             rShareable.incRefCount();
-                        } else if (isSharedProfile.profile(!rShareable.isShared())) {
+                        } else if (!isSharedProfile.profile(rShareable.isShared())) {
                             // don't increment if already shared - will not get "unshared" until
                             // this function exits anyway
                             rShareable.incRefCount();
