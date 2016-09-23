@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * last time.
  */
 public abstract class CopyOfRegAttributesNode extends RBaseNode {
+
+    private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
     public abstract void execute(RAbstractVector source, RVector target);
 
@@ -60,9 +63,9 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyDimAttribute(RAbstractVector source) {
+    protected final boolean onlyDimAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
@@ -71,9 +74,9 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyNamesAttribute(RAbstractVector source) {
+    protected final boolean onlyNamesAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
@@ -82,9 +85,9 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyClassAttribute(RAbstractVector source) {
+    protected final boolean onlyClassAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")

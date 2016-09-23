@@ -46,8 +46,6 @@ public final class ArgumentsSignature implements Iterable<String> {
     public static final String VARARG_NAME = "...";
     public static final int NO_VARARG = -1;
 
-    private static final String VARARG_GETTER_PREFIX = "..";
-
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
     public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
 
@@ -78,7 +76,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     @CompilationFinal private final String[] names;
     @CompilationFinal private final int[] varArgIndexes;
     @CompilationFinal private final boolean[] isVarArg;
-    @CompilationFinal private final boolean[] isVarArgGetter;
+    private final int varArgIndex;
     private final int nonNullCount;
 
     private ArgumentsSignature(String[] names) {
@@ -88,7 +86,6 @@ public final class ArgumentsSignature implements Iterable<String> {
         int index = NO_VARARG;
         int count = 0;
         this.isVarArg = new boolean[names.length];
-        this.isVarArgGetter = new boolean[names.length];
         for (int i = 0; i < names.length; i++) {
             String name = names[i];
             if (name != null) {
@@ -98,8 +95,6 @@ public final class ArgumentsSignature implements Iterable<String> {
                     if (index != NO_VARARG) {
                         index = i;
                     }
-                } else if (name.startsWith(VARARG_GETTER_PREFIX)) {
-                    this.isVarArgGetter[i] = true;
                 }
             }
         }
@@ -110,6 +105,7 @@ public final class ArgumentsSignature implements Iterable<String> {
                 varArgIndexes[pos++] = i;
             }
         }
+        this.varArgIndex = varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
     }
 
     public boolean isEmpty() {
@@ -126,7 +122,7 @@ public final class ArgumentsSignature implements Iterable<String> {
 
     public int getVarArgIndex() {
         assert varArgIndexes.length <= 1 : "cannot ask for _the_ vararg index if there are multiple varargs";
-        return varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
+        return varArgIndex;
     }
 
     public int getVarArgCount() {
@@ -207,7 +203,7 @@ public final class ArgumentsSignature implements Iterable<String> {
      * methods {@link #isVarArgsIndex(long)}, {@link #extractVarArgsArgumentIndex(long)} and
      * {@link #extractVarArgsArgumentIndex(long)} to access the data packed in the {@code long}
      * value. This method also removes arguments that are marked as 'unmatched' in the signature.
-     * 
+     *
      * @param argListSize length of the result -- sum of lengths of all varargs contained within
      *            varArgSignatures minus any unmatched arguments.
      */
