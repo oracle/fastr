@@ -61,4 +61,12 @@ public final class MessageData {
             return this;
         }
     }
+
+    /**
+     * Helper method for operation that is often performed with {@link MessageData}.
+     */
+    public static MessageData getFirstNonNull(MessageData first, MessageData second, MessageData third) {
+        assert third != null : "at least the last one must not be null";
+        return first != null ? first : second != null ? second : third;
+    }
 }

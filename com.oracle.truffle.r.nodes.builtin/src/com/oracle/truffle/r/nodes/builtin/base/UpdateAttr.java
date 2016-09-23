@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -75,8 +74,8 @@ public abstract class UpdateAttr extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
-        casts.arg("x").mustBe(Predef.nullValue().not());
-        casts.arg("which").mustBe(Predef.nullValue().not().and(stringValue()), SHOW_CALLER, MUST_BE_NONNULL_STRING, "name").asStringVector().findFirst();
+        casts.arg("x"); // disallows null
+        casts.arg("which").defaultError(SHOW_CALLER, MUST_BE_NONNULL_STRING, "name").mustBe(stringValue()).asStringVector().findFirst();
     }
 
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {

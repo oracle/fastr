@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
@@ -34,8 +37,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
-import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
@@ -43,8 +46,10 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
@@ -57,24 +62,13 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilte
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactoryImpl;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactory;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactoryImpl;
-import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
-import com.oracle.truffle.r.nodes.unary.FirstBooleanNodeGen;
-import com.oracle.truffle.r.nodes.unary.FirstIntNode;
-import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -99,156 +93,198 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class CastBuilder {
 
-    private static final CastNodeFactory[] EMPTY_CAST_FACT_ARRAY = new CastNodeFactory[0];
+    private static final PipelineBuilder[] EMPTY_BUILDERS = new PipelineBuilder[0];
 
     private final RBuiltinNode builtinNode;
-
-    private CastNodeFactory[] castFactories = EMPTY_CAST_FACT_ARRAY;
-    private CastNode[] castsWrapped = null;
+    private final String[] argumentNames;
+    private PipelineBuilder[] argumentBuilders;
+    private CastNode[] castsCache = null;
 
     public CastBuilder(RBuiltinNode builtinNode) {
-        this.builtinNode = builtinNode;
+        assert builtinNode != null : "builtinNode is null";
+        // Note: if we have the builtin metadata, we pre-allocate the arrays, builtinNode != null is
+        // used to determine, if the arrays are pre-allocated or if they can grow
+        RBuiltin builtin = builtinNode.getRBuiltin();
+        if (builtin == null) {
+            this.builtinNode = null;
+            argumentNames = null;
+            argumentBuilders = EMPTY_BUILDERS;
+        } else {
+            this.builtinNode = builtinNode;
+            argumentNames = builtin.parameterNames();
+            argumentBuilders = new PipelineBuilder[builtin.parameterNames().length];
+        }
+    }
+
+    public CastBuilder(int argumentsCount) {
+        assert argumentsCount >= 0 : "argumentsCount must be non-negative";
+        builtinNode = null;
+        argumentNames = null;
+        argumentBuilders = new PipelineBuilder[argumentsCount];
     }
 
     public CastBuilder() {
-        this(null);
+        builtinNode = null;
+        argumentNames = null;
+        argumentBuilders = EMPTY_BUILDERS;
     }
 
-    @FunctionalInterface
-    public interface CastNodeFactory {
-        CastNode create();
-    }
-
-    private CastBuilder insert(int index, final CastNodeFactory castNodeFactory) {
-        if (index >= castFactories.length) {
-            castFactories = Arrays.copyOf(castFactories, index + 1);
-        }
-        final CastNodeFactory cnf = castFactories[index];
-        if (cnf == null) {
-            castFactories[index] = castNodeFactory;
-        } else {
-            castFactories[index] = () -> new ChainedCastNode(cnf, castNodeFactory);
-        }
-        return this;
-    }
-
+    /**
+     * Returns the first case node in the chain for each argument, if argument does not require any
+     * casting, returns {@code null} as its cast node.
+     */
     public CastNode[] getCasts() {
-        if (castsWrapped == null) {
-            castsWrapped = new CastNode[castFactories.length];
-            for (int i = 0; i < castFactories.length; i++) {
-                CastNodeFactory cnf = i < castFactories.length ? castFactories[i] : null;
-                CastNode cn = cnf == null ? null : cnf.create();
-                castsWrapped[i] = cn;
+        if (castsCache == null) {
+            castsCache = new CastNode[argumentBuilders.length];
+            for (int i = 0; i < argumentBuilders.length; i++) {
+                PipelineBuilder arg = argumentBuilders[i];
+                if (arg != null) {
+                    PipelineStep<?, ?> firstStep = arg.chainBuilder != null ? arg.chainBuilder.firstStep : null;
+                    castsCache[i] = PipelineToCastNode.convert(arg.pcb, firstStep);
+                }
             }
         }
-
-        return castsWrapped;
+        return castsCache;
     }
 
-    public CastBuilder toAttributable(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return insert(index, () -> CastToAttributableNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+    // ---------------
+    // Deprecated API:
+    // Converted to the new API preserving original semantics as much as possible
+
+    private PipelineBuilder getBuilderForDeprecated(int index) {
+        PipelineBuilder builder = getBuilder(index, "");
+        builder.getPipelineConfig().allowNull();
+        return builder;
     }
 
     public CastBuilder toVector(int index) {
-        return insert(index, () -> CastToVectorNodeGen.create(false));
-    }
-
-    public CastBuilder toVector(int index, boolean preserveNonVector) {
-        return insert(index, () -> CastToVectorNodeGen.create(preserveNonVector));
-    }
-
-    public CastBuilder toInteger(int index) {
-        return toInteger(index, false, false, false);
-    }
-
-    public CastBuilder toInteger(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return insert(index, () -> CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public CastBuilder toDouble(int index) {
-        return toDouble(index, false, false, false);
-    }
-
-    public CastBuilder toDouble(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return insert(index, () -> CastDoubleNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public CastBuilder toLogical(int index) {
-        return insert(index, () -> CastLogicalNodeGen.create(false, false, false));
-    }
-
-    public CastBuilder toCharacter(int index) {
-        return insert(index, () -> CastStringNodeGen.create(false, false, false));
-    }
-
-    public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return insert(index, () -> CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public CastBuilder toComplex(int index) {
-        return insert(index, () -> CastComplexNodeGen.create(false, false, false));
-    }
-
-    public CastBuilder toRaw(int index) {
-        return insert(index, () -> CastRawNodeGen.create(false, false, false));
-    }
-
-    public CastBuilder boxPrimitive(int index) {
-        return insert(index, () -> BoxPrimitiveNodeGen.create());
-    }
-
-    public CastBuilder custom(int index, CastNodeFactory castNodeFactory) {
-        return insert(index, castNodeFactory);
-    }
-
-    public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
-        insert(index, () -> CastIntegerNodeGen.create(false, false, false));
-        return insert(index, () -> FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
-    }
-
-    public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
-        insert(index, () -> CastIntegerNodeGen.create(false, false, false));
-        return insert(index, () -> FirstIntNode.createWithError(error, name));
-    }
-
-    public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
-        return insert(index, () -> FirstStringNode.createWithError(error, name));
-    }
-
-    public CastBuilder firstBoolean(int index) {
-        return insert(index, () -> FirstBooleanNodeGen.create(null));
-    }
-
-    public CastBuilder firstBoolean(int index, String invalidValueName) {
-        return insert(index, () -> FirstBooleanNodeGen.create(invalidValueName));
-    }
-
-    public CastBuilder firstLogical(int index) {
-        arg(index).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        // TODO: asVector with preserveNonVector transforms RNull, this is not compatible with the
+        // semantics of RNull being forwarded by all cast nodes. Because of this we need to map null
+        // for legacy API calls
+        builder.getPipelineConfig().setWasLegacyAsVectorCall();
+        builder.getPipelineConfig().mapNull(new MapToValue<>(RDataFactory.createList()));
+        builder.appendAsVector();
         return this;
     }
 
+    public CastBuilder toInteger(int index) {
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
+            mapNullAndMissing(builder, RDataFactory.createIntVector(0));
+        } else {
+            builder.getPipelineConfig().mapNull(new MapToValue<>(RNull.instance));
+        }
+        builder.appendAsIntegerVector(false, false, false);
+        return this;
+    }
+
+    public CastBuilder toDouble(int index) {
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
+            builder.getPipelineConfig().mapNull(new MapToValue<>(RDataFactory.createDoubleVector(0)));
+            // CastDoubleBaseNode does not handle RMissing it seems...
+        } else {
+            allowNullAndMissing(builder);
+        }
+        builder.appendAsDoubleVector(false, false, false);
+        return this;
+    }
+
+    public CastBuilder toLogical(int index) {
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
+            mapNullAndMissing(builder, RDataFactory.createLogicalVector(0));
+        } else {
+            allowNullAndMissing(builder);
+        }
+        builder.appendAsLogicalVector(false, false, false);
+        return this;
+    }
+
+    public CastBuilder boxPrimitive(int index) {
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        allowNullAndMissing(builder);
+        builder.append(new BoxPrimitiveStep<>());
+        return this;
+    }
+
+    public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
+        // TODO: check if we can remove FirstIntNode when this is removed...
+        getBuilderForDeprecated(index).appendAsIntegerVector(false, false, false);
+        getBuilderForDeprecated(index).appendFindFirst(null, Integer.class, SHOW_CALLER, error, new Object[]{name});
+        return this;
+    }
+
+    public CastBuilder firstBoolean(int index) {
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        builder.appendAsLogicalVector(false, false, false);
+        builder.appendFindFirst(null, Byte.class, SHOW_CALLER, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL, new Object[0]);
+        builder.appendMap(MapByteToBoolean.INSTANCE);
+        return this;
+    }
+
+    public CastBuilder firstBoolean(int index, String invalidValueName) {
+        if (invalidValueName == null) {
+            return firstBoolean(index);
+        }
+        PipelineBuilder builder = getBuilderForDeprecated(index);
+        builder.appendAsLogicalVector(false, false, false);
+        builder.appendFindFirst(null, Byte.class, SHOW_CALLER, RError.Message.INVALID_VALUE, new Object[]{invalidValueName});
+        builder.appendMap(MapByteToBoolean.INSTANCE);
+        return this;
+    }
+
+    private void allowNullAndMissing(PipelineBuilder builder) {
+        builder.getPipelineConfig().mapNull(new MapToValue<>(RNull.instance));
+        builder.getPipelineConfig().mapMissing(new MapToValue<>(RMissing.instance));
+    }
+
+    private void mapNullAndMissing(PipelineBuilder builder, Object value) {
+        builder.getPipelineConfig().mapNull(new MapToValue<>(value));
+        builder.getPipelineConfig().mapMissing(new MapToValue<>(value));
+    }
+
+    // end of deprecated API:
+    // ---------------------
     // The cast-pipelines API starts here
 
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
-        return new ArgCastBuilderFactoryImpl(argumentIndex, argumentName).newPreinitialPhaseBuilder();
+        assert builtinNode != null : "arg(int, String) is only supported for builtins cast pipelines";
+        assert argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
+        assert argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
+        return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, argumentName));
     }
 
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex) {
-        return arg(argumentIndex, builtinNode == null ? null : builtinNode.getRBuiltin().parameterNames()[argumentIndex]);
+        boolean existingIndex = argumentNames != null && argumentIndex >= 0 && argumentIndex < argumentNames.length;
+        String name = existingIndex ? argumentNames[argumentIndex] : null;
+        return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, name));
     }
 
     public PreinitialPhaseBuilder<Object> arg(String argumentName) {
-        return arg(getArgumentIndex(argumentName), argumentName);
+        assert builtinNode != null : "arg(String) is only supported for builtins cast pipelines";
+        return new PreinitialPhaseBuilder<>(getBuilder(getArgumentIndex(argumentName), argumentName));
+    }
+
+    private PipelineBuilder getBuilder(int argumentIndex, String argumentName) {
+        if (builtinNode == null && argumentIndex >= argumentBuilders.length) {
+            // in the case that we have a builtin, the arguments size is known and fixed, otherwise
+            // we grow the array accordingly
+            argumentBuilders = Arrays.copyOf(argumentBuilders, argumentIndex + 1);
+        }
+        if (argumentBuilders[argumentIndex] == null) {
+            argumentBuilders[argumentIndex] = new PipelineBuilder(new PipelineConfigBuilder(argumentName));
+        }
+        return argumentBuilders[argumentIndex];
     }
 
     private int getArgumentIndex(String argumentName) {
         if (builtinNode == null) {
             throw new IllegalArgumentException("No builtin node associated with cast builder");
         }
-        String[] parameterNames = builtinNode.getRBuiltin().parameterNames();
-        for (int i = 0; i < parameterNames.length; i++) {
-            if (argumentName.equals(parameterNames[i])) {
+        for (int i = 0; i < argumentNames.length; i++) {
+            if (argumentName.equals(argumentNames[i])) {
                 return i;
             }
         }
@@ -256,14 +292,14 @@ public final class CastBuilder {
         throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
     public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
         Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
 
         for (int i = 0; i < messageArgs.length; i++) {
             final Object msgArg = messageArgs[i];
             if (msgArg instanceof Function) {
-                newMsgArgs[i] = ((Function) msgArg).apply(arg);
+                newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
             }
         }
 
@@ -386,16 +422,28 @@ public final class CastBuilder {
             return new CoercionStep<>(TargetType.Any, true, false, false, false, preserveNonVector);
         }
 
-        public static <V extends RAbstractVector> FindFirstNodeBuilder<V> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder<>(callObj, message, messageArgs);
+        /**
+         * Version of {@code findFirst} step that can be used in {@code chain}, must be followed by
+         * call for {@code xyzElement()}.
+         */
+        public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            return new FindFirstNodeBuilder(callObj, message, messageArgs);
         }
 
-        public static <V extends RAbstractVector> FindFirstNodeBuilder<V> findFirst(RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder<>(null, message, messageArgs);
+        /**
+         * Version of {@code findFirst} step that can be used in {@code chain}, must be followed by
+         * call for {@code xyzElement()}.
+         */
+        public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RError.Message message, Object... messageArgs) {
+            return new FindFirstNodeBuilder(null, message, messageArgs);
         }
 
-        public static <V extends RAbstractVector> FindFirstNodeBuilder<V> findFirst() {
-            return new FindFirstNodeBuilder<>(null, null, null);
+        /**
+         * Version of {@code findFirst} step that can be used in {@code chain}, must be followed by
+         * call for {@code xyzElement()}.
+         */
+        public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst() {
+            return new FindFirstNodeBuilder(null, null, null);
         }
 
         public static <T> PipelineStep<T, T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -781,297 +829,158 @@ public final class CastBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    public interface ArgCastBuilder<T, THIS> {
+    public static class ArgCastBuilder<T, THIS> {
 
-        ArgCastBuilderState state();
+        private final PipelineBuilder builder;
 
-        default CastBuilder builder() {
-            return state().castBuilder();
+        public ArgCastBuilder(PipelineBuilder builder) {
+            this.builder = builder;
         }
 
-        default THIS defaultError(RBaseNode callObj, RError.Message message, Object... args) {
-            state().setDefaultError(callObj, message, args);
-            state().pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
+        public PipelineBuilder pipelineBuilder() {
+            return builder;
+        }
+
+        public THIS defaultError(RBaseNode callObj, RError.Message message, Object... args) {
+            pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
             return (THIS) this;
         }
 
-        default THIS defaultError(RError.Message message, Object... args) {
-            state().setDefaultError(message, args);
-            state().pipelineBuilder().appendDefaultErrorStep(message, args);
+        public THIS defaultError(RError.Message message, Object... args) {
+            defaultError(null, message, args);
             return (THIS) this;
         }
 
-        default THIS defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
-            state().setDefaultWarning(callObj, message, args);
-            state().pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
+        public THIS defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
+            pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
             return (THIS) this;
         }
 
-        default THIS defaultWarning(RError.Message message, Object... args) {
-            state().setDefaultWarning(message, args);
-            state().pipelineBuilder().appendDefaultWarningStep(message, args);
+        public THIS shouldBe(Filter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendShouldBeStep(argFilter, message, messageArgs);
             return (THIS) this;
         }
 
-        default THIS shouldBe(Filter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendShouldBeStep(argFilter, message, messageArgs);
+        public THIS shouldBe(Filter<? super T, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendShouldBeStep(argFilter, callObj, message, messageArgs);
             return (THIS) this;
         }
 
-        default THIS shouldBe(Filter<? super T, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendShouldBeStep(argFilter, callObj, message, messageArgs);
+        public THIS shouldBe(Filter<? super T, ?> argFilter) {
+            pipelineBuilder().appendShouldBeStep(argFilter, null, null, null);
             return (THIS) this;
         }
 
-        default THIS shouldBe(Filter<? super T, ?> argFilter) {
-            return shouldBe(argFilter, state().defaultWarning().getCallObj(), state().defaultWarning().getMessage(), state().defaultWarning().getMessageArgs());
+        /**
+         * Custom nodes in cast pipeline block optimisations and analysis, use them sparsely.
+         */
+        public THIS customNode(Supplier<CastNode> castNodeFactory) {
+            pipelineBuilder().append(new CustomNodeStep<>(castNodeFactory));
+            return (THIS) this;
         }
 
-        default <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
+        public <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
             return aliaser.apply((THIS) this);
         }
 
     }
 
-    interface ArgCastBuilderFactory {
+    public static class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
 
-        PreinitialPhaseBuilder<Object> newPreinitialPhaseBuilder();
-
-        <T> InitialPhaseBuilder<T> newInitialPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder);
-
-        <T extends RAbstractVector, S> CoercedPhaseBuilder<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder, Class<?> elementClass);
-
-        <T> HeadPhaseBuilder<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder);
-
-    }
-
-    public static class ArgCastBuilderState {
-        private final MessageData defaultDefaultError;
-
-        private final int argumentIndex;
-        private final String argumentName;
-        final ArgCastBuilderFactory factory;
-        private final CastBuilder cb;
-        private final PipelineConfigBuilder pcb;
-        private final PipelineBuilder pb;
-
-        final boolean boxPrimitives;
-        private MessageData defError;
-        private MessageData defWarning;
-
-        public ArgCastBuilderState(int argumentIndex, String argumentName, ArgCastBuilderFactory fact, CastBuilder cb, boolean boxPrimitives) {
-            this.argumentIndex = argumentIndex;
-            this.argumentName = argumentName;
-            this.factory = fact;
-            this.cb = cb;
-            this.boxPrimitives = boxPrimitives;
-            this.defaultDefaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
-            this.pcb = new PipelineConfigBuilder(this);
-            this.pb = new PipelineBuilder(this.pcb);
+        public InitialPhaseBuilder(PipelineBuilder builder) {
+            super(builder);
         }
 
-        ArgCastBuilderState(ArgCastBuilderState prevState, boolean boxPrimitives) {
-            this.argumentIndex = prevState.argumentIndex;
-            this.argumentName = prevState.argumentName;
-            this.factory = prevState.factory;
-            this.cb = prevState.cb;
-            this.boxPrimitives = boxPrimitives;
-            this.defError = prevState.defError;
-            this.defWarning = prevState.defWarning;
-            this.defaultDefaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
-            this.pcb = prevState.pcb;
-            this.pb = prevState.pb;
-        }
-
-        public int index() {
-            return argumentIndex;
-        }
-
-        public String name() {
-            return argumentName;
-        }
-
-        public CastBuilder castBuilder() {
-            return cb;
-        }
-
-        public PipelineBuilder pipelineBuilder() {
-            return pb;
-        }
-
-        boolean isDefaultErrorDefined() {
-            return defError != null;
-        }
-
-        boolean isDefaultWarningDefined() {
-            return defWarning != null;
-        }
-
-        void setDefaultError(RBaseNode callObj, RError.Message message, Object... args) {
-            defError = new MessageData(callObj, message, args);
-        }
-
-        void setDefaultError(RError.Message message, Object... args) {
-            defError = new MessageData(null, message, args);
-        }
-
-        void setDefaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
-            defWarning = new MessageData(callObj, message, args);
-        }
-
-        void setDefaultWarning(RError.Message message, Object... args) {
-            defWarning = new MessageData(null, message, args);
-        }
-
-        MessageData defaultError() {
-            return defError == null ? defaultDefaultError : defError;
-        }
-
-        MessageData defaultError(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defError == null ? new MessageData(callObj, defaultDefaultMessage, defaultDefaultArgs) : defError;
-        }
-
-        MessageData defaultError(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defError == null ? new MessageData(null, defaultDefaultMessage, defaultDefaultArgs) : defError;
-        }
-
-        MessageData defaultWarning() {
-            return defWarning == null ? defaultDefaultError : defWarning;
-        }
-
-        MessageData defaultWarning(RBaseNode callObj, RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defWarning == null ? new MessageData(callObj, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
-        }
-
-        MessageData defaultWarning(RError.Message defaultDefaultMessage, Object... defaultDefaultArgs) {
-            return defWarning == null ? new MessageData(null, defaultDefaultMessage, defaultDefaultArgs) : defWarning;
-        }
-
-        void mustBe(Filter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
             pipelineBuilder().appendMustBeStep(argFilter, callObj, message, messageArgs);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        void mustBe(Filter<?, ?> argFilter) {
-            mustBe(argFilter, defaultError().getCallObj(), defaultError().getMessage(), defaultError().getMessageArgs());
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+            return mustBe(argFilter, null, message, messageArgs);
         }
 
-        void shouldBe(Filter<?, ?> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            pipelineBuilder().appendShouldBeStep(argFilter, callObj, message, messageArgs);
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
+            return mustBe(argFilter, null, null, (Object[]) null);
         }
 
-        void shouldBe(Filter<?, ?> argFilter) {
-            shouldBe(argFilter, defaultWarning().getCallObj(), defaultWarning().getMessage(), defaultWarning().getMessageArgs());
-        }
-
-    }
-
-    abstract class ArgCastBuilderBase<T, THIS> implements ArgCastBuilder<T, THIS> {
-
-        private final ArgCastBuilderState st;
-
-        ArgCastBuilderBase(ArgCastBuilderState state) {
-            this.st = state;
-        }
-
-        @Override
-        public ArgCastBuilderState state() {
-            return st;
-        }
-    }
-
-    public interface InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
-
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, callObj, message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
-        }
-
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, null, message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
-        }
-
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
-        }
-
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
             mustBe(Predef.instanceOf(cls), callObj, message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
             mustBe(Predef.instanceOf(cls), message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
+        public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
             mustBe(Predef.instanceOf(cls));
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+        public <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
             shouldBe(Predef.instanceOf(cls), callObj, message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+        public <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
             shouldBe(Predef.instanceOf(cls), message, messageArgs);
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls) {
+        public <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls) {
             shouldBe(Predef.instanceOf(cls));
-            return state().factory.newInitialPhaseBuilder(this);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> InitialPhaseBuilder<S> map(Mapper<T, S> mapFn) {
-            state().pipelineBuilder().appendMap(mapFn);
-            return state().factory.newInitialPhaseBuilder(this);
+        public <S> InitialPhaseBuilder<S> map(Mapper<T, S> mapFn) {
+            pipelineBuilder().appendMap(mapFn);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper);
-            return state().factory.newInitialPhaseBuilder(this);
+        public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranchMapper);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
-            return state().factory.newInitialPhaseBuilder(this);
+        public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranch);
-            return state().factory.newInitialPhaseBuilder(this);
+        public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranch);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
-            return state().factory.newInitialPhaseBuilder(this);
+        public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
+            return new InitialPhaseBuilder<>(pipelineBuilder());
         }
 
-        default InitialPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
+        public InitialPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(null, null, message, messageArgs);
+        public InitialPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(null, null, message, messageArgs);
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
+        public InitialPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
+        public InitialPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
             return this;
         }
 
-        default InitialPhaseBuilder<T> notNA(T naReplacement) {
-            state().pipelineBuilder().appendNotNA(naReplacement, null, null, null);
+        public InitialPhaseBuilder<T> notNA(T naReplacement) {
+            pipelineBuilder().appendNotNA(naReplacement, null, null, null);
             return this;
         }
 
@@ -1079,390 +988,328 @@ public final class CastBuilder {
          * This method should be used as a step in pipeline, not as an argument to {@code mustBe}.
          * Example: {@code casts.arg("x").notNA()}.
          */
-        default InitialPhaseBuilder<T> notNA() {
-            state().pipelineBuilder().appendNotNA(null, null, null, null);
+        public InitialPhaseBuilder<T> notNA() {
+            pipelineBuilder().appendNotNA(null, null, null, null);
             return this;
         }
 
-        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().pipelineBuilder().appendAsIntegerVector(preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, Integer.class);
+        public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            pipelineBuilder().appendAsIntegerVector(preserveNames, dimensionsPreservation, attrPreservation);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector() {
+        public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector() {
             return asIntegerVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().pipelineBuilder().appendAsDoubleVector(preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, Double.class);
+        public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            pipelineBuilder().appendAsDoubleVector(preserveNames, dimensionsPreservation, attrPreservation);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector() {
+        public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector() {
             return asDoubleVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().pipelineBuilder().appendAsLogicalVector(preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, Byte.class);
+        public CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            pipelineBuilder().appendAsLogicalVector(preserveNames, dimensionsPreservation, attrPreservation);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Byte.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector() {
+        public CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector() {
             return asLogicalVector(false, false, false);
         }
 
-        default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().pipelineBuilder().appendAsStringVector(preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newCoercedPhaseBuilder(this, String.class);
+        public CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            pipelineBuilder().appendAsStringVector(preserveNames, dimensionsPreservation, attrPreservation);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), String.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
-            state().pipelineBuilder().appendAsStringVector();
-            return state().factory.newCoercedPhaseBuilder(this, String.class);
+        public CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
+            pipelineBuilder().appendAsStringVector();
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), String.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector() {
-            state().pipelineBuilder().appendAsComplexVector();
-            return state().factory.newCoercedPhaseBuilder(this, RComplex.class);
+        public CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector() {
+            pipelineBuilder().appendAsComplexVector();
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), RComplex.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractRawVector, RRaw> asRawVector() {
-            state().pipelineBuilder().appendAsRawVector();
-            return state().factory.newCoercedPhaseBuilder(this, RRaw.class);
+        public CoercedPhaseBuilder<RAbstractRawVector, RRaw> asRawVector() {
+            pipelineBuilder().appendAsRawVector();
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), RRaw.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
-            state().pipelineBuilder().appendAsVector();
-            return state().factory.newCoercedPhaseBuilder(this, Object.class);
+        public CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
+            // TODO: asVector() sets preserveNonVector to false, which is against intended semantics
+            // of cast nodes that always forward RNull, we need to revise all calls to this method
+            // and remove the preserveNonVector option of CastToVectorNode
+            pipelineBuilder().appendAsVector();
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
         }
 
-        default CoercedPhaseBuilder<RAbstractVector, Object> asVector(boolean preserveNonVector) {
-            state().pipelineBuilder().appendAsVector(preserveNonVector);
-            return state().factory.newCoercedPhaseBuilder(this, Object.class);
+        public CoercedPhaseBuilder<RAbstractVector, Object> asVector(boolean preserveNonVector) {
+            pipelineBuilder().appendAsVector(false, false, false, preserveNonVector);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
         }
 
-        default HeadPhaseBuilder<RAttributable> asAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-            state().pipelineBuilder().appendAsAttributable(preserveNames, dimensionsPreservation, attrPreservation);
-            return state().factory.newHeadPhaseBuilder(this);
+        public CoercedPhaseBuilder<RAbstractVector, Object> asVectorPreserveAttrs(boolean preserveNonVector) {
+            pipelineBuilder().appendAsVector(false, false, true, false);
+            return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
+        }
+
+        public HeadPhaseBuilder<RAttributable> asAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            pipelineBuilder().appendAsAttributable(preserveNames, dimensionsPreservation, attrPreservation);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
     }
 
-    public interface PreinitialPhaseBuilder<T> extends InitialPhaseBuilder<T> {
+    public static final class PreinitialPhaseBuilder<T> extends InitialPhaseBuilder<T> {
 
-        default PreinitialPhaseBuilder<T> conf(Function<PipelineConfigBuilder, PipelineConfigBuilder> cfgLambda) {
-            cfgLambda.apply(getPipelineConfigBuilder());
+        public PreinitialPhaseBuilder(PipelineBuilder pipelineBuilder) {
+            super(pipelineBuilder);
+        }
+
+        public PreinitialPhaseBuilder<T> conf(Consumer<PipelineConfigBuilder> cfgLambda) {
+            cfgLambda.accept(pipelineBuilder().pcb);
             return this;
         }
 
-        default InitialPhaseBuilder<T> allowNull() {
+        public InitialPhaseBuilder<T> allowNull() {
             return conf(c -> c.allowNull());
         }
 
-        default InitialPhaseBuilder<T> mustNotBeNull() {
-            return conf(c -> c.mustNotBeNull(state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs()));
+        public InitialPhaseBuilder<T> mustNotBeNull() {
+            return conf(c -> c.mustNotBeNull(null, null, (Object[]) null));
         }
 
-        default InitialPhaseBuilder<T> mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
+        public InitialPhaseBuilder<T> mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
             return conf(c -> c.mustNotBeNull(null, errorMsg, msgArgs));
         }
 
-        default InitialPhaseBuilder<T> mustNotBeNull(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
+        public InitialPhaseBuilder<T> mustNotBeNull(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
             return conf(c -> c.mustNotBeNull(callObj, errorMsg, msgArgs));
         }
 
-        default InitialPhaseBuilder<T> mapNull(Mapper<? super RNull, ?> mapper) {
+        public InitialPhaseBuilder<T> mapNull(Mapper<? super RNull, ?> mapper) {
             return conf(c -> c.mapNull(mapper));
         }
 
-        default InitialPhaseBuilder<T> allowMissing() {
+        public InitialPhaseBuilder<T> allowMissing() {
             return conf(c -> c.allowMissing());
         }
 
-        default InitialPhaseBuilder<T> mustNotBeMissing() {
-            return conf(c -> c.mustNotBeMissing(state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs()));
+        public InitialPhaseBuilder<T> mustNotBeMissing() {
+            return conf(c -> c.mustNotBeMissing(null, null, (Object[]) null));
         }
 
-        default InitialPhaseBuilder<T> mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
+        public InitialPhaseBuilder<T> mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
             return conf(c -> c.mustNotBeMissing(null, errorMsg, msgArgs));
         }
 
-        default InitialPhaseBuilder<T> mustNotBeMissing(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
+        public InitialPhaseBuilder<T> mustNotBeMissing(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
             return conf(c -> c.mustNotBeMissing(callObj, errorMsg, msgArgs));
         }
 
-        default InitialPhaseBuilder<T> mapMissing(Mapper<? super RMissing, ?> mapper) {
+        public InitialPhaseBuilder<T> mapMissing(Mapper<? super RMissing, ?> mapper) {
             return conf(c -> c.mapMissing(mapper));
         }
 
-        default InitialPhaseBuilder<T> allowNullAndMissing() {
+        public InitialPhaseBuilder<T> allowNullAndMissing() {
             return conf(c -> c.allowMissing().allowNull());
         }
 
         @Override
-        default PreinitialPhaseBuilder<T> defaultError(RBaseNode callObj, RError.Message message, Object... args) {
-            state().setDefaultError(callObj, message, args);
-            state().pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
-            getPipelineConfigBuilder().updateDefaultError();
+        public PreinitialPhaseBuilder<T> defaultError(RBaseNode callObj, RError.Message message, Object... args) {
+            pipelineBuilder().getPipelineConfig().setDefaultError(new MessageData(callObj, message, args));
+            pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
             return this;
         }
 
         @Override
-        default PreinitialPhaseBuilder<T> defaultError(RError.Message message, Object... args) {
-            return defaultError(null, message, args);
-        }
-
-        @Override
-        default PreinitialPhaseBuilder<T> defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
-            state().setDefaultWarning(callObj, message, args);
-            state().pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
+        public PreinitialPhaseBuilder<T> defaultError(Message message, Object... args) {
+            defaultError(null, message, args);
             return this;
         }
 
         @Override
-        default PreinitialPhaseBuilder<T> defaultWarning(RError.Message message, Object... args) {
-            return defaultWarning(null, message, args);
+        public PreinitialPhaseBuilder<T> defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
+            pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(callObj, message, args));
+            pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
+            return this;
         }
-
-        PipelineConfigBuilder getPipelineConfigBuilder();
     }
 
-    public interface CoercedPhaseBuilder<T extends RAbstractVector, S> extends ArgCastBuilder<T, CoercedPhaseBuilder<T, S>> {
+    public static final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends ArgCastBuilder<T, CoercedPhaseBuilder<T, S>> {
+
+        private final Class<?> elementClass;
+
+        public CoercedPhaseBuilder(PipelineBuilder builder, Class<?> elementClass) {
+            super(builder);
+            this.elementClass = elementClass;
+        }
 
         /**
          * The inserted cast node returns the default value if the input vector is empty. It also
          * reports the warning message.
          */
-        default HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), null, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default HeadPhaseBuilder<S> findFirst(S defaultValue, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), callObj, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public HeadPhaseBuilder<S> findFirst(S defaultValue, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendFindFirst(defaultValue, elementClass, callObj, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
         /**
          * The inserted cast node raises an error if the input vector is empty.
          */
-        default HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendFindFirst(null, elementClass(), null, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendFindFirst(null, elementClass, null, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default HeadPhaseBuilder<S> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendFindFirst(null, elementClass(), callObj, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public HeadPhaseBuilder<S> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendFindFirst(null, elementClass, callObj, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
         /**
-         * The inserted cast node raises the default error, if defined, or
-         * RError.Message.LENGTH_ZERO error if the input vector is empty.
+         * The inserted cast node raises the public error, if defined, or RError.Message.LENGTH_ZERO
+         * error if the input vector is empty.
          */
-        default HeadPhaseBuilder<S> findFirst() {
-            MessageData err = state().isDefaultErrorDefined() ? state().defaultError() : new MessageData(null, RError.Message.LENGTH_ZERO);
-            state().pipelineBuilder().appendFindFirst(null, elementClass(), err.getCallObj(), err.getMessage(), err.getMessageArgs());
-            return state().factory.newHeadPhaseBuilder(this);
+        public HeadPhaseBuilder<S> findFirst() {
+            pipelineBuilder().appendFindFirst(null, elementClass, null, null, null);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
         /**
          * The inserted cast node returns the default value if the input vector is empty. It reports
          * no warning message.
          */
-        default HeadPhaseBuilder<S> findFirst(S defaultValue) {
+        public HeadPhaseBuilder<S> findFirst(S defaultValue) {
             assert defaultValue != null : "defaultValue cannot be null";
-            state().pipelineBuilder().appendFindFirst(defaultValue, elementClass(), null, null, null);
-            return state().factory.newHeadPhaseBuilder(this);
+            pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, null, null);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        Class<?> elementClass();
-
-        default CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, callObj, message, messageArgs);
+        public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendMustBeStep(argFilter, callObj, message, messageArgs);
             return this;
         }
 
-        default CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, null, message, messageArgs);
+        public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendMustBeStep(argFilter, null, message, messageArgs);
             return this;
         }
 
-        default CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter) {
-            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
+        public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter) {
+            return mustBe(argFilter, null, null, (Object[]) null);
         }
-
     }
 
-    public interface HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilder<T>> {
+    public static final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilder<T>> {
 
-        default <S> HeadPhaseBuilder<S> map(Mapper<T, S> mapFn) {
+        public HeadPhaseBuilder(PipelineBuilder builder) {
+            super(builder);
+        }
+
+        public <S> HeadPhaseBuilder<S> map(Mapper<T, S> mapFn) {
             // state().castBuilder().insert(state().index(), () -> MapNode.create(mapFn));
-            state().pipelineBuilder().appendMap(mapFn);
-            return state().factory.newHeadPhaseBuilder(this);
+            pipelineBuilder().appendMap(mapFn);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranchMapper);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, ?> trueBranch) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranch);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, ?> trueBranch) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranch);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, R> trueBranch, PipelineStep<T, ?> falseBranch) {
-            state().pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, R> trueBranch, PipelineStep<T, ?> falseBranch) {
+            pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, callObj, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendMustBeStep(argFilter, callObj, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
-            state().mustBe(argFilter, null, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+        public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendMustBeStep(argFilter, null, message, messageArgs);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
-            return mustBe(argFilter, state().defaultError().getCallObj(), state().defaultError().getMessage(), state().defaultError().getMessageArgs());
+        public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
+            return mustBe(argFilter, null, null, (Object[]) null);
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+        public <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
             mustBe(Predef.instanceOf(cls), message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls) {
+        public <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls) {
             mustBe(Predef.instanceOf(cls));
-            return state().factory.newHeadPhaseBuilder(this);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+        public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
             shouldBe(Predef.instanceOf(cls), callObj, message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
+        public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
             shouldBe(Predef.instanceOf(cls), message, messageArgs);
-            return state().factory.newHeadPhaseBuilder(this);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls) {
+        public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls) {
             shouldBe(Predef.instanceOf(cls));
-            return state().factory.newHeadPhaseBuilder(this);
+            return new HeadPhaseBuilder<>(pipelineBuilder());
         }
 
-        default HeadPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
+        public HeadPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
             return this;
         }
 
-        default HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(null, null, message, messageArgs);
+        public HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(null, null, message, messageArgs);
             return this;
         }
 
-        default HeadPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
+        public HeadPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
             return this;
         }
 
-        default HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            state().pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
+        public HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
             return this;
         }
 
-        default HeadPhaseBuilder<T> notNA() {
-            state().pipelineBuilder().appendNotNA(null, null, null, null);
+        public HeadPhaseBuilder<T> notNA() {
+            pipelineBuilder().appendNotNA(null, null, null, null);
             return this;
         }
 
-        default HeadPhaseBuilder<T> notNA(T naReplacement) {
-            state().pipelineBuilder().appendNotNA(naReplacement, null, null, null);
+        public HeadPhaseBuilder<T> notNA(T naReplacement) {
+            pipelineBuilder().appendNotNA(naReplacement, null, null, null);
             return this;
-        }
-
-    }
-
-    final class ArgCastBuilderFactoryImpl implements ArgCastBuilderFactory {
-
-        private final int argumentIndex;
-        private final String argumentName;
-
-        ArgCastBuilderFactoryImpl(int argumentIndex, String argumentName) {
-            this.argumentIndex = argumentIndex;
-            this.argumentName = argumentName;
-        }
-
-        @Override
-        public PreinitialPhaseBuilderImpl<Object> newPreinitialPhaseBuilder() {
-            return new PreinitialPhaseBuilderImpl<>();
-        }
-
-        @Override
-        public <T> InitialPhaseBuilderImpl<T> newInitialPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
-            return new InitialPhaseBuilderImpl<>(currentBuilder.state());
-        }
-
-        @Override
-        public <T extends RAbstractVector, S> CoercedPhaseBuilderImpl<T, S> newCoercedPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder, Class<?> elementClass) {
-            return new CoercedPhaseBuilderImpl<>(currentBuilder.state(), elementClass);
-        }
-
-        @Override
-        public <T> HeadPhaseBuilderImpl<T> newHeadPhaseBuilder(ArgCastBuilder<?, ?> currentBuilder) {
-            return new HeadPhaseBuilderImpl<>(currentBuilder.state());
-        }
-
-        public final class InitialPhaseBuilderImpl<T> extends ArgCastBuilderBase<T, InitialPhaseBuilder<T>> implements InitialPhaseBuilder<T> {
-            InitialPhaseBuilderImpl(ArgCastBuilderState state) {
-                super(new ArgCastBuilderState(state, false));
-            }
-
-        }
-
-        public final class PreinitialPhaseBuilderImpl<T> extends ArgCastBuilderBase<T, InitialPhaseBuilder<T>> implements PreinitialPhaseBuilder<T> {
-
-            PreinitialPhaseBuilderImpl() {
-                super(new ArgCastBuilderState(argumentIndex, argumentName, ArgCastBuilderFactoryImpl.this, CastBuilder.this, false));
-                insert(argumentIndex, state().pipelineBuilder());
-            }
-
-            @Override
-            public PipelineConfigBuilder getPipelineConfigBuilder() {
-                return state().pcb;
-            }
-
-        }
-
-        public final class CoercedPhaseBuilderImpl<T extends RAbstractVector, S> extends ArgCastBuilderBase<T, CoercedPhaseBuilder<T, S>> implements CoercedPhaseBuilder<T, S> {
-
-            private final Class<?> elementClass;
-
-            CoercedPhaseBuilderImpl(ArgCastBuilderState state, Class<?> elementClass) {
-                super(new ArgCastBuilderState(state, true));
-                this.elementClass = elementClass;
-            }
-
-            @Override
-            public Class<?> elementClass() {
-                return elementClass;
-            }
-        }
-
-        public final class HeadPhaseBuilderImpl<T> extends ArgCastBuilderBase<T, HeadPhaseBuilder<T>> implements HeadPhaseBuilder<T> {
-            HeadPhaseBuilderImpl(ArgCastBuilderState state) {
-                super(new ArgCastBuilderState(state, false));
-            }
         }
 
     }
@@ -1472,8 +1319,9 @@ public final class CastBuilder {
         private PipelineStep<?, ?> lastStep;
 
         private ChainBuilder(PipelineStep<?, ?> firstStep) {
+            assert firstStep != null : "firstStep must not be null";
             this.firstStep = firstStep;
-            this.lastStep = firstStep;
+            lastStep = firstStep;
         }
 
         private void addStep(PipelineStep<?, ?> nextStep) {
@@ -1499,7 +1347,11 @@ public final class CastBuilder {
 
     }
 
-    public static final class FindFirstNodeBuilder<W> {
+    /**
+     * Allows to convert find first into a valid step when used in {@code chain}, for example
+     * {@code chain(findFirst().stringElement())}.
+     */
+    public static final class FindFirstNodeBuilder {
         private final RBaseNode callObj;
         private final Message message;
         private final Object[] messageArgs;
@@ -1566,26 +1418,72 @@ public final class CastBuilder {
 
     public static final class PipelineConfigBuilder {
 
+        // TODO: move the "internal" methods into a child class
+
         private static ArgumentFilterFactory filterFactory = ArgumentFilterFactoryImpl.INSTANCE;
         private static ArgumentMapperFactory mapperFactory = ArgumentMapperFactoryImpl.INSTANCE;
 
-        private final ArgCastBuilderState state;
+        private final String argumentName;
+        private MessageData defaultError;
+        private MessageData defaultWarning;
 
         private Mapper<? super RMissing, ?> missingMapper = null;
         private Mapper<? super RNull, ?> nullMapper = null;
         private MessageData missingMsg;
         private MessageData nullMsg;
 
-        public PipelineConfigBuilder(ArgCastBuilderState state) {
-            this.state = state;
+        // Note: to be removed with legacy API
+        private boolean wasLegacyAsVectorCall = false;
+
+        public PipelineConfigBuilder(String argumentName) {
+            defaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
+            defaultWarning = defaultError;
+            this.argumentName = argumentName;
         }
 
+        public void setWasLegacyAsVectorCall() {
+            wasLegacyAsVectorCall = true;
+        }
+
+        public boolean wasLegacyAsVectorCall() {
+            return wasLegacyAsVectorCall;
+        }
+
+        public String getArgumentName() {
+            return argumentName;
+        }
+
+        public void setDefaultError(MessageData defaultError) {
+            this.defaultError = defaultError;
+        }
+
+        /**
+         * The preinitialization phase where one can configure RNull and RMissing handling may also
+         * define default error, in such case it is remembered the {@link PipelineConfigBuilder} and
+         * also set default error step is added to the pipeline.The default error saved here is used
+         * for RNull and RMissing handling. It may be null, if no default error was set explicitly.
+         */
+        public MessageData getDefaultError() {
+            return defaultError;
+        }
+
+        public void setDefaultWarning(MessageData defaultWarning) {
+            this.defaultWarning = defaultWarning;
+        }
+
+        /**
+         * The same as in {@link #getDefaultError()} applies for default warning.
+         */
+        public MessageData getDefaultWarning() {
+            return defaultWarning;
+        }
+
+        /**
+         * Default message that should be used when no explicit default error/warning was set. For
+         * the time being this is not configurable.
+         */
         public MessageData getDefaultDefaultMessage() {
-            return state.defaultDefaultError;
-        }
-
-        public String getArgName() {
-            return state.argumentName;
+            return new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
         }
 
         public Mapper<? super RMissing, ?> getMissingMapper() {
@@ -1656,11 +1554,6 @@ public final class CastBuilder {
             return mapNull(Predef.nullConstant(), callObj, warningMsg, msgArgs);
         }
 
-        void updateDefaultError() {
-            missingMsg = state.defaultError();
-            nullMsg = state.defaultError();
-        }
-
         public static ArgumentFilterFactory getFilterFactory() {
             return filterFactory;
         }
@@ -1676,10 +1569,14 @@ public final class CastBuilder {
         public static void setMapperFactory(ArgumentMapperFactory mf) {
             mapperFactory = mf;
         }
-
     }
 
-    public static final class PipelineBuilder implements CastNodeFactory {
+    /**
+     * Class that holds the data for a pipeline for a single parameter. It holds the cast pipeline
+     * steps created so far and some data related to the selected argument for which we are creating
+     * the pipeline.
+     */
+    public static final class PipelineBuilder {
 
         private final PipelineConfigBuilder pcb;
         private ChainBuilder<?> chainBuilder;
@@ -1696,20 +1593,24 @@ public final class CastBuilder {
             }
         }
 
+        public PipelineConfigBuilder getPipelineConfig() {
+            return pcb;
+        }
+
         public void appendFindFirst(Object defaultValue, Class<?> elementClass, RBaseNode callObj, Message message, Object[] messageArgs) {
-            append(new FindFirstStep<>(defaultValue, elementClass, message == null ? null : new MessageData(callObj, message, messageArgs)));
+            append(new FindFirstStep<>(defaultValue, elementClass, createMessage(callObj, message, messageArgs)));
         }
 
         public void appendAsAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
             append(new CoercionStep<>(TargetType.Attributable, false, preserveNames, dimensionsPreservation, attrPreservation));
         }
 
-        public void appendAsVector(boolean preserveNonVector) {
-            append(new CoercionStep<>(TargetType.Any, true, false, false, false, preserveNonVector));
+        public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
+            append(new CoercionStep<>(TargetType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
         }
 
         public void appendAsVector() {
-            appendAsVector(false);
+            appendAsVector(false, false, false, false);
         }
 
         public void appendAsRawVector() {
@@ -1741,7 +1642,7 @@ public final class CastBuilder {
         }
 
         public void appendNotNA(Object naReplacement, RBaseNode callObj, Message message, Object[] messageArgs) {
-            append(new NotNAStep<>(naReplacement, message == null ? null : new MessageData(callObj, message, messageArgs)));
+            append(new NotNAStep<>(naReplacement, createMessage(callObj, message, messageArgs)));
         }
 
         public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper) {
@@ -1765,7 +1666,7 @@ public final class CastBuilder {
         }
 
         public void appendMustBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-            append(new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), false));
+            append(new FilterStep<>(argFilter, createMessage(callObj, message, messageArgs), false));
         }
 
         public void appendShouldBeStep(Filter<?, ?> argFilter, Message message, Object[] messageArgs) {
@@ -1773,29 +1674,19 @@ public final class CastBuilder {
         }
 
         public void appendShouldBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-            append(new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), true));
-        }
-
-        public void appendDefaultWarningStep(Message message, Object[] args) {
-            appendDefaultWarningStep(null, message, args);
+            append(new FilterStep<>(argFilter, createMessage(callObj, message, messageArgs), true));
         }
 
         public void appendDefaultWarningStep(RBaseNode callObj, Message message, Object[] args) {
-            append(new DefaultWarningStep<>(new MessageData(callObj, message, args)));
-        }
-
-        public void appendDefaultErrorStep(Message message, Object[] args) {
-            appendDefaultErrorStep(null, message, args);
+            append(new DefaultWarningStep<>(createMessage(callObj, message, args)));
         }
 
         public void appendDefaultErrorStep(RBaseNode callObj, Message message, Object[] args) {
-            append(new DefaultErrorStep<>(new MessageData(callObj, message, args)));
+            append(new DefaultErrorStep<>(createMessage(callObj, message, args)));
         }
 
-        @Override
-        public CastNode create() {
-            return PipelineToCastNode.convert(pcb, chainBuilder == null ? null : chainBuilder.firstStep);
+        private MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
+            return message == null ? null : new MessageData(callObj, message, messageArgs);
         }
-
     }
 }

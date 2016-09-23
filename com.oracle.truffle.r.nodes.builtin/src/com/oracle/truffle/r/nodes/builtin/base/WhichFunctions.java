@@ -32,7 +32,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMinMaxNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMaxNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMinNodeGen;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -103,28 +104,6 @@ public class WhichFunctions {
         }
     }
 
-    @RBuiltin(name = "which.max", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class WhichMax {
-        private WhichMax() {
-            // private
-        }
-
-        public static WhichMinMax create(RNode[] arguments) {
-            return WhichMinMaxNodeGen.create(true, arguments);
-        }
-    }
-
-    @RBuiltin(name = "which.min", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class WhichMin {
-        private WhichMin() {
-            // private
-        }
-
-        public static WhichMinMax create(RNode[] arguments) {
-            return WhichMinMaxNodeGen.create(false, arguments);
-        }
-    }
-
     public abstract static class WhichMinMax extends RBuiltinNode {
 
         private final boolean isMax;
@@ -173,6 +152,28 @@ public class WhichFunctions {
         @Specialization
         protected RIntVector which(@SuppressWarnings("unused") RNull x) {
             return RDataFactory.createEmptyIntVector();
+        }
+    }
+
+    @RBuiltin(name = "which.max", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
+    public abstract static class WhichMax extends WhichMinMax {
+        protected WhichMax() {
+            super(true);
+        }
+
+        public static WhichMinMax create(RNode[] arguments) {
+            return WhichMaxNodeGen.create(arguments);
+        }
+    }
+
+    @RBuiltin(name = "which.min", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
+    public abstract static class WhichMin extends WhichMinMax {
+        protected WhichMin() {
+            super(false);
+        }
+
+        public static WhichMinMax create(RNode[] arguments) {
+            return WhichMinNodeGen.create(arguments);
         }
     }
 }

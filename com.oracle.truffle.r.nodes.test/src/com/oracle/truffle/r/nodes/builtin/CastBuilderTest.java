@@ -287,14 +287,15 @@ public class CastBuilderTest {
         }
     }
 
-    @Test
-    public void testSizeWarning() {
-        arg.defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
-        testPipeline();
-
-        cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
-        // assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
-    }
+    // TODO: is it OK to leave this out?
+    // @Test
+    // public void testSizeWarning() {
+    // arg.defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
+    // testPipeline();
+    //
+    // cast(RDataFactory.createIntVector(new int[]{1, 2}, true));
+    // // assertEquals(RError.Message.LENGTH_GT_1.message, out.toString());
+    // }
 
     @Test
     public void testSizeWarningWithCustomMessage() {
@@ -725,12 +726,12 @@ public class CastBuilderTest {
         CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
         System.out.println(sampler.resultTypes());
         Samples<?> samples = sampler.collectSamples();
-//
-// if (positiveMustNotBeEmpty) {
-// Assert.assertFalse(samples.positiveSamples().isEmpty());
-// }
-//
-// testPipeline(samples);
+        //
+        // if (positiveMustNotBeEmpty) {
+        // Assert.assertFalse(samples.positiveSamples().isEmpty());
+        // }
+        //
+        // testPipeline(samples);
     }
 
     @SuppressWarnings("unused")

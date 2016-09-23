@@ -90,11 +90,11 @@ public abstract class BypassNode extends CastNode {
                     CastNode afterFindFirst) {
         this.nullMapFn = pcb.getNullMapper() == null ? null : mapperFactory.createMapper(pcb.getNullMapper());
         this.isRNullBypassed = this.nullMapFn != null;
-        this.nullMsg = pcb.getNullMessage() == null ? null : pcb.getNullMessage().fixCallObj(this);
+        this.nullMsg = getMessage(isRNullBypassed, pcb.getNullMessage(), pcb);
 
         this.missingMapFn = pcb.getMissingMapper() == null ? null : mapperFactory.createMapper(pcb.getMissingMapper());
         this.isRMissingBypassed = this.missingMapFn != null;
-        this.missingMsg = pcb.getMissingMessage() == null ? null : pcb.getMissingMessage().fixCallObj(this);
+        this.missingMsg = getMessage(isRMissingBypassed, pcb.getMissingMessage(), pcb);
 
         this.wrappedHead = wrappedHead;
         this.noHead = wrappedHead == null;
@@ -133,6 +133,12 @@ public abstract class BypassNode extends CastNode {
 
     private <T extends Node> T insertIfNotNull(T child) {
         return child != null ? insert(child) : child;
+    }
+
+    private MessageData getMessage(boolean isWarning, MessageData msg, PipelineConfigBuilder pcb) {
+        MessageData defaultValue = isWarning ? pcb.getDefaultWarning() : pcb.getDefaultError();
+        MessageData result = isWarning ? msg : MessageData.getFirstNonNull(msg, defaultValue, pcb.getDefaultDefaultMessage());
+        return result != null ? result.fixCallObj(this) : null;
     }
 
     @Specialization

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -165,7 +166,7 @@ public class GetFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstBoolean(3);
+            casts.arg("inherits").allowNull().asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -192,7 +193,7 @@ public class GetFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstBoolean(3);
+            casts.arg("inherits").allowNull().asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization

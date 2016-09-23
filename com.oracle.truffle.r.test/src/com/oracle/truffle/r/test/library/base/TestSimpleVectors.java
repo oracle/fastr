@@ -2217,7 +2217,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ c(\"1L\",\"hello\") %in% 1:10 }");
         assertEval("{ (1 + 2i) %in% c(1+10i, 1+4i, 2+2i, 1+2i) }");
         assertEval("{ as.logical(-1:1) %in% TRUE }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- function(){1} ; x %in% TRUE }");
+        assertEval("{ x <- function(){1} ; x %in% TRUE }");
     }
 
     @Test

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
@@ -60,11 +59,11 @@ public class SortFunctions {
 
     private abstract static class Adapter extends RBuiltinNode {
         protected static void addCastForX(CastBuilder castBuilder) {
-            castBuilder.arg("x").mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
+            castBuilder.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
         }
 
         protected static void addCastForDecreasing(CastBuilder castBuilder) {
-            castBuilder.arg("decreasing").mustBe(nullValue().not().and(numericValue()), SHOW_CALLER, INVALID_LOGICAL, "decreasing").asLogicalVector().findFirst().map(toBoolean());
+            castBuilder.arg("decreasing").defaultError(SHOW_CALLER, INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @TruffleBoundary

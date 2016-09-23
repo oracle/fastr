@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.ArgCastBuilderState;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
@@ -38,12 +37,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNode;
@@ -90,7 +86,7 @@ public class PipelineToCastNodeTests {
     }
 
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
-        PipelineConfigBuilder configBuilder = new PipelineConfigBuilder(new ArgCastBuilderState(0, "x", null, null, true));
+        PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
         return PipelineToCastNode.convert(configBuilder, lastStep);
     }
 }

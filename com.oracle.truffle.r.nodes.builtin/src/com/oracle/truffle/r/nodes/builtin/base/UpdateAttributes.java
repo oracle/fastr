@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.RError.Message.ATTRIBUTES_LIST_OR_NULL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -66,8 +65,8 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
-        casts.arg("obj").mustBe(nullValue().not());
-        casts.arg("value").mustBe(nullValue().or(instanceOf(RList.class)), this, ATTRIBUTES_LIST_OR_NULL);
+        casts.arg("obj"); // by default disallows RNull
+        casts.arg("value").conf(c -> c.allowNull()).mustBe(instanceOf(RList.class), this, ATTRIBUTES_LIST_OR_NULL);
     }
 
     // it's OK for the following two methods to update attributes in-place as the container has been

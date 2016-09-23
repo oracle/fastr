@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
@@ -47,8 +48,10 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
@@ -77,6 +80,7 @@ import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.MapNode;
 import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -95,6 +99,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public final class PipelineToCastNode {
 
+    private PipelineToCastNode() {
+        // nop: static class
+    }
+
     public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep) {
         return convert(configBuilder, firstStep, PipelineConfigBuilder.getFilterFactory(), PipelineConfigBuilder.getMapperFactory());
     }
@@ -103,7 +111,8 @@ public final class PipelineToCastNode {
         if (firstStep == null) {
             return BypassNode.create(configBuilder, null, filterFactory, mapperFactory);
         } else {
-            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, configBuilder.getDefaultDefaultMessage());
+            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, configBuilder.getDefaultDefaultMessage(), configBuilder.getDefaultError(),
+                            configBuilder.getDefaultWarning());
             CastNode headNode = convert(firstStep, nodeFactory);
 
             return BypassNode.create(configBuilder, headNode, filterFactory, mapperFactory);
@@ -141,14 +150,28 @@ public final class PipelineToCastNode {
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {
         private final ArgumentFilterFactory filterFactory;
         private final ArgumentMapperFactory mapperFactory;
-        private MessageData defaultErrorMessage;
-        private MessageData defaultWarningMessage;
         private boolean boxPrimitives = false;
 
-        CastNodeFactory(ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, MessageData defaultMessage) {
+        /**
+         * Should be used when {@link #defaultError} or {@link #defaultWarning} are not explicitly
+         * set by visiting {@link DefaultErrorStep}.
+         */
+        private final MessageData defaultMessage;
+
+        /**
+         * Use {@link #getDefaultErrorIfNull} and {@link #getDefaultWarningIfNull} to always get a
+         * non-null message - they supply {@link #defaultMessage} if there is no explicitly set.
+         */
+        private MessageData defaultError;
+        private MessageData defaultWarning;
+
+        CastNodeFactory(ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, MessageData defaultMessage, MessageData defaultError, MessageData defaultWarning) {
+            assert defaultMessage != null : "defaultMessage is null";
             this.filterFactory = filterFactory;
             this.mapperFactory = mapperFactory;
-            this.defaultErrorMessage = defaultMessage;
+            this.defaultMessage = defaultMessage;
+            this.defaultError = defaultError;
+            this.defaultWarning = defaultWarning;
         }
 
         public CastNode create(PipelineStep<?, ?> step) {
@@ -157,29 +180,44 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(DefaultErrorStep<?> step) {
-            defaultErrorMessage = step.getDefaultMessage();
+            defaultError = step.getDefaultMessage();
             return null;
         }
 
         @Override
         public CastNode visit(DefaultWarningStep<?> step) {
-            defaultWarningMessage = step.getDefaultMessage();
+            defaultWarning = step.getDefaultMessage();
             return null;
+        }
+
+        @Override
+        public CastNode visit(BoxPrimitiveStep<?> step) {
+            return BoxPrimitiveNode.create();
+        }
+
+        @Override
+        public CastNode visit(CustomNodeStep<?> step) {
+            return step.getFactory().get();
         }
 
         @Override
         public CastNode visit(FindFirstStep<?, ?> step) {
             boxPrimitives = false;
 
+            // See FindFirstStep documentation on how it should be interpreted
             if (step.getDefaultValue() == null) {
-                MessageData msg = getDefaultIfNull(step.getError(), false);
-                return FindFirstNodeGen.create(step.getElementClass(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getDefaultValue());
-            } else {
                 MessageData msg = step.getError();
                 if (msg == null) {
+                    // Note: intentional direct use of defaultError
+                    msg = defaultError != null ? defaultError : new MessageData(null, RError.Message.LENGTH_ZERO);
+                }
+                return FindFirstNodeGen.create(step.getElementClass(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getDefaultValue());
+            } else {
+                MessageData warning = step.getError();
+                if (warning == null) {
                     return FindFirstNodeGen.create(step.getElementClass(), step.getDefaultValue());
                 } else {
-                    return FindFirstNodeGen.create(step.getElementClass(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getDefaultValue());
+                    return FindFirstNodeGen.create(step.getElementClass(), warning.getCallObj(), warning.getMessage(), warning.getMessageArgs(), step.getDefaultValue());
                 }
             }
         }
@@ -194,7 +232,7 @@ public final class PipelineToCastNode {
         @Override
         public CastNode visit(NotNAStep<?> step) {
             if (step.getReplacement() == null) {
-                MessageData msg = getDefaultIfNull(step.getMessage(), false);
+                MessageData msg = getDefaultErrorIfNull(step.getMessage());
                 return NonNANodeGen.create(msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getReplacement());
             } else {
                 MessageData msg = step.getMessage();
@@ -250,10 +288,17 @@ public final class PipelineToCastNode {
             return ConditionalMapNode.create(condition, trueCastNode, falseCastNode);
         }
 
-        private MessageData getDefaultIfNull(MessageData message, boolean isWarning) {
-            return message == null ? (isWarning ? defaultWarningMessage : defaultErrorMessage) : message;
+        private MessageData getDefaultErrorIfNull(MessageData message) {
+            return MessageData.getFirstNonNull(message, defaultError, defaultMessage);
         }
 
+        private MessageData getDefaultWarningIfNull(MessageData message) {
+            return MessageData.getFirstNonNull(message, defaultWarning, defaultMessage);
+        }
+
+        private MessageData getDefaultIfNull(MessageData message, boolean isWarning) {
+            return isWarning ? getDefaultWarningIfNull(message) : getDefaultErrorIfNull(message);
+        }
     }
 
     public interface ArgumentFilterFactory {
@@ -309,18 +354,12 @@ public final class PipelineToCastNode {
         public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this);
             ArgumentFilter rightFilter = filter.getRight().accept(this);
-            return new ArgumentTypeFilter<Object, Object>() {
-
-                @SuppressWarnings("unchecked")
-                @Override
-                public boolean test(Object arg) {
-                    if (!leftFilter.test(arg)) {
-                        return false;
-                    } else {
-                        return rightFilter.test(arg);
-                    }
+            return (ArgumentTypeFilter<Object, Object>) arg -> {
+                if (!leftFilter.test(arg)) {
+                    return false;
+                } else {
+                    return rightFilter.test(arg);
                 }
-
             };
         }
 
@@ -329,18 +368,12 @@ public final class PipelineToCastNode {
         public ArgumentFilter<?, ?> visit(OrFilter<?> filter) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this);
             ArgumentFilter rightFilter = filter.getRight().accept(this);
-            return new ArgumentTypeFilter<Object, Object>() {
-
-                @SuppressWarnings("unchecked")
-                @Override
-                public boolean test(Object arg) {
-                    if (leftFilter.test(arg)) {
-                        return true;
-                    } else {
-                        return rightFilter.test(arg);
-                    }
+            return (ArgumentTypeFilter<Object, Object>) arg -> {
+                if (leftFilter.test(arg)) {
+                    return true;
+                } else {
+                    return rightFilter.test(arg);
                 }
-
             };
         }
 
@@ -348,15 +381,7 @@ public final class PipelineToCastNode {
         @Override
         public ArgumentFilter<?, ?> visit(NotFilter<?> filter) {
             ArgumentFilter toNegate = filter.getFilter().accept(this);
-            return new ArgumentFilter<Object, Object>() {
-
-                @SuppressWarnings("unchecked")
-                @Override
-                public boolean test(Object arg) {
-                    return !toNegate.test(arg);
-                }
-
-            };
+            return (ArgumentFilter<Object, Object>) arg -> !toNegate.test(arg);
         }
 
         @Override

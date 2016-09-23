@@ -24,10 +24,14 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.CastNodeFactory;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {
+
+    @FunctionalInterface
+    public interface CastNodeFactory {
+        CastNode create();
+    }
 
     private final CastNodeFactory firstCastFact;
     private final CastNodeFactory secondCastFact;

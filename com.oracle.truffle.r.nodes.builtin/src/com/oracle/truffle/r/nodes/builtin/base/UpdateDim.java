@@ -22,11 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -52,8 +48,8 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(nullValue().not());
-        casts.arg("value").mapIf(nullValue().not(), chain(asIntegerVector()).with(mustBe(notEmpty(), this, true, LENGTH_ZERO_DIM_INVALID)).end());
+        casts.arg("x"); // disallows null
+        casts.arg("value").allowNull().asIntegerVector().mustBe(notEmpty(), this, LENGTH_ZERO_DIM_INVALID);
     }
 
     @Specialization

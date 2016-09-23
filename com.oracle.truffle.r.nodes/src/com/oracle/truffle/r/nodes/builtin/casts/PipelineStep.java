@@ -22,7 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import java.util.function.Supplier;
+
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Represents a single step in the cast pipeline. {@code PipelineStep}, {@code Mapper} and
@@ -63,6 +67,10 @@ public abstract class PipelineStep<T, R> {
         T visit(DefaultErrorStep<?> step);
 
         T visit(DefaultWarningStep<?> step);
+
+        T visit(BoxPrimitiveStep<?> step);
+
+        T visit(CustomNodeStep<?> step);
     }
 
     /**
@@ -107,6 +115,16 @@ public abstract class PipelineStep<T, R> {
     }
 
     /**
+     * Boxes all primitive types (integer, string, double, byte) to {@link RAbstractVector}.
+     */
+    public static final class BoxPrimitiveStep<T> extends PipelineStep<T, T> {
+        @Override
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
+    }
+
+    /**
      * If the replacement is set (!= null), then maps NA values to the replacement, otherwise raises
      * given error on NA value of any type. If both the replacement and the message are set, then
      * the replacement is accompanied by a warning.
@@ -135,8 +153,12 @@ public abstract class PipelineStep<T, R> {
     }
 
     /**
-     * Takes the first element of a vector. If the vector is empty, null or missing, then either
-     * raises an error or returns default value if set.
+     * Takes the first element of a vector. If the default value and message are provided, then if
+     * the vector is empty, the message is used as a warning. If only default value is provided,
+     * then if the vector is empty, the default value is returned without any warning. If the
+     * default value is not provided, then error is raised if the vector is empty, the error message
+     * chosen in the following order: provided message, explicitly set default error message using
+     * {@link DefaultErrorStep}, default find first message.
      */
     public static final class FindFirstStep<V, E> extends PipelineStep<V, E> {
         private final MessageData error;
@@ -295,6 +317,27 @@ public abstract class PipelineStep<T, R> {
         public <D> D accept(PipelineStepVisitor<D> visitor) {
             return visitor.visit(this);
         }
+    }
 
+    /**
+     * Allows to insert arbitrary node into the cast pipeline. Should be avoided as much as
+     * possible, because it hinders inference of any semantics from the pipeline intermediate
+     * representation. This step is here for legacy reasons and will be removed in the future.
+     */
+    public static final class CustomNodeStep<T> extends PipelineStep<T, Object> {
+        private final Supplier<CastNode> factory;
+
+        public CustomNodeStep(Supplier<CastNode> factory) {
+            this.factory = factory;
+        }
+
+        public Supplier<CastNode> getFactory() {
+            return factory;
+        }
+
+        @Override
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
     }
 }

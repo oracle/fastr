@@ -24,7 +24,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFinite;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -58,21 +57,20 @@ public abstract class Sample extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         // @formatter:off
-        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).
+        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().
                 mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, VECTOR_SIZE_NA_NAN).
                 mapIf(doubleValue(), chain(asDoubleVector()).with(findFirst().doubleElement()).
-                        with(mustBe(isFinite(), SHOW_CALLER, false, VECTOR_SIZE_NA_NAN)).
-                        with(mustBe(lt(4.5e15), SHOW_CALLER, false, VECTOR_SIZE_TOO_LARGE)).end()).
+                        with(mustBe(isFinite(), SHOW_CALLER, VECTOR_SIZE_NA_NAN)).
+                        with(mustBe(lt(4.5e15), SHOW_CALLER, VECTOR_SIZE_TOO_LARGE)).end()).
                 asIntegerVector().findFirst().mustBe(gte0());
         casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
-                mustBe(nullValue().not()).
                 mustBe(integerValue().or(doubleValue()).or(stringValue())).
                 asIntegerVector().findFirst().
                 defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
                 notNA().mustBe(gte0());
-        casts.arg("replace").mustBe(nullValue().not()).mustBe(integerValue().or(doubleValue()).or(logicalValue())).
+        casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).
                 asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
-        casts.arg("prob").asDoubleVector();
+        casts.arg("prob").allowNull().asDoubleVector();
         // @formatter:on
     }
 

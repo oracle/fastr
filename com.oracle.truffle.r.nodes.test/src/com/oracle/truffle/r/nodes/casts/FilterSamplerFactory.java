@@ -66,7 +66,7 @@ public final class FilterSamplerFactory
     public static final FilterSamplerFactory INSTANCE = new FilterSamplerFactory();
 
     private FilterSamplerFactory() {
-// singleton
+        // singleton
     }
 
     @Override
