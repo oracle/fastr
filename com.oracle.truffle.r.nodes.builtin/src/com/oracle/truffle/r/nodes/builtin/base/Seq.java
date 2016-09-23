@@ -55,6 +55,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 // below)
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
+
+    // TODO: warnings for non-scalar values of stride are quite weird (for now we simply assume that
+    // stride is of length one)
+
     private final ConditionProfile lengthProfile1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile lengthProfile2 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile topLengthProfile = ConditionProfile.createBinaryProfile();
@@ -247,26 +251,26 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, RAbstractIntVector stride, RMissing lengthOut, RMissing alongWith) {
         startLengthOne(start);
         toLengthOne(to);
         validateParams(start, to);
         if (topLengthProfile.profile(zero(start, to))) {
             return 0;
         } else {
-            return RDataFactory.createIntSequence(start.getDataAt(0), stride, Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+            return RDataFactory.createIntSequence(start.getDataAt(0), stride.getDataAt(0), Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride.getDataAt(0)) + 1);
         }
     }
 
     @Specialization
-    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RAbstractIntVector start, RAbstractIntVector to, RAbstractDoubleVector stride, RMissing lengthOut, RMissing alongWith) {
         startLengthOne(start);
         toLengthOne(to);
         validateParams(start, to);
         if (topLengthProfile.profile(zero(start, to))) {
             return 0;
         } else {
-            return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride)) + 1);
+            return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), stride.getDataAt(0), (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride.getDataAt(0))) + 1);
         }
     }
 
@@ -323,23 +327,23 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        return seq(start, to, (double) stride, lengthOut, alongWith);
+    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, RAbstractIntVector stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, RClosures.createIntToDoubleVector(stride), lengthOut, alongWith);
     }
 
     @Specialization
-    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RAbstractIntVector start, RAbstractDoubleVector to, RAbstractDoubleVector stride, RMissing lengthOut, RMissing alongWith) {
         startLengthOne(start);
         toLengthOne(to);
         validateParams(start, to);
         if (topLengthProfile.profile(zero(start, to))) {
             return 0;
         } else {
-            int length = (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride);
-            if (start.getDataAt(0) + length * stride == to.getDataAt(0)) {
+            int length = (int) (Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride.getDataAt(0));
+            if (start.getDataAt(0) + length * stride.getDataAt(0) == to.getDataAt(0)) {
                 length++;
             }
-            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, length);
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride.getDataAt(0), length);
         }
     }
 
@@ -433,19 +437,19 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        return seq(start, to, (double) stride, lengthOut, alongWith);
+    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, RAbstractIntVector stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, RClosures.createIntToDoubleVector(stride), lengthOut, alongWith);
     }
 
     @Specialization
-    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RAbstractDoubleVector start, RAbstractIntVector to, RAbstractDoubleVector stride, RMissing lengthOut, RMissing alongWith) {
         startLengthOne(start);
         toLengthOne(to);
         validateParams(start, to);
         if (topLengthProfile.profile(zero(start, to))) {
             return 0;
         } else {
-            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride.getDataAt(0), (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride.getDataAt(0)) + 1);
         }
     }
 
@@ -495,19 +499,19 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
-        return seq(start, to, (double) stride, lengthOut, alongWith);
+    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RAbstractIntVector stride, RMissing lengthOut, RMissing alongWith) {
+        return seq(start, to, RClosures.createIntToDoubleVector(stride), lengthOut, alongWith);
     }
 
     @Specialization
-    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RAbstractDoubleVector stride, RMissing lengthOut, RMissing alongWith) {
         startLengthOne(start);
         toLengthOne(to);
         validateParams(start, to);
         if (topLengthProfile.profile(zero(start, to))) {
             return 0;
         } else {
-            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
+            return RDataFactory.createDoubleSequence(start.getDataAt(0), stride.getDataAt(0), (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride.getDataAt(0)) + 1));
         }
     }
 

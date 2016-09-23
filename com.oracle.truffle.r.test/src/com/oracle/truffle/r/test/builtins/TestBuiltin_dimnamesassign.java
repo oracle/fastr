@@ -92,4 +92,9 @@ public class TestBuiltin_dimnamesassign extends TestBase {
     public void testdimnamesassign15() {
         assertEval("argv <- list(structure(c('NULL', 'double', 'integer', 'complex', 'list', 'list', 'pairlist', 'builtin', 'closure', 'symbol', 'symbol', 'language', 'language', 'symbol', 'symbol', 'NULL', 'double', 'integer', 'complex', 'list', 'list', 'pairlist', 'function', 'function', 'symbol', 'symbol', 'language', 'language', 'symbol', 'symbol', 'NULL', 'numeric', 'numeric', 'complex', 'list', 'list', 'pairlist', 'function', 'function', 'name', 'name', 'call', '(', 'name', 'name'), .Dim = c(15L, 3L), .Dimnames = list(    c('NULL', '1', '1:1', '1i', 'list(1)', 'data.frame(x = 1)', 'pairlist(pi)', 'c', 'lm', 'formals(lm)[[1]]', 'formals(lm)[[2]]', 'y ~ x', 'expression((1))[[1]]', '(y ~ x)[[1]]', 'expression(x <- pi)[[1]][[1]]'), c('typeof(.)', 'storage.mode(.)', 'mode(.)'))), value = list(c('NULL', '1', '1:1', '1i', 'list(1)', 'data.frame(x = 1)', 'pairlist(pi)', 'c', 'lm', 'formals(lm)[[1]]', 'formals(lm)[[2]]', 'y ~ x', 'expression((1))[[1]]', '(y ~ x)[[1]]', 'expression(x <- pi)[[1]][[1]]'), c('typeof(.)', 'storage.mode(.)', 'mode(.)')));`dimnames<-`(argv[[1]],argv[[2]]);");
     }
+
+    @Test
+    public void testDimnamesAssign() {
+        assertEval("{ x<-data.frame(c(1,2),c(3,4)); dimnames(x) <- list(c(\"A\", \"B\"), c(\"C\", \"D\")); x }");
+    }
 }

@@ -58,7 +58,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toAttributable(0, true, true, true);
+        casts.arg(0, "").asAttributable(true, true, true);
     }
 
     protected String getName(Object nameObj) {

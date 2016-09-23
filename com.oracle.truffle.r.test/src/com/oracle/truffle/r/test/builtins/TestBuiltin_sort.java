@@ -120,4 +120,10 @@ public class TestBuiltin_sort extends TestBase {
         assertEval("{ sort(c(1L,10L,2L), method=\"quick\") }");
         assertEval("{ sort(c(\"abc\", \"aba\", \"aa\")) }");
     }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval("{ .Internal(sort(c(1L,10L,2L), 'not-numeric')) }");
+        assertEval("{ .Internal(sort(c(1L,10L,2L), NULL)) }");
+    }
 }

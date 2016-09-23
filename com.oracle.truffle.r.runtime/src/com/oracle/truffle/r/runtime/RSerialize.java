@@ -218,21 +218,9 @@ public class RSerialize {
         return i >> 8;
     }
 
-    private abstract static class Common {
-
+    public abstract static class RefCounter {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
-        protected final CallHook hook;
-        protected final ContextStateImpl contextState;
-
-        protected Common(CallHook hook) {
-            this.hook = hook;
-            this.contextState = getContextState();
-        }
-
-        protected static IOException formatError(byte format, boolean ok) throws IOException {
-            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
-        }
 
         protected Object addReadRef(Object item) {
             assert item != null;
@@ -256,6 +244,22 @@ public class RSerialize {
             }
             return -1;
         }
+    }
+
+    private abstract static class Common extends RefCounter {
+
+        protected final CallHook hook;
+        protected final ContextStateImpl contextState;
+
+        protected Common(CallHook hook) {
+            this.hook = hook;
+            this.contextState = getContextState();
+        }
+
+        protected static IOException formatError(byte format, boolean ok) throws IOException {
+            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
+        }
+
     }
 
     public static final int DEFAULT_VERSION = 2;
@@ -311,6 +315,26 @@ public class RSerialize {
         Input instance = trace() ? new TracingInput(is, hook, packageName, functionName) : new Input(is, hook, packageName, functionName);
         Object result = instance.unserialize();
         return result;
+    }
+
+    @TruffleBoundary
+    public static RPromise unserializePromise(RExpression expr, Object e, Object value) {
+        assert expr.getLength() == 1;
+        RBaseNode rep;
+        if (expr.getDataAt(0) instanceof RLanguage) {
+            RLanguage lang = (RLanguage) expr.getDataAt(0);
+            rep = lang.getRep();
+        } else if (expr.getDataAt(0) instanceof RSymbol) {
+            rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
+        } else {
+            rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
+        }
+        if (value == RUnboundValue.instance) {
+            REnvironment env = e == RNull.instance ? REnvironment.baseEnv() : (REnvironment) e;
+            return RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
+        } else {
+            return RDataFactory.createEvaluatedPromise(Closure.create(rep), value);
+        }
     }
 
     private static class Input extends Common {
@@ -613,21 +637,7 @@ public class RSerialize {
                             String deparse = RDeparse.deparseDeserialize(constants, pl.cdr());
                             RExpression expr = parse(constants, deparse);
                             assert expr.getLength() == 1;
-                            RBaseNode rep;
-                            if (expr.getDataAt(0) instanceof RLanguage) {
-                                RLanguage lang = (RLanguage) expr.getDataAt(0);
-                                rep = lang.getRep();
-                            } else if (expr.getDataAt(0) instanceof RSymbol) {
-                                rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
-                            } else {
-                                rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
-                            }
-                            if (pl.car() == RUnboundValue.instance) {
-                                REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                                result = RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
-                            } else {
-                                result = RDataFactory.createEvaluatedPromise(Closure.create(rep), pl.car());
-                            }
+                            result = unserializePromise(expr, pl.getTag(), pl.car());
                             break;
                         }
 
@@ -2226,6 +2236,26 @@ public class RSerialize {
             Output output = new Output(out, type, version, (CallHook) refhook);
             State state = new PLState(output);
             output.serialize(state, obj);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
+    public static byte[] serializePromiseRep(RPromise promise) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, XDR, DEFAULT_VERSION, null);
+            State state = new PLState(output);
+            RSyntaxNode node = RContext.getRRuntimeASTAccess().unwrapPromiseRep(promise);
+            state.openPairList();
+            node.serializeImpl(state);
+            Object res = state.closePairList();
+            if (res instanceof RPairList) {
+                state.convertUnboundValues((RPairList) res);
+            }
+            output.serialize(state, res);
             return out.toByteArray();
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere();

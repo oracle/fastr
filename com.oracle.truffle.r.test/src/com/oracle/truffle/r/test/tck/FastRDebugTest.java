@@ -40,7 +40,6 @@ import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.source.LineLocation;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
@@ -129,7 +128,7 @@ public class FastRDebugTest {
                 try {
                     assertNull(suspendedEvent);
                     assertNotNull(executionEvent);
-                    LineLocation nMinusOne = factorial.createLineLocation(9);
+                    com.oracle.truffle.api.source.LineLocation nMinusOne = factorial.createLineLocation(9);
                     debugger.setLineBreakpoint(0, nMinusOne, false);
                     executionEvent.prepareContinue();
                 } catch (IOException e) {

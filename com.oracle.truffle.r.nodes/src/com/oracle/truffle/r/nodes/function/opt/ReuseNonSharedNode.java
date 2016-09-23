@@ -30,6 +30,12 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
+/**
+ * Internal node that should be used whenever you want to alter some data: if the data is shared,
+ * then it creates a copy, otherwise it returns the data. It does not increment the reference count
+ * of the result in either case, but that is typically handled by write variable node, put container
+ * element node or by put attribute node.
+ */
 public abstract class ReuseNonSharedNode extends Node {
 
     public static ReuseNonSharedNode create() {
@@ -41,32 +47,21 @@ public abstract class ReuseNonSharedNode extends Node {
     @Specialization
     protected RShareable getStorage(RSharingAttributeStorage value, //
                     @Cached("createBinaryProfile()") ConditionProfile isSharedProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile isTemporaryProfile, //
                     @Cached("createClassProfile()") ValueProfile copyProfile) {
         if (isSharedProfile.profile(value.isShared())) {
             RShareable res = copyProfile.profile(value).copy();
             assert res.isTemporary();
-            res.incRefCount();
             return res;
-        }
-        if (isTemporaryProfile.profile(value.isTemporary())) {
-            value.incRefCount();
         }
         return value;
     }
 
     @Specialization(contains = "getStorage")
     protected static RShareable getRShareable(RShareable value, //
-                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile isTemporaryProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile) {
         if (isSharedProfile.profile(value.isShared())) {
             RShareable res = value.copy();
-            assert res.isTemporary();
-            res.incRefCount();
             return res;
-        }
-        if (isTemporaryProfile.profile(value.isTemporary())) {
-            value.incRefCount();
         }
         return value;
     }

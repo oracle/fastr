@@ -52,4 +52,6 @@ public interface CallRFFI {
      * Sets the {@code R_Interactive} FFI variable. Similar rationale to {#link setTmpDir}.
      */
     void setInteractive(boolean interactive);
+
+    double exactSum(double[] values, boolean hasNa, boolean naRm);
 }

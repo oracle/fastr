@@ -49,6 +49,7 @@ public enum FastROptions {
     PerformanceWarnings("Print FastR performance warning", false),
     LoadBase("Load base package", true),
     PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
+    FullPrecisionSum("Use 128 bit arithmetic in sum builtin", false),
     LoadPkgSourcesIndex("Load R package sources index", true),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),

@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 
 /**
  * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
@@ -152,6 +153,13 @@ public class RSource {
      */
     public static Source fromURL(URL url, String name) throws IOException {
         return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
+    }
+
+    /**
+     * Create an unknown source with the given name.
+     */
+    public static SourceSection createUnknown(String name) {
+        return Source.newBuilder("").name(name).mimeType(RRuntime.R_APP_MIME).build().createSection(0, 0);
     }
 
     /**
