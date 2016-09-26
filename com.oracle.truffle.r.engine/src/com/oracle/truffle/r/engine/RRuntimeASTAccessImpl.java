@@ -442,6 +442,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
+    public void serializeFunctionDefinitionNode(RSerialize.State state, RFunction fn) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) fn.getRootNode();
+        fdn.serializeImpl(state);
+    }
+
+    @Override
     public ArgumentsSignature getArgumentsSignature(RFunction f) {
         return ((RRootNode) f.getRootNode()).getSignature();
     }

@@ -2263,6 +2263,24 @@ public class RSerialize {
     }
 
     @TruffleBoundary
+    public static byte[] serializeFunctionNonEnv(RFunction fn) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, XDR, DEFAULT_VERSION, null);
+            State state = new PLState(output);
+            state.openPairList(SEXPTYPE.CLOSXP);
+            RContext.getRRuntimeASTAccess().serializeFunctionDefinitionNode(state, fn);
+            Object res = state.closePairList();
+            // CLOSXP-type ensures that the list is not shrunk
+            state.convertUnboundValues((RPairList) res);
+            output.serialize(state, res);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
     public static void serialize(RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
         Output output = new Output(conn, type, version, (CallHook) refhook);
         State state = new PLState(output);

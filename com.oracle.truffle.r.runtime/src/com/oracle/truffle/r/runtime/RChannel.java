@@ -29,6 +29,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -42,12 +43,13 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
@@ -202,7 +204,7 @@ public class RChannel {
     private static class TransmitterCommon extends RSerialize.RefCounter {
 
         protected static class SerializedRef {
-            private int index;
+            private final int index;
 
             public SerializedRef(int index) {
                 this.index = index;
@@ -215,7 +217,7 @@ public class RChannel {
 
         protected static class SerializedList {
 
-            private RList list;
+            private final RList list;
 
             SerializedList(RList list) {
                 this.list = list;
@@ -229,8 +231,8 @@ public class RChannel {
         protected static class SerializedEnv {
 
             public static class Bindings {
-                private String[] names;
-                private Object[] values;
+                private final String[] names;
+                private final Object[] values;
 
                 Bindings(String[] names, Object[] values) {
                     this.names = names;
@@ -268,9 +270,9 @@ public class RChannel {
 
         protected static class SerializedPromise {
 
-            private Object env;
-            private Object value;
-            private byte[] serializedExpr;
+            private final Object env;
+            private final Object value;
+            private final byte[] serializedExpr;
 
             public SerializedPromise(Object env, Object value, byte[] serializedExpr) {
                 this.env = env;
@@ -292,10 +294,34 @@ public class RChannel {
 
         }
 
+        protected static class SerializedFunction {
+            private final RAttributes attributes;
+            private final Object env;
+            private final byte[] serializedDef;
+
+            public SerializedFunction(RAttributes attributes, Object env, byte[] serializedDef) {
+                this.attributes = attributes;
+                this.env = env;
+                this.serializedDef = serializedDef;
+            }
+
+            public RAttributes getAttributes() {
+                return attributes;
+            }
+
+            public Object getEnv() {
+                return env;
+            }
+
+            public byte[] getSerializedDef() {
+                return serializedDef;
+            }
+        }
+
         protected static class SerializedAttributable {
 
-            private RAttributes attributes;
-            private byte[] serializedAttributable;
+            private final RAttributes attributes;
+            private final byte[] serializedAttributable;
 
             public SerializedAttributable(RAttributes attributes, byte[] serializedAttributable) {
                 this.attributes = attributes;
@@ -401,6 +427,14 @@ public class RChannel {
 
         }
 
+        private SerializedFunction convertPrivateFunction(Object msg) throws IOException {
+            RFunction fn = (RFunction) msg;
+            byte[] serializedFunctionDef = RSerialize.serializeFunctionNonEnv(fn);
+            Object env = convertPrivate(REnvironment.frameToEnvironment(fn.getEnclosingFrame()));
+            RAttributes attributes = fn.getAttributes();
+            return new SerializedFunction(attributes == null ? null : createShareableSlow(attributes, true), env, serializedFunctionDef);
+        }
+
         private Object convertPrivateAttributable(Object msg) throws IOException {
             // do full serialization but handle attributes separately (no reason to serialize them
             // unconditionally)
@@ -435,7 +469,7 @@ public class RChannel {
         }
 
         private static boolean serializeObject(Object o) {
-            return o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage;
+            return o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage;
         }
 
         private Object convertPrivate(Object o) throws IOException {
@@ -445,6 +479,8 @@ public class RChannel {
                 return convertPrivateEnv(o);
             } else if (o instanceof RPromise) {
                 return convertPrivatePromise(o);
+            } else if (o instanceof RFunction) {
+                return convertPrivateFunction(o);
             } else if (!serializeObject(o)) {
                 // we need to make internal values (permanently) shared to avoid updates to ref
                 // count by different threads
@@ -524,51 +560,11 @@ public class RChannel {
         }
 
         public Object processOutgoingMessage(Object data) {
-            Object msg = data;
-            if (msg instanceof RList) {
-                try {
-                    msg = convertPrivateList(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable list");
-                }
-            } else if (shareableEnv(msg)) {
-                try {
-                    msg = convertPrivateEnv(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable environment");
-                }
-            } else if (msg instanceof RPromise) {
-                try {
-                    msg = convertPrivatePromise(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable promise");
-                }
-            } else if (!serializeObject(msg)) {
-                // make sure that what's passed through the channel will be copied on the first
-                // update
-                makeShared(msg);
-                try {
-                    if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
-                        Object newMsg = convertObjectAttributesToPrivate(msg);
-                        if (newMsg == msg) {
-                            makeShared(msg);
-                        } // otherwise a copy has been created to store new attributes
-                        return newMsg;
-                    } else {
-                        return makeShared(msg);
-                    }
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating channel message");
-                }
-            } else {
-                assert msg instanceof RAttributable;
-                try {
-                    msg = convertPrivateAttributable(msg);
-                } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating shareable attributable");
-                }
+            try {
+                return convertPrivate(data);
+            } catch (IOException x) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error serializing message for channel transmission");
             }
-            return msg;
         }
 
     }
@@ -588,6 +584,8 @@ public class RChannel {
                     ret = unserializeEnv((SerializedEnv) el);
                 } else if (el instanceof SerializedPromise) {
                     ret = unserializePromise((SerializedPromise) el);
+                } else if (el instanceof SerializedFunction) {
+                    ret = unserializeFunction((SerializedFunction) el);
                 } else if (el instanceof SerializedAttributable) {
                     ret = unserializeAttributable((SerializedAttributable) el);
                 }
@@ -643,6 +641,25 @@ public class RChannel {
         }
 
         @TruffleBoundary
+        private RFunction unserializeFunction(SerializedFunction f) throws IOException {
+            Map<String, Object> constants = new HashMap<>();
+            RPairList l = (RPairList) RSerialize.unserialize(f.getSerializedDef(), null, null, null);
+            // seems like the best (only) way to make deparser see a correct pair list type here
+            RPairList closxpList = RDataFactory.createPairList(l.car(), l.cdr(), RNull.instance, SEXPTYPE.CLOSXP);
+            String deparse = RDeparse.deparseDeserialize(constants, closxpList);
+            REnvironment env = (REnvironment) unserializeObject(f.getEnv());
+            MaterializedFrame enclosingFrame = env.getFrame();
+            RFunction fn = RContext.getEngine().parseFunction(constants, null, RSource.fromTextInternal(deparse, RSource.Internal.PAIRLIST_DEPARSE), enclosingFrame);
+            RAttributes attributes = f.getAttributes();
+            if (attributes != null) {
+                assert fn.getAttributes() == null;
+                // attributes unserialized in caller methods
+                fn.initAttributes(attributes);
+            }
+            return fn;
+        }
+
+        @TruffleBoundary
         private static RAttributable unserializeAttributable(SerializedAttributable a) throws IOException {
             RAttributes attributes = a.getAttributes();
             RAttributable attributable = (RAttributable) RSerialize.unserialize(a.getSerializedAttributable(), null, null, null);
@@ -668,9 +685,11 @@ public class RChannel {
                 if (newVal != val) {
                     // class attribute is a string vector which should be always shared
                     assert !a.getName().equals(RRuntime.CLASS_ATTR_KEY);
-                    // TODO: this is a bit brittle as it relies on the iterator to work correctly in
+                    // TODO: this is a bit brittle as it relies on the iterator to work
+                    // correctly in
                     // the
-                    // face of updates (which it does under current implementation of attributes)
+                    // face of updates (which it does under current implementation of
+                    // attributes)
                     attributable.setAttr(a.getName(), newVal);
                 }
             }
@@ -678,24 +697,7 @@ public class RChannel {
 
         public Object processedReceivedMessage(Object msg) {
             try {
-                Object ret = msg;
-                if (msg instanceof SerializedList) {
-                    RList list = ((SerializedList) msg).getList();
-                    // list and attributes are already private (shallow copies - do the appropriate
-                    // changes in place)
-                    unserializeList(list);
-                    ret = list;
-                } else if (msg instanceof SerializedEnv) {
-                    ret = unserializeEnv((SerializedEnv) msg);
-                } else if (msg instanceof SerializedPromise) {
-                    ret = unserializePromise((SerializedPromise) msg);
-                } else if (msg instanceof SerializedAttributable) {
-                    ret = unserializeAttributable((SerializedAttributable) msg);
-                }
-                if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
-                    unserializeAttributes((RAttributable) ret);
-                }
-                return ret;
+                return unserializeObject(msg);
             } catch (IOException x) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error unserializing msg from the channel");
             }
