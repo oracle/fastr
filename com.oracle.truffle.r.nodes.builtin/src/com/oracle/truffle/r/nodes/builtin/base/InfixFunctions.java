@@ -45,9 +45,13 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctionsFactory.AccessArraySubscriptSpecialBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.InfixFunctionsFactory.PromiseEvaluatorNodeGen;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -66,6 +70,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -180,6 +186,59 @@ public class InfixFunctions {
     @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE)
     public abstract static class AccessArraySubsetDefaultBuiltin {
 
+    }
+
+    @NodeChild(value = "arguments", type = RNode[].class)
+    public abstract static class AccessArraySubscriptSpecialBuiltin extends RNode {
+
+        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+
+        public static RNode create(RNode[] arguments) {
+            return arguments.length == 2 ? AccessArraySubscriptSpecialBuiltinNodeGen.create(arguments) : null;
+        }
+
+        protected boolean simpleVector(RAbstractVector vector) {
+            return classHierarchy.execute(vector) == null;
+        }
+
+        protected static boolean inIntRange(RAbstractVector vector, int index) {
+            return index >= 1 && index <= vector.getLength();
+        }
+
+        protected static boolean inDoubleRange(RAbstractVector vector, double index) {
+            return index >= 1 && index <= vector.getLength();
+        }
+
+        private static int toInt(double index) {
+            int i = (int) index;
+            return i == 0 ? 1 : i - 1;
+        }
+
+        @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+        protected static int access(RAbstractIntVector vector, int index) {
+            return vector.getDataAt(index - 1);
+        }
+
+        @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+        protected static double access(RAbstractDoubleVector vector, int index) {
+            return vector.getDataAt(index - 1);
+        }
+
+        @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
+        protected static int access(RAbstractIntVector vector, double index) {
+            return vector.getDataAt(toInt(index));
+        }
+
+        @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
+        protected static double access(RAbstractDoubleVector vector, double index) {
+            return vector.getDataAt(toInt(index));
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected static Object access(Object vector, Object index) {
+            throw RCallSpecialNode.fullCallNeeded();
+        }
     }
 
     @RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)

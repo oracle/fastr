@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen;
 import com.oracle.truffle.r.nodes.binary.ColonNode;
 import com.oracle.truffle.r.nodes.binary.ColonNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
+import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptSpecialBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.AssignFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.GetFastPathNodeGen;
@@ -386,7 +387,7 @@ public class BasePackage extends RBuiltinPackage {
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, Identical::create);
         add(NumericalFunctions.Im.class, NumericalFunctionsFactory.ImNodeGen::create);
-        add(InfixFunctions.AccessArraySubscriptBuiltin.class, InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
+        add(InfixFunctions.AccessArraySubscriptBuiltin.class, InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create, AccessArraySubscriptSpecialBuiltin::create);
         add(InfixFunctions.AccessArraySubscriptDefaultBuiltin.class, InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
         add(InfixFunctions.AccessArraySubsetBuiltin.class, InfixFunctionsFactory.AccessArraySubsetBuiltinNodeGen::create);
         add(InfixFunctions.AccessArraySubsetDefaultBuiltin.class, InfixFunctionsFactory.AccessArraySubsetBuiltinNodeGen::create);

@@ -67,6 +67,7 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -615,9 +616,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Override
     public void serializeImpl(RSerialize.State state) {
+        serializeImpl(state, getFunctionNode(), arguments, signature);
+    }
+
+    public static void serializeImpl(RSerialize.State state, RNode functionNode, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         state.setAsLangType();
-        state.serializeNodeSetCar(getFunctionNode());
-        if (isColon(getFunctionNode())) {
+        state.serializeNodeSetCar(functionNode);
+        if (isColon(functionNode)) {
             // special case, have to translate Identifier names to Symbols
             RSyntaxNode arg0 = arguments[0];
             RSyntaxNode arg1 = arguments[1];
@@ -636,7 +641,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             state.linkPairList(2);
             state.setCdr(state.closePairList());
         } else {
-            RSyntaxNode f = getFunctionNode().asRSyntaxNode();
+            RSyntaxNode f = functionNode.asRSyntaxNode();
             boolean infixFieldAccess = false;
             if (f instanceof RSyntaxLookup) {
                 RSyntaxLookup lookup = (RSyntaxLookup) f;
@@ -1014,13 +1019,33 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return result;
         }
 
+        private final VectorLengthProfile varArgProfile = VectorLengthProfile.create();
+
         private void forcePromises(VirtualFrame frame, RArgsValuesAndNames varArgs) {
+            if (varArgsPromiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                varArgsPromiseHelper = insert(new PromiseCheckHelperNode());
+            }
+            varArgProfile.profile(varArgs.getLength());
+            int cachedLength = varArgProfile.getCachedLength();
+            if (cachedLength >= 0) {
+                forcePromisesUnrolled(frame, varArgs, cachedLength);
+            } else {
+                forcePromisesDynamic(frame, varArgs);
+            }
+        }
+
+        @ExplodeLoop
+        private void forcePromisesUnrolled(VirtualFrame frame, RArgsValuesAndNames varArgs, int length) {
+            Object[] array = varArgs.getArguments();
+            for (int i = 0; i < length; i++) {
+                array[i] = varArgsPromiseHelper.checkEvaluate(frame, array[i]);
+            }
+        }
+
+        private void forcePromisesDynamic(VirtualFrame frame, RArgsValuesAndNames varArgs) {
             Object[] array = varArgs.getArguments();
             for (int i = 0; i < array.length; i++) {
-                if (varArgsPromiseHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    varArgsPromiseHelper = insert(new PromiseCheckHelperNode());
-                }
                 array[i] = varArgsPromiseHelper.checkEvaluate(frame, array[i]);
             }
         }
