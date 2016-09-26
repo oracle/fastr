@@ -130,6 +130,10 @@ public class TestOutputManager {
         this.rSessionName = session.name();
     }
 
+    public RSession getRSession() {
+        return rSession;
+    }
+
     /**
      * Associates a name with the manager, for the case where {@link #rSession} is unset.
      */

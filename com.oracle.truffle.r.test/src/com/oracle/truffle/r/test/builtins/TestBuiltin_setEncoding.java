@@ -24,7 +24,7 @@ public class TestBuiltin_setEncoding extends TestBase {
 
     @Test
     public void testsetEncoding2() {
-        assertEval(Ignored.Unknown, "argv <- list(\''', 'unknown'); .Internal(setEncoding(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('', 'unknown'); .Internal(setEncoding(argv[[1]], argv[[2]]))");
     }
 
     @Test

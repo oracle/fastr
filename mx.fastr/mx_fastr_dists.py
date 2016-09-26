@@ -43,7 +43,7 @@ class FastRProjectAdapter(mx.ArchivableProject):
                     results.append(join(root, f))
 
 
-class DelFastRNativeProject(FastRProjectAdapter):
+class FastRNativeProject(FastRProjectAdapter):
     '''
     Custom class for building the com.oracle.truffle.r.native project.
     The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
@@ -85,6 +85,15 @@ class DelFastRNativeProject(FastRProjectAdapter):
         # just the .h files from 'include'
         self._get_files('include', results, is_dot_h)
 
+        # tools for alternate impl of gramRd.c
+        gnur_tools = join(gnur, 'library', 'tools')
+        self._get_files(gnur_tools, results)
+        gnur_tools_src = join(gnur, 'src', 'library', 'tools', 'src')
+        for f in ['gramRd.c', 'init.c', 'tools.h']:
+            results.append(join(self.dir, gnur_tools_src, f))
+        for f in ['lib.mk', 'Makefile', 'tools/src/tools_dummy.c', 'tools/src/gramRd_fastr.h', 'tools/Makefile']:
+            results.append(join(self.dir, 'library', f))
+
         # selected headers from GNU R source
         with open(join(self.dir, 'fficall/src/include/gnurheaders.mk')) as f:
             lines = f.readlines()
@@ -102,7 +111,43 @@ class DelFastRNativeProject(FastRProjectAdapter):
 
         return results
 
-class DelFastRReleaseProject(FastRProjectAdapter):
+class FastRTestNativeProject(FastRProjectAdapter):
+    '''
+    Custom class for building the com.oracle.truffle.r.native project.
+    The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        FastRProjectAdapter.__init__(self, suite, name, deps, workingSets, theLicense)
+
+    def getBuildTask(self, args):
+        return mx.NativeBuildTask(args, self)
+
+    def getResults(self):
+        '''
+        Capture all the files from the com.oracle.truffle.r.test.native project that are needed
+        for running unit tests in an alternate implementation.
+        '''
+        # plain files
+        results = []
+
+        self._get_files(join('packages', 'recommended'), results)
+
+        fastr_packages = []
+        fastr_packages_dir = join(self.dir, 'packages')
+        for root, dirs, _ in os.walk(fastr_packages_dir):
+            for d in dirs:
+                if d == 'recommended':
+                    continue
+                if os.path.isdir(join(root, d)):
+                    fastr_packages.append(d)
+            break
+        for p in fastr_packages:
+            results.append(join(fastr_packages_dir, p, 'lib', p + '.tar'))
+
+        results.append(join(self.dir, 'urand', 'lib', 'liburand.so'))
+        return results
+
+class FastRReleaseProject(FastRProjectAdapter):
     '''
     Custom class for creating the FastR release project, which supports the
     FASTR_RELEASE distribution.
@@ -112,8 +157,11 @@ class DelFastRReleaseProject(FastRProjectAdapter):
 
     def getResults(self):
         results = []
-        for rdir in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
+        for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
             self._get_files(rdir, results)
+        results.append(join(self.dir, 'LICENSE'))
+        results.append(join(self.dir, 'COPYRIGHT'))
+        results.append(join(self.dir, 'README.md'))
         return results
 
     def getBuildTask(self, args):
@@ -136,11 +184,25 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         # copy the release directories
         output_dir = self.subject.dir
         fastr_dir = mx_fastr._fastr_suite.dir
-        for d in ['bin', 'lib', 'library', 'etc', 'share', 'doc']:
+        for d in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             shutil.copytree(join(fastr_dir, d), target_dir)
+
+        # copyrights
+        copyrights_dir = join(fastr_dir, 'mx.fastr', 'copyrights')
+        with open(join(output_dir, 'COPYRIGHT'), 'w') as outfile:
+            for copyright_file in os.listdir(copyrights_dir):
+                basename = os.path.basename(copyright_file)
+                if basename.endswith('copyright.star'):
+                    with open(join(copyrights_dir, copyright_file)) as infile:
+                        data = infile.read()
+                        outfile.write(data)
+        # license/README
+        shutil.copy(join(fastr_dir, 'LICENSE'), output_dir)
+        shutil.copy(join(fastr_dir, 'README.md'), output_dir)
+
         # canonicalize R_HOME_DIR in bin/R
         bin_dir = join(output_dir, 'bin')
         rcmd = join(bin_dir, 'R')
@@ -155,7 +217,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
                     line = 'R_HOME_DIR="$(unset CDPATH && cd ${R_HOME_DIR} && pwd)"\n'
                 f.write(line)
         # jar files for the launchers
-        jars_dir = join(bin_dir, 'jjars')
+        jars_dir = join(bin_dir, 'fastr_jars')
         if not os.path.exists(jars_dir):
             os.mkdir(jars_dir)
         fastr_classfiles = dict()
@@ -188,7 +250,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         classpath = []
         for _, _, jars in os.walk(jars_dir):
             for jar in jars:
-                classpath.append(join("$R_HOME/bin/jjars", jar))
+                classpath.append(join("$R_HOME/bin/fastr_jars", jar))
         classpath_string = ":".join(classpath)
 
         # replace the mx exec scripts with native Java launchers, setting the classpath from above
@@ -208,10 +270,11 @@ class FastRArchiveParticipant:
             # The release project states dependencies on the java projects in order
             # to ensure they are built first. Therefore, the JarDistribution code
             # will include all their class files at the top-level of the jar by default.
-            # Since we have already encapsulated the class files in 'jjars/fastr.jar' we
-            # suppress their inclusion here by resetting the deps filed. A bit of a hack.
+            # Since we have already encapsulated the class files in 'fastr_jars/fastr.jar' we
+            # suppress their inclusion here by resetting the deps field. A bit of a hack.
         if self.dist.name == "FASTR_RELEASE":
-            assert isinstance(self.dist.deps[0], DelFastRReleaseProject)
+            assert isinstance(self.dist.deps[0], FastRReleaseProject)
+            self.release_project = self.dist.deps[0]
             self.dist.deps[0].deps = []
 
     def __add__(self, arcname, contents):
@@ -221,7 +284,13 @@ class FastRArchiveParticipant:
         return False
 
     def __closing__(self):
-        pass
+        if self.dist.name == "FASTR_RELEASE":
+            # the files copied  in can be confused as source files by
+            # e.g., mx copyright, so delete them, specifically thne
+            # include dir
+            include_dir = join(self.release_project.dir, 'include')
+            shutil.rmtree(include_dir)
+
 
 def mx_post_parse_cmd_line(opts):
     for dist in mx_fastr._fastr_suite.dists:

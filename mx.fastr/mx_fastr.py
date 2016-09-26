@@ -27,6 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
+from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
 import os
 
 '''
@@ -88,7 +89,13 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
 
-    vmArgs += _graal_options()
+    if 'nocompile' in kwargs:
+        nocompile = True
+        del kwargs['nocompile']
+    else:
+        nocompile = False
+
+    vmArgs += set_graal_options(nocompile)
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -127,7 +134,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
         i = i + 1
     return xargs
 
-def _graal_options(nocompile=False):
+def set_graal_options(nocompile=False):
     if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         if nocompile:
@@ -299,9 +306,16 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
         runlistener_arg = add_arg_separator()
         runlistener_arg += 'gen-diff=' + args.gen_diff_output
 
+    if args.trace_tests:
+        runlistener_arg = add_arg_separator()
+        runlistener_arg += 'trace-tests'
+
 #    if args.test_methods:
 #        runlistener_arg = add_arg_separator()
 #        runlistener_arg = 'test-methods=' + args.test_methods
+
+    runlistener_arg = add_arg_separator()
+    runlistener_arg += 'test-project-output-dir=' + mx.project('com.oracle.truffle.r.test').output_dir()
 
     # use a custom junit.RunListener
     runlistener = 'com.oracle.truffle.r.test.TestBase$RunListener'
@@ -315,7 +329,7 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # no point in printing errors to file when running tests (that contain errors on purpose)
     vmArgs += ['-DR:-PrintErrorStacktracesToFile']
 
-    vmArgs += _graal_options(nocompile=True)
+    vmArgs += set_graal_options(nocompile=True)
 
     setREnvironment()
 
@@ -330,6 +344,7 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
+    parser.add_argument('--trace-tests', action='store_true', help='trace the actual @Test methods as they are executed')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
@@ -342,6 +357,9 @@ def junit_simple(args):
 
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
+
+def junit_nopkgs(args):
+    return mx.command_function('junit')(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
 
 def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
@@ -409,14 +427,11 @@ def testgen(args):
         except subprocess.CalledProcessError:
             mx.abort('RVersionNumber.main failed')
 
-    # clean the test project to invoke the test analyzer AP
-    testOnly = ['--projects', 'com.oracle.truffle.r.test']
-    mx.clean(['--no-dist', ] + testOnly)
-    mx.build(testOnly)
     # now just invoke junit with the appropriate options
     mx.log("generating expected output for packages: ")
     for pkg in args.tests.split(','):
         mx.log("    " + str(pkg))
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
     junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
 
 def unittest(args):
@@ -489,25 +504,10 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-class FastRNativeProject(mx_fastr_dists.DelFastRNativeProject):
-    '''
-    Custom class for building the com.oracle.truffle.r.native project.
-    Delegates to mx_fastr_dists.DelFastRNativeProject to keep this file uncluttered
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx_fastr_dists.DelFastRNativeProject.__init__(self, suite, name, deps, workingSets, theLicense)
-
-class FastRReleaseProject(mx_fastr_dists.DelFastRReleaseProject):
-    '''
-    Custom class for creating the FastR release project, which supports the
-    FASTR_RELEASE distribution.
-    Delegates to mx_fastr_dists.DelFastRReleaseProject to keep this file uncluttered
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx_fastr_dists.DelFastRReleaseProject.__init__(self, suite, name, deps, workingSets, theLicense)
-
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
+
+import mx_fastr_mkgramrd
 
 _commands = {
     'r' : [rshell, '[options]'],
@@ -522,6 +522,7 @@ _commands = {
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
     'junitnoapps' : [junit_noapps, ['options']],
+    'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
@@ -531,6 +532,7 @@ _commands = {
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
+    'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

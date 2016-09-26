@@ -45,7 +45,7 @@ public class TestBuiltin_options extends TestBase {
     @Test
     public void testOptions() {
         assertEval("{ getOption(NULL) }");
-        assertEval("{ getOption(character() }");
-        assertEval("{ getOption(c(\"warn\", \"width\") }");
+        assertEval(Output.IgnoreErrorContext, Ignored.ImplementationError, "{ getOption(character()) }");
+        assertEval("{ options(\"timeout\", \"width\") }");
     }
 }

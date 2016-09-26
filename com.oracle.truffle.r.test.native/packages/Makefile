@@ -21,21 +21,39 @@
 # questions.
 #
 
-.PHONY: all clean make_subdirs clean_subdirs
+.PHONY: all clean make_subdirs clean_subdirs clean_recommended
 
-SUBDIRS = testrffi vanilla
+SUBDIRS = testrffi vanilla tests4
+NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
+R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
+GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
+GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
 
-all: make_subdirs
+# We have to copy the GNU R recommended packages into this project
+# to keep the mx archiver happy, which asserts that every path
+# is inside the project.
+
+# WARNING: If you add/delete anything in this project you must update mx_fastr_dists.py
+# to reflect the changes, e.g., adding a new SUBDIR
+
+all: make_subdirs copy_recommended
 
 make_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
 
-clean: clean_subdirs
+copy_recommended:
+	mkdir -p recommended
+	cp $(GNUR_RECOMMENDED) recommended
+	touch copy_recommended
+
+clean: clean_subdirs clean_recommended
 
 clean_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
 	
+clean_recommended:
+	rm -rf recommended copy_recommended

@@ -197,11 +197,12 @@ public interface RRuntimeASTAccess {
      * .fastr.context.r/rscript. The args are everything you might legally enter into a
      * shell,including I/O redirection. The result is an integer status code if "intern==false",
      * otherwise it is a character vector of the output, with a 'status' attribute containing the
-     * status code.
+     * status code. The env arguments are an optional settings of environment variables of the form
+     * X=Y.
      */
 
-    Object rcommandMain(String[] args, boolean intern);
+    Object rcommandMain(String[] args, String[] env, boolean intern);
 
-    Object rscriptMain(String[] args, boolean intern);
+    Object rscriptMain(String[] args, String[] env, boolean intern);
 
 }

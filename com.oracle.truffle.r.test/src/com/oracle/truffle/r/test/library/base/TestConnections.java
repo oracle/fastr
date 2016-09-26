@@ -23,13 +23,10 @@
 package com.oracle.truffle.r.test.library.base;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestConnections extends TestBase {
@@ -37,11 +34,7 @@ public class TestConnections extends TestBase {
         private final Path testDirPath;
 
         TestDir() {
-            Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test");
-            testDirPath = TestBase.relativize(rpackages.resolve("library.base.conn"));
-            if (!testDirPath.toFile().exists()) {
-                testDirPath.toFile().mkdir();
-            }
+            testDirPath = TestBase.createTestDir("com.oracle.truffle.r.test.library.base.conn");
         }
 
         String[] subDir(String p) {
@@ -59,7 +52,7 @@ public class TestConnections extends TestBase {
     @AfterClass
     public static void teardownTestDir() {
         if (!deleteDir(testDir.testDirPath)) {
-            throw new AssertionError();
+            System.err.println("WARNING: error deleting : " + testDir.testDirPath);
         }
     }
 

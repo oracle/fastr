@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Semaphore;
 
 /**
  * Managing output from sub-processes, which is needed in a several places, e.g.
@@ -33,6 +34,8 @@ public class ProcessOutputManager {
     public abstract static class OutputThread extends Thread {
         protected final InputStream is;
         protected int totalRead;
+        protected final Semaphore entry = new Semaphore(0);
+        protected final Semaphore exit = new Semaphore(0);
 
         protected OutputThread(String name, InputStream is) {
             super(name);
@@ -93,16 +96,23 @@ public class ProcessOutputManager {
                     }
                 }
             } catch (IOException ex) {
-                return;
+                // unexpected, we will just return what we have read so far
+            } finally {
+                exit.release();
             }
         }
 
         /**
-         * Returns the internal byte array used to store the data, which may be larger than
-         * {@link #totalRead}. Use {@link #getTotalRead} to access the subarray containg the read
-         * data.
+         * Waits for the reads to complete and then returns the internal byte array used to store
+         * the data, which may be larger than {@link #totalRead}. Use {@link #getTotalRead} to
+         * access the subarray containing the read data.
          */
         public byte[] getData() {
+            try {
+                exit.acquire();
+            } catch (InterruptedException e) {
+
+            }
             return data;
         }
     }

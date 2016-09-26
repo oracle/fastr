@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFactoryFactory.ContextRSystemFunctionNodeGen;
@@ -31,17 +30,19 @@ import com.oracle.truffle.r.nodes.builtin.base.system.ContextSystemFunctionFacto
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * A variant that uses {@code .fastr.context.r} for R sub-processes and throws an error otherwise.
- * Used in systems that do not support {@code ProcessBuilder}.
+ * Used in systems that do not support {@code ProcessBuilder} and for R commands by
+ * {@link PreferContextSystemFunctionFactory}, for better performance.
  */
 public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     private abstract static class ContextSystemFunctionNode extends RBaseNode {
-        public abstract Object execute(VirtualFrame frame, Object command, Object intern);
+        public abstract Object execute(VirtualFrame frame, Object args, Object env, Object intern);
 
     }
 
@@ -57,9 +58,9 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, boolean intern) {
+        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRNode();
-            Object result = contextRNode.execute(frame, args, intern);
+            Object result = contextRNode.execute(frame, args, env, intern);
             return result;
         }
     }
@@ -76,35 +77,30 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, boolean intern) {
+        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRscriptNode();
-            Object result = contextRscriptNode.execute(frame, args, intern);
+            Object result = contextRscriptNode.execute(frame, args, env, intern);
             return result;
         }
     }
 
     @Override
-    Object execute(VirtualFrame frame, String command, boolean intern) {
+    public Object execute(VirtualFrame frame, String command, boolean intern) {
         log(command, "Context");
-        String[] parts = checkRCommand(command);
-        if (parts != null) {
-            String[] args = new String[parts.length - 1];
-            System.arraycopy(parts, 1, args, 0, args.length);
-            ContextSystemFunctionNode node = parts[0].equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
-            Object result = node.execute(frame, RDataFactory.createStringVector(args, RDataFactory.COMPLETE_VECTOR), intern);
+        CommandInfo commandInfo = checkRCommand(command);
+        if (commandInfo != null) {
+            ContextSystemFunctionNode node = Utils.unShQuote(commandInfo.command).equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
+            Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),
+                            RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern);
             return result;
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
+            throw cannotExecute(command);
         }
     }
 
-    @TruffleBoundary
-    private static String[] checkRCommand(String command) {
-        String[] parts = command.split(" ");
-        String rcommand = isFastR(parts[0]);
-        return rcommand == null ? null : parts;
-
+    private static RError cannotExecute(String command) throws RError {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
     }
 
 }

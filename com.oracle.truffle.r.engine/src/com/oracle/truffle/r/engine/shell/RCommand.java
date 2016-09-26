@@ -68,15 +68,15 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        doMain(args, true, System.in, System.out);
+        doMain(args, null, true, System.in, System.out);
         // never returns
         throw RInternalError.shouldNotReachHere();
     }
 
-    public static int doMain(String[] args, boolean initial, InputStream inStream, OutputStream outStream) {
+    public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream);
+        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream, env);
         return readEvalPrint(vm);
     }
 
@@ -87,7 +87,7 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream) {
+    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream, String[] env) {
         RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
@@ -183,7 +183,7 @@ public class RCommand {
                 }
             }
         }
-        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler).createVM();
+        return ContextInfo.create(rsp, env, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler).createVM();
     }
 
     private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);

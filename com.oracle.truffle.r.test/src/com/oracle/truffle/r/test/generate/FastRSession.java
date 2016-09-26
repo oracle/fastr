@@ -49,8 +49,14 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final int DEFAULT_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
-    private static final int LONG_TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 60000;
+    private static final String TEST_TIMEOUT_PROPERTY = "FastRTestTimeout";
+    private static final String DISABLE_TIMEOUT_PROPERTY = "DisableTestTimeout"; // legacy
+    private static int timeoutValue = 10000;
+    /**
+     * The long timeout is used for package installation and currently needs to be 5 mins for the
+     * {@code Matrix} package.
+     */
+    private static int longTimeoutValue = 300000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
@@ -138,7 +144,7 @@ public final class FastRSession implements RSession {
 
     public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
-    public PolyglotEngine createTestContext(ContextInfo contextInfoArg) {
+    public ContextInfo checkContext(ContextInfo contextInfoArg) {
         create();
         ContextInfo contextInfo;
         if (contextInfoArg == null) {
@@ -146,19 +152,27 @@ public final class FastRSession implements RSession {
         } else {
             contextInfo = contextInfoArg;
         }
-        return contextInfo.createVM();
+        return contextInfo;
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[0], false), false);
-        return ContextInfo.create(params, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
+        return ContextInfo.create(params, null, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
     }
 
     private FastRSession() {
+        if (System.getProperty(DISABLE_TIMEOUT_PROPERTY) != null) {
+            timeoutValue = Integer.MAX_VALUE;
+            longTimeoutValue = Integer.MAX_VALUE;
+        } else if (System.getProperty(TEST_TIMEOUT_PROPERTY) != null) {
+            int timeoutGiven = Integer.parseInt(System.getProperty(TEST_TIMEOUT_PROPERTY));
+            timeoutValue = timeoutGiven * 1000;
+            // no need to scale longTimeoutValue
+        }
         consoleHandler = new TestConsoleHandler();
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
-            ContextInfo info = ContextInfo.create(params, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            ContextInfo info = ContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, consoleHandler);
             main = info.createVM();
             mainContext = main.eval(GET_CONTEXT).as(RContext.class);
         } finally {
@@ -167,10 +181,19 @@ public final class FastRSession implements RSession {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
-        consoleHandler.reset();
+        evalAsObject(expression, contextInfo, longTimeout);
+        return consoleHandler.buffer.toString();
+    }
 
+    /**
+     * Returns the actual object from evaluating expression. Used (and result ignored) by
+     * {@link #eval} but also used for package installation via the {@code system2} command, where
+     * the result is used to check whether the installation succeeded.
+     */
+    @SuppressWarnings("deprecation")
+    public Object evalAsObject(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
+        consoleHandler.reset();
         EvalThread thread = evalThread;
         if (thread == null || !thread.isAlive() || contextInfo != thread.contextInfo) {
             thread = new EvalThread(contextInfo);
@@ -182,9 +205,10 @@ public final class FastRSession implements RSession {
         thread.push(expression);
 
         try {
-            if (!thread.await(longTimeout ? LONG_TIMEOUT : DEFAULT_TIMEOUT)) {
+            if (!thread.await(longTimeout ? longTimeoutValue : timeoutValue)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
+                evalThread.ensureContextDestroyed();
                 evalThread = null;
                 throw new TimeoutException();
             }
@@ -195,7 +219,7 @@ public final class FastRSession implements RSession {
             evalThread = null;
             throw thread.killedByException;
         }
-        return consoleHandler.buffer.toString();
+        return evalThread.result;
     }
 
     private final class EvalThread extends RContext.ContextThread {
@@ -205,10 +229,18 @@ public final class FastRSession implements RSession {
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
         private final ContextInfo contextInfo;
+        private Object result;
 
+        /**
+         * Create an evaluation thread (to handle timeouts).
+         *
+         * @param contextInfo {@code null} for a lightweight test context, else an existing one to
+         *            use.
+         */
         EvalThread(ContextInfo contextInfo) {
             super(null);
             this.contextInfo = contextInfo;
+            setDaemon(true);
         }
 
         public void push(String exp) {
@@ -220,6 +252,15 @@ public final class FastRSession implements RSession {
             return exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
         }
 
+        /**
+         * In case the vm is not disposed by the {@code finally} clause in run after a timeout,
+         * (which should not happen), we explicitly destroy the context, to avoid subsequent errors
+         * relating to multiple children of a single SHARED_RW context.
+         */
+        public void ensureContextDestroyed() {
+            context.destroy();
+        }
+
         @Override
         public void run() {
             while (killedByException == null) {
@@ -229,7 +270,8 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    PolyglotEngine vm = createTestContext(contextInfo);
+                    ContextInfo actualContextInfo = checkContext(contextInfo);
+                    PolyglotEngine vm = actualContextInfo.createVM();
                     consoleHandler.setInput(expression.split("\n"));
                     try {
                         String input = consoleHandler.readLine();
@@ -237,7 +279,7 @@ public final class FastRSession implements RSession {
                             Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                             try {
                                 try {
-                                    vm.eval(source);
+                                    result = vm.eval(source).get();
                                     // checked exceptions are wrapped in RuntimeExceptions
                                 } catch (RuntimeException e) {
                                     if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
