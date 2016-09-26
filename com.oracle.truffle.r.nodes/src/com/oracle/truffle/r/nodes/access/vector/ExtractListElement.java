@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElementNodeGen.UpdateStateOfListElementNodeGen;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -84,10 +84,12 @@ public abstract class ExtractListElement extends Node {
         }
 
         @Specialization
-        protected void doShareableValues(RListBase owner, RShareable value, //
-                        @Cached("createBinaryProfile()") ConditionProfile sharedValue, //
+        protected void doShareableValues(RListBase owner, RShareable value,
+                        @Cached("createClassProfile()") ValueProfile valueProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile sharedValue,
                         @Cached("createBinaryProfile()") ConditionProfile temporaryOwner) {
-            if (sharedValue.profile(value.isShared())) {
+            RShareable profiledValue = valueProfile.profile(value);
+            if (sharedValue.profile(profiledValue.isShared())) {
                 // it is already shared, not need to do anything
                 return;
             }
@@ -99,21 +101,25 @@ public abstract class ExtractListElement extends Node {
                 return;
             }
 
-            if (value.isTemporary()) {
+            if (profiledValue.isTemporary()) {
                 // make it at least non-shared (parent list must be also at least non-shared)
-                value.incRefCount();
+                profiledValue.incRefCount();
             }
             if (owner.isShared()) {
                 // owner is shared, make the value shared too
-                value.incRefCount();
+                profiledValue.incRefCount();
             }
         }
 
-        @Fallback
+        @Specialization(guards = "isFallback(owner, value)")
         protected void doFallback(Object owner, Object value) {
             assert !(value instanceof RShareable && owner instanceof RAbstractVector && !(owner instanceof RListBase)) : "RShareables can only live inside lists and no other vectors.";
             // nop: either value is not RShareable, or the owner is "list" like structure with
             // reference semantics (e.g. REnvironment)
+        }
+
+        protected final boolean isFallback(Object owner, Object value) {
+            return !(value instanceof RShareable) || !(owner instanceof RListBase);
         }
     }
 }

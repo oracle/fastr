@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -30,9 +32,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -142,39 +147,44 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "hasNames(x)"})
-    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") PutAttributeNode putNames) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
         }
         RAbstractVector input = handleEach(x, each);
         RStringVector names = (RStringVector) handleEach(x.getNames(attrProfiles), each);
+        RVector r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             names = (RStringVector) handleLengthOut(names, lengthOut, false);
-            RVector r = handleLengthOut(input, lengthOut, false);
-            r.setNames(names);
-            return r;
+            r = handleLengthOut(input, lengthOut, false);
         } else {
             names = (RStringVector) handleTimes(names, times, false);
-            RVector r = handleTimes(input, times, false);
-            r.setNames(names);
-            return r;
+            r = handleTimes(input, times, false);
         }
+        putNames.execute(initAttributes.execute(r), names);
+        r.setInternalNames(names);
+        return r;
     }
 
     @Specialization(guards = {"each <= 1", "hasNames(x)"})
-    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") PutAttributeNode putNames) {
+        RStringVector names;
+        RVector r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-            RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
-            RVector r = handleLengthOut(x, lengthOut, true);
-            r.setNames(names);
-            return r;
+            names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
+            r = handleLengthOut(x, lengthOut, true);
         } else {
-            RStringVector names = (RStringVector) handleTimes(x.getNames(attrProfiles), times, true);
-            RVector r = handleTimes(x, times, true);
-            r.setNames(names);
-            return r;
+            names = (RStringVector) handleTimes(x.getNames(attrProfiles), times, true);
+            r = handleTimes(x, times, true);
         }
+        putNames.execute(initAttributes.execute(r), names);
+        r.setInternalNames(names);
+        return r;
     }
 
     /**

@@ -31,12 +31,14 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -77,7 +79,6 @@ public abstract class BrowserInteractNode extends RNode {
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
         String savedPrompt = ch.getPrompt();
-        ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         RFunction callerFunction = RArguments.getFunction(frame);
         // we may be at top level where there is not caller
         boolean callerIsDebugged = callerFunction == null ? false : DebugHandling.isDebugged(callerFunction);
@@ -90,6 +91,7 @@ public abstract class BrowserInteractNode extends RNode {
         try {
             browserState.setInBrowser(browserCaller);
             LW: while (true) {
+                ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
                 String input = ch.readLine();
                 if (input != null) {
                     input = input.trim();
@@ -144,15 +146,27 @@ public abstract class BrowserInteractNode extends RNode {
                     }
 
                     default:
-                        try {
-                            RContext.getEngine().parseAndEval(RSource.fromTextInternal(input, RSource.Internal.BROWSER_INPUT), mFrame, true);
-                        } catch (ReturnException e) {
-                            exitMode = NEXT;
-                            break LW;
-                        } catch (ParseException e) {
-                            throw e.throwAsRError();
+                        StringBuffer sb = new StringBuffer(input);
+                        while (true) {
+                            try {
+                                RContext.getEngine().parseAndEval(RSource.fromTextInternal(sb.toString(), RSource.Internal.BROWSER_INPUT), mFrame, true);
+                            } catch (IncompleteSourceException e) {
+                                // read another line of input
+                                ch.setPrompt("+ ");
+                                sb.append(ch.readLine());
+                                // The only continuation in the while loop
+                                continue;
+                            } catch (ParseException e) {
+                                e.report(ch);
+                                continue LW;
+                            } catch (RError e) {
+                                continue LW;
+                            } catch (ReturnException e) {
+                                exitMode = NEXT;
+                                break LW;
+                            }
+                            continue LW;
                         }
-                        break;
                 }
             }
         } finally {

@@ -95,6 +95,11 @@ public interface RRuntimeASTAccess {
     void serializeNode(RSerialize.State state, Object node);
 
     /**
+     * Helper function for {@code serialize} working around cyclic dependency.
+     */
+    void serializeFunctionDefinitionNode(RSerialize.State state, RFunction fn);
+
+    /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
      * associated with the node stored with {@code rl}.
      */

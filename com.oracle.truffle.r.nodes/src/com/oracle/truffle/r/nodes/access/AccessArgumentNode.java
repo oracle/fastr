@@ -138,10 +138,7 @@ public final class AccessArgumentNode extends RNode {
 
     private Object doArgument(VirtualFrame frame, Object arg) {
         if (hasDefaultArg) {
-            if (isMissingProfile.profile(arg == RMissing.instance)) {
-                return doArgumentInternal(frame);
-            }
-            if (isEmptyProfile.profile(arg == REmpty.instance)) {
+            if (isMissingProfile.profile(arg == RMissing.instance) || isEmptyProfile.profile(arg == REmpty.instance)) {
                 return doArgumentInternal(frame);
             }
         }
