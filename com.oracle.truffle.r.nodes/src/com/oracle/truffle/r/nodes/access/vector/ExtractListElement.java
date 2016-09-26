@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -109,11 +108,15 @@ public abstract class ExtractListElement extends Node {
             }
         }
 
-        @Fallback
+        @Specialization(guards = "isFallback(owner, value)")
         protected void doFallback(Object owner, Object value) {
             assert !(value instanceof RShareable && owner instanceof RAbstractVector && !(owner instanceof RListBase)) : "RShareables can only live inside lists and no other vectors.";
             // nop: either value is not RShareable, or the owner is "list" like structure with
             // reference semantics (e.g. REnvironment)
+        }
+
+        protected final boolean isFallback(Object owner, Object value) {
+            return !(value instanceof RShareable) || !(owner instanceof RListBase);
         }
     }
 }
