@@ -47,9 +47,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
@@ -59,8 +59,10 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.PipelineStepVisitor;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
+import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
+import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassLogicalMapToBooleanNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -103,28 +105,25 @@ public final class PipelineToCastNode {
         // nop: static class
     }
 
-    public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep) {
-        return convert(configBuilder, firstStep, PipelineConfigBuilder.getFilterFactory(), PipelineConfigBuilder.getMapperFactory());
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep) {
+        return convert(config, firstStep, config.getFilterFactory(), config.getMapperFactory());
     }
 
-    public static CastNode convert(PipelineConfigBuilder configBuilder, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
         if (firstStep == null) {
-            return BypassNode.create(configBuilder, null, filterFactory, mapperFactory);
+            return BypassNode.create(config, null, mapperFactory);
         } else {
-            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, configBuilder.getDefaultDefaultMessage(), configBuilder.getDefaultError(),
-                            configBuilder.getDefaultWarning());
-            CastNode headNode = convert(firstStep, nodeFactory);
-
-            return BypassNode.create(configBuilder, headNode, filterFactory, mapperFactory);
+            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage(), config.getDefaultError(), config.getDefaultWarning());
+            SinglePrimitiveOptimization singleOptVisitor = new SinglePrimitiveOptimization(nodeFactory);
+            CastNode headNode = convert(firstStep, singleOptVisitor);
+            return singleOptVisitor.createBypassNode(config, headNode, mapperFactory);
         }
     }
 
     /**
-     * Converts chain of pipeline steps to cast nodes. The steps must not contain
-     * {@code PipelineConfStep} anymore. This method is also invoked when we build mapIf node to
-     * convert {@code trueBranch} and {@code falseBranch}.
+     * Converts chain of pipeline steps to cast nodes.
      */
-    private static CastNode convert(PipelineStep<?, ?> firstStep, CastNodeFactory nodeFactory) {
+    private static CastNode convert(PipelineStep<?, ?> firstStep, PipelineStepVisitor<CastNode> nodeFactory) {
         if (firstStep == null) {
             return null;
         }
@@ -132,7 +131,7 @@ public final class PipelineToCastNode {
         CastNode prevCastNode = null;
         PipelineStep<?, ?> currCastStep = firstStep;
         while (currCastStep != null) {
-            CastNode node = nodeFactory.create(currCastStep);
+            CastNode node = currCastStep.accept(nodeFactory);
             if (node != null) {
                 if (prevCastNode == null) {
                     prevCastNode = node;
@@ -145,6 +144,148 @@ public final class PipelineToCastNode {
             currCastStep = currCastStep.getNext();
         }
         return prevCastNode;
+    }
+
+    /**
+     * Visitor that is capable of recognizing patterns that permit to bypass single primitive value
+     * directly to any casts after find first step or directly to the built-in if there is nothing
+     * after find first step.
+     */
+    private static final class SinglePrimitiveOptimization implements PipelineStepVisitor<CastNode> {
+        // Any destructive step or step we cannot analyze changes this to false
+        private boolean canBeOptimized = true;
+        // Any coercion or check step initialize this or check the existing value, if it does not
+        // match -> canBeOptimized = false
+        private RType targetType = null;
+        // We remember this step so that we can construct another copy of its cast node
+        private FindFirstStep<?, ?> findFirstStep = null;
+        private final PipelineStepVisitor<CastNode> inner;
+
+        private SinglePrimitiveOptimization(PipelineStepVisitor<CastNode> inner) {
+            this.inner = inner;
+        }
+
+        /**
+         * Creates {@link BypassNode} if there is no optimization opportunity, or creates more
+         * specialized child class if the cast pipeline follows the required pattern.
+         */
+        public CastNode createBypassNode(PipelineConfig pipelineConfig, CastNode wrappedHead, ArgumentMapperFactory mapperFactory) {
+            if (canBeOptimized && findFirstStep != null) {
+                if (targetType == RType.Integer) {
+                    return BypassIntegerNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
+                } else if (targetType == RType.Double) {
+                    return BypassDoubleNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
+                } else if (targetType == RType.Logical && isNextMapToBoolean(findFirstStep)) {
+                    return BypassLogicalMapToBooleanNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
+                }
+            }
+            return BypassNode.create(pipelineConfig, wrappedHead, mapperFactory);
+        }
+
+        @Override
+        public CastNode visit(FindFirstStep<?, ?> step) {
+            assert targetType != null : "There must be a coercion step before find first";
+            findFirstStep = step;
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(CoercionStep<?, ?> step) {
+            canBeOptimized(step.type);
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(MapStep<?, ?> step) {
+            cannotBeOptimizedBeforeFindFirst();
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(MapIfStep<?, ?> step) {
+            cannotBeOptimizedBeforeFindFirst();
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(FilterStep<?, ?> step) {
+            Filter<?, ?> filter = step.getFilter();
+            if (filter instanceof RTypeFilter) {
+                canBeOptimized(((RTypeFilter) filter).getType());
+            } else {
+                cannotBeOptimizedBeforeFindFirst();
+            }
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(NotNAStep<?> step) {
+            // TODO: we can remember that we saw not NA and do this check in the BypassNode
+            canBeOptimized = false;
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(DefaultErrorStep<?> step) {
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(DefaultWarningStep<?> step) {
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(BoxPrimitiveStep<?> step) {
+            canBeOptimized = false;
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(CustomNodeStep<?> step) {
+            cannotBeOptimizedBeforeFindFirst();
+            return inner.visit(step);
+        }
+
+        @Override
+        public CastNode visit(AttributableCoercionStep<?> step) {
+            cannotBeOptimizedBeforeFindFirst();
+            return inner.visit(step);
+        }
+
+        private void cannotBeOptimizedBeforeFindFirst() {
+            if (findFirstStep == null) {
+                canBeOptimized = false;
+            }
+        }
+
+        private void canBeOptimized(RType newType) {
+            if (targetType == null) {
+                targetType = newType;
+            } else if (targetType != newType) {
+                canBeOptimized = false;
+            }
+        }
+
+        private CastNode getFindFirstWithDefault() {
+            assert findFirstStep != null;
+            if (findFirstStep.getDefaultValue() != null) {
+                return convert(findFirstStep, inner);
+            }
+            return null;
+        }
+
+        private CastNode getAfterFindFirstNode() {
+            if (findFirstStep.getNext() != null) {
+                return convert(findFirstStep.getNext(), inner);
+            }
+            return null;
+        }
+
+        private static boolean isNextMapToBoolean(FindFirstStep<?, ?> findFirst) {
+            PipelineStep<?, ?> next = findFirst.getNext();
+            return next != null && next instanceof MapStep && ((MapStep) next).getMapper() instanceof MapByteToBoolean;
+        }
     }
 
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {
@@ -172,10 +313,6 @@ public final class PipelineToCastNode {
             this.defaultMessage = defaultMessage;
             this.defaultError = defaultError;
             this.defaultWarning = defaultWarning;
-        }
-
-        public CastNode create(PipelineStep<?, ?> step) {
-            return step.accept(this);
         }
 
         @Override
@@ -248,7 +385,7 @@ public final class PipelineToCastNode {
         public CastNode visit(CoercionStep<?, ?> step) {
             boxPrimitives = true;
 
-            TargetType type = step.getType();
+            RType type = step.getType();
             switch (type) {
                 case Integer:
                     return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
@@ -268,11 +405,14 @@ public final class PipelineToCastNode {
                     return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Any:
                     return CastToVectorNodeGen.create(step.preserveNonVector);
-                case Attributable:
-                    return CastToAttributableNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 default:
-                    throw RInternalError.shouldNotReachHere(String.format("Unexpected type '%s' in AsVectorStep.", type));
+                    throw RInternalError.shouldNotReachHere(String.format("Unsupported type '%s' in AsVectorStep.", type));
             }
+        }
+
+        @Override
+        public CastNode visit(AttributableCoercionStep<?> step) {
+            return CastToAttributableNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
         }
 
         @Override

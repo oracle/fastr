@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -71,6 +72,8 @@ public abstract class PipelineStep<T, R> {
         T visit(BoxPrimitiveStep<?> step);
 
         T visit(CustomNodeStep<?> step);
+
+        T visit(AttributableCoercionStep<?> step);
     }
 
     /**
@@ -190,36 +193,26 @@ public abstract class PipelineStep<T, R> {
     }
 
     /**
-     * Converts the value to a vector of given {@link RType}. Null and missing values are forwarded.
+     * Converts the value to a vector of given type (or a vector if Any, or Attributable). Null and
+     * missing values are forwarded.
      */
     public static final class CoercionStep<T, V> extends PipelineStep<T, V> {
-        public final TargetType type;
+        public final RType type;
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
         public final boolean preserveNonVector;
         public final boolean vectorCoercion;
 
-        public enum TargetType {
-            Integer,
-            Double,
-            Character,
-            Complex,
-            Logical,
-            Raw,
-            Any,
-            Attributable
-        }
-
-        public CoercionStep(TargetType type, boolean vectorCoercion) {
+        public CoercionStep(RType type, boolean vectorCoercion) {
             this(type, vectorCoercion, false, false, false, true);
         }
 
-        public CoercionStep(TargetType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
         }
 
-        public CoercionStep(TargetType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
@@ -228,8 +221,28 @@ public abstract class PipelineStep<T, R> {
             this.preserveNonVector = preserveNonVector;
         }
 
-        public TargetType getType() {
+        public RType getType() {
             return type;
+        }
+
+        @Override
+        public <D> D accept(PipelineStepVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
+    }
+
+    /**
+     * Converts the value to a {@link com.oracle.truffle.r.runtime.data.RAttributable} instance;
+     */
+    public static final class AttributableCoercionStep<T> extends PipelineStep<T, RAttributable> {
+        public final boolean preserveNames;
+        public final boolean preserveDimensions;
+        public final boolean preserveAttributes;
+
+        public AttributableCoercionStep(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            this.preserveNames = preserveNames;
+            this.preserveDimensions = preserveDimensions;
+            this.preserveAttributes = preserveAttributes;
         }
 
         @Override

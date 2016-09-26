@@ -74,8 +74,8 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
@@ -103,8 +103,8 @@ public class CastBuilderTest {
     private PreinitialPhaseBuilder<Object> arg;
 
     static {
-        PipelineConfigBuilder.setFilterFactory(FilterSamplerFactory.INSTANCE);
-        PipelineConfigBuilder.setMapperFactory(MapperSamplerFactory.INSTANCE);
+        PipelineConfig.setFilterFactory(FilterSamplerFactory.INSTANCE);
+        PipelineConfig.setMapperFactory(MapperSamplerFactory.INSTANCE);
     }
 
     @Before

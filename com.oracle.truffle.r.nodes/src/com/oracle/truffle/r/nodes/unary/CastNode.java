@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.Arrays;
+import java.util.function.Function;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -38,9 +39,9 @@ public abstract class CastNode extends UnaryNode {
     @TruffleBoundary
     protected static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (RContext.getInstance() == null) {
-            throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
+            throw new IllegalArgumentException(String.format(message.message, substituteArgPlaceholder(arg, messageArgs)));
         } else {
-            throw RError.error(callObj, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            throw RError.error(callObj, message, substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
@@ -51,10 +52,24 @@ public abstract class CastNode extends UnaryNode {
         }
 
         if (RContext.getInstance() == null) {
-            System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
+            System.err.println(String.format(message.message, substituteArgPlaceholder(arg,
                             messageArgs)));
         } else {
-            RError.warning(callObj, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            RError.warning(callObj, message, substituteArgPlaceholder(arg, messageArgs));
         }
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
+        Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
+
+        for (int i = 0; i < messageArgs.length; i++) {
+            final Object msgArg = messageArgs[i];
+            if (msgArg instanceof Function) {
+                newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
+            }
+        }
+
+        return newMsgArgs;
     }
 }

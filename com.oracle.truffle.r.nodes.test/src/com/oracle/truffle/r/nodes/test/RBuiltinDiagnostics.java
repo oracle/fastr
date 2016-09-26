@@ -43,7 +43,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
@@ -71,8 +71,8 @@ public class RBuiltinDiagnostics {
     }
 
     static {
-        PipelineConfigBuilder.setFilterFactory(FilterSamplerFactory.INSTANCE);
-        PipelineConfigBuilder.setMapperFactory(MapperSamplerFactory.INSTANCE);
+        PipelineConfig.setFilterFactory(FilterSamplerFactory.INSTANCE);
+        PipelineConfig.setMapperFactory(MapperSamplerFactory.INSTANCE);
     }
 
     private final DiagConfig diagConfig;

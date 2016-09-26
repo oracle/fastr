@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.util.Arrays;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
@@ -46,7 +45,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
@@ -131,7 +129,7 @@ public final class CastBuilder {
             for (int i = 0; i < argumentBuilders.length; i++) {
                 PipelineBuilder arg = argumentBuilders[i];
                 if (arg != null) {
-                    castsCache[i] = PipelineToCastNode.convert(arg.getPipelineConfig(), arg.getFirstStep());
+                    castsCache[i] = PipelineToCastNode.convert(arg.getPipelineConfig().build(), arg.getFirstStep());
                 }
             }
         }
@@ -283,20 +281,6 @@ public final class CastBuilder {
         throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
     }
 
-    @SuppressWarnings({"unchecked"})
-    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
-        Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
-
-        for (int i = 0; i < messageArgs.length; i++) {
-            final Object msgArg = messageArgs[i];
-            if (msgArg instanceof Function) {
-                newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
-            }
-        }
-
-        return newMsgArgs;
-    }
-
     public static final class Predef {
 
         @SuppressWarnings("unchecked")
@@ -346,59 +330,59 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, Integer> asInteger() {
-            return new CoercionStep<>(TargetType.Integer, false);
+            return new CoercionStep<>(RType.Integer, false);
         }
 
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector() {
-            return new CoercionStep<>(TargetType.Integer, true);
+            return new CoercionStep<>(RType.Integer, true);
         }
 
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(TargetType.Integer, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
-            return new CoercionStep<>(TargetType.Double, false);
+            return new CoercionStep<>(RType.Double, false);
         }
 
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector() {
-            return new CoercionStep<>(TargetType.Double, true);
+            return new CoercionStep<>(RType.Double, true);
         }
 
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(TargetType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, String> asString() {
-            return new CoercionStep<>(TargetType.Character, false);
+            return new CoercionStep<>(RType.Character, false);
         }
 
         public static <T> PipelineStep<T, RAbstractStringVector> asStringVector() {
-            return new CoercionStep<>(TargetType.Character, true);
+            return new CoercionStep<>(RType.Character, true);
         }
 
         public static <T> PipelineStep<T, RAbstractStringVector> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(TargetType.Character, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(RType.Character, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
         public static <T> PipelineStep<T, RAbstractComplexVector> asComplexVector() {
-            return new CoercionStep<>(TargetType.Complex, true);
+            return new CoercionStep<>(RType.Complex, true);
         }
 
         public static <T> PipelineStep<T, RAbstractRawVector> asRawVector() {
-            return new CoercionStep<>(TargetType.Raw, true);
+            return new CoercionStep<>(RType.Raw, true);
         }
 
         public static <T> PipelineStep<T, Byte> asLogical() {
-            return new CoercionStep<>(TargetType.Logical, false);
+            return new CoercionStep<>(RType.Logical, false);
         }
 
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector() {
-            return new CoercionStep<>(TargetType.Logical, true);
+            return new CoercionStep<>(RType.Logical, true);
         }
 
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(TargetType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
+            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
         }
 
         public static PipelineStep<Byte, Boolean> asBoolean() {
@@ -406,11 +390,11 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector() {
-            return new CoercionStep<>(TargetType.Any, true);
+            return new CoercionStep<>(RType.Any, true);
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {
-            return new CoercionStep<>(TargetType.Any, true, false, false, false, preserveNonVector);
+            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector);
         }
 
         /**

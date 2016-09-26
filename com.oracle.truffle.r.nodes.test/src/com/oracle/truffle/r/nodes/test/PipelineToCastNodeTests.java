@@ -27,15 +27,19 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
+import com.oracle.truffle.r.nodes.unary.BypassNode.BypassIntegerNode;
+import com.oracle.truffle.r.nodes.unary.BypassNode.BypassLogicalMapToBooleanNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -43,19 +47,24 @@ import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
 import com.oracle.truffle.r.nodes.unary.ChainedCastNode;
 import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNode;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+/**
+ * Tests that {@link PipelineToCastNode} converts manually constructed steps into the correct cast
+ * nodes.
+ */
 public class PipelineToCastNodeTests {
     @Test
     public void asLogicalVector() {
-        CastNode pipeline = createPipeline(new CoercionStep<>(TargetType.Logical, false));
+        CastNode pipeline = createPipeline(new CoercionStep<>(RType.Logical, false));
         CastNode castNode = assertBypassNode(pipeline);
         assertTrue(castNode instanceof CastLogicalBaseNode);
     }
 
     @Test
     public void asStringVectorFindFirst() {
-        CastNode pipeline = createPipeline(new CoercionStep<>(TargetType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null)));
+        CastNode pipeline = createPipeline(new CoercionStep<>(RType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null)));
         CastNode chain = assertBypassNode(pipeline);
         assertChainedCast(chain, CastStringBaseNode.class, FindFirstNode.class);
         FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) chain).getSecondCast();
@@ -63,9 +72,24 @@ public class PipelineToCastNodeTests {
     }
 
     @Test
+    public void optimizeForSingleInteger() {
+        // should be equivalent of mustBe(integerValue()).asIntegerVector().findFirst()
+        CastNode pipeline = createPipeline(
+                        new FilterStep<>(new RTypeFilter<>(RType.Integer), null, false).setNext(new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>(null, Integer.class, null))));
+        assertBypassNode(pipeline, BypassIntegerNode.class);
+    }
+
+    @Test
+    public void optimizeMapSingleByteToBoolean() {
+        // should be equivalent of mustBe(integerValue()).asIntegerVector().findFirst()
+        CastNode pipeline = createPipeline(new CoercionStep<>(RType.Logical, false).setNext(new FindFirstStep<>(null, Byte.class, null).setNext(new MapStep<>(MapByteToBoolean.INSTANCE))));
+        assertBypassNode(pipeline, BypassLogicalMapToBooleanNode.class);
+    }
+
+    @Test
     public void mustBeREnvironmentAsIntegerVectorFindFirst() {
         CastNode pipeline = createPipeline(new FilterStep<>(new TypeFilter<>(x -> x instanceof REnvironment, REnvironment.class), null, false).setNext(
-                        new CoercionStep<>(TargetType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))));
+                        new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))));
         CastNode chain = assertBypassNode(pipeline);
         assertChainedCast(chain, ChainedCastNode.class, FindFirstNode.class);
         CastNode next = ((ChainedCastNode) chain).getFirstCast();
@@ -79,6 +103,11 @@ public class PipelineToCastNodeTests {
         return ((BypassNode) node).getWrappedHead();
     }
 
+    private static CastNode assertBypassNode(CastNode node, Class<?> expectedClass) {
+        assertTrue(expectedClass.isInstance(node));
+        return ((BypassNode) node).getWrappedHead();
+    }
+
     private static void assertChainedCast(CastNode node, Class<?> expectedFirst, Class<?> expectedSecond) {
         assertTrue(node instanceof ChainedCastNode);
         assertTrue(expectedFirst.isInstance(((ChainedCastNode) node).getFirstCast()));
@@ -87,6 +116,6 @@ public class PipelineToCastNodeTests {
 
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
-        return PipelineToCastNode.convert(configBuilder, lastStep);
+        return PipelineToCastNode.convert(configBuilder.build(), lastStep);
     }
 }

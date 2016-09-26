@@ -1,11 +1,33 @@
+/*
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.TargetType;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
@@ -14,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -52,11 +75,11 @@ public final class PipelineBuilder {
     }
 
     public void appendAsAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(TargetType.Attributable, false, preserveNames, dimensionsPreservation, attrPreservation));
+        append(new AttributableCoercionStep<>(preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
-        append(new CoercionStep<>(TargetType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
+        append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
     }
 
     public void appendAsVector() {
@@ -64,31 +87,31 @@ public final class PipelineBuilder {
     }
 
     public void appendAsRawVector() {
-        append(new CoercionStep<>(TargetType.Raw, true, false, false, false));
+        append(new CoercionStep<>(RType.Raw, true, false, false, false));
     }
 
     public void appendAsComplexVector() {
-        append(new CoercionStep<>(TargetType.Complex, true, false, false, false));
+        append(new CoercionStep<>(RType.Complex, true, false, false, false));
     }
 
     public void appendAsStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(TargetType.Character, true, preserveNames, dimensionsPreservation, attrPreservation));
+        append(new CoercionStep<>(RType.Character, true, preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public void appendAsStringVector() {
-        append(new CoercionStep<>(TargetType.Character, true, false, false, false));
+        append(new CoercionStep<>(RType.Character, true, false, false, false));
     }
 
     public void appendAsLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(TargetType.Logical, true, preserveNames, dimensionsPreservation, attrPreservation));
+        append(new CoercionStep<>(RType.Logical, true, preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public void appendAsDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(TargetType.Double, true, preserveNames, dimensionsPreservation, attrPreservation));
+        append(new CoercionStep<>(RType.Double, true, preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public void appendAsIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(TargetType.Integer, true, preserveNames, dimensionsPreservation, attrPreservation));
+        append(new CoercionStep<>(RType.Integer, true, preserveNames, dimensionsPreservation, attrPreservation));
     }
 
     public void appendNotNA(Object naReplacement, RBaseNode callObj, Message message, Object[] messageArgs) {
