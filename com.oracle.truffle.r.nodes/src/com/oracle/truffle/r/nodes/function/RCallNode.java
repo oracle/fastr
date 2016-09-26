@@ -941,7 +941,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         private final FormalArguments formals;
         private final RBuiltinDescriptor builtinDescriptor;
-        private boolean explicitArgs;
+        private final boolean explicitArgs;
 
         BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);

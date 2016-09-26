@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -43,13 +43,13 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public class LogFunctions {
     @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log extends RBuiltinNode {
 
-        private final NACheck naCheck = NACheck.create();
+        private final NAProfile naProfile = NAProfile.create();
         private final BranchProfile nanProfile = BranchProfile.create();
 
         @Override
@@ -79,7 +79,7 @@ public class LogFunctions {
             for (int i = 0; i < vector.getLength(); i++) {
                 int inputValue = vector.getDataAt(i);
                 double result = RRuntime.DOUBLE_NA;
-                if (!RRuntime.isNA(inputValue)) {
+                if (!naProfile.isNA(inputValue)) {
                     result = logb(inputValue, base);
                 }
                 resultVector[i] = result;
@@ -101,8 +101,7 @@ public class LogFunctions {
         }
 
         private double logb(double x, double base) {
-            naCheck.enable(true);
-            if (naCheck.check(base)) {
+            if (naProfile.isNA(base)) {
                 return RRuntime.DOUBLE_NA;
             }
 
