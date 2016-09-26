@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
@@ -35,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep.Target
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
