@@ -98,43 +98,42 @@ suite = {
 
     "JNR_POSIX" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.18.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.18/jnr-posix-3.0.18.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.29.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.29/jnr-posix-3.0.29.jar",
       ],
-      "sha1" : "96ae4f7837eeda0e47a470570da1803941f1bf78",
+      "sha1" : "bc3d222cb0eae5bc59f733ee8ca9d005e3d2666f",
     },
 
     "JNR_CONSTANTS" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.9.0.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.9.0/jnr-constants-0.9.0.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.9.2.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.9.2/jnr-constants-0.9.2.jar",
       ],
-      "sha1" : "6894684e17a84cd500836e82b5e6c674b4d4dda6",
+      "sha1" : "9392eabda021cfc4ca202c762ddebf1b5afb147e",
     },
 
     "JNR_FFI" : {
+      "path" : "lib/jnr-ffi-2.0.9.jar",
       "urls" : [
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.9/jnr-ffi-2.0.9.jar",
       ],
-      "sourcePath" : "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7-sources.jar",
-      "sha1" : "f0968c5bb5a283ebda2df3604c2c1129d45196e3",
-      "sourceSha1" : "164d820d7c38c14cd3675bfbf3eb6aeeedc9b0f4",
+      "sha1" : "f1306974f7a56de98fb816f30d40fdc199590b63",
     },
 
     "JFFI" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9.jar",
+        "http://graal.us.oracle.com/slavefiles/graal-external-deps/jffi-1.2.12.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.12/jffi-1.2.12.jar",
       ],
-      "sha1" : "93294973285d2977c41fb1cfcfa864d41b145498",
+      "sha1" : "a9f12011e9f5c1b363ecf3b51998058a18a48d26",
     },
 
     "JFFI_NATIVE" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9-native.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9-native.jar",
+        "http://graal.us.oracle.com/slavefiles/graal-external-deps/jffi-1.2.12-native.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.12/jffi-1.2.12-native.jar",
       ],
-      "sha1" : "1b1e82f867bb47237e6db690fbc6bfc999689c63",
+      "sha1" : "f3bd969534ea4a743cb736f09fb7ec2a35405bc1",
     },
 
     "JNR_INVOKE" : {
