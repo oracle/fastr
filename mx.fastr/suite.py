@@ -90,12 +90,6 @@ suite = {
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
-
-    "NETLIB" : {
-      "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
-      "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
-    },
-
     "JNR_POSIX" : {
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.18.jar",
@@ -336,7 +330,6 @@ suite = {
         "ASM_UTIL",
         "JFFI",
         "JNR_FFI",
-        "NETLIB",
         "JNR_CONSTANTS",
         "JFFI_NATIVE",
         "JNR_INVOKE",
@@ -408,7 +401,6 @@ suite = {
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
         "JDK_TOOLS",
-        "NETLIB",
         "ASM",
         "ASM_UTIL",
         "ASM_TREE",
