@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are

@@ -90,7 +90,6 @@ suite = {
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
-
     "JNR_POSIX" : {
       "urls" : [
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.29/jnr-posix-3.0.29.jar",
@@ -320,7 +319,6 @@ suite = {
         "ASM_UTIL",
         "JFFI",
         "JNR_FFI",
-        "NETLIB",
         "JNR_CONSTANTS",
         "JFFI_NATIVE",
         "JNR_INVOKE",
@@ -392,7 +390,6 @@ suite = {
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
         "JDK_TOOLS",
-        "NETLIB",
         "ASM",
         "ASM_UTIL",
         "ASM_TREE",

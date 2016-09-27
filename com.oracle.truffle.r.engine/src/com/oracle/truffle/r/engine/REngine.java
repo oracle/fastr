@@ -584,7 +584,7 @@ final class REngine implements Engine, Engine.Timings {
     public void printResult(Object originalResult) {
         Object result = evaluatePromise(originalResult);
         result = RRuntime.asAbstractVector(result);
-        if (result instanceof RTypedValue) {
+        if (result instanceof RTypedValue || result instanceof TruffleObject) {
             Object resultValue = evaluatePromise(result);
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) evaluatePromise(printMethod);
@@ -606,13 +606,10 @@ final class REngine implements Engine, Engine.Timings {
         Object result = evaluatePromise(originalResult);
         result = RRuntime.asAbstractVector(result);
         // this supports printing of non-R values (via toString for now)
-        if (result instanceof RTypedValue) {
+        if (result instanceof RTypedValue || result instanceof TruffleObject) {
             return ValuePrinterNode.prettyPrint(result);
         } else if (result == null) {
             return "[external object (null)]";
-        } else if (result instanceof TruffleObject) {
-            assert !(result instanceof RTypedValue);
-            return "[external object]";
         } else if (result instanceof CharSequence) {
             return "[1] \"" + String.valueOf(result) + "\"";
         } else {

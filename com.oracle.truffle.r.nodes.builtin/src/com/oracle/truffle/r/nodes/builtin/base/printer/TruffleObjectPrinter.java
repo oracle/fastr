@@ -24,15 +24,20 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-interface ValuePrinter<T> {
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 
-    /**
-     * This attribute instructs the <code>println</code> method not to print the new line character
-     * since it has already been printed by an external printing routine, such as the
-     * <code>show</code> R-function.
-     */
-    String DONT_PRINT_NL_ATTR = "no_nl";
+final class TruffleObjectPrinter extends AbstractValuePrinter<TruffleObject> {
 
-    void print(T value, PrintContext printCtx) throws IOException;
+    static TruffleObjectPrinter INSTANCE = new TruffleObjectPrinter();
 
+    private TruffleObjectPrinter() {
+        // singleton
+    }
+
+    @Override
+    @TruffleBoundary
+    protected void printValue(TruffleObject value, PrintContext printCtx) throws IOException {
+        printCtx.output().print("[external object]");
+    }
 }

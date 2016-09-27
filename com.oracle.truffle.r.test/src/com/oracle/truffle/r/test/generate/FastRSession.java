@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -222,6 +223,18 @@ public final class FastRSession implements RSession {
         return evalThread.result;
     }
 
+    /**
+     * Used for testing interop functionality.
+     */
+    public static final class POJO {
+        public int intValue = 1;
+        public long longValue = 123412341234L;
+        public char charValue = 'R';
+        public short shortValue = -100;
+        public boolean booleanValue = true;
+        public String stringValue = "foo";
+    }
+
     private final class EvalThread extends RContext.ContextThread {
 
         private volatile String expression;
@@ -271,7 +284,11 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     ContextInfo actualContextInfo = checkContext(contextInfo);
-                    PolyglotEngine vm = actualContextInfo.createVM();
+                    // set up some interop objects used by fastr-specific tests:
+                    PolyglotEngine vm = actualContextInfo.createVM(b -> {
+                        return b.globalSymbol("testPOJO", JavaInterop.asTruffleObject(new POJO())).globalSymbol("testPOJO", JavaInterop.asTruffleObject(new POJO())).globalSymbol("testIntArray",
+                                        JavaInterop.asTruffleObject(new int[]{1, -5, 199})).globalSymbol("testStringArray", JavaInterop.asTruffleObject(new String[]{"a", "", "foo"}));
+                    });
                     consoleHandler.setInput(expression.split("\n"));
                     try {
                         String input = consoleHandler.readLine();

@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.RType;
 
 public final class RList extends RListBase {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
     public String elementNamePrefix;
 
