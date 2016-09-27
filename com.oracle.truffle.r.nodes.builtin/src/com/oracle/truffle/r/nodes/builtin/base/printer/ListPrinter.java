@@ -214,7 +214,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
                 out.println(tagbuf);
                 Object si = s.getDataAtAsObject(i);
-                ValuePrinters.INSTANCE.println(si, printCtx);
+                ValuePrinters.INSTANCE.print(si, printCtx);
+                ValuePrinters.printNewLine(printCtx);
 
                 tagbuf.setLength(taglen); // reset tag buffer to the original value
             }

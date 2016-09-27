@@ -58,7 +58,7 @@ public abstract class TypeofNode extends UnaryNode {
     }
 
     @Specialization
-    protected static RType doString(RMissing x) {
+    protected static RType doMissing(RMissing x) {
         return RType.Missing;
     }
 

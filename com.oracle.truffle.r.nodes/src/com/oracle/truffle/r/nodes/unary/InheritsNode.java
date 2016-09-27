@@ -37,7 +37,8 @@ public abstract class InheritsNode extends RBaseNode {
     }
 
     @Specialization(guards = "!which")
-    protected byte doesInherit(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
+    protected byte doesInherit(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which,
+                    @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
         RStringVector hierarchy = classHierarchy.execute(x);
         for (int i = 0; i < what.getLength(); i++) {
             String whatString = what.getDataAt(i);
@@ -51,7 +52,8 @@ public abstract class InheritsNode extends RBaseNode {
     }
 
     @Specialization(guards = "which")
-    protected RIntVector doesInheritWhich(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
+    protected RIntVector doesInheritWhich(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which,
+                    @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
         RStringVector hierarchy = classHierarchy.execute(x);
         int[] data = new int[what.getLength()];
         for (int i = 0; i < what.getLength(); i++) {
