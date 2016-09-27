@@ -164,7 +164,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public UserRngRFFI getUserRngRFFI() {
         if (userRngRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            userRngRFFI = new JNR_UserRng();
+            userRngRFFI = new JNI_UserRng();
         }
         return userRngRFFI;
     }
