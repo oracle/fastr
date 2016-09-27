@@ -32,12 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AcosNodeGen;
@@ -55,126 +50,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
-
-    public abstract static class TrigExpFunctionNode extends RBuiltinNode {
-
-        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-        @Child private CHypot chypot;
-
-        @Specialization
-        protected Object calculateUnboxed(Object value) {
-            return calculate(boxPrimitive.execute(value));
-        }
-
-        protected Object calculate(@SuppressWarnings("unused") Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        private void ensureChypot() {
-            if (chypot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                chypot = insert(new CHypot());
-            }
-        }
-
-        protected double hypot(double re, double im) {
-            ensureChypot();
-            return chypot.chypot(re, im);
-        }
-    }
-
-    public abstract static class AdapterCall1 extends RBuiltinNode {
-
-        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-
-        private final BranchProfile notCompleteIntValueMet = BranchProfile.create();
-        private final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
-        private final NACheck na = NACheck.create();
-
-        @Child private UnaryCopyAttributesNode copyAttributes = UnaryCopyAttributesNodeGen.create(true);
-
-        @Specialization
-        protected byte isType(@SuppressWarnings("unused") RMissing value) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
-        }
-
-        protected double op(@SuppressWarnings("unused") double x) {
-            // not abstract because this would confuse the DSL annotation
-            // processor
-            throw RInternalError.shouldNotReachHere("this method needs to be implemented in subclasses");
-        }
-
-        private double doFunInt(int value) {
-            if (na.check(value)) {
-                notCompleteIntValueMet.enter();
-                return RRuntime.DOUBLE_NA;
-            }
-            return op(value);
-        }
-
-        private double doFunDouble(double value) {
-            if (na.check(value)) {
-                notCompleteDoubleValueMet.enter();
-                return value;
-            }
-            return op(value);
-        }
-
-        @Specialization
-        protected double trigOp(int x) {
-            na.enable(x);
-            return doFunInt(x);
-        }
-
-        @Specialization
-        protected double trigOp(double x) {
-            na.enable(x);
-            return doFunDouble(x);
-        }
-
-        @Specialization
-        protected RAbstractVector trigOp(RIntVector vector, //
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            int length = vector.getLength();
-            double[] resultVector = new double[length];
-            reportWork(length);
-            profile.profileCounted(length);
-            na.enable(vector);
-            for (int i = 0; profile.inject(i < length); i++) {
-                resultVector[i] = doFunInt(vector.getDataAt(i));
-            }
-            return createDoubleVectorBasedOnOrigin(resultVector, vector);
-        }
-
-        @Specialization
-        protected RAbstractVector trigOp(RDoubleVector vector, //
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            int length = vector.getLength();
-            double[] resultVector = new double[length];
-            reportWork(length);
-            profile.profileCounted(length);
-            na.enable(vector);
-            for (int i = 0; profile.inject(i < length); i++) {
-                resultVector[i] = doFunDouble(vector.getDataAt(i));
-            }
-            return createDoubleVectorBasedOnOrigin(resultVector, vector);
-        }
-
-        private RAbstractVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
-            RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
-            return copyAttributes.execute(result, originVector);
-        }
-    }
 
     @RBuiltin(name = "exp", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Exp extends UnaryArithmeticBuiltinNode {
