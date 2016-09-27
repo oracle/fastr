@@ -101,19 +101,11 @@ public abstract class BypassNode extends CastNode {
     }
 
     protected final Object executeAfterFindFirst(Object value) {
-        if (directFindFirstNodeWithDefault != null) {
+        if (afterFindFirst != null) {
             return afterFindFirst.execute(value);
         } else {
             return value;
         }
-    }
-
-    private Object executeFindFirstPipeline(Object value) {
-        Object result = directFindFirstNodeWithDefault.execute(value);
-        if (afterFindFirst != null) {
-            result = afterFindFirst.execute(result);
-        }
-        return result;
     }
 
     private <T extends Node> T insertIfNotNull(T child) {
@@ -134,7 +126,7 @@ public abstract class BypassNode extends CastNode {
             }
             return nullMapFn.map(x);
         } else if (directFindFirstNodeWithDefault != null) {
-            return executeFindFirstPipeline(x);
+            return directFindFirstNodeWithDefault.execute(x);
         } else if (nullMsg == null) {
             // go to the pipeline
             return handleOthers(x);
@@ -152,7 +144,7 @@ public abstract class BypassNode extends CastNode {
             }
             return missingMapFn.map(x);
         } else if (directFindFirstNodeWithDefault != null) {
-            return executeFindFirstPipeline(x);
+            return directFindFirstNodeWithDefault.execute(x);
         } else if (missingMsg == null) {
             // go to the pipeline
             return handleOthers(x);
@@ -171,8 +163,8 @@ public abstract class BypassNode extends CastNode {
         return x != RNull.instance && x != RMissing.instance;
     }
 
-    public static CastNode create(PipelineConfig pipelineConfig, CastNode wrappedHead, ArgumentMapperFactory mapperFactory) {
-        return BypassNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, null, null);
+    public static CastNode create(PipelineConfig pipelineConfig, CastNode wrappedHead, ArgumentMapperFactory mapperFactory, CastNode directFindFirstNodeWithDefault) {
+        return BypassNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, directFindFirstNodeWithDefault, null);
     }
 
     public abstract static class BypassIntegerNode extends BypassNode {
@@ -206,6 +198,23 @@ public abstract class BypassNode extends CastNode {
         @Override
         protected boolean isNotHandled(Object x) {
             return super.isNotHandled(x) && !(x instanceof Integer);
+        }
+    }
+
+    public abstract static class BypassStringNode extends BypassNode {
+        public BypassStringNode(PipelineConfig pcb, CastNode wrappedHead, ArgumentMapperFactory mapperFactory, CastNode directFindFirstNode,
+                        CastNode afterFindFirst) {
+            super(pcb, wrappedHead, mapperFactory, directFindFirstNode, afterFindFirst);
+        }
+
+        @Specialization
+        public Object bypassString(String x) {
+            return executeAfterFindFirst(x);
+        }
+
+        @Override
+        protected boolean isNotHandled(Object x) {
+            return super.isNotHandled(x) && !(x instanceof String);
         }
     }
 

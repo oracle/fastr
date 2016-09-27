@@ -63,6 +63,7 @@ import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassLogicalMapToBooleanNodeGen;
+import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -106,12 +107,12 @@ public final class PipelineToCastNode {
     }
 
     public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep) {
-        return convert(config, firstStep, config.getFilterFactory(), config.getMapperFactory());
+        return convert(config, firstStep, PipelineConfig.getFilterFactory(), PipelineConfig.getMapperFactory());
     }
 
     public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
         if (firstStep == null) {
-            return BypassNode.create(config, null, mapperFactory);
+            return BypassNode.create(config, null, mapperFactory, null);
         } else {
             CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage(), config.getDefaultError(), config.getDefaultWarning());
             SinglePrimitiveOptimization singleOptVisitor = new SinglePrimitiveOptimization(nodeFactory);
@@ -177,9 +178,11 @@ public final class PipelineToCastNode {
                     return BypassDoubleNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
                 } else if (targetType == RType.Logical && isNextMapToBoolean(findFirstStep)) {
                     return BypassLogicalMapToBooleanNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
+                } else if (targetType == RType.Character) {
+                    return BypassStringNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
                 }
             }
-            return BypassNode.create(pipelineConfig, wrappedHead, mapperFactory);
+            return BypassNode.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault());
         }
 
         @Override
@@ -268,8 +271,7 @@ public final class PipelineToCastNode {
         }
 
         private CastNode getFindFirstWithDefault() {
-            assert findFirstStep != null;
-            if (findFirstStep.getDefaultValue() != null) {
+            if (findFirstStep != null && findFirstStep.getDefaultValue() != null) {
                 return convert(findFirstStep, inner);
             }
             return null;
@@ -489,7 +491,7 @@ public final class PipelineToCastNode {
             return filter.getSubject().accept(this, filter.getOperation());
         }
 
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
         public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this);
@@ -503,7 +505,7 @@ public final class PipelineToCastNode {
             };
         }
 
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
         public ArgumentFilter<?, ?> visit(OrFilter<?> filter) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this);
@@ -517,7 +519,7 @@ public final class PipelineToCastNode {
             };
         }
 
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
         public ArgumentFilter<?, ?> visit(NotFilter<?> filter) {
             ArgumentFilter toNegate = filter.getFilter().accept(this);
@@ -536,7 +538,7 @@ public final class PipelineToCastNode {
 
         @Override
         public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsMatrix() {
-            return x -> x.isMatrix();
+            return RAbstractVector::isMatrix;
         }
 
         @Override

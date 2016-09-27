@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Defines fluent API methods for building cast pipeline steps that are available in every phase of
- * the pipeline building, i.e. in {@link }
+ * the pipeline building, i.e. in {@link InitialPhaseBuilder}.
  */
 @SuppressWarnings("unchecked")
 public class ArgCastBuilder<T, THIS> {

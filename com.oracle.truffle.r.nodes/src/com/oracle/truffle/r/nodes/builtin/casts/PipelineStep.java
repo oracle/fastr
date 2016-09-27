@@ -232,7 +232,7 @@ public abstract class PipelineStep<T, R> {
     }
 
     /**
-     * Converts the value to a {@link com.oracle.truffle.r.runtime.data.RAttributable} instance;
+     * Converts the value to a {@link com.oracle.truffle.r.runtime.data.RAttributable} instance.
      */
     public static final class AttributableCoercionStep<T> extends PipelineStep<T, RAttributable> {
         public final boolean preserveNames;
