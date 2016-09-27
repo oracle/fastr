@@ -91,14 +91,8 @@ suite = {
     },
 
 
-    "NETLIB" : {
-      "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
-      "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
-    },
-
     "JNR_POSIX" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.29.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.29/jnr-posix-3.0.29.jar",
       ],
       "sha1" : "bc3d222cb0eae5bc59f733ee8ca9d005e3d2666f",
@@ -106,7 +100,6 @@ suite = {
 
     "JNR_CONSTANTS" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.9.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.9.2/jnr-constants-0.9.2.jar",
       ],
       "sha1" : "9392eabda021cfc4ca202c762ddebf1b5afb147e",
@@ -122,7 +115,6 @@ suite = {
 
     "JFFI" : {
       "urls" : [
-        "http://graal.us.oracle.com/slavefiles/graal-external-deps/jffi-1.2.12.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.12/jffi-1.2.12.jar",
       ],
       "sha1" : "a9f12011e9f5c1b363ecf3b51998058a18a48d26",
@@ -130,7 +122,6 @@ suite = {
 
     "JFFI_NATIVE" : {
       "urls" : [
-        "http://graal.us.oracle.com/slavefiles/graal-external-deps/jffi-1.2.12-native.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.12/jffi-1.2.12-native.jar",
       ],
       "sha1" : "f3bd969534ea4a743cb736f09fb7ec2a35405bc1",
@@ -148,7 +139,6 @@ suite = {
 
     "JNR_X86ASM" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-x86asm-1.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
       ],
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
@@ -156,7 +146,6 @@ suite = {
 
     "ASM" : {
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
       ],
       "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
@@ -164,7 +153,6 @@ suite = {
 
     "ASM_ANALYSIS" : {
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
       ],
       "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
@@ -172,7 +160,6 @@ suite = {
 
     "ASM_COMMONS" : {
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
       ],
       "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
@@ -180,7 +167,6 @@ suite = {
 
     "ASM_TREE" : {
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
       ],
       "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
@@ -188,7 +174,6 @@ suite = {
 
     "ASM_UTIL" : {
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
       ],
       "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
