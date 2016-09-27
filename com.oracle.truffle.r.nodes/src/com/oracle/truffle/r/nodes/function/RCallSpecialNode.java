@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -140,7 +141,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             return null;
         }
         for (RSyntaxNode argument : arguments) {
-            if (!(argument instanceof RSyntaxLookup)) {
+            if (!(argument instanceof RSyntaxLookup || argument instanceof RSyntaxConstant)) {
                 // argument is not a simple lookup -> bail out
                 return null;
             }
@@ -153,7 +154,12 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         RNode[] localArguments = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
+            if (arguments[i] instanceof RSyntaxLookup) {
+                localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
+            } else {
+                assert arguments[i] instanceof RSyntaxConstant;
+                localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+            }
         }
         RNode special = builtinDescriptor.getSpecialCall().apply(localArguments);
         if (special == null) {

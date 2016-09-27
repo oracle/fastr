@@ -35,7 +35,6 @@ import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -60,7 +59,6 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
     abstract static class VectorReadNode extends RootNode {
 
         @CompilationFinal private boolean lengthAccess;
-        @Child private AccessArraySubscriptBuiltin builtin;
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
