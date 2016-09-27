@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
@@ -52,6 +53,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.ChainBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.FindFirstNodeBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
@@ -238,6 +240,57 @@ public final class CastBuilder {
     // ---------------------
     // The cast-pipelines API starts here
 
+    /**
+     * Returns a builder of a cast pipeline for given parameter.
+     * <p>
+     * In the pre-initial phase, the pipeline can be configured using
+     * {@link PreinitialPhaseBuilder#conf(Consumer)} or any other method of the
+     * {@link PreinitialPhaseBuilder} class, e.g. {@link PreinitialPhaseBuilder#allowNull()}. The
+     * default configuration is that {@code RNull} and {@code RMissing} values are not allowed and
+     * will cause default error (which can be configured). However, if there is a 'find first' step
+     * in the pipeline with a default value, then {@code RNull} and {@code RMissing} are passed to
+     * that step, which maps them to the default value and executes any other following steps. If
+     * {@code RNull} or {@code RMissing} are explicitly allowed, they will bypass the whole
+     * pipeline. In such case, they can be also mapped to some other value (which will also bypass
+     * the whole pipeline). In either case, {@code RNull} and {@code RMissing} can be ignored when
+     * constructing the rest of the pipeline.
+     * </p>
+     * <p>
+     * In the initial phase, the pipeline can filter or cast the argument, which can narrow down the
+     * type of the argument and the API will be restricted to adding only pipeline steps that match
+     * the type, this is coerced phase.
+     * </p>
+     * <p>
+     * The coerced phase can be followed by head phase once a {@code findFirst} step is used. In
+     * this phase the argument type is narrowed down to a scalar value.
+     * </p>
+     * <p>
+     * During any phase, one can add filter and mapper steps. The methods creating such steps, e.g.
+     * {@link InitialPhaseBuilder#mustBe(Filter)}, usually take {@link Filter} or {@link Mapper}
+     * instance. Use convenient static methods in the {@link Predef} class to construct these
+     * instances.
+     * </p>
+     * <p>
+     * Notable is the {@code mapIf} step, which allows to split the pipeline into two eventualities
+     * depending on the filter condition. The second and third argument, namely
+     * {@code trueBranchMapper} and {@code falseBranchMapper}, can be simple mappers, e.g.
+     * {@link Predef#toBoolean()} or one can construct more complex mapping using
+     * {@link Predef#chain(PipelineStep)} invocation followed by {@code with(step)} calls and
+     * finished by {@code end()} invocation. The steps can be constructed using convenient methods
+     * in the {@link Predef} class. For technical reasons, when using 'find first' step by means of
+     * {@link Predef#findFirst()} in this situation, it must be followed by call to
+     * {@link FindFirstNodeBuilder#integerElement()} or other similar method corresponding to the
+     * expected element type.
+     * </p>
+     */
+    public PreinitialPhaseBuilder<Object> arg(String argumentName) {
+        assert builtinNode != null : "arg(String) is only supported for builtins cast pipelines";
+        return new PreinitialPhaseBuilder<>(getBuilder(getArgumentIndex(argumentName), argumentName));
+    }
+
+    /**
+     * @see #arg(String)
+     */
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
         assert builtinNode != null : "arg(int, String) is only supported for builtins cast pipelines";
         assert argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
@@ -245,15 +298,13 @@ public final class CastBuilder {
         return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, argumentName));
     }
 
+    /**
+     * @see #arg(String)
+     */
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex) {
         boolean existingIndex = argumentNames != null && argumentIndex >= 0 && argumentIndex < argumentNames.length;
         String name = existingIndex ? argumentNames[argumentIndex] : null;
         return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, name));
-    }
-
-    public PreinitialPhaseBuilder<Object> arg(String argumentName) {
-        assert builtinNode != null : "arg(String) is only supported for builtins cast pipelines";
-        return new PreinitialPhaseBuilder<>(getBuilder(getArgumentIndex(argumentName), argumentName));
     }
 
     private PipelineBuilder getBuilder(int argumentIndex, String argumentName) {
