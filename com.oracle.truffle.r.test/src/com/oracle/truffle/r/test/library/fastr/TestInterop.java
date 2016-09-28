@@ -59,7 +59,7 @@ public class TestInterop extends TestBase {
         public String stringValue = "foo";
     }
 
-    private static class TestJavaObject {
+    private static final class TestJavaObject {
         public final String name;
         public Object object;
 
