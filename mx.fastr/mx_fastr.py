@@ -26,6 +26,7 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
+import mx_find_pcre
 import os
 
 '''
@@ -516,6 +517,7 @@ _commands = {
     'installpkgs' : [installpkgs, '[options]'],
     'installcran' : [installpkgs, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
+    'findpcre' : [mx_find_pcre.findpcre, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

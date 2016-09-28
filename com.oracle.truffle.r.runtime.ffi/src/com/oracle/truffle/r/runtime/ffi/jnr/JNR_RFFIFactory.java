@@ -195,7 +195,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     @Override
     public PCRERFFI getPCRERFFI() {
         if (pcreRFFI == null) {
-            pcreRFFI = new JNR_PCRE();
+            pcreRFFI = new JNI_PCRE();
         }
         return pcreRFFI;
     }

@@ -35,6 +35,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_initialize(JNIEnv *env, 
 	init_rmath(env);
 	init_random(env);
 	init_parse(env);
+	init_pcre(env);
 }
 
 JNIEXPORT void JNICALL
