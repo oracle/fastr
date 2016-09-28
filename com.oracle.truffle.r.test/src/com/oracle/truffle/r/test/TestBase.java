@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
@@ -795,11 +796,11 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected static String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
+    protected String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
         microTestInfo.expression = input;
         String result;
         try {
-            result = fastROutputManager.fastRSession.eval(input, contextInfo, longTimeout);
+            result = fastROutputManager.fastRSession.eval(this, input, contextInfo, longTimeout);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
@@ -836,9 +837,9 @@ public class TestBase {
      */
     protected static Object evalInstallPackage(String system2Command) throws Throwable {
         if (generatingExpected()) {
-            return expectedOutputManager.getRSession().eval(system2Command, null, true);
+            return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
         } else {
-            return fastROutputManager.fastRSession.evalAsObject(system2Command, null, true);
+            return fastROutputManager.fastRSession.evalAsObject(null, system2Command, null, true);
         }
     }
 
@@ -880,6 +881,13 @@ public class TestBase {
 
     protected static String[] join(String[]... arrays) {
         return TestOutputManager.join(arrays);
+    }
+
+    /**
+     * Tests that require additional {@link PolyglotEngine} global symbols should override this,
+     * which will be called just prior to the evaluation.
+     */
+    public void addPolyglotSymbols(@SuppressWarnings("unused") PolyglotEngine.Builder builder) {
     }
 
     private static final LocalDiagnosticHandler localDiagnosticHandler = new LocalDiagnosticHandler();

@@ -73,8 +73,8 @@ public final class ContextInfo implements TruffleObject {
         return newVM;
     }
 
-    public PolyglotEngine createVM(Function<PolyglotEngine.Builder, PolyglotEngine.Builder> build) {
-        PolyglotEngine newVM = build.apply(PolyglotEngine.newBuilder()).globalSymbol(GLOBAL_SYMBOL, this).build();
+    public PolyglotEngine createVM(PolyglotEngine.Builder builder) {
+        PolyglotEngine newVM = builder.globalSymbol(GLOBAL_SYMBOL, this).build();
         this.vm = newVM;
         return newVM;
     }

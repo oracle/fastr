@@ -403,11 +403,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
             String output;
             try {
-                output = diagSuite.fastRSession.eval(call, null, false);
+                output = diagSuite.fastRSession.eval(null, call, null, false);
             } catch (Throwable t) {
                 output = "ERROR: " + t.getMessage();
             }
-            String outputGnu = diagSuite.gnuRSession.eval(call, null, false);
+            String outputGnu = diagSuite.gnuRSession.eval(null, call, null, false);
 
             List<String> outputPair = Arrays.asList(output, outputGnu);
 

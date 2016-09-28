@@ -364,7 +364,7 @@ public class TestOutputManager {
             String expected = null;
             if (!checkOnly) {
                 try {
-                    expected = rSession.eval(test, null, false);
+                    expected = rSession.eval(null, test, null, false);
                 } catch (Throwable e) {
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
