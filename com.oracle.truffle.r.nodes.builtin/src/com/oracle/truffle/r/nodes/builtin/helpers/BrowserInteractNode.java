@@ -23,11 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -63,9 +63,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  */
 public abstract class BrowserInteractNode extends RNode {
-
-    // it's never meant to be executed
-    private static final RSyntaxNode browserCall = new RASTBuilder().call(RSyntaxNode.INTERNAL, ReadVariableNode.create("browser"));
 
     public static final int STEP = 0;
     public static final int NEXT = 1;
@@ -87,7 +84,7 @@ public abstract class BrowserInteractNode extends RNode {
         if (currentCaller == null) {
             currentCaller = RCaller.topLevel;
         }
-        RCaller browserCaller = RCaller.create(null, currentCaller, browserCall);
+        RCaller browserCaller = createCaller(currentCaller);
         try {
             browserState.setInBrowser(browserCaller);
             LW: while (true) {
@@ -174,6 +171,12 @@ public abstract class BrowserInteractNode extends RNode {
             browserState.setInBrowser(null);
         }
         return exitMode;
+    }
+
+    @TruffleBoundary
+    private static RCaller createCaller(RCaller currentCaller) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+        return RCaller.create(null, currentCaller, builder.call(RSyntaxNode.INTERNAL, builder.lookup(RSyntaxNode.INTERNAL, "browser", true)));
     }
 
     private static String getSrcinfo(RStringVector element) {

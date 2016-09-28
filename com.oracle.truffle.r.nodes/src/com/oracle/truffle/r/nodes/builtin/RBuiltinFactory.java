@@ -38,8 +38,8 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
     private final Function<RNode[], RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, Function<RNode[], RBuiltinNode> constructor, RBehavior behavior) {
-        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior);
+                    boolean alwaysSplit, RDispatch dispatch, Function<RNode[], RBuiltinNode> constructor, RBehavior behavior, Function<RNode[], RNode> specialCall) {
+        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior, specialCall);
         this.constructor = constructor;
     }
 

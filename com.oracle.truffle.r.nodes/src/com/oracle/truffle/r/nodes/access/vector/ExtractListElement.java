@@ -52,6 +52,10 @@ public abstract class ExtractListElement extends Node {
 
     public abstract Object execute(RAbstractContainer container, int index);
 
+    public static ExtractListElement create() {
+        return ExtractListElementNodeGen.create();
+    }
+
     @Specialization
     protected Object doList(RListBase list, int index, @Cached("create()") UpdateStateOfListElement updateStateNode) {
         Object element = list.getDataAt(index);
