@@ -34,7 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -45,7 +44,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -312,7 +310,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected RNode createDispatchArgument(int index) {
-        return new ForcePromiseNode(NodeUtil.cloneNode(arguments[index].asRNode()));
+        return new ForcePromiseNode(RASTUtils.cloneNode(arguments[index].asRNode()));
     }
 
     /**
@@ -339,7 +337,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
-        FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject, () -> internalDispatchCall = null);
+        dispatchTempSlot.initialize(frame, dispatchObject, () -> internalDispatchCall = null);
         try {
             RStringVector type = classHierarchyNode.execute(dispatchObject);
             S3Args s3Args;
@@ -362,7 +360,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
             return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame), s3Args, null);
         } finally {
-            dispatchTempSlot.cleanup(frame, slot);
+            dispatchTempSlot.cleanup(frame, dispatchObject);
         }
     }
 
