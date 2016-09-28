@@ -28,7 +28,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -70,11 +69,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     public final Object execute(VirtualFrame frame) {
         handleVisibility(frame);
         return getValue();
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setCar(getValue());
     }
 
     public static ConstantNode create(Object value) {
@@ -183,15 +177,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
         @Override
         public Object getValue() {
             return value;
-        }
-
-        @Override
-        public void serializeImpl(RSerialize.State state) {
-            if (value == RMissing.instance) {
-                state.setCar(RMissing.instance);
-            } else {
-                super.serializeImpl(state);
-            }
         }
     }
 }

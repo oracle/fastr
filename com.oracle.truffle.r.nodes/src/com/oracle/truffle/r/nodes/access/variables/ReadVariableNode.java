@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -165,11 +164,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     public RType getMode() {
         return mode;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setCarAsSymbol(identifierAsString);
     }
 
     @Override

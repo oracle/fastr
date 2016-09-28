@@ -39,9 +39,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -94,22 +92,6 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
 
     public RNode getBody() {
         return getForRepeatingNode().body;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin("for");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        // variable
-        state.serializeNodeSetCar(getCvar());
-        // range
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getRange());
-        // body
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getBody());
-        state.linkPairList(3);
-        state.setCdr(state.closePairList());
     }
 
     private ForRepeatingNode getForRepeatingNode() {

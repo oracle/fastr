@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -190,11 +189,6 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, functionNode.execute(frame));
-    }
-
-    @Override
-    public void serializeImpl(State state) {
-        RCallNode.serializeImpl(state, functionNode.getValueNode(), arguments, signature);
     }
 
     @Override

@@ -80,7 +80,6 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
@@ -96,12 +95,10 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -612,85 +609,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
         }
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature, varArgIndexes);
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        serializeImpl(state, getFunctionNode(), arguments, signature);
-    }
-
-    public static void serializeImpl(RSerialize.State state, RNode functionNode, RSyntaxNode[] arguments, ArgumentsSignature signature) {
-        state.setAsLangType();
-        state.serializeNodeSetCar(functionNode);
-        if (isColon(functionNode)) {
-            // special case, have to translate Identifier names to Symbols
-            RSyntaxNode arg0 = arguments[0];
-            RSyntaxNode arg1 = arguments[1];
-            state.openPairList();
-            if (arg0 instanceof ReadVariableNode) {
-                state.setCarAsSymbol(((ReadVariableNode) arg0).getIdentifier());
-            } else {
-                state.setCar(((ConstantNode) arg0).getValue());
-            }
-            state.openPairList();
-            if (arg1 instanceof ReadVariableNode) {
-                state.setCarAsSymbol(((ReadVariableNode) arg1).getIdentifier());
-            } else {
-                state.setCar(((ConstantNode) arg1).getValue());
-            }
-            state.linkPairList(2);
-            state.setCdr(state.closePairList());
-        } else {
-            RSyntaxNode f = functionNode.asRSyntaxNode();
-            boolean infixFieldAccess = false;
-            if (f instanceof RSyntaxLookup) {
-                RSyntaxLookup lookup = (RSyntaxLookup) f;
-                infixFieldAccess = "$".equals(lookup.getIdentifier()) || "@".equals(lookup.getIdentifier());
-            }
-            serializeArguments(state, arguments, signature, infixFieldAccess);
-        }
-    }
-
-    static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
-        state.openPairList(SEXPTYPE.LISTSXP);
-        if (arguments.length == 0) {
-            state.setNull();
-        } else {
-            for (int i = 0; i < arguments.length; i++) {
-                RSyntaxNode argument = arguments[i];
-                String name = signature.getName(i);
-                if (name != null) {
-                    state.setTagAsSymbol(name);
-                }
-                if (argument == null) {
-                    state.setCarMissing();
-                } else {
-                    if (infixFieldAccess && i == 1 && argument instanceof RSyntaxConstant) {
-                        RSyntaxConstant c = (RSyntaxConstant) argument;
-                        String identifier = RRuntime.asStringLengthOne(c.getValue());
-                        assert identifier != null;
-                        state.setCarAsSymbol(identifier);
-                    } else {
-                        state.serializeNodeSetCar(argument);
-                    }
-                }
-                if (i != arguments.length - 1) {
-                    state.openPairList();
-                }
-
-            }
-            state.linkPairList(arguments.length);
-        }
-        state.setCdr(state.closePairList());
-    }
-
-    private static boolean isColon(RNode node) {
-        if (node instanceof ReadVariableNode) {
-            ReadVariableNode rvn = (ReadVariableNode) node;
-            String name = rvn.getIdentifier();
-            return name.equals("::") || name.equals(":::");
-        }
-        return false;
     }
 
     /**

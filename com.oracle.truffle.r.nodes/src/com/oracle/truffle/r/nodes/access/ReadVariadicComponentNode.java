@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -84,11 +83,6 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
 
     public String getPrintForm() {
         return name;
-    }
-
-    @Override
-    public void serializeImpl(State state) {
-        state.setCarAsSymbol(getPrintForm());
     }
 
     @Override

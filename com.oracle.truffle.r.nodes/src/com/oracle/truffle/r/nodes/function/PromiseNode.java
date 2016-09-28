@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -311,11 +310,6 @@ public abstract class PromiseNode extends RNode {
 
         public int getIndex() {
             return index;
-        }
-
-        @Override
-        public void serializeImpl(State state) {
-            throw RInternalError.unimplemented();
         }
 
         @Override
