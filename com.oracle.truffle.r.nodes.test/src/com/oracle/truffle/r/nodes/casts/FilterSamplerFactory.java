@@ -174,7 +174,7 @@ public final class FilterSamplerFactory
                 return leftFilter.trueBranchType().or(rightFilter.trueBranchType());
             }
 
-            @SuppressWarnings({"unchecked", "cast"})
+            @SuppressWarnings("unchecked")
             @Override
             public Samples<Object> collectSamples(TypeExpr inputType) {
                 Samples thisSamples = leftFilter.collectSamples(inputType);
@@ -204,7 +204,7 @@ public final class FilterSamplerFactory
 
             @Override
             public TypeExpr trueBranchType() {
-                return filter.getFilter().isNarrowing() ? trueBranchType().not() : trueBranchType();
+                return filter.getFilter().isNarrowing() ? toNegate.trueBranchType().not() : toNegate.trueBranchType();
             }
 
             @SuppressWarnings({"unchecked", "cast"})

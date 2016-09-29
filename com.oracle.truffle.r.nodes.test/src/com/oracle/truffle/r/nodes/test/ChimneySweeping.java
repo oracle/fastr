@@ -69,9 +69,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     private static final String TEST_PREFIX = "com.oracle.truffle.r.test.builtins.TestBuiltin_";
     private static final String SWEEP_MODE_ARG = "--sweep";
-    private static final String SWEEP_MODE_ARG_SPEC = SWEEP_MODE_ARG + "-";
+    private static final String SWEEP_MODE_ARG_SPEC = SWEEP_MODE_ARG + "=";
     private static final String NO_SELF_TEST_ARG = "--noSelfTest";
     private static final String MISSING_AND_NULL_SAMPLES_ONLY_ARG = "--mnonly";
+    private static final String OUTPUT_MATCH_LEVEL = "--matchLevel";
+    private static final String OUTPUT_MATCH_LEVEL_SPEC = OUTPUT_MATCH_LEVEL + "=";
 
     enum ChimneySweepingMode {
         auto,
@@ -89,8 +91,22 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
+    enum OutputMatchLevel {
+        same,
+        error;
+
+        static Optional<OutputMatchLevel> fromArg(String arg) {
+            if (arg.startsWith(OUTPUT_MATCH_LEVEL_SPEC)) {
+                return Optional.of(valueOf(arg.substring(OUTPUT_MATCH_LEVEL_SPEC.length())));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
     static class ChimneySweepingConfig extends DiagConfig {
         ChimneySweepingMode sweepingMode;
+        OutputMatchLevel outputMatchLevel;
         boolean missingAndNullSamplesOnly;
         boolean performPipelineSelfTest;
     }
@@ -127,6 +143,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         static <C extends ChimneySweepingConfig> C initChimneySweepingConfig(C config, String[] args) {
             config.sweepingMode = getSweepMode(args).flatMap(ChimneySweepingMode::fromArg).orElse(ChimneySweepingMode.auto);
+            config.outputMatchLevel = getOutputMatchLevel(args).flatMap(OutputMatchLevel::fromArg).orElse(OutputMatchLevel.same);
             config.missingAndNullSamplesOnly = Arrays.stream(args).filter(arg -> MISSING_AND_NULL_SAMPLES_ONLY_ARG.equals(arg)).findFirst().isPresent();
             // The pipeline self-test is disabled when only RMissing and RNull samples are used as
             // these values are not determined via the pipeline static type analysis
@@ -136,6 +153,10 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         private static Optional<String> getSweepMode(String[] args) {
             return Arrays.stream(args).filter(arg -> arg.startsWith(SWEEP_MODE_ARG)).findFirst();
+        }
+
+        private static Optional<String> getOutputMatchLevel(String[] args) {
+            return Arrays.stream(args).filter(arg -> arg.startsWith(OUTPUT_MATCH_LEVEL_SPEC)).findFirst();
         }
 
         @Override
@@ -331,9 +352,14 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     private static RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
-        Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
-        RList args = (RList) eval.get();
-        return args;
+        try {
+            Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
+            RList args = (RList) eval.get();
+            return args;
+        } catch (Exception e) {
+            System.out.println("Warning: Cannot parse arguments: " + argsExpr);
+            return null;
+        }
     }
 
     private void sweepChimney() throws IOException {
@@ -394,6 +420,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         try {
             for (int i = 0; i < args.size(); i++) {
                 Object validArg = args.get(i);
+                if (validArg == RMissing.instance) {
+                    continue;
+                }
                 String deparsedValidArg;
                 try {
                     deparsedValidArg = RDeparse.deparse(validArg);
@@ -404,7 +433,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
                 if (sb.length() != 0) {
                     sb.append(",");
                 }
-                sb.append(deparsedValidArg);
+                sb.append(parameterNames[i]).append('=').append(deparsedValidArg);
             }
 
             String call;
@@ -427,7 +456,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
             List<String> outputPair = Arrays.asList(output, outputGnu);
 
-            if (outputGnu.equals(output)) {
+            if (compareOutputs(output, outputGnu)) {
                 System.out.print('.');
             } else if (!printedOutputPairs.contains(outputPair)) {
                 System.out.println("\n#" + sweepCounter + "> " + call);
@@ -454,6 +483,27 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
         } finally {
             sweepCounter++;
+        }
+    }
+
+    private boolean compareOutputs(String output, String outputGnu) {
+        switch (diagSuite.diagConfig.outputMatchLevel) {
+            case same:
+                return outputGnu.equals(output);
+            case error:
+                if (output.contains("ERROR:")) {
+                    // FastR error
+                    return false;
+                }
+                if (output.contains("Error") && outputGnu.contains("Error")) {
+                    return true;
+                }
+                if (!output.contains("Error") && !outputGnu.contains("Error")) {
+                    return true;
+                }
+                return false;
+            default:
+                throw new UnsupportedOperationException("Unsupported output match level: " + diagSuite.diagConfig.outputMatchLevel);
         }
     }
 

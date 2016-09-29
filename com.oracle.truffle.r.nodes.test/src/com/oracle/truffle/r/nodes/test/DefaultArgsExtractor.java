@@ -71,9 +71,14 @@ class DefaultArgsExtractor {
 
                     if (defVal instanceof RLanguage) {
                         String deparsedDefVal = RDeparse.deparse(defVal);
-                        Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal,
-                                        RSource.Internal.UNIT_TEST));
-                        defVal = eval.get();
+                        try {
+                            Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal,
+                                            RSource.Internal.UNIT_TEST));
+                            defVal = eval.get();
+                        } catch (Exception e) {
+                            System.out.println("Warning: Unable to evaluate the default value of argument " + name + ". Expression: " + deparsedDefVal);
+                            continue;
+                        }
 
                         if (defVal == null) {
                             samplesMap.put(name, Samples.anything(RNull.instance));

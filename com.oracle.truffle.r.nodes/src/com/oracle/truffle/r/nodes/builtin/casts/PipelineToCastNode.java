@@ -187,7 +187,7 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(FindFirstStep<?, ?> step) {
-            assert targetType != null : "There must be a coercion step before find first";
+            assert !canBeOptimized || targetType != null : "There must be a coercion step before find first";
             findFirstStep = step;
             return inner.visit(step);
         }
@@ -212,11 +212,9 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(FilterStep<?, ?> step) {
-            Filter<?, ?> filter = step.getFilter();
-            if (filter instanceof RTypeFilter) {
-                canBeOptimized(((RTypeFilter<?>) filter).getType());
-            } else {
-                cannotBeOptimizedBeforeFindFirst();
+            targetType = checkFilter(step.getFilter());
+            if (targetType == null) {
+                canBeOptimized = false;
             }
             return inner.visit(step);
         }
@@ -268,6 +266,29 @@ public final class PipelineToCastNode {
             } else if (targetType != newType) {
                 canBeOptimized = false;
             }
+        }
+
+        /**
+         * Returns null if the filter does not conform to expected type or does not produce some
+         * concrete type if there is no expected type.
+         */
+        private RType checkFilter(Filter<?, ?> filter) {
+            if (filter instanceof RTypeFilter) {
+                RType type = ((RTypeFilter) filter).getType();
+                if (targetType == null) {
+                    return type;
+                }
+                return type == targetType ? type : null;
+            } else if (filter instanceof OrFilter) {
+                OrFilter<?> or = (OrFilter<?>) filter;
+                RType leftType = checkFilter(or.getLeft());
+                if (targetType == null) {
+                    return leftType;
+                }
+                RType rightType = checkFilter(or.getRight());
+                return rightType == targetType || leftType == targetType ? targetType : null;
+            }
+            return null;
         }
 
         private CastNode getFindFirstWithDefault() {

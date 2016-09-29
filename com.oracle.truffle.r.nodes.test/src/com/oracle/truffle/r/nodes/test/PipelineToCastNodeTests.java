@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
@@ -76,6 +77,15 @@ public class PipelineToCastNodeTests {
         // should be equivalent of mustBe(integerValue()).asIntegerVector().findFirst()
         CastNode pipeline = createPipeline(
                         new FilterStep<>(new RTypeFilter<>(RType.Integer), null, false).setNext(new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>(null, Integer.class, null))));
+        assertBypassNode(pipeline, BypassIntegerNode.class);
+    }
+
+    @Test
+    public void optimizeForSingleIntegerWhenNumericFilterIsUsed() {
+        // should be close to mustBe(numericValue()).asIntegerVector().findFirst()
+        OrFilter<Object> filter = new OrFilter<>(new RTypeFilter<>(RType.Integer), new RTypeFilter<>(RType.Double));
+        CastNode pipeline = createPipeline(
+                        new FilterStep<>(filter, null, false).setNext(new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>(null, Integer.class, null))));
         assertBypassNode(pipeline, BypassIntegerNode.class);
     }
 
