@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
@@ -69,6 +70,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     private static final String TEST_PREFIX = "com.oracle.truffle.r.test.builtins.TestBuiltin_";
     private static final String SWEEP_MODE_ARG = "--sweep";
     private static final String SWEEP_MODE_ARG_SPEC = SWEEP_MODE_ARG + "-";
+    private static final String NO_SELF_TEST_ARG = "--noSelfTest";
+    private static final String MISSING_AND_NULL_SAMPLES_ONLY_ARG = "--mnonly";
 
     enum ChimneySweepingMode {
         auto,
@@ -88,6 +91,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     static class ChimneySweepingConfig extends DiagConfig {
         ChimneySweepingMode sweepingMode;
+        boolean missingAndNullSamplesOnly;
+        boolean performPipelineSelfTest;
     }
 
     static class ChimneySweepingSuite extends RBuiltinDiagnostics {
@@ -122,6 +127,10 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         static <C extends ChimneySweepingConfig> C initChimneySweepingConfig(C config, String[] args) {
             config.sweepingMode = getSweepMode(args).flatMap(ChimneySweepingMode::fromArg).orElse(ChimneySweepingMode.auto);
+            config.missingAndNullSamplesOnly = Arrays.stream(args).filter(arg -> MISSING_AND_NULL_SAMPLES_ONLY_ARG.equals(arg)).findFirst().isPresent();
+            // The pipeline self-test is disabled when only RMissing and RNull samples are used as
+            // these values are not determined via the pipeline static type analysis
+            config.performPipelineSelfTest = config.missingAndNullSamplesOnly ? false : !Arrays.stream(args).filter(arg -> NO_SELF_TEST_ARG.equals(arg)).findFirst().isPresent();
             return RBuiltinDiagnostics.initDiagConfig(config, args);
         }
 
@@ -164,10 +173,10 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     ChimneySweeping(ChimneySweepingSuite diagSuite, RIntBuiltinDiagFactory builtinFactory) {
         super(diagSuite, builtinFactory);
+        this.kind = builtinFactory.getBuiltinKind();
         this.diagSuite = diagSuite;
         this.validArgsList = extractValidArgsForBuiltin();
         this.argSamples = createSamples();
-        this.kind = builtinFactory.getBuiltinKind();
     }
 
     @Override
@@ -184,7 +193,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         System.out.println(" Samples:");
         System.out.println(argSamples.get(i));
 
-        checkPipelines(i);
+        if (diagSuite.diagConfig.performPipelineSelfTest) {
+            checkPipelines(i);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -194,26 +205,31 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         List<Samples<?>> as = new ArrayList<>();
         for (int i = 0; i < argLength; i++) {
-            CastNode cn;
-            if (i < castNodes.length) {
-                cn = castNodes[i];
-            } else {
-                cn = null;
-            }
             Samples samples;
-            try {
-                if (cn == null) {
-                    samples = Samples.anything();
-                } else {
-                    CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cn);
-                    samples = sampler.collectSamples();
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Error in sample generation from argument " + i, e);
-            }
 
-            Samples defArgSamples = defaultArgs.get(parameterNames[i]);
-            samples = defArgSamples == null ? samples : samples.and(defArgSamples);
+            if (diagSuite.diagConfig.missingAndNullSamplesOnly) {
+                samples = Samples.anything(RNull.instance).or(Samples.anything(RMissing.instance));
+            } else {
+                CastNode cn;
+                if (i < castNodes.length) {
+                    cn = castNodes[i];
+                } else {
+                    cn = null;
+                }
+                try {
+                    if (cn == null) {
+                        samples = Samples.anything();
+                    } else {
+                        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cn);
+                        samples = sampler.collectSamples();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Error in sample generation from argument " + i, e);
+                }
+
+                Samples defArgSamples = defaultArgs.get(parameterNames[i]);
+                samples = defArgSamples == null ? samples : samples.and(defArgSamples);
+            }
 
             as.add(samples);
 

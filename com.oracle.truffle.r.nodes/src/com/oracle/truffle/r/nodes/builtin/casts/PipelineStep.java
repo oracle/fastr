@@ -161,7 +161,7 @@ public abstract class PipelineStep<T, R> {
      * then if the vector is empty, the default value is returned without any warning. If the
      * default value is not provided, then error is raised if the vector is empty, the error message
      * chosen in the following order: provided message, explicitly set default error message using
-     * {@link DefaultErrorStep}, default find first message.
+     * {@link PipelineStep.DefaultErrorStep}, default find first message.
      */
     public static final class FindFirstStep<V, E> extends PipelineStep<V, E> {
         private final MessageData error;

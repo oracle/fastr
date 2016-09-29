@@ -444,6 +444,8 @@ def rbdiag(args):
 	-v		Verbose output including the list of unimplemented specializations
 	-n		Ignore RNull as an argument type
 	-m		Ignore RMissing as an argument type
+    --mnonly		Uses the RMissing and RNull values as the only samples for the chimney-sweeping
+    --noSelfTest	Does not perform the pipeline self-test using the generated samples as the intro to each chimney-sweeping. It has no effect when --mnonly is specified as the self-test is never performed in that case.
     --sweep		Performs the 'chimney-sweeping'. The sample combination selection method is determined automatically.
     --sweep-lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
     --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
@@ -524,7 +526,7 @@ _commands = {
     'junitnoapps' : [junit_noapps, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total] [--mnonly] [--noSelfTest]'],
     'rcmplib' : [rcmplib, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],

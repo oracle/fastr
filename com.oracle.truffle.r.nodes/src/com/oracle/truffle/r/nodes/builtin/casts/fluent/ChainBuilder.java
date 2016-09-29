@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
  * can be used to create a chain outside of a context of {@link PipelineBuilder}, it can be
  * constructed using the {@code chain} method from {@code Predef}.
  *
- * {@see Predef#chain}
+ * @see Predef#chain
  */
 public final class ChainBuilder<T> {
     private final PipelineStep<?, ?> firstStep;

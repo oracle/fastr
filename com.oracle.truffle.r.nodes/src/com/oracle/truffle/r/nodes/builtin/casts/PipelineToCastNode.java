@@ -214,7 +214,7 @@ public final class PipelineToCastNode {
         public CastNode visit(FilterStep<?, ?> step) {
             Filter<?, ?> filter = step.getFilter();
             if (filter instanceof RTypeFilter) {
-                canBeOptimized(((RTypeFilter) filter).getType());
+                canBeOptimized(((RTypeFilter<?>) filter).getType());
             } else {
                 cannotBeOptimizedBeforeFindFirst();
             }

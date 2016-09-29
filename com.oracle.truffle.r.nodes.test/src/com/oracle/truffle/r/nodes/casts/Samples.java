@@ -130,7 +130,7 @@ public final class Samples<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public Samples<T> or(Samples<? extends T> other) {
+    public Samples<T> or(Samples<?> other) {
         String newName = "or(" + name + "," + other.name + ")";
 
         Set<Object> negativeUnion = new HashSet<>(other.negativeSamples());
