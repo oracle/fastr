@@ -28,9 +28,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -66,18 +64,6 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
             lastResult = sequence[i].execute(frame);
         }
         return lastResult;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsLangType();
-        state.setCarAsSymbol("{");
-
-        for (int i = 0; i < sequence.length; i++) {
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.serializeNodeSetCar(sequence[i]);
-        }
-        state.linkPairList(sequence.length + 1);
     }
 
     @Override

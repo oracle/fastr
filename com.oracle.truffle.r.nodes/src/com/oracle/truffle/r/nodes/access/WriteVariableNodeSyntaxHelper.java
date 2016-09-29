@@ -24,9 +24,6 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     @CompilationFinal private SourceSection sourceSectionR;
@@ -34,21 +31,6 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
         assert sourceSection != null;
         this.sourceSectionR = sourceSection;
-    }
-
-    protected void serializeHelper(RSerialize.State state, String op) {
-        RNode rhs = getRhs();
-        if (rhs == null) {
-            state.setCarAsSymbol(getName().toString());
-        } else {
-            state.setAsBuiltin(op);
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.setCarAsSymbol(getName().toString());
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.serializeNodeSetCar(getRhs());
-            state.linkPairList(2);
-            state.setCdr(state.closePairList());
-        }
     }
 
     public void setSourceSection(SourceSection sourceSection) {

@@ -64,7 +64,6 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -80,10 +79,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -391,60 +387,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else {
             return val;
         }
-    }
-
-    @Override
-    public Object serialize(RSerialize.State state, Object obj) {
-        if (obj instanceof RFunction) {
-            RFunction f = (RFunction) obj;
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
-            REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
-            state.openPairList().setTag(env);
-            fdn.serializeImpl(state);
-            return state.closePairList();
-        } else if (obj instanceof RLanguage) {
-            RLanguage lang = (RLanguage) obj;
-            RSyntaxNode node = lang.getRep().asRSyntaxNode();
-            state.openPairList(SEXPTYPE.LANGSXP);
-            node.serializeImpl(state);
-            return state.closePairList();
-        } else if (obj instanceof RPromise) {
-            RPromise promise = (RPromise) obj;
-            RSyntaxNode node = (RSyntaxNode) RASTUtils.unwrap(promise.getRep());
-            /*
-             * If the promise is evaluated, we store the value (in car) and the tag is set to RNull,
-             * else we record the environment in the tag and store RUnboundValue. In either case we
-             * record the expression.
-             */
-            Object value;
-            Object tag;
-            if (promise.isEvaluated()) {
-                value = promise.getValue();
-                tag = RNull.instance;
-            } else {
-                value = RUnboundValue.instance;
-                tag = promise.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(promise.getFrame());
-            }
-            state.openPairList().setTag(tag);
-            state.setCar(value);
-            state.openPairList();
-            node.serializeImpl(state);
-            state.setCdr(state.closePairList());
-            return state.closePairList();
-        } else {
-            throw RInternalError.unimplemented("serialize");
-        }
-    }
-
-    @Override
-    public void serializeNode(RSerialize.State state, Object node) {
-        ((RBaseNode) node).serialize(state);
-    }
-
-    @Override
-    public void serializeFunctionDefinitionNode(RSerialize.State state, RFunction fn) {
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) fn.getRootNode();
-        fdn.serializeImpl(state);
     }
 
     @Override

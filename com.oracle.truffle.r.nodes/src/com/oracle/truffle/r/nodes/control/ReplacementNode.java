@@ -31,8 +31,6 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -105,18 +103,6 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
         } finally {
             visibility.execute(frame, false);
         }
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsLangType();
-        state.setCarAsSymbol(operator);
-        state.openPairList();
-        state.serializeNodeSetCar(syntaxLhs);
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(storeRhs.getRhs());
-        state.setCdr(state.closePairList());
-        state.setCdr(state.closePairList());
     }
 
     @Override

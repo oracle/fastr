@@ -84,22 +84,6 @@ public interface RRuntimeASTAccess {
     RSyntaxFunction getSyntaxFunction(RFunction f);
 
     /**
-     * Serialize a runtime value that requires non-standard treatment.
-     */
-    Object serialize(RSerialize.State state, Object f);
-
-    /**
-     * Helper function for {@code serialize} working around cyclic dependency. {@code node} is an
-     * {@RNode}.
-     */
-    void serializeNode(RSerialize.State state, Object node);
-
-    /**
-     * Helper function for {@code serialize} working around cyclic dependency.
-     */
-    void serializeFunctionDefinitionNode(RSerialize.State state, RFunction fn);
-
-    /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
      * associated with the node stored with {@code rl}.
      */
