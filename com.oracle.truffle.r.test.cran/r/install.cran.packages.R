@@ -91,6 +91,7 @@ usage <- function() {
 					  "[--testdir dir]",
 					  "[--print-ok-installs]",
 					  "[--list-versions]",
+					  "[--list-canonical]",
 					  "[--use-installed-pkgs]",
 					  "[--invert-pkgset]",
 					  "[--alpha-daily]",
@@ -522,7 +523,9 @@ do.it <- function() {
 	if (list.versions) {
 		for (pkgname in test.pkgnames) {
 			pkg <- toinstall.pkgs[pkgname, ]
-			cat(pkg["Package"], pkg["Version"], paste0(contriburl, "/", pkg["Version"], ".tar.gz"), "\n", sep=",")
+			# pretend we are acessing CRAN if list.canonical
+			list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", contriburl)
+			cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
 	}
 
@@ -734,6 +737,8 @@ parse.args <- function() {
 			print.install.status <<- T
 		} else if (a == "--list-versions") {
 			list.versions <<- TRUE
+		} else if (a == "--list-canonical") {
+			list.canonical <<- TRUE
 		} else if (a == "--install-dependents-first") {
 			install.dependents.first <<- TRUE
 		} else if (a == "--use-installed-pkgs") {
@@ -859,6 +864,7 @@ run.mode <- "system"
 run.tests <- FALSE
 gnur <- FALSE
 list.versions <- FALSE
+list.canonical <- FALSE
 invert.pkgset <- F
 
 if (!interactive()) {
