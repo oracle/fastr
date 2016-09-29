@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
@@ -73,7 +73,7 @@ public final class BinaryMapNode extends RBaseNode {
     private final ConditionProfile maxLengthProfile;
     private final ConditionProfile leftIsNAProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile rightIsNAProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile seenEmpty = BranchProfile.create();
+    private final ConditionProfile seenEmpty = ConditionProfile.createBinaryProfile();
     private final ConditionProfile shareLeft;
     private final ConditionProfile shareRight;
     private final RType argumentType;
@@ -229,16 +229,16 @@ public final class BinaryMapNode extends RBaseNode {
     private Object applyVectorized(RAbstractVector left, RAbstractVector leftCast, int leftLength, RAbstractVector right, RAbstractVector rightCast, int rightLength) {
         if (mayContainMetadata && (dimensionsProfile.profile(left.hasDimensions() && right.hasDimensions()))) {
             if (differentDimensions(left, right)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, RError.Message.NON_CONFORMABLE_ARRAYS);
             }
         }
 
-        if (leftLength == 0 || rightLength == 0) {
+        if (seenEmpty.profile(leftLength == 0 || rightLength == 0)) {
             /*
              * It is safe to skip attribute handling here as they are never copied if length is 0 of
              * either side. Note that dimension check still needs to be performed.
              */
-            seenEmpty.enter();
             return resultType.getEmpty();
         }
 

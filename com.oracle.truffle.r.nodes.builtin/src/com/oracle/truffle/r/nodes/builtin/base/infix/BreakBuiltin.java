@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.nodes;
+package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RSerialize.State;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-/**
- * The following methods must be implemented by all implementors of {@link RSyntaxNode}. However,
- * they should not, in general, be called, unless it is statically known that the node is an
- * {@link RSyntaxNode}. Instead the generic methods on {@link RBaseNode} should be called.
- *
- */
-interface RSyntaxNodeSPI {
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-    /**
-     * Support for serializing closures. The relevant methods in {@link State} should be called to
-     * create the virtual pairlist for this node,
-     */
-    void serializeImpl(RSerialize.State state);
-
+@RBuiltin(name = "break", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
+public abstract class BreakBuiltin extends RBuiltinNode {
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object doIt(Object x) {
+        throw RInternalError.unimplemented();
+    }
 }

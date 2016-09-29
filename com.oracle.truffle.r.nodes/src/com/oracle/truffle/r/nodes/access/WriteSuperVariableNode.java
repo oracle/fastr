@@ -28,7 +28,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -78,11 +77,6 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     @Override
     public void execute(VirtualFrame frame, Object value) {
         writeSuperFrameVariableNode.execute(frame, value);
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        serializeHelper(state, "<<-");
     }
 
     @Override

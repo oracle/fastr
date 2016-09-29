@@ -34,7 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -45,7 +44,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -69,6 +67,7 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -81,7 +80,6 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
@@ -97,12 +95,10 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -312,7 +308,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected RNode createDispatchArgument(int index) {
-        return new ForcePromiseNode(NodeUtil.cloneNode(arguments[index].asRNode()));
+        return new ForcePromiseNode(RASTUtils.cloneNode(arguments[index].asRNode()));
     }
 
     /**
@@ -339,7 +335,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
-        FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject, () -> internalDispatchCall = null);
+        dispatchTempSlot.initialize(frame, dispatchObject, () -> internalDispatchCall = null);
         try {
             RStringVector type = classHierarchyNode.execute(dispatchObject);
             S3Args s3Args;
@@ -362,7 +358,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
             return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame), s3Args, null);
         } finally {
-            dispatchTempSlot.cleanup(frame, slot);
+            dispatchTempSlot.cleanup(frame, dispatchObject);
         }
     }
 
@@ -615,81 +611,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature, varArgIndexes);
     }
 
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsLangType();
-        state.serializeNodeSetCar(getFunctionNode());
-        if (isColon(getFunctionNode())) {
-            // special case, have to translate Identifier names to Symbols
-            RSyntaxNode arg0 = arguments[0];
-            RSyntaxNode arg1 = arguments[1];
-            state.openPairList();
-            if (arg0 instanceof ReadVariableNode) {
-                state.setCarAsSymbol(((ReadVariableNode) arg0).getIdentifier());
-            } else {
-                state.setCar(((ConstantNode) arg0).getValue());
-            }
-            state.openPairList();
-            if (arg1 instanceof ReadVariableNode) {
-                state.setCarAsSymbol(((ReadVariableNode) arg1).getIdentifier());
-            } else {
-                state.setCar(((ConstantNode) arg1).getValue());
-            }
-            state.linkPairList(2);
-            state.setCdr(state.closePairList());
-        } else {
-            RSyntaxNode f = getFunctionNode().asRSyntaxNode();
-            boolean infixFieldAccess = false;
-            if (f instanceof RSyntaxLookup) {
-                RSyntaxLookup lookup = (RSyntaxLookup) f;
-                infixFieldAccess = "$".equals(lookup.getIdentifier()) || "@".equals(lookup.getIdentifier());
-            }
-            serializeArguments(state, arguments, signature, infixFieldAccess);
-        }
-    }
-
-    static void serializeArguments(RSerialize.State state, RSyntaxNode[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
-        state.openPairList(SEXPTYPE.LISTSXP);
-        if (arguments.length == 0) {
-            state.setNull();
-        } else {
-            for (int i = 0; i < arguments.length; i++) {
-                RSyntaxNode argument = arguments[i];
-                String name = signature.getName(i);
-                if (name != null) {
-                    state.setTagAsSymbol(name);
-                }
-                if (argument == null) {
-                    state.setCarMissing();
-                } else {
-                    if (infixFieldAccess && i == 1 && argument instanceof RSyntaxConstant) {
-                        RSyntaxConstant c = (RSyntaxConstant) argument;
-                        String identifier = RRuntime.asStringLengthOne(c.getValue());
-                        assert identifier != null;
-                        state.setCarAsSymbol(identifier);
-                    } else {
-                        state.serializeNodeSetCar(argument);
-                    }
-                }
-                if (i != arguments.length - 1) {
-                    state.openPairList();
-                }
-
-            }
-            state.linkPairList(arguments.length);
-        }
-        state.setCdr(state.closePairList());
-    }
-
-    private static boolean isColon(RNode node) {
-        if (node instanceof ReadVariableNode) {
-            ReadVariableNode rvn = (ReadVariableNode) node;
-            String name = rvn.getIdentifier();
-            return name.equals("::") || name.equals(":::");
-        }
-        return false;
-    }
-
     /**
      * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
      * original call.
@@ -839,7 +760,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             FormalArguments formals = root.getFormalArguments();
             if (root instanceof RBuiltinRootNode) {
                 RBuiltinRootNode builtinRoot = (RBuiltinRootNode) root;
-                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall);
+                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall, explicitArgs);
             } else {
                 return new DispatchedCallNode(cachedTarget, originalCall);
             }
@@ -928,36 +849,54 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     private static final class BuiltinCallNode extends LeafCallNode {
 
         @Child private RBuiltinNode builtin;
-        @Child private PromiseCheckHelperNode promiseHelper;
+        @Child private PromiseCheckHelperNode varArgsPromiseHelper;
+        @Children private final PromiseHelperNode[] promiseHelpers;
         @Children private final CastNode[] casts;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-        private final BranchProfile emptyProfile = BranchProfile.create();
-        private final BranchProfile varArgsProfile = BranchProfile.create();
-        private final ConditionProfile wrapProfile = ConditionProfile.createBinaryProfile();
+        // not using profiles to save overhead
+        @CompilationFinal private final boolean[] argEmptySeen;
+        @CompilationFinal private final boolean[] varArgSeen;
+        @CompilationFinal private final boolean[] nonWrapSeen;
+        @CompilationFinal private final boolean[] wrapSeen;
+
         private final FormalArguments formals;
         private final RBuiltinDescriptor builtinDescriptor;
+        private final boolean explicitArgs;
 
-        BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall) {
+        BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);
             this.builtin = builtin;
             this.builtinDescriptor = builtinDescriptor;
+            this.explicitArgs = explicitArgs;
             this.casts = builtin.getCasts();
             this.formals = formalArguments;
+            promiseHelpers = new PromiseHelperNode[formals.getLength()];
+            argEmptySeen = new boolean[formals.getLength()];
+            varArgSeen = new boolean[formals.getLength()];
+            nonWrapSeen = new boolean[formals.getLength()];
+            wrapSeen = new boolean[formals.getLength()];
         }
 
         @ExplodeLoop
         public Object[] castArguments(VirtualFrame frame, Object[] args) {
             int argCount = formals.getLength();
+            int varArgIndex = formals.getSignature().getVarArgIndex();
             Object[] result = new Object[argCount];
             for (int i = 0; i < argCount; i++) {
                 Object arg = args[i];
-                if (arg == REmpty.instance) {
-                    emptyProfile.enter();
+                if (explicitArgs && arg == REmpty.instance) {
+                    if (!argEmptySeen[i]) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        argEmptySeen[i] = true;
+                    }
                     arg = formals.getInternalDefaultArgumentAt(i);
                 }
-                if (arg instanceof RArgsValuesAndNames) {
-                    varArgsProfile.enter();
+                if (varArgIndex == i && arg instanceof RArgsValuesAndNames) {
+                    if (!varArgSeen[i]) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        varArgSeen[i] = true;
+                    }
                     RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
                     if (builtinDescriptor.evaluatesArg(i)) {
                         forcePromises(frame, varArgs);
@@ -967,12 +906,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 } else {
                     if (builtinDescriptor.evaluatesArg(i)) {
                         if (arg instanceof RPromise) {
-                            if (promiseHelper == null) {
+                            if (promiseHelpers[i] == null) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                                promiseHelper = insert(new PromiseCheckHelperNode());
+                                promiseHelpers[i] = insert(new PromiseHelperNode());
                             }
-                            arg = promiseHelper.checkEvaluate(frame, arg);
-
+                            arg = promiseHelpers[i].evaluate(frame, (RPromise) arg);
                         }
                         if (i < casts.length && casts[i] != null) {
                             assert builtinDescriptor.evaluatesArg(i);
@@ -980,7 +918,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                         }
                     } else {
                         assert casts.length <= i || casts[i] == null : "no casts allowed on non-evaluated arguments";
-                        if (wrapProfile.profile(!(arg instanceof RPromise || arg instanceof RMissing))) {
+                        if (arg instanceof RPromise || arg instanceof RMissing) {
+                            if (!nonWrapSeen[i]) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                nonWrapSeen[i] = true;
+                            }
+                        } else {
+                            if (!wrapSeen[i]) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                wrapSeen[i] = true;
+                            }
                             arg = createPromise(arg);
                         }
                     }
@@ -990,14 +937,34 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return result;
         }
 
+        private final VectorLengthProfile varArgProfile = VectorLengthProfile.create();
+
         private void forcePromises(VirtualFrame frame, RArgsValuesAndNames varArgs) {
+            if (varArgsPromiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                varArgsPromiseHelper = insert(new PromiseCheckHelperNode());
+            }
+            varArgProfile.profile(varArgs.getLength());
+            int cachedLength = varArgProfile.getCachedLength();
+            if (cachedLength >= 0) {
+                forcePromisesUnrolled(frame, varArgs, cachedLength);
+            } else {
+                forcePromisesDynamic(frame, varArgs);
+            }
+        }
+
+        @ExplodeLoop
+        private void forcePromisesUnrolled(VirtualFrame frame, RArgsValuesAndNames varArgs, int length) {
+            Object[] array = varArgs.getArguments();
+            for (int i = 0; i < length; i++) {
+                array[i] = varArgsPromiseHelper.checkEvaluate(frame, array[i]);
+            }
+        }
+
+        private void forcePromisesDynamic(VirtualFrame frame, RArgsValuesAndNames varArgs) {
             Object[] array = varArgs.getArguments();
             for (int i = 0; i < array.length; i++) {
-                if (promiseHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseHelper = insert(new PromiseCheckHelperNode());
-                }
-                array[i] = promiseHelper.checkEvaluate(frame, array[i]);
+                array[i] = varArgsPromiseHelper.checkEvaluate(frame, array[i]);
             }
         }
 

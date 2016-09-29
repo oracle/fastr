@@ -22,82 +22,41 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.Pointer;
-import jnr.ffi.annotations.In;
-
-//Checkstyle: stop method name
-public class JNR_UserRng implements UserRngRFFI {
-    public interface UserRng {
-        void user_unif_init(@In int seed);
-
-        Pointer user_unif_rand();
-
-        Pointer user_unif_nseed();
-
-        Pointer user_unif_seedloc();
-    }
-
-    private static class UserRngProvider {
-        private static String libPath;
-        private static UserRng userRng;
-
-        UserRngProvider(String libPath) {
-            UserRngProvider.libPath = libPath;
-        }
-
-        @TruffleBoundary
-        private static UserRng createAndLoadLib() {
-            return LibraryLoader.create(UserRng.class).load(libPath);
-        }
-
-        static UserRng userRng() {
-            if (userRng == null) {
-                userRng = createAndLoadLib();
-            }
-            return userRng;
-        }
-    }
-
-    private static UserRng userRng() {
-        return UserRngProvider.userRng();
-    }
-
-    @Override
-    @SuppressWarnings("unused")
-    public void setLibrary(String path) {
-        new UserRngProvider(path);
-
-    }
-
+public class JNI_UserRng implements UserRngRFFI {
     @Override
     @TruffleBoundary
     public void init(int seed) {
-        userRng().user_unif_init(seed);
+        init(Function.Init.getAddress(), seed);
+
     }
 
     @Override
     @TruffleBoundary
     public double rand() {
-        Pointer pDouble = userRng().user_unif_rand();
-        return pDouble.getDouble(0);
+        return rand(Function.Rand.getAddress());
     }
 
     @Override
     @TruffleBoundary
     public int nSeed() {
-        return userRng().user_unif_nseed().getInt(0);
+        return nSeed(Function.NSeed.getAddress());
     }
 
     @Override
     @TruffleBoundary
     public void seeds(int[] n) {
-        Pointer pInt = userRng().user_unif_seedloc();
-        for (int i = 0; i < n.length; i++) {
-            n[i] = pInt.getInt(i * 4);
-        }
+        seeds(Function.Seedloc.getAddress(), n);
     }
+
+    private static native void init(long address, int seed);
+
+    private static native double rand(long address);
+
+    private static native int nSeed(long address);
+
+    private static native void seeds(long address, int[] n);
 }

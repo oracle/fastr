@@ -46,6 +46,6 @@ public class TestBuiltin_Mod extends TestBase {
     public void testMod() {
         assertEval("{ round(Mod(1+1i)*10000) }");
         assertEval("{ Mod(as.raw(12)) }");
-        assertEval("{ is.integer(Mod(FALSE) }");
+        assertEval("{ is.integer(Mod(FALSE)) }");
     }
 }

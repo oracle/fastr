@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
@@ -274,6 +273,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();
     private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
     private final ConditionProfile selectPositionsProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile originalDimNamesPRofile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
@@ -311,9 +312,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (newDimNames != null) {
                 extractedTarget.setDimNames(RDataFactory.createList(newDimNames));
             }
-        } else if (newDimNames != null && originalDimNames.getLength() > 0) {
+        } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
-            if (foundNames != null) {
+            if (foundNamesProfile.profile(foundNames != null)) {
                 foundNames = foundDimNamesProfile.profile(foundNames);
                 if (foundNames.getLength() > 0) {
                     metadataApplied.enter();
@@ -323,7 +324,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private final BranchProfile droppedDimensionProfile = BranchProfile.create();
+    private final ConditionProfile droppedDimensionProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
     private int countDimensions(PositionProfile[] boundsProfile) {
@@ -331,8 +332,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             int dimCount = numberOfDimensions;
             for (int i = 0; i < numberOfDimensions; i++) {
                 int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
-                if (selectedPositionsCount == 1) {
-                    droppedDimensionProfile.enter();
+                if (droppedDimensionProfile.profile(selectedPositionsCount == 1)) {
                     dimCount--;
                 }
             }
@@ -342,6 +342,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
+    private final ConditionProfile srcNamesProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile srcNamesValueProfile = ValueProfile.createClassProfile();
     private final ConditionProfile newNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
@@ -353,8 +355,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 continue;
             }
 
-            Object srcNames = originalDimNames.getDataAt(currentDimIndex);
-            if (srcNames != RNull.instance) {
+            Object srcNames = srcNamesValueProfile.profile(originalDimNames.getDataAt(currentDimIndex));
+            if (srcNamesProfile.profile(srcNames != RNull.instance)) {
                 Object position = positions[currentDimIndex];
 
                 Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex,

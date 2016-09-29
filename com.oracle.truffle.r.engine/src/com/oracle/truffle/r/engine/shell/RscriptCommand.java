@@ -99,22 +99,23 @@ public class RscriptCommand {
     }
 
     public static void main(String[] args) {
-        doMain(args, true, System.in, System.out);
+        doMain(args, null, true, System.in, System.out);
         // never returns
         throw RInternalError.shouldNotReachHere();
     }
 
-    public static int doMain(String[] args, boolean initial, InputStream inStream, OutputStream outStream) {
+    public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
         // Since many of the options are shared parse them from an RSCRIPT perspective.
         // Handle --help and --version specially, as they exit.
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
         preprocessRScriptOptions(options);
-        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream);
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream, env);
         return RCommand.readEvalPrint(vm);
 
     }
 
     private static void printVersionAndExit() {
+        // TODO Not ok in nested context
         System.out.print("R scripting front-end version ");
         System.out.println(RVersionNumber.FULL);
         System.exit(0);

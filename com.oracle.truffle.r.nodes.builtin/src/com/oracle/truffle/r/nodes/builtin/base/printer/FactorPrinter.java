@@ -63,7 +63,8 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
         RAbstractVector v = RClosures.createFactorToVector(operand, true, levels);
         PrintContext vectorPrintCtx = printCtx.cloneContext();
         vectorPrintCtx.parameters().setQuote(false);
-        ValuePrinters.INSTANCE.println(v, vectorPrintCtx);
+        ValuePrinters.INSTANCE.print(v, vectorPrintCtx);
+        ValuePrinters.printNewLine(printCtx);
 
         final PrintWriter out = printCtx.output();
         out.print("Levels:");

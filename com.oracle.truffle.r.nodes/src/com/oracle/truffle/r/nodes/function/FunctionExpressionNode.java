@@ -34,13 +34,10 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFr
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
@@ -94,27 +91,6 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
 
     public RootCallTarget getCallTarget() {
         return callTarget;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin("function");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) callTarget.getRootNode();
-        /*
-         * Cannot just serialize fdn, as this needs to generate slightly different output. In
-         * particular the body is always a LISTSXP and never shortened.
-         */
-        fdn.serializeFormals(state);
-        state.openPairList(SEXPTYPE.LISTSXP);
-        fdn.serializeBody(state);
-        state.switchCdrToCar();
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.setCar(RNull.instance);
-        state.setCdr(RNull.instance);
-        state.setCdr(state.closePairList());
-        state.setCdr(state.closePairList());
-        state.setCdr(state.closePairList());
     }
 
     @Override

@@ -53,12 +53,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@link #SOURCE_UNAVAILABLE}, that can be used instead of {@code null} and identify the situation.
  * One particular case is {@link #LAZY_DEPARSE} which indicates that a valid {@link SourceSection}
  * can be produced for the associated node, but it is computed lazily, when requested.
- *
- * Every implementor of this interface must provide an implementation of the {@link #serializeImpl}
- * method. These are invoked by the corresponding method on {@link RBaseNode} after the correct
- * {@link RSyntaxNode} is located.
  */
-public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
+public interface RSyntaxNode extends RSyntaxElement {
 
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is

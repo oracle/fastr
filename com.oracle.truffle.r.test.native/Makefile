@@ -24,6 +24,8 @@
 .PHONY: all clean
 
 export TOPDIR = $(CURDIR)
+# all output goes into the com.oracle.truffle.r.test project for packaging into a single distribution
+export MX_OUTPUT_DIR = $(abspath $(TOPDIR)/../mxbuild/com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test)
 OSNAME := $(shell uname)
 
 all:

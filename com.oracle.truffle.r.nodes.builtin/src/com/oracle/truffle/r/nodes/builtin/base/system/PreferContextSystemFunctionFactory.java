@@ -33,10 +33,9 @@ public class PreferContextSystemFunctionFactory extends SystemFunctionFactory {
     private ProcessSystemFunctionFactory processSystemFunctionFactory;
 
     @Override
-    Object execute(VirtualFrame frame, String command, boolean intern) {
-        String[] parts = command.split(" ");
-        String rcommand = isFastR(parts[0]);
-        if (rcommand == null) {
+    public Object execute(VirtualFrame frame, String command, boolean intern) {
+        CommandInfo commandInfo = checkRCommand(command);
+        if (commandInfo == null) {
             if (processSystemFunctionFactory == null) {
                 processSystemFunctionFactory = new ProcessSystemFunctionFactory();
             }
@@ -46,7 +45,6 @@ public class PreferContextSystemFunctionFactory extends SystemFunctionFactory {
                 contextSystemFunctionFactory = new ContextSystemFunctionFactory();
             }
             return contextSystemFunctionFactory.execute(frame, command, intern);
-
         }
     }
 }

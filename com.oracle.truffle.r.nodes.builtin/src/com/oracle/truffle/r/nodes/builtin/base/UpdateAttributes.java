@@ -217,7 +217,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
      */
     @Specialization(guards = {"!isAbstractContainer(o)"})
     @TruffleBoundary
-    protected Object doOtherNull(Object o, RNull operand) {
+    protected Object doOtherNull(Object o, @SuppressWarnings("unused") RNull operand) {
         checkAttributable(o);
         Object obj = getNonShared(o);
         RAttributable attrObj = (RAttributable) obj;

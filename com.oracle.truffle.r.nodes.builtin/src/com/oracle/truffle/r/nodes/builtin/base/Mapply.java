@@ -23,7 +23,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -39,8 +39,9 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.Subscript;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SubscriptNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
@@ -78,7 +79,7 @@ public abstract class Mapply extends RBuiltinNode {
 
     protected static final class ElementNode extends Node {
         @Child private Length lengthNode;
-        @Child private AccessArraySubscriptBuiltin indexedLoadNode;
+        @Child private Subscript indexedLoadNode;
         @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
         private final String argName;
@@ -87,7 +88,7 @@ public abstract class Mapply extends RBuiltinNode {
             // the name is a hack to treat ReadVariableNode-s as syntax nodes
             this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create(null));
-            this.indexedLoadNode = insert(InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null));
+            this.indexedLoadNode = insert(SubscriptNodeGen.create(null));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
             this.argName = argName;
         }
@@ -124,7 +125,7 @@ public abstract class Mapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
-        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, AccessArraySubscriptBuiltin indexedLoadNode) {
+        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, Subscript indexedLoadNode) {
             Object listElem = dots.getDataAt(listIndex);
             RAbstractContainer vec = null;
             if (listElem instanceof RAbstractContainer) {
@@ -196,7 +197,7 @@ public abstract class Mapply extends RBuiltinNode {
                         @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
                         @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode slotNode,
                         @Cached("create()") RLengthNode lengthNode,
-                        @Cached("createIndexedLoadNode()") AccessArraySubscriptBuiltin indexedLoadNode,
+                        @Cached("createIndexedLoadNode()") Subscript indexedLoadNode,
                         @Cached("createExplicitCallNode(argsIdentifier)") RCallNode callNode) {
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
@@ -280,8 +281,8 @@ public abstract class Mapply extends RBuiltinNode {
             return RCallNode.createExplicitCall(argsIdentifier);
         }
 
-        protected AccessArraySubscriptBuiltin createIndexedLoadNode() {
-            return InfixFunctionsFactory.AccessArraySubscriptBuiltinNodeGen.create(null);
+        protected Subscript createIndexedLoadNode() {
+            return SubscriptNodeGen.create(null);
         }
 
         protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {

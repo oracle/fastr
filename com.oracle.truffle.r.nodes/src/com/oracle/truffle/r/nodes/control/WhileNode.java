@@ -35,9 +35,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -87,20 +85,6 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     public boolean isRepeat() {
         return isRepeat;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin(isRepeat ? "repeat" : "while");
-        if (!isRepeat) {
-            state.openPairList(SEXPTYPE.LISTSXP);
-            // condition
-            state.serializeNodeSetCar(getCondition());
-        }
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getBody());
-        state.linkPairList(isRepeat ? 1 : 2);
-        state.setCdr(state.closePairList());
     }
 
     private static final class WhileRepeatingNode extends RBaseNode implements RepeatingNode {

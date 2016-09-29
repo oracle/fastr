@@ -185,7 +185,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends RAbstractContainer> T reuseNonShared(T obj) {
+    private static <T extends RAbstractContainer> T reuseNonShared(T obj) {
         return (T) obj.getNonShared();
     }
 

@@ -84,17 +84,6 @@ public interface RRuntimeASTAccess {
     RSyntaxFunction getSyntaxFunction(RFunction f);
 
     /**
-     * Serialize a runtime value that requires non-standard treatment.
-     */
-    Object serialize(RSerialize.State state, Object f);
-
-    /**
-     * Helper function for {@code serialize} working around cyclic dependency. {@code node} is an
-     * {@RNode}.
-     */
-    void serializeNode(RSerialize.State state, Object node);
-
-    /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
      * associated with the node stored with {@code rl}.
      */
@@ -192,11 +181,12 @@ public interface RRuntimeASTAccess {
      * .fastr.context.r/rscript. The args are everything you might legally enter into a
      * shell,including I/O redirection. The result is an integer status code if "intern==false",
      * otherwise it is a character vector of the output, with a 'status' attribute containing the
-     * status code.
+     * status code. The env arguments are an optional settings of environment variables of the form
+     * X=Y.
      */
 
-    Object rcommandMain(String[] args, boolean intern);
+    Object rcommandMain(String[] args, String[] env, boolean intern);
 
-    Object rscriptMain(String[] args, boolean intern);
+    Object rscriptMain(String[] args, String[] env, boolean intern);
 
 }

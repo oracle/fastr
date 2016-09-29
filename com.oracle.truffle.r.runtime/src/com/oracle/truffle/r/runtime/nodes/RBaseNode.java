@@ -27,7 +27,6 @@ import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -118,11 +117,6 @@ public abstract class RBaseNode extends Node {
             current = current.getParent();
         }
         return null;
-    }
-
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        syntaxNode.serializeImpl(state);
     }
 
     @Override

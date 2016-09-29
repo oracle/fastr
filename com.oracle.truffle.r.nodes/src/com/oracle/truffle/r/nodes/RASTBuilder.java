@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
@@ -145,7 +146,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
                                         RSyntaxNode[]::new);
 
-        return RCallNode.createCall(source, lhs.asRNode(), signature, nodes);
+        return RCallSpecialNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
     private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
