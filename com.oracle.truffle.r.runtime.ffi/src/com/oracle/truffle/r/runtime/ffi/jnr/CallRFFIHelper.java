@@ -675,13 +675,7 @@ public class CallRFFIHelper {
         }
         int code = SEXPTYPE.gnuRCodeForObject(x);
         if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
-            RList l;
-            if (x instanceof RPairList) {
-                l = ((RPairList) x).toRList();
-            } else {
-                l = (RList) x;
-            }
-            return RContext.getRRuntimeASTAccess().fromList(l, RLanguage.RepType.CALL);
+            return RLanguage.fromList(x, RLanguage.RepType.CALL);
         } else {
             throw unimplemented();
         }
@@ -768,16 +762,8 @@ public class CallRFFIHelper {
         }
         if (e instanceof RLanguage) {
             RLanguage lang = (RLanguage) e;
-            int length = RContext.getRRuntimeASTAccess().getLength(lang);
-            Object obj = RNull.instance;
-
-            // TODO: missing argument names in the tags
-            for (int i = length - 1; i >= 1; i--) {
-                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
-                obj = RDataFactory.createPairList(element, obj);
-            }
-
-            return obj;
+            RPairList l = lang.getPairList();
+            return l.cdr();
         } else {
             guaranteeInstanceOf(e, RPairList.class);
             return ((RPairList) e).cdr();
@@ -802,16 +788,8 @@ public class CallRFFIHelper {
         }
         if (e instanceof RLanguage) {
             RLanguage lang = (RLanguage) e;
-            int length = RContext.getRRuntimeASTAccess().getLength(lang);
-            Object obj = RNull.instance;
-
-            // TODO: missing argument names in the tags
-            for (int i = length - 1; i >= 2; i--) {
-                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(lang, i);
-                obj = RDataFactory.createPairList(element, obj);
-            }
-
-            return obj;
+            RPairList l = lang.getPairList();
+            return l.cddr();
         } else {
             guaranteeInstanceOf(e, RPairList.class);
             return ((RPairList) e).cddr();
