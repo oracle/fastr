@@ -23,14 +23,9 @@
 package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class JNI_PCRE implements PCRERFFI {
-    JNI_PCRE() {
-        System.load(LibPaths.getBuiltinLibPath("pcre"));
-    }
-
     @Override
     public long maketables() {
         return nativeMaketables();

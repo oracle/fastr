@@ -79,6 +79,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RPackageSource.initialize();
 
         } catch (Throwable t) {
+            t.printStackTrace();
             Utils.rSuicide("error during R language initialization");
         }
     }

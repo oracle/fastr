@@ -24,15 +24,14 @@ package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class JNI_C implements CRFFI {
 
     /**
-     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
-     * native array types, no upcalls are possible, and no result is returned. However, the
-     * receiving function expects actual native arrays (not SEXPs), so these have to be handled on
-     * the JNI side.
+     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be native
+     * array types, no upcalls are possible, and no result is returned. However, the receiving
+     * function expects actual native arrays (not SEXPs), so these have to be handled on the JNI
+     * side.
      */
     @Override
     @TruffleBoundary

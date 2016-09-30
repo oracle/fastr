@@ -1,6 +1,6 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 #java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
-java8 : {name : labsjdk, version : "8u92-jvmci-0.20", platformspecific: true}
+java8 : {name : labsjdk, version : "8u92-jvmci-0.21", platformspecific: true}
 logfiles : [
     "fastr_errors.log"
     "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
@@ -20,7 +20,10 @@ common : {
     gcc-build-essentials : ">=4.9.1" # GCC 4.9.0 fails on cluster
     readline : "==6.3"
   }
+  # TODO this will eventually relocate elsewhere
   environment : {
+    PKG_INCLUDE_FLAGS_OVERRIDE : """"-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include""""
+    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1//lib""""
   }
   logs: ${logfiles}
   timelimit : "1:00:00"
@@ -39,7 +42,7 @@ java8Downloads : {
 
 gateTest : ${common} ${java8Downloads} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,LDD, UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
@@ -49,7 +52,7 @@ gateTestDarwin : ${java8Downloads} {
     "pip:pylint" : "==1.1.0"
     "xz" : ""
   }
-  environment : ${common.environment} {
+  environment :  {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     F77: "/usr/local/bin/gfortran-4.9"
   }
@@ -57,7 +60,7 @@ gateTestDarwin : ${java8Downloads} {
   timelimit : "1:00:00"
 
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,LDD, UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 

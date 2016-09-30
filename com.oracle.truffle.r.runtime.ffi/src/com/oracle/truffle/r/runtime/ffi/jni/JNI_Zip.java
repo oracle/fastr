@@ -23,17 +23,12 @@
 package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
  * Zip support using JNI.
  */
 public class JNI_Zip implements ZipRFFI {
-
-    JNI_Zip() {
-        System.load(LibPaths.getBuiltinLibPath("z"));
-    }
 
     @Override
     @TruffleBoundary

@@ -28,7 +28,7 @@ import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
-import mx_findlib
+import mx_copylib
 import os
 
 '''
@@ -243,6 +243,16 @@ def _fastr_gate_runner(args, tasks):
         if t:
             if mx.checkcopyrights(['--primary']) != 0:
                 t.abort('copyright errors')
+
+    with mx_gate.Task('LDD', tasks) as t:
+        if t:
+            libpath = join(_fastr_suite.dir, 'lib')
+            if platform.system() == 'Darwin':
+                rc = subprocess.call(['otool', '-L', join(libpath, 'libR.dylib')])
+            else:
+                rc = subprocess.call(['ldd', join(libpath, 'libR.so')])
+            if rc != 0:
+                t.abort('LDD failed')
 
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
@@ -534,7 +544,7 @@ _commands = {
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
-    'rfindlib' : [mx_findlib.findlib, '[]'],
+    'rcopylib' : [mx_copylib.copylib, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

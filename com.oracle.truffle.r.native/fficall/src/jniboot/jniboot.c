@@ -27,20 +27,21 @@
 #include <dlfcn.h>
 #include <jni.h>
 
+// It seems that an internal (JVM) dlsym call can occur between a call to these functions and dlerror
+// (probably resolving the JNI dlerror symbol, so we capture it here (N.B. depends on single
+// threaded limitation).
+
+static char *last_dlerror;
+
 JNIEXPORT jlong JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlopen(JNIEnv *env, jclass c, jstring jpath, jboolean local, jboolean now) {
     const char *path = (*env)->GetStringUTFChars(env, jpath, NULL);
     int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
     void *handle = dlopen(path, flags);
+    last_dlerror = dlerror();
     (*env)->ReleaseStringUTFChars(env, jpath, path);
     return (jlong) handle;
 }
-
-// It seems that an internal (JVM) dlsym call can occur between a call to this dlsym and dlerror
-// (probably resolving the JNI dlerror symbol, so we capture it here (N.B. depends on single
-// threaded limitation).
-
-static char *last_dlerror;
 
 JNIEXPORT jlong JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlsym(JNIEnv *env, jclass c, jlong handle, jstring jsymbol) {
