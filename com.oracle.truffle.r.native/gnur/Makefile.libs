@@ -33,8 +33,12 @@ endif
 
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
+# at a minimum we need to know where libpcre/libz are located,
+# to keep the Java side simpler, we copy them to $(FASTR_LIB_DIR)
+PCRE_TARGET := $(FASTR_LIB_DIR)/libpcre$(DYLIB_EXT)
+Z_TARGET := $(FASTR_LIB_DIR)/libz$(DYLIB_EXT)
 
-all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET)
+all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET) $(Z_TARGET)
 
 $(FASTR_LIB_DIR):
 	mkdir -p $(FASTR_LIB_DIR)
@@ -51,7 +55,13 @@ ifeq ($(OS_NAME),Darwin)
 	install_name_tool -id $(LAPACK_TARGET) $(LAPACK_TARGET)
 endif
 
+$(PCRE_TARGET): 
+	cp $(shell mx rfindlib pcre) $(PCRE_TARGET)
+	
+$(Z_TARGET): 
+	cp $(shell mx rfindlib z) $(Z_TARGET)
+	
 clean:
-	rm -f $(BLAS_TARGET) $(LAPACK_TARGET)
+	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET) $(Z_TARGET)
 
 		

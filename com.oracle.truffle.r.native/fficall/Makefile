@@ -33,8 +33,10 @@ endif
 
 .PHONY: all clean objs
 
-C_LIBNAME := libR$(DYLIB_EXT)
-C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+R_LIBNAME := libR$(DYLIB_EXT)
+R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
+BOOTJNI_LIBNAME := libjniboot$(DYLIB_EXT)
+BOOTJNI_LIB := $(FASTR_LIB_DIR)/$(BOOTJNI_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -42,20 +44,26 @@ endif
 
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 
-all: $(C_LIB)
+all: $(R_LIB) $(BOOTJNI_LIB)
 
-$(C_LIB): objs 
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) -L $(GNUR_HOME)/lib -lRblas $(VERSION_FLAGS)
+$(R_LIB): objs 
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(R_LIB) $(wildcard lib/*.o) -L $(GNUR_HOME)/lib -lRblas $(VERSION_FLAGS)
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(C_LIB)
+	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(R_LIB)
 endif
 
 objs:
 	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
 
+$(BOOTJNI_LIB): bootobjs
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(BOOTJNI_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
+
+bootobjs:
+	$(MAKE) -C src/jniboot all
+
 clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
-	rm -rf $(C_LIB)
+	rm -rf $(R_LIB)
 	

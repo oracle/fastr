@@ -40,6 +40,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link PCRERFFI}: interface to PCRE library (Perl regexp).</li>
  * <li>{@link ZipRFFI}: interface to zip compression</li>
  * <li>{@link REmbedRFFI}: interface to embedded support</li>
+ * <li>{@link MiscRFFI}: interface to miscellaneous native functions</li>
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
@@ -69,5 +70,7 @@ public interface RFFI {
     ZipRFFI getZipRFFI();
 
     REmbedRFFI getREmbedRFFI();
+
+    MiscRFFI getMiscRFFI();
 
 }

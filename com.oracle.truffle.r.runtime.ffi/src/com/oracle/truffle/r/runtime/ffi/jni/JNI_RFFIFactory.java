@@ -20,11 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -32,7 +31,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
@@ -46,33 +45,17 @@ import com.oracle.truffle.r.runtime.ffi.generic.Generic_Grid;
 import com.oracle.truffle.r.runtime.ffi.generic.Generic_Tools;
 
 /**
- * JNR/JNI-based factory. The majority of the FFI instances are instantiated on demand.
+ * JNI-based factory. The majority of the FFI instances are instantiated on demand.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
+public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
 
-    public JNR_RFFIFactory() {
+    public JNI_RFFIFactory() {
     }
 
     @Override
     protected void initialize(boolean runtime) {
         // This must load early as package libraries reference symbols in it.
         getCallRFFI();
-        /*
-         * Some package C code calls these functions and, therefore, expects the linpack symbols to
-         * be available, which will not be the case unless one of the functions has already been
-         * called from R code. So we eagerly load the library to define the symbols.
-         *
-         * There is an additional problem when running without a *_LIBRARY_PATH being set which is
-         * mandated by Mac OSX El Capitan, which is we must tell JNR where to find the libraries.
-         */
-        String jnrLibPath = LibPaths.getBuiltinLibPath();
-        if (RPlatform.getOSInfo().osName.equals("Mac OS X")) {
-            // Why this is necessary is a JNR mystery
-            jnrLibPath += ":/usr/lib";
-        }
-        System.setProperty("jnr.ffi.library.path", jnrLibPath);
-        JNR_RAppl.linpack();
-        JNR_Lapack.lapack();
     }
 
     /**
@@ -98,7 +81,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public BaseRFFI getBaseRFFI() {
         if (baseRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            baseRFFI = new JNR_Base();
+            baseRFFI = new JNI_Base();
         }
         return baseRFFI;
     }
@@ -109,7 +92,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public LapackRFFI getLapackRFFI() {
         if (lapackRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lapackRFFI = new JNR_Lapack();
+            lapackRFFI = new JNI_Lapack();
         }
         return lapackRFFI;
     }
@@ -120,7 +103,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public RApplRFFI getRApplRFFI() {
         if (rApplRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            rApplRFFI = new JNR_RAppl();
+            rApplRFFI = new JNI_RAppl();
         }
         return rApplRFFI;
     }
@@ -131,7 +114,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public StatsRFFI getStatsRFFI() {
         if (statsRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            statsRFFI = new JNR_Stats();
+            statsRFFI = new JNI_Stats();
         }
         return statsRFFI;
     }
@@ -175,7 +158,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public CRFFI getCRFFI() {
         if (cRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            cRFFI = new CRFFI_JNR_Invoke();
+            cRFFI = new JNI_C();
         }
         return cRFFI;
     }
@@ -186,7 +169,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public CallRFFI getCallRFFI() {
         if (callRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callRFFI = new JNI_CallRFFI();
+            callRFFI = new JNI_Call();
         }
         return callRFFI;
     }
@@ -197,7 +180,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public ZipRFFI getZipRFFI() {
         if (zipRFFI == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            zipRFFI = new JNR_Zip();
+            zipRFFI = new JNI_Zip();
         }
         return zipRFFI;
     }
@@ -207,8 +190,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     @Override
     public PCRERFFI getPCRERFFI() {
         if (pcreRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pcreRFFI = new JNR_PCRE();
+            pcreRFFI = new JNI_PCRE();
         }
         return pcreRFFI;
     }
@@ -221,6 +203,16 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
             rEmbedRFFI = new JNI_REmbed();
         }
         return rEmbedRFFI;
+    }
+
+    private MiscRFFI miscRFFI;
+
+    @Override
+    public MiscRFFI getMiscRFFI() {
+        if (miscRFFI == null) {
+            miscRFFI = new JNI_Misc();
+        }
+        return miscRFFI;
     }
 
 }

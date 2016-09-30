@@ -20,45 +20,43 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
+import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
-public class JNI_REmbed implements REmbedRFFI {
-
+public class JNI_UserRng implements UserRngRFFI {
     @Override
-    public void suicide(String x) {
-        nativeSuicide(x);
+    @TruffleBoundary
+    public void init(int seed) {
+        init(Function.Init.getAddress(), seed);
+
     }
 
     @Override
-    public void cleanUp(int type, int x, int y) {
-        nativeCleanUp(type, x, y);
+    @TruffleBoundary
+    public double rand() {
+        return rand(Function.Rand.getAddress());
     }
 
     @Override
-    public String readConsole(String prompt) {
-        return nativeReadConsole(prompt);
+    @TruffleBoundary
+    public int nSeed() {
+        return nSeed(Function.NSeed.getAddress());
     }
 
     @Override
-    public void writeConsole(String x) {
-        nativeWriteConsole(x);
+    @TruffleBoundary
+    public void seeds(int[] n) {
+        seeds(Function.Seedloc.getAddress(), n);
     }
 
-    @Override
-    public void writeErrConsole(String x) {
-        nativeWriteErrConsole(x);
-    }
+    private static native void init(long address, int seed);
 
-    private static native void nativeSuicide(String x);
+    private static native double rand(long address);
 
-    private static native String nativeReadConsole(String prompt);
+    private static native int nSeed(long address);
 
-    private static native void nativeWriteConsole(String x);
-
-    private static native void nativeWriteErrConsole(String x);
-
-    private static native void nativeCleanUp(int type, int x, int y);
-
+    private static native void seeds(long address, int[] n);
 }

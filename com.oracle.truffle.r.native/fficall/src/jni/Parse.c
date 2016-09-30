@@ -31,7 +31,7 @@ static jfieldID parseExprFieldID;
 
 void init_parse(JNIEnv *env) {
 	parseMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 1);
-	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$ParseResult");
+	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$ParseResult");
 	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
 	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
 }

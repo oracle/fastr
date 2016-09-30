@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
 
-public interface ZipRFFI {
-    // zip compression/uncompression
+#include <rffiutils.h>
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+JNIEXPORT jdouble JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Misc_exactSumFunc(JNIEnv *env, jclass c, jdoubleArray values, jboolean hasNa, jboolean naRm) {
+	jint length = (*env)->GetArrayLength(env, values);
+	jdouble* contents = (jdouble*) (*env)->GetPrimitiveArrayCritical(env, values, NULL);
 
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, byte[] source);
+	long double sum = 0;
+	int i = 0;
+	if (!hasNa) {
+		for (; i < length - 3; i+= 4) {
+			sum += contents[i];
+			sum += contents[i + 1];
+			sum += contents[i + 2];
+			sum += contents[i + 3];
+		}
+	}
+	for (; i < length; i++) {
+		jdouble value = contents[i];
+		if (R_IsNA(value)) {
+			if (!naRm) {
+				(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+				return R_NaReal;
+			}
+		} else {
+			sum += value;
+		}
+	}
 
+	(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+	return sum;
 }

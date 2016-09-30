@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-public interface ZipRFFI {
-    // zip compression/uncompression
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.CRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+public class JNI_C implements CRFFI {
 
     /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
+     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
+     * native array types, no upcalls are possible, and no result is returned. However, the
+     * receiving function expects actual native arrays (not SEXPs), so these have to be handled on
+     * the JNI side.
      */
-    int uncompress(byte[] dest, byte[] source);
+    @Override
+    @TruffleBoundary
+    public synchronized void invoke(long address, Object[] args) {
+        c(address, args);
+    }
 
+    private static native void c(long address, Object[] args);
 }

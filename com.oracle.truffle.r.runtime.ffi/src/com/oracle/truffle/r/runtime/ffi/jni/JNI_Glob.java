@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <string.h>
-#include <glob.h>
-#include <jni.h>
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-static jmethodID addPathID = 0;
+import java.util.ArrayList;
 
-JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1Glob_doglob(JNIEnv *env, jobject obj, jstring pattern) {
-	glob_t globstruct;
+public class JNI_Glob {
+    private ArrayList<String> paths = new ArrayList<>();
 
-	if (addPathID == 0) {
-		addPathID = (*env)->GetMethodID(env, (*env)->GetObjectClass(env, obj), "addPath", "(Ljava/lang/String;)V");
-	}
+    public static ArrayList<String> glob(String pattern) {
+        JNI_Glob jniGlob = new JNI_Glob();
+        jniGlob.doglob(pattern);
+        return jniGlob.paths;
+    }
 
-	const char *patternChars = (*env)->GetStringUTFChars(env, pattern, NULL);
-	int rc = glob(patternChars, 0, NULL, &globstruct);
-	if (rc == 0) {
-		int i;
-		for (i = 0; i < globstruct.gl_pathc; i++) {
-			char *path = globstruct.gl_pathv[i];
-			jstring pathString = (*env)->NewStringUTF(env, path);
-			(*env)->CallVoidMethod(env, obj, addPathID, pathString);
-		}
-	}
+    private void addPath(String path) {
+        paths.add(path);
+    }
+
+    private native void doglob(String pattern);
 }

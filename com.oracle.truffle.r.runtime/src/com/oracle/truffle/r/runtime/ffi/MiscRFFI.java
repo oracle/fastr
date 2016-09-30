@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.ArrayList;
+/**
+ * Miscellaneous methods implemented in native code.
+ *
+ */
+public interface MiscRFFI {
+    double exactSum(double[] values, boolean hasNa, boolean naRm);
 
-public class JNI_Glob {
-    private ArrayList<String> paths = new ArrayList<>();
-
-    public static ArrayList<String> glob(String pattern) {
-        JNI_Glob jniGlob = new JNI_Glob();
-        jniGlob.doglob(pattern);
-        return jniGlob.paths;
-    }
-
-    private void addPath(String path) {
-        paths.add(path);
-    }
-
-    private native void doglob(String pattern);
 }

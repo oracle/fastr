@@ -20,43 +20,45 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 
-public class JNI_UserRng implements UserRngRFFI {
+public class JNI_REmbed implements REmbedRFFI {
+
     @Override
-    @TruffleBoundary
-    public void init(int seed) {
-        init(Function.Init.getAddress(), seed);
-
+    public void suicide(String x) {
+        nativeSuicide(x);
     }
 
     @Override
-    @TruffleBoundary
-    public double rand() {
-        return rand(Function.Rand.getAddress());
+    public void cleanUp(int type, int x, int y) {
+        nativeCleanUp(type, x, y);
     }
 
     @Override
-    @TruffleBoundary
-    public int nSeed() {
-        return nSeed(Function.NSeed.getAddress());
+    public String readConsole(String prompt) {
+        return nativeReadConsole(prompt);
     }
 
     @Override
-    @TruffleBoundary
-    public void seeds(int[] n) {
-        seeds(Function.Seedloc.getAddress(), n);
+    public void writeConsole(String x) {
+        nativeWriteConsole(x);
     }
 
-    private static native void init(long address, int seed);
+    @Override
+    public void writeErrConsole(String x) {
+        nativeWriteErrConsole(x);
+    }
 
-    private static native double rand(long address);
+    private static native void nativeSuicide(String x);
 
-    private static native int nSeed(long address);
+    private static native String nativeReadConsole(String prompt);
 
-    private static native void seeds(long address, int[] n);
+    private static native void nativeWriteConsole(String x);
+
+    private static native void nativeWriteErrConsole(String x);
+
+    private static native void nativeCleanUp(int type, int x, int y);
+
 }

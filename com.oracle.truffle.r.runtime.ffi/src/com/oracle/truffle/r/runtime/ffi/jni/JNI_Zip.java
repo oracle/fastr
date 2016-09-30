@@ -20,54 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.annotations.In;
-import jnr.ffi.annotations.Out;
-
 /**
- * Zip support using JNR.
+ * Zip support using JNI.
  */
-public class JNR_Zip implements ZipRFFI {
-    public interface Zip {
-        int compress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
+public class JNI_Zip implements ZipRFFI {
 
-        int uncompress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
-    }
-
-    private static class ZipProvider {
-        private static Zip zip;
-
-        @TruffleBoundary
-        private static Zip createAndLoadLib() {
-            return LibraryLoader.create(Zip.class).load("z");
-        }
-
-        static Zip zip() {
-            if (zip == null) {
-                zip = createAndLoadLib();
-            }
-            return zip;
-        }
-    }
-
-    private static Zip zip() {
-        return ZipProvider.zip();
+    JNI_Zip() {
+        System.load(LibPaths.getBuiltinLibPath("z"));
     }
 
     @Override
     @TruffleBoundary
-    public int compress(byte[] dest, long[] destlen, byte[] source) {
-        return zip().compress(dest, destlen, source, source.length);
+    public int compress(byte[] dest, byte[] source) {
+        int rc = native_compress(dest, dest.length, source, source.length);
+        return rc;
     }
 
     @Override
     @TruffleBoundary
-    public int uncompress(byte[] dest, long[] destlen, byte[] source) {
-        return zip().uncompress(dest, destlen, source, source.length);
+    public int uncompress(byte[] dest, byte[] source) {
+        int rc = native_uncompress(dest, dest.length, source, source.length);
+        return rc;
     }
+
+    // Checkstyle: stop method name
+
+    private static native int native_compress(byte[] dest, long destlen, byte[] source, long sourcelen);
+
+    private static native int native_uncompress(byte[] dest, long destlen, byte[] source, long sourcelen);
 }

@@ -84,6 +84,8 @@ void init_internals(JNIEnv *env);
 void init_random(JNIEnv *env);
 void init_utils(JNIEnv *env);
 void init_parse(JNIEnv *env);
+void init_pcre(JNIEnv *env);
+void init_c(JNIEnv *env);
 
 void setEmbedded(void);
 

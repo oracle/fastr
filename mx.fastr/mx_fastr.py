@@ -28,6 +28,7 @@ import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
+import mx_findlib
 import os
 
 '''
@@ -533,6 +534,7 @@ _commands = {
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
+    'rfindlib' : [mx_findlib.findlib, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

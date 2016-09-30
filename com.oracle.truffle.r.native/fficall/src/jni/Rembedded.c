@@ -421,15 +421,15 @@ static void REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string, 
 	callExit(jniEnv);
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1REmbed_nativeWriteConsole(JNIEnv *jniEnv, jclass c, jstring string) {
 	REmbed_nativeWriteConsole(jniEnv, c, string, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeWriteErrConsole(JNIEnv *jniEnv, jclass c, jstring string) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1REmbed_nativeWriteErrConsole(JNIEnv *jniEnv, jclass c, jstring string) {
 	REmbed_nativeWriteConsole(jniEnv, c, string, 1);
 }
 
-JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeReadConsole(JNIEnv *jniEnv, jclass c, jstring prompt) {
+JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1REmbed_nativeReadConsole(JNIEnv *jniEnv, jclass c, jstring prompt) {
 	jmp_buf error_jmpbuf;
 	jstring result = NULL;
 	callEnter(jniEnv, &error_jmpbuf);
@@ -444,7 +444,7 @@ JNIEXPORT jstring JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_
 	return result;
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeCleanUp(JNIEnv *jniEnv, jclass c, jint x, jint y, jint z) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1REmbed_nativeCleanUp(JNIEnv *jniEnv, jclass c, jint x, jint y, jint z) {
 	jmp_buf error_jmpbuf;
 	callEnter(jniEnv, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
@@ -453,7 +453,7 @@ JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nat
 	callExit(jniEnv);
 }
 
-JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1REmbed_nativeSuicide(JNIEnv *jniEnv, jclass c, jstring string) {
+JNIEXPORT void JNICALL Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1REmbed_nativeSuicide(JNIEnv *jniEnv, jclass c, jstring string) {
 	jmp_buf error_jmpbuf;
 	callEnter(jniEnv, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {

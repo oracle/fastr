@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
 import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
 import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCallReturn;
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
@@ -43,9 +44,9 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
  *
  * The JNI layer is not (currently) MT safe, so all calls are single threaded.
  */
-public class JNI_CallRFFI implements CallRFFI {
+public class JNI_Call implements CallRFFI {
 
-    JNI_CallRFFI() {
+    JNI_Call() {
         loadLibrary();
     }
 
@@ -57,9 +58,15 @@ public class JNI_CallRFFI implements CallRFFI {
      * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
      * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
      * so we have to do an additional {@code System.load} to achieve that.
+     *
+     * Before we do that we must load {@code libjniboot} because the implementation of
+     * {@link BaseRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
      */
     @TruffleBoundary
     private static void loadLibrary() {
+        String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
+        System.load(libjnibootPath);
+
         String librffiPath = LibPaths.getBuiltinLibPath("R");
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
@@ -118,8 +125,6 @@ public class JNI_CallRFFI implements CallRFFI {
     private static native void nativeSetTempDir(String tempDir);
 
     private static native void nativeSetInteractive(boolean interactive);
-
-    private static native double exactSumFunc(double[] values, boolean hasNa, boolean naRm);
 
     private static native Object call(long address, Object[] args);
 
@@ -194,17 +199,4 @@ public class JNI_CallRFFI implements CallRFFI {
         }
     }
 
-    @Override
-    public double exactSum(double[] values, boolean hasNa, boolean naRm) {
-        if (traceEnabled()) {
-            traceDownCall("exactSum");
-        }
-        try {
-            return exactSumFunc(values, hasNa, naRm);
-        } finally {
-            if (traceEnabled()) {
-                traceDownCallReturn("exactSum", null);
-            }
-        }
-    }
 }

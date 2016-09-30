@@ -82,7 +82,7 @@ public abstract class Sum extends RBuiltinNode {
         int length = lengthProfile.profile(vector.getLength());
 
         if (needsExactSumProfile.profile(length >= 3)) {
-            return RFFIFactory.getRFFI().getCallRFFI().exactSum(vector.getDataWithoutCopying(), !vector.isComplete(), cachedNaRm);
+            return RFFIFactory.getRFFI().getMiscRFFI().exactSum(vector.getDataWithoutCopying(), !vector.isComplete(), cachedNaRm);
         } else {
             na.enable(vector);
             loopProfile.profileCounted(length);

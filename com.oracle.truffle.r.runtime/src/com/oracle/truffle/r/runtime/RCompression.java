@@ -123,16 +123,12 @@ public class RCompression {
     }
 
     private static boolean gzipCompress(byte[] udata, byte[] cdata) {
-        long[] cdatalen = new long[1];
-        cdatalen[0] = cdata.length;
-        int rc = RFFIFactory.getRFFI().getZipRFFI().compress(cdata, cdatalen, udata);
+        int rc = RFFIFactory.getRFFI().getZipRFFI().compress(cdata, udata);
         return rc == 0;
     }
 
     private static boolean gzipUncompress(byte[] udata, byte[] data) {
-        long[] destlen = new long[1];
-        destlen[0] = udata.length;
-        int rc = RFFIFactory.getRFFI().getZipRFFI().uncompress(udata, destlen, data);
+        int rc = RFFIFactory.getRFFI().getZipRFFI().uncompress(udata, data);
         return rc == 0;
     }
 
