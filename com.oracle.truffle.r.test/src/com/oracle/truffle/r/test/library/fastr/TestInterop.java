@@ -24,6 +24,8 @@ package com.oracle.truffle.r.test.library.fastr;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestInterop extends TestBase {
@@ -43,6 +45,38 @@ public class TestInterop extends TestBase {
         assertEvalFastR(".fastr.interop.export('foo', 'foo')", "invisible()");
         assertEvalFastR(".fastr.interop.export('foo', 1:100)", "invisible()");
         assertEvalFastR(".fastr.interop.export('foo', new.env())", "invisible()");
+    }
+
+    /**
+     * Used for testing interop functionality.
+     */
+    public static final class POJO {
+        public int intValue = 1;
+        public long longValue = 123412341234L;
+        public char charValue = 'R';
+        public short shortValue = -100;
+        public boolean booleanValue = true;
+        public String stringValue = "foo";
+    }
+
+    private static final class TestJavaObject {
+        public final String name;
+        public Object object;
+
+        private TestJavaObject(String name, Object object) {
+            this.name = name;
+            this.object = object;
+        }
+    }
+
+    private static final TestJavaObject[] testJavaObjects = new TestJavaObject[]{new TestJavaObject("testPOJO", new POJO()), new TestJavaObject("testIntArray", new int[]{1, -5, 199}),
+                    new TestJavaObject("testStringArray", new String[]{"a", "", "foo"})};
+
+    @Override
+    public void addPolyglotSymbols(PolyglotEngine.Builder builder) {
+        for (TestJavaObject t : TestInterop.testJavaObjects) {
+            builder.globalSymbol(t.name, JavaInterop.asTruffleObject(t.object));
+        }
     }
 
     @Test
