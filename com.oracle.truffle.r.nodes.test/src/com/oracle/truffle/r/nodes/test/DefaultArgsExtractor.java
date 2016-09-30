@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -47,20 +49,24 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 class DefaultArgsExtractor {
 
     private final FastRSession fastRSession;
+    private final Consumer<Object> printer;
 
-    DefaultArgsExtractor(FastRSession fastRSession) {
+    DefaultArgsExtractor(FastRSession fastRSession, Consumer<Object> printer) {
         this.fastRSession = fastRSession;
+        this.printer = printer;
     }
 
     Map<String, Samples<?>> extractDefaultArgs(String functionName) {
         final PolyglotEngine vm = fastRSession.checkContext(null).createVM();
 
+        HashMap<String, Samples<?>> samplesMap = new HashMap<>();
         try {
-            HashMap<String, Samples<?>> samplesMap = new HashMap<>();
 
             Source source = RSource.fromTextInternal("formals(" + functionName + ")",
                             RSource.Internal.UNIT_TEST);
+
             Value defArgVal = vm.eval(source);
+
             if (defArgVal.get() instanceof RPairList) {
                 RPairList formals = (RPairList) defArgVal.get();
                 RStringVector names = formals.getNames(null);
@@ -75,8 +81,8 @@ class DefaultArgsExtractor {
                             Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal,
                                             RSource.Internal.UNIT_TEST));
                             defVal = eval.get();
-                        } catch (Exception e) {
-                            System.out.println("Warning: Unable to evaluate the default value of argument " + name + ". Expression: " + deparsedDefVal);
+                        } catch (Throwable t) {
+                            printer.accept("Warning: Unable to evaluate the default value of argument " + name + ". Expression: " + deparsedDefVal);
                             continue;
                         }
 
@@ -106,11 +112,12 @@ class DefaultArgsExtractor {
 
             }
 
-            return samplesMap;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Throwable t) {
+            printer.accept("Warning: Unable to evaluate formal arguments of function " + functionName);
         } finally {
             vm.dispose();
         }
+
+        return samplesMap;
     }
 }

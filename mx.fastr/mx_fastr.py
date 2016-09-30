@@ -466,6 +466,8 @@ def rbdiag(args):
     --sweep=total	Performs the 'chimney-sweeping'. The total sample selection method is used.
     --matchLevel=same	Outputs produced by FastR and GnuR must be same (default)
     --matchLevel=error	Outputs are considered matching if none or both outputs contain an error
+    --maxSweeps=N		Sets the maximum number of sweeps
+    --outMaxLev=N		Sets the maximum output detail level for report messages. Use 0 for the basic messages only.
     
 	If no builtin is specified, all registered builtins are diagnosed.
 	An external builtin is specified by the fully qualified name of its node class.
@@ -529,7 +531,7 @@ _commands = {
     'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error]'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
     'rcmplib' : [rcmplib, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],

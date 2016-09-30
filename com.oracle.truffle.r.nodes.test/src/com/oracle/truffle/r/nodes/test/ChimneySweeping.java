@@ -36,7 +36,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingWorker;
 
 import org.junit.Assert;
 
@@ -65,7 +69,24 @@ import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
 
+/**
+ * Use the following command to sweep all builtins
+ *
+ * <pre>
+ * mx rbdiag --sweep --mnonly --matchLevel=error --maxSweeps=30 --outMaxLev=0
+ * </pre>
+ * 
+ * .
+ *
+ */
 class ChimneySweeping extends SingleBuiltinDiagnostics {
+
+    private Set<String> blacklistedBuiltins = new HashSet<>();
+    {
+        blacklistedBuiltins.add(".dfltWarn");
+        blacklistedBuiltins.add("browser");
+        blacklistedBuiltins.add(".fastr.context.r");
+    }
 
     private static final String TEST_PREFIX = "com.oracle.truffle.r.test.builtins.TestBuiltin_";
     private static final String SWEEP_MODE_ARG = "--sweep";
@@ -74,6 +95,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     private static final String MISSING_AND_NULL_SAMPLES_ONLY_ARG = "--mnonly";
     private static final String OUTPUT_MATCH_LEVEL = "--matchLevel";
     private static final String OUTPUT_MATCH_LEVEL_SPEC = OUTPUT_MATCH_LEVEL + "=";
+    private static final String MAX_SWEEPS_ARG = "--maxSweeps=";
 
     enum ChimneySweepingMode {
         auto,
@@ -109,6 +131,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         OutputMatchLevel outputMatchLevel;
         boolean missingAndNullSamplesOnly;
         boolean performPipelineSelfTest;
+        int maxSweeps;
     }
 
     static class ChimneySweepingSuite extends RBuiltinDiagnostics {
@@ -122,13 +145,13 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             super(config);
             this.diagConfig = config;
 
-            System.out.println("Loading GnuR ...");
+            print(1, "Loading GnuR ...");
             gnuRSession = new GnuROneShotRSession();
 
-            System.out.println("Loading FastR ...");
+            print(1, "Loading FastR ...");
             fastRSession = FastRSession.create();
 
-            System.out.println("Loading test outputs ...");
+            print(1, "Loading test outputs ...");
             outputManager = loadTestOutputManager();
         }
 
@@ -148,6 +171,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             // The pipeline self-test is disabled when only RMissing and RNull samples are used as
             // these values are not determined via the pipeline static type analysis
             config.performPipelineSelfTest = config.missingAndNullSamplesOnly ? false : !Arrays.stream(args).filter(arg -> NO_SELF_TEST_ARG.equals(arg)).findFirst().isPresent();
+            config.maxSweeps = Arrays.stream(args).filter(arg -> arg.startsWith(MAX_SWEEPS_ARG)).map(x -> Integer.parseInt(x.split("=")[1])).findFirst().orElse(Integer.MAX_VALUE);
             return RBuiltinDiagnostics.initDiagConfig(config, args);
         }
 
@@ -194,6 +218,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     ChimneySweeping(ChimneySweepingSuite diagSuite, RIntBuiltinDiagFactory builtinFactory) {
         super(diagSuite, builtinFactory);
+
+        print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinNodeClass().getName() + ") ***");
+
         this.kind = builtinFactory.getBuiltinKind();
         this.diagSuite = diagSuite;
         this.validArgsList = extractValidArgsForBuiltin();
@@ -202,17 +229,21 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     @Override
     public void diagnoseBuiltin() throws Exception {
-        super.diagnoseBuiltin();
+        // super.diagnoseBuiltin();
 
-        sweepChimney();
+        if (blacklistedBuiltins.contains(builtinName)) {
+            print(1, "Builtin '" + builtinName + "' blacklisted for chimney-sweeping");
+        } else {
+            sweepChimney();
+        }
     }
 
     @Override
     protected void diagnosePipeline(int i) {
         super.diagnosePipeline(i);
 
-        System.out.println(" Samples:");
-        System.out.println(argSamples.get(i));
+        print(1, " Samples:");
+        print(1, argSamples.get(i));
 
         if (diagSuite.diagConfig.performPipelineSelfTest) {
             checkPipelines(i);
@@ -221,7 +252,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private List<Samples<?>> createSamples() {
-        DefaultArgsExtractor defArgExt = new DefaultArgsExtractor(diagSuite.fastRSession);
+        DefaultArgsExtractor defArgExt = new DefaultArgsExtractor(diagSuite.fastRSession, msg -> print(1, msg));
         Map<String, Samples<?>> defaultArgs = defArgExt.extractDefaultArgs(builtinName);
 
         List<Samples<?>> as = new ArrayList<>();
@@ -276,15 +307,15 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         if (cn != null) {
             Samples<?> samples = argSamples.get(i);
             if (samples.positiveSamples().isEmpty() && samples.negativeSamples().isEmpty()) {
-                System.out.println("No samples");
+                print(1, "No samples");
             } else {
                 testPipeline(cn, samples);
-                System.out.println("Pipeline check OK (" + samples.positiveSamples().size() + "," + samples.negativeSamples().size() + ")");
+                print(1, "Pipeline check OK (" + samples.positiveSamples().size() + "," + samples.negativeSamples().size() + ")");
             }
         }
     }
 
-    private static void testPipeline(CastNode cn, Samples<?> samples) {
+    private void testPipeline(CastNode cn, Samples<?> samples) {
         NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(cn, (node, args) -> {
             return node.execute(args[0]);
         });
@@ -293,7 +324,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             try {
                 argCastNodeHandle.call(sample);
             } catch (UnsupportedSpecializationException e) {
-                System.out.println("Warning: No specialization to handle arg " + sample + " : " + e.getMessage());
+                print(1, "Warning: No specialization to handle arg " + sample + " : " + e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
                 fail("Unexpectedly negative sample: " + sample);
@@ -338,36 +369,24 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
                             a -> a != null && !"".equals(a)).collect(Collectors.toSet());
             Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, vm)).filter(a -> a != null).collect(Collectors.toSet());
 
-            if (args.isEmpty()) {
-                Object[] nullArgs = new Object[this.argLength];
-                Arrays.fill(nullArgs, RNull.instance);
-                args = Collections.singleton(RDataFactory.createList(nullArgs));
-                System.out.println("No suitable test snippets found. Using the default RNull argument list");
-            }
-
             return args;
         } finally {
             vm.dispose();
         }
     }
 
-    private static RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
+    private RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
         try {
             Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
             RList args = (RList) eval.get();
             return args;
         } catch (Exception e) {
-            System.out.println("Warning: Cannot parse arguments: " + argsExpr);
+            print(1, "Warning: Cannot parse arguments: " + argsExpr);
             return null;
         }
     }
 
-    private void sweepChimney() throws IOException {
-        System.out.println("++++++++++++++++++++++");
-        System.out.println("+  Chimney-sweeping  +");
-        System.out.println("++++++++++++++++++++++");
-        System.out.println();
-
+    private void sweepChimney() {
         boolean useDiagonalGen;
 
         long totalCombinations = calculateNumOfSampleCombinations(argSamples);
@@ -389,14 +408,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         List<List<Object>> generatedCombinations = generateSampleArgCombinations(argSamples, useDiagonalGen);
 
-        System.out.println("Springboard argument lists: " + validArgsList.size());
-        System.out.println("Used sample combinations: " + generatedCombinations.size() + " (from total " + totalCombinations + ")");
-        System.out.println("Sweeps to perform: " + generatedCombinations.size() * validArgsList.size());
+        print(1, "Springboard argument lists: " + validArgsList.size());
+        print(1, "Used sample combinations: " + generatedCombinations.size() + " (from total " + totalCombinations + ")");
 
-        System.out.println();
-        System.out.println();
-        System.out.println("Press Enter to continue ...");
-        System.in.read();
+        int sweepsToPerform = Math.min(generatedCombinations.size() * validArgsList.size(), diagSuite.diagConfig.maxSweeps);
+        print(0, "Sweeps to perform: " + sweepsToPerform);
 
         evalArgsWithSampleCombinations(generatedCombinations);
     }
@@ -404,8 +420,12 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     private void evalBuiltin(RList validArgs, List<List<Object>> argSampleCombinations) {
         List<List<Object>> mergedSampleAndValidArgs = mergeValidAndSampleArgs(validArgs, argSampleCombinations);
 
+        boolean isOriginal = true;
         for (List<Object> evalArgs : mergedSampleAndValidArgs) {
-            evalBuiltin(evalArgs);
+            if (!evalBuiltin(evalArgs, isOriginal)) {
+                return;
+            }
+            isOriginal = false;
         }
 
     }
@@ -415,7 +435,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         validArgsList.forEach(validArgs -> evalBuiltin(validArgs, argSampleCombinations));
     }
 
-    private void evalBuiltin(List<Object> args) {
+    private boolean evalBuiltin(List<Object> args, boolean isOriginal) {
+        if (sweepCounter > diagSuite.diagConfig.maxSweeps) {
+            return false;
+        }
+
         StringBuilder sb = new StringBuilder();
         try {
             for (int i = 0; i < args.size(); i++) {
@@ -437,13 +461,17 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
 
             String call;
-            switch (kind) {
-                case INTERNAL:
-                    call = ".Internal(" + builtinName + "(" + sb + "))";
-                    break;
-                default:
-                    call = builtinName + "(" + sb + ")";
-                    break;
+            if ("(".equals(builtinName)) {
+                call = "(" + sb + ")";
+            } else {
+                switch (kind) {
+                    case INTERNAL:
+                        call = ".Internal(" + builtinName + "(" + sb + "))";
+                        break;
+                    default:
+                        call = builtinName + "(" + sb + ")";
+                        break;
+                }
             }
 
             String output;
@@ -456,16 +484,24 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
             List<String> outputPair = Arrays.asList(output, outputGnu);
 
+            if (isOriginal && !output.equals(outputGnu)) {
+                // The original test may not be passing (e.g. marked by Ignored.Inknown etc.).
+                // Skip these arguments.
+                System.out.print('I');
+                print(1, "Ignoring original test arguments: " + sb);
+                return false;
+            }
+
             if (compareOutputs(output, outputGnu)) {
                 System.out.print('.');
             } else if (!printedOutputPairs.contains(outputPair)) {
-                System.out.println("\n#" + sweepCounter + "> " + call);
-                System.out.println("\n====== FastR output ======");
-                System.out.println(output);
+                print(0, "\n#" + sweepCounter + "> " + call);
+                print(0, "\n====== FastR output ======");
+                print(0, output);
 
-                System.out.println("====== GnuR output ======");
-                System.out.println(outputGnu);
-                System.out.println("==========================");
+                print(0, "====== GnuR output ======");
+                print(0, outputGnu);
+                print(0, "==========================");
 
                 printedOutputPairs.add(outputPair);
             } else {
@@ -473,17 +509,17 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
 
         } catch (Throwable e) {
-            // throw new RuntimeException(e);
-            // e.printStackTrace();
             if (!printedErrors.contains(e.getMessage())) {
                 String call = ".Internal(" + builtinName + "(" + sb + "))";
-                System.out.println("\n[" + sweepCounter + "]> " + call);
-                System.out.println("ERROR: " + e.getMessage());
+                print(0, "\n[" + sweepCounter + "]> " + call);
+                print(0, "ERROR: " + e.getMessage());
                 printedErrors.add(e.getMessage());
             }
         } finally {
             sweepCounter++;
         }
+
+        return true;
     }
 
     private boolean compareOutputs(String output, String outputGnu) {

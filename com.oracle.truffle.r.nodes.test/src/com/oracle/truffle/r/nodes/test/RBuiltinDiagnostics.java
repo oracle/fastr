@@ -63,11 +63,14 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class RBuiltinDiagnostics {
 
+    private static final String OUTPUT_MAX_LEVEL_ARG = "--outMaxLev=";
+
     static class DiagConfig {
         boolean verbose;
         boolean ignoreRNull;
         boolean ignoreRMissing;
         long maxTotalCombinations = 500L;
+        int outputMaxLevel;
     }
 
     static {
@@ -89,6 +92,7 @@ public class RBuiltinDiagnostics {
         diagConfig.verbose = Arrays.stream(args).filter(arg -> "-v".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRNull = Arrays.stream(args).filter(arg -> "-n".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRMissing = Arrays.stream(args).filter(arg -> "-m".equals(arg)).findFirst().isPresent();
+        diagConfig.outputMaxLevel = Arrays.stream(args).filter(arg -> arg.startsWith(OUTPUT_MAX_LEVEL_ARG)).map(x -> Integer.parseInt(x.split("=")[1])).findFirst().orElse(Integer.MAX_VALUE);
         return diagConfig;
     }
 
@@ -117,7 +121,7 @@ public class RBuiltinDiagnostics {
             try {
                 bdf = RExtBuiltinDiagFactory.create(builtinName);
             } catch (Exception e) {
-                System.out.println("No builtin '" + builtinName + "' found");
+                print(0, "No builtin '" + builtinName + "' found");
                 return;
             }
         } else {
@@ -126,8 +130,8 @@ public class RBuiltinDiagnostics {
 
         createBuiltinDiagnostics(bdf).diagnoseBuiltin();
 
-        System.out.println("Finished");
-        System.out.println("--------");
+        print(0, "Finished");
+        print(0, "--------");
 
         System.exit(0);
     }
@@ -138,14 +142,21 @@ public class RBuiltinDiagnostics {
             try {
                 createBuiltinDiagnostics(new RIntBuiltinDiagFactory((bf))).diagnoseBuiltin();
             } catch (Exception e) {
-                System.out.println(bf.getName() + " failed: " + e.getMessage());
+                e.printStackTrace();
+                print(0, bf.getName() + " failed: " + e.getMessage());
             }
         }
 
-        System.out.println("Finished");
-        System.out.println("--------");
+        print(0, "Finished");
+        print(0, "--------");
 
         System.exit(0);
+    }
+
+    protected void print(int level, Object x) {
+        if (level <= diagConfig.outputMaxLevel) {
+            System.out.println(x);
+        }
     }
 
     static class SingleBuiltinDiagnostics {
@@ -167,7 +178,7 @@ public class RBuiltinDiagnostics {
 
             String[] pn = builtinFactory.getParameterNames();
             this.argLength = pn.length;
-            this.parameterNames = Arrays.stream(pn).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+            this.parameterNames = Arrays.stream(pn).map(n -> n == null || n.isEmpty() ? null : n).toArray(String[]::new);
 
             this.castNodes = getCastNodesFromBuiltin();
 
@@ -180,6 +191,10 @@ public class RBuiltinDiagnostics {
 
             this.convResultTypePerSpec = createConvResultTypePerSpecialization();
             this.nonCoveredArgsSet = combineArguments();
+        }
+
+        protected void print(int level, Object x) {
+            diagSuite.print(level, x);
         }
 
         private HashMap<Method, List<Set<Cast>>> createConvResultTypePerSpecialization() {
@@ -214,29 +229,29 @@ public class RBuiltinDiagnostics {
         }
 
         public void diagnoseBuiltin() throws Exception {
-            System.out.println("****************************************************************************");
-            System.out.println("Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
-            System.out.println("****************************************************************************");
+            print(0, "****************************************************************************");
+            print(0, "Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
+            print(0, "****************************************************************************");
 
-            System.out.println("Argument cast pipelines binding:");
+            print(0, "Argument cast pipelines binding:");
             for (int i = 0; i < argLength; i++) {
                 diagnosePipeline(i);
             }
 
-            System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
-            System.out.println("");
+            print(0, "\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
+            print(0, "");
 
             printDeadSpecs();
 
             if (diagSuite.diagConfig.verbose) {
                 for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
-                    System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
+                    print(0, uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
                 }
             }
         }
 
         private void printDeadSpecs() {
-            System.out.println("Dead specializations: ");
+            print(0, "Dead specializations: ");
             for (Map.Entry<Method, List<Set<Cast>>> resTpPerSpec : convResultTypePerSpec.entrySet()) {
                 List<Set<Cast>> argsCasts = resTpPerSpec.getValue();
                 List<Integer> missingCasts = new ArrayList<>();
@@ -248,33 +263,33 @@ public class RBuiltinDiagnostics {
                 }
 
                 if (!missingCasts.isEmpty()) {
-                    System.out.println("   " + methodName(resTpPerSpec.getKey(), missingCasts));
+                    print(0, "   " + methodName(resTpPerSpec.getKey(), missingCasts));
                 }
             }
 
-            System.out.println("");
+            print(0, "");
         }
 
         protected void diagnosePipeline(int i) {
             TypeExpr argResultSet = argResultSets.get(i);
-            System.out.println("\n Pipeline for '" + parameterNames[i] + "' (arg[" + i + "]):");
-            System.out.println("  Result types union:");
+            print(0, "\n Pipeline for '" + parameterNames[i] + "' (arg[" + i + "]):");
+            print(0, "  Result types union:");
             Set<Type> argSetNorm = argResultSet.normalize();
-            System.out.println("   " + argSetNorm.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
-            System.out.println("  Bound result types:");
+            print(0, "   " + argSetNorm.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
+            print(0, "  Bound result types:");
             final int curParIndex = i;
             Set<Type> unboundArgTypes = new HashSet<>(argSetNorm);
             for (Map.Entry<Method, List<Set<Cast>>> entry : convResultTypePerSpec.entrySet()) {
                 Set<Cast> argCastInSpec = entry.getValue().get(i);
                 argCastInSpec.stream().forEach(
                                 partialCast -> {
-                                    System.out.println("   " + partialCast.coverage() + " (" + typeName(partialCast.inputType()) + "->" + typeName(partialCast.resultType()) + ")" + " in " +
+                                    print(0, "   " + partialCast.coverage() + " (" + typeName(partialCast.inputType()) + "->" + typeName(partialCast.resultType()) + ")" + " in " +
                                                     methodName(entry.getKey(), Collections.singleton(curParIndex)));
                                     unboundArgTypes.remove(partialCast.inputType());
                                 });
             }
-            System.out.println("  Unbound types:");
-            System.out.println("   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
+            print(0, "  Unbound types:");
+            print(0, "   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
 
         }
 
