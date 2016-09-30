@@ -468,7 +468,7 @@ def rbdiag(args):
     --matchLevel=error	Outputs are considered matching if none or both outputs contain an error
     --maxSweeps=N		Sets the maximum number of sweeps
     --outMaxLev=N		Sets the maximum output detail level for report messages. Use 0 for the basic messages only.
-    
+
 	If no builtin is specified, all registered builtins are diagnosed.
 	An external builtin is specified by the fully qualified name of its node class.
 
