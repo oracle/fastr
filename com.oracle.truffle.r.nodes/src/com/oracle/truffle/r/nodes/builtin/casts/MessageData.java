@@ -67,6 +67,6 @@ public final class MessageData {
      */
     public static MessageData getFirstNonNull(MessageData first, MessageData second, MessageData third) {
         assert third != null : "at least the last one must not be null";
-        return first != null ? first : second != null ? second : third;
+        return first != null && first.getMessage() != null ? first : second != null && second.getMessage() != null ? second : third;
     }
 }

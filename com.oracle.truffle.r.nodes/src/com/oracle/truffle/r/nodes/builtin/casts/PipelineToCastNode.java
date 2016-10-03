@@ -114,7 +114,7 @@ public final class PipelineToCastNode {
         if (firstStep == null) {
             return BypassNode.create(config, null, mapperFactory, null);
         } else {
-            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage(), config.getDefaultError(), config.getDefaultWarning());
+            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage());
             SinglePrimitiveOptimization singleOptVisitor = new SinglePrimitiveOptimization(nodeFactory);
             CastNode headNode = convert(firstStep, singleOptVisitor);
             return singleOptVisitor.createBypassNode(config, headNode, mapperFactory);
@@ -329,13 +329,11 @@ public final class PipelineToCastNode {
         private MessageData defaultError;
         private MessageData defaultWarning;
 
-        CastNodeFactory(ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, MessageData defaultMessage, MessageData defaultError, MessageData defaultWarning) {
+        CastNodeFactory(ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory, MessageData defaultMessage) {
             assert defaultMessage != null : "defaultMessage is null";
             this.filterFactory = filterFactory;
             this.mapperFactory = mapperFactory;
             this.defaultMessage = defaultMessage;
-            this.defaultError = defaultError;
-            this.defaultWarning = defaultWarning;
         }
 
         @Override

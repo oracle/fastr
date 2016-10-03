@@ -201,7 +201,15 @@ public abstract class PipelineStep<T, R> {
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
+
+        /**
+         * Whether RNull/RMissing should be preserved, or converted to an empty list.
+         */
         public final boolean preserveNonVector;
+
+        /**
+         * Coercion to scalar or vector type.
+         */
         public final boolean vectorCoercion;
 
         public CoercionStep(RType type, boolean vectorCoercion) {

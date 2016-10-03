@@ -51,7 +51,7 @@ public abstract class Merge extends RBuiltinNode {
     }
 
     private static void addLogicalCast(CastBuilder casts, String name) {
-        casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").notNA().mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+        casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").mustBe(numericValue()).asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     private static void isortWithIndex(int[] x, int[] indx, int n) {

@@ -67,11 +67,11 @@ public final class PipelineConfigBuilder {
         return wasLegacyAsVectorCall;
     }
 
-    public void setDefaultError(MessageData defaultError) {
+    void setDefaultError(MessageData defaultError) {
         this.defaultError = defaultError;
     }
 
-    public void setDefaultWarning(MessageData defaultWarning) {
+    void setDefaultWarning(MessageData defaultWarning) {
         this.defaultWarning = defaultWarning;
     }
 

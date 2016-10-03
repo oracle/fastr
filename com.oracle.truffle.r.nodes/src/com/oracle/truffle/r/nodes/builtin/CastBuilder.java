@@ -89,22 +89,20 @@ public final class CastBuilder {
 
     private static final PipelineBuilder[] EMPTY_BUILDERS = new PipelineBuilder[0];
 
-    private final RBuiltinNode builtinNode;
+    private final RBuiltin builtin;
     private final String[] argumentNames;
     private PipelineBuilder[] argumentBuilders;
     private CastNode[] castsCache = null;
 
-    public CastBuilder(RBuiltinNode builtinNode) {
-        assert builtinNode != null : "builtinNode is null";
+    public CastBuilder(RBuiltin builtin) {
         // Note: if we have the builtin metadata, we pre-allocate the arrays, builtinNode != null is
         // used to determine, if the arrays are pre-allocated or if they can grow
-        RBuiltin builtin = builtinNode.getRBuiltin();
         if (builtin == null) {
-            this.builtinNode = null;
+            this.builtin = null;
             argumentNames = null;
             argumentBuilders = EMPTY_BUILDERS;
         } else {
-            this.builtinNode = builtinNode;
+            this.builtin = builtin;
             argumentNames = builtin.parameterNames();
             argumentBuilders = new PipelineBuilder[builtin.parameterNames().length];
         }
@@ -112,13 +110,13 @@ public final class CastBuilder {
 
     public CastBuilder(int argumentsCount) {
         assert argumentsCount >= 0 : "argumentsCount must be non-negative";
-        builtinNode = null;
+        builtin = null;
         argumentNames = null;
         argumentBuilders = new PipelineBuilder[argumentsCount];
     }
 
     public CastBuilder() {
-        builtinNode = null;
+        builtin = null;
         argumentNames = null;
         argumentBuilders = EMPTY_BUILDERS;
     }
@@ -157,7 +155,7 @@ public final class CastBuilder {
         // for legacy API calls
         builder.getPipelineConfig().setWasLegacyAsVectorCall();
         builder.getPipelineConfig().mapNull(new MapToValue<>(RDataFactory.createList()));
-        builder.appendAsVector();
+        builder.appendAsVector(false, false, false, false);
         return this;
     }
 
@@ -294,7 +292,7 @@ public final class CastBuilder {
      * expected element type.
      * </p>
      *
-     * <h2>{@code RNull} and {@code RMissing} handling</h2> By default, {@code RNull} and
+     * <h2>Handling {@code RNull} and {@code RMissing} values</h2> By default, {@code RNull} and
      * {@code RMissing} argument values are sent to the pipeline. While most of the pipeline cast
      * nodes ignore those values and let them pass through, there are some nodes that may perform
      * some transformation of those values. For example, the {@code FindFirstNode} node replaces
@@ -319,7 +317,7 @@ public final class CastBuilder {
      * Analogous methods exist for {@code RMissing}.
      */
     public PreinitialPhaseBuilder<Object> arg(String argumentName) {
-        assert builtinNode != null : "arg(String) is only supported for builtins cast pipelines";
+        assert builtin != null : "arg(String) is only supported for builtins cast pipelines";
         return new PreinitialPhaseBuilder<>(getBuilder(getArgumentIndex(argumentName), argumentName));
     }
 
@@ -327,7 +325,7 @@ public final class CastBuilder {
      * @see #arg(String)
      */
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
-        assert builtinNode != null : "arg(int, String) is only supported for builtins cast pipelines";
+        assert builtin != null : "arg(int, String) is only supported for builtins cast pipelines";
         assert argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
         assert argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
         return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, argumentName));
@@ -343,7 +341,7 @@ public final class CastBuilder {
     }
 
     private PipelineBuilder getBuilder(int argumentIndex, String argumentName) {
-        if (builtinNode == null && argumentIndex >= argumentBuilders.length) {
+        if (builtin == null && argumentIndex >= argumentBuilders.length) {
             // in the case that we have a builtin, the arguments size is known and fixed, otherwise
             // we grow the array accordingly
             argumentBuilders = Arrays.copyOf(argumentBuilders, argumentIndex + 1);
@@ -355,7 +353,7 @@ public final class CastBuilder {
     }
 
     private int getArgumentIndex(String argumentName) {
-        if (builtinNode == null) {
+        if (builtin == null) {
             throw new IllegalArgumentException("No builtin node associated with cast builder");
         }
         for (int i = 0; i < argumentNames.length; i++) {
@@ -364,7 +362,7 @@ public final class CastBuilder {
             }
         }
         CompilerDirectives.transferToInterpreter();
-        throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtinNode.getRBuiltin().name()));
+        throw RInternalError.shouldNotReachHere(String.format("Argument %s not found in builtin %s", argumentName, builtin.name()));
     }
 
     public static final class Predef {
@@ -476,7 +474,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector() {
-            return new CoercionStep<>(RType.Any, true);
+            return new CoercionStep<>(RType.Any, /* vectorCoercion: */true);
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {

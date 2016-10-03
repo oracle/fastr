@@ -142,15 +142,6 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return this;
     }
 
-    /**
-     * This method should be used as a step in pipeline, not as an argument to {@code mustBe}.
-     * Example: {@code casts.arg("x").notNA()}.
-     */
-    public InitialPhaseBuilder<T> notNA() {
-        pipelineBuilder().appendNotNA(null, null, null, null);
-        return this;
-    }
-
     public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
         pipelineBuilder().appendAsIntegerVector(preserveNames, dimensionsPreservation, attrPreservation);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
@@ -199,9 +190,6 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
-        // TODO: asVector() sets preserveNonVector to false, which is against intended semantics
-        // of cast nodes that always forward RNull, we need to revise all calls to this method
-        // and remove the preserveNonVector option of CastToVectorNode
         pipelineBuilder().appendAsVector();
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
     }

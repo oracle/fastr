@@ -113,8 +113,12 @@ public abstract class BypassNode extends CastNode {
     }
 
     private MessageData getMessage(boolean isWarning, MessageData msg, PipelineConfig config) {
+        if (msg == null) {
+            return null;
+        }
+
         MessageData defaultValue = isWarning ? config.getDefaultWarning() : config.getDefaultError();
-        MessageData result = isWarning ? msg : MessageData.getFirstNonNull(msg, defaultValue, config.getDefaultDefaultMessage());
+        MessageData result = isWarning ? msg : MessageData.getFirstNonNull(null, msg, defaultValue);
         return result != null ? result.fixCallObj(this) : null;
     }
 

@@ -83,7 +83,7 @@ public final class PipelineBuilder {
     }
 
     public void appendAsVector() {
-        appendAsVector(false, false, false, false);
+        appendAsVector(false, false, false, true);
     }
 
     public void appendAsRawVector() {

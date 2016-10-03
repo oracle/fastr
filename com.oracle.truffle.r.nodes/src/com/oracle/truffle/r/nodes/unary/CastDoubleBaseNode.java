@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -61,6 +62,11 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
+    }
+
+    @Specialization
+    protected RMissing doMissing(RMissing missing) {
+        return missing;
     }
 
     @Specialization
