@@ -58,6 +58,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.FindFirstNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -241,28 +243,35 @@ public final class CastBuilder {
     // The cast-pipelines API starts here
 
     /**
-     * Returns a builder of a cast pipeline for given parameter.
+     * Returns a builder of a cast pipeline for the given argument name.
      * <p>
-     * In the pre-initial phase, the pipeline can be configured using
+     * The process of building a cast pipeline proceeds in up-to four phases:
+     *
+     * <pre>
+     * Pre-initialPhase -> (InitialPhase -> (CoercedPhase -> HeadPhase?)?)?
+     * </pre>
+     *
+     * In the pre-initial phase one can configure the overall behavior of the pipeline. Currently,
+     * only the default handling of {@code RNull} and {@code RMissing} values can be overridden (the
+     * default behavior is explained below). The pipeline can be configured using
      * {@link PreinitialPhaseBuilder#conf(Consumer)} or any other method of the
-     * {@link PreinitialPhaseBuilder} class, e.g. {@link PreinitialPhaseBuilder#allowNull()}. The
-     * default configuration is that {@code RNull} and {@code RMissing} values are not allowed and
-     * will cause default error (which can be configured). However, if there is a 'find first' step
-     * in the pipeline with a default value, then {@code RNull} and {@code RMissing} are passed to
-     * that step, which maps them to the default value and executes any other following steps. If
-     * {@code RNull} or {@code RMissing} are explicitly allowed, they will bypass the whole
-     * pipeline. In such case, they can be also mapped to some other value (which will also bypass
-     * the whole pipeline). In either case, {@code RNull} and {@code RMissing} can be ignored when
-     * constructing the rest of the pipeline.
+     * {@link PreinitialPhaseBuilder} class, e.g. {@link PreinitialPhaseBuilder#allowNull()}.
      * </p>
      * <p>
-     * In the initial phase, the pipeline can filter or cast the argument, which can narrow down the
-     * type of the argument and the API will be restricted to adding only pipeline steps that match
-     * the type, this is coerced phase.
+     * In the initial phase, the pipeline can be configured to filter or to coerce the input
+     * argument to one of the available vector types. By using filters one can narrow down the
+     * expected type of the argument. The API reflects that narrowing type in subsequent builder
+     * steps. Other filters can put constrains on argument values. Filter conditions can be combined
+     * by means of <code>and</code>, <code>or</code> and <code>not</code> operators. To coerce the
+     * input argument to a vector one of the <code>as<X>Vector</code> steps is used, where
+     * <code>X</code> is the element type of the given vector. Using a coercion step leads to the
+     * transition to the coerced phase.
      * </p>
      * <p>
-     * The coerced phase can be followed by head phase once a {@code findFirst} step is used. In
-     * this phase the argument type is narrowed down to a scalar value.
+     * In the coerced phase one can specify filters examining a vector argument's properties, such
+     * as the size or dimensions. The coerced phase can be followed by the head phase once a
+     * {@code findFirst} step is used. In this phase the vector argument type is narrowed down to a
+     * scalar value.
      * </p>
      * <p>
      * During any phase, one can add filter and mapper steps. The methods creating such steps, e.g.
@@ -277,11 +286,37 @@ public final class CastBuilder {
      * {@link Predef#toBoolean()} or one can construct more complex mapping using
      * {@link Predef#chain(PipelineStep)} invocation followed by {@code with(step)} calls and
      * finished by {@code end()} invocation. The steps can be constructed using convenient methods
-     * in the {@link Predef} class. For technical reasons, when using 'find first' step by means of
+     * in the {@link Predef} class.
+     *
+     * Note: For technical reasons, when using 'find first' step by means of
      * {@link Predef#findFirst()} in this situation, it must be followed by call to
      * {@link FindFirstNodeBuilder#integerElement()} or other similar method corresponding to the
      * expected element type.
      * </p>
+     *
+     * <h2>{@code RNull} and {@code RMissing} handling</h2> By default, {@code RNull} and
+     * {@code RMissing} argument values are sent to the pipeline. While most of the pipeline cast
+     * nodes ignore those values and let them pass through, there are some nodes that may perform
+     * some transformation of those values. For example, the {@code FindFirstNode} node replaces
+     * both {@code RNull} and {@code RMissing} by the replacement values specified in the
+     * corresponding <code>findFirst(repl)</code> pipeline step. Also the {@code CastToVectorNode}
+     * coercion node replaces those values by an empty list provided that the
+     * <code>isPreserveNonVector</code> flag is set.
+     *
+     * <h3>Overriding the default behavior</h3> A cast pipeline can be configured not to send
+     * {@code RNull} and/or {@code RMissing} to the cast nodes forming the cast pipeline. Then those
+     * values either bypass the pipeline, being eventually transformed to some constant, or an error
+     * is raised.
+     *
+     * One can use the following steps in the pre-initial phase to override the default behavior:
+     *
+     * <pre>
+     * allowNull()              - RNull bypasses the pipeline
+     * mustNotBeNull(errorMsg)  - the error with errorMsg is raised when the input argument is RNull
+     * mapNull(mapper)          - RNull is transformed using the mapper. The RNull replacement bypasses the pipeline.
+     * </pre>
+     *
+     * Analogous methods exist for {@code RMissing}.
      */
     public PreinitialPhaseBuilder<Object> arg(String argumentName) {
         assert builtinNode != null : "arg(String) is only supported for builtins cast pipelines";
