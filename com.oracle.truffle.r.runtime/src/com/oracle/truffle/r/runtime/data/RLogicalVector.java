@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RLogicalVector extends RVector implements RAbstractLogicalVector {
+public final class RLogicalVector extends RVector<byte[]> implements RAbstractLogicalVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getClazz());
 
@@ -185,6 +185,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         data[toIndex] = other.getDataAt(fromIndex);
     }
 
+    @Override
     public byte[] getDataCopy() {
         return Arrays.copyOf(data, data.length);
     }
@@ -193,29 +194,9 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public byte[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public byte[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public byte[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override

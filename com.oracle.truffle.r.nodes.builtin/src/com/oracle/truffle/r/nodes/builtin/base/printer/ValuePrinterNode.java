@@ -302,11 +302,6 @@ public final class ValuePrinterNode extends RBaseNode {
                             }
 
                             @Override
-                            public RStringVector getNames() {
-                                return null;
-                            }
-
-                            @Override
                             public RList materialize() {
                                 throw RInternalError.shouldNotReachHere();
                             }
@@ -352,11 +347,6 @@ public final class ValuePrinterNode extends RBaseNode {
                         @Override
                         public RStringVector getImplicitClass() {
                             return RList.implicitClassHeader;
-                        }
-
-                        @Override
-                        public RStringVector getNames() {
-                            return names;
                         }
 
                         @Override
@@ -445,7 +435,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RVector copyResized(int size, boolean fillNA) {
+        public RVector<?> copyResized(int size, boolean fillNA) {
             throw RInternalError.shouldNotReachHere();
         }
 
@@ -455,7 +445,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
             throw RInternalError.shouldNotReachHere();
         }
 
@@ -465,7 +455,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
             throw RInternalError.shouldNotReachHere();
         }
 

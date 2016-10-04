@@ -738,7 +738,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object readBin(RConnection con, String what, int n, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") boolean signed,
                         boolean swap) {
-            RVector result = null;
+            RVector<?> result = null;
             try (RConnection openConn = con.forceOpen("rb")) {
                 if (getBaseConnection(openConn).getOpenMode().isText()) {
                     throw RError.error(this, RError.Message.ONLY_READ_BINARY_CONNECTION);

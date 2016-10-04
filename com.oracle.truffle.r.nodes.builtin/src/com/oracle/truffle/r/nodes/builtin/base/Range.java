@@ -63,13 +63,13 @@ public abstract class Range extends RBuiltinNode {
     }
 
     @Specialization(guards = "args.getLength() == 1")
-    protected RVector rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
+    protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
         Object min = minReduce.executeReduce(args.getArgument(0), naRm, finite);
         Object max = maxReduce.executeReduce(args.getArgument(0), naRm, finite);
         return createResult(min, max);
     }
 
-    private static RVector createResult(Object min, Object max) {
+    private static RVector<?> createResult(Object min, Object max) {
         if (min instanceof Integer) {
             return RDataFactory.createIntVector(new int[]{(Integer) min, (Integer) max}, false);
         } else {
@@ -78,7 +78,7 @@ public abstract class Range extends RBuiltinNode {
     }
 
     @Specialization(contains = "rangeLengthOne")
-    protected RVector range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
+    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
                     @Cached("create()") Combine combine) {
         Object combined = combine.executeCombine(args);
         Object min = minReduce.executeReduce(combined, naRm, finite);

@@ -170,7 +170,7 @@ public final class UnaryMapNode extends RBaseNode {
         if (containsMetadata(operand) && operand != target) {
             hasAttributesProfile.enter();
             result = result.materialize();
-            copyAttributesInternal((RVector) result, operand);
+            copyAttributesInternal((RVector<?>) result, operand);
         }
         return result;
     }
@@ -184,7 +184,7 @@ public final class UnaryMapNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    private void copyAttributesInternal(RVector result, RAbstractVector attributeSource) {
+    private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
         result.setDimensions(attributeSource.getDimensions());
         result.copyNamesFrom(attrProfiles, attributeSource);

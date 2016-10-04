@@ -380,8 +380,16 @@ public final class RDataFactory {
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
-    public static RExpression createExpression(RList list) {
-        return traceDataCreated(new RExpression(list));
+    public static RExpression createExpression(Object[] data, int[] newDimensions) {
+        return traceDataCreated(new RExpression(data, newDimensions, null));
+    }
+
+    public static RExpression createExpression(Object[] data, RStringVector names) {
+        return traceDataCreated(new RExpression(data, null, names));
+    }
+
+    public static RExpression createExpression(Object[] data) {
+        return traceDataCreated(new RExpression(data, null, null));
     }
 
     public static RSymbol createSymbol(String name) {

@@ -73,7 +73,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
         Object result = argumentValueProfile.profile(initialResult);
         if (result instanceof RVector) {
             everSeenVector.enter();
-            return (RVector) result;
+            return (RVector<?>) result;
         } else if (result instanceof RLanguage) {
             everSeenLanguage.enter();
             return (RLanguage) result;

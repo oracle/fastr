@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -126,7 +127,10 @@ public abstract class AsVector extends RBuiltinNode {
             if (res instanceof RAttributable && hasAttributes.profile(((RAttributable) res).getAttributes() != null)) {
                 // the assertion should hold because of how cast works and it's only used for
                 // vectors (as per as.vector docs)
-                if (res instanceof RAbstractVector) {
+                if (res instanceof RExpression) {
+                    expressionProfile.enter();
+                    return res;
+                } else if (res instanceof RAbstractVector) {
                     vectorProfile.enter();
                     if (listProfile.profile(res instanceof RAbstractListVector)) {
                         // attributes are not dropped for list results
@@ -140,9 +144,6 @@ public abstract class AsVector extends RBuiltinNode {
                 } else if (res instanceof RSymbol) {
                     symbolProfile.enter();
                     return RDataFactory.createSymbol(((RSymbol) res).getName());
-                } else if (res instanceof RExpression) {
-                    expressionProfile.enter();
-                    return res;
                 } else {
                     CompilerDirectives.transferToInterpreter();
                     throw RInternalError.unimplemented("drop attributes for " + res.getClass().getSimpleName());
@@ -199,6 +200,8 @@ public abstract class AsVector extends RBuiltinNode {
 
         protected abstract static class CastPairListNode extends CastNode {
 
+            private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
             @Specialization
             @TruffleBoundary
             protected Object castPairlist(RAbstractListVector x) {
@@ -208,7 +211,7 @@ public abstract class AsVector extends RBuiltinNode {
                     return RNull.instance;
                 } else {
                     Object list = RNull.instance;
-                    RStringVector names = x.getNames();
+                    RStringVector names = x.getNames(attrProfiles);
                     for (int i = x.getLength() - 1; i >= 0; i--) {
                         Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
                         Object data = x.getDataAt(i);

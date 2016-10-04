@@ -41,7 +41,7 @@ public abstract class CopyDFAttr extends RBuiltinNode {
 
     @Specialization()
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
-        RVector res = out.materialize();
+        RVector<?> res = out.materialize();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
     }

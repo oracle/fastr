@@ -46,12 +46,12 @@ public final class WriteTable extends RExternalBuiltinNode {
                     throws IOException, IllegalArgumentException {
         String tmp = null;
         if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
-            executeDataFrame(con, (RVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
+            executeDataFrame(con, (RVector<?>) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
         } else { /* A matrix */
 
             // if (!isVectorAtomic(x))
             // UNIMPLEMENTED_TYPE("write.table, matrix method", x);
-            RVector x = (RVector) xx;
+            RVector<?> x = (RVector<?>) xx;
             /* quick integrity check */
             if (x.getLength() != nr * nc) {
                 throw new IllegalArgumentException("corrupt matrix -- dims not not match length");
@@ -84,7 +84,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         return RNull.instance;
     }
 
-    private static void executeDataFrame(RConnection con, RVector x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
+    private static void executeDataFrame(RConnection con, RVector<?> x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
                     boolean quoteRn)
                     throws IOException {
         String tmp;

@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -192,9 +191,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
                     vector.initAttributes(attrs.copy());
                 }
-                break;
-            case Expression:
-                vector = ((RExpression) castVector).getList();
                 break;
             default:
                 vector = (RAbstractVector) castVector;
@@ -511,9 +507,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // TODO (chumer) this is way to complicated at the moment
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
-    private RVector resizeVector(RAbstractVector vector, int size) {
+    private RVector<?> resizeVector(RAbstractVector vector, int size) {
         RStringVector oldNames = vector.getNames(vectorNamesProfile);
-        RVector res = vector.copyResized(size, true).materialize();
+        RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
             res.copyAttributesFrom(positionNamesProfile, vector);
         }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RRawVector extends RVector implements RAbstractRawVector {
+public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getClazz());
 
@@ -114,39 +114,18 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return RDataFactory.createRaw(data[i]);
     }
 
+    @Override
     public byte[] getDataCopy() {
-        byte[] copy = new byte[data.length];
-        System.arraycopy(data, 0, copy, 0, data.length);
-        return copy;
+        return Arrays.copyOf(data, data.length);
     }
 
     /**
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public byte[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public byte[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public byte[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override

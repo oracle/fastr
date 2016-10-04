@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.instrument.RPackageSource;
@@ -693,7 +694,7 @@ public class RSerialize {
                         data[i] = elem;
                     }
                     if (type == SEXPTYPE.EXPRSXP) {
-                        result = RDataFactory.createExpression(RDataFactory.createList(data));
+                        result = RDataFactory.createExpression(data);
                     } else {
                         // this could (ultimately) be a list, factor or dataframe
                         result = RDataFactory.createList(data);
@@ -959,9 +960,9 @@ public class RSerialize {
                 if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
                     ((RShareable) attrValue).incRefCount();
                 }
-                if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (result instanceof RVector<?> && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;
-                    result = ((RVector) result).setClassAttr(classes);
+                    result = ((RVector<?>) result).setClassAttr(classes);
                 } else {
                     rAttributable.setAttr(tag, attrValue);
                 }
@@ -1611,15 +1612,15 @@ public class RSerialize {
 
                         case EXPRSXP:
                         case VECSXP: {
-                            RList list;
+                            RAbstractVector list;
                             if (type == SEXPTYPE.EXPRSXP) {
-                                list = ((RExpression) obj).getList();
+                                list = (RExpression) obj;
                             } else {
                                 list = (RList) obj;
                             }
                             stream.writeInt(list.getLength());
                             for (int i = 0; i < list.getLength(); i++) {
-                                Object listObj = list.getDataAt(i);
+                                Object listObj = list.getDataAtAsObject(i);
                                 writeItem(listObj);
                             }
                             break;

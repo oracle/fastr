@@ -141,8 +141,8 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RVector copyResized(int size, boolean fillNA) {
-        RVector result = materialize().copyResized(size, fillNA);
+    public RVector<?> copyResized(int size, boolean fillNA) {
+        RVector<?> result = materialize().copyResized(size, fillNA);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
@@ -155,21 +155,21 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        RVector result = materialize().copyResizedWithDimensions(newDimensions, fillNA);
+    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        RVector<?> result = materialize().copyResizedWithDimensions(newDimensions, fillNA);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     @Override
     public RAbstractVector copyDropAttributes() {
-        RVector result = materialize().copyDropAttributes();
+        RVector<?> result = materialize().copyDropAttributes();
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     @Override
-    public RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return materialize().createEmptySameType(newLength, newIsComplete);
     }
 

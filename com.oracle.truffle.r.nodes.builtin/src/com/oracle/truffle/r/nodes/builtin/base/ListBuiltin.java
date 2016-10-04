@@ -99,7 +99,8 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     @Specialization(guards = "!args.isEmpty()")
-    protected RList list(RArgsValuesAndNames args, @Cached("create()") ShareObjectNode shareObjectNode) {
+    protected RList list(RArgsValuesAndNames args,
+                    @Cached("create()") ShareObjectNode shareObjectNode) {
         Object[] argArray = args.getArguments();
         for (int i = 0; i < argArray.length; i++) {
             shareObjectNode.execute(argArray[i]);
@@ -118,7 +119,8 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!isRArgsValuesAndNames(value)", "!isRMissing(value)"})
-    protected RList listSingleElement(Object value, @Cached("create()") ShareObjectNode shareObjectNode) {
+    protected RList listSingleElement(Object value,
+                    @Cached("create()") ShareObjectNode shareObjectNode) {
         shareObjectNode.execute(value);
         if (suppliedSignatureArgNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

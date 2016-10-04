@@ -250,8 +250,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             ((RShareable) b).incRefCount();
         }
 
-        RVector aMaterialized = a.copy().materialize();
-        RVector bMaterialized = b.copy().materialize();
+        RVector<?> aMaterialized = a.copy().materialize();
+        RVector<?> bMaterialized = b.copy().materialize();
 
         aMaterialized.setAttr("a", "a");
         bMaterialized.setAttr("b", "b");

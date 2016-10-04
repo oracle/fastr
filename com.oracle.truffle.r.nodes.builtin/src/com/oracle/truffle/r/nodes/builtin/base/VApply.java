@@ -139,12 +139,12 @@ public abstract class VApply extends RBuiltinNode {
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValue, byte useNames) {
-        RVector result = delegateToLapply(frame, vec, fun, funValue, useNames);
+        RVector<?> result = delegateToLapply(frame, vec, fun, funValue, useNames);
         // set here else it gets overridden by the iterator evaluation
         return result;
     }
 
-    private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, byte useNames) {
+    private RVector<?> delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, byte useNames) {
         /*
          * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
          * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
@@ -153,10 +153,10 @@ public abstract class VApply extends RBuiltinNode {
          */
         int funValueVecLen = funValueVec.getLength();
 
-        RVector vecMat = vec.materialize();
+        RVector<?> vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
-        RVector result = null;
+        RVector<?> result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
 
         naCheck.enable(true);

@@ -36,7 +36,7 @@ abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbst
     }
 
     @Override
-    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
     }
 

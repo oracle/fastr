@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RSharingAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
+public abstract class RVector<ArrayT> extends RSharingAttributeStorage implements RAbstractVector, RFFIAccess {
 
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
@@ -93,6 +93,37 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
                 initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIM_ATTR_KEY}, new Object[]{RDataFactory.createIntVector(dimensions, true)}));
             }
         }
+    }
+
+    /**
+     * Intended for external calls where a mutable copy is needed.
+     */
+    public abstract ArrayT getDataCopy();
+
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public abstract ArrayT getDataWithoutCopying();
+
+    /**
+     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
+     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
+     *
+     * @return vector data
+     */
+    public final ArrayT getDataNonShared() {
+        return isShared() ? getDataCopy() : getDataWithoutCopying();
+    }
+
+    /**
+     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
+     * of vector sharing mode).
+     *
+     * @return vector data
+     */
+    public final ArrayT getDataTemp() {
+        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     public final int[] getInternalDimensions() {
@@ -499,11 +530,11 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         return setClassAttrInternal(this, classAttr);
     }
 
-    public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr) {
+    public static RAbstractContainer setVectorClassAttr(RVector<?> vector, RStringVector classAttr) {
         return setClassAttrInternal(vector, classAttr);
     }
 
-    private static RAbstractContainer setClassAttrInternal(RVector vector, RStringVector classAttr) {
+    private static RAbstractContainer setClassAttrInternal(RVector<?> vector, RStringVector classAttr) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
         }
@@ -534,7 +565,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
         return vector;
     }
 
-    public final void setAttributes(RVector result) {
+    public final void setAttributes(RVector<?> result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
         result.rowNames = this.rowNames;
@@ -547,48 +578,47 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     // public interface *copy* methods are final and delegate to *internalCopyAndReport* methods
 
     @Override
-    public final RVector copy() {
-        RVector result = internalCopyAndReport();
+    public final RVector<ArrayT> copy() {
+        RVector<ArrayT> result = internalCopyAndReport();
         setAttributes(result);
         result.setTypedValueInfo(getTypedValueInfo());
         return result;
     }
 
     @Override
-    public final RVector copyDropAttributes() {
-        RVector result = internalCopyAndReport();
-        return result;
+    public final RVector<ArrayT> copyDropAttributes() {
+        return internalCopyAndReport();
     }
 
     @Override
-    public final RVector deepCopy() {
-        RVector result = internalDeepCopyAndReport();
+    public final RVector<ArrayT> deepCopy() {
+        RVector<ArrayT> result = internalDeepCopyAndReport();
         setAttributes(result);
         return result;
     }
 
     @Override
-    public final RVector copyResized(int size, boolean fillNA) {
+    public final RVector<ArrayT> copyResized(int size, boolean fillNA) {
         return internalCopyResizedAndReport(size, fillNA);
     }
 
     // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should
     // be used if additional logic in public interface *copy* method is not desired.
 
-    protected final RVector internalCopyAndReport() {
-        RVector result = internalCopy();
+    protected final RVector<ArrayT> internalCopyAndReport() {
+        RVector<ArrayT> result = internalCopy();
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
-    protected final RVector internalDeepCopyAndReport() {
-        RVector result = internalDeepCopy();
+    protected final RVector<ArrayT> internalDeepCopyAndReport() {
+        RVector<ArrayT> result = internalDeepCopy();
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
-    protected final RVector internalCopyResizedAndReport(int size, boolean fillNA) {
-        RVector result = internalCopyResized(size, fillNA);
+    protected final RVector<ArrayT> internalCopyResizedAndReport(int size, boolean fillNA) {
+        RVector<ArrayT> result = internalCopyResized(size, fillNA);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
@@ -596,20 +626,20 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     // *internalCopy* methods should only be overridden, but never invoked from anywhere but
     // *internalCopyAndReport*
 
-    protected abstract RVector internalCopyResized(int size, boolean fillNA);
+    protected abstract RVector<ArrayT> internalCopyResized(int size, boolean fillNA);
 
     // to be overridden by recursive structures
-    protected RVector internalDeepCopy() {
+    protected RVector<ArrayT> internalDeepCopy() {
         return internalCopy();
     }
 
-    protected abstract RVector internalCopy();
+    protected abstract RVector<ArrayT> internalCopy();
 
     @Override
-    public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+    public RVector<ArrayT> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RVector result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
+        RVector<ArrayT> result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
         result.setDimensions(newDimensions);
         return result;
     }
@@ -631,7 +661,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
      * @param naCheck NA check used to change vector's mode in case value is NA
      * @return updated vector
      */
-    public abstract RVector updateDataAtAsObject(int i, Object o, NACheck naCheck);
+    public abstract RVector<ArrayT> updateDataAtAsObject(int i, Object o, NACheck naCheck);
 
     public abstract void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex);
 
@@ -663,7 +693,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
      * Internal version without profiles used in a rare (and already slow) case of double-to-int
      * vector conversion when setting class attribute
      */
-    protected final RAttributable copyAttributesFrom(RVector vector) {
+    protected final RAttributable copyAttributesFrom(RVector<?> vector) {
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             this.names = vector.getNames();
         }
@@ -715,7 +745,7 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "all three string constants below are supposed to be used as identities")
-    public final RVector copyRegAttributesFrom(RAbstractContainer vector) {
+    public final RVector<ArrayT> copyRegAttributesFrom(RAbstractContainer vector) {
         RAttributes orgAttributes = vector.getAttributes();
         if (orgAttributes != null) {
             Object newRowNames = null;
@@ -735,13 +765,13 @@ public abstract class RVector extends RSharingAttributeStorage implements RShare
     }
 
     @Override
-    public final RVector resize(int size) {
+    public final RVector<ArrayT> resize(int size) {
         return resize(size, true);
     }
 
-    private RVector resize(int size, boolean resetAll) {
+    private RVector<ArrayT> resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
-        RVector res = this;
+        RVector<ArrayT> res = this;
         RStringVector oldNames = res.names;
         res = copyResized(size, true);
         if (this.isShared()) {

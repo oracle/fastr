@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 @RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = 0, behavior = PURE)
@@ -55,23 +54,20 @@ public abstract class Expression extends RBuiltinNode {
         for (int i = 0; i < argValues.length; i++) {
             data[i] = convert((RPromise) argValues[i]);
         }
-        RList list;
         if (hasNonNull) {
             String[] names = new String[signature.getLength()];
             for (int i = 0; i < names.length; i++) {
                 names[i] = signature.getName(i);
             }
-            list = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+            return RDataFactory.createExpression(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } else {
-            list = RDataFactory.createList(data);
+            return RDataFactory.createExpression(data);
         }
-        return RDataFactory.createExpression(list);
     }
 
     @Specialization
     protected Object doExpression(RPromise language) {
-        RList list = RDataFactory.createList(new Object[]{convert(language)});
-        return RDataFactory.createExpression(list);
+        return RDataFactory.createExpression(new Object[]{convert(language)});
     }
 
     private Object convert(RPromise promise) {

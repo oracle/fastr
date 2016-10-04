@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -101,18 +102,18 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(guards = "!isListVector(arg)")
+        @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
         protected byte isRecursive(RAbstractVector arg) {
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        protected byte isRecursive(RList arg) {
+        protected byte isRecursive(RListBase arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         protected boolean isListVector(RAbstractVector arg) {
-            return arg instanceof RList;
+            return arg instanceof RListBase;
         }
 
         @Fallback
@@ -131,14 +132,14 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isRList(arg)")
+        @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
         protected byte isAtomic(RAbstractVector arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         protected static boolean isNonListVector(Object value) {
             return value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RRaw ||
-                            (value instanceof RAbstractVector && !(value instanceof RList));
+                            (value instanceof RAbstractVector && !(value instanceof RListBase));
         }
 
         protected boolean isFactor(Object value) {
