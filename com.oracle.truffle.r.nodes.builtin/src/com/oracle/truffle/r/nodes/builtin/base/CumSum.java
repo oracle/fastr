@@ -64,7 +64,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mapIf(integerValue().or(logicalValue()), asIntegerVector(), chain(mapIf(complexValue().not(), asDoubleVector())).end());
+        casts.arg("x").allowNull().mapIf(integerValue().or(logicalValue()), asIntegerVector(), chain(mapIf(complexValue().not(), asDoubleVector())).end());
     }
 
     @Specialization

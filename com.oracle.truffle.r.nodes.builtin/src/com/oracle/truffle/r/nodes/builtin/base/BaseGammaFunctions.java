@@ -74,7 +74,7 @@ public class BaseGammaFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue(), RError.Message.NON_NUMERIC_MATH).asDoubleVector();
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
         }
 
         @Specialization
@@ -118,7 +118,7 @@ public class BaseGammaFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue(), RError.Message.NON_NUMERIC_MATH).asDoubleVector();
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
         }
 
         @Specialization

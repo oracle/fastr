@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RError.Message.MATCH_VECTOR_ARGS;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -75,11 +76,14 @@ public abstract class Match extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        // TODO these pipelines do not allow scalars, i.e., the RAbstractVector isn't right.
-        // casts.arg("x").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
-        // casts.arg("table").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
+        // TODO initially commented out because of use of scalars, the commented out version
+        // converted to new cast pipelines API
+
+        // casts.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER,
+        // MATCH_VECTOR_ARGS).asVectorPreserveAttrs(true);
+        // casts.arg("table").allowNull().mustBe(abstractVectorValue()).asVectorPreserveAttrs(true);
         casts.arg("nomatch").asIntegerVector().findFirst();
-        // casts.arg("incomparables").mustBe(instanceOf(RAbstractVector.class).or(nullValue())).asVector(true);
+        // casts.arg("incomparables").allowNull().mustBe(abstractVectorValue()).asVectorPreserveAttrs(true);
     }
 
     private RAbstractStringVector castString(RAbstractVector operand) {
@@ -502,13 +506,13 @@ public abstract class Match extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(RFunction x, Object table, int nomatch, Object incomparables) {
-        throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
+        throw RError.error(this, MATCH_VECTOR_ARGS);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(Object x, RFunction table, int nomatch, Object incomparables) {
-        throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
+        throw RError.error(this, MATCH_VECTOR_ARGS);
     }
 
     protected boolean isStringVectorTable(RAbstractVector table) {

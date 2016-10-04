@@ -39,7 +39,7 @@ public abstract class Strtrim extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(Predef.stringValue(), Message.REQUIRES_CHAR_VECTOR, "strtrim()").asStringVector(true, true, true);
+        casts.arg("x").defaultError(Message.REQUIRES_CHAR_VECTOR, "strtrim()").mustBe(Predef.stringValue()).asStringVector(true, true, true);
         casts.arg("width").asIntegerVector();
     }
 

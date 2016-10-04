@@ -12,7 +12,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RErrorHandling.getHandlerStack;
@@ -56,8 +55,8 @@ public class ConditionFunctions {
     public abstract static class AddCondHands extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("classes").mustBe(nullValue().or(stringValue())).asStringVector();
-            casts.arg("handlers").mustBe(nullValue().or(instanceOf(RList.class)));
+            casts.arg("classes").allowNull().mustBe(stringValue()).asStringVector();
+            casts.arg("handlers").allowNull().mustBe(instanceOf(RList.class));
             casts.arg("calling").asLogicalVector().findFirst();
         }
 

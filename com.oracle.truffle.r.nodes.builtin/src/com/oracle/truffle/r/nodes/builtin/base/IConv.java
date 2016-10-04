@@ -43,11 +43,9 @@ public abstract class IConv extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(stringValue(), RError.NO_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "x");
         // with default error message, NO_CALLER does not work
-        casts.arg("from").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "from").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
-                        "from");
-        casts.arg("to").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "to").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
-                        "to");
-        casts.arg("sub").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub").asStringVector().mustBe(size(1), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub");
+        casts.arg("from").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        casts.arg("to").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        casts.arg("sub").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub").mustBe(stringValue()).asStringVector().mustBe(size(1));
         casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
 

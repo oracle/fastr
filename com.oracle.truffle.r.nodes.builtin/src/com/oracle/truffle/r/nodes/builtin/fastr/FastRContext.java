@@ -60,7 +60,7 @@ public class FastRContext {
 
     private static final class Casts {
         private static void exprs(CastBuilder casts) {
-            casts.arg("exprs").asStringVector().mustBe(nullValue().not().and(notEmpty()));
+            casts.arg("exprs").asStringVector().mustBe(notEmpty());
         }
 
         private static void kind(CastBuilder casts) {
@@ -73,11 +73,11 @@ public class FastRContext {
         }
 
         private static void key(CastBuilder casts) {
-            casts.arg("key").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
+            casts.arg("key").asIntegerVector().mustBe(notEmpty()).findFirst();
         }
 
         private static void id(CastBuilder casts) {
-            casts.arg("id").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
+            casts.arg("id").asIntegerVector().mustBe(notEmpty()).findFirst();
         }
     }
 
@@ -133,7 +133,7 @@ public class FastRContext {
     public abstract static class Join extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("handle").asIntegerVector().mustBe(nullValue().not().and(notEmpty()));
+            casts.arg("handle").asIntegerVector().mustBe(notEmpty());
         }
 
         @Specialization
@@ -226,8 +226,8 @@ public class FastRContext {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("args").mustBe(missingValue().or(stringValue()));
-            casts.arg("env").mustBe(missingValue().or(stringValue()));
+            casts.arg("args").allowMissing().mustBe(stringValue());
+            casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
 
@@ -260,7 +260,7 @@ public class FastRContext {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("args").mustBe(stringValue(), RError.Message.GENERIC, "usage: /path/to/Rscript [--options] [-e expr [-e expr2 ...] | file] [args]").asStringVector();
-            casts.arg("env").mustBe(missingValue().or(stringValue()));
+            casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
 

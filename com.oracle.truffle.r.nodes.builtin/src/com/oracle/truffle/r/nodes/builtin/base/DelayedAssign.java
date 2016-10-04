@@ -50,8 +50,8 @@ public abstract class DelayedAssign extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_FIRST_ARGUMENT).findFirst();
-        casts.arg("eval.env").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
-        casts.arg("assign.env").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        casts.arg("eval.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        casts.arg("assign.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
     }
 
     @Specialization

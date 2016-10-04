@@ -12,7 +12,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -70,7 +72,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
     @Child private CastNode castIntScalar;
     @Child private CastNode castStringScalar;
     {
-        CastBuilder builder = new CastBuilder();
+        CastBuilder builder = new CastBuilder(2);
         builder.arg(0).asIntegerVector().findFirst(RRuntime.INT_NA);
         builder.arg(1).asStringVector().findFirst(RRuntime.STRING_NA);
         castIntScalar = builder.getCasts()[0];
@@ -92,7 +94,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         casts.arg("f").defaultError(RError.Message.GENERIC, "argument to 'standardGeneric' must be a non-empty character string").mustBe(
                         stringValue()).asStringVector().findFirst().mustBe(lengthGt(0));
         Function<Object, Object> argClass = this::argClass;
-        casts.arg("fdef").asAttributable(true, true, true).mustBe(missingValue().or(instanceOf(RFunction.class)), RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass);
+        casts.arg("fdef").defaultError(RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass).allowMissing().asAttributable(true, true, true).mustBe(instanceOf(RFunction.class));
     }
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {

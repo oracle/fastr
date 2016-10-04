@@ -58,7 +58,7 @@ public abstract class RBuiltinNode extends RNode {
     }
 
     public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder(this);
+        CastBuilder builder = new CastBuilder(getRBuiltin());
         createCasts(builder);
         return builder.getCasts();
     }

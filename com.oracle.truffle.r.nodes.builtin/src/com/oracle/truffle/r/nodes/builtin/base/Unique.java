@@ -71,13 +71,12 @@ public abstract class Unique extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         // these are similar to those in DuplicatedFunctions.java
-        casts.arg("x").mustBe(nullValue().or(abstractVectorValue()), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS,
-                        "unique()").mapIf(nullValue().not(), asVector());
+        casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS, "unique()").allowNull().mustBe(abstractVectorValue()).asVector();
         // not much more can be done for incomparables as it is either a vector of incomparable
         // values or a (single) logical value
         // TODO: coercion error must be handled by specialization as it depends on type of x (much
         // like in duplicated)
-        casts.arg("incomparables").asVector(true);
+        casts.arg("incomparables").mapNull(emptyList()).asVector(true);
         casts.arg("fromLast").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         // currently not supported and not tested, but NA is a correct value (the same for empty
         // vectors) whereas 0 is not (throws an error)

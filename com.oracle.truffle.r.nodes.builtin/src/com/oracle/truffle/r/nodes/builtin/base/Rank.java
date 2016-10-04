@@ -15,6 +15,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -63,8 +65,7 @@ public abstract class Rank extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // @formatter:off
         Function<Object, Object> typeFunc = x -> x.getClass().getSimpleName();
-        casts.arg("x").mustBe(abstractVectorValue(), SHOW_CALLER, UNIMPLEMENTED_TYPE_IN_GREATER, typeFunc).
-                mustBe(rawValue().not(), SHOW_CALLER, RError.Message.RAW_SORT);
+        casts.arg("x").mustBe(abstractVectorValue(), SHOW_CALLER, UNIMPLEMENTED_TYPE_IN_GREATER, typeFunc).mustBe(not(rawValue()), SHOW_CALLER, RError.Message.RAW_SORT);
         // Note: in the case of no long vector support, when given anything but integer as n, GnuR behaves as if n=1,
         // we allow ourselves to be bit inconsistent with GnuR in that.
         casts.arg("len").defaultError(NO_CALLER, INVALID_VALUE, "length(xx)").mustBe(numericValue()).

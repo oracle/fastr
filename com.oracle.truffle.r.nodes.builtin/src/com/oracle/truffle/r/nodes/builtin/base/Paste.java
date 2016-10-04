@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
@@ -65,9 +64,9 @@ public abstract class Paste extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0).mustBe(RAbstractListVector.class);
-        casts.arg("sep").mustBe(nullValue().not()).asStringVector().findFirst(Message.INVALID_SEPARATOR);
-        casts.arg("collapse").mustBe(Predef.stringValue().or(Predef.nullValue())).mapIf(Predef.stringValue(), Predef.findFirst().stringElement());
+        casts.arg(0).mustBe(abstractVectorValue());
+        casts.arg("sep").asStringVector().findFirst(Message.INVALID_SEPARATOR);
+        casts.arg("collapse").allowNull().mustBe(Predef.stringValue()).asStringVector().findFirst();
     }
 
     /**

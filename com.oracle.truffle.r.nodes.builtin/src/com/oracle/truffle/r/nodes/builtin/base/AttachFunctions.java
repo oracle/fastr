@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -55,7 +54,7 @@ public class AttachFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("what").mustBe(instanceOf(REnvironment.class).or(nullValue()).or(instanceOf(RAbstractListVector.class)), RError.Message.ATTACH_BAD_TYPE);
+            casts.arg("what").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RAbstractListVector.class)), RError.Message.ATTACH_BAD_TYPE);
             casts.arg("pos").mustBe(numericValue(), Message.MUST_BE_INTEGER, "pos").asIntegerVector();
             casts.arg("name").mustBe(stringValue());
         }

@@ -13,7 +13,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -33,7 +32,7 @@ public abstract class Row extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("dims").mustBe(nullValue().not().and(integerValue()), SHOW_CALLER, RError.Message.MATRIX_LIKE_REQUIRED, "row").asIntegerVector().mustBe(size(2));
+        casts.arg("dims").defaultError(SHOW_CALLER, RError.Message.MATRIX_LIKE_REQUIRED, "row").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
     }
 
     @Specialization

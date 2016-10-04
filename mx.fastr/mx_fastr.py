@@ -459,9 +459,15 @@ def rbdiag(args):
 	-v		Verbose output including the list of unimplemented specializations
 	-n		Ignore RNull as an argument type
 	-m		Ignore RMissing as an argument type
+    --mnonly		Uses the RMissing and RNull values as the only samples for the chimney-sweeping
+    --noSelfTest	Does not perform the pipeline self-test using the generated samples as the intro to each chimney-sweeping. It has no effect when --mnonly is specified as the self-test is never performed in that case.
     --sweep		Performs the 'chimney-sweeping'. The sample combination selection method is determined automatically.
-    --sweep-lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
-    --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
+    --sweep=lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
+    --sweep=total	Performs the 'chimney-sweeping'. The total sample selection method is used.
+    --matchLevel=same	Outputs produced by FastR and GnuR must be same (default)
+    --matchLevel=error	Outputs are considered matching if none or both outputs contain an error
+    --maxSweeps=N		Sets the maximum number of sweeps
+    --outMaxLev=N		Sets the maximum output detail level for report messages. Use 0 for the basic messages only.
 
 	If no builtin is specified, all registered builtins are diagnosed.
 	An external builtin is specified by the fully qualified name of its node class.
@@ -525,7 +531,7 @@ _commands = {
     'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
     'rcmplib' : [rcmplib, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],

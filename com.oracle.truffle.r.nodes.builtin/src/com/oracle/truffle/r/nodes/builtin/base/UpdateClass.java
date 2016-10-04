@@ -11,7 +11,6 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -54,8 +53,8 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(nullValue().not());
-        casts.arg("value").asStringVector();
+        casts.arg("x"); // disallows null
+        casts.arg("value").allowNull().asStringVector();
     }
 
     @Specialization

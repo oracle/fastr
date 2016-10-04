@@ -57,7 +57,7 @@ public class LoadSaveFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("con").mustBe(instanceOf(RConnection.class));
-            casts.arg("envir").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("verbose").asLogicalVector().findFirst().map(toBoolean());
         }
 
@@ -113,7 +113,7 @@ public class LoadSaveFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("file").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_FILENAME).findFirst();
-            casts.arg("envir").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
         }
 
         private static final int R_MAGIC_EMPTY = 999;
@@ -193,8 +193,8 @@ public class LoadSaveFunctions {
             casts.arg("list").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_CHARVEC).findFirst();
             casts.arg("con").mustBe(instanceOf(RConnection.class));
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
-            casts.arg("version").mustBe(nullValue().or(integerValue()));
-            casts.arg("environment").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("version").allowNull().mustBe(integerValue());
+            casts.arg("environment").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("eval.promises").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 

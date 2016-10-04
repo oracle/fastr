@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -63,7 +62,7 @@ public abstract class Rm extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("list").mustBe(stringValue(), SHOW_CALLER, INVALID_FIRST_ARGUMENT);
-        casts.arg("envir").mustBe(nullValue().not(), SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
+        casts.arg("envir").mustNotBeNull(SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
         casts.arg("inherits").mustBe(numericValue(), SHOW_CALLER, INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
     }
 

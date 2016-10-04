@@ -68,11 +68,12 @@ public abstract class Signif extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.NON_NUMERIC_MATH).mapIf(complexValue().not(), asDoubleVector(true, true, true));
+        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue())).mapIf(complexValue().not(),
+                        asDoubleVector(true, true, true));
         // TODO: for the error messages to be consistent with GNU R we should chack for notEmpty()
         // first but it does not seem to be possible currently as numericValue() cannot be used on
         // the result of asVector()
-        casts.arg("digits").mustBe(numericValue(), RError.Message.NON_NUMERIC_MATH).asIntegerVector().mustBe(notEmpty(), RError.Message.INVALID_ARG_OF_LENGTH, "second", 0);
+        casts.arg("digits").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue()).asIntegerVector().mustBe(notEmpty(), RError.Message.INVALID_ARG_OF_LENGTH, "second", 0);
     }
 
     // TODO: consider porting signif implementation from GNU R

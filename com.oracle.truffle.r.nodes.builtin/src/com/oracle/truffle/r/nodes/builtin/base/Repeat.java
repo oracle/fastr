@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -97,9 +98,11 @@ public abstract class Repeat extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         Function<Object, Object> argType = this::argType;
         casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, argType);
-        casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustBe(nullValue().not()).asIntegerVector();
-        casts.arg("length.out").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(1);
-        casts.arg("each").asIntegerVector().shouldBe(size(1), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1);
+        casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustNotBeNull().asIntegerVector();
+        casts.arg("length.out").mustNotBeNull().asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
+                        RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(intNA().or(gte(0)));
+        casts.arg("each").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED, "each").notNA(
+                        1).mustBe(gte(0));
     }
 
     protected boolean hasNames(RAbstractVector x) {

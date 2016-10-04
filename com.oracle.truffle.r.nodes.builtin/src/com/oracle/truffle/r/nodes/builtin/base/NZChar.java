@@ -41,7 +41,7 @@ public abstract class NZChar extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asStringVector();
+        casts.arg("x").allowNull().asStringVector();
         casts.arg("keepNA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 

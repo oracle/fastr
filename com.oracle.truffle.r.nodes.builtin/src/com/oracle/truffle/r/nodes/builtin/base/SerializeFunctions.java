@@ -112,7 +112,7 @@ public class SerializeFunctions {
         protected void createCasts(CastBuilder casts) {
             connection(casts);
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
-            casts.arg("version").mustBe(nullValue().or(integerValue()));
+            casts.arg("version").allowNull().mustBe(integerValue());
         }
 
         @Specialization
@@ -151,7 +151,7 @@ public class SerializeFunctions {
     public abstract static class Serialize extends Adapter {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("con").mustBe(nullValue().or(instanceOf(RConnection.class)));
+            casts.arg("con").allowNull().mustBe(instanceOf(RConnection.class));
             casts.arg("type").asIntegerVector().findFirst();
         }
 

@@ -49,7 +49,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mapIf(Predef.integerValue(), asIntegerVector(), asStringVector(true, false, false));
+        casts.arg("x").allowNull().mapIf(Predef.integerValue(), asIntegerVector(), asStringVector(true, false, false));
         casts.arg("type").asStringVector().findFirst();
         casts.arg("allowNA").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean());
         casts.arg("keepNA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());

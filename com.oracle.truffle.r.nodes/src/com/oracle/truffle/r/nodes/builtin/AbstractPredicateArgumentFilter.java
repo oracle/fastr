@@ -31,22 +31,14 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class AbstractPredicateArgumentFilter<T, R extends T> implements NarrowingArgumentFilter<T, R> {
 
     private final Predicate<? super T> valuePredicate;
-    private final boolean isNullable;
 
-    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-
-    public AbstractPredicateArgumentFilter(Predicate<? super T> valuePredicate, boolean isNullable) {
+    public AbstractPredicateArgumentFilter(Predicate<? super T> valuePredicate) {
         this.valuePredicate = valuePredicate;
-        this.isNullable = isNullable;
     }
 
     @Override
     public boolean test(T arg) {
-        if (profile.profile(!isNullable && (arg == RNull.instance))) {
-            return false;
-        } else {
-            return valuePredicate.test(arg);
-        }
+        return valuePredicate.test(arg);
     }
 
 }

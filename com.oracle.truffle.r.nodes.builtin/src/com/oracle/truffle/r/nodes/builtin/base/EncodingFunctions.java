@@ -56,11 +56,10 @@ public class EncodingFunctions {
     public abstract static class SetEncoding extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT);
+            casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT).mustBe(stringValue());
             // asStringVector is required for notEmpty() to receive a proper type in case of scalars
-            casts.arg("value").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.GENERIC, "a character vector 'value' expected").asStringVector().mustBe(notEmpty(), RError.SHOW_CALLER,
-                            RError.Message.GENERIC,
-                            "'value' must be of positive length");
+            casts.arg("value").defaultError(RError.SHOW_CALLER, RError.Message.GENERIC, "a character vector 'value' expected").mustBe(stringValue()).asStringVector().mustBe(notEmpty(),
+                            RError.SHOW_CALLER, RError.Message.GENERIC, "'value' must be of positive length");
         }
 
         @Specialization

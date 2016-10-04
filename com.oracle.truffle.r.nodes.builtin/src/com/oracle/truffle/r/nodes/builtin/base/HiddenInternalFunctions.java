@@ -12,7 +12,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -147,10 +146,10 @@ public class HiddenInternalFunctions {
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("impenv").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
-            casts.arg("expenv").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
-            casts.arg("impnames").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "names").asStringVector();
-            casts.arg("expnames").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "names").asStringVector();
+            casts.arg("impenv").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
+            casts.arg("impnames").defaultError(RError.Message.INVALID_ARGUMENT, "names").mustBe(stringValue()).asStringVector();
+            casts.arg("expenv").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
+            casts.arg("expnames").defaultError(RError.Message.INVALID_ARGUMENT, "names").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "names").asStringVector();
         }
 
         @Specialization

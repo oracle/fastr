@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -44,11 +43,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
     public abstract Object executeString(byte o);
 
     public abstract Object executeString(Object o);
-
-    @Specialization
-    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
-        return RNull.instance;
-    }
 
     private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
         RStringVector ret = RDataFactory.createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));

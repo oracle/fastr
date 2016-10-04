@@ -39,7 +39,7 @@ public abstract class Stop extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("call").asLogicalVector().findFirst().map(toBoolean());
-        casts.arg("message").mustBe(stringValue().or(nullValue())).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_STRING_IN_STOP).findFirst();
+        casts.arg("message").allowNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_STRING_IN_STOP).findFirst();
     }
 
     @Specialization

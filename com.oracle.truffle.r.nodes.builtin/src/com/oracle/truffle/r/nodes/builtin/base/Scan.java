@@ -18,7 +18,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.length;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -109,12 +108,12 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("nmax").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
 
-        casts.arg("sep").mustBe(nullValue().or(stringValue())).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+        casts.arg("sep").allowNull().mustBe(stringValue()).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(nullValue().or(stringValue())).asStringVector().findFirst(".").mustBe(length(1), RError.Message.MUST_BE_ONE_BYTE,
-                        "'sep' value");
+        casts.arg("dec").allowNull().defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
+                        RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapIf(nullValue(), constant("")).mustBe(stringValue()).asStringVector().findFirst("");
+        casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapNull(constant("")).mustBe(stringValue()).asStringVector().findFirst("");
 
         casts.arg("skip").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
 

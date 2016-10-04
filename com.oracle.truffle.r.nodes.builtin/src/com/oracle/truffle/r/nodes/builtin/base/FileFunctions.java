@@ -113,7 +113,7 @@ public class FileFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("file1").mustBe(stringValue()).asStringVector();
-            casts.arg("file1").mustBe(stringValue()).asStringVector();
+            casts.arg("file2").mustBe(stringValue()).asStringVector();
         }
 
         @Specialization
@@ -566,7 +566,7 @@ public class FileFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("path").mustBe(stringValue()).asStringVector();
-            casts.arg("pattern").mustBe(stringValue().or(nullValue()));
+            casts.arg("pattern").allowNull().mustBe(stringValue());
             casts.arg("all.files").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());

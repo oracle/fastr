@@ -11,9 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -140,7 +140,7 @@ public class DatePOSIXFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector();
+            casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector();
         }
 
         @Specialization
@@ -176,7 +176,7 @@ public class DatePOSIXFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").map(defaultValue(RDataFactory.createEmptyDoubleVector())).asDoubleVector(true, false, false);
+            casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector(true, false, false);
             casts.arg("tz").asStringVector().findFirst("");
         }
 
@@ -333,7 +333,7 @@ public class DatePOSIXFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("x").mustBe(RAbstractListVector.class);
-            casts.arg("format").mustBe(nullValue().not()).asStringVector().mustBe(notEmpty());
+            casts.arg("format").asStringVector().mustBe(notEmpty());
             casts.arg("usetz").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
@@ -390,9 +390,9 @@ public class DatePOSIXFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
-            casts.arg("format").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
-            casts.arg("tz").map(defaultValue(RDataFactory.createEmptyStringVector())).asStringVector();
+            casts.arg("x").mapNull(emptyStringVector()).asStringVector();
+            casts.arg("format").mapNull(emptyStringVector()).asStringVector();
+            casts.arg("tz").mapNull(emptyStringVector()).asStringVector();
         }
 
         @Specialization

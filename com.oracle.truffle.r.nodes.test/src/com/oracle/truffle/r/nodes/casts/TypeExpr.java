@@ -74,6 +74,10 @@ public final class TypeExpr {
         return new TypeExpr(newDisjNormForm);
     }
 
+    public boolean contains(Type tp) {
+        return disjNormForm.stream().flatMap(conjSet -> conjSet.stream().filter(t -> t.equals(tp))).findFirst().isPresent();
+    }
+
     public TypeExpr or(TypeExpr te) {
         Set<Set<? extends Type>> newDisjNormForm = new HashSet<>(this.disjNormForm);
         newDisjNormForm.addAll(te.disjNormForm);

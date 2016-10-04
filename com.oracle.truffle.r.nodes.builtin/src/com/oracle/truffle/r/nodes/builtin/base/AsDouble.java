@@ -41,7 +41,7 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asDoubleVector();
+        casts.arg("x").allowNull().asDoubleVector();
     }
 
     @Specialization

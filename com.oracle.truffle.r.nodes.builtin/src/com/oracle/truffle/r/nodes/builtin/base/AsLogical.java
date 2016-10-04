@@ -41,7 +41,7 @@ public abstract class AsLogical extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asLogicalVector();
+        casts.arg("x").allowNull().asLogicalVector();
     }
 
     @Specialization

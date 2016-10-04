@@ -41,7 +41,7 @@ public abstract class AsRaw extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").asRawVector();
+        casts.arg("x").allowNull().asRawVector();
     }
 
     @Specialization

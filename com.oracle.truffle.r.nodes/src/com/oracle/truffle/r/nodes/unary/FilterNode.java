@@ -22,16 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public final class FilterNode extends CastNode {
+public abstract class FilterNode extends CastNode {
 
     private final ArgumentFilter filter;
     private final RError.Message message;
@@ -45,7 +48,7 @@ public final class FilterNode extends CastNode {
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-    private FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
+    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
         this.filter = filter;
         this.isWarning = isWarning;
         this.callObj = callObj == null ? this : callObj;
@@ -55,7 +58,7 @@ public final class FilterNode extends CastNode {
     }
 
     public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
-        return new FilterNode(filter, isWarning, callObj, message, messageArgs, boxPrimitives);
+        return FilterNodeGen.create(filter, isWarning, callObj, message, messageArgs, boxPrimitives);
     }
 
     public ArgumentFilter getFilter() {
@@ -77,8 +80,18 @@ public final class FilterNode extends CastNode {
         }
     }
 
-    @Override
-    public Object execute(Object x) {
+    @Specialization
+    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
+        return RNull.instance;
+    }
+
+    @Specialization
+    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
+        return RMissing.instance;
+    }
+
+    @Specialization
+    public Object executeRest(Object x) {
         if (!conditionProfile.profile(evalCondition(x))) {
             handleMessage(x);
         }

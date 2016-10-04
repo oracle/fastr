@@ -22,11 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
@@ -54,10 +51,10 @@ public class RNGFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("seed").mustBe(numericValue().or(nullValue()), SHOW_CALLER, SEED_NOT_VALID_INT).mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().stringElement()).end());
+            casts.arg("seed").allowNull().mustBe(numericValue(), SHOW_CALLER, SEED_NOT_VALID_INT).asIntegerVector().findFirst();
             Casts.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             // TODO: implement normal.kind specializations with String
-            casts.arg("normal.kind").mustBe(stringValue().or(nullValue()), SHOW_CALLER, INVALID_NORMAL_TYPE_IN_RGNKIND).mustBe(nullValue(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed");
+            casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), SHOW_CALLER, INVALID_NORMAL_TYPE_IN_RGNKIND);
         }
 
         @SuppressWarnings("unused")
@@ -103,9 +100,7 @@ public class RNGFunctions {
 
     private static final class Casts {
         public static void kindInteger(CastBuilder casts, String name, Message error, Object... messageArgs) {
-            casts.arg(name).mustBe(nullValue().or(numericValue()), SHOW_CALLER, error, messageArgs).mapIf(nullValue().not(), chain(asIntegerVector()).with(findFirst().stringElement()).end()).mapIf(
-                            nullValue(),
-                            constant(RRNG.NO_KIND_CHANGE));
+            casts.arg(name).mapNull(constant(RRNG.NO_KIND_CHANGE)).mustBe(numericValue(), SHOW_CALLER, error, messageArgs).asIntegerVector().findFirst();
         }
     }
 }

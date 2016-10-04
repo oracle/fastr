@@ -62,7 +62,7 @@ public class BrowserFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             // TODO: add support for conditions conditions
-            casts.arg("condition").mustBe(nullValue(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
+            casts.arg("condition").allowNull().mustBe(anyValue().not(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
             casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("skipCalls").asIntegerVector().findFirst(0);
         }
