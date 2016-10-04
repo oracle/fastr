@@ -76,7 +76,8 @@ public class RSource {
         LAPPLY("<lapply>"),
         R_PARSEVECTOR("<R_ParseVector>"),
         PAIRLIST_DEPARSE("<pairlist deparse>"),
-        INIT_EMBEDDED("<init embedded>");
+        INIT_EMBEDDED("<init embedded>"),
+        R_IMPL("<internal R code>");
 
         public final String string;
 
