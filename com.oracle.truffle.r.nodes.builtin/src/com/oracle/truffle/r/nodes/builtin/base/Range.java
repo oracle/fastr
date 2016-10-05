@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -54,7 +55,8 @@ public abstract class Range extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1).firstBoolean(2);
+        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("finite").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Override

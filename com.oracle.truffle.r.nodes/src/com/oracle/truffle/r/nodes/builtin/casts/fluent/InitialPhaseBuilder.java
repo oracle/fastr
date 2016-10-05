@@ -142,6 +142,11 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return this;
     }
 
+    public InitialPhaseBuilder<T> boxPrimitive() {
+        pipelineBuilder().appendBoxPrimitive();
+        return this;
+    }
+
     public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
         pipelineBuilder().appendAsIntegerVector(preserveNames, dimensionsPreservation, attrPreservation);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
@@ -200,7 +205,7 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractVector, Object> asVectorPreserveAttrs(boolean preserveNonVector) {
-        pipelineBuilder().appendAsVector(false, false, true, false);
+        pipelineBuilder().appendAsVector(false, false, true, preserveNonVector);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
     }
 

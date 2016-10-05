@@ -11,6 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -24,15 +28,10 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.AnyVectorToStringVectorWr
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -41,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+@SuppressWarnings("unused")
 @RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific", "decimal.mark"}, behavior = PURE)
 public abstract class Format extends RBuiltinNode {
 
@@ -88,26 +88,26 @@ public abstract class Format extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toVector(1).toLogical(1);
-        casts.toVector(2).toInteger(2);
-        casts.toVector(3).toInteger(3);
-        casts.toVector(4).toInteger(4);
-        casts.toVector(5).toInteger(5);
-        casts.toVector(6).toLogical(6);
-        casts.toVector(7);
+        casts.arg("x");
+        casts.arg("trim").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
+        casts.arg("digits").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(R_MIN_DIGITS_OPT).and(lte(R_MAX_DIGITS_OPT))));
+        casts.arg("nsmall").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(20))));
+        casts.arg("width").asIntegerVector().findFirst(0).notNA();
+        casts.arg("justify").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(3))));
+        casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
+        casts.arg("scientific").asIntegerVector().findFirst();
+        casts.arg("decimal.mark").asStringVector().findFirst();
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+                    String decimalMark) {
         return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+                    String decimalMark) {
         return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
@@ -134,82 +134,23 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+                    String decimalMark) {
         return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractComplexVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+    protected RStringVector format(VirtualFrame frame, RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+                    String decimalMark) {
         return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
     }
 
-    @SuppressWarnings("unused")
-    private void processArguments(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec,
-                    RAbstractStringVector decimalMark) {
-        byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
-        int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
-        getConfig().digits = digits;
-        int nsmall = nsmallVec.getLength() > 0 ? nsmallVec.getDataAt(0) : RRuntime.INT_NA;
-        int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
-        int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
-        byte naEncode = naEncodeVec.getLength() > 0 ? naEncodeVec.getDataAt(0) : RRuntime.LOGICAL_NA;
-        int sci = computeSciArg(sciVec);
-        String myOutDec = decimalMark.getDataAt(0);
-        if (RRuntime.isNA(myOutDec)) {
-            myOutDec = ".";
-        }
-    }
-
     @Specialization
-    protected RStringVector format(RAbstractStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec, RAbstractStringVector decimalMark) {
-        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec, decimalMark);
+    protected RStringVector format(RAbstractStringVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
         // TODO: implement full semantics
         return value.materialize();
     }
 
-    // TruffleDSL bug - should not need multiple guards here
-    protected void checkArgs(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec,
-                    RAbstractStringVector decimalMark) {
-        if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "trim");
-        }
-        if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > R_MAX_DIGITS_OPT)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "digits");
-        }
-        if (nsmallVec.getLength() > 0 && (RRuntime.isNA(nsmallVec.getDataAt(0)) || nsmallVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 20)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "nsmall");
-        }
-        if (widthVec.getLength() > 0 && RRuntime.isNA(widthVec.getDataAt(0))) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "width");
-        }
-        if (justifyVec.getLength() > 0 && (RRuntime.isNA(justifyVec.getDataAt(0)) || justifyVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 3)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "justify");
-        }
-        if (naEncodeVec.getLength() > 0 && RRuntime.isNA(naEncodeVec.getDataAt(0))) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "na.encode");
-        }
-        if (sciVec.getLength() != 1 || (sciVec.getElementClass() != RLogical.class && sciVec.getElementClass() != RInteger.class && sciVec.getElementClass() != RDouble.class)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "scientific");
-        }
-        if (decimalMark.getLength() != 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "decmial.mark");
-        }
-    }
-
-    @SuppressWarnings("unused")
     private static class Config {
         public int width;
         public int naWidth;

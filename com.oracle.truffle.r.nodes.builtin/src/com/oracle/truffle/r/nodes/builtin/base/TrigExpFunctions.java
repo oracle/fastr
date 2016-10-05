@@ -496,7 +496,8 @@ public class TrigExpFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0).toDouble(1);
+            casts.arg(0).asDoubleVector();
+            casts.arg(1).asDoubleVector();
         }
 
         private double doFunDouble(double y, double x) {

@@ -11,7 +11,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -253,7 +261,7 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstBoolean(1, "extra_cols");
+            casts.arg("extra_cols").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization

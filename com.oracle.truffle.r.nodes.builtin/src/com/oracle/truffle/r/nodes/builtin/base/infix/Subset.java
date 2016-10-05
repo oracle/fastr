@@ -142,7 +142,7 @@ public abstract class Subset extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(2);
+        casts.arg("drop").asLogicalVector();
     }
 
     @SuppressWarnings("unused")

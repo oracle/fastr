@@ -70,6 +70,10 @@ public final class PipelineBuilder {
         return chainBuilder != null ? chainBuilder.getFirstStep() : null;
     }
 
+    public void appendBoxPrimitive() {
+        append(new PipelineStep.BoxPrimitiveStep<>());
+    }
+
     public void appendFindFirst(Object defaultValue, Class<?> elementClass, RBaseNode callObj, Message message, Object[] messageArgs) {
         append(new FindFirstStep<>(defaultValue, elementClass, createMessage(callObj, message, messageArgs)));
     }

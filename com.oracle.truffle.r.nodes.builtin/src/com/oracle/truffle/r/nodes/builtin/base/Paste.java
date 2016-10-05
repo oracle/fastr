@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -43,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
@@ -64,9 +64,9 @@ public abstract class Paste extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0).mustBe(abstractVectorValue());
+        casts.arg(0).mustBe(RAbstractListVector.class);
         casts.arg("sep").asStringVector().findFirst(Message.INVALID_SEPARATOR);
-        casts.arg("collapse").allowNull().mustBe(Predef.stringValue()).asStringVector().findFirst();
+        casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }
 
     /**
@@ -90,7 +90,7 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector pasteList(RList values, String sep, @SuppressWarnings("unused") RNull collapse) {
+    protected RStringVector pasteList(RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
@@ -101,7 +101,7 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    protected String pasteList(RList values, String sep, String collapse) {
+    protected String pasteList(RAbstractListVector values, String sep, String collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
@@ -111,7 +111,7 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    private boolean hasNonNullElements(RList values, int length) {
+    private boolean hasNonNullElements(RAbstractListVector values, int length) {
         for (int i = 0; i < length; i++) {
             if (values.getDataAt(i) != RNull.instance) {
                 nonNullElementsProfile.enter();
@@ -122,7 +122,7 @@ public abstract class Paste extends RBuiltinNode {
         return false;
     }
 
-    private String[] pasteListElements(RList values, String sep, int length) {
+    private String[] pasteListElements(RAbstractListVector values, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
         for (int i = 0; i < length; i++) {

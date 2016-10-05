@@ -51,6 +51,7 @@ import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
@@ -93,6 +94,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -365,8 +367,11 @@ final class REngine implements Engine, Engine.Timings {
     public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
-            Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
-            if (obj instanceof RLanguage) {
+            Object obj = exprs.getDataAt(i);
+            if (obj instanceof RSymbol) {
+                result = ReadVariableNode.lookupAny(((RSymbol) obj).getName(), envir.getFrame(), false);
+                caller.setVisibility(true);
+            } else if (obj instanceof RLanguage) {
                 result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, caller);
             } else {
                 result = obj;
