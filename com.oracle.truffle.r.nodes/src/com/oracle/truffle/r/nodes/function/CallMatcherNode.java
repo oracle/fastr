@@ -259,7 +259,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     }
                 } else {
                     applyCasts(reorderedArgs);
-                    Object result = builtin.execute(frame, reorderedArgs);
+                    Object result = builtin.executeBuiltin(frame, reorderedArgs);
                     visibility.execute(frame, builtinDescriptor.getVisibility());
                     return result;
                 }

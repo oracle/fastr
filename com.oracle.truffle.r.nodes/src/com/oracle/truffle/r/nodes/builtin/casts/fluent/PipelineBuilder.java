@@ -158,7 +158,7 @@ public final class PipelineBuilder {
         append(new DefaultErrorStep<>(createMessage(callObj, message, args)));
     }
 
-    private MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
+    private static MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
         return message == null ? null : new MessageData(callObj, message, messageArgs);
     }
 }

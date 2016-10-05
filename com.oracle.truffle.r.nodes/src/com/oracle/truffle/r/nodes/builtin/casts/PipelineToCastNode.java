@@ -274,7 +274,7 @@ public final class PipelineToCastNode {
          */
         private RType checkFilter(Filter<?, ?> filter) {
             if (filter instanceof RTypeFilter) {
-                RType type = ((RTypeFilter) filter).getType();
+                RType type = ((RTypeFilter<?>) filter).getType();
                 if (targetType == null) {
                     return type;
                 }
@@ -307,7 +307,7 @@ public final class PipelineToCastNode {
 
         private static boolean isNextMapToBoolean(FindFirstStep<?, ?> findFirst) {
             PipelineStep<?, ?> next = findFirst.getNext();
-            return next != null && next instanceof MapStep && ((MapStep) next).getMapper() instanceof MapByteToBoolean;
+            return next != null && next instanceof MapStep && ((MapStep<?, ?>) next).getMapper() instanceof MapByteToBoolean;
         }
     }
 

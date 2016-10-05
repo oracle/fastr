@@ -224,8 +224,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             String symbol = lookupLHS.getIdentifier();
             if ("slot".equals(symbol) || "@".equals(symbol)) {
                 // this is pretty gross, but at this point seems like the only way to get setClass
-                // to
-                // work properly
+                // to work properly
                 argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
             }
             newSyntaxLHS = lookup(lookupLHS.getSourceSection(), symbol + "<-", true);

@@ -186,7 +186,7 @@ public final class Missing extends RBuiltinNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame, Object... args) {
+    public Object executeBuiltin(VirtualFrame frame, Object... args) {
         throw RInternalError.shouldNotReachHere();
     }
 

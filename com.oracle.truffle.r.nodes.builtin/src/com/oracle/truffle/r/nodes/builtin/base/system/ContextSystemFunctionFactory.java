@@ -60,7 +60,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         @Specialization
         protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRNode();
-            Object result = contextRNode.execute(frame, args, env, intern);
+            Object result = contextRNode.executeBuiltin(frame, args, env, intern);
             return result;
         }
     }
@@ -79,7 +79,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         @Specialization
         protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRscriptNode();
-            Object result = contextRscriptNode.execute(frame, args, env, intern);
+            Object result = contextRscriptNode.executeBuiltin(frame, args, env, intern);
             return result;
         }
     }
