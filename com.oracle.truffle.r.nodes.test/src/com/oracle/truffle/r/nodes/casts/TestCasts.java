@@ -38,8 +38,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarIntegerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
@@ -243,9 +241,8 @@ public class TestCasts extends TestBase {
 
             final boolean mustBeResultCompilationConstant;
 
-            @SuppressWarnings("deprecation")
             protected Root(String name, boolean mustBeResultCompilationConstant) {
-                super(name, setupAndGetCast(b -> b.arg(0).mapIf(scalarIntegerValue(), constant(10))));
+                super(name, setupAndGetCast(b -> b.arg(0).mapIf(instanceOf(Integer.class), constant(10))));
                 this.mustBeResultCompilationConstant = mustBeResultCompilationConstant;
             }
 
@@ -410,9 +407,8 @@ public class TestCasts extends TestBase {
     public void testFilterAndExpression() {
         class Root extends TestRootNode<CastNode> {
 
-            @SuppressWarnings("deprecation")
             protected Root(String name) {
-                super(name, setupAndGetCast(b -> b.arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)))));
+                super(name, setupAndGetCast(b -> b.arg(0).mustBe(instanceOf(Integer.class)).shouldBe(gt0().and(lt(10)))));
             }
 
             @Override
@@ -429,9 +425,8 @@ public class TestCasts extends TestBase {
     public void testFilterNotAndExpression() {
         class Root extends TestRootNode<CastNode> {
 
-            @SuppressWarnings("deprecation")
             protected Root(String name) {
-                super(name, setupAndGetCast(b -> b.arg(0).mustBe(scalarIntegerValue()).shouldBe(gt0().and(lt(10)).not())));
+                super(name, setupAndGetCast(b -> b.arg(0).mustBe(instanceOf(Integer.class)).shouldBe(gt0().and(lt(10)).not())));
             }
 
             @Override
@@ -448,10 +443,9 @@ public class TestCasts extends TestBase {
     public void testComplexPipeline3() {
         class Root extends TestRootNode<CastNode> {
 
-            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, setupAndGetCast(b -> b.arg(0).mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
-                                instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(),
+                                instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())), Message.NON_POSITIVE_FILL).mapIf(instanceOf(Byte.class), asBoolean(),
                                                 asInteger())));
             }
 

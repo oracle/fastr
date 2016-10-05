@@ -681,44 +681,12 @@ public final class CastBuilder {
             return (Filter<Object, RAbstractVector>) f;
         }
 
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        public static Filter<Object, Integer> scalarIntegerValue() {
-            return new TypeFilter<>(x -> x instanceof String, String.class);
-        }
-
         public static Filter<Object, Integer> atomicIntegerValue() {
             return new TypeFilter<>(x -> x instanceof String, String.class);
         }
 
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        public static Filter<Object, Double> scalarDoubleValue() {
-            return new TypeFilter<>(x -> x instanceof Double, Double.class);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        public static Filter<Object, Byte> scalarLogicalValue() {
-            return new TypeFilter<>(x -> x instanceof Byte, Byte.class);
-        }
-
         public static Filter<Object, Byte> atomicLogicalValue() {
             return new TypeFilter<>(x -> x instanceof Byte, Byte.class);
-        }
-
-        /**
-         * @deprecated tests for scalar types are dangerous
-         */
-        @Deprecated
-        public static Filter<Object, RComplex> scalarComplexValue() {
-            return new TypeFilter<>(x -> x instanceof RComplex, RComplex.class);
         }
 
         public static MapByteToBoolean toBoolean() {
