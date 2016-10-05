@@ -50,7 +50,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
@@ -243,12 +242,6 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(CustomNodeStep<?> step) {
-            cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step);
-        }
-
-        @Override
         public CastNode visit(AttributableCoercionStep<?> step) {
             cannotBeOptimizedBeforeFindFirst();
             return inner.visit(step);
@@ -351,11 +344,6 @@ public final class PipelineToCastNode {
         @Override
         public CastNode visit(BoxPrimitiveStep<?> step) {
             return BoxPrimitiveNode.create();
-        }
-
-        @Override
-        public CastNode visit(CustomNodeStep<?> step) {
-            return step.getFactory().get();
         }
 
         @Override

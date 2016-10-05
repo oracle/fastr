@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
-
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -44,7 +42,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToCharAt;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapToValue;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -58,8 +55,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.FindFirstNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -138,105 +133,6 @@ public final class CastBuilder {
         return castsCache;
     }
 
-    // ---------------
-    // Deprecated API:
-    // Converted to the new API preserving original semantics as much as possible
-
-    private PipelineBuilder getBuilderForDeprecated(int index) {
-        PipelineBuilder builder = getBuilder(index, "");
-        builder.getPipelineConfig().allowNull();
-        return builder;
-    }
-
-    public CastBuilder toVector(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        // TODO: asVector with preserveNonVector transforms RNull, this is not compatible with the
-        // semantics of RNull being forwarded by all cast nodes. Because of this we need to map null
-        // for legacy API calls
-        builder.getPipelineConfig().setWasLegacyAsVectorCall();
-        builder.getPipelineConfig().mapNull(new MapToValue<>(RDataFactory.createList()));
-        builder.appendAsVector(false, false, false, false);
-        return this;
-    }
-
-    public CastBuilder toInteger(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
-            mapNullAndMissing(builder, RDataFactory.createIntVector(0));
-        } else {
-            builder.getPipelineConfig().mapNull(new MapToValue<>(RNull.instance));
-        }
-        builder.appendAsIntegerVector(false, false, false);
-        return this;
-    }
-
-    public CastBuilder toDouble(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
-            builder.getPipelineConfig().mapNull(new MapToValue<>(RDataFactory.createDoubleVector(0)));
-            // CastDoubleBaseNode does not handle RMissing it seems...
-        } else {
-            allowNullAndMissing(builder);
-        }
-        builder.appendAsDoubleVector(false, false, false);
-        return this;
-    }
-
-    public CastBuilder toLogical(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        if (builder.getPipelineConfig().wasLegacyAsVectorCall()) {
-            mapNullAndMissing(builder, RDataFactory.createLogicalVector(0));
-        } else {
-            allowNullAndMissing(builder);
-        }
-        builder.appendAsLogicalVector(false, false, false);
-        return this;
-    }
-
-    public CastBuilder boxPrimitive(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        allowNullAndMissing(builder);
-        builder.append(new BoxPrimitiveStep<>());
-        return this;
-    }
-
-    public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
-        // TODO: check if we can remove FirstIntNode when this is removed...
-        getBuilderForDeprecated(index).appendAsIntegerVector(false, false, false);
-        getBuilderForDeprecated(index).appendFindFirst(null, Integer.class, SHOW_CALLER, error, new Object[]{name});
-        return this;
-    }
-
-    public CastBuilder firstBoolean(int index) {
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        builder.appendAsLogicalVector(false, false, false);
-        builder.appendFindFirst(null, Byte.class, SHOW_CALLER, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL, new Object[0]);
-        builder.appendMap(MapByteToBoolean.INSTANCE);
-        return this;
-    }
-
-    public CastBuilder firstBoolean(int index, String invalidValueName) {
-        if (invalidValueName == null) {
-            return firstBoolean(index);
-        }
-        PipelineBuilder builder = getBuilderForDeprecated(index);
-        builder.appendAsLogicalVector(false, false, false);
-        builder.appendFindFirst(null, Byte.class, SHOW_CALLER, RError.Message.INVALID_VALUE, new Object[]{invalidValueName});
-        builder.appendMap(MapByteToBoolean.INSTANCE);
-        return this;
-    }
-
-    private void allowNullAndMissing(PipelineBuilder builder) {
-        builder.getPipelineConfig().mapNull(new MapToValue<>(RNull.instance));
-        builder.getPipelineConfig().mapMissing(new MapToValue<>(RMissing.instance));
-    }
-
-    private void mapNullAndMissing(PipelineBuilder builder, Object value) {
-        builder.getPipelineConfig().mapNull(new MapToValue<>(value));
-        builder.getPipelineConfig().mapMissing(new MapToValue<>(value));
-    }
-
-    // end of deprecated API:
     // ---------------------
     // The cast-pipelines API starts here
 
@@ -884,6 +780,5 @@ public final class CastBuilder {
         public static <T> MapToValue<T, RList> emptyList() {
             return new MapToValue<>(RDataFactory.createList());
         }
-
     }
 }

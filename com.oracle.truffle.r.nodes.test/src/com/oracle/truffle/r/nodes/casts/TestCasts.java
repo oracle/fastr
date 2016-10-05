@@ -146,7 +146,7 @@ public class TestCasts extends TestBase {
         class Root extends TestRootNode<CastNode> {
 
             protected Root(String name) {
-                super(name, setupAndGetCast(b -> b.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "foo")));
+                super(name, setupAndGetCast(b -> b.arg(0, "foo").asIntegerVector().findFirst()));
             }
 
             @Override
@@ -167,7 +167,7 @@ public class TestCasts extends TestBase {
             private final Object constant;
 
             protected Root(String name, Object constant) {
-                super(name, setupAndGetCast(b -> b.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "foo")));
+                super(name, setupAndGetCast(b -> b.arg(0, "foo").asIntegerVector().findFirst()));
                 this.constant = constant;
             }
 
@@ -205,7 +205,6 @@ public class TestCasts extends TestBase {
     public void testMapDefaultValue() {
         class Root extends TestRootNode<CastNode> {
 
-            @SuppressWarnings("deprecation")
             protected Root(String name) {
                 super(name, setupAndGetCast(b -> b.arg(0).mapNull(constant("X"))));
             }

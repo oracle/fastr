@@ -23,11 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -75,14 +72,6 @@ public class ArgCastBuilder<T, THIS> {
 
     public THIS shouldBe(Filter<? super T, ?> argFilter) {
         pipelineBuilder().appendShouldBeStep(argFilter, null, null, null);
-        return (THIS) this;
-    }
-
-    /**
-     * Custom nodes in cast pipeline block optimisations and analysis, use them sparsely.
-     */
-    public THIS customNode(Supplier<CastNode> castNodeFactory) {
-        pipelineBuilder().append(new CustomNodeStep<>(castNodeFactory));
         return (THIS) this;
     }
 
