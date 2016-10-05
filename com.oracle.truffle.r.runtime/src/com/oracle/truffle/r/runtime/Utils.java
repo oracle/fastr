@@ -26,7 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -91,13 +90,20 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
+    /**
+     * Locates a resource that is used within the implementation, e.g. a file of R code, and returns
+     * a {@link Source} instance that represents it. Since the location may vary between
+     * implementations and, in particular may not be a persistently accessible URL, we read the
+     * content and store it as an "internal" instance.
+     */
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         try {
-            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
-            if (url == null) {
-                throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+            if (is == null) {
+                throw new IOException();
             }
-            return RSource.fromURL(url, resourceName);
+            String content = getResourceAsString(is);
+            return RSource.fromTextInternal(content, RSource.Internal.R_IMPL);
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
         }
