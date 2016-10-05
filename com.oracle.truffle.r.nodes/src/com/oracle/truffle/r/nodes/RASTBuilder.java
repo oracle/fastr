@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -287,15 +288,18 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         RSyntaxElement current = lhs;
         while (!(current instanceof RSyntaxLookup)) {
             if (!(current instanceof RSyntaxCall)) {
-                throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+                if (current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.INVALID_LHS, "NULL");
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+                }
             }
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
             RSyntaxElement syntaxLHS = call.getSyntaxLHS();
             if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
-                // TODO: this should only be signaled when run, not when parsed
-                throw RInternalError.unimplemented("proper error message for RError.INVALID_LHS");
+                return new ReplacementNode.LHSError(source, operator, new RSyntaxElement[]{lhs, rhs});
             }
             current = call.getSyntaxArguments()[0];
         }
