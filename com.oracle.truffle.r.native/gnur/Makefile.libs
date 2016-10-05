@@ -51,10 +51,13 @@ $(BLAS_TARGET): $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT)
 $(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
 	cp $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(LAPACK_TARGET)
-	install_name_tool -change libR.dylib $(FASTR_LIB_DIR)/libR.dylib $(LAPACK_TARGET)
-	install_name_tool -id $(BLAS_TARGET) $(BLAS_TARGET)
-	install_name_tool -id $(LAPACK_TARGET) $(LAPACK_TARGET)
+# libRblas depends on libgfortran, libquadmath
+# libRlapack depends on libgfortran, libquadmath, libRblas, libR
+# use @loader_path to make references relocatable
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(LAPACK_TARGET)
+	install_name_tool -change libR.dylib @rpath/libR.dylib $(LAPACK_TARGET)
+	install_name_tool -id @rpath/libRblas.dylib $(BLAS_TARGET)
+	install_name_tool -id @rpath/libRlapack.dylib $(LAPACK_TARGET)
 endif
 
 pcre_target: 

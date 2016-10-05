@@ -49,9 +49,9 @@ all: $(R_LIB) $(BOOTJNI_LIB)
 
 $(R_LIB): objs 
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(R_LIB)
-	install_name_tool -change libRlapack.dylib $(LAPACK_TARGET) $(R_LIB)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
+	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
