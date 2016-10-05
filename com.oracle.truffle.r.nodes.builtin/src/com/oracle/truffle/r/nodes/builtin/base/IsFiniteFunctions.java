@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.function.DoublePredicate;
 import java.util.function.IntPredicate;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -82,6 +83,7 @@ public class IsFiniteFunctions {
         @Fallback
         protected Object doIsFiniteOther(Object x) {
             if (typeofNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 typeofNode = insert(TypeofNodeGen.create());
             }
             String type = typeofNode.execute(x).getName();

@@ -31,13 +31,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
-import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -79,6 +79,7 @@ public abstract class Rank extends RBuiltinNode {
 
     private Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             orderVector1Node = insert(OrderVector1NodeGen.create(false));
         }
         return orderVector1Node;
@@ -86,6 +87,7 @@ public abstract class Rank extends RBuiltinNode {
 
     private Order.CmpNode initOrderCmp() {
         if (orderCmpNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             orderCmpNode = insert(CmpNodeGen.create());
         }
         return orderCmpNode;

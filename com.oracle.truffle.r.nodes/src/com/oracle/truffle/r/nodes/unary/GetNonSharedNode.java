@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -39,12 +38,23 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
 
     private final ValueProfile shareableTypeProfile = ValueProfile.createClassProfile();
 
+    protected abstract RNode getN();
+
+    @Override
+    protected RSyntaxNode getRSyntaxNode() {
+        return getN().asRSyntaxNode();
+    }
+
     @Specialization
     protected RTypedValue getNonShared(RShareable shareable) {
         return shareableTypeProfile.profile(shareable).getNonShared();
     }
 
-    @Fallback
+    protected static boolean isRShareable(Object o) {
+        return o instanceof RShareable;
+    }
+
+    @Specialization(guards = "!isRShareable(o)")
     protected Object getNonShared(Object o) {
         return o;
     }
