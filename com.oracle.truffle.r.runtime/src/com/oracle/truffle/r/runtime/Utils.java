@@ -902,4 +902,9 @@ public final class Utils {
         return obj.toString();
     }
 
+    @TruffleBoundary
+    public static String stringFormat(String format, Object... objects) {
+        return String.format(format, objects);
+    }
+
 }
