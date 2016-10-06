@@ -58,15 +58,12 @@ public abstract class UpdateField extends RBuiltinNode {
 
     @Specialization
     protected Object update(VirtualFrame frame, Object container, String field, Object value) {
-        Object updatedObject = container;
-        if (!coerceList.profile(container instanceof RAbstractListVector)) {
-            updatedObject = coerceList(container, updatedObject);
-        }
-        return extract.apply(frame, updatedObject, new Object[]{field}, value);
+        Object list = coerceList.profile(container instanceof RAbstractListVector) ? container : coerceList(container);
+        return extract.apply(frame, list, new Object[]{field}, value);
     }
 
-    private Object coerceList(Object object, Object vector) {
-        if (object instanceof RAbstractVector) {
+    private Object coerceList(Object vector) {
+        if (vector instanceof RAbstractVector) {
             if (castList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castList = insert(CastListNodeGen.create(true, true, false));
