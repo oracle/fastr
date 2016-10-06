@@ -31,14 +31,30 @@
 // (probably resolving the JNI dlerror symbol, so we capture it here (N.B. depends on single
 // threaded limitation).
 
-static char *last_dlerror;
+static jobject last_dlerror = NULL;
+
+static void create_dlerror_string(JNIEnv *env) {
+	if (last_dlerror != NULL) {
+		(*env)->DeleteGlobalRef(env, last_dlerror);
+		last_dlerror = NULL;
+	}
+	char *err = dlerror();
+	if (err == NULL) {
+		last_dlerror = NULL;
+	} else {
+//    	printf("dlerror: %s\n", err);
+		last_dlerror = (*env)->NewGlobalRef(env, (*env)->NewStringUTF(env, err));
+	}
+}
 
 JNIEXPORT jlong JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlopen(JNIEnv *env, jclass c, jstring jpath, jboolean local, jboolean now) {
     const char *path = (*env)->GetStringUTFChars(env, jpath, NULL);
     int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
     void *handle = dlopen(path, flags);
-    last_dlerror = dlerror();
+    if (handle == NULL) {
+        create_dlerror_string(env);
+    }
     (*env)->ReleaseStringUTFChars(env, jpath, path);
     return (jlong) handle;
 }
@@ -47,7 +63,7 @@ JNIEXPORT jlong JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlsym(JNIEnv *env, jclass c, jlong handle, jstring jsymbol) {
     const char *symbol = (*env)->GetStringUTFChars(env, jsymbol, NULL);
     void *address = dlsym((void *)handle, symbol);
-	last_dlerror = dlerror();
+    create_dlerror_string(env);
     (*env)->ReleaseStringUTFChars(env, jsymbol, symbol);
     return (jlong) address;
 }
@@ -60,11 +76,6 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlclose(JNIEnv *env,
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlerror(JNIEnv *env, jclass c) {
-    char *err = last_dlerror;
-    if (err == NULL) {
-    	return NULL;
-    } else {
-    	return (*env)->NewStringUTF(env, err);
-    }
+   	return last_dlerror;
 }
 
