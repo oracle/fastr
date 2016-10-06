@@ -209,7 +209,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BrowserFunctions.BrowserSetDebug.class, BrowserFunctionsFactory.BrowserSetDebugNodeGen::create);
         add(BrowserFunctions.BrowserText.class, BrowserFunctionsFactory.BrowserTextNodeGen::create);
         add(Call.class, CallNodeGen::create);
-        add(CapabilitiesFunctions.Capabilities.class, CapabilitiesFunctionsFactory.CapabilitiesNodeGen::create);
+        add(Capabilities.class, CapabilitiesNodeGen::create);
         add(Cat.class, CatNodeGen::create);
         add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
