@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -148,7 +149,8 @@ public class ForeignFunctions {
 
         private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-        protected String lookupName(RList f) {
+        protected static String lookupName(RList f) {
+            CompilerAsserts.neverPartOfCompilation();
             if (f.getNames() != null) {
                 RAbstractStringVector names = f.getNames();
                 for (int i = 0; i < names.getLength(); i++) {
@@ -287,6 +289,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             switch (name) {
@@ -558,6 +561,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
@@ -648,6 +652,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -718,6 +723,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -779,6 +785,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 default:
