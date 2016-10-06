@@ -101,14 +101,15 @@ def copylib(args):
         plain_libpath = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
-            for f in os.listdir(path):
-                if f.startswith(lib_prefix):
-                    if os.path.exists(os.path.join(path, plain_libpath)):
-                        f = plain_libpath
-                    target_dir = args[1]
-                    if not os.path.exists(os.path.join(target_dir, f)):
-                        _copylib(args[0], os.path.join(path, f), args[1])
-                    return 0
+            if os.path.exists(path):
+                for f in os.listdir(path):
+                    if f.startswith(lib_prefix):
+                        if os.path.exists(os.path.join(path, plain_libpath)):
+                            f = plain_libpath
+                        target_dir = args[1]
+                        if not os.path.exists(os.path.join(target_dir, f)):
+                            _copylib(args[0], os.path.join(path, f), args[1])
+                        return 0
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
 
@@ -132,6 +133,8 @@ def updatelib(args):
     cap_libs = []
     libs = []
     for lib in os.listdir(libdir):
+        if not '.dylib' in lib:
+            continue
         if not os.path.islink(os.path.join(libdir, lib)):
             libs.append(lib)
         if ignorelib(lib) or os.path.islink(os.path.join(libdir, lib)):
