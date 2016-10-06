@@ -9,12 +9,14 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.library.utils;
+package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -178,7 +180,7 @@ public final class WriteTable extends RExternalBuiltinNode {
             return RRuntime.isNA(v) ? cna : RRuntime.intToStringNoCheck(v);
         } else if (o instanceof Double) {
             double v = (double) o;
-            return RRuntime.isNA(v) ? cna : RRuntime.doubleToStringNoCheck(v);
+            return RRuntime.isNA(v) ? cna : DoubleVectorPrinter.encodeReal(v);
         } else if (o instanceof Byte) {
             byte v = (byte) o;
             return RRuntime.isNA(v) ? cna : RRuntime.logicalToStringNoCheck(v);
@@ -187,7 +189,7 @@ public final class WriteTable extends RExternalBuiltinNode {
             return RRuntime.isNA(v) ? cna : encodeStringElement(v, quote, qmethod);
         } else if (o instanceof Double) {
             RComplex v = (RComplex) o;
-            return RRuntime.isNA(v) ? cna : RRuntime.complexToStringNoCheck(v);
+            return RRuntime.isNA(v) ? cna : ComplexVectorPrinter.encodeComplex(v);
         } else if (o instanceof RRaw) {
             RRaw v = (RRaw) o;
             return RRuntime.rawToHexString(v);
@@ -217,7 +219,7 @@ public final class WriteTable extends RExternalBuiltinNode {
     private static String encodeElement(Object x, int indx, char quote, char dec) {
         if (x instanceof RAbstractDoubleVector) {
             RAbstractDoubleVector v = (RAbstractDoubleVector) x;
-            return RRuntime.doubleToString(v.getDataAt(indx));
+            return DoubleVectorPrinter.encodeReal(v.getDataAt(indx));
         }
         if (x instanceof RAbstractIntVector) {
             RAbstractIntVector v = (RAbstractIntVector) x;
@@ -229,7 +231,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         }
         if (x instanceof RAbstractComplexVector) {
             RAbstractComplexVector v = (RAbstractComplexVector) x;
-            return RRuntime.complexToString(v.getDataAt(indx));
+            return ComplexVectorPrinter.encodeComplex(v.getDataAt(indx));
         }
         if (x instanceof RAbstractRawVector) {
             RAbstractRawVector v = (RAbstractRawVector) x;
