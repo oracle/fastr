@@ -437,6 +437,18 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.test.native"],
       "distDependencies" : ["FASTR_NATIVE_DEV"],
       "exclude" : ["GNUR", "GNU_ICONV"],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-unit-tests-native.jar",
+           }
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
+           },
+        },
+      },
     },
 
     "FASTR_NATIVE_DEV": {
@@ -446,12 +458,36 @@ suite = {
         "GNUR",
         "GNU_ICONV",
         ],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-native-dev.jar",
+           },
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
+          },
+        },
+      },
     },
 
     "FASTR_RELEASE": {
       "description" : "a binary release of FastR",
       "dependencies" : ["com.oracle.truffle.r.release"],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-release.jar",
+           }
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
+           }
+        },
+      },
     },
-},
-
+  },
 }
+
