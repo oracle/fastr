@@ -33,7 +33,7 @@ public class TestBuiltin_rm extends TestBase {
         assertEval("tmp <- 42; rm(tmp); tmp");
         assertEval("tmp <- 42; rm(list='tmp'); tmp");
         assertEval(" e <- new.env(); e$a <- 42; rm(list='a', envir=e); e$a");
-        assertEval(Ignored.Unimplemented, "tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
+        assertEval(Output.IgnoreErrorContext, "tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
     }
 
     @Test

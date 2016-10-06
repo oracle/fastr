@@ -627,16 +627,12 @@ public class CastBuilderTest {
         assertEquals(value, cast(value));
     }
 
-    private void assertVectorEquals(RAbstractVector expected, Object actualObj) {
+    private static void assertVectorEquals(RAbstractVector expected, Object actualObj) {
         RAbstractVector actual = (RAbstractVector) actualObj;
         assertEquals("vectors differ in size", expected.getLength(), actual.getLength());
         for (int i = 0; i < expected.getLength(); i++) {
             assertEquals("vectors differ at position " + i, expected.getDataAtAsObject(i), actual.getDataAtAsObject(i));
         }
-    }
-
-    private void assertCastWarning(Object value, Object expectedValue) {
-        assertCastWarning(value, expectedValue, String.format(RError.Message.INVALID_ARGUMENT.message, "x"));
     }
 
     private void assertCastWarning(Object value, Object expectedValue, String expectedMessage) {

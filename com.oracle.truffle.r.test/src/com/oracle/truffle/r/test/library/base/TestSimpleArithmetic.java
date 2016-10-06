@@ -307,7 +307,7 @@ public class TestSimpleArithmetic extends TestBase {
     public void testVectorsComplex() {
         assertEval("{ 1:4+c(1,2+2i) }");
         assertEval("{ c(1,2+2i)+1:4 }");
-        assertEval(Ignored.ImplementationError, "x <- c(NaN, 3+2i); xre <- Re(x); xim <- (0+1i) * Im(x); xre + xim");
+        assertEval("x <- c(NaN, 3+2i); xre <- Re(x); xim <- (0+1i) * Im(x); xre + xim");
     }
 
     @Test
