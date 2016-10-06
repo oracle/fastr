@@ -109,7 +109,7 @@ $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(PKGD
 	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -id @loader_path/../library/$(PKG)/libs/$(PKG).so $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
+	install_name_tool -id @rpath/../library/$(PKG)/libs/$(PKG).so $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
 endif
 
 $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
