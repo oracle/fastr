@@ -545,6 +545,7 @@ _commands = {
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
+    'rupdatelib' : [mx_copylib.updatelib, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

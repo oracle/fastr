@@ -49,9 +49,12 @@ all: $(R_LIB) $(BOOTJNI_LIB)
 
 $(R_LIB): objs 
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
+	install_name_tool -id @rpath/libR.dylib $(R_LIB)
+# check if we captured libpcre/libz, rpath those in libR
+	mx rupdatelib $(FASTR_LIB_DIR)
 else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
@@ -62,6 +65,9 @@ objs:
 
 $(BOOTJNI_LIB): bootobjs
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(BOOTJNI_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -id @rpath/libjniboot.dylib $(BOOTJNI_LIB)
+endif
 
 bootobjs:
 	$(MAKE) -C src/jniboot all
@@ -70,4 +76,5 @@ clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
 	rm -rf $(R_LIB)
+	rm -rf $(BOOTJNI_LIB)
 	

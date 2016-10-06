@@ -26,6 +26,21 @@ import subprocess
 import shutil
 import mx
 
+def _darwin_extract_realpath(lib, libpath):
+    '''
+    If libpath has a dependency on lib, return the path in the library, else None
+    '''
+    try:
+        output = subprocess.check_output(['otool', '-L', libpath])
+        lines = output.split('\n')
+        for line in lines[1:]:
+            if lib in line:
+                parts = line.split(' ')
+                return parts[0].strip()
+        return None
+    except subprocess.CalledProcessError:
+        mx.abort('copylib: otool failed')
+
 def _copylib(lib, libpath, target):
     '''
     Just copying libxxx.so/dylib isn't sufficient as versioning is involved.
@@ -34,15 +49,7 @@ def _copylib(lib, libpath, target):
     Unfortunately getting that info is is OS specific.
     '''
     if platform.system() == 'Darwin':
-        try:
-            output = subprocess.check_output(['otool', '-L', libpath])
-            lines = output.split('\n')
-            for line in lines[1:]:
-                if lib in line:
-                    parts = line.split(' ')
-                    real_libpath = parts[0].strip()
-        except subprocess.CalledProcessError:
-            mx.abort('copylib: otool failed')
+        real_libpath = _darwin_extract_realpath(lib, libpath)
     else:
         try:
             output = subprocess.check_output(['objdump', '-p', libpath])
@@ -55,10 +62,20 @@ def _copylib(lib, libpath, target):
             mx.abort('copylib: otool failed')
     # copy both files
     shutil.copy(real_libpath, target)
+    libpath_base = os.path.basename(libpath)
     os.chdir(target)
-    if os.path.exists(os.path.basename(libpath)):
-        os.remove(os.path.basename(libpath))
-    os.symlink(os.path.basename(real_libpath), os.path.basename(libpath))
+    if libpath != real_libpath:
+        # create a symlink
+        if os.path.exists(libpath_base):
+            os.remove(libpath_base)
+        os.symlink(os.path.basename(real_libpath), libpath_base)
+    # On Darwin we change the id to use @rpath
+    if platform.system() == 'Darwin':
+        try:
+            subprocess.check_call(['install_name_tool', '-id', '@rpath/' + libpath_base, libpath_base])
+        except subprocess.CalledProcessError:
+            mx.abort('copylib: install_name_tool failed')
+    # TODO @rpath references within the library?
     mx.log('copied ' + lib + ' library from ' + libpath + ' to ' + target)
 
 def copylib(args):
@@ -80,14 +97,55 @@ def copylib(args):
     if os.environ.has_key('PKG_LDFLAGS_OVERRIDE'):
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = '.dylib' if platform.system() == 'Darwin' else '.so'
-        name = 'lib' + args[0] + ext
+        lib_prefix = 'lib' + args[0]
+        plain_libpath = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
             for f in os.listdir(path):
-                if name == f:
+                if f.startswith(lib_prefix):
+                    if os.path.exists(os.path.join(path, plain_libpath)):
+                        f = plain_libpath
                     target_dir = args[1]
-                    if not os.path.exists(os.path.join(target_dir, name)):
+                    if not os.path.exists(os.path.join(target_dir, f)):
                         _copylib(args[0], os.path.join(path, f), args[1])
                     return 0
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
+
+def updatelib(args):
+    '''
+    If we captured a library then, on Darwin, we patch up the references
+    in the target library passed as argument to use @rpath.
+    args:
+      0 directory containing library
+    '''
+    ignore_list = ['R', 'Rblas', 'Rlapack', 'jniboot']
+
+    def ignorelib(name):
+        for ignore in ignore_list:
+            x = 'lib' + ignore + '.dylib'
+            if x == name:
+                return True
+        return False
+
+    libdir = args[0]
+    cap_libs = []
+    libs = []
+    for lib in os.listdir(libdir):
+        if not os.path.islink(os.path.join(libdir, lib)):
+            libs.append(lib)
+        if ignorelib(lib) or os.path.islink(os.path.join(libdir, lib)):
+            continue
+        cap_libs.append(lib)
+    # for each of the libs, check whether they depend
+    # on any of the captured libs, @rpath the dependency if so
+    for lib in libs:
+        targetlib = os.path.join(libdir, lib)
+        for cap_lib in cap_libs:
+            try:
+                real_libpath = _darwin_extract_realpath(cap_lib, targetlib)
+                if real_libpath and not '@rpath' in real_libpath:
+                    cmd = ['install_name_tool', '-change', real_libpath, '@rpath/' + cap_lib, targetlib]
+                    subprocess.check_call(cmd)
+            except subprocess.CalledProcessError:
+                mx.abort('update: install_name_tool failed')
