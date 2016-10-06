@@ -20,25 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include <rffiutils.h>
-#include <R_ext/Parse.h>
 
-static jmethodID parseMethodID;
-static jclass parseResultClass;
-static jfieldID parseStatusFieldID;
-static jfieldID parseExprFieldID;
+JNIEXPORT jdouble JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Misc_exactSumFunc(JNIEnv *env, jclass c, jdoubleArray values, jboolean hasNa, jboolean naRm) {
+	jint length = (*env)->GetArrayLength(env, values);
+	jdouble* contents = (jdouble*) (*env)->GetPrimitiveArrayCritical(env, values, NULL);
 
+	long double sum = 0;
+	int i = 0;
+	if (!hasNa) {
+		for (; i < length - 3; i+= 4) {
+			sum += contents[i];
+			sum += contents[i + 1];
+			sum += contents[i + 2];
+			sum += contents[i + 3];
+		}
+	}
+	for (; i < length; i++) {
+		jdouble value = contents[i];
+		if (R_IsNA(value)) {
+			if (!naRm) {
+				(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+				return R_NaReal;
+			}
+		} else {
+			sum += value;
+		}
+	}
 
-void init_parse(JNIEnv *env) {
-	parseMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 1);
-	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$ParseResult");
-	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
-	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
-}
-
-SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
-	JNIEnv *env = getEnv();
-	jobject result = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, parseMethodID, text, n, srcfile);
-	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
-    return (*env)->GetObjectField(env, result, parseExprFieldID);
+	(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
+	return sum;
 }

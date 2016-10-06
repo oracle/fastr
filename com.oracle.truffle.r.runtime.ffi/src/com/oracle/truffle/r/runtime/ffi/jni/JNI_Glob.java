@@ -20,25 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <rffiutils.h>
-#include <R_ext/Parse.h>
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-static jmethodID parseMethodID;
-static jclass parseResultClass;
-static jfieldID parseStatusFieldID;
-static jfieldID parseExprFieldID;
+import java.util.ArrayList;
 
+public class JNI_Glob {
+    private ArrayList<String> paths = new ArrayList<>();
 
-void init_parse(JNIEnv *env) {
-	parseMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 1);
-	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$ParseResult");
-	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
-	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
-}
+    public static ArrayList<String> glob(String pattern) {
+        JNI_Glob jniGlob = new JNI_Glob();
+        jniGlob.doglob(pattern);
+        return jniGlob.paths;
+    }
 
-SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
-	JNIEnv *env = getEnv();
-	jobject result = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, parseMethodID, text, n, srcfile);
-	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
-    return (*env)->GetObjectField(env, result, parseExprFieldID);
+    private void addPath(String path) {
+        paths.add(path);
+    }
+
+    private native void doglob(String pattern);
 }

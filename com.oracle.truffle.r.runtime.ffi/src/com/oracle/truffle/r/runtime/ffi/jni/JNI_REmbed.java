@@ -20,23 +20,45 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-public interface ZipRFFI {
-    // zip compression/uncompression
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+public class JNI_REmbed implements REmbedRFFI {
 
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, byte[] source);
+    @Override
+    public void suicide(String x) {
+        nativeSuicide(x);
+    }
+
+    @Override
+    public void cleanUp(int type, int x, int y) {
+        nativeCleanUp(type, x, y);
+    }
+
+    @Override
+    public String readConsole(String prompt) {
+        return nativeReadConsole(prompt);
+    }
+
+    @Override
+    public void writeConsole(String x) {
+        nativeWriteConsole(x);
+    }
+
+    @Override
+    public void writeErrConsole(String x) {
+        nativeWriteErrConsole(x);
+    }
+
+    private static native void nativeSuicide(String x);
+
+    private static native String nativeReadConsole(String prompt);
+
+    private static native void nativeWriteConsole(String x);
+
+    private static native void nativeWriteErrConsole(String x);
+
+    private static native void nativeCleanUp(int type, int x, int y);
 
 }

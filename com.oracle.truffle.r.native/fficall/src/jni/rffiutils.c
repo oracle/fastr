@@ -115,7 +115,7 @@ void init_utils(JNIEnv *env) {
 		}
 	}
 	RDataFactoryClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RDataFactory");
-	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
+	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper");
 	RRuntimeClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RRuntime");
 	RInternalErrorClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RInternalError");
 	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);

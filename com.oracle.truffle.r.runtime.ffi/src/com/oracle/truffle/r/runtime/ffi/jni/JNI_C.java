@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-import java.util.ArrayList;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.CRFFI;
 
-public class JNI_Glob {
-    private ArrayList<String> paths = new ArrayList<>();
+public class JNI_C implements CRFFI {
 
-    public static ArrayList<String> glob(String pattern) {
-        JNI_Glob jniGlob = new JNI_Glob();
-        jniGlob.doglob(pattern);
-        return jniGlob.paths;
+    /**
+     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be native
+     * array types, no upcalls are possible, and no result is returned. However, the receiving
+     * function expects actual native arrays (not SEXPs), so these have to be handled on the JNI
+     * side.
+     */
+    @Override
+    @TruffleBoundary
+    public synchronized void invoke(long address, Object[] args) {
+        c(address, args);
     }
 
-    private void addPath(String path) {
-        paths.add(path);
-    }
-
-    private native void doglob(String pattern);
+    private static native void c(long address, Object[] args);
 }

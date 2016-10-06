@@ -43,8 +43,9 @@ public interface CallRFFI {
     void invokeVoidCall(long address, String name, Object[] args);
 
     /**
-     * This interface is initialized very early, before the {@code tempDir} is established. This
-     * call sets the value.
+     * This interface is instantiated very early and sets the FFI global variables as part of that
+     * process. However, at that stage {@code tempDir} is not established so this call exists to set
+     * the value later.
      */
     void setTempDir(String tempDir);
 
@@ -53,5 +54,4 @@ public interface CallRFFI {
      */
     void setInteractive(boolean interactive);
 
-    double exactSum(double[] values, boolean hasNa, boolean naRm);
 }

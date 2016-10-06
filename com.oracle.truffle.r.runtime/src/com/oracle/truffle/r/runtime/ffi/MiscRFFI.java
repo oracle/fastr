@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,52 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
-
-public class JNI_UtsName implements UtsName {
-    String sysname;
-    String release;
-    String version;
-    String machine;
-    String nodename;
-
-    private static JNI_UtsName singleton;
-
-    public static UtsName get() {
-        if (singleton == null) {
-            singleton = new JNI_UtsName();
-        }
-        singleton.getutsname();
-        return singleton;
-    }
-
-    @Override
-    public String sysname() {
-        return sysname;
-    }
-
-    @Override
-    public String release() {
-        return release;
-    }
-
-    @Override
-    public String version() {
-        return version;
-    }
-
-    @Override
-    public String machine() {
-        return machine;
-    }
-
-    @Override
-    public String nodename() {
-        return nodename;
-    }
-
-    private native void getutsname();
+/**
+ * Miscellaneous methods implemented in native code.
+ *
+ */
+public interface MiscRFFI {
+    double exactSum(double[] values, boolean hasNa, boolean naRm);
 
 }

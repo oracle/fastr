@@ -26,7 +26,7 @@
 #include <setjmp.h>
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_initialize(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_initialize(JNIEnv *env, jclass c,
 		jobjectArray initialValues) {
 	init_utils(env); // must be first
 	init_variables(env, initialValues);
@@ -35,43 +35,15 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_initialize(JNIEnv *env, 
 	init_rmath(env);
 	init_random(env);
 	init_parse(env);
+	init_pcre(env);
+	init_c(env);
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_nativeSetTempDir(JNIEnv *env, jclass c, jstring tempDir) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_nativeSetTempDir(JNIEnv *env, jclass c, jstring tempDir) {
 	setTempDir(env, tempDir);
 }
 
-JNIEXPORT jdouble JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_exactSumFunc(JNIEnv *env, jclass c, jdoubleArray values, jboolean hasNa, jboolean naRm) {
-	jint length = (*env)->GetArrayLength(env, values);
-	jdouble* contents = (jdouble*) (*env)->GetPrimitiveArrayCritical(env, values, NULL);
-
-	long double sum = 0;
-	int i = 0;
-	if (!hasNa) {
-		for (; i < length - 3; i+= 4) {
-			sum += contents[i];
-			sum += contents[i + 1];
-			sum += contents[i + 2];
-			sum += contents[i + 3];
-		}
-	}
-	for (; i < length; i++) {
-		jdouble value = contents[i];
-		if (R_IsNA(value)) {
-			if (!naRm) {
-				(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
-				return R_NaReal;
-			}
-		} else {
-			sum += value;
-		}
-	}
-
-	(*env)->ReleasePrimitiveArrayCritical(env, values, contents, JNI_ABORT);
-	return sum;
-}
 
 // Boilerplate methods for the actual calls
 
@@ -371,7 +343,7 @@ typedef SEXP (*call64func)(SEXP arg1, SEXP arg2, SEXP arg3, SEXP arg4, SEXP arg5
         );
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call0(JNIEnv *env, jclass c, jlong address) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call0(JNIEnv *env, jclass c, jlong address) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
 	callEnter(env, &error_jmpbuf);
@@ -384,7 +356,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call0(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
 	callEnter(env, &error_jmpbuf);
@@ -397,7 +369,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call1(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call2(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call2(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
 	callEnter(env, &error_jmpbuf);
@@ -410,7 +382,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call2(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call3(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call3(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -424,21 +396,25 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call3(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call4(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call4(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
+	printf("in call4\n");
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call4func call4 = (call4func) address;
+		printf("calling\n");
 		result = (*call4)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4));
 	}
+	printf("callexit\n");
 	callExit(env);
+	printf("done\n");
 	return result;
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call5(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call5(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -452,7 +428,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call5(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call6(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call6(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -466,7 +442,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call6(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call7(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call7(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -480,7 +456,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call7(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call8(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call8(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -494,7 +470,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call8(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call9(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call9(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8, jobject arg9) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
@@ -508,7 +484,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call9(JNIEnv *env, jclas
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
 	callEnter(env, &error_jmpbuf);
@@ -1253,7 +1229,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_call(JNIEnv *env, jclass
 typedef void (*callVoid1func)(SEXP arg1);
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_callVoid1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
 	jmp_buf error_jmpbuf;
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
@@ -1266,7 +1242,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid1(JNIEnv *env, j
 typedef void (*callVoid0func)();
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid0(JNIEnv *env, jclass c, jlong address) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_callVoid0(JNIEnv *env, jclass c, jlong address) {
 	jmp_buf error_jmpbuf;
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
@@ -1279,7 +1255,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_callVoid0(JNIEnv *env, j
 #include <Rinterface.h>
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_nativeSetInteractive(JNIEnv *env, jclass c, jboolean interactive) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_nativeSetInteractive(JNIEnv *env, jclass c, jboolean interactive) {
 	R_Interactive = interactive;
 }
 

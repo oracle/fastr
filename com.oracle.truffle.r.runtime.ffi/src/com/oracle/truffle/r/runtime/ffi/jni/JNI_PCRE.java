@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,43 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
-public class JNI_UserRng implements UserRngRFFI {
+public class JNI_PCRE implements PCRERFFI {
     @Override
-    @TruffleBoundary
-    public void init(int seed) {
-        init(Function.Init.getAddress(), seed);
-
+    public long maketables() {
+        return nativeMaketables();
     }
 
     @Override
-    @TruffleBoundary
-    public double rand() {
-        return rand(Function.Rand.getAddress());
+    public Result compile(String pattern, int options, long tables) {
+        return nativeCompile(pattern, options, tables);
     }
 
     @Override
-    @TruffleBoundary
-    public int nSeed() {
-        return nSeed(Function.NSeed.getAddress());
+    public Result study(long code, int options) {
+        throw RInternalError.unimplemented("pcre_study");
     }
 
     @Override
-    @TruffleBoundary
-    public void seeds(int[] n) {
-        seeds(Function.Seedloc.getAddress(), n);
+    public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
+        return nativeExec(code, extra, subject, offset, options, ovector, ovector.length);
     }
 
-    private static native void init(long address, int seed);
+    private static native long nativeMaketables();
 
-    private static native double rand(long address);
+    private static native Result nativeCompile(String pattern, int options, long tables);
 
-    private static native int nSeed(long address);
+    private static native int nativeExec(long code, long extra, String subject, int offset,
+                    int options, int[] ovector, int ovectorLen);
 
-    private static native void seeds(long address, int[] n);
 }

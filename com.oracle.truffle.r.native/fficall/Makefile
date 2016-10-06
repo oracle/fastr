@@ -33,29 +33,48 @@ endif
 
 .PHONY: all clean objs
 
-C_LIBNAME := libR$(DYLIB_EXT)
-C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+R_LIBNAME := libR$(DYLIB_EXT)
+R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
+BOOTJNI_LIBNAME := libjniboot$(DYLIB_EXT)
+BOOTJNI_LIB := $(FASTR_LIB_DIR)/$(BOOTJNI_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
 endif
 
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
+LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
-all: $(C_LIB)
+all: $(R_LIB) $(BOOTJNI_LIB)
 
-$(C_LIB): objs 
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) -L $(GNUR_HOME)/lib -lRblas $(VERSION_FLAGS)
+$(R_LIB): objs 
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(C_LIB)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
+	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
+	install_name_tool -id @rpath/libR.dylib $(R_LIB)
+# check if we captured libpcre/libz, rpath those in libR
+	mx rupdatelib $(FASTR_LIB_DIR)
+else
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
 
 objs:
 	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
 
+$(BOOTJNI_LIB): bootobjs
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(BOOTJNI_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -id @rpath/libjniboot.dylib $(BOOTJNI_LIB)
+endif
+
+bootobjs:
+	$(MAKE) -C src/jniboot all
+
 clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
-	rm -rf $(C_LIB)
+	rm -rf $(R_LIB)
+	rm -rf $(BOOTJNI_LIB)
 	

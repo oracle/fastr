@@ -20,23 +20,43 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-public interface ZipRFFI {
-    // zip compression/uncompression
+import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+public class JNI_UserRng implements UserRngRFFI {
+    @Override
+    @TruffleBoundary
+    public void init(int seed) {
+        init(Function.Init.getAddress(), seed);
 
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, byte[] source);
+    }
 
+    @Override
+    @TruffleBoundary
+    public double rand() {
+        return rand(Function.Rand.getAddress());
+    }
+
+    @Override
+    @TruffleBoundary
+    public int nSeed() {
+        return nSeed(Function.NSeed.getAddress());
+    }
+
+    @Override
+    @TruffleBoundary
+    public void seeds(int[] n) {
+        seeds(Function.Seedloc.getAddress(), n);
+    }
+
+    private static native void init(long address, int seed);
+
+    private static native double rand(long address);
+
+    private static native int nSeed(long address);
+
+    private static native void seeds(long address, int[] n);
 }

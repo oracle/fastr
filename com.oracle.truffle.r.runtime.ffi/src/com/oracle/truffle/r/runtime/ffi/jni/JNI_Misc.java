@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-public interface ZipRFFI {
-    // zip compression/uncompression
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, byte[] source);
+public class JNI_Misc implements MiscRFFI {
+
+    @Override
+    public double exactSum(double[] values, boolean hasNa, boolean naRm) {
+        if (traceEnabled()) {
+            traceDownCall("exactSum");
+        }
+        try {
+            return exactSumFunc(values, hasNa, naRm);
+        } finally {
+            if (traceEnabled()) {
+                traceDownCallReturn("exactSum", null);
+            }
+        }
+    }
+
+    private static native double exactSumFunc(double[] values, boolean hasNa, boolean naRm);
 
 }

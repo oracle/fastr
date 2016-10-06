@@ -20,45 +20,52 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi.jni;
 
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
-public class JNI_REmbed implements REmbedRFFI {
+public class JNI_UtsName implements UtsName {
+    String sysname;
+    String release;
+    String version;
+    String machine;
+    String nodename;
 
-    @Override
-    public void suicide(String x) {
-        nativeSuicide(x);
+    private static JNI_UtsName singleton;
+
+    public static UtsName get() {
+        if (singleton == null) {
+            singleton = new JNI_UtsName();
+        }
+        singleton.getutsname();
+        return singleton;
     }
 
     @Override
-    public void cleanUp(int type, int x, int y) {
-        nativeCleanUp(type, x, y);
+    public String sysname() {
+        return sysname;
     }
 
     @Override
-    public String readConsole(String prompt) {
-        return nativeReadConsole(prompt);
+    public String release() {
+        return release;
     }
 
     @Override
-    public void writeConsole(String x) {
-        nativeWriteConsole(x);
+    public String version() {
+        return version;
     }
 
     @Override
-    public void writeErrConsole(String x) {
-        nativeWriteErrConsole(x);
+    public String machine() {
+        return machine;
     }
 
-    private static native void nativeSuicide(String x);
+    @Override
+    public String nodename() {
+        return nodename;
+    }
 
-    private static native String nativeReadConsole(String prompt);
-
-    private static native void nativeWriteConsole(String x);
-
-    private static native void nativeWriteErrConsole(String x);
-
-    private static native void nativeCleanUp(int type, int x, int y);
+    private native void getutsname();
 
 }

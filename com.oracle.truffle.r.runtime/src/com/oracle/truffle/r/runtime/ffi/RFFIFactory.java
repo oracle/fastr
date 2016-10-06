@@ -66,49 +66,5 @@ public abstract class RFFIFactory {
      */
     protected abstract RFFI createRFFI();
 
-    public LapackRFFI getLapackRFFI() {
-        throw missing("Lapack");
-    }
-
-    public StatsRFFI getStatsRFFI() {
-        throw missing("Stats");
-    }
-
-    public ToolsRFFI getToolsRFFI() {
-        throw missing("Tools");
-    }
-
-    public GridRFFI getGridRFFI() {
-        throw missing("Grid");
-    }
-
-    public RApplRFFI getRApplRFFI() {
-        throw missing("RDerived");
-    }
-
-    public CRFFI getCRFFI() {
-        throw missing("C");
-    }
-
-    public CallRFFI getCallRFFI() {
-        throw missing("Call");
-    }
-
-    public UserRngRFFI getUserRngRFFI() {
-        throw missing("UserRNG");
-    }
-
-    public PCRERFFI getPCRERFFI() {
-        throw missing("PCRE");
-    }
-
-    public ZipRFFI getZipRFFI() {
-        throw missing("Zip");
-    }
-
-    private static RuntimeException missing(String ffi) throws RuntimeException {
-        throw Utils.rSuicide(ffi + " FFI not implemented");
-    }
-
     public abstract ContextState newContextState();
 }

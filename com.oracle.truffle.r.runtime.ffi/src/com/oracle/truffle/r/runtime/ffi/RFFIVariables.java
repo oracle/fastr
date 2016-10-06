@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.jnr.CallRFFIHelper;
+import com.oracle.truffle.r.runtime.ffi.jni.CallRFFIHelper;
 
 public enum RFFIVariables {
     R_Home(REnvVars.rHome()),

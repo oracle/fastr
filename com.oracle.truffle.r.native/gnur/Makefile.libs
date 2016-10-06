@@ -33,8 +33,14 @@ endif
 
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
+# at a minimum we need to know where libpcre/libz/libgfortran/libquadmath are located,
+# to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
+# they were found in the standard system locations
+OTHER_LIB_TARGETS = pcre z gfortran quadmath gcc_s
 
-all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET)
+.PHONY: all other_lib_targets
+
+all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) other_lib_targets
 
 $(FASTR_LIB_DIR):
 	mkdir -p $(FASTR_LIB_DIR)
@@ -45,13 +51,21 @@ $(BLAS_TARGET): $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT)
 $(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
 	cp $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(LAPACK_TARGET)
-	install_name_tool -change libR.dylib $(FASTR_LIB_DIR)/libR.dylib $(LAPACK_TARGET)
-	install_name_tool -id $(BLAS_TARGET) $(BLAS_TARGET)
-	install_name_tool -id $(LAPACK_TARGET) $(LAPACK_TARGET)
+# libRblas depends on libgfortran, libquadmath
+# libRlapack depends on libgfortran, libquadmath, libRblas, libR
+# use @rpath to make references relocatable
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(LAPACK_TARGET)
+	install_name_tool -change libR.dylib @rpath/libR.dylib $(LAPACK_TARGET)
+	install_name_tool -id @rpath/libRblas.dylib $(BLAS_TARGET)
+	install_name_tool -id @rpath/libRlapack.dylib $(LAPACK_TARGET)
 endif
 
+other_lib_targets:
+	for target in $(OTHER_LIB_TARGETS); do \
+		mx rcopylib $$target $(FASTR_LIB_DIR) || exit 1; \
+	done
+	
 clean:
-	rm -f $(BLAS_TARGET) $(LAPACK_TARGET)
+	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) 
+	rm -f $(foreach target,$(OTHER_LIB_TARGETS),$(wildcard $(FASTR_LIB_DIR)/lib$(target).*))
 
-		
