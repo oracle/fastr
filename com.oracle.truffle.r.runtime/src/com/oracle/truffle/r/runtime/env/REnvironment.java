@@ -606,7 +606,7 @@ public abstract class REnvironment extends RAttributeStorage {
             detachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
-            detachException(RError.Message.INVALID_POS_ARGUMENT);
+            detachException(RError.Message.INVALID_ARGUMENT, "pos");
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based
@@ -620,8 +620,8 @@ public abstract class REnvironment extends RAttributeStorage {
     }
 
     @TruffleBoundary
-    private static void detachException(RError.Message message) throws DetachException {
-        throw new DetachException(message);
+    private static void detachException(RError.Message message, Object... args) throws DetachException {
+        throw new DetachException(message, args);
     }
 
     /**

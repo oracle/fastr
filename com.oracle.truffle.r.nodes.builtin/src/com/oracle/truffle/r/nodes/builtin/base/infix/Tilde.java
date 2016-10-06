@@ -34,12 +34,9 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * This a rather strange function. It is where, in GnuR, that the "formula" class is set and the
@@ -58,16 +55,7 @@ public abstract class Tilde extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLanguage tilde(VirtualFrame frame, RPromise response, @SuppressWarnings("unused") RMissing model) {
-        return doTilde(frame, null, ((RNode) response.getRep()).asRSyntaxNode());
-    }
-
-    @Specialization
-    protected RLanguage tilde(VirtualFrame frame, RPromise response, RPromise model) {
-        return doTilde(frame, ((RNode) response.getRep()).asRSyntaxNode(), ((RNode) model.getRep()).asRSyntaxNode());
-    }
-
-    private RLanguage doTilde(VirtualFrame frame, @SuppressWarnings("unused") RSyntaxNode response, @SuppressWarnings("unused") RSyntaxNode model) {
+    protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model) {
         RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
         RLanguage lang = RDataFactory.createLanguage(call);
         lang.setClassAttr(FORMULA_CLASS);

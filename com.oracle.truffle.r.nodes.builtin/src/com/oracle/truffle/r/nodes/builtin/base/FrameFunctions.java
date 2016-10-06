@@ -59,10 +59,10 @@ import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -158,7 +158,7 @@ public class FrameFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "which");
+            casts.arg("which").asIntegerVector().findFirst();
         }
 
         @Override
@@ -175,8 +175,7 @@ public class FrameFunctions {
             if (RArguments.getFunction(cframe) == null) {
                 return RNull.instance;
             }
-            RLanguage createCall = createCall(RArguments.getCall(cframe));
-            return createCall;
+            return createCall(RArguments.getCall(cframe));
         }
 
         @TruffleBoundary
@@ -206,6 +205,14 @@ public class FrameFunctions {
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("definition").mustBe(RFunction.class);
+            casts.arg("call").mustBe(RLanguage.class);
+            casts.arg("expand.dots").asLogicalVector().findFirst();
+            casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
         }
 
         @Specialization
@@ -404,6 +411,11 @@ public class FrameFunctions {
             return FrameAccess.MATERIALIZE;
         }
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
+        }
+
         @Specialization
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
             REnvironment result;
@@ -418,11 +430,6 @@ public class FrameFunctions {
             deoptFrameNode.deoptimizeFrame(result.getFrame());
 
             return result;
-        }
-
-        @Specialization
-        protected REnvironment sysFrame(VirtualFrame frame, double which) {
-            return sysFrame(frame, (int) which);
         }
     }
 
@@ -508,7 +515,7 @@ public class FrameFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -540,6 +547,11 @@ public class FrameFunctions {
             return FrameAccess.READ_ONLY;
         }
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
+        }
+
         @Specialization
         protected Object sysFunction(VirtualFrame frame, int which) {
             // N.B. Despite the spec, n==0 is treated as the current function
@@ -551,11 +563,6 @@ public class FrameFunctions {
             } else {
                 return func;
             }
-        }
-
-        @Specialization
-        protected Object sysFunction(VirtualFrame frame, double which) {
-            return sysFunction(frame, (int) which);
         }
     }
 
@@ -610,11 +617,11 @@ public class FrameFunctions {
         private final BranchProfile promiseProfile = BranchProfile.create();
         private final BranchProfile nonNullCallerProfile = BranchProfile.create();
 
-        public abstract Object execute(VirtualFrame frame, int n);
+        public abstract REnvironment execute(VirtualFrame frame, int n);
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_VALUE, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Override
@@ -665,11 +672,6 @@ public class FrameFunctions {
             // parentDepth--;
             // }
             return REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
-        }
-
-        @Specialization
-        protected REnvironment parentFrame(VirtualFrame frame, double n) {
-            return parentFrame(frame, (int) n);
         }
     }
 }

@@ -41,6 +41,10 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("{ g<-function(y) { f<-function(x) { x }; substitute(f(y)) } ; eval(g(42)) }");
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
 
+        assertEval("eval('foo')");
+        assertEval(Output.IgnoreErrorContext, "eval(as.symbol('foo'))");
+        assertEval("eval(as.symbol('baseenv'))");
+
         // should print two values, xx^2 and xx
         assertEval("eval({ xx <- pi; xx^2}) ; xx");
 

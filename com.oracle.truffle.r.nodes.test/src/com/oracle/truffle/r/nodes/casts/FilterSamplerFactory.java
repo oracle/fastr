@@ -135,7 +135,7 @@ public final class FilterSamplerFactory
                 return leftFilter.trueBranchType().and(rightFilter.trueBranchType());
             }
 
-            @SuppressWarnings({"unchecked", "cast"})
+            @SuppressWarnings({"unchecked"})
             @Override
             public Samples<Object> collectSamples(TypeExpr inputType) {
                 Samples thisSamples = rightFilter.collectSamples(inputType);

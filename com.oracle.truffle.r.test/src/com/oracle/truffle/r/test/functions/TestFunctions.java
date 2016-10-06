@@ -148,7 +148,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(a){1} ; x(1,) }");
+        assertEval("{ x<-function(a){1} ; x(1,) }");
 
         // note exactly GNU-R message
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a,a) {1} }");
@@ -331,7 +331,7 @@ public class TestFunctions extends TestBase {
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ lapply(1:3, \"dummy\") }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
+        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
     }

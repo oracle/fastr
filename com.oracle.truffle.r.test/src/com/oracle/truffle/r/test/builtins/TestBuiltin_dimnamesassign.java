@@ -74,8 +74,7 @@ public class TestBuiltin_dimnamesassign extends TestBase {
 
     @Test
     public void testdimnamesassign12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(fair = c(326L, 688L, 343L, 98L), red = c(38L, 116L, 84L, 48L), medium = c(241L, 584L, 909L, 403L), dark = c(110L, 188L, 412L, 681L), black = c(3L, 4L, 26L, 85L)), .Names = c('fair', 'red', 'medium', 'dark', 'black'), class = 'data.frame', row.names = c('blue', 'light', 'medium', 'dark')), value = list(c('blue', 'light', 'medium', 'dark'), c('F', 'R', 'M', 'D', 'B')));`dimnames<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(fair = c(326L, 688L, 343L, 98L), red = c(38L, 116L, 84L, 48L), medium = c(241L, 584L, 909L, 403L), dark = c(110L, 188L, 412L, 681L), black = c(3L, 4L, 26L, 85L)), .Names = c('fair', 'red', 'medium', 'dark', 'black'), class = 'data.frame', row.names = c('blue', 'light', 'medium', 'dark')), value = list(c('blue', 'light', 'medium', 'dark'), c('F', 'R', 'M', 'D', 'B')));`dimnames<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test

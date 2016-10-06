@@ -70,6 +70,10 @@ public final class PipelineBuilder {
         return chainBuilder != null ? chainBuilder.getFirstStep() : null;
     }
 
+    public void appendBoxPrimitive() {
+        append(new PipelineStep.BoxPrimitiveStep<>());
+    }
+
     public void appendFindFirst(Object defaultValue, Class<?> elementClass, RBaseNode callObj, Message message, Object[] messageArgs) {
         append(new FindFirstStep<>(defaultValue, elementClass, createMessage(callObj, message, messageArgs)));
     }
@@ -158,7 +162,7 @@ public final class PipelineBuilder {
         append(new DefaultErrorStep<>(createMessage(callObj, message, args)));
     }
 
-    private MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
+    private static MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
         return message == null ? null : new MessageData(callObj, message, messageArgs);
     }
 }

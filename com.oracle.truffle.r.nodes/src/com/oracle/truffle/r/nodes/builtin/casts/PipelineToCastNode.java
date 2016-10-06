@@ -50,7 +50,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapperVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CustomNodeStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
@@ -244,12 +243,6 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(CustomNodeStep<?> step) {
-            cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step);
-        }
-
-        @Override
         public CastNode visit(AttributableCoercionStep<?> step) {
             cannotBeOptimizedBeforeFindFirst();
             return inner.visit(step);
@@ -275,7 +268,7 @@ public final class PipelineToCastNode {
          */
         private RType checkFilter(Filter<?, ?> filter) {
             if (filter instanceof RTypeFilter) {
-                RType type = ((RTypeFilter) filter).getType();
+                RType type = ((RTypeFilter<?>) filter).getType();
                 if (targetType == null) {
                     return type;
                 }
@@ -308,7 +301,7 @@ public final class PipelineToCastNode {
 
         private static boolean isNextMapToBoolean(FindFirstStep<?, ?> findFirst) {
             PipelineStep<?, ?> next = findFirst.getNext();
-            return next != null && next instanceof MapStep && ((MapStep) next).getMapper() instanceof MapByteToBoolean;
+            return next != null && next instanceof MapStep && ((MapStep<?, ?>) next).getMapper() instanceof MapByteToBoolean;
         }
     }
 
@@ -352,11 +345,6 @@ public final class PipelineToCastNode {
         @Override
         public CastNode visit(BoxPrimitiveStep<?> step) {
             return BoxPrimitiveNode.create();
-        }
-
-        @Override
-        public CastNode visit(CustomNodeStep<?> step) {
-            return step.getFactory().get();
         }
 
         @Override

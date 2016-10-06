@@ -20,27 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
-public class TestBuiltin_rm extends TestBase {
-    @Test
-    public void basicTests() {
-        assertEval("tmp <- 42; rm(tmp); tmp");
-        assertEval("tmp <- 42; rm(list='tmp'); tmp");
-        assertEval(" e <- new.env(); e$a <- 42; rm(list='a', envir=e); e$a");
-        assertEval(Output.IgnoreErrorContext, "tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
-    }
+// Checkstyle: stop line length check
+public class TestBuiltin_lockEnvironment extends TestBase {
 
     @Test
-    public void testArgsCasting() {
-        assertEval("tmp <- 42; rm(tmp, inherits='asd')");
-        assertEval(".Internal(remove(list=33, environment(), F))");
-        assertEval("tmp <- 42; rm(tmp, envir=NULL)");
-        assertEval("tmp <- 42; rm(tmp, envir=42)");
+    public void testlockEnvironment() {
+        assertEval("lockEnvironment('foo', TRUE)");
+        assertEval("e <- new.env(); e$a <- 'foo'; lockEnvironment(e, FALSE); e$b <- 123");
+        assertEval("e <- new.env(); e$a <- 'foo'; lockEnvironment(e, FALSE); e$a <- 123");
+        assertEval("e <- new.env(); e$a <- 'foo'; lockEnvironment(e, 'a'); e$b <- 123");
+        assertEval(Ignored.MissingBuiltin, "e <- new.env(); e$a <- 'foo'; lockEnvironment(e, 'a'); e$a <- 123");
+        assertEval("e <- new.env(); e$a <- 'foo'; lockEnvironment(e, logical()); e$b <- 123");
+        assertEval(Ignored.MissingBuiltin, "e <- new.env(); e$a <- 'foo'; lockEnvironment(e, logical()); e$a <- 123");
     }
 }

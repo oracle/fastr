@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.function.Predicate;
 
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.NarrowingArgumentFilter;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class AbstractPredicateArgumentFilter<T, R extends T> implements NarrowingArgumentFilter<T, R> {
 
@@ -40,5 +38,4 @@ public abstract class AbstractPredicateArgumentFilter<T, R extends T> implements
     public boolean test(T arg) {
         return valuePredicate.test(arg);
     }
-
 }

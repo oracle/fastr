@@ -84,6 +84,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
     private String argClass(Object arg) {
         if (classNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             classNode = insert(ClassHierarchyScalarNodeGen.create());
         }
         return classNode.executeString(arg);

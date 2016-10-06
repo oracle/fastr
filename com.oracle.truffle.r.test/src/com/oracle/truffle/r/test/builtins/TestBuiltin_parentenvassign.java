@@ -20,27 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
-public class TestBuiltin_rm extends TestBase {
-    @Test
-    public void basicTests() {
-        assertEval("tmp <- 42; rm(tmp); tmp");
-        assertEval("tmp <- 42; rm(list='tmp'); tmp");
-        assertEval(" e <- new.env(); e$a <- 42; rm(list='a', envir=e); e$a");
-        assertEval(Output.IgnoreErrorContext, "tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
-    }
+public class TestBuiltin_parentenvassign extends TestBase {
 
     @Test
-    public void testArgsCasting() {
-        assertEval("tmp <- 42; rm(tmp, inherits='asd')");
-        assertEval(".Internal(remove(list=33, environment(), F))");
-        assertEval("tmp <- 42; rm(tmp, envir=NULL)");
-        assertEval("tmp <- 42; rm(tmp, envir=42)");
+    public void testParentEnv() {
+        assertEval("parent.env() <- new.env()");
+        assertEval(Output.IgnoreErrorContext, "parent.env(NULL) <- new.env()");
+        assertEval(Output.IgnoreErrorContext, "parent.env(1) <- new.env()");
+        assertEval(Output.IgnoreErrorContext, "parent.env(c(1,2,3)) <- new.env()");
+        assertEval("parent.env(emptyenv()) <- new.env()");
+        assertEval(Output.IgnoreErrorContext, "e <- new.env(); parent.env(e) <- 44");
+        assertEval(Output.IgnoreErrorContext, Output.IgnoreErrorMessage, "e <- new.env(); parent.env(e) <- NULL");
+        assertEval("e <- new.env(); parent.env(e) <- emptyenv(); parent.env(e)");
+        assertEval(Output.IgnoreErrorContext, "e <- new.env(); parent.env(e) <- c(1,2,3)");
+        assertEval(Output.ContainsReferences, "e <- new.env(); e2 <- new.env(); parent.env(e) <- e2; parent.env(e)");
     }
 }

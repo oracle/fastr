@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -38,18 +39,16 @@ import com.oracle.truffle.r.runtime.data.RList;
 @RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse"}, behavior = PURE)
 public abstract class Paste0 extends RBuiltinNode {
 
-    @Child private Paste pasteNode;
+    @Child private Paste pasteNode = PasteNodeGen.create(null);
 
-    private Object paste(RList values, Object collapse) {
-        if (pasteNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteNodeGen.create(null));
-        }
-        return pasteNode.executeList(values, "", collapse);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("list").mustBe(RList.class);
+        casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }
 
     @Specialization
     protected Object paste0(RList values, Object collapse) {
-        return paste(values, collapse);
+        return pasteNode.executeList(values, "", collapse);
     }
 }

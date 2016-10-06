@@ -153,7 +153,7 @@ public abstract class Mapply extends RBuiltinNode {
             } else {
                 indexArg = new RArgsValuesAndNames(new Object[]{adjIndex + 1}, I_INDEX);
             }
-            return indexedLoadNode.execute(frame, vec, indexArg, EXACT, DROP);
+            return indexedLoadNode.executeBuiltin(frame, vec, indexArg, EXACT, DROP);
 
         }
 

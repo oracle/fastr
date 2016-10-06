@@ -22,21 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.EvalFunctionsFactory.EvalEnvCastNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -45,13 +47,15 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Contains the {@code eval} {@code .Internal} implementation.
  */
-public class EvalFunctions {
+@RBuiltin(name = "eval", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"}, behavior = COMPLEX)
+public abstract class Eval extends RBuiltinNode {
 
     /**
      * Eval takes two arguments that specify the environment where the expression should be
@@ -60,7 +64,7 @@ public class EvalFunctions {
      * values that may make it into the internal code. This node handles these. See the
      * documentation of eval for more details.
      */
-    public abstract static class EvalEnvCast extends RBaseNode {
+    abstract static class EvalEnvCast extends RBaseNode {
 
         public abstract REnvironment execute(Object env, Object enclos);
 
@@ -109,48 +113,61 @@ public class EvalFunctions {
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
             return REnvironment.createFromList(attributeProfiles, list.toRList(), REnvironment.baseEnv());
         }
+    }
 
-        @Fallback
-        @TruffleBoundary
-        protected REnvironment doEval(@SuppressWarnings("unused") Object env, @SuppressWarnings("unused") Object enclos) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+    @Child private EvalEnvCast envCast = EvalEnvCastNodeGen.create();
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("envir").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RList.class)).or(instanceOf(RPairList.class)));
+        casts.arg("enclos").allowNull().mustBe(REnvironment.class);
+    }
+
+    @Specialization
+    protected Object doEval(VirtualFrame frame, RLanguage expr, Object envir, Object enclos) {
+        RCaller rCaller = RCaller.create(frame, getOriginalCall());
+        REnvironment environment = envCast.execute(envir, enclos);
+        try {
+            return RContext.getEngine().eval(expr, environment, rCaller);
+        } finally {
+            visibility.executeAfterCall(frame, rCaller);
         }
     }
 
-    @RBuiltin(name = "eval", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"}, behavior = COMPLEX)
-    public abstract static class Eval extends RBuiltinNode {
-
-        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
-
-        @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos, //
-                        @Cached("createCast()") EvalEnvCast envCast) {
-            // Note: fallback for invalid combinations of envir and enclos is in EvalEnvCastNode
-            RCaller rCaller = RCaller.create(frame, getOriginalCall());
-            REnvironment envir1 = envCast.execute(envir, enclos);
-            Object expr1 = RASTUtils.checkForRSymbol(expr);
-
-            if (expr1 instanceof RExpression) {
-                try {
-                    return RContext.getEngine().eval((RExpression) expr1, envir1, rCaller);
-                } finally {
-                    visibility.executeAfterCall(frame, rCaller);
-                }
-            } else if (expr1 instanceof RLanguage) {
-                try {
-                    return RContext.getEngine().eval((RLanguage) expr1, envir1, rCaller);
-                } finally {
-                    visibility.executeAfterCall(frame, rCaller);
-                }
-            } else {
-                // just return value
-                visibility.execute(frame, true);
-                return expr1;
-            }
+    @Specialization
+    protected Object doEval(VirtualFrame frame, RExpression expr, Object envir, Object enclos) {
+        RCaller rCaller = RCaller.create(frame, getOriginalCall());
+        REnvironment environment = envCast.execute(envir, enclos);
+        try {
+            return RContext.getEngine().eval(expr, environment, rCaller);
+        } finally {
+            visibility.executeAfterCall(frame, rCaller);
         }
+    }
 
-        protected EvalEnvCast createCast() {
-            return EvalEnvCastNodeGen.create();
+    protected static Get createGet() {
+        return GetNodeGen.create(null);
+    }
+
+    @Specialization
+    protected Object doEval(VirtualFrame frame, RSymbol expr, Object envir, Object enclos,
+                    @Cached("createGet()") Get get) {
+        REnvironment environment = envCast.execute(envir, enclos);
+
+        try {
+            // no need to do the full eval for symbols: just do the lookup
+            return get.execute(frame, expr.getName(), environment, RType.Any.getName(), true);
+        } finally {
+            visibility.execute(frame, true);
         }
+    }
+
+    @Fallback
+    protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos) {
+        // just return value
+        envCast.execute(envir, enclos);
+        visibility.execute(frame, true);
+        return expr;
     }
 }

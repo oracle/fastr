@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import java.util.function.Supplier;
-
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -70,8 +67,6 @@ public abstract class PipelineStep<T, R> {
         T visit(DefaultWarningStep<?> step);
 
         T visit(BoxPrimitiveStep<?> step);
-
-        T visit(CustomNodeStep<?> step);
 
         T visit(AttributableCoercionStep<?> step);
     }
@@ -332,28 +327,6 @@ public abstract class PipelineStep<T, R> {
 
         public boolean isWarning() {
             return isWarning;
-        }
-
-        @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
-        }
-    }
-
-    /**
-     * Allows to insert arbitrary node into the cast pipeline. Should be avoided as much as
-     * possible, because it hinders inference of any semantics from the pipeline intermediate
-     * representation. This step is here for legacy reasons and will be removed in the future.
-     */
-    public static final class CustomNodeStep<T> extends PipelineStep<T, Object> {
-        private final Supplier<CastNode> factory;
-
-        public CustomNodeStep(Supplier<CastNode> factory) {
-            this.factory = factory;
-        }
-
-        public Supplier<CastNode> getFactory() {
-            return factory;
         }
 
         @Override

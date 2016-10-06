@@ -167,20 +167,6 @@ public class RASTUtils {
     }
 
     /**
-     * Checks whether {@code expr instanceof RSymbol} and, if so, wraps in an {@link RLanguage}
-     * instance.
-     */
-    @TruffleBoundary
-    public static Object checkForRSymbol(Object expr) {
-        if (expr instanceof RSymbol) {
-            String symbolName = ((RSymbol) expr).getName();
-            return RDataFactory.createLanguage(ReadVariableNode.create(symbolName));
-        } else {
-            return expr;
-        }
-    }
-
-    /**
      * Create an {@link RNode} from a runtime value.
      */
     @TruffleBoundary

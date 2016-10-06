@@ -22,20 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -49,6 +50,11 @@ public abstract class AccessField extends RBuiltinNode {
     private final ConditionProfile invalidAtomicVector = ConditionProfile.createBinaryProfile();
     private final BranchProfile error = BranchProfile.create();
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName()).mustBe(stringValue()).asStringVector().findFirst();
+    }
+
     @Specialization
     protected Object access(VirtualFrame frame, Object container, String field) {
         if (!invalidAtomicVector.profile(container instanceof RAbstractListVector) && container instanceof RAbstractVector) {
@@ -56,11 +62,5 @@ public abstract class AccessField extends RBuiltinNode {
             throw RError.error(this, RError.Message.DOLLAR_ATOMIC_VECTORS);
         }
         return extract.applyAccessField(frame, container, field);
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected Object fallbackError(@SuppressWarnings("unused") Object container, @SuppressWarnings("unused") Object field) {
-        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName());
     }
 }

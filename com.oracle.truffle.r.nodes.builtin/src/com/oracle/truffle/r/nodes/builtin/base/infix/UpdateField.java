@@ -22,23 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -51,33 +51,26 @@ public abstract class UpdateField extends RBuiltinNode {
 
     private final ConditionProfile coerceList = ConditionProfile.createBinaryProfile();
 
-    @Specialization
-    protected Object update(VirtualFrame frame, Object container, String field, Object value) {
-        Object updatedObject = container;
-        if (!coerceList.profile(container instanceof RAbstractListVector)) {
-            updatedObject = coerceList(container, updatedObject);
-        }
-        return extract.apply(frame, updatedObject, new Object[]{field}, value);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue()).asStringVector().findFirst();
     }
 
-    private Object coerceList(Object object, Object vector) {
-        Object updatedVector = vector;
-        if (object instanceof RAbstractVector) {
+    @Specialization
+    protected Object update(VirtualFrame frame, Object container, String field, Object value) {
+        Object list = coerceList.profile(container instanceof RAbstractListVector) ? container : coerceList(container);
+        return extract.apply(frame, list, new Object[]{field}, value);
+    }
+
+    private Object coerceList(Object vector) {
+        if (vector instanceof RAbstractVector) {
             if (castList == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castList = insert(CastListNodeGen.create(true, true, false));
             }
             RError.warning(this, RError.Message.COERCING_LHS_TO_LIST);
-            updatedVector = castList.executeList(vector);
+            return castList.executeList(vector);
         }
-        return updatedVector;
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected Object fallbackError(@SuppressWarnings("unused") Object container, Object field, @SuppressWarnings("unused") Object value) {
-        // TODO: the error message is not quite correct for all types;
-        // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+        return vector;
     }
 }

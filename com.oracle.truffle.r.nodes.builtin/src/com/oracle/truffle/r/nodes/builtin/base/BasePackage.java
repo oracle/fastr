@@ -30,8 +30,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen;
-import com.oracle.truffle.r.nodes.binary.ColonNode;
-import com.oracle.truffle.r.nodes.binary.ColonNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.AssignFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
@@ -214,7 +212,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
         add(Col.class, ColNodeGen::create);
-        add(ColonNode.class, ColonNodeGen::create);
+        add(Colon.class, ColonNodeGen::create);
         add(ColMeans.class, ColMeansNodeGen::create);
         add(ColSums.class, ColSumsNodeGen::create);
         add(Combine.class, CombineNodeGen::create);
@@ -317,7 +315,7 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.Search.class, EnvFunctionsFactory.SearchNodeGen::create);
         add(EnvFunctions.SetParentEnv.class, EnvFunctionsFactory.SetParentEnvNodeGen::create);
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
-        add(EvalFunctions.Eval.class, EvalFunctionsFactory.EvalNodeGen::create);
+        add(Eval.class, EvalNodeGen::create);
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);

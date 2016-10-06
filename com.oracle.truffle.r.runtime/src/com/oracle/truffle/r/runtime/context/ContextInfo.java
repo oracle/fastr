@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;

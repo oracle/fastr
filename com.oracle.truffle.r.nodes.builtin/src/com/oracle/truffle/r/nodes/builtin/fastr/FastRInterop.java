@@ -105,7 +105,7 @@ public class FastRInterop {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.boxPrimitive(1);
+            casts.arg("value").boxPrimitive();
         }
 
         @Specialization(guards = "!isRMissing(value)")
