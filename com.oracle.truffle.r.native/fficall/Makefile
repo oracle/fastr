@@ -56,7 +56,7 @@ ifeq ($(OS_NAME),Darwin)
 # check if we captured libpcre/libz, rpath those in libR
 	mx rupdatelib $(FASTR_LIB_DIR)
 else
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,$(FASTR_LIB_DIR) -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
 
 objs:
