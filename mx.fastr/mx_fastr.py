@@ -29,6 +29,8 @@ import mx_fastr_pkgs
 import mx_fastr_dists
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
 import mx_copylib
+import mx_fastr_mkgramrd
+
 import os
 
 '''
@@ -232,27 +234,17 @@ def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
     run_r(args, 'rembed')
 
 def _fastr_gate_runner(args, tasks):
-    # Until fixed, we call Checkstyle here and limit to primary
-    with mx_gate.Task('Checkstyle check', tasks) as t:
-        if t:
-            if mx.checkstyle(['--primary']) != 0:
-                t.abort('Checkstyle warnings were found')
-
+    '''
+    The specific additional gates tasks provided by FastR:
+    1. Copyright check
+    2. Check that ExpectedTestOutput file is in sync with unit tests
+    3. Unit tests
+    '''
     # FastR has custom copyright check
     with mx_gate.Task('Copyright check', tasks) as t:
         if t:
             if mx.checkcopyrights(['--primary']) != 0:
                 t.abort('copyright errors')
-
-    with mx_gate.Task('LDD', tasks) as t:
-        if t:
-            libpath = join(_fastr_suite.dir, 'lib')
-            if platform.system() == 'Darwin':
-                rc = subprocess.call(['otool', '-L', join(libpath, 'libR.dylib')])
-            else:
-                rc = subprocess.call(['ldd', join(libpath, 'libR.so')])
-            if rc != 0:
-                t.abort('LDD failed')
 
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
@@ -267,14 +259,17 @@ def _fastr_gate_runner(args, tasks):
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
-def gate(args):
-    '''Run the R gate'''
-    # exclude findbugs until compliant
-    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
-
-def original_gate(args):
-    '''Run the R gate (without filtering gate tasks)'''
+def rgate(args):
+    '''
+    Run 'mx.gate' with given args (used in CI system).
+    N.B. This will fail if run without certain exclusions; use the local
+    'gate' command for that.
+    '''
     mx_gate.gate(args)
+
+def gate(args):
+    '''Run 'mx.gate' with some standard tasks excluded as they currently fail'''
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -524,15 +519,13 @@ def rcmplib(args):
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
-import mx_fastr_mkgramrd
-
 _commands = {
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
-    'originalgate' : [original_gate, '[options]'],
+    'rgate' : [rgate, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
     'junitsimple' : [junit_simple, ['options']],
