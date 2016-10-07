@@ -611,7 +611,7 @@ install.pkg <- function(pkgname) {
 system.install <- function(pkgname) {
 	script <- normalizePath("com.oracle.truffle.r.test.cran/r/install.package.R")
 	if (is.fastr()) {
-		rscript = normalizePath("bin/Rscript")
+		rscript = file.path(R.home(), "bin", "Rscript")
 	} else {
 		rscript = "Rscript"
 	}
@@ -655,7 +655,7 @@ is.fastr <- function() {
 system.test <- function(pkgname) {
 	script <- normalizePath("com.oracle.truffle.r.test.cran/r/test.package.R")
 	if (is.fastr()) {
-		rscript = normalizePath("bin/Rscript")
+		rscript = file.path(R.home(), "bin", "Rscript")
 	} else {
 		rscript = "Rscript"
 	}
