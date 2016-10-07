@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.closures;
+package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import org.junit.Test;
 
-final class RComplexToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-    RComplexToStringVectorClosure(RAbstractComplexVector vector) {
-        super(vector);
+import static org.junit.Assert.*;
+
+public class ComplexVectorPrinterTest {
+
+    @Test
+    public void testEncodeComplex() {
+        assertEquals("3.14159265358979e-05+3.1415926535898e-06i", ComplexVectorPrinter.encodeComplex(RDataFactory.createComplex(Math.PI / 100000, Math.PI / 1000000)));
     }
 
-    @Override
-    public String getDataAt(int index) {
-        RComplex data = ((RAbstractComplexVector) vector).getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
-        }
-        return RContext.getRRuntimeASTAccess().encodeComplex(data);
-    }
 }

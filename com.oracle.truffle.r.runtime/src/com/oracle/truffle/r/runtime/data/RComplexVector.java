@@ -102,7 +102,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.complexToString(getDataAt(i)));
+        return toString(i -> getDataAt(i).toString());
     }
 
     @Override
@@ -134,11 +134,6 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
-    }
-
-    @Override
-    protected String getDataAtAsString(int index) {
-        return getDataAt(index).toString();
     }
 
     private RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {

@@ -95,7 +95,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
     @TruffleBoundary
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return toString(RRuntime.doubleToString(realPart), RRuntime.doubleToString(imaginaryPart));
+        return toString(Double.toString(realPart), Double.toString(imaginaryPart));
     }
 
     public String toString(String realPartString, String imaginaryPartString) {

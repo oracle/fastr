@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -646,7 +647,15 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     private static String unlistValueString(Object cur) {
-        return RRuntime.toString(cur);
+        if (cur instanceof Double) {
+            Double d = (Double) cur;
+            return RRuntime.isNAorNaN(d) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeDouble(d);
+        } else if (cur instanceof RComplex) {
+            RComplex c = (RComplex) cur;
+            return c.isNA() ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeComplex(c);
+        } else {
+            return RRuntime.toString(cur);
+        }
     }
 
     private static RComplex unlistValueComplex(Object dataAtAsObject) {

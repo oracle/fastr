@@ -131,11 +131,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         return data[i];
     }
 
-    @Override
-    protected String getDataAtAsString(int index) {
-        return RRuntime.logicalToString(this.getDataAt(index));
-    }
-
     private RLogicalVector updateDataAt(int index, byte right, NACheck valueNACheck) {
         assert !this.isShared();
         data[index] = right;

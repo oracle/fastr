@@ -648,8 +648,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return internalVerify();
     }
 
-    protected abstract String getDataAtAsString(int index);
-
     protected abstract boolean internalVerify();
 
     /**

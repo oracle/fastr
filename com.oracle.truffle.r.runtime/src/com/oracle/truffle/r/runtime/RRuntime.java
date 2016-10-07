@@ -11,8 +11,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.Locale;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -555,55 +553,6 @@ public class RRuntime {
         return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
-    @TruffleBoundary
-    public static String doubleToString(double operand, int digitsBehindDot) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
-    }
-
-    @TruffleBoundary
-    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
-        if (doubleIsInt(operand)) {
-            return intToStringNoCheck((int) operand);
-        }
-        if (operand == Double.POSITIVE_INFINITY) {
-            return "Inf";
-        }
-        if (operand == Double.NEGATIVE_INFINITY) {
-            return "-Inf";
-        }
-        if (Double.isNaN(operand)) {
-            return STRING_NaN;
-        }
-
-        if (operand < 1000000000000L && ((long) operand) == operand) {
-            return Long.toString((long) operand);
-        }
-        if (operand > 1000000000000L) {
-            return String.format((Locale) null, "%.6e", operand);
-        }
-        // if (true || operand < 0.0001) {
-        // // not quite correct but better than nothing for now...
-        // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
-        // }
-
-        // We want to print the number without scientific notation and without trailing zeros after
-        // the decimal point. This is achieved by setting the maximum digits to a large enough
-        // number.
-        java.text.DecimalFormat format = new java.text.DecimalFormat();
-        format.setMaximumIntegerDigits(32);
-        format.setMaximumFractionDigits(digitsBehindDot == -1 ? 32 : digitsBehindDot);
-        format.setGroupingUsed(false);
-        return format.format(operand);
-    }
-
-    public static String doubleToStringNoCheck(double operand) {
-        return doubleToStringNoCheck(operand, -1);
-    }
-
-    public static String doubleToString(double operand) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
-    }
-
     public static int double2rawIntValue(double operand) {
         return isNA(operand) ? 0 : ((int) operand) & 0xFF;
     }
@@ -638,16 +587,6 @@ public class RRuntime {
         return isNA(c) ? LOGICAL_NA : complex2doubleNoCheck(c);
     }
 
-    @TruffleBoundary
-    public static String complexToStringNoCheck(RComplex operand) {
-        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
-    }
-
-    @TruffleBoundary
-    public static String complexToString(RComplex operand) {
-        return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
-    }
-
     public static int complex2rawIntValue(RComplex c) {
         return isNA(c) ? 0 : ((int) c.getRealPart() & 0xFF);
     }
@@ -675,7 +614,7 @@ public class RRuntime {
         if (object instanceof Integer) {
             return intToString((int) object);
         } else if (object instanceof Double) {
-            return doubleToString((double) object);
+            return Double.toString((double) object);
         } else if (object instanceof Byte) {
             return logicalToString((byte) object);
         }

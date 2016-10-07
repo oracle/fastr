@@ -26,6 +26,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -188,5 +189,13 @@ public interface RRuntimeASTAccess {
     Object rcommandMain(String[] args, String[] env, boolean intern);
 
     Object rscriptMain(String[] args, String[] env, boolean intern);
+
+    String encodeDouble(double x);
+
+    String encodeDouble(double x, int digits);
+
+    String encodeComplex(RComplex x);
+
+    String encodeComplex(RComplex x, int digits);
 
 }

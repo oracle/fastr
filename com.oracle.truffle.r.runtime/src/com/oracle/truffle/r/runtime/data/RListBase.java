@@ -121,11 +121,6 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
         return data[i];
     }
 
-    @Override
-    protected final String getDataAtAsString(int index) {
-        return RRuntime.toString(getDataAt(index));
-    }
-
     public final RListBase updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
         assert !this.isShared() : "data in shared list must not be updated, make a copy";
         data[i] = right;
