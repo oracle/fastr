@@ -73,10 +73,12 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
     }
 
+    @TruffleBoundary
     static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
         return formatComplexVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
     }
 
+    @TruffleBoundary
     static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
 
         int wr;
@@ -387,19 +389,23 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
     }
 
+    @TruffleBoundary
     public static String encodeComplex(RComplex x) {
         return encodeComplex(x, 15, 0, RRuntime.STRING_NA);
     }
 
+    @TruffleBoundary
     public static String encodeComplex(RComplex x, int digits) {
         return encodeComplex(x, digits, 0, RRuntime.STRING_NA);
     }
 
+    @TruffleBoundary
     public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
         ComplexVectorMetrics cvm = formatComplexVector(x, 0, 1, 0, digits, sciPen, naString.length());
         return encodeComplex(x, cvm, digits, naString);
     }
 
+    @TruffleBoundary
     static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
         return encodeComplex(x, cvm, pp.getDigits(), pp.getNaString());
     }
@@ -420,6 +426,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
     }
 
+    @TruffleBoundary
     private static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei, char cdec, int digits, String naString) {
         String buff;
         String im;

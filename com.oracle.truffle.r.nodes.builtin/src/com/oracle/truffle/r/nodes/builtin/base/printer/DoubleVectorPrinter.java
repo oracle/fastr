@@ -71,10 +71,12 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         }
     }
 
+    @TruffleBoundary
     static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
         return formatDoubleVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
     }
 
+    @TruffleBoundary
     static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
         int left;
         int right;
@@ -248,10 +250,12 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         }
     }
 
+    @TruffleBoundary
     public static ScientificDouble scientific(double x, PrintParameters pp) {
         return scientific(x, pp.getDigits());
     }
 
+    @TruffleBoundary
     public static ScientificDouble scientific(double x, int digits) {
         /*
          * for a number x , determine sgn = 1_{x < 0} {0/1} kpower = Exponent of 10; nsig =
@@ -360,23 +364,28 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
     }
 
+    @TruffleBoundary
     public static String encodeReal(double x) {
         return encodeReal(x, 15, '.', 0, RRuntime.STRING_NA);
     }
 
+    @TruffleBoundary
     public static String encodeReal(double x, int digits) {
         return encodeReal(x, digits, '.', 0, RRuntime.STRING_NA);
     }
 
+    @TruffleBoundary
     public static String encodeReal(double x, int digits, char cdec, int sciPen, String naString) {
         DoubleVectorMetrics dm = formatDoubleVector(RDataFactory.createDoubleVectorFromScalar(x), 0, 1, 0, digits, sciPen, naString.length());
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
     }
 
+    @TruffleBoundary
     static String encodeReal(double initialX, int w, int d, int e, char cdec, PrintParameters pp) {
         return encodeReal(initialX, w, d, e, cdec, pp.getNaString());
     }
 
+    @TruffleBoundary
     static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }

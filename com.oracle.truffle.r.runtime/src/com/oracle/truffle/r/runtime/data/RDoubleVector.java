@@ -109,7 +109,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.doubleToString(getDataAt(i)));
+        return toString(i -> Double.toString(getDataAt(i)));
     }
 
     @Override
@@ -146,11 +146,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
-    }
-
-    @Override
-    protected String getDataAtAsString(int index) {
-        return RRuntime.doubleToString(data[index]);
     }
 
     public RDoubleVector updateDataAt(int i, double right, NACheck valueNACheck) {

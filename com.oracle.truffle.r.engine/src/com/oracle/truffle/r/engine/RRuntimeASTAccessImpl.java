@@ -47,6 +47,8 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -71,6 +73,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -714,4 +717,23 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return new IORedirect(in, out, newArgs, intern);
     }
 
+    @Override
+    public String encodeDouble(double x) {
+        return DoubleVectorPrinter.encodeReal(x);
+    }
+
+    @Override
+    public String encodeDouble(double x, int digits) {
+        return DoubleVectorPrinter.encodeReal(x, digits);
+    }
+
+    @Override
+    public String encodeComplex(RComplex x) {
+        return ComplexVectorPrinter.encodeComplex(x);
+    }
+
+    @Override
+    public String encodeComplex(RComplex x, int digits) {
+        return ComplexVectorPrinter.encodeComplex(x, digits);
+    }
 }

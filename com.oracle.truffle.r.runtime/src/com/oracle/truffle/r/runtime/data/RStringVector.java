@@ -127,11 +127,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
         return data[i];
     }
 
-    @Override
-    protected String getDataAtAsString(int index) {
-        return getDataAt(index);
-    }
-
     public RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
         if (this.isShared()) {
             throw RInternalError.shouldNotReachHere("update shared vector");

@@ -114,7 +114,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.doubleToString(getDataAt(i)));
+        return toString(i -> Double.toString(getDataAt(i)));
     }
 
     @Override
@@ -146,11 +146,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
-    }
-
-    @Override
-    protected String getDataAtAsString(int index) {
-        return RRuntime.intToString(this.getDataAt(index));
     }
 
     public RIntVector updateDataAt(int i, int right, NACheck valueNACheck) {

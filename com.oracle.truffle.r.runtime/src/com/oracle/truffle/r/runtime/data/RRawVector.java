@@ -134,11 +134,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    protected String getDataAtAsString(int index) {
-        return getDataAt(index).toString();
-    }
-
-    @Override
     public RRawVector materialize() {
         return this;
     }

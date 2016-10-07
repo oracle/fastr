@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -39,6 +40,6 @@ final class RComplexToStringVectorClosure extends RToStringVectorClosure impleme
         if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         }
-        return RRuntime.complexToString(data);
+        return RContext.getRRuntimeASTAccess().encodeComplex(data);
     }
 }
