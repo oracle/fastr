@@ -51,12 +51,10 @@ packagesLinux : ${pkgEnvironment} {
 }
 
 packagesDarwin : {
-  packages : {
-    "pip:astroid" : "==1.1.0"
-    "pip:pylint" : "==1.1.0"
-    "xz" : ""
-    # assume pcre/z system installed
-  }
+  "pip:astroid" : "==1.1.0"
+  "pip:pylint" : "==1.1.0"
+  "xz" : ""
+  # assume pcre/z system installed
 }
 
 # Common settings for all builds but note that it uses the Linux package settings,
