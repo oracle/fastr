@@ -70,7 +70,7 @@ common : ${java8Downloads} ${packagesLinux}  {
 # the "mx" tool. This defines a common prefix for all gate commands. The "-t"
 # arg indicates the exact set of gate "tasks" that will be run.
 
-gateCmd : ["mx", "--strict-compliance", "gate", "--strict-mode", "-t"]
+gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
 

@@ -260,7 +260,15 @@ def _fastr_gate_runner(args, tasks):
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
 def rgate(args):
-    '''Run the R gate, with some standard tasks excluded as they currently fail'''
+    '''
+    Run 'mx.gate' with given args (used in CI system).
+    N.B. This will fail if run without certain exclusions; use the local
+    'gate' command for that.
+    '''
+    mx_gate.gate(args)
+
+def gate(args):
+    '''Run 'mx.gate' with some standard tasks excluded as they currently fail'''
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_srcdir():
@@ -518,6 +526,7 @@ _commands = {
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'rgate' : [rgate, ''],
+    'gate' : [gate, ''],
     'junit' : [junit, ['options']],
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
