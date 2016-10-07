@@ -674,8 +674,8 @@ public class BasePackage extends RBuiltinPackage {
         add(ParenBuiltin.class, ParenBuiltinNodeGen::create);
         add(RepeatBuiltin.class, RepeatBuiltinNodeGen::create);
         add(Tilde.class, TildeNodeGen::create);
-        add(UpdateSubscript.class, UpdateSubscriptNodeGen::create);
-        add(UpdateSubset.class, UpdateSubsetNodeGen::create);
+        add(UpdateSubscript.class, UpdateSubscriptNodeGen::create, UpdateSubset::special);
+        add(UpdateSubset.class, UpdateSubsetNodeGen::create, UpdateSubset::special);
         add(UpdateField.class, UpdateFieldNodeGen::create);
         add(WhileBuiltin.class, WhileBuiltinNodeGen::create);
     }
