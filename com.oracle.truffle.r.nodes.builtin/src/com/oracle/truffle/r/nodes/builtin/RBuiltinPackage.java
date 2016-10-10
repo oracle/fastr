@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -156,12 +157,16 @@ public abstract class RBuiltinPackage {
     }
 
     protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor) {
+        add(builtinClass, constructor, null);
+    }
+
+    protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor, RSpecialFactory specialCall) {
         RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
         putBuiltin(new RBuiltinFactory(annotation.name(), builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
-                        annotation.alwaysSplit(), annotation.dispatch(), constructor, annotation.behavior()));
+                        annotation.alwaysSplit(), annotation.dispatch(), constructor, annotation.behavior(), specialCall));
     }
 }

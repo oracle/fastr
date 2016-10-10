@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,34 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
+import java.util.ArrayList;
+
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+
+/**
+ * Description of different internal frame slots used by FastR. This enum is used as an identifier,
+ * so that these internal frame slots have non-string names.
+ */
 public enum RFrameSlot {
-    OnExit;
+    /**
+     * This frame slot is used to store expressions installed as function exit handlers via on.exit.
+     * It contains an {@link ArrayList} with {@link RNode} elements.
+     */
+    OnExit,
+    /**
+     * This frame slot is used to track result visibility. It can contain one of three values:
+     * <ul>
+     * <li>{@link Boolean#TRUE} if the result is currently visible</li>
+     * <li>{@link Boolean#FALSE} if the result is currently not visible</li>
+     * <li>{@code null} if the visibility was not set yet</li>
+     * </ul>
+     *
+     * Whenever an {@RBuiltinNode} is called via {@code RCallNode}, the resulting visibility is
+     * stored in the current frame. At the end of a {@code FunctionDefinitionNode}, the current
+     * state is stored into {@link RCaller#setVisibility(boolean)} if it is non-{@code null}. After
+     * each call site, the value of {@link RCaller#getVisibility()} is extracted and stored into the
+     * frame slot.
+     */
+    Visibility;
 }

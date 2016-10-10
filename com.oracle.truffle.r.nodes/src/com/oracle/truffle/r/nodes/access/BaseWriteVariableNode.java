@@ -48,10 +48,11 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 abstract class BaseWriteVariableNode extends WriteVariableNode {
 
+    private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isSharedPermanent = ConditionProfile.createBinaryProfile();
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -89,18 +90,18 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
                 // this comparison does not work consistently for boxing objects, so it's important
                 // to do the RShareable check first.
-                if (isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
+                if (isCurrentValue(frame, frameSlot, value)) {
                     return value;
                 }
                 RShareable rShareable = (RShareable) shareableProfile.profile(value);
                 if (mode == Mode.COPY) {
                     return rShareable.copy();
                 } else {
-                    if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
+                    if (!isSharedPermanent.profile(rShareable.isSharedPermanent())) {
                         if (isSuper) {
                             // if non-local assignment, increment conservatively
                             rShareable.incRefCount();
-                        } else if (isSharedProfile.profile(!rShareable.isShared())) {
+                        } else if (!isSharedProfile.profile(rShareable.isShared())) {
                             // don't increment if already shared - will not get "unshared" until
                             // this function exits anyway
                             rShareable.incRefCount();
@@ -112,9 +113,9 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         return value;
     }
 
-    private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
+    private boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
         try {
-            return frame.isObject(frameSlot) && frame.getObject(frameSlot) == value;
+            return isObjectProfile.profile(frame.isObject(frameSlot)) && isCurrentProfile.profile(frame.getObject(frameSlot) == value);
         } catch (FrameSlotTypeException ex) {
             throw RInternalError.shouldNotReachHere();
         }

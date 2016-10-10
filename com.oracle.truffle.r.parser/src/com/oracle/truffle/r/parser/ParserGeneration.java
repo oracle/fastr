@@ -81,6 +81,8 @@ public class ParserGeneration {
         "transform parser to a generic class via the annotation processor",
         "use RComplex.createNA()",
         "inlined ParseUtils",
-        "properly throw errors in lexer"
+        "properly throw errors in lexer",
+        "remove deprecated calls to SourceSection functions",
+        "remove deprecated calls to Source functions"
     };
 }

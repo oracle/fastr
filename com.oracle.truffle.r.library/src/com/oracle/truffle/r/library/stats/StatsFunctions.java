@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -99,7 +101,11 @@ public final class StatsFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0).toDouble(1).toDouble(2).firstBoolean(3).firstBoolean(4);
+            casts.arg(0).asDoubleVector();
+            casts.arg(1).asDoubleVector();
+            casts.arg(2).asDoubleVector();
+            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg(4).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -121,7 +127,10 @@ public final class StatsFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0).toDouble(1).toDouble(2).firstBoolean(3);
+            casts.arg(0).asDoubleVector();
+            casts.arg(1).asDoubleVector();
+            casts.arg(2).asDoubleVector();
+            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization

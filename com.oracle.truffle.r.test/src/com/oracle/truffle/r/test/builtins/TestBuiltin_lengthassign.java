@@ -46,7 +46,7 @@ public class TestBuiltin_lengthassign extends TestBase {
     public void testlengthassign6() {
         assertEval("argv <- list(list(), value = 0L);`length<-`(argv[[1]],argv[[2]]);");
 
-        assertEval(Ignored.Unknown, "argv <- structure(list(1:3, value = TRUE), .Names = c('', 'value'));do.call('length<-', argv)");
+        assertEval(Output.IgnoreErrorContext, "argv <- structure(list(1:3, value = TRUE), .Names = c('', 'value'));do.call('length<-', argv)");
     }
 
     @Test
@@ -66,5 +66,13 @@ public class TestBuiltin_lengthassign extends TestBase {
         assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
         assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
         assertEval("{ x<-NULL; length(x)<-2; x }");
+    }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval("{ x<-quote(a); length(x)<-2 }");
+        assertEval("{ x<-c(42, 1); length(x)<-'3'; x }");
+        assertEval("{ x<-c(42, 1); length(x)<-3.1; x }");
+        assertEval("{ x<-c(42, 1); length(x)<-c(1,2) }");
     }
 }

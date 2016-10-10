@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
@@ -32,27 +32,20 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class RDataFactory {
-
-    /**
-     * Profile for creation tracing; must precede following declarations.
-     */
-    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
@@ -387,8 +380,16 @@ public final class RDataFactory {
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
-    public static RExpression createExpression(RList list) {
-        return traceDataCreated(new RExpression(list));
+    public static RExpression createExpression(Object[] data, int[] newDimensions) {
+        return traceDataCreated(new RExpression(data, newDimensions, null));
+    }
+
+    public static RExpression createExpression(Object[] data, RStringVector names) {
+        return traceDataCreated(new RExpression(data, null, names));
+    }
+
+    public static RExpression createExpression(Object[] data) {
+        return traceDataCreated(new RExpression(data, null, null));
     }
 
     public static RSymbol createSymbol(String name) {
@@ -404,7 +405,7 @@ public final class RDataFactory {
         return createSymbol(name.intern());
     }
 
-    public static RLanguage createLanguage(RNode rep) {
+    public static RLanguage createLanguage(RBaseNode rep) {
         return traceDataCreated(new RLanguage(rep));
     }
 
@@ -418,7 +419,7 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(state, closure, argumentValue));
     }
 
-    public static Object createEvaluatedPromise(Closure closure, Object value) {
+    public static RPromise createEvaluatedPromise(Closure closure, Object value) {
         return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
     }
 
@@ -471,14 +472,17 @@ public final class RDataFactory {
 
     private static final AtomicInteger environmentCount = new AtomicInteger();
 
+    @TruffleBoundary
     public static REnvironment createInternalEnv() {
         return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
     }
 
+    @TruffleBoundary
     public static REnvironment.NewEnv createNewEnv(String name) {
         return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
     }
 
+    @TruffleBoundary
     public static REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
         REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
         env.setHashed(hashed);
@@ -498,65 +502,50 @@ public final class RDataFactory {
         return traceDataCreated(new RExternalPtr(value, tag, RNull.instance));
     }
 
-    @CompilationFinal private static PerfHandler stats;
+    /*
+     * Support for collecting information on allocations in this class. Rprofmem/Rprof register a
+     * listener when active which, when memory profiling is enabled, is called with the object being
+     * allocated. Owing to the use of the Assumption, there should be no overhead when disabled.
+     */
+
+    private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+    @CompilationFinal private static boolean enabled;
+    private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
+
+    public static void setTracingState(boolean newState) {
+        if (enabled != newState) {
+            noAllocationTracingAssumption.invalidate();
+            enabled = newState;
+        }
+    }
 
     private static <T> T traceDataCreated(T data) {
-        if (statsProfile.profile(stats != null)) {
-            stats.record(data);
+        if (enabled) {
+            for (Listener listener : listeners) {
+                listener.reportAllocation((RTypedValue) data);
+            }
         }
         return data;
     }
 
-    static {
-        RPerfStats.register(new PerfHandler());
+    public interface Listener {
+        /**
+         * Invoked when an instance of an {@link RTypedValue} is created. Note that the initial
+         * state of the complex objects, i.e., those with additional {@code Object} subclass fields,
+         * which may also be {@link RTypedValue} instances is undefined other than by inspection. A
+         * listener that computes the "size" of an object must take into account that
+         * {@link RTypedValue} instances passed to a {@code createXXX} method will already have been
+         * reported, but other data such as {@code int[]} instances for array dimensions will not.
+         */
+        void reportAllocation(RTypedValue data);
     }
 
-    private static class PerfHandler implements RPerfStats.Handler {
-        private static Map<Class<?>, RPerfStats.Histogram> histMap;
-
-        @TruffleBoundary
-        void record(Object data) {
-            Class<?> klass = data.getClass();
-            boolean isBounded = data instanceof RAbstractVector;
-            RPerfStats.Histogram hist = histMap.get(klass);
-            if (hist == null) {
-                hist = new RPerfStats.Histogram(isBounded ? 10 : 1);
-                histMap.put(klass, hist);
-            }
-            int length = isBounded ? ((RAbstractVector) data).getLength() : 0;
-            hist.inc(length);
-        }
-
-        @Override
-        public void initialize(String optionData) {
-            stats = this;
-            histMap = new HashMap<>();
-        }
-
-        @Override
-        public String getName() {
-            return "datafactory";
-        }
-
-        @Override
-        public void report() {
-            RPerfStats.out().println("Scalar types");
-            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
-                RPerfStats.Histogram hist = entry.getValue();
-                if (hist.numBuckets() == 1) {
-                    RPerfStats.out().printf("%s: %d%n", entry.getKey().getSimpleName(), hist.getTotalCount());
-                }
-            }
-            RPerfStats.out().println();
-            RPerfStats.out().println("Vector types");
-            for (Map.Entry<Class<?>, RPerfStats.Histogram> entry : histMap.entrySet()) {
-                RPerfStats.Histogram hist = entry.getValue();
-                if (hist.numBuckets() > 1) {
-                    RPerfStats.out().printf("%s: %d, max size %d%n", entry.getKey().getSimpleName(), hist.getTotalCount(), hist.getMaxSize());
-                    entry.getValue().report();
-                }
-            }
-            RPerfStats.out().println();
-        }
+    /**
+     * Sets the listener of memory tracing events. For the time being there can only be one
+     * listener. This can be extended to an array should we need more listeners.
+     */
+    public static void addListener(Listener listener) {
+        listeners.addLast(listener);
     }
+
 }

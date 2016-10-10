@@ -22,14 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.IOException;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -45,6 +43,7 @@ public final class ContextInfo implements TruffleObject {
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
 
     private final RStartParams startParams;
+    private final String[] env;
     private final RContext.ContextKind kind;
     private final TimeZone systemTimeZone;
 
@@ -57,8 +56,9 @@ public final class ContextInfo implements TruffleObject {
     private final int id;
     private PolyglotEngine vm;
 
-    private ContextInfo(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
+    private ContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
         this.startParams = startParams;
+        this.env = env;
         this.kind = kind;
         this.parent = parent;
         this.consoleHandler = consoleHandler;
@@ -72,35 +72,42 @@ public final class ContextInfo implements TruffleObject {
         return newVM;
     }
 
+    public PolyglotEngine createVM(PolyglotEngine.Builder builder) {
+        PolyglotEngine newVM = builder.globalSymbol(GLOBAL_SYMBOL, this).build();
+        this.vm = newVM;
+        return newVM;
+    }
+
     /**
      * Create a context configuration object.
      *
-     * @param parent if non-null {@code null}, the parent creating the context
+     * @param startParams the start parameters passed this R session
+     * @param env TODO
      * @param kind defines the degree to which this context shares base and package environments
      *            with its parent
-     * @param startParams the start parameters passed this R session
+     * @param parent if non-null {@code null}, the parent creating the context
      * @param consoleHandler a {@link ConsoleHandler} for output
      * @param systemTimeZone the system's time zone
      */
-    public static ContextInfo create(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
+    public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
         int id = contextInfoIds.incrementAndGet();
-        return new ContextInfo(startParams, kind, parent, consoleHandler, systemTimeZone, id);
+        return new ContextInfo(startParams, env, kind, parent, consoleHandler, systemTimeZone, id);
     }
 
-    public static ContextInfo create(RStartParams startParams, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
-        return create(startParams, kind, parent, consoleHandler, TimeZone.getDefault());
+    public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+        return create(startParams, env, kind, parent, consoleHandler, TimeZone.getDefault());
     }
 
     public static ContextInfo getContextInfo(PolyglotEngine vm) {
-        try {
-            return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
     }
 
     public RStartParams getStartParams() {
         return startParams;
+    }
+
+    public String[] getEnv() {
+        return env;
     }
 
     public ContextKind getKind() {

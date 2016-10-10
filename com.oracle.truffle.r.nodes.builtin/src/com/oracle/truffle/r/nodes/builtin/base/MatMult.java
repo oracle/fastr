@@ -27,6 +27,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -48,8 +51,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -132,13 +133,6 @@ public abstract class MatMult extends RBuiltinNode {
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile incompleteProfile = BranchProfile.create();
     @CompilationFinal private boolean seenLargeMatrix;
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        int[] aDimensions = a.getDimensions();
-        int[] bDimensions = b.getDimensions();
-        return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
-    }
 
     private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
         return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
@@ -268,598 +262,404 @@ public abstract class MatMult extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "vecvec(a, b)")
-    protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        if (a.getLength() != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        double result = 0.0;
-        na.enable(a);
-        na.enable(b);
-        for (int k = 0; k < a.getLength(); k++) {
-            double aValue = a.getDataAt(k);
-            double bValue = b.getDataAt(k);
-            if (na.check(aValue) || na.check(bValue)) {
-                return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+    @Specialization
+    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractDoubleVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        if (aIsMatrix.profile(a.isMatrix())) {
+            if (bIsMatrix.profile(b.isMatrix())) {
+                int[] aDimensions = a.getDimensions();
+                int[] bDimensions = b.getDimensions();
+                return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
+            } else {
+                int aRows = a.getDimensions()[0];
+                int aCols = a.getDimensions()[1];
+                int bRows;
+                int bCols;
+                if (lengthEquals.profile(aCols == b.getLength())) {
+                    bRows = b.getLength();
+                    bCols = 1;
+                } else {
+                    bRows = 1;
+                    bCols = b.getLength();
+                }
+                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
             }
-            result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
-        }
-        return RDataFactory.createDoubleVector(new double[]{result}, true, new int[]{1, 1});
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        int aRows = a.getDimensions()[0];
-        int aCols = a.getDimensions()[1];
-        int bRows;
-        int bCols;
-        if (aCols == b.getLength()) {
-            bRows = b.getLength();
-            bCols = 1;
         } else {
-            bRows = 1;
-            bCols = b.getLength();
+            if (bIsMatrix.profile(b.isMatrix())) {
+                int bRows = b.getDimensions()[0];
+                int bCols = b.getDimensions()[1];
+                int aRows;
+                int aCols;
+                if (lengthEquals.profile(bRows == a.getLength())) {
+                    aRows = 1;
+                    aCols = a.getLength();
+                } else {
+                    aRows = a.getLength();
+                    aCols = 1;
+                }
+                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
+            } else {
+                if (a.getLength() != b.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                }
+                double result = 0.0;
+                na.enable(a);
+                na.enable(b);
+                for (int k = 0; k < a.getLength(); k++) {
+                    double aValue = a.getDataAt(k);
+                    double bValue = b.getDataAt(k);
+                    if (na.check(aValue) || na.check(bValue)) {
+                        return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+                    }
+                    result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
+                }
+                return RDataFactory.createDoubleVector(new double[]{result}, true, new int[]{1, 1});
+            }
         }
-        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        int bRows = b.getDimensions()[0];
-        int bCols = b.getDimensions()[1];
-        int aRows;
-        int aCols;
-        if (bRows == a.getLength()) {
-            aRows = 1;
-            aCols = a.getLength();
-        } else {
-            aRows = a.getLength();
-            aCols = 1;
-        }
-        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
     }
 
     // complex-complex
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        final int aCols = a.getDimensions()[1];
-        final int bRows = b.getDimensions()[0];
-        if (aCols != bRows) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        final int aRows = a.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
-        double[] result = new double[(aRows * bCols) << 1];
-        na.enable(a);
-        na.enable(b);
-        for (int row = 0; row < aRows; row++) {
-            for (int col = 0; col < bCols; col++) {
-                RComplex x = RDataFactory.createComplexZero();
-                for (int k = 0; k < aCols; k++) {
-                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
-                    na.check(x);
+    @Specialization
+    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractComplexVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        if (aIsMatrix.profile(a.isMatrix())) {
+            if (bIsMatrix.profile(b.isMatrix())) {
+                final int aCols = a.getDimensions()[1];
+                final int bRows = b.getDimensions()[0];
+                if (aCols != bRows) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                final int index = 2 * (col * aRows + row);
-                result[index] = x.getRealPart();
-                result[index + 1] = x.getImaginaryPart();
-            }
-        }
-        return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        if (a.getLength() != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        RComplex result = RDataFactory.createComplexZero();
-        na.enable(a);
-        na.enable(b);
-        for (int k = 0; k < a.getLength(); k++) {
-            result = add.applyComplex(result, mult.applyComplex(a.getDataAt(k), b.getDataAt(k)));
-            na.check(result);
-        }
-        return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        final int aCols = a.getDimensions()[1];
-        final int aRows = a.getDimensions()[0];
-        if (aCols != 1 && aCols != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneColumn.profile(aCols != 1)) {
-            double[] result = new double[aRows << 1];
-            for (int row = 0; row < aRows; row++) {
-                RComplex x = RDataFactory.createComplexZero();
-                for (int k = 0; k < b.getLength(); k++) {
-                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
-                    na.check(x);
+                final int aRows = a.getDimensions()[0];
+                final int bCols = b.getDimensions()[1];
+                double[] result = new double[(aRows * bCols) << 1];
+                na.enable(a);
+                na.enable(b);
+                for (int row = 0; row < aRows; row++) {
+                    for (int col = 0; col < bCols; col++) {
+                        RComplex x = RDataFactory.createComplexZero();
+                        for (int k = 0; k < aCols; k++) {
+                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                            na.check(x);
+                        }
+                        final int index = 2 * (col * aRows + row);
+                        result[index] = x.getRealPart();
+                        result[index + 1] = x.getImaginaryPart();
+                    }
                 }
-                result[row << 1] = x.getRealPart();
-                result[row << 1 + 1] = x.getImaginaryPart();
+                return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
+            } else {
+                final int aCols = a.getDimensions()[1];
+                final int aRows = a.getDimensions()[0];
+                if (aCols != 1 && aCols != b.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                }
+                na.enable(a);
+                na.enable(b);
+                if (notOneColumn.profile(aCols != 1)) {
+                    double[] result = new double[aRows << 1];
+                    for (int row = 0; row < aRows; row++) {
+                        RComplex x = RDataFactory.createComplexZero();
+                        for (int k = 0; k < b.getLength(); k++) {
+                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                            na.check(x);
+                        }
+                        result[row << 1] = x.getRealPart();
+                        result[(row << 1) + 1] = x.getImaginaryPart();
+                    }
+                    return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, 1});
+                } else {
+                    double[] result = new double[aRows * b.getLength() << 1];
+                    for (int row = 0; row < aRows; row++) {
+                        for (int k = 0; k < b.getLength(); k++) {
+                            RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
+                            na.check(x);
+                            result[(k * aRows + row) << 1] = x.getRealPart();
+                            result[((k * aRows + row) << 1) + 1] = x.getRealPart();
+                        }
+                    }
+                    return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
+                }
             }
-            return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, 1});
         } else {
-            double[] result = new double[aRows * b.getLength() << 1];
-            for (int row = 0; row < aRows; row++) {
-                for (int k = 0; k < b.getLength(); k++) {
-                    RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[(k * aRows + row) << 1] = x.getRealPart();
-                    result[(k * aRows + row) << 1 + 1] = x.getRealPart();
+            if (bIsMatrix.profile(b.isMatrix())) {
+                final int bRows = b.getDimensions()[0];
+                final int bCols = b.getDimensions()[1];
+                if (bRows != 1 && bRows != a.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-            }
-            return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
-        }
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
-        final int bRows = b.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
-        if (bRows != 1 && bRows != a.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneRow.profile(bRows != 1)) {
-            double[] result = new double[bCols << 1];
-            for (int k = 0; k < bCols; k++) {
-                RComplex x = RDataFactory.createComplexZero();
-                for (int row = 0; row < a.getLength(); row++) {
-                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
-                    na.check(x);
+                na.enable(a);
+                na.enable(b);
+                if (notOneRow.profile(bRows != 1)) {
+                    double[] result = new double[bCols << 1];
+                    for (int k = 0; k < bCols; k++) {
+                        RComplex x = RDataFactory.createComplexZero();
+                        for (int row = 0; row < a.getLength(); row++) {
+                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                            na.check(x);
+                        }
+                        result[k << 1] = x.getRealPart();
+                        result[(k << 1) + 1] = x.getImaginaryPart();
+                    }
+                    return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{1, bCols});
+                } else {
+                    double[] result = new double[(bCols * a.getLength()) << 1];
+                    for (int row = 0; row < a.getLength(); row++) {
+                        for (int k = 0; k < bCols; k++) {
+                            RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
+                            na.check(x);
+                            result[(k * a.getLength() + row) << 1] = x.getRealPart();
+                            result[((k * a.getLength() + row) << 1) + 1] = x.getImaginaryPart();
+                        }
+                    }
+                    return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
                 }
-                result[k << 1] = x.getRealPart();
-                result[k << 1 + 1] = x.getImaginaryPart();
-            }
-            return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{1, bCols});
-        } else {
-            double[] result = new double[(bCols * a.getLength()) << 1];
-            for (int row = 0; row < a.getLength(); row++) {
-                for (int k = 0; k < bCols; k++) {
-                    RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[(k * a.getLength() + row) << 1] = x.getRealPart();
-                    result[(k * a.getLength() + row) << 1 + 1] = x.getImaginaryPart();
+            } else {
+                if (a.getLength() != b.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
+                RComplex result = RDataFactory.createComplexZero();
+                na.enable(a);
+                na.enable(b);
+                for (int k = 0; k < a.getLength(); k++) {
+                    result = add.applyComplex(result, mult.applyComplex(a.getDataAt(k), b.getDataAt(k)));
+                    na.check(result);
+                }
+                return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});
             }
-            return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
         }
     }
 
     // int-int
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RIntVector matmatmult(RAbstractIntVector a, RAbstractIntVector b) {
-        final int aCols = a.getDimensions()[1];
-        final int bRows = b.getDimensions()[0];
-        if (aCols != bRows) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        final int aRows = a.getDimensions()[0];
-        final int bCols = b.getDimensions()[1];
-        int[] result = new int[aRows * bCols];
-        na.enable(a);
-        na.enable(b);
-        for (int row = 0; row < aRows; row++) {
-            for (int col = 0; col < bCols; col++) {
-                int x = 0;
-                for (int k = 0; k < aCols; k++) {
-                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
-                    na.check(x);
+    @Specialization
+    protected RIntVector multiply(RAbstractIntVector a, RAbstractIntVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        if (aIsMatrix.profile(a.isMatrix())) {
+            if (bIsMatrix.profile(b.isMatrix())) {
+                final int aCols = a.getDimensions()[1];
+                final int bRows = b.getDimensions()[0];
+                if (aCols != bRows) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                result[col * aRows + row] = x;
-            }
-        }
-        return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RIntVector vecvecmult(RAbstractIntVector a, RAbstractIntVector b) {
-        if (a.getLength() != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        int result = 0;
-        na.enable(result);
-        for (int k = 0; k < a.getLength(); k++) {
-            result = add.applyInteger(result, mult.applyInteger(a.getDataAt(k), b.getDataAt(k)));
-            na.check(result);
-        }
-        return RDataFactory.createIntVector(new int[]{result}, na.neverSeenNA(), new int[]{1, 1});
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RIntVector matvecmult(RAbstractIntVector a, RAbstractIntVector b) {
-        final int aCols = a.getDimensions()[1];
-        final int aRows = a.getDimensions()[0];
-        if (aCols != 1 && aCols != b.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneColumn.profile(aCols != 1)) {
-            int[] result = new int[aRows];
-            for (int row = 0; row < aRows; row++) {
-                int x = 0;
-                for (int k = 0; k < b.getLength(); k++) {
-                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(k)));
-                    na.check(x);
+                final int aRows = a.getDimensions()[0];
+                final int bCols = b.getDimensions()[1];
+                int[] result = new int[aRows * bCols];
+                na.enable(a);
+                na.enable(b);
+                for (int row = 0; row < aRows; row++) {
+                    for (int col = 0; col < bCols; col++) {
+                        int x = 0;
+                        for (int k = 0; k < aCols; k++) {
+                            x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                            na.check(x);
+                        }
+                        result[col * aRows + row] = x;
+                    }
                 }
-                result[row] = x;
+                return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
+            } else {
+                final int aCols = a.getDimensions()[1];
+                final int aRows = a.getDimensions()[0];
+                if (aCols != 1 && aCols != b.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                }
+                na.enable(a);
+                na.enable(b);
+                if (notOneColumn.profile(aCols != 1)) {
+                    int[] result = new int[aRows];
+                    for (int row = 0; row < aRows; row++) {
+                        int x = 0;
+                        for (int k = 0; k < b.getLength(); k++) {
+                            x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                            na.check(x);
+                        }
+                        result[row] = x;
+                    }
+                    return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, 1});
+                } else {
+                    int[] result = new int[aRows * b.getLength()];
+                    for (int row = 0; row < aRows; row++) {
+                        for (int k = 0; k < b.getLength(); k++) {
+                            int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
+                            na.check(x);
+                            result[k * aRows + row] = x;
+                        }
+                    }
+                    return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
+                }
             }
-            return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, 1});
         } else {
-            int[] result = new int[aRows * b.getLength()];
-            for (int row = 0; row < aRows; row++) {
-                for (int k = 0; k < b.getLength(); k++) {
-                    int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[k * aRows + row] = x;
+            if (bIsMatrix.profile(b.isMatrix())) {
+                final int bCols = b.getDimensions()[1];
+                final int bRows = b.getDimensions()[0];
+                if (bRows != 1 && bRows != a.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-            }
-            return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
-        }
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RIntVector vecmatmult(RAbstractIntVector a, RAbstractIntVector b) {
-        final int bCols = b.getDimensions()[1];
-        final int bRows = b.getDimensions()[0];
-        if (bRows != 1 && bRows != a.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
-        }
-        na.enable(a);
-        na.enable(b);
-        if (notOneRow.profile(bRows != 1)) {
-            int[] result = new int[bCols];
-            for (int k = 0; k < bCols; k++) {
-                int x = 0;
-                for (int row = 0; row < a.getLength(); row++) {
-                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
-                    na.check(x);
+                na.enable(a);
+                na.enable(b);
+                if (notOneRow.profile(bRows != 1)) {
+                    int[] result = new int[bCols];
+                    for (int k = 0; k < bCols; k++) {
+                        int x = 0;
+                        for (int row = 0; row < a.getLength(); row++) {
+                            x = add.applyInteger(x, mult.applyInteger(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                            na.check(x);
+                        }
+                        result[k] = x;
+                    }
+                    return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{1, bCols});
+                } else {
+                    int[] result = new int[bCols * a.getLength()];
+                    for (int row = 0; row < a.getLength(); row++) {
+                        for (int k = 0; k < bCols; k++) {
+                            int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
+                            na.check(x);
+                            result[k * a.getLength() + row] = x;
+                        }
+                    }
+                    return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
                 }
-                result[k] = x;
-            }
-            return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{1, bCols});
-        } else {
-            int[] result = new int[bCols * a.getLength()];
-            for (int row = 0; row < a.getLength(); row++) {
-                for (int k = 0; k < bCols; k++) {
-                    int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
-                    na.check(x);
-                    result[k * a.getLength() + row] = x;
+            } else {
+                if (a.getLength() != b.getLength()) {
+                    errorProfile.enter();
+                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
+                int result = 0;
+                na.enable(result);
+                for (int k = 0; k < a.getLength(); k++) {
+                    result = add.applyInteger(result, mult.applyInteger(a.getDataAt(k), b.getDataAt(k)));
+                    na.check(result);
+                }
+                return RDataFactory.createIntVector(new int[]{result}, na.neverSeenNA(), new int[]{1, 1});
             }
-            return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
         }
     }
 
     // logical-logical
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RIntVector matmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RIntVector matvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
+    @Specialization
+    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(RClosures.createLogicalToIntVector(aOriginal), RClosures.createLogicalToIntVector(bOriginal), aIsMatrix, bIsMatrix);
     }
 
     // to int
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RIntVector matmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a), b);
+    @Specialization
+    protected RIntVector multiply(RAbstractLogicalVector a, RAbstractIntVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(RClosures.createLogicalToIntVector(a), b, aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "vecvec(a, b)")
-    protected RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a), b);
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RIntVector matvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a), b);
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a), b);
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RIntVector matmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RIntVector vecvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RIntVector matvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToIntVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RIntVector vecmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToIntVector(b));
+    @Specialization
+    protected RIntVector multiply(RAbstractIntVector a, RAbstractLogicalVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(a, RClosures.createLogicalToIntVector(b), aIsMatrix, bIsMatrix);
     }
 
     // to complex
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createIntToComplexVector(a), b);
+    @Specialization
+    protected RComplexVector multiply(RAbstractIntVector a, RAbstractComplexVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(RClosures.createIntToComplexVector(a), b, aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createIntToComplexVector(a), b);
+    @Specialization
+    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractIntVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(a, RClosures.createIntToComplexVector(b), aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createIntToComplexVector(a), b);
+    @Specialization
+    protected RComplexVector multiply(RAbstractLogicalVector a, RAbstractComplexVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(RClosures.createLogicalToComplexVector(a), b, aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createIntToComplexVector(a), b);
+    @Specialization
+    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractLogicalVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(a, RClosures.createLogicalToComplexVector(b), aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToComplexVector(b));
+    @Specialization
+    protected RComplexVector multiply(RAbstractDoubleVector a, RAbstractComplexVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(RClosures.createDoubleToComplexVector(a), b, aIsMatrix, bIsMatrix);
     }
 
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToComplexVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToComplexVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToComplexVector(b));
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createLogicalToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createLogicalToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createLogicalToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createLogicalToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToComplexVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToComplexVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToComplexVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToComplexVector(b));
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createDoubleToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createDoubleToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createDoubleToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createDoubleToComplexVector(a), b);
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matmatmult(a, RClosures.createDoubleToComplexVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecvecmult(a, RClosures.createDoubleToComplexVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matvecmult(a, RClosures.createDoubleToComplexVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecmatmult(a, RClosures.createDoubleToComplexVector(b));
+    @Specialization
+    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractDoubleVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return multiply(a, RClosures.createDoubleToComplexVector(b), aIsMatrix, bIsMatrix);
     }
 
     // to double
 
-    @Specialization(guards = "matmat(a, b)")
-    protected RDoubleVector matmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createIntToDoubleVector(a), b);
+    @Specialization
+    protected RDoubleVector multiply(RAbstractIntVector a, RAbstractDoubleVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return multiply(RClosures.createIntToDoubleVector(a), b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    @Specialization(guards = "vecvec(a, b)")
-    protected RDoubleVector vecvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createIntToDoubleVector(a), b);
+    @Specialization
+    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractIntVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return multiply(a, RClosures.createIntToDoubleVector(b), aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    @Specialization(guards = "matvec(a, b)")
-    protected RDoubleVector matvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createIntToDoubleVector(a), b);
+    @Specialization
+    protected RDoubleVector multiply(RAbstractLogicalVector a, RAbstractDoubleVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return multiply(RClosures.createLogicalToDoubleVector(a), b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    @Specialization(guards = "vecmat(a, b)")
-    protected RDoubleVector vecmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createIntToDoubleVector(a), b);
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToDoubleVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToDoubleVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToDoubleVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToDoubleVector(b));
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RDoubleVector matmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createLogicalToDoubleVector(a), b);
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RDoubleVector vecvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createLogicalToDoubleVector(a), b);
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RDoubleVector matvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createLogicalToDoubleVector(a), b);
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RDoubleVector vecmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createLogicalToDoubleVector(a), b);
-    }
-
-    @Specialization(guards = "matmat(a, b)")
-    protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToDoubleVector(b));
-    }
-
-    @Specialization(guards = "vecvec(a, b)")
-    protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToDoubleVector(b));
-    }
-
-    @Specialization(guards = "matvec(a, b)")
-    protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToDoubleVector(b));
-    }
-
-    @Specialization(guards = "vecmat(a, b)")
-    protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToDoubleVector(b));
+    @Specialization
+    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractLogicalVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return multiply(a, RClosures.createLogicalToDoubleVector(b), aIsMatrix, bIsMatrix, lengthEquals);
     }
 
     // errors
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector doRaw(RAbstractRawVector a, Object b) {
-        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector doRaw(Object a, RAbstractRawVector b) {
-        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector doString(RAbstractStringVector a, Object b) {
-        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector doString(Object a, RAbstractStringVector b) {
+    @Fallback
+    @TruffleBoundary
+    protected RDoubleVector doRaw(@SuppressWarnings("unused") Object a, @SuppressWarnings("unused") Object b) {
         throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     // guards
-
-    protected static boolean matmat(RAbstractVector a, RAbstractVector b) {
-        return a.isMatrix() && b.isMatrix();
-    }
-
-    protected static boolean vecvec(RAbstractVector a, RAbstractVector b) {
-        return !a.isMatrix() && !b.isMatrix();
-    }
-
-    protected static boolean matvec(RAbstractVector a, RAbstractVector b) {
-        return a.isMatrix() && !b.isMatrix();
-    }
-
-    protected static boolean vecmat(RAbstractVector a, RAbstractVector b) {
-        return !a.isMatrix() && b.isMatrix();
-    }
 
     protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b) {
         return hasZeroDim(a) && hasZeroDim(b);

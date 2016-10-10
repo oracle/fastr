@@ -23,15 +23,16 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special
@@ -71,10 +72,12 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
     }
 
-    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
-
     public static RAttributes create() {
         return new RAttributes();
+    }
+
+    public static RAttributes create(RAttributes attr) {
+        return new RAttributes(attr);
     }
 
     public static RAttributes createInitialized(String[] names, Object[] values) {
@@ -98,8 +101,8 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
      */
 
     RAttributes() {
-        if (statsProfile.profile(stats != null)) {
-            stats.init();
+        if (AttributeTracer.enabled) {
+            AttributeTracer.reportAttributeChange(AttributeTracer.Change.CREATE, this, null);
         }
     }
 
@@ -130,6 +133,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
     public void put(String name, Object value) {
         assert isInterned(name);
         int pos = find(name);
+        int spos = pos;
         if (pos == -1) {
             ensureFreeSpace();
             pos = size++;
@@ -139,8 +143,8 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         // assert value == null || !(value instanceof RShareable) || !((RShareable)
         // value).isTemporary();
         values[pos] = value;
-        if (statsProfile.profile(stats != null)) {
-            stats.update(this);
+        if (AttributeTracer.enabled) {
+            AttributeTracer.reportAttributeChange(spos == -1 ? AttributeTracer.Change.ADD : AttributeTracer.Change.UPDATE, this, name);
         }
     }
 
@@ -149,6 +153,9 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             names = Arrays.copyOf(names, (size + 1) * 2);
             values = Arrays.copyOf(values, (size + 1) * 2);
             assert names.length == values.length;
+            if (AttributeTracer.enabled) {
+                AttributeTracer.reportAttributeChange(AttributeTracer.Change.GROW, this, names.length);
+            }
         }
     }
 
@@ -202,6 +209,9 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             }
             names[size] = null;
             values[size] = null;
+            if (AttributeTracer.enabled) {
+                AttributeTracer.reportAttributeChange(AttributeTracer.Change.REMOVE, this, name);
+            }
         }
     }
 
@@ -267,55 +277,64 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         throw new NoSuchElementException();
     }
 
-    // Performance analysis
-
-    @CompilationFinal private static PerfHandler stats;
-
-    static {
-        RPerfStats.register(new PerfHandler());
-    }
-
-    /**
-     * Collects data on the maximum size of the attribute set. So only interested in adding not
-     * removing attributes.
-     */
-    private static class PerfHandler implements RPerfStats.Handler {
-        private static final RPerfStats.Histogram hist = new RPerfStats.Histogram(5);
-
-        @TruffleBoundary
-        void init() {
-            hist.inc(0);
-        }
-
-        @TruffleBoundary
-        void update(RAttributes attr) {
-            // incremented size by 1
-            int s = attr.size();
-            int effectivePrevSize = hist.effectiveBucket(s - 1);
-            int effectiveSizeNow = hist.effectiveBucket(s);
-            hist.dec(effectivePrevSize);
-            hist.inc(effectiveSizeNow);
-        }
-
-        @Override
-        public void initialize(String optionText) {
-            stats = this;
-        }
-
-        @Override
-        public String getName() {
-            return "attributes";
-
-        }
-
-        @Override
-        public void report() {
-            RPerfStats.out().printf("RAttributes: %d, max size %d%n", hist.getTotalCount(), hist.getMaxSize());
-            hist.report();
-        }
-    }
-
     public void setSize(int size) {
         this.size = size;
     }
+
+    public static final class AttributeTracer {
+        private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+        @CompilationFinal private static boolean enabled;
+
+        private static final CyclicAssumption noAttributeTracingAssumption = new CyclicAssumption("data copying");
+
+        private AttributeTracer() {
+            // only static methods
+        }
+
+        /**
+         * Adds a listener of attribute events.
+         */
+        public static void addListener(Listener listener) {
+            listeners.addLast(listener);
+        }
+
+        /**
+         * After calling this method attribute related events will be reported to the listener. This
+         * invalidates global assumption and should be used with caution.
+         */
+        public static void setTracingState(boolean newState) {
+            if (enabled != newState) {
+                noAttributeTracingAssumption.invalidate();
+                enabled = newState;
+            }
+        }
+
+        public enum Change {
+            CREATE,
+            ADD,
+            UPDATE,
+            REMOVE,
+            GROW
+        }
+
+        public static void reportAttributeChange(Change change, RAttributes attrs, Object value) {
+            if (enabled) {
+                for (Listener listener : listeners) {
+                    listener.reportAttributeChange(change, attrs, value);
+                }
+            }
+        }
+
+        public interface Listener {
+            /**
+             * Reports attribute events to the listener. If there are no traced objects, this should
+             * turn into no-op. {@code valuer} depends on the value of {@code change}. For
+             * {@code CREATE} it is {@code null}, for {@code ADD,UPDATE, REMOVE} it is the
+             * {@code String} name of the attribute and for {@code GROW} it is the (new) size.
+             */
+            void reportAttributeChange(Change change, RAttributes attrs, Object value);
+        }
+
+    }
+
 }

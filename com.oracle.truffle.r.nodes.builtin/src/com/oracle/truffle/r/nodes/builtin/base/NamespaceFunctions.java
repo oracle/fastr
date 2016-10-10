@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -39,8 +42,19 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
 
+    private static final class Casts {
+        private static void name(CastBuilder casts) {
+            casts.arg("name").mustBe(stringValue().or(instanceOf(RSymbol.class)));
+        }
+    }
+
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class GetRegisteredNamespace extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.name(casts);
+        }
+
         @Specialization
         protected Object doGetRegisteredNamespace(RAbstractStringVector name) {
             Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
@@ -64,6 +78,11 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class IsRegisteredNamespace extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.name(casts);
+        }
+
         @Specialization
         protected byte doIsRegisteredNamespace(RAbstractStringVector name) {
             Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
@@ -92,8 +111,8 @@ public class NamespaceFunctions {
             return RRuntime.asLogical(env.isNamespaceEnv());
         }
 
-        @Specialization
-        protected byte doIsNamespaceEnv(@SuppressWarnings("unused") RNull env) {
+        @Fallback
+        protected byte doIsNamespaceEnv(@SuppressWarnings("unused") Object env) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -108,17 +127,37 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
     public abstract static class RegisterNamespace extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.name(casts);
+            casts.arg("env").mustBe(instanceOf(REnvironment.class));
+        }
+
         @Specialization
-        protected RNull registerNamespace(String name, REnvironment env) {
-            if (REnvironment.registerNamespace(name, env) == null) {
+        protected RNull registerNamespace(RAbstractStringVector name, REnvironment env) {
+            if (REnvironment.registerNamespace(name.getDataAt(0), env) == null) {
                 throw RError.error(this, RError.Message.NS_ALREADY_REG);
             }
             return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull registerNamespace(RSymbol nameSym, REnvironment env) {
+            if (REnvironment.registerNamespace(nameSym.getName(), env) == null) {
+                throw RError.error(this, RError.Message.NS_ALREADY_REG);
+            }
+            return RNull.instance;
+
         }
     }
 
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = MODIFIES_STATE)
     public abstract static class UnregisterNamespace extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.name(casts);
+        }
+
         @Specialization
         protected RNull unregisterNamespace(RAbstractStringVector name) {
             doUnregisterNamespace(name.getDataAt(0));

@@ -11,6 +11,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -45,7 +54,6 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -62,6 +70,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -78,15 +88,13 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(1);
+            casts.arg("names").mustBe(stringValue()).asStringVector();
+            casts.arg("mode").asIntegerVector().findFirst().mustBe(gte(0).and(lte(7)));
         }
 
         @Specialization
         @TruffleBoundary
         protected Object fileAccess(RAbstractStringVector names, int mode) {
-            if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "mode");
-            }
             int[] data = new int[names.getLength()];
             for (int i = 0; i < data.length; i++) {
                 File file = new File(Utils.tildeExpand(names.getDataAt(i)));
@@ -110,6 +118,12 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"}, behavior = IO)
     public abstract static class FileAppend extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("file1").mustBe(stringValue()).asStringVector();
+            casts.arg("file2").mustBe(stringValue()).asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RLogicalVector doFileAppend(RAbstractStringVector file1Vec, RAbstractStringVector file2Vec) {
@@ -200,6 +214,11 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"}, behavior = IO)
     public abstract static class FileCreate extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("vec").mustBe(stringValue()).asStringVector();
+            casts.arg("showWarnings").asLogicalVector().findFirst().mapIf(logicalNA(), constant(RRuntime.LOGICAL_FALSE));
+        }
 
         @Specialization
         @TruffleBoundary
@@ -225,11 +244,6 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
     @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn", "extra_cols"}, behavior = IO)
@@ -247,7 +261,7 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstBoolean(1, "extra_cols");
+            casts.arg("extra_cols").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -394,7 +408,13 @@ public class FileFunctions {
         }
     }
 
-    abstract static class FileLinkAdaptor extends RBuiltinNode {
+    private abstract static class FileLinkAdaptor extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("from").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
+            casts.arg("to").mustBe(stringValue(), RError.Message.INVALID_SECOND_FILENAME).asStringVector();
+        }
+
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean symbolic) {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
@@ -440,11 +460,6 @@ public class FileFunctions {
             return doFileLink(vecFrom, vecTo, false);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
     @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
@@ -455,15 +470,15 @@ public class FileFunctions {
             return doFileLink(vecFrom, vecTo, true);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
-    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"vec"}, behavior = IO)
+    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
     public abstract static class FileRemove extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("file").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
+        }
 
         @Specialization
         @TruffleBoundary
@@ -485,15 +500,16 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
     @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileRename extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("from").mustBe(stringValue()).asStringVector();
+            casts.arg("to").mustBe(stringValue()).asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -520,15 +536,15 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Fallback
-        @TruffleBoundary
-        protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
-    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"vec"}, behavior = IO)
+    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
     public abstract static class FileExists extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("file").mustBe(stringValue()).asStringVector();
+        }
 
         @Specialization
         @TruffleBoundary
@@ -547,10 +563,6 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Fallback
-        protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
-        }
     }
 
     // TODO Implement all the options
@@ -559,17 +571,31 @@ public class FileFunctions {
         private static final String DOT = ".";
         private static final String DOTDOT = "..";
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue()).asStringVector();
+            casts.arg("pattern").allowNull().mustBe(stringValue());
+            casts.arg("all.files").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("ignore.case").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("include.dirs").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("no..").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected RStringVector doListFiles(RAbstractStringVector vec, RNull patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
+        protected RStringVector doListFiles(RAbstractStringVector vec, RNull patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase, boolean includeDirs,
+                        boolean noDotDot) {
             return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs,
-                        byte noDotDot) {
+        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase,
+                        boolean includeDirs,
+                        boolean noDotDot) {
             /*
              * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
              * N.B. The pattern matches file names not paths, which means we cannot just use the
@@ -577,20 +603,22 @@ public class FileFunctions {
              */
 
             String pattern = null;
-            if (!(patternVec.getLength() == 0 || patternVec.getDataAt(0).length() == 0)) {
-                pattern = patternVec.getDataAt(0);
+            if (patternVec.getLength() > 0) {
+                if (RRuntime.isNA(patternVec.getDataAt(0))) {
+                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pattern");
+                } else {
+                    pattern = patternVec.getDataAt(0);
+                }
             }
+
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
-            boolean allFiles = RRuntime.fromLogical(allFilesL);
-            boolean fullNames = RRuntime.fromLogical(fullNamesL);
-            boolean recursive = RRuntime.fromLogical(recursiveL);
+        private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
+                        boolean ignoreCaseIn, boolean includeDirsIn, boolean noDotDot) {
+            boolean includeDirs = !recursive || includeDirsIn;
             @SuppressWarnings("unused")
-            boolean ignoreCase = check(ignoreCaseL, "ignoreCase");
-            boolean includeDirs = !recursive || RRuntime.fromLogical(includeDirsL);
-            boolean noDotDot = RRuntime.fromLogical(noDotDotL);
+            boolean ignoreCase = check(ignoreCaseIn, "ignoreCase");
             Pattern pattern = patternString == null ? null : Pattern.compile(patternString);
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
@@ -644,10 +672,10 @@ public class FileFunctions {
                 Arrays.sort(data);
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
+
         }
 
-        private boolean check(byte valueLogical, String argName) {
-            boolean value = RRuntime.fromLogical(valueLogical);
+        private boolean check(boolean value, String argName) {
             if (value) {
                 RError.warning(this, RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
             }
@@ -683,13 +711,18 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"path", "full.names", "recursive"}, behavior = IO)
+    @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"directory", "full.names", "recursive"}, behavior = IO)
     public abstract static class ListDirs extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("directory").mustBe(stringValue()).asStringVector();
+            casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RStringVector listDirs(RAbstractStringVector paths, byte fullNamesL, byte recursiveL) {
-            boolean fullNames = RRuntime.fromLogical(fullNamesL);
-            boolean recursive = RRuntime.fromLogical(recursiveL);
+        protected RStringVector listDirs(RAbstractStringVector paths, boolean fullNames, boolean recursive) {
             ArrayList<String> dirList = new ArrayList<>();
             for (int i = 0; i < paths.getLength(); i++) {
                 String vecPathString = paths.getDataAt(i);
@@ -736,12 +769,18 @@ public class FileFunctions {
     @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"}, behavior = IO)
     public abstract static class FilePath extends RBuiltinNode {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("paths").mustBe(instanceOf(RList.class), RError.Message.INVALID_FIRST_ARGUMENT);
+            casts.arg("fsep").mustBe(stringValue()).asStringVector().findFirst().notNA();
+        }
+
         @Child private CastStringNode castStringNode;
 
         private CastStringNode initCastStringNode() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(false, false, false));
             }
             return castStringNode;
         }
@@ -749,12 +788,13 @@ public class FileFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "lengthZero(vec)")
         @TruffleBoundary
-        protected RStringVector doFilePathZero(RList vec, RAbstractStringVector fsep) {
+        protected RStringVector doFilePathZero(RList vec, String fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
         @Specialization(guards = "!lengthZero(args)")
-        protected RStringVector doFilePath(RList args, RAbstractStringVector fsepVec) {
+        @TruffleBoundary
+        protected RStringVector doFilePath(RList args, String fsep) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;
             for (int i = 0; i < argValues.length; i++) {
@@ -775,19 +815,24 @@ public class FileFunctions {
             String[] result = new String[resultLength];
             String[][] inputs = new String[argValues.length][];
             for (int i = 0; i < argValues.length; i++) {
-                Object elem = argValues[i];
-                if (!(elem instanceof String || elem instanceof RStringVector)) {
-                    elem = initCastStringNode().executeString(elem);
+                Object elem = args.getDataAt(i);
+                if (elem instanceof RTypedValue && ((RTypedValue) elem).isS4()) {
+                    throw RError.nyi(this, "list files: S4 elem");
+                } else if (elem instanceof RSymbol) {
+                    inputs[i] = new String[]{((RSymbol) elem).getName()};
+                } else {
+                    if (!(elem instanceof String || elem instanceof RStringVector)) {
+                        elem = initCastStringNode().executeString(elem);
+                    }
                 }
                 if (elem instanceof String) {
                     inputs[i] = new String[]{(String) elem};
                 } else if (elem instanceof RStringVector) {
                     inputs[i] = ((RStringVector) elem).getDataWithoutCopying();
                 } else {
-                    RInternalError.shouldNotReachHere();
+                    throw RError.error(this, RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE);
                 }
             }
-            String fsep = fsepVec.getDataAt(0);
             for (int i = 0; i < resultLength; i++) {
                 String path = "";
                 for (int j = 0; j < inputs.length; j++) {
@@ -826,20 +871,18 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toLogical(2).toLogical(3).toLogical(4).toLogical(5);
-        }
-
-        private boolean checkLogical(byte value, String name) throws RError {
-            if (RRuntime.isNA(value)) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
-            } else {
-                return RRuntime.fromLogical(value);
-            }
+            casts.arg("from").mustBe(stringValue()).asStringVector();
+            casts.arg("to").mustBe(stringValue()).asStringVector();
+            casts.arg("overwrite").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("copy.mode").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("copy.date").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector fileCopy(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, byte overwriteArg, byte recursiveArg, byte copyModeArg, byte copyDateArg) {
+        protected RLogicalVector fileCopy(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean overwrite, boolean recursiveA, boolean copyMode, boolean copyDate) {
+            boolean recursive = recursiveA;
             int lenFrom = vecFrom.getLength();
             byte[] status = new byte[lenFrom];
             if (lenFrom > 0) {
@@ -847,22 +890,18 @@ public class FileFunctions {
                 if (lenTo != 1) {
                     throw RError.error(this, RError.Message.INVALID_ARGUMENT, "to");
                 }
-                boolean overWrite = checkLogical(overwriteArg, "overwrite");
-                boolean recursive = checkLogical(recursiveArg, "recursive");
-                boolean copyMode = checkLogical(copyModeArg, "copy.mode");
-                boolean copyDate = checkLogical(copyDateArg, "copy.dates");
 
                 // Java cannot distinguish copy.mode and copy.dates
                 CopyOption[] copyOptions;
                 if (copyMode || copyDate) {
-                    copyOptions = new CopyOption[overWrite ? 2 : 1];
-                    copyOptions[overWrite ? 1 : 0] = StandardCopyOption.COPY_ATTRIBUTES;
-                } else if (overWrite) {
+                    copyOptions = new CopyOption[overwrite ? 2 : 1];
+                    copyOptions[overwrite ? 1 : 0] = StandardCopyOption.COPY_ATTRIBUTES;
+                } else if (overwrite) {
                     copyOptions = new CopyOption[1];
                 } else {
                     copyOptions = new CopyOption[0];
                 }
-                if (overWrite) {
+                if (overwrite) {
                     copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
                 }
                 FileSystem fileSystem = FileSystems.getDefault();
@@ -899,10 +938,10 @@ public class FileFunctions {
                             }
                         } else {
                             // copy to existing files is skipped unless overWrite
-                            if (!Files.exists(toPath) || overWrite) {
+                            if (!Files.exists(toPath) || overwrite) {
                                 /*
-                                 * Be careful if toPath is a directory, if empty Java will replace
-                                 * it with a plain file, otherwise the copy will fail
+                                 * toB Be careful if toPath is a directory, if empty Java will
+                                 * replace it with a plain file, otherwise the copy will fail
                                  */
                                 if (Files.isDirectory(toPath)) {
                                     Path fromFileNamePath = fromPath.getFileName();
@@ -985,6 +1024,11 @@ public class FileFunctions {
 
     @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class DirName extends XyzNameAdapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
+        }
+
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
@@ -998,6 +1042,12 @@ public class FileFunctions {
 
     @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class BaseName extends XyzNameAdapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
+        }
+
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
@@ -1014,23 +1064,14 @@ public class FileFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toLogical(1).toLogical(2);
-        }
-
-        private boolean checkLogical(byte value, String name) throws RError {
-            if (RRuntime.isNA(value)) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
-            } else {
-                return RRuntime.fromLogical(value);
-            }
+            casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
+            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("force").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected int doUnlink(RAbstractStringVector vec, byte recursiveArg, byte forceArg) {
-            @SuppressWarnings("unused")
-            boolean force = checkLogical(forceArg, "force");
-            boolean recursive = checkLogical(recursiveArg, "recursive");
+        protected int doUnlink(RAbstractStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force) {
             int result = 1;
             FileSystem fileSystem = FileSystems.getDefault();
             for (int i = -0; i < vec.getLength(); i++) {
@@ -1087,37 +1128,39 @@ public class FileFunctions {
 
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected int doUnlink(Object vec, Object recursive, Object force) {
-            throw RError.nyi(this, "unlink");
-        }
-
-        public static boolean simpleArgs(@SuppressWarnings("unused") RAbstractStringVector vec, byte recursive, byte force) {
-            return recursive == RRuntime.LOGICAL_FALSE && force == RRuntime.LOGICAL_FALSE;
-        }
     }
 
     @RBuiltin(name = "dir.create", visibility = OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"}, behavior = IO)
     public abstract static class DirCreate extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+            casts.arg("showWarnings").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("mode").asIntegerVector().findFirst().mapIf(intNA(), constant(0777));
+        }
+
         @Specialization
         @TruffleBoundary
-        protected byte dirCreate(RAbstractStringVector pathVec, byte showWarnings, byte recursive, RIntVector octMode) {
-            boolean ok = true;
-            if (pathVec.getLength() != 1) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");
-            }
-            String path = Utils.tildeExpand(pathVec.getDataAt(0));
-            if (RRuntime.fromLogical(recursive)) {
-                ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode.getDataAt(0));
-            }
-            if (ok) {
-                ok = mkdir(path, showWarnings, octMode.getDataAt(0));
+        protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode) {
+            boolean ok;
+            if (RRuntime.isNA(pathIn)) {
+                ok = false;
+            } else {
+                ok = true;
+                String path = Utils.tildeExpand(pathIn);
+                if (recursive) {
+                    ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode);
+                }
+                if (ok) {
+                    ok = mkdir(path, showWarnings, octMode);
+                }
             }
             return RRuntime.asLogical(ok);
         }
 
-        private boolean mkparentdirs(File file, byte showWarnings, int mode) {
+        private boolean mkparentdirs(File file, boolean showWarnings, int mode) {
             if (file.isDirectory()) {
                 return true;
             }
@@ -1131,12 +1174,12 @@ public class FileFunctions {
             }
         }
 
-        private boolean mkdir(String path, byte showWarnings, int mode) {
+        private boolean mkdir(String path, boolean showWarnings, int mode) {
             try {
                 RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
                 return true;
             } catch (IOException ex) {
-                if (RRuntime.fromLogical(showWarnings)) {
+                if (showWarnings) {
                     RError.warning(this, RError.Message.DIR_CANNOT_CREATE, path);
                 }
                 return false;
@@ -1146,6 +1189,11 @@ public class FileFunctions {
 
     @RBuiltin(name = "dir.exists", kind = INTERNAL, parameterNames = "paths", behavior = IO)
     public abstract static class DirExists extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("paths").mustBe(stringValue()).asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RLogicalVector dirExists(RAbstractStringVector pathVec) {
@@ -1158,9 +1206,5 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Fallback
-        protected RLogicalVector dirExists(@SuppressWarnings("unused") Object pathVec) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "filename");
-        }
     }
 }

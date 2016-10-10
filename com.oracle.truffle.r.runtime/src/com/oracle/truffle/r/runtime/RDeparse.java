@@ -21,10 +21,12 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -72,6 +74,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * handled in {@code RASTDeparse} via the {@link RRuntimeASTAccess} interface.
  */
 public class RDeparse {
+
+    private static final RAttributeProfiles DUMMY_ATTR_PROFILES = RAttributeProfiles.create();
+
     public static final int KEEPINTEGER = 1;
     public static final int QUOTEEXPRESSIONS = 2;
     public static final int SHOWATTRIBUTES = 4;
@@ -343,7 +348,7 @@ public class RDeparse {
         public void fixupSources() {
             Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
             for (SourceSectionElement s : sources) {
-                s.element.setSourceSection(source.createSection(null, s.start, s.length));
+                s.element.setSourceSection(source.createSection(s.start, s.length));
             }
         }
 
@@ -589,7 +594,7 @@ public class RDeparse {
                 }
 
                 if (value instanceof RExpression) {
-                    append("expression(").appendListContents(((RExpression) value).getList()).append(')');
+                    append("expression(").appendListContents((RExpression) value).append(')');
                 } else if (value instanceof RAbstractListVector) {
                     RAbstractListVector obj = (RAbstractListVector) value;
                     try (C c = withAttributes(obj)) {
@@ -636,6 +641,8 @@ public class RDeparse {
                     append("<pointer: 0x").append(Long.toHexString(((RExternalPtr) value).getAddr())).append('>');
                 } else if (value instanceof REnvironment) {
                     append("<environment>");
+                } else if (value instanceof TruffleObject) {
+                    append("<truffle object>");
                 } else {
                     throw RInternalError.shouldNotReachHere("unexpected: " + value);
                 }
@@ -956,10 +963,10 @@ public class RDeparse {
         /**
          * Handles {@link RList}, (@link RExpression}. Method name same as GnuR.
          */
-        private DeparseVisitor appendListContents(RAbstractListVector v) {
+        private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames();
+            Object names = v.getNames(DUMMY_ATTR_PROFILES);
             RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
             for (int i = 0; i < n; i++) {
                 if (i > 0) {
@@ -1061,7 +1068,7 @@ public class RDeparse {
                 root = list.getDataAtAsObject(0);
             }
         }
-        return new DeparseVisitor(false, 80, true, 0, -1, constants).process(root).getContents();
+        return new DeparseVisitor(false, 80, true, SHOWATTRIBUTES, -1, constants).process(root).getContents();
     }
 
     @TruffleBoundary

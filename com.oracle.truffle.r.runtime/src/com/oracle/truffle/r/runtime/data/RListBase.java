@@ -27,11 +27,27 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class RListBase extends RVector implements RAbstractListVector {
+/**
+ * Note on sharing mode for list elements: by default the sharing state of elements in a list can be
+ * inconsistent, e.g. a list referenced by one local variable may contain temporary vectors, or list
+ * references by more variables (shared list) may contain non-shared elements. The sharing state of
+ * the elements should be made consistent on reading from the list by the callers! When we read from
+ * shared list, we make the element shared. When we read from non-shared list, we make the element
+ * at least non-shared. There is no possible way, how a list can contain a non-shared element not
+ * owned by it, given that any element of some other list must be first read into variable (the
+ * extraction from list makes it at least non-shared, then the write makes it shared) and only then
+ * it can be put inside another list. This is however not true for internal code, which may read
+ * data from a list and then put it into another list, in such case it is responsibility of the code
+ * to increment the refcount of such data. Consult also the documentation of
+ * {@code ExtractListElement}, which is a node that can extract an element of a list or abstract
+ * vector and put it in the consistent sharing state.
+ */
+public abstract class RListBase extends RVector<Object[]> implements RAbstractListBaseVector {
 
     protected final Object[] data;
 
@@ -51,6 +67,11 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         return data;
     }
 
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
     @Override
     public Object getDataAtAsObject(Object store, int index) {
         assert store == data;
@@ -78,10 +99,12 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public final Object[] getDataWithoutCopying() {
         return data;
     }
 
+    @Override
     public final Object[] getDataCopy() {
         Object[] copy = new Object[data.length];
         System.arraycopy(data, 0, copy, 0, data.length);
@@ -89,38 +112,17 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
     }
 
     /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
      */
-    public final Object[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public final Object[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
-    }
-
     @Override
     public final Object getDataAt(int i) {
         return data[i];
     }
 
-    @Override
-    protected final String getDataAtAsString(int index) {
-        return RRuntime.toString(getDataAt(index));
-    }
-
     public final RListBase updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
-        assert !this.isShared();
+        assert !this.isShared() : "data in shared list must not be updated, make a copy";
         data[i] = right;
         return this;
     }
@@ -160,6 +162,11 @@ public abstract class RListBase extends RVector implements RAbstractListVector {
         }
     }
 
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
     @Override
     public final Object getDataAtAsObject(int index) {
         return this.getDataAt(index);

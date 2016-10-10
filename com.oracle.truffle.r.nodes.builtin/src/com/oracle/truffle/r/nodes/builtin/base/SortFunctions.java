@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
+import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -29,11 +35,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -53,11 +58,19 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class SortFunctions {
 
     private abstract static class Adapter extends RBuiltinNode {
+        protected static void addCastForX(CastBuilder castBuilder) {
+            castBuilder.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
+        }
+
+        protected static void addCastForDecreasing(CastBuilder castBuilder) {
+            castBuilder.arg("decreasing").defaultError(SHOW_CALLER, INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+        }
+
         @TruffleBoundary
-        private static double[] sort(double[] data, byte decreasing) {
+        private static double[] sort(double[] data, boolean decreasing) {
             // no reverse comparator for primitives
             Arrays.parallelSort(data);
-            if (RRuntime.fromLogical(decreasing)) {
+            if (decreasing) {
                 int len = data.length;
                 for (int i = len / 2 - 1; i >= 0; i--) {
                     double temp = data[i];
@@ -69,9 +82,9 @@ public class SortFunctions {
         }
 
         @TruffleBoundary
-        private static int[] sort(int[] data, byte decreasing) {
+        private static int[] sort(int[] data, boolean decreasing) {
             Arrays.parallelSort(data);
-            if (RRuntime.fromLogical(decreasing)) {
+            if (decreasing) {
                 int len = data.length;
                 for (int i = len / 2 - 1; i >= 0; i--) {
                     int temp = data[i];
@@ -83,9 +96,9 @@ public class SortFunctions {
         }
 
         @TruffleBoundary
-        private static byte[] sort(byte[] data, byte decreasing) {
+        private static byte[] sort(byte[] data, boolean decreasing) {
             Arrays.parallelSort(data);
-            if (RRuntime.fromLogical(decreasing)) {
+            if (decreasing) {
                 int len = data.length;
                 for (int i = len / 2 - 1; i >= 0; i--) {
                     byte temp = data[i];
@@ -97,8 +110,8 @@ public class SortFunctions {
         }
 
         @TruffleBoundary
-        private static String[] sort(String[] data, byte decreasing) {
-            if (RRuntime.fromLogical(decreasing)) {
+        private static String[] sort(String[] data, boolean decreasing) {
+            if (decreasing) {
                 Arrays.parallelSort(data, Collections.reverseOrder());
             } else {
                 Arrays.parallelSort(data);
@@ -106,22 +119,22 @@ public class SortFunctions {
             return data;
         }
 
-        protected RDoubleVector jdkSort(RAbstractDoubleVector vec, byte decreasing) {
+        protected RDoubleVector jdkSort(RAbstractDoubleVector vec, boolean decreasing) {
             double[] data = vec.materialize().getDataCopy();
             return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
         }
 
-        protected RIntVector jdkSort(RAbstractIntVector vec, byte decreasing) {
+        protected RIntVector jdkSort(RAbstractIntVector vec, boolean decreasing) {
             int[] data = vec.materialize().getDataCopy();
             return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
         }
 
-        protected RStringVector jdkSort(RAbstractStringVector vec, byte decreasing) {
+        protected RStringVector jdkSort(RAbstractStringVector vec, boolean decreasing) {
             String[] data = vec.materialize().getDataCopy();
             return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
         }
 
-        protected RLogicalVector jdkSort(RAbstractLogicalVector vec, byte decreasing) {
+        protected RLogicalVector jdkSort(RAbstractLogicalVector vec, boolean decreasing) {
             byte[] data = vec.materialize().getDataCopy();
             return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
         }
@@ -136,82 +149,95 @@ public class SortFunctions {
      */
     @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class Sort extends Adapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            addCastForX(casts);
+            addCastForDecreasing(casts);
+        }
+
         @Specialization
-        protected RDoubleVector sort(RAbstractDoubleVector vec, byte decreasing) {
+        protected RDoubleVector sort(RAbstractDoubleVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
         @Specialization
-        protected RIntVector sort(RAbstractIntVector vec, byte decreasing) {
+        protected RIntVector sort(RAbstractIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
         @Specialization
-        protected RStringVector sort(RAbstractStringVector vec, byte decreasing) {
+        protected RStringVector sort(RAbstractStringVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
         @Specialization
-        protected RLogicalVector sort(RAbstractLogicalVector vec, byte decreasing) {
+        protected RLogicalVector sort(RAbstractLogicalVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object sort(Object vec, Object decreasing) {
-            throw RError.nyi(this, ".Internal(sort)");
         }
     }
 
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class QSort extends Adapter {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            addCastForX(casts);
+            addCastForDecreasing(casts);
+        }
+
         @Specialization
-        protected RDoubleVector qsort(RAbstractDoubleVector vec, byte decreasing) {
+        protected RDoubleVector qsort(RAbstractDoubleVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
         @Specialization
-        protected RIntVector qsort(RAbstractIntVector vec, byte decreasing) {
+        protected RIntVector qsort(RAbstractIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
     }
 
     @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"}, behavior = PURE)
     public abstract static class PartialSort extends Adapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            addCastForX(casts);
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         protected RDoubleVector sort(RAbstractDoubleVector vec, Object partial) {
-            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+            return jdkSort(vec, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RIntVector sort(RAbstractIntVector vec, Object partial) {
-            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+            return jdkSort(vec, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RStringVector sort(RAbstractStringVector vec, Object partial) {
-            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+            return jdkSort(vec, false);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RLogicalVector sort(RAbstractLogicalVector vec, Object partial) {
-            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object sort(Object x, Object partial) {
-            throw RError.nyi(this, ".Internal(psort)");
+            return jdkSort(vec, false);
         }
     }
 
     @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"zz", "na.last", "decreasing"}, behavior = PURE)
-    public abstract static class RadixSort extends RBuiltinNode {
+    public abstract static class RadixSort extends Adapter {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            addCastForDecreasing(casts);
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         protected Object radixSort(Object zz, Object naLast, Object decreasing) {

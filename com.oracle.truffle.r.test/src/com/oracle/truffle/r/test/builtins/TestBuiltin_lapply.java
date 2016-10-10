@@ -31,6 +31,8 @@ public class TestBuiltin_lapply extends TestBase {
         assertEval("{ lapply(1:3, sum, 2) }");
         assertEval("{ x <- list(a=1:10, b=1:20) ; lapply(x, sum) }");
         assertEval("{ l <- list(list(1),list(2),list(3)); f <- function(a) { lapply(a, function(x) lapply(x, function(y) print(y))) }; f(l)}");
+
+        assertEval("{ .Internal(lapply(1:4, 42)) }");
     }
 
     @Test

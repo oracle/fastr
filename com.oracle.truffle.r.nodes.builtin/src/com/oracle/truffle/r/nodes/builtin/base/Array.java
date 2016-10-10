@@ -22,8 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -73,9 +80,18 @@ public abstract class Array extends RBuiltinNode {
         updateDimNames.executeRAbstractContainer(container, o);
     }
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("data").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data", argType).mustNotBeNull().mustBe(abstractVectorValue());
+        casts.arg("dim").defaultError(RError.SHOW_CALLER, RError.Message.CANNOT_BE_LENGTH, "dims", 0).mustNotBeNull().asIntegerVector().mustBe(notEmpty());
+        casts.arg("dimnames").allowNull().shouldBe(instanceOf(RList.class), RError.SHOW_CALLER,
+                        RError.Message.GENERIC, "non-list dimnames are disregarded; will be an error in R 3.3.0").mapIf(
+                                        instanceOf(RList.class).not(), nullConstant());
     }
 
     private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {

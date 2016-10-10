@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -22,6 +23,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 public final class ReadTableHead extends RExternalBuiltinNode {
 
     @Override
+    @TruffleBoundary
     public Object call(RArgsValuesAndNames args) {
         // TODO This is quite incomplete and just uses readLines, which works for some inputs
         Object[] argValues = args.getArguments();

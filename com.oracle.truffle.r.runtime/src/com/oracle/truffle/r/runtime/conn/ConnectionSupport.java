@@ -179,7 +179,7 @@ public class ConnectionSupport {
             }
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+        public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
     }
@@ -333,7 +333,7 @@ public class ConnectionSupport {
      * if the result isn't actually a valid connection, e.g.
      * {@code structure(2, class=c("terminal","connection"))}.
      */
-    public static RConnection fromVector(RVector vector, @SuppressWarnings("unused") RStringVector classAttr) {
+    public static RConnection fromVector(RVector<?> vector, @SuppressWarnings("unused") RStringVector classAttr) {
         int index = RRuntime.asInteger(vector);
         RConnection result = RContext.getInstance().stateRConnection.getConnection(index);
         if (result == null) {

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -45,6 +46,7 @@ final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
     }
 
     @Override
+    @TruffleBoundary
     protected void printValue(RFunction operand, PrintContext printCtx) throws IOException {
         final PrintWriter out = printCtx.output();
         final PrintContext valPrintCtx = printCtx.cloneContext();

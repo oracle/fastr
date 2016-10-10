@@ -50,9 +50,10 @@ public abstract class AccessSlotNode extends RNode {
 
     public abstract Object executeAccess(Object o, String name);
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
+
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile noSlot = BranchProfile.create();
     private final BranchProfile symbolValue = BranchProfile.create();
     private final boolean asOperator;
@@ -120,7 +121,7 @@ public abstract class AccessSlotNode extends RNode {
 
     @Specialization(contains = "getSlotS4Cached", guards = "slotAccessAllowed(object)")
     protected Object getSlotS4(RAttributable object, String name) {
-        String internedName = name.intern();
+        String internedName = Utils.intern(name);
         Object value = object.getAttr(attrProfiles, internedName);
         return getSlotS4Internal(object, internedName, value);
     }

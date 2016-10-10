@@ -22,28 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
@@ -59,22 +58,15 @@ public abstract class Paste extends RBuiltinNode {
     @Child private CastStringNode castCharacterNode;
 
     private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
-    private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
 
-    private RStringVector castCharacter(Object o) {
-        if (asCharacterNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(AsCharacterNodeGen.create(null));
-        }
-        Object ret = asCharacterNode.execute(o);
-        if (ret instanceof String) {
-            return RDataFactory.createStringVector((String) ret);
-        } else {
-            return (RStringVector) ret;
-        }
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustBe(RAbstractListVector.class);
+        casts.arg("sep").asStringVector().findFirst(Message.INVALID_SEPARATOR);
+        casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }
 
     /**
@@ -85,18 +77,20 @@ public abstract class Paste extends RBuiltinNode {
     private RStringVector castCharacterVector(Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeGen.create(false, true, false, false));
+            castCharacterNode = insert(CastStringNodeGen.create(false, false, false));
         }
         Object ret = castCharacterNode.executeString(o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
+        } else if (ret == RNull.instance) {
+            return RDataFactory.createEmptyStringVector();
         } else {
-            return (RStringVector) ret;
+            return (RStringVector) ((RStringVector) ret).copyDropAttributes();
         }
     }
 
     @Specialization
-    protected RStringVector pasteList(RList values, String sep, @SuppressWarnings("unused") RNull collapse) {
+    protected RStringVector pasteList(RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
@@ -106,27 +100,18 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "!isRNull(collapse)")
-    protected String pasteList(RList values, String sep, Object collapse, //
-                    @Cached("createBinaryProfile()") ConditionProfile collapseIsVectorProfile) {
+    @Specialization
+    protected String pasteList(RAbstractListVector values, String sep, String collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(values, sep, length);
-            String collapseString;
-            if (collapse instanceof String) {
-                collapseString = (String) collapse;
-            } else if (collapseIsVectorProfile.profile(collapse instanceof RAbstractStringVector)) {
-                collapseString = ((RAbstractStringVector) collapse).getDataAt(0);
-            } else {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "collapse");
-            }
-            return collapseString(result, collapseString);
+            return collapseString(result, collapse);
         } else {
             return "";
         }
     }
 
-    private boolean hasNonNullElements(RList values, int length) {
+    private boolean hasNonNullElements(RAbstractListVector values, int length) {
         for (int i = 0; i < length; i++) {
             if (values.getDataAt(i) != RNull.instance) {
                 nonNullElementsProfile.enter();
@@ -137,17 +122,12 @@ public abstract class Paste extends RBuiltinNode {
         return false;
     }
 
-    private String[] pasteListElements(RList values, String sep, int length) {
+    private String[] pasteListElements(RAbstractListVector values, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            String[] array;
-            if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
-                array = castCharacterVector(element).getDataWithoutCopying();
-            } else {
-                array = castCharacter(element).getDataWithoutCopying();
-            }
+            String[] array = castCharacterVector(element).getDataWithoutCopying();
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,9 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Explicit statically typed interface to user-supplied random number generators. TODO This could
- * eventually be subsumed by {@link CRFFI}.
+ * Explicit statically typed interface to user-supplied random number generators.
  */
 public interface UserRngRFFI {
-
-    void setLibrary(String path);
 
     void init(int seed);
 

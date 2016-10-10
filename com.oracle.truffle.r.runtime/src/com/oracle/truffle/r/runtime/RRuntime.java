@@ -11,9 +11,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.DecimalFormat;
-import java.util.Locale;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -329,6 +326,12 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
+    public static String rawToHexString(RRaw operand) {
+        int value = raw2int(operand);
+        char[] digits = new char[]{Character.forDigit((value & 0xF0) >> 4, 16), Character.forDigit(value & 0x0F, 16)};
+        return new String(digits);
+    }
+
     @TruffleBoundary
     public static String rawToString(RRaw operand) {
         return intToString(raw2int(operand));
@@ -339,14 +342,20 @@ public class RRuntime {
     @TruffleBoundary
     public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
+        int result;
         try {
-            return Integer.decode(s);  // decode supports hex constants
+            result = Integer.decode(s);  // decode supports hex constants
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;
             }
+            return INT_NA;
         }
-        return INT_NA;
+
+        if (result == INT_NA && exceptionOnFail) {
+            throw new NumberFormatException();
+        }
+        return result;
     }
 
     @TruffleBoundary
@@ -544,61 +553,6 @@ public class RRuntime {
         return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
-    @TruffleBoundary
-    public static String doubleToString(double operand, int digitsBehindDot) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
-    }
-
-    @TruffleBoundary
-    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
-        if (doubleIsInt(operand)) {
-            return intToStringNoCheck((int) operand);
-        }
-        if (operand == Double.POSITIVE_INFINITY) {
-            return "Inf";
-        }
-        if (operand == Double.NEGATIVE_INFINITY) {
-            return "-Inf";
-        }
-        if (Double.isNaN(operand)) {
-            return STRING_NaN;
-        }
-
-        /*
-         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
-         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
-         * format.format(operand);
-         */
-        if (operand < 1000000000000L && ((long) operand) == operand) {
-            return Long.toString((long) operand);
-        }
-        if (operand > 1000000000000L) {
-            return String.format((Locale) null, "%.6e", operand);
-        }
-        // if (true || operand < 0.0001) {
-        // // not quite correct but better than nothing for now...
-        // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
-        // }
-        if (digitsBehindDot == -1) {
-            return Double.toString(operand);
-        } else {
-            StringBuilder sb = new StringBuilder("#.");
-            for (int i = 0; i < digitsBehindDot; i++) {
-                sb.append('#');
-            }
-            DecimalFormat df = new DecimalFormat(sb.toString());
-            return df.format(operand);
-        }
-    }
-
-    public static String doubleToStringNoCheck(double operand) {
-        return doubleToStringNoCheck(operand, -1);
-    }
-
-    public static String doubleToString(double operand) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
-    }
-
     public static int double2rawIntValue(double operand) {
         return isNA(operand) ? 0 : ((int) operand) & 0xFF;
     }
@@ -633,16 +587,6 @@ public class RRuntime {
         return isNA(c) ? LOGICAL_NA : complex2doubleNoCheck(c);
     }
 
-    @TruffleBoundary
-    public static String complexToStringNoCheck(RComplex operand) {
-        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
-    }
-
-    @TruffleBoundary
-    public static String complexToString(RComplex operand) {
-        return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
-    }
-
     public static int complex2rawIntValue(RComplex c) {
         return isNA(c) ? 0 : ((int) c.getRealPart() & 0xFF);
     }
@@ -670,7 +614,7 @@ public class RRuntime {
         if (object instanceof Integer) {
             return intToString((int) object);
         } else if (object instanceof Double) {
-            return doubleToString((double) object);
+            return Double.toString((double) object);
         } else if (object instanceof Byte) {
             return logicalToString((byte) object);
         }

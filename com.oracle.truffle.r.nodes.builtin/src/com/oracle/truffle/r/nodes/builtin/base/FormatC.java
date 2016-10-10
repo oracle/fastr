@@ -24,10 +24,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "formatC", kind = INTERNAL, parameterNames = {"x", "mode", "width", "digits", "format", "flat", "i.strlen"}, behavior = PURE)
+@RBuiltin(name = "formatC", kind = INTERNAL, parameterNames = {"x", "mode", "width", "digits", "format", "flag", "i.strlen"}, behavior = PURE)
 public abstract class FormatC extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
@@ -35,20 +33,25 @@ public abstract class FormatC extends RBuiltinNode {
     private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(true, true, true, false));
+            castStringNode = insert(CastStringNodeGen.create(true, true, true));
         }
         return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
     }
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(2).toInteger(3).toInteger(6);
+        casts.arg("x");
+        casts.arg("mode").asStringVector().findFirst();
+        casts.arg("width").asIntegerVector().findFirst();
+        casts.arg("digits").asIntegerVector().findFirst();
+        casts.arg("format").asStringVector().findFirst();
+        casts.arg("flag").asStringVector().findFirst();
+        casts.arg("i.strlen").asIntegerVector().findFirst();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    RAttributable formatC(RAbstractContainer x, RAbstractStringVector modeVec, RAbstractIntVector widthVec, RAbstractIntVector digitsVec, RAbstractStringVector formatVec,
-                    RAbstractStringVector flagVec, RAbstractIntVector iStrlen) {
+    RAttributable formatC(RAbstractContainer x, String mode, int width, int digits, String format, String flag, int iStrlen) {
         RStringVector res = castStringVector(x);
         return res.setClassAttr(null);
     }

@@ -69,7 +69,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.boxPrimitive(0).boxPrimitive(1);
+        casts.arg(0).boxPrimitive();
+        casts.arg(1).boxPrimitive();
     }
 
     private static boolean isLogicOp(BooleanOperation op) {

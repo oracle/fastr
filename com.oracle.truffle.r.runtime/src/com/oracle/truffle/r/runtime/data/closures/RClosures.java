@@ -124,7 +124,7 @@ public class RClosures {
         return createFactorToVector(factor, withNames, RFactor.getLevels(attrProfiles, factor));
     }
 
-    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RVector levels) {
+    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RVector<?> levels) {
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, withNames);
         } else {

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -50,12 +51,15 @@ public class ROptions {
          * The current values for a given context.
          */
         private final HashMap<String, Object> map;
+        private final REnvVars envVars;
 
-        private ContextStateImpl(HashMap<String, Object> map) {
+        private ContextStateImpl(HashMap<String, Object> map, REnvVars envVars) {
             this.map = map;
+            this.envVars = envVars;
             // cannot call updateDotOptions here
         }
 
+        @TruffleBoundary
         public Set<Entry<String, Object>> getValues() {
             Set<Map.Entry<String, Object>> result = new HashSet<>();
             for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -66,6 +70,7 @@ public class ROptions {
             return result;
         }
 
+        @TruffleBoundary
         public Object getValue(String name) {
             Object value = map.get(name);
             if (value == null) {
@@ -74,6 +79,7 @@ public class ROptions {
             return value;
         }
 
+        @TruffleBoundary
         public Object setValue(String name, Object value) throws OptionsException {
             Object coercedValue = value;
             if (CHECKED_OPTIONS_SET.contains(name)) {
@@ -90,14 +96,20 @@ public class ROptions {
             return previous;
         }
 
-        public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
+        @TruffleBoundary
+        public static ContextStateImpl newContextState(REnvVars envVars) {
             HashMap<String, Object> map = new HashMap<>();
+            return new ContextStateImpl(map, envVars);
+        }
+
+        @Override
+        public RContext.ContextState initialize(RContext context) {
             if (context.getKind() == ContextKind.SHARE_NOTHING) {
                 applyDefaults(map, context.getStartParams(), envVars);
             } else {
                 map.putAll(context.getParent().stateROptions.map);
             }
-            return new ContextStateImpl(map);
+            return this;
         }
 
         /**

@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -33,9 +35,16 @@ import com.oracle.truffle.r.runtime.data.RNull;
 @RBuiltin(name = "setTimeLimit", kind = INTERNAL, parameterNames = {"cpu", "elapsed", "transient"}, behavior = COMPLEX)
 public abstract class SetTimeLimit extends RBuiltinNode {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("cpu").asDoubleVector().findFirst();
+        casts.arg("elapsed").asDoubleVector().findFirst();
+        casts.arg("transient").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     @SuppressWarnings("unused")
     @Specialization
-    protected RNull setTimeLimit(Object cpu, Object elapsed, Object trans) {
+    protected RNull setTimeLimit(double cpu, double elapsed, boolean trans) {
         // TODO: proper implementation sets timers checked during user interrupts that we currently
         // do not support
         return RNull.instance;

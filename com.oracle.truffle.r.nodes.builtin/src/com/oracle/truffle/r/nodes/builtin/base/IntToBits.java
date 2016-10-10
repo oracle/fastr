@@ -39,7 +39,7 @@ public abstract class IntToBits extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        casts.arg("x").allowNull().asIntegerVector();
     }
 
     @Specialization

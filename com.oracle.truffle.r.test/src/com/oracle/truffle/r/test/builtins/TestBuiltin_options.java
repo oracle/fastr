@@ -41,4 +41,11 @@ public class TestBuiltin_options extends TestBase {
     public void testoptions5() {
         assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(options(argv[[1]]))");
     }
+
+    @Test
+    public void testOptions() {
+        assertEval("{ getOption(NULL) }");
+        assertEval("{ getOption(character()) }");
+        assertEval("{ options(\"timeout\", \"width\") }");
+    }
 }

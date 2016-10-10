@@ -12,21 +12,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "row", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
 public abstract class Row extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("dims").defaultError(SHOW_CALLER, RError.Message.MATRIX_LIKE_REQUIRED, "row").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
+    }
 
     @Specialization
     protected RIntVector col(RAbstractIntVector x) {
@@ -39,11 +46,5 @@ public abstract class Row extends RBuiltinNode {
             }
         }
         return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR, new int[]{nrows, ncols});
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RIntVector col(@SuppressWarnings("unused") RNull x) {
-        throw RError.error(this, RError.Message.MATRIX_LIKE_REQUIRED, "row");
     }
 }

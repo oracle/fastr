@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -44,6 +45,18 @@ public abstract class FastrDqrls extends RBuiltinNode {
     private final RAttributeProfiles coeffAttributeProfiles = RAttributeProfiles.create();
     private final RAttributeProfiles xAttributeProfiles = RAttributeProfiles.create();
     private final RAttributeProfiles residualsAttributesProfiles = RAttributeProfiles.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asDoubleVector(true, true, true);
+        casts.arg("n").asIntegerVector().findFirst();
+        casts.arg("p").asIntegerVector().findFirst();
+        casts.arg("y").asDoubleVector(true, true, true);
+        casts.arg("ny").asIntegerVector().findFirst();
+        casts.arg("tol").asDoubleVector().findFirst();
+        casts.arg("coeff").asDoubleVector(true, true, true);
+
+    }
 
     @Specialization
     public RList doDouble(RAbstractDoubleVector xVec, int n, int p, RAbstractDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {

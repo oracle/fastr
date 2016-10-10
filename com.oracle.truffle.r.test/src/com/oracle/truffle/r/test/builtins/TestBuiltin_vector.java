@@ -65,6 +65,11 @@ public class TestBuiltin_vector extends TestBase {
         assertEval("{ vector(\"numeric\", length=4) }");
         assertEval("{ vector(length=3) }");
         assertEval("{ x<-as.vector(3); y<-vector(length=x) }");
+
+        assertEval("{ vector(character()) }");
+        assertEval("{ vector(c(\"numeric\", \"numeric\")) }");
+        assertEval("{  vector(\"numeric\", integer()) }");
+        assertEval("{  vector(\"numeric\", c(7, 42)) }");
     }
 
     @Test

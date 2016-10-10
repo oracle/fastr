@@ -33,11 +33,13 @@ import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -47,6 +49,9 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -117,32 +122,31 @@ public class RASTUtils {
      * Creates a standard {@link ReadVariableNode}.
      */
     @TruffleBoundary
-    public static ReadVariableNode createReadVariableNode(String name) {
-        return ReadVariableNode.create(name);
+    public static RSyntaxNode createReadVariableNode(String name) {
+        return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, name, false);
     }
 
     /**
-     * Handles constants and symbols as special cases as required by R.
+     * Handles constants and symbols as special cases as required by R: create symbols for simple
+     * variables and actual values for constants.
      */
     @TruffleBoundary
-    public static Object createLanguageElement(RBaseNode argNode) {
-        if (argNode == null) {
-            return RSymbol.MISSING;
-        } else if (argNode instanceof ConstantNode) {
-            Object value = ((ConstantNode) argNode).getValue();
+    public static Object createLanguageElement(RSyntaxNode element) {
+        assert element != null;
+        if (element instanceof RSyntaxConstant) {
+            Object value = ((RSyntaxConstant) element).getValue();
             if (value == RMissing.instance) {
                 // special case which GnuR handles as an unnamed symbol
                 return RSymbol.MISSING;
             }
             return value;
-        } else if (argNode instanceof ReadVariableNode) {
-            return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VarArgNode) {
-            VarArgNode varArgNode = (VarArgNode) argNode;
-            return RDataFactory.createSymbolInterned(varArgNode.getIdentifier());
+        } else if (element instanceof RSyntaxLookup) {
+            String id = ((RSyntaxLookup) element).getIdentifier();
+            assert id == id.intern() : element;
+            return RDataFactory.createSymbol(id);
         } else {
-            assert !(argNode instanceof VarArgNode);
-            return RDataFactory.createLanguage((RNode) argNode);
+            assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
+            return RDataFactory.createLanguage(element.asRNode());
         }
     }
 
@@ -163,20 +167,6 @@ public class RASTUtils {
     }
 
     /**
-     * Checks wheter {@code expr instanceof RSymbol} and, if so, wraps in an {@link RLanguage}
-     * instance.
-     */
-    @TruffleBoundary
-    public static Object checkForRSymbol(Object expr) {
-        if (expr instanceof RSymbol) {
-            String symbolName = ((RSymbol) expr).getName();
-            return RDataFactory.createLanguage(ReadVariableNode.create(symbolName));
-        } else {
-            return expr;
-        }
-    }
-
-    /**
      * Create an {@link RNode} from a runtime value.
      */
     @TruffleBoundary
@@ -184,7 +174,7 @@ public class RASTUtils {
         if (value instanceof RNode) {
             return (RNode) value;
         } else if (value instanceof RSymbol) {
-            return RASTUtils.createReadVariableNode(((RSymbol) value).getName());
+            return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) value).getName(), false).asRNode();
         } else if (value instanceof RLanguage) {
             RLanguage l = (RLanguage) value;
             return RASTUtils.cloneNode(l.getRep());
@@ -234,8 +224,8 @@ public class RASTUtils {
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
         if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
-        } else if (fn instanceof RCallNode) {
-            return RCallNode.createCall(sourceSection, (RCallNode) fn, signature, arguments);
+        } else if (fn instanceof RCallBaseNode) {
+            return RCallNode.createCall(sourceSection, (RCallBaseNode) fn, signature, arguments);
         } else {
             // apart from RFunction, this of course would not make much sense if trying to evaluate
             // this call, yet it's syntactically possible, for example as a result of:

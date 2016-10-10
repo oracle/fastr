@@ -12,10 +12,6 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -94,20 +90,5 @@ public class TestBuiltin_colSums extends TestBase {
 
         // colSums on array have correct values
         assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
-    }
-
-    class RBuiltinRootNode extends RootNode {
-
-        @Child private RBuiltinNode builtinNode;
-
-        RBuiltinRootNode(RBuiltinNode builtinNode) {
-            super(TruffleLanguage.class, null, null);
-            this.builtinNode = builtinNode;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return builtinNode.execute(frame);
-        }
     }
 }

@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -25,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -38,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -53,9 +54,16 @@ public class LoadSaveFunctions {
 
         private final NACheck naCheck = NACheck.create();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("con").mustBe(instanceOf(RConnection.class));
+            casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("verbose").asLogicalVector().findFirst().map(toBoolean());
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
+        protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") boolean verbose) {
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
@@ -91,16 +99,22 @@ public class LoadSaveFunctions {
                     throw RError.error(this, RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
                 }
             } catch (IOException iox) {
-                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
-                throw RError.error(this, px);
+                throw RError.error(RError.SHOW_CALLER, px);
             }
         }
     }
 
-    @RBuiltin(name = "load", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir"}, behavior = IO)
+    @RBuiltin(name = "load", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "envir"}, behavior = IO)
     public abstract static class Load extends RBuiltinNode {
         // now deprecated but still used by some packages
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("file").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_FILENAME).findFirst();
+            casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        }
 
         private static final int R_MAGIC_EMPTY = 999;
         private static final int R_MAGIC_CORRUPT = 998;
@@ -114,8 +128,8 @@ public class LoadSaveFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector load(RAbstractStringVector fileVec, @SuppressWarnings("unused") REnvironment envir) {
-            String path = Utils.tildeExpand(fileVec.getDataAt(0));
+        protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
+            String path = Utils.tildeExpand(pathIn);
             try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(path))) {
                 int magic = readMagic(bs);
                 switch (magic) {
@@ -169,16 +183,25 @@ public class LoadSaveFunctions {
         }
     }
 
-    @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"}, behavior = IO)
+    @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "con", "ascii", "version", "environment", "eval.promises"}, behavior = IO)
     public abstract static class SaveToConn extends Adapter {
         private static final String ASCII_HEADER = "RDA2\n";
         private static final String XDR_HEADER = "RDX2\n";
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("list").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_CHARVEC).findFirst();
+            casts.arg("con").mustBe(instanceOf(RConnection.class));
+            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
+            casts.arg("version").allowNull().mustBe(integerValue());
+            casts.arg("environment").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg("eval.promises").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
+
         @Specialization
         protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir,
-                        byte evalPromisesLogical, //
+                        boolean evalPromises, //
                         @Cached("new()") PromiseCheckHelperNode promiseHelper) {
-            boolean evalPromises = RRuntime.fromLogical(evalPromisesLogical);
             RPairList prev = null;
             Object toSave = RNull.instance;
             for (int i = 0; i < list.getLength(); i++) {
@@ -191,7 +214,7 @@ public class LoadSaveFunctions {
                     value = promiseHelper.checkEvaluate(frame, value);
                 }
                 RPairList pl = RDataFactory.createPairList(value);
-                pl.setTag(RDataFactory.createSymbol(varName.intern()));
+                pl.setTag(RDataFactory.createSymbol(Utils.intern(varName)));
                 if (prev == null) {
                     toSave = pl;
                 } else {

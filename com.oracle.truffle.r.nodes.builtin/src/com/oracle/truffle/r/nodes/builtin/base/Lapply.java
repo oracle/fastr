@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -32,14 +33,15 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -70,6 +72,15 @@ public abstract class Lapply extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // to make conversion of X parameter 100% correct, we'd need to match semantics of
+        // asVector() to whatever GNU R is doing there; still this can be a problem only if the
+        // internal is called directly (otherwise, it's guaranteed that it's a vector)
+        casts.arg("X").asVector();
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.NO_CALLER, RError.Message.APPLY_NON_FUNCTION);
+    }
 
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
@@ -116,11 +127,6 @@ public abstract class Lapply extends RBuiltinNode {
         @Override
         public RSyntaxElement[] getSyntaxArguments() {
             return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "X", false), RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "i", false)};
-        }
-
-        @Override
-        public void serializeImpl(State state) {
-            throw RInternalError.shouldNotReachHere();
         }
     }
 
@@ -178,6 +184,6 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     static SourceSection createCallSourceSection() {
-        return CALL_SOURCE.createSection("", 0, CALL_SOURCE.getLength());
+        return CALL_SOURCE.createSection(0, CALL_SOURCE.getLength());
     }
 }

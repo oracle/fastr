@@ -94,18 +94,14 @@ public abstract class CastExpressionNode extends CastBaseNode {
         if (obj instanceof RList) {
             RList list = (RList) obj;
             // TODO other attributes
-            return RDataFactory.createExpression(RDataFactory.createList(data, list.getNames(attrProfiles)));
+            return RDataFactory.createExpression(data, list.getNames(attrProfiles));
         } else {
-            return create(data);
+            return RDataFactory.createExpression(data);
         }
     }
 
     private static RExpression create(Object obj) {
-        return create(new Object[]{obj});
-    }
-
-    private static RExpression create(Object[] objArray) {
-        return RDataFactory.createExpression(RDataFactory.createList(objArray));
+        return RDataFactory.createExpression(new Object[]{obj});
     }
 
     public static CastExpressionNode createNonPreserving() {

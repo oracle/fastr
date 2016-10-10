@@ -19,14 +19,12 @@ public class TestBuiltin_det extends TestBase {
 
     @Test
     public void testdet1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(FALSE, TRUE, TRUE, FALSE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))), TRUE); .Internal(det_ge_real(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(FALSE, TRUE, TRUE, FALSE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))), TRUE); .Internal(det_ge_real(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdet2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))), TRUE); .Internal(det_ge_real(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))), TRUE); .Internal(det_ge_real(argv[[1]], argv[[2]]))");
     }
 
     @Test

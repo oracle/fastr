@@ -44,14 +44,14 @@ public abstract class UpdateLevels extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
-        RVector v = (RVector) vector.getNonShared();
+        RVector<?> v = (RVector<?>) vector.getNonShared();
         v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
         return v;
     }
 
     @Specialization(guards = "levelsNotNull(levels)")
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
-        RVector v = (RVector) vector.getNonShared();
+        RVector<?> v = (RVector<?>) vector.getNonShared();
         v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(levels));
         return v;
     }

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+JAVA_ARGS=()
+PROGRAM_ARGS=()
+for opt in "${@:1}"
+do
+  case $opt in
+    -J:*)
+      opt=${opt:3}
+      JAVA_ARGS+=("$opt") ;;
+    *)
+      PROGRAM_ARGS+=("$opt") ;;
+  esac
+done
+
+# we can invoke FastR directly, but we do have to set R_HOME
+R_HOME_DIR="$(dirname $0)/.."
+export R_HOME="$(unset CDPATH && cd ${R_HOME_DIR} && pwd)"
+exec java -cp %%CLASSPATH "${JAVA_ARGS[@]}" com.oracle.truffle.r.engine.shell.RscriptCommand "${PROGRAM_ARGS[@]}"

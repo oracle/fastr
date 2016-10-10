@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RStringVector extends RVector implements RAbstractStringVector {
+public final class RStringVector extends RVector<String[]> implements RAbstractStringVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Character.getClazz());
 
@@ -89,6 +89,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return data.length;
     }
 
+    @Override
     public String[] getDataCopy() {
         String[] copy = new String[data.length];
         System.arraycopy(data, 0, copy, 0, data.length);
@@ -99,29 +100,9 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public String[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public String[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public String[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override
@@ -144,11 +125,6 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     @Override
     public String getDataAt(int i) {
         return data[i];
-    }
-
-    @Override
-    protected String getDataAtAsString(int index) {
-        return getDataAt(index);
     }
 
     public RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {

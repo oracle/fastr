@@ -535,8 +535,8 @@ public class TestBuiltin_c extends TestBase {
         // which seems to invoke deparse, so we just check the c didn't fail.
         assertEval("{ f <- function() { }; length(c(f, 2)) == 2 }");
 
-        assertEval("{ e1 <- new.env(), e2 <- new.env(); c(e1, e2) }");
-        assertEval("{ e1 <- new.env(), c(e1, 3) }");
+        assertEval(Output.ContainsReferences, "{ e1 <- new.env(); e2 <- new.env(); c(e1, e2) }");
+        assertEval(Output.ContainsReferences, "{ e1 <- new.env(); c(e1, 3) }");
 
         assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); y<-c(x, 7); y[[1]] }");
 

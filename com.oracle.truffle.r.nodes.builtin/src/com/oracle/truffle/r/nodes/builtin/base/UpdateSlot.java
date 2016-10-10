@@ -18,11 +18,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
@@ -33,7 +31,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
-import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
+import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -55,13 +53,12 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private ClassHierarchyNode valClassHierarchy;
     @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
     @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
-    @Child private DirectCallNode checkAtAssignmentCall;
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+    @Child private CallRFunctionNode checkAtAssignmentCall;
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toAttributable(0, true, true, true);
+        casts.arg(0).allowNull().asAttributable(true, true, true);
     }
 
     protected String getName(Object nameObj) {
@@ -93,7 +90,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
         if (checkSlotAssignFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
-            checkAtAssignmentCall = insert(Truffle.getRuntime().createDirectCallNode(checkSlotAssignFunction.getTarget()));
+            checkAtAssignmentCall = insert(CallRFunctionNode.create(checkSlotAssignFunction.getTarget()));
             assert objClassHierarchy == null && valClassHierarchy == null;
             objClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
             valClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
@@ -105,8 +102,8 @@ public abstract class UpdateSlot extends RBuiltinNode {
         if (cached.profile(currentFunction == checkSlotAssignFunction)) {
             // TODO: technically, someone could override checkAtAssignment function and access the
             // caller, but it's rather unlikely
-            Object[] args = argsNode.execute(checkSlotAssignFunction, RCaller.create(frame, getOriginalCall()), null, new Object[]{objClass, name, valClass}, SIGNATURE, null);
-            checkAtAssignmentCall.call(frame, args);
+            checkAtAssignmentCall.execute(frame, checkSlotAssignFunction, RCaller.create(frame, getOriginalCall()), null, new Object[]{objClass, name, valClass}, SIGNATURE,
+                            checkSlotAssignFunction.getEnclosingFrame(), null);
         } else {
             // slow path
             RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, objClass, name, valClass);

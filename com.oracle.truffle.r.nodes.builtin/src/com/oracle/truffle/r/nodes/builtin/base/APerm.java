@@ -10,24 +10,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-//TODO: Implement permuting with DimNames
+// TODO: add (permuted) dimnames to the result
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
 public abstract class APerm extends RBuiltinNode {
 
@@ -37,28 +48,26 @@ public abstract class APerm extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.arg("a").mustNotBeNull(RError.Message.FIRST_ARG_MUST_BE_ARRAY);
+        casts.arg("perm").allowNull().mustBe(numericValue().or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVector());
+        casts.arg("resize").mustBe(numericValue().or(logicalValue()), Message.INVALID_LOGICAL, "resize").asLogicalVector().findFirst();
     }
 
-    private void checkErrorConditions(RAbstractVector vector, byte resize) {
+    private void checkErrorConditions(RAbstractVector vector) {
         if (!vector.isArray()) {
             errorProfile.enter();
-            throw RError.error(this, RError.Message.FIRST_ARG_MUST_BE_ARRAY);
-        }
-        if (resize == RRuntime.LOGICAL_NA) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_LOGICAL, "resize");
+            throw RError.error(RError.SHOW_CALLER, RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
     }
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize) {
-        checkErrorConditions(vector, resize);
+        checkErrorConditions(vector);
 
         int[] dim = vector.getDimensions();
         final int diml = dim.length;
 
-        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         if (mustResize.profile(resize == RRuntime.LOGICAL_TRUE)) {
             int[] pDim = new int[diml];
@@ -93,7 +102,7 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
-        checkErrorConditions(vector, resize);
+        checkErrorConditions(vector);
 
         int[] dim = vector.getDimensions();
         int[] perm = getPermute(dim, permVector);
@@ -101,7 +110,7 @@ public abstract class APerm extends RBuiltinNode {
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
 
-        RVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         result.setDimensions(resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
@@ -113,6 +122,31 @@ public abstract class APerm extends RBuiltinNode {
         }
 
         return result;
+    }
+
+    @Specialization
+    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
+                    @Cached("create()") RAttributeProfiles dimNamesProfile) {
+        RList dimNames = vector.getDimNames(dimNamesProfile);
+        if (dimNames == null) {
+            // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
+            errorProfile.enter();
+            throw RError.error(this, RError.Message.DOES_NOT_HAVE_DIMNAMES, "a");
+        }
+
+        int[] perm = new int[permVector.getLength()];
+        for (int i = 0; i < perm.length; i++) {
+            for (int dimNamesIdx = 0; dimNamesIdx < dimNames.getLength(); dimNamesIdx++) {
+                if (dimNames.getDataAt(dimNamesIdx).equals(permVector.getDataAt(i))) {
+                    perm[i] = dimNamesIdx;
+                    break;
+                }
+            }
+            // TODO: not found dimname error
+        }
+
+        // Note: if this turns out to be slow, we can cache the permutation
+        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize);
     }
 
     private static int[] getReverse(int[] dim) {
@@ -136,13 +170,13 @@ public abstract class APerm extends RBuiltinNode {
                 int pos = perm.getDataAt(i) - 1; // Adjust to zero based permute.
                 if (pos >= perm.getLength() || pos < 0) {
                     errorProfile.enter();
-                    throw RError.error(this, RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = pos;
                 if (visited[pos]) {
                     // Duplicate dimension mapping in permute
                     errorProfile.enter();
-                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "perm");
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "perm");
                 }
                 visited[pos] = true;
             }
@@ -150,7 +184,7 @@ public abstract class APerm extends RBuiltinNode {
         } else {
             // perm size error
             errorProfile.enter();
-            throw RError.error(this, RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
     }
 

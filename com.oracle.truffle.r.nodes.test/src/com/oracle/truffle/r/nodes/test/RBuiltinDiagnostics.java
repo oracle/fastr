@@ -23,46 +23,59 @@
 package com.oracle.truffle.r.nodes.test;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
+import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
+import com.oracle.truffle.r.nodes.casts.MapperSamplerFactory;
 import com.oracle.truffle.r.nodes.casts.Not;
-import com.oracle.truffle.r.nodes.casts.PredefFiltersSamplers;
-import com.oracle.truffle.r.nodes.casts.PredefMappersSamplers;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class RBuiltinDiagnostics {
 
+    private static final String OUTPUT_MAX_LEVEL_ARG = "--outMaxLev=";
+
     static class DiagConfig {
         boolean verbose;
         boolean ignoreRNull;
         boolean ignoreRMissing;
         long maxTotalCombinations = 500L;
+        int outputMaxLevel;
+    }
+
+    static {
+        PipelineConfig.setFilterFactory(FilterSamplerFactory.INSTANCE);
+        PipelineConfig.setMapperFactory(MapperSamplerFactory.INSTANCE);
     }
 
     private final DiagConfig diagConfig;
@@ -79,13 +92,11 @@ public class RBuiltinDiagnostics {
         diagConfig.verbose = Arrays.stream(args).filter(arg -> "-v".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRNull = Arrays.stream(args).filter(arg -> "-n".equals(arg)).findFirst().isPresent();
         diagConfig.ignoreRMissing = Arrays.stream(args).filter(arg -> "-m".equals(arg)).findFirst().isPresent();
+        diagConfig.outputMaxLevel = Arrays.stream(args).filter(arg -> arg.startsWith(OUTPUT_MAX_LEVEL_ARG)).map(x -> Integer.parseInt(x.split("=")[1])).findFirst().orElse(Integer.MAX_VALUE);
         return diagConfig;
     }
 
     public static void main(String[] args) throws Throwable {
-        Predef.setPredefFilters(new PredefFiltersSamplers());
-        Predef.setPredefMappers(new PredefMappersSamplers());
-
         RBuiltinDiagnostics rbDiag = ChimneySweepingSuite.createChimneySweepingSuite(args).orElseGet(() -> createRBuiltinDiagnostics(args));
 
         List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
@@ -98,22 +109,29 @@ public class RBuiltinDiagnostics {
         }
     }
 
-    public SingleBuiltinDiagnostics createBuiltinDiagnostics(RBuiltinFactory bf) {
+    public SingleBuiltinDiagnostics createBuiltinDiagnostics(RBuiltinDiagFactory bf) {
         return new SingleBuiltinDiagnostics(this, bf);
     }
 
     public void diagnoseSingleBuiltin(String builtinName) throws Exception {
         BasePackage bp = new BasePackage();
         RBuiltinFactory bf = bp.lookupByName(builtinName);
+        RBuiltinDiagFactory bdf;
         if (bf == null) {
-            System.out.println("No builtin '" + builtinName + "' found");
-            return;
+            try {
+                bdf = RExtBuiltinDiagFactory.create(builtinName);
+            } catch (Exception e) {
+                print(0, "No builtin '" + builtinName + "' found");
+                return;
+            }
+        } else {
+            bdf = new RIntBuiltinDiagFactory(bf);
         }
 
-        createBuiltinDiagnostics(bf).diagnoseBuiltin();
+        createBuiltinDiagnostics(bdf).diagnoseBuiltin();
 
-        System.out.println("Finished");
-        System.out.println("--------");
+        print(0, "Finished");
+        print(0, "--------");
 
         System.exit(0);
     }
@@ -122,42 +140,45 @@ public class RBuiltinDiagnostics {
         BasePackage bp = new BasePackage();
         for (RBuiltinFactory bf : bp.getBuiltins().values()) {
             try {
-                createBuiltinDiagnostics(bf).diagnoseBuiltin();
+                createBuiltinDiagnostics(new RIntBuiltinDiagFactory((bf))).diagnoseBuiltin();
             } catch (Exception e) {
-                System.out.println(bf.getName() + " failed: " + e.getMessage());
+                e.printStackTrace();
+                print(0, bf.getName() + " failed: " + e.getMessage());
             }
         }
 
-        System.out.println("Finished");
-        System.out.println("--------");
+        print(0, "Finished");
+        print(0, "--------");
 
         System.exit(0);
     }
 
+    protected void print(int level, Object x) {
+        if (level <= diagConfig.outputMaxLevel) {
+            System.out.println(x);
+        }
+    }
+
     static class SingleBuiltinDiagnostics {
         private final RBuiltinDiagnostics diagSuite;
-        final RBuiltinFactory builtinFactory;
+        final RBuiltinDiagFactory builtinFactory;
         final String builtinName;
         final int argLength;
         final String[] parameterNames;
         final CastNode[] castNodes;
-        final Class<?> builtinClass;
-        final RBuiltin annotation;
         final List<Method> specMethods;
         final List<TypeExpr> argResultSets;
         final HashMap<Method, List<Set<Cast>>> convResultTypePerSpec;
         final Set<List<Type>> nonCoveredArgsSet;
 
-        SingleBuiltinDiagnostics(RBuiltinDiagnostics diagSuite, RBuiltinFactory builtinFactory) {
+        SingleBuiltinDiagnostics(RBuiltinDiagnostics diagSuite, RBuiltinDiagFactory builtinFactory) {
             this.diagSuite = diagSuite;
             this.builtinFactory = builtinFactory;
-            this.builtinName = builtinFactory.getName();
+            this.builtinName = builtinFactory.getBuiltinName();
 
-            this.builtinClass = builtinFactory.getBuiltinNodeClass();
-            this.annotation = builtinClass.getAnnotation(RBuiltin.class);
-            this.argLength = annotation.parameterNames().length;
-            String[] pn = annotation.parameterNames();
-            this.parameterNames = Arrays.stream(pn).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+            String[] pn = builtinFactory.getParameterNames();
+            this.argLength = pn.length;
+            this.parameterNames = Arrays.stream(pn).map(n -> n == null || n.isEmpty() ? null : n).toArray(String[]::new);
 
             this.castNodes = getCastNodesFromBuiltin();
 
@@ -166,10 +187,14 @@ public class RBuiltinDiagnostics {
                 return !((diagSuite.diagConfig.ignoreRNull && t == RNull.class) || (diagSuite.diagConfig.ignoreRMissing && t == RMissing.class));
             })).collect(Collectors.toList());
 
-            this.specMethods = CastUtils.getAnnotatedMethods(builtinClass, Specialization.class);
+            this.specMethods = CastUtils.getAnnotatedMethods(builtinFactory.getBuiltinNodeClass(), Specialization.class);
 
             this.convResultTypePerSpec = createConvResultTypePerSpecialization();
             this.nonCoveredArgsSet = combineArguments();
+        }
+
+        protected void print(int level, Object x) {
+            diagSuite.print(level, x);
         }
 
         private HashMap<Method, List<Set<Cast>>> createConvResultTypePerSpecialization() {
@@ -204,60 +229,72 @@ public class RBuiltinDiagnostics {
         }
 
         public void diagnoseBuiltin() throws Exception {
-            System.out.println("****************************************************************************");
-            System.out.println("Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
-            System.out.println("****************************************************************************");
+            print(0, "****************************************************************************");
+            print(0, "Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getName() + ")");
+            print(0, "****************************************************************************");
 
-            System.out.println("Argument cast pipelines binding:");
+            print(0, "Argument cast pipelines binding:");
             for (int i = 0; i < argLength; i++) {
                 diagnosePipeline(i);
             }
 
-            System.out.println("\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
-            System.out.println("");
+            print(0, "\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
+            print(0, "");
+
+            printDeadSpecs();
 
             if (diagSuite.diagConfig.verbose) {
                 for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
-                    System.out.println(uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
+                    print(0, uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
                 }
             }
         }
 
+        private void printDeadSpecs() {
+            print(0, "Dead specializations: ");
+            for (Map.Entry<Method, List<Set<Cast>>> resTpPerSpec : convResultTypePerSpec.entrySet()) {
+                List<Set<Cast>> argsCasts = resTpPerSpec.getValue();
+                List<Integer> missingCasts = new ArrayList<>();
+                for (int i = 0; i < argsCasts.size(); i++) {
+                    Set<Cast> argCasts = argsCasts.get(i);
+                    if (argCasts.isEmpty()) {
+                        missingCasts.add(i);
+                    }
+                }
+
+                if (!missingCasts.isEmpty()) {
+                    print(0, "   " + methodName(resTpPerSpec.getKey(), missingCasts));
+                }
+            }
+
+            print(0, "");
+        }
+
         protected void diagnosePipeline(int i) {
             TypeExpr argResultSet = argResultSets.get(i);
-            System.out.println("\n Pipeline for '" + annotation.parameterNames()[i] + "' (arg[" + i + "]):");
-            System.out.println("  Result types union:");
+            print(0, "\n Pipeline for '" + parameterNames[i] + "' (arg[" + i + "]):");
+            print(0, "  Result types union:");
             Set<Type> argSetNorm = argResultSet.normalize();
-            System.out.println("   " + argSetNorm.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
-            System.out.println("  Bound result types:");
+            print(0, "   " + argSetNorm.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
+            print(0, "  Bound result types:");
             final int curParIndex = i;
             Set<Type> unboundArgTypes = new HashSet<>(argSetNorm);
             for (Map.Entry<Method, List<Set<Cast>>> entry : convResultTypePerSpec.entrySet()) {
                 Set<Cast> argCastInSpec = entry.getValue().get(i);
                 argCastInSpec.stream().forEach(
                                 partialCast -> {
-                                    System.out.println("   " + partialCast.coverage() + " (" + typeName(partialCast.inputType()) + "->" + typeName(partialCast.resultType()) + ")" + " in " +
-                                                    methodName(entry.getKey(), curParIndex));
+                                    print(0, "   " + partialCast.coverage() + " (" + typeName(partialCast.inputType()) + "->" + typeName(partialCast.resultType()) + ")" + " in " +
+                                                    methodName(entry.getKey(), Collections.singleton(curParIndex)));
                                     unboundArgTypes.remove(partialCast.inputType());
                                 });
             }
-            System.out.println("  Unbound types:");
-            System.out.println("   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
+            print(0, "  Unbound types:");
+            print(0, "   " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
 
         }
 
         private CastNode[] getCastNodesFromBuiltin() {
-            ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
-
-            int total = signature.getLength();
-            RNode[] args = new RNode[total];
-            for (int i = 0; i < total; i++) {
-                args[i] = ReadVariableNode.create("dummy");
-            }
-            RBuiltinNode builtinNode = builtinFactory.getConstructor().apply(args.clone());
-
-            CastNode[] cn = builtinNode.getCasts();
-            return cn;
+            return builtinFactory.getCasts();
         }
 
         private List<TypeExpr> createArgResultSets() {
@@ -300,13 +337,13 @@ public class RBuiltinDiagnostics {
         }
     }
 
-    private static String methodName(Method m, int markedParamIndex) {
-        final int markedParamRealIndex = getRealParamIndex(m.getParameterTypes(), markedParamIndex);
+    private static String methodName(Method m, Collection<Integer> markedParamIndices) {
+        final Set<Integer> markedParamRealIndices = markedParamIndices.stream().map(markedParamIndex -> getRealParamIndex(m.getParameterTypes(), markedParamIndex)).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
         int i = 0;
         for (Class<?> pt : m.getParameterTypes()) {
             final String tn;
-            if (i == markedParamRealIndex) {
+            if (markedParamRealIndices.contains(i)) {
                 tn = "*" + typeName(pt) + "*";
             } else {
                 tn = typeName(pt);
@@ -320,4 +357,123 @@ public class RBuiltinDiagnostics {
         }
         return typeName(m.getReturnType()) + " " + m.getName() + "(" + sb + ")";
     }
+
+    public interface RBuiltinDiagFactory {
+        String getBuiltinName();
+
+        Class<?> getBuiltinNodeClass();
+
+        String[] getParameterNames();
+
+        CastNode[] getCasts();
+
+    }
+
+    public static final class RIntBuiltinDiagFactory implements RBuiltinDiagFactory {
+
+        private final RBuiltinFactory fact;
+
+        public RIntBuiltinDiagFactory(RBuiltinFactory fact) {
+            super();
+            this.fact = fact;
+        }
+
+        @Override
+        public String getBuiltinName() {
+            return fact.getName();
+        }
+
+        @Override
+        public Class<?> getBuiltinNodeClass() {
+            return fact.getBuiltinNodeClass();
+        }
+
+        public RBuiltinKind getBuiltinKind() {
+            return fact.getKind();
+        }
+
+        @Override
+        public String[] getParameterNames() {
+            RBuiltin annotation = fact.getBuiltinNodeClass().getAnnotation(RBuiltin.class);
+            String[] pn = annotation.parameterNames();
+            return Arrays.stream(pn).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+        }
+
+        @Override
+        public CastNode[] getCasts() {
+            ArgumentsSignature signature = ArgumentsSignature.get(getParameterNames());
+
+            int total = signature.getLength();
+            RNode[] args = new RNode[total];
+            for (int i = 0; i < total; i++) {
+                args[i] = ReadVariableNode.create("dummy");
+            }
+
+            return fact.getConstructor().apply(args).getCasts();
+        }
+
+    }
+
+    public static final class RExtBuiltinDiagFactory implements RBuiltinDiagFactory {
+
+        private final Class<? extends RExternalBuiltinNode> nodeClass;
+        private final String[] parameterNames;
+
+        RExtBuiltinDiagFactory(Class<? extends RExternalBuiltinNode> nodeClass, int arity) {
+            this.nodeClass = nodeClass;
+            this.parameterNames = new String[arity];
+            for (int i = 0; i < arity; i++) {
+                this.parameterNames[i] = "arg" + i;
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        public static RExtBuiltinDiagFactory create(String extBuiltinClsName) throws ClassNotFoundException {
+            Class<?> nodeClass = Class.forName(extBuiltinClsName);
+
+            if (!Modifier.isFinal(nodeClass.getModifiers())) {
+                nodeClass = Class.forName(extBuiltinClsName + "NodeGen");
+                if (!Modifier.isFinal(nodeClass.getModifiers())) {
+                    throw new IllegalArgumentException("Invalid external builtin class name: " + extBuiltinClsName);
+                }
+            }
+
+            if (!RExternalBuiltinNode.class.isAssignableFrom(nodeClass)) {
+                throw new IllegalArgumentException(extBuiltinClsName + " is not a subclass of " + RExternalBuiltinNode.class.getName());
+            }
+
+            Optional<Method> execMethod = Arrays.stream(nodeClass.getMethods()).filter(
+                            m -> m.getName().equals("execute") && Arrays.stream(m.getParameterTypes()).allMatch(t -> t == Object.class)).findFirst();
+            if (execMethod.isPresent()) {
+                return new RExtBuiltinDiagFactory((Class<RExternalBuiltinNode>) nodeClass, execMethod.get().getParameterCount());
+            } else {
+                throw new UnsupportedOperationException(extBuiltinClsName + " is not a supported external builtin class");
+            }
+        }
+
+        @Override
+        public String getBuiltinName() {
+            return nodeClass.getSimpleName();
+        }
+
+        @Override
+        public Class<?> getBuiltinNodeClass() {
+            return nodeClass;
+        }
+
+        @Override
+        public String[] getParameterNames() {
+            return parameterNames;
+        }
+
+        @Override
+        public CastNode[] getCasts() {
+            try {
+                return ((RExternalBuiltinNode) nodeClass.getMethod("create").invoke(null)).getCasts();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }

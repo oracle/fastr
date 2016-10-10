@@ -26,7 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -91,13 +90,20 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
+    /**
+     * Locates a resource that is used within the implementation, e.g. a file of R code, and returns
+     * a {@link Source} instance that represents it. Since the location may vary between
+     * implementations and, in particular may not be a persistently accessible URL, we read the
+     * content and store it as an "internal" instance.
+     */
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         try {
-            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
-            if (url == null) {
-                throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+            if (is == null) {
+                throw new IOException();
             }
-            return RSource.fromURL(url, resourceName);
+            String content = getResourceAsString(is);
+            return RSource.fromTextInternal(content, RSource.Internal.R_IMPL);
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
         }
@@ -167,6 +173,15 @@ public final class Utils {
     public static RuntimeException rSuicideDefault(String msg) {
         System.err.println("FastR unexpected failure: " + msg);
         throw new ExitException(2);
+    }
+
+    /**
+     * This the real, final, non-overrideable, exit of the entire R system. TODO well, modulo how
+     * quit() is interpreted when R is started implicitly from a Polyglot shell that is running
+     * other languages.
+     */
+    public static void systemExit(int status) {
+        System.exit(status);
     }
 
     private static String userHome;
@@ -293,6 +308,14 @@ public final class Utils {
      */
     public static String tildeExpand(String path) {
         return tildeExpand(path, false);
+    }
+
+    public static String unShQuote(String s) {
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
     }
 
     /**
@@ -868,4 +891,20 @@ public final class Utils {
         }
         return r;
     }
+
+    @TruffleBoundary
+    public static String intern(String s) {
+        return s.intern();
+    }
+
+    @TruffleBoundary
+    public static String toString(Object obj) {
+        return obj.toString();
+    }
+
+    @TruffleBoundary
+    public static String stringFormat(String format, Object... objects) {
+        return String.format(format, objects);
+    }
+
 }

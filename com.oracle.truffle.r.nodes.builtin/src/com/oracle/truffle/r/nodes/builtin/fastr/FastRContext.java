@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -55,22 +56,28 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  */
 public class FastRContext {
 
-    private abstract static class CastHelper extends RBuiltinNode {
-        protected void exprs(CastBuilder casts) {
-            casts.arg("exprs").asStringVector().mustBe(nullValue().not().and(notEmpty()));
+    private static final String[] EMPTY = new String[0];
+
+    private static final class Casts {
+        private static void exprs(CastBuilder casts) {
+            casts.arg("exprs").asStringVector().mustBe(notEmpty());
         }
 
-        protected void kind(CastBuilder casts) {
+        private static void kind(CastBuilder casts) {
             casts.arg("kind").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA().mustBe(
                             equalTo(RContext.ContextKind.SHARE_NOTHING.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RW.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RO.name()))));
         }
 
-        protected void args(CastBuilder casts) {
-            casts.arg("args").asStringVector().mustBe(nullValue().not().and(notEmpty()));
+        private static void pc(CastBuilder casts) {
+            casts.arg("pc").asIntegerVector().findFirst().notNA().mustBe(gt(0));
         }
 
-        protected void pc(CastBuilder casts) {
-            casts.arg("pc").asIntegerVector().findFirst().notNA().mustBe(gt(0));
+        private static void key(CastBuilder casts) {
+            casts.arg("key").asIntegerVector().mustBe(notEmpty()).findFirst();
+        }
+
+        private static void id(CastBuilder casts) {
+            casts.arg("id").asIntegerVector().mustBe(notEmpty()).findFirst();
         }
     }
 
@@ -89,29 +96,28 @@ public class FastRContext {
      * {@code .fastr.context.join}.
      *
      */
-    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind", "args"}, behavior = COMPLEX)
-    public abstract static class Spawn extends CastHelper {
+    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
+    public abstract static class Spawn extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING", ""};
+            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
         }
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            exprs(casts);
-            pc(casts);
-            kind(casts);
-            args(casts);
+            Casts.exprs(casts);
+            Casts.pc(casts);
+            Casts.kind(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector spawn(RAbstractStringVector exprs, int pc, String kind, RAbstractStringVector args) {
+        protected RIntVector spawn(RAbstractStringVector exprs, int pc, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             RContext.EvalThread[] threads = new RContext.EvalThread[pc];
             int[] data = new int[pc];
             for (int i = 0; i < pc; i++) {
-                ContextInfo info = createContextInfo(contextKind, args);
+                ContextInfo info = createContextInfo(contextKind);
                 threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 data[i] = info.getId();
             }
@@ -127,10 +133,11 @@ public class FastRContext {
     public abstract static class Join extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("handle").asIntegerVector().mustBe(nullValue().not().and(notEmpty()));
+            casts.arg("handle").asIntegerVector().mustBe(notEmpty());
         }
 
         @Specialization
+        @TruffleBoundary
         protected RNull eval(RAbstractIntVector handle) {
             try {
                 for (int i = 0; i < handle.getLength(); i++) {
@@ -162,70 +169,134 @@ public class FastRContext {
      * sublist contains the result of the evaluation with name "result". It may also have an
      * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
      */
-    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind", "args"}, behavior = COMPLEX)
-    public abstract static class Eval extends CastHelper {
+    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
+    public abstract static class Eval extends RBuiltinNode {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING", ""};
+            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
         }
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            exprs(casts);
-            pc(casts);
-            kind(casts);
-            args(casts);
+            Casts.exprs(casts);
+            Casts.pc(casts);
+            Casts.kind(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(RAbstractStringVector exprs, int pc, String kind, RAbstractStringVector args) {
+        protected Object eval(RAbstractStringVector exprs, int pc, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
+
             Object[] results = new Object[pc];
-            // separate threads that run in parallel; invoking thread waits for completion
-            RContext.EvalThread[] threads = new RContext.EvalThread[pc];
-            for (int i = 0; i < pc; i++) {
-                ContextInfo info = createContextInfo(contextKind, args);
-                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
-            }
-            for (int i = 0; i < pc; i++) {
-                threads[i].start();
-            }
-            try {
+            if (pc == 1) {
+                ContextInfo info = createContextInfo(contextKind);
+                PolyglotEngine vm = info.createVM();
+                results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+            } else {
+                // separate threads that run in parallel; invoking thread waits for completion
+                RContext.EvalThread[] threads = new RContext.EvalThread[pc];
                 for (int i = 0; i < pc; i++) {
-                    threads[i].join();
-                    results[i] = threads[i].getEvalResult();
+                    ContextInfo info = createContextInfo(contextKind);
+                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 }
-            } catch (InterruptedException ex) {
-                throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                for (int i = 0; i < pc; i++) {
+                    threads[i].start();
+                }
+                try {
+                    for (int i = 0; i < pc; i++) {
+                        threads[i].join();
+                        results[i] = threads[i].getEvalResult();
+                    }
+                } catch (InterruptedException ex) {
+                    throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                }
             }
             return RDataFactory.createList(results);
         }
 
     }
 
-    private static ContextInfo createContextInfo(RContext.ContextKind contextKind, RAbstractStringVector args) {
-        RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy(), false), false);
-        ContextInfo info = ContextInfo.create(startParams, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
-        return info;
-    }
-
-    private abstract static class ChannelCastAdapter extends RBuiltinNode {
-        protected void key(CastBuilder casts) {
-            casts.arg("key").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
+    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
+    public abstract static class R extends RBuiltinNode {
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
         }
-
-        protected void id(CastBuilder casts) {
-            casts.arg("id").asIntegerVector().mustBe(nullValue().not().and(notEmpty())).findFirst();
-        }
-    }
-
-    @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class CreateChannel extends ChannelCastAdapter {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            key(casts);
+            casts.arg("args").allowMissing().mustBe(stringValue());
+            casts.arg("env").allowMissing().mustBe(stringValue());
+            casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
+            return rc;
+        }
+
+        @Specialization
+        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern) {
+            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
+            return r(RDataFactory.createEmptyStringVector(), env, intern);
+        }
+    }
+
+    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
+    public abstract static class Rscript extends RBuiltinNode {
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("args").mustBe(stringValue(), RError.Message.GENERIC, "usage: /path/to/Rscript [--options] [-e expr [-e expr2 ...] | file] [args]").asStringVector();
+            casts.arg("env").allowMissing().mustBe(stringValue());
+            casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+            Object rc = RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
+            return rc;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern) {
+            return rscript(args, RDataFactory.createEmptyStringVector(), intern);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object rscript(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
+            return rscript(RDataFactory.createEmptyStringVector(), env, intern);
+        }
+
+    }
+
+    private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
+        RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, EMPTY, false), false);
+        ContextInfo info = ContextInfo.create(startParams, null, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+        return info;
+    }
+
+    @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
+    public abstract static class CreateChannel extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.key(casts);
         }
 
         @Specialization
@@ -237,10 +308,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class GetChannel extends ChannelCastAdapter {
+    public abstract static class GetChannel extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            key(casts);
+            Casts.key(casts);
         }
 
         @Specialization
@@ -252,10 +323,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class CloseChannel extends ChannelCastAdapter {
+    public abstract static class CloseChannel extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -268,10 +339,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
-    public abstract static class ChannelSend extends ChannelCastAdapter {
+    public abstract static class ChannelSend extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -284,10 +355,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelReceive extends ChannelCastAdapter {
+    public abstract static class ChannelReceive extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -299,10 +370,10 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelPoll extends ChannelCastAdapter {
+    public abstract static class ChannelPoll extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            id(casts);
+            Casts.id(casts);
         }
 
         @Specialization
@@ -341,4 +412,5 @@ public class FastRContext {
             }
         }
     }
+
 }

@@ -110,15 +110,19 @@ public abstract class ReplaceVectorNode extends Node {
         }
         Object position = positions[0];
         try {
-            if (position instanceof String || position instanceof Double || position instanceof Integer) {
+            if (position instanceof Integer) {
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((Integer) position) - 1, writtenValue});
+            } else if (position instanceof Double) {
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((Double) position) - 1, writtenValue});
+            } else if (position instanceof String) {
                 return ForeignAccess.send(foreignRead, frame, object, new Object[]{position, writtenValue});
             } else if (position instanceof RAbstractStringVector) {
                 String string = firstString.executeString(castNode.execute(position));
                 return ForeignAccess.send(foreignRead, frame, object, new Object[]{string, writtenValue});
             } else if (position instanceof RAbstractDoubleVector) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0), writtenValue});
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0) - 1, writtenValue});
             } else if (position instanceof RAbstractIntVector) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0), writtenValue});
+                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0) - 1, writtenValue});
             } else {
                 throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
             }

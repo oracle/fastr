@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
-import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 
@@ -55,10 +54,13 @@ public class FilterNodeGenSampler extends CastNodeSampler<FilterNodeGen> {
     @SuppressWarnings("unchecked")
     @Override
     public Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        Samples samples = filter.collectSamples(inputType);
-        samples = isWarning ? samples.positiveOnly() : samples;
-        Samples<?> combined = samples.and(downStreamSamples);
-        return combined;
-    }
+        if (isWarning) {
+            return downStreamSamples;
+        } else {
+            Samples samples = filter.collectSamples(inputType);
 
+            Samples<?> combined = samples.and(downStreamSamples);
+            return combined;
+        }
+    }
 }

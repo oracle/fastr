@@ -44,6 +44,7 @@ final class PositionsCheckNode extends Node {
     private final VectorLengthProfile selectedPositionsCountProfile = VectorLengthProfile.create();
     private final VectorLengthProfile maxOutOfBoundsProfile = VectorLengthProfile.create();
     private final ConditionProfile containsNAProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile unsupportedProfile = BranchProfile.create();
     private final boolean replace;
     private final int positionsLength;
 
@@ -64,10 +65,12 @@ final class PositionsCheckNode extends Node {
     @ExplodeLoop
     public boolean isSupported(Object[] positions) {
         if (positionsCheck.length != positions.length) {
+            unsupportedProfile.enter();
             return false;
         }
         for (int i = 0; i < positionsCheck.length; i++) {
             if (!positionsCheck[i].isSupported(positions[i])) {
+                unsupportedProfile.enter();
                 return false;
             }
         }

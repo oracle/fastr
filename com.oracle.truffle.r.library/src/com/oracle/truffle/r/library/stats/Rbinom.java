@@ -261,7 +261,9 @@ public abstract class Rbinom extends RExternalBuiltinNode.Arg3 {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toDouble(0).toDouble(1).toDouble(2);
+        casts.arg(0).asDoubleVector();
+        casts.arg(1).asDoubleVector();
+        casts.arg(2).asDoubleVector();
     }
 
     @Specialization

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.generate;
 
 import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Represents an R session that may be interactive or non-interactive.
@@ -34,8 +35,15 @@ public interface RSession {
      * If {@code contextInfo is non-null} it is used for the evaluation, else the choice is left to
      * the implementation. If the implementation uses timeouts, {@code longTimeout} indicates that
      * this evaluation is expected to take (much) longer than normal.
+     *
+     * If {@code testClass} is not null, then it represents the subclass of {@link TestBase} that
+     * caused the evaluation.
+     *
+     * This result will always be non-null or an exception will be thrown in, say, a timeout
+     * occurring.
+     *
      */
-    String eval(String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
+    String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
 
     /**
      * A name to identify the session.

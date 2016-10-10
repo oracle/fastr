@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -51,6 +52,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
     private static int TAGBUFLEN = 256;
 
     @Override
+    @TruffleBoundary
     protected void printValue(RAbstractListVector s, PrintContext printCtx) throws IOException {
         RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
                         s.getAttr(dummyAttrProfiles, RRuntime.DIM_ATTR_KEY));
@@ -84,7 +86,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 }
             } else if (tmp instanceof RAbstractIntVector) {
                 RAbstractIntVector iv = (RAbstractIntVector) tmp;
-                if (printCtx.printerNode().inherits(iv, "factor", RRuntime.LOGICAL_FALSE)) {
+                if (printCtx.printerNode().inherits(iv, RRuntime.CLASS_FACTOR)) {
                     /* factors are stored as integers */
                     pbuf = snprintf(115, "factor,%d", iv.getLength());
                 } else {
@@ -155,6 +157,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         StringVectorPrinter.INSTANCE.print(tt, cc);
     }
 
+    @TruffleBoundary
     static void printNoDimList(RAbstractContainer s, PrintContext printCtx) throws IOException {
         final PrintParameters pp = printCtx.parameters();
         final PrintWriter out = printCtx.output();
@@ -211,7 +214,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
                 out.println(tagbuf);
                 Object si = s.getDataAtAsObject(i);
-                ValuePrinters.INSTANCE.println(si, printCtx);
+                ValuePrinters.INSTANCE.print(si, printCtx);
+                ValuePrinters.printNewLine(printCtx);
 
                 tagbuf.setLength(taglen); // reset tag buffer to the original value
             }

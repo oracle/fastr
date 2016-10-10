@@ -36,6 +36,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -64,6 +65,11 @@ public abstract class OnExit extends RBuiltinNode {
     private final NAProfile na = NAProfile.create();
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("add").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {

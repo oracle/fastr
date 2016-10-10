@@ -22,6 +22,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // Transcribed from src/library/methods/slot.c
@@ -34,7 +35,7 @@ public class Slot {
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
-            return nameVec.getDataAt(0).intern();
+            return Utils.intern(nameVec.getDataAt(0));
         }
 
         @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
@@ -44,7 +45,7 @@ public class Slot {
 
         @Specialization(contains = "getSlotCached", guards = "nameVec.getLength() == 1")
         protected Object getSlot(Object object, RAbstractStringVector nameVec) {
-            return accessSlotNode.executeAccess(castAttributable.executeObject(object), nameVec.getDataAt(0).intern());
+            return accessSlotNode.executeAccess(castAttributable.executeObject(object), getInternedName(nameVec));
         }
 
         @SuppressWarnings("unused")
@@ -60,7 +61,7 @@ public class Slot {
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         protected static String getInternedName(RAbstractStringVector nameVec) {
-            return nameVec.getDataAt(0).intern();
+            return Utils.intern(nameVec.getDataAt(0));
         }
 
         @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
@@ -70,7 +71,7 @@ public class Slot {
 
         @Specialization(contains = "setSlotCached", guards = "nameVec.getLength() == 1")
         protected Object setSlot(Object object, RAbstractStringVector nameVec, Object value) {
-            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), nameVec.getDataAt(0).intern(), value);
+            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(nameVec), value);
         }
 
         @SuppressWarnings("unused")

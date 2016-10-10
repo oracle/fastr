@@ -52,8 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-import sun.java2d.xr.XRCompositeManager;
-
 public class CastUtils {
 
     public static final class Cast {
@@ -672,6 +670,10 @@ public class CastUtils {
         return te.normalize().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
+    public static Set<?> sampleValuesForClases(Class<?>[] classes) {
+        return Arrays.stream(classes).flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
+    }
+
     public static Set<?> sampleValuesForType(Type t) {
         HashSet<Object> samples = new HashSet<>();
 
@@ -787,21 +789,20 @@ public class CastUtils {
 
     @SuppressWarnings("varargs")
     @SafeVarargs
-    public static <T> Set<? extends T> samples(T samplesHead, T... samplesTail) {
+    public static <T> Set<T> samples(T samplesHead, T... samplesTail) {
         HashSet<T> sampleSet = new HashSet<>(Arrays.asList(samplesTail));
         sampleSet.add(samplesHead);
         return sampleSet;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> Set<? extends T> samples(T s) {
+    public static <T> Set<T> samples(T s) {
         if (s == null) {
-            return Collections.singleton((T) RNull.instance);
+            return Collections.emptySet();
         }
         return Collections.singleton(s);
     }
 
-    public static <T> Set<? extends T> samples() {
+    public static <T> Set<T> samples() {
         return Collections.emptySet();
     }
 

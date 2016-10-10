@@ -219,7 +219,7 @@ void init_internals(JNIEnv *env) {
 	externalPtrSetTagMethodID = checkGetMethodID(env, RExternalPtrClass, "setTag", "(Ljava/lang/Object;)V", 0);
 	externalPtrSetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "setProt", "(Ljava/lang/Object;)V", 0);
 
-	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper$CharSXPWrapper");
+	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$CharSXPWrapper");
 	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 
     R_computeIdenticalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 1);
@@ -250,24 +250,6 @@ SEXP Rf_ScalarReal(double value) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarDoubleMethodID, value);
     return checkRef(thisenv, result);
-}
-
-// JNR calls to PCRE do not work properly (via JNR) without these wrappers
-
-char *pcre_maketables();
-void *pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables);
-int  pcre_exec(void * code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
-
-char *fastr_pcre_maketables() {
-	return pcre_maketables();
-}
-
-void *fastr_pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables) {
-	return pcre_compile(pattern, options, errorMessage, errOffset, tables);
-}
-
-int fastr_pcre_exec(void * code, void *extra,  char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize) {
-	return pcre_exec(code, extra, subject, subjectLength, startOffset, options, ovector, ovecSize);
 }
 
 SEXP Rf_ScalarString(SEXP value) {
@@ -350,6 +332,7 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 SEXP Rf_eval(SEXP expr, SEXP env) {
 	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
@@ -849,7 +832,7 @@ SEXP CADR(SEXP e) {
 }
 
 SEXP CDDR(SEXP e) {
-    TRACE(TARG1, e);
+    TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
     return checkRef(thisenv, result);
@@ -1455,6 +1438,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
+    updateNativeArrays(thisenv);
 	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
@@ -1526,7 +1510,7 @@ void R_SetExternalPtrTag(SEXP s, SEXP tag) {
 	(*thisenv)->CallObjectMethod(thisenv, s, externalPtrSetTagMethodID, tag);
 }
 
-void R_SetExternalPtrProt(SEXP s, SEXP p) {
+void R_SetExternalPtrProtected(SEXP s, SEXP p) {
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallObjectMethod(thisenv, s, externalPtrSetProtMethodID, p);
 }
@@ -1609,12 +1593,13 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
 }
 
-void R_PreserveObject(SEXP x) {
-	// Not applicable
+SEXP R_PreserveObject(SEXP x) {
+	// convert to a JNI global ref until explicitly released
+	return createGlobalRef(getEnv(), x, 0);
 }
 
 void R_ReleaseObject(SEXP x) {
-	// Not applicable
+	releaseGlobalRef(getEnv(), x);
 }
 
 void R_dot_Last(void) {

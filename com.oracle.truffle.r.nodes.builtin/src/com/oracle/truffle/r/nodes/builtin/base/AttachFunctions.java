@@ -22,23 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
@@ -51,7 +54,9 @@ public class AttachFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(1);
+            casts.arg("what").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RAbstractListVector.class)), RError.Message.ATTACH_BAD_TYPE);
+            casts.arg("pos").mustBe(numericValue(), Message.MUST_BE_INTEGER, "pos").asIntegerVector();
+            casts.arg("name").mustBe(stringValue());
         }
 
         @Specialization
@@ -70,7 +75,7 @@ public class AttachFunctions {
             for (int i = 0; i < names.getLength(); i++) {
                 String key = names.getDataAt(i);
                 Object value = what.get(key);
-                // TODO copy?
+                // TODO: copy/sharing?
                 env.safePut(key, value);
             }
             doAttachEnv(pos.getDataAt(0), env);
@@ -79,20 +84,15 @@ public class AttachFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
+        protected REnvironment doAttach(RAbstractListVector what, RAbstractIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
+                // TODO: copy/sharing?
                 env.safePut(names.getDataAt(i), what.getDataAt(i));
             }
             doAttachEnv(pos.getDataAt(0), env);
             return env;
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected REnvironment doAttach(Object what, Object pos, Object name) {
-            throw RError.error(this, RError.Message.ATTACH_BAD_TYPE);
         }
 
         private static void doAttachEnv(int pos, REnvironment env) {
@@ -111,7 +111,7 @@ public class AttachFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(0);
+            casts.arg("pos").mustBe(numericValue(), Message.MUST_BE_INTEGER, "pos").asIntegerVector();
         }
 
         @Specialization

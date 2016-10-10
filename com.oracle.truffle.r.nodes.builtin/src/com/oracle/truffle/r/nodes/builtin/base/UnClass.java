@@ -17,62 +17,72 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class UnClass extends RBuiltinNode {
     private final BranchProfile objectProfile = BranchProfile.create();
+    private final BranchProfile shareableProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").allowNull().asAttributable(true, true, true);
+    }
+
     @Specialization
+    protected RNull unClass(RNull rnull) {
+        return rnull;
+    }
+
     @TruffleBoundary
+    private static Object unClassVector(RAbstractVector arg) {
+        RVector<?> resultVector = arg.materialize();
+        if (!resultVector.isTemporary()) {
+            resultVector = resultVector.copy();
+            resultVector.incRefCount();
+        }
+        return RVector.setVectorClassAttr(resultVector, null);
+    }
+
+    // TODO: this specialization could go away if connections were simple vectors (we wouldn't need
+    // special method for setting class attributes then)
+    @Specialization
     protected Object unClass(RAbstractVector arg) {
         if (arg.isObject(attrProfiles)) {
             objectProfile.enter();
-            RVector resultVector = arg.materialize();
-            if (!resultVector.isTemporary()) {
-                resultVector = resultVector.copy();
-                resultVector.incRefCount();
-            }
-            return RVector.setVectorClassAttr(resultVector, null);
+            return unClassVector(arg);
         }
         return arg;
     }
 
-    @Specialization
-    protected Object unClass(RLanguage arg) {
+    @Specialization(guards = "notAbstractVector(arg)")
+    protected Object unClass(RAttributable arg) {
         if (arg.getClassAttr(attrProfiles) != null) {
             objectProfile.enter();
-            RLanguage resultLang = arg;
-            if (!resultLang.isTemporary()) {
-                resultLang = resultLang.copy();
-                resultLang.incRefCount();
+            if (arg instanceof RShareable) {
+                shareableProfile.enter();
+                RShareable shareable = (RShareable) arg;
+                if (!shareable.isTemporary()) {
+                    shareable = shareable.copy();
+                    shareable.incRefCount();
+                }
             }
-            resultLang.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-            return resultLang;
+            arg.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
         }
         return arg;
     }
 
-    @Specialization
-    protected Object unClass(RS4Object arg) {
-        if (arg.getClassAttr(attrProfiles) != null) {
-            objectProfile.enter();
-            RS4Object resultS4 = arg;
-            if (!resultS4.isTemporary()) {
-                resultS4 = resultS4.copy();
-                resultS4.incRefCount();
-            }
-            resultS4.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-            return resultS4;
-        }
-        return arg;
+    protected boolean notAbstractVector(Object arg) {
+        return !(arg instanceof RAbstractVector);
     }
 }

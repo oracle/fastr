@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import java.io.IOException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -39,8 +37,8 @@ public class TestBase {
     static RContext testVMContext;
 
     @BeforeClass
-    public static void setupClass() throws IOException {
-        testVM = FastRSession.create().createTestContext(null);
+    public static void setupClass() {
+        testVM = FastRSession.create().checkContext(null).createVM();
         testVMContext = testVM.eval(FastRSession.GET_CONTEXT).as(RContext.class);
     }
 
@@ -48,7 +46,7 @@ public class TestBase {
     private static final Source CLEAR_WARNINGS = RSource.fromTextInternal("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS);
 
     @AfterClass
-    public static void finishClass() throws IOException {
+    public static void finishClass() {
         testVM.eval(CLEAR_WARNINGS);
         testVM.dispose();
     }

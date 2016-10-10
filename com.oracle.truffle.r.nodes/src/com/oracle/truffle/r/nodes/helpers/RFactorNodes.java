@@ -82,11 +82,11 @@ public final class RFactorNodes {
             Object attr = attrAccess.execute(factor.getAttributes());
 
             // Convert scalars to vector if necessary
-            RVector vec;
+            RVector<?> vec;
             if (nonScalarLevels.profile(attr instanceof RVector)) {
-                vec = (RVector) attr;
+                vec = (RVector<?>) attr;
             } else if (attr != null) {
-                vec = (RVector) RRuntime.asAbstractVector(attr);   // scalar to vector
+                vec = (RVector<?>) RRuntime.asAbstractVector(attr);   // scalar to vector
             } else {
                 notVectorBranch.enter();
                 // N.B: when a factor is lacking the 'levels' attribute, GNU R uses range 1:14331272
@@ -101,7 +101,7 @@ public final class RFactorNodes {
             } else {
                 if (castString == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    castString = insert(CastStringNodeGen.create(false, false, false, false));
+                    castString = insert(CastStringNodeGen.create(false, false, false));
                 }
                 RStringVector slevels = (RStringVector) castString.executeString(vec);
                 return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);

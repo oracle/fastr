@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @TypeSystemReference(RTypes.class)
 public abstract class ToStringNode extends RBaseNode {
@@ -50,6 +51,8 @@ public abstract class ToStringNode extends RBaseNode {
     static final String DEFAULT_SEPARATOR = ", ";
 
     @Child private ToStringNode recursiveToString;
+
+    private final NACheck naCheck = NACheck.create();
 
     private String toStringRecursive(Object o, boolean quotes, String separator) {
         if (recursiveToString == null) {
@@ -95,7 +98,8 @@ public abstract class ToStringNode extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization
     protected String toString(RComplex complex, boolean quotes, String separator) {
-        return complex.toString();
+        naCheck.enable(complex);
+        return naCheck.convertComplexToString(complex);
     }
 
     @SuppressWarnings("unused")
@@ -113,7 +117,8 @@ public abstract class ToStringNode extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization
     protected String toString(double operand, boolean quotes, String separator) {
-        return RRuntime.doubleToString(operand);
+        naCheck.enable(operand);
+        return naCheck.convertDoubleToString(operand);
     }
 
     @SuppressWarnings("unused")

@@ -115,14 +115,14 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHrAttributable(RAttributable arg, //
-                    @Cached("createBinaryProfile()") ConditionProfile attrStoraeProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
         RAttributes attributes;
         RAttributable profiledArg;
-        if (attrStoraeProfile.profile(arg instanceof RAttributeStorage)) {
+        if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
+            // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
             attributes = ((RAttributeStorage) arg).getAttributes();
-            profiledArg = arg;
         } else {
             profiledArg = argProfile.profile(arg);
             attributes = profiledArg.getAttributes();

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -29,8 +30,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -80,10 +81,19 @@ public class SerializeFunctions {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
+
+        protected void connection(CastBuilder casts) {
+            casts.arg("con").mustBe(instanceOf(RConnection.class));
+        }
     }
 
-    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"}, behavior = IO)
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
     public abstract static class UnserializeFromConn extends Adapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            connection(casts);
+        }
+
         @Specialization
         protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromConnBase(conn, null);
@@ -96,8 +106,15 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serializeToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"}, behavior = IO)
+    @RBuiltin(name = "serializeToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "ascii", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeToConn extends Adapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            connection(casts);
+            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
+            casts.arg("version").allowNull().mustBe(integerValue());
+        }
+
         @Specialization
         protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
             int type;
@@ -112,8 +129,13 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"conn", "refhook"}, behavior = IO)
+    @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
     public abstract static class Unserialize extends Adapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("con").mustBe(instanceOf(RConnection.class).or(instanceOf(RAbstractRawVector.class)));
+        }
+
         @Specialization
         protected Object unSerialize(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromConnBase(conn, null);
@@ -125,8 +147,14 @@ public class SerializeFunctions {
         }
     }
 
-    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "type", "version", "refhook"}, behavior = IO)
+    @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "con", "type", "version", "refhook"}, behavior = IO)
     public abstract static class Serialize extends Adapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("con").allowNull().mustBe(instanceOf(RConnection.class));
+            casts.arg("type").asIntegerVector().findFirst();
+        }
+
         @Specialization
         protected Object serialize(Object object, RConnection conn, int type, RNull version, RNull refhook) {
             return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
@@ -139,15 +167,16 @@ public class SerializeFunctions {
             return RDataFactory.createRawVector(data);
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object serialize(Object object, Object conn, Object asciiLogical, Object version, Object refhook) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-        }
     }
 
-    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"}, behavior = IO)
+    @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "con", "xdr", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeB extends Adapter {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            connection(casts);
+            casts.arg("xdr").asLogicalVector().findFirst();
+        }
+
         @Specialization
         protected Object serializeB(Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
             if (!RRuntime.fromLogical(xdrLogical)) {

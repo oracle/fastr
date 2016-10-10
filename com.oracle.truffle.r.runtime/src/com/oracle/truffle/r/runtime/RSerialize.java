@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Deque;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -68,10 +70,18 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -200,7 +210,7 @@ public class RSerialize {
             return dotDotFindNamespace;
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+        public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
     }
@@ -215,21 +225,9 @@ public class RSerialize {
         return i >> 8;
     }
 
-    private abstract static class Common {
-
+    public abstract static class RefCounter {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
-        protected final CallHook hook;
-        protected final ContextStateImpl contextState;
-
-        protected Common(CallHook hook) {
-            this.hook = hook;
-            this.contextState = getContextState();
-        }
-
-        protected static IOException formatError(byte format, boolean ok) throws IOException {
-            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
-        }
 
         protected Object addReadRef(Object item) {
             assert item != null;
@@ -253,6 +251,22 @@ public class RSerialize {
             }
             return -1;
         }
+    }
+
+    private abstract static class Common extends RefCounter {
+
+        protected final CallHook hook;
+        protected final ContextStateImpl contextState;
+
+        protected Common(CallHook hook) {
+            this.hook = hook;
+            this.contextState = getContextState();
+        }
+
+        protected static IOException formatError(byte format, boolean ok) throws IOException {
+            throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
+        }
+
     }
 
     public static final int DEFAULT_VERSION = 2;
@@ -308,6 +322,26 @@ public class RSerialize {
         Input instance = trace() ? new TracingInput(is, hook, packageName, functionName) : new Input(is, hook, packageName, functionName);
         Object result = instance.unserialize();
         return result;
+    }
+
+    @TruffleBoundary
+    public static RPromise unserializePromise(RExpression expr, Object e, Object value) {
+        assert expr.getLength() == 1;
+        RBaseNode rep;
+        if (expr.getDataAt(0) instanceof RLanguage) {
+            RLanguage lang = (RLanguage) expr.getDataAt(0);
+            rep = lang.getRep();
+        } else if (expr.getDataAt(0) instanceof RSymbol) {
+            rep = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) expr.getDataAt(0)).getName(), false).asRNode();
+        } else {
+            rep = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, expr.getDataAt(0)).asRNode();
+        }
+        if (value == RUnboundValue.instance) {
+            REnvironment env = e == RNull.instance ? REnvironment.baseEnv() : (REnvironment) e;
+            return RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
+        } else {
+            return RDataFactory.createEvaluatedPromise(Closure.create(rep), value);
+        }
     }
 
     private static class Input extends Common {
@@ -610,21 +644,7 @@ public class RSerialize {
                             String deparse = RDeparse.deparseDeserialize(constants, pl.cdr());
                             RExpression expr = parse(constants, deparse);
                             assert expr.getLength() == 1;
-                            RBaseNode rep;
-                            if (expr.getDataAt(0) instanceof RLanguage) {
-                                RLanguage lang = (RLanguage) expr.getDataAt(0);
-                                rep = lang.getRep();
-                            } else if (expr.getDataAt(0) instanceof RSymbol) {
-                                rep = RContext.getRRuntimeASTAccess().createReadVariableNode(((RSymbol) expr.getDataAt(0)).getName());
-                            } else {
-                                rep = RContext.getRRuntimeASTAccess().createConstantNode(expr.getDataAt(0));
-                            }
-                            if (pl.car() == RUnboundValue.instance) {
-                                REnvironment env = pl.getTag() == RNull.instance ? REnvironment.baseEnv() : (REnvironment) pl.getTag();
-                                result = RDataFactory.createPromise(PromiseState.Explicit, Closure.create(rep), env.getFrame());
-                            } else {
-                                result = RDataFactory.createEvaluatedPromise(Closure.create(rep), pl.car());
-                            }
+                            result = unserializePromise(expr, pl.getTag(), pl.car());
                             break;
                         }
 
@@ -674,7 +694,7 @@ public class RSerialize {
                         data[i] = elem;
                     }
                     if (type == SEXPTYPE.EXPRSXP) {
-                        result = RDataFactory.createExpression(RDataFactory.createList(data));
+                        result = RDataFactory.createExpression(data);
                     } else {
                         // this could (ultimately) be a list, factor or dataframe
                         result = RDataFactory.createList(data);
@@ -940,9 +960,9 @@ public class RSerialize {
                 if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
                     ((RShareable) attrValue).incRefCount();
                 }
-                if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (result instanceof RVector<?> && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;
-                    result = ((RVector) result).setClassAttr(classes);
+                    result = ((RVector<?>) result).setClassAttr(classes);
                 } else {
                     rAttributable.setAttr(tag, attrValue);
                 }
@@ -1115,6 +1135,8 @@ public class RSerialize {
         private int size;
         private int offset;
 
+        private final WeakHashMap<String, WeakReference<String>> strings = RContext.getInstance().stringMap;
+
         XdrInputFormat(InputStream is) {
             super(is);
             if (is instanceof PByteArrayInputStream) {
@@ -1167,6 +1189,14 @@ public class RSerialize {
                 result = new String(buf, offset, len, StandardCharsets.UTF_8);
             }
             offset += len;
+            WeakReference<String> entry;
+            if ((entry = strings.get(result)) != null) {
+                String string = entry.get();
+                if (string != null) {
+                    return string;
+                }
+            }
+            strings.put(result, new WeakReference<>(result));
             return result;
         }
 
@@ -1281,20 +1311,35 @@ public class RSerialize {
 
         @Override
         void writeString(String value) throws IOException {
-            byte[] bytes = value.getBytes();
-            int bytesLen = bytes.length;
-            int totalLen = bytesLen + 4;
-            if (totalLen > buf.length) {
-                // too large to fit buffer
-                ensureSpace(4);
-                writeInt(bytesLen);
-                flushBuffer();
-                os.write(bytes);
+            boolean simple = true;
+            for (int i = 0; i < value.length(); i++) {
+                if (value.charAt(i) >= 0x80) {
+                    simple = false;
+                    break;
+                }
+            }
+            if (simple && value.length() <= buf.length) {
+                writeInt(value.length());
+                ensureSpace(value.length());
+                for (int i = 0; i < value.length(); i++) {
+                    buf[offset++] = (byte) value.charAt(i);
+                }
             } else {
-                ensureSpace(totalLen);
-                writeInt(bytesLen);
-                System.arraycopy(bytes, 0, buf, offset, bytesLen);
-                offset += bytesLen;
+                byte[] bytes = value.getBytes();
+                int bytesLen = bytes.length;
+                int totalLen = bytesLen + 4;
+                if (totalLen > buf.length) {
+                    // too large to fit buffer
+                    ensureSpace(4);
+                    writeInt(bytesLen);
+                    flushBuffer();
+                    os.write(bytes);
+                } else {
+                    ensureSpace(totalLen);
+                    writeInt(bytesLen);
+                    System.arraycopy(bytes, 0, buf, offset, bytesLen);
+                    offset += bytesLen;
+                }
             }
         }
 
@@ -1355,10 +1400,6 @@ public class RSerialize {
         private State state;
         protected final POutputStream stream;
         private int version;
-
-        private Output(RConnection conn, int format, int version, CallHook hook) throws IOException {
-            this(conn.getOutputStream(), format, version, hook);
-        }
 
         private Output(OutputStream os, int format, int version, CallHook hook) throws IOException {
             super(hook);
@@ -1571,15 +1612,15 @@ public class RSerialize {
 
                         case EXPRSXP:
                         case VECSXP: {
-                            RList list;
+                            RAbstractVector list;
                             if (type == SEXPTYPE.EXPRSXP) {
-                                list = ((RExpression) obj).getList();
+                                list = (RExpression) obj;
                             } else {
                                 list = (RList) obj;
                             }
                             stream.writeInt(list.getLength());
                             for (int i = 0; i < list.getLength(); i++) {
-                                Object listObj = list.getDataAt(i);
+                                Object listObj = list.getDataAtAsObject(i);
                                 writeItem(listObj);
                             }
                             break;
@@ -1681,7 +1722,7 @@ public class RSerialize {
                             switch (type) {
                                 case FUNSXP: {
                                     RFunction fun = (RFunction) obj;
-                                    RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, fun);
+                                    RPairList pl = (RPairList) serializeLanguageObject(state, fun);
                                     assert pl != null;
                                     state.convertUnboundValues(pl);
                                     if (FastROptions.debugMatches("printWclosure")) {
@@ -1694,7 +1735,7 @@ public class RSerialize {
                                 }
 
                                 case PROMSXP: {
-                                    RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, obj);
+                                    RPairList pl = (RPairList) serializeLanguageObject(state, obj);
                                     assert pl != null;
                                     state.convertUnboundValues(pl);
                                     if (pl.getTag() != RNull.instance) {
@@ -1716,7 +1757,7 @@ public class RSerialize {
                                 }
 
                                 case LANGSXP: {
-                                    RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, obj);
+                                    RPairList pl = (RPairList) serializeLanguageObject(state, obj);
                                     state.convertUnboundValues(pl);
                                     writeItem(pl.car());
                                     obj = pl.cdr();
@@ -1872,11 +1913,10 @@ public class RSerialize {
      * {@code serialize} method. On return the caller is responsible for removing the virtual
      * pairlist with {@link State#closePairList()} and assigning it into the appropriate field (
      * {@code car} or {@code cdr}) of it's virtual pairlist.
-     *
      */
-    public abstract static class State {
+    private abstract static class State {
 
-        protected final Output output;
+        @SuppressWarnings("unused") protected final Output output;
         private Map<String, RSymbol> symbolMap = new HashMap<>();
 
         private State(Output output) {
@@ -1936,12 +1976,6 @@ public class RSerialize {
         public abstract void setNull();
 
         /**
-         * Checks for the special case where the active pairlist has a {@link RNull} {@code car} and
-         * {@code cdr} and an unset {@code tag}.
-         */
-        public abstract boolean isNull();
-
-        /**
          * Closes the current pairlist, handling the case where a "simple" value is down-shifted
          * from a pairlist to just the value.
          *
@@ -1958,17 +1992,6 @@ public class RSerialize {
          * list.
          */
         public abstract void linkPairList(int n);
-
-        /**
-         * Handles the special case of '[', where the indices and "drop/exact" values are in
-         * different parts of the AST but need to be in the same list.
-         */
-        public abstract void setPositionsLength(int n);
-
-        /**
-         * Returns value from previous call to {@link #setPositionsLength(int)}.
-         */
-        public abstract int getPositionsLength();
 
         /**
          * Special case where the value is in the {@code cdr} and it needs to be in the {@code car}.
@@ -1990,23 +2013,6 @@ public class RSerialize {
             setCar(RMissing.instance);
         }
 
-        public void setAsBuiltin(String name) {
-            setAsLangType();
-            setCarAsSymbol(name);
-        }
-
-        public void serializeNodeSetCar(Object node) {
-            openPairList();
-            RContext.getRRuntimeASTAccess().serializeNode(this, node);
-            setCar(closePairList());
-        }
-
-        public void serializeNodeSetCdr(Object node, SEXPTYPE type) {
-            openPairList(type);
-            RContext.getRRuntimeASTAccess().serializeNode(this, node);
-            setCdr(closePairList());
-        }
-
         RSymbol findSymbol(String name) {
             RSymbol symbol = symbolMap.get(name);
             if (symbol == null) {
@@ -2024,8 +2030,6 @@ public class RSerialize {
     private static class PLState extends State {
         private static final RPairList NULL = RDataFactory.createPairList();
         private Deque<RPairList> active = new LinkedList<>();
-        private int[] positionsLength = new int[10];
-        private int px = 0;
 
         private PLState(Output output) {
             super(output);
@@ -2119,12 +2123,6 @@ public class RSerialize {
         }
 
         @Override
-        public boolean isNull() {
-            RPairList pl = active.peekFirst();
-            return pl.getTag() == RUnboundValue.instance && pl.car() == RNull.instance && pl.cdr() == RNull.instance;
-        }
-
-        @Override
         public void switchCdrToCar() {
             RPairList pl = active.removeFirst();
             // setting the type prevents the usual value down-shift on close
@@ -2161,17 +2159,6 @@ public class RSerialize {
         }
 
         @Override
-        public void setPositionsLength(int n) {
-            positionsLength[px++] = n;
-        }
-
-        @Override
-        public int getPositionsLength() {
-            px--;
-            return positionsLength[px];
-        }
-
-        @Override
         public void convertUnboundValues(RPairList pl) {
             Object obj = pl;
             while (obj instanceof RPairList) {
@@ -2205,8 +2192,45 @@ public class RSerialize {
     }
 
     @TruffleBoundary
+    public static byte[] serializePromiseRep(RPromise promise) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, XDR, DEFAULT_VERSION, null);
+            State state = new PLState(output);
+            state.openPairList();
+            new SerializeVisitor(state).accept(promise.getRep().asRSyntaxNode());
+            Object res = state.closePairList();
+            if (res instanceof RPairList) {
+                state.convertUnboundValues((RPairList) res);
+            }
+            output.serialize(state, res);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
+    public static byte[] serializeFunctionNonEnv(RFunction fn) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, XDR, DEFAULT_VERSION, null);
+            State state = new PLState(output);
+            state.openPairList(SEXPTYPE.CLOSXP);
+            serializeFunctionDefinition(state, (RSyntaxFunction) fn.getRootNode());
+            Object res = state.closePairList();
+            // CLOSXP-type ensures that the list is not shrunk
+            state.convertUnboundValues((RPairList) res);
+            output.serialize(state, res);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
     public static void serialize(RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
-        Output output = new Output(conn, type, version, (CallHook) refhook);
+        Output output = new Output(conn.getOutputStream(), type, version, (CallHook) refhook);
         State state = new PLState(output);
         output.serialize(state, obj);
     }
@@ -2276,5 +2300,226 @@ public class RSerialize {
             out.printf(format, objects);
             out.write('\n');
         }
+    }
+
+    private static final class SerializeVisitor extends RSyntaxVisitor<Void> {
+
+        private final State state;
+
+        SerializeVisitor(State state) {
+            this.state = state;
+        }
+
+        @Override
+        protected Void visit(RSyntaxCall element) {
+            state.setAsLangType();
+            state.openPairList();
+            accept(element.getSyntaxLHS());
+            state.setCar(state.closePairList());
+            RSyntaxElement[] arguments = element.getSyntaxArguments();
+            RSyntaxElement lhs = element.getSyntaxLHS();
+            if (isColon(lhs)) {
+                // special case, have to translate Identifier names to Symbols
+                for (int i = 0; i < 2; i++) {
+                    RSyntaxElement arg = arguments[i];
+                    state.openPairList();
+                    if (arg instanceof RSyntaxLookup) {
+                        state.setCarAsSymbol(((RSyntaxLookup) arg).getIdentifier());
+                    } else {
+                        state.setCar(((RSyntaxConstant) arg).getValue());
+                    }
+                }
+                state.linkPairList(2);
+                state.setCdr(state.closePairList());
+            } else {
+                boolean infixFieldAccess = false;
+                if (lhs instanceof RSyntaxLookup) {
+                    String name = ((RSyntaxLookup) lhs).getIdentifier();
+                    infixFieldAccess = "$".equals(name) || "@".equals(name);
+                }
+                serializeArguments(arguments, element.getSyntaxSignature(), infixFieldAccess);
+            }
+            return null;
+        }
+
+        private static boolean isColon(RSyntaxElement element) {
+            if (element instanceof RSyntaxLookup) {
+                String name = ((RSyntaxLookup) element).getIdentifier();
+                return name.equals("::") || name.equals(":::");
+            }
+            return false;
+        }
+
+        private void serializeArguments(RSyntaxElement[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
+            state.openPairList(SEXPTYPE.LISTSXP);
+            if (arguments.length == 0) {
+                state.setNull();
+            } else {
+                for (int i = 0; i < arguments.length; i++) {
+                    RSyntaxElement argument = arguments[i];
+                    String name = signature.getName(i);
+                    if (name != null) {
+                        state.setTagAsSymbol(name);
+                    }
+                    if (argument == null) {
+                        state.setCarMissing();
+                    } else {
+                        if (infixFieldAccess && i == 1 && argument instanceof RSyntaxConstant) {
+                            RSyntaxConstant c = (RSyntaxConstant) argument;
+                            String identifier = RRuntime.asStringLengthOne(c.getValue());
+                            assert identifier != null;
+                            state.setCarAsSymbol(identifier);
+                        } else {
+                            state.openPairList();
+                            accept(argument);
+                            state.setCar(state.closePairList());
+                        }
+                    }
+                    if (i != arguments.length - 1) {
+                        state.openPairList();
+                    }
+
+                }
+                state.linkPairList(arguments.length);
+            }
+            state.setCdr(state.closePairList());
+        }
+
+        @Override
+        protected Void visit(RSyntaxConstant element) {
+            if (element.getValue() == RMissing.instance) {
+                state.setCar(RMissing.instance);
+            } else {
+                state.setCar(element.getValue());
+            }
+            return null;
+        }
+
+        @Override
+        protected Void visit(RSyntaxLookup element) {
+            state.setCarAsSymbol(element.getIdentifier());
+            return null;
+        }
+
+        @Override
+        protected Void visit(RSyntaxFunction element) {
+            state.setAsLangType();
+            state.setCarAsSymbol("function");
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.setCar(visitFunctionFormals(element));
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.setCdr(visitFunctionBody(element));
+            state.switchCdrToCar();
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.setCar(RNull.instance);
+            state.setCdr(RNull.instance);
+            state.setCdr(state.closePairList());
+            state.setCdr(state.closePairList());
+            state.setCdr(state.closePairList());
+            return null;
+        }
+
+        /**
+         * Serialize a function's formal arguments. On entry {@code state} has an active pairlist,
+         * whose {@code tag} is the enclosing {@link REnvironment}. The {@code car} will be set to
+         * the pairlist representing the formal arguments (or {@link RNull} if none). Each formal
+         * argument is represented as a pairlist:
+         * <ul>
+         * <li>{@code tag}: RSymbol(name)</li>
+         * <li>{@code car}: Missing or default value</li>
+         * <li>{@code cdr}: if last formal then RNull else pairlist for next argument.
+         * </ul>
+         */
+        public Object visitFunctionFormals(RSyntaxFunction element) {
+            ArgumentsSignature signature = element.getSyntaxSignature();
+            RSyntaxElement[] defaults = element.getSyntaxArgumentDefaults();
+            if (signature.getLength() > 0) {
+                for (int i = 0; i < signature.getLength(); i++) {
+                    state.openPairList();
+                    state.setTagAsSymbol(signature.getName(i));
+                    if (defaults[i] != null) {
+                        state.openPairList();
+                        accept(defaults[i]);
+                        state.setCar(state.closePairList());
+                    } else {
+                        state.setCarMissing();
+                    }
+                }
+                state.linkPairList(signature.getLength());
+                return state.closePairList();
+            } else {
+                return RNull.instance;
+            }
+        }
+
+        /**
+         * Serialize a function's body. On entry {@code state} has an active pairlist, whose
+         * {@code tag} is the enclosing {@link REnvironment}. The {@code cdr} to the pairlist
+         * representing the body. The body is never empty as the syntax "{}" has a value, however if
+         * the body is a simple expression, e.g. {@code function(x) x}, the body is not represented
+         * as a pairlist, just a SYMSXP, which is handled transparently in
+         * {@code RSerialize.State.closePairList()}.
+         */
+        public Object visitFunctionBody(RSyntaxFunction element) {
+            state.openPairList();
+            accept(element.getSyntaxBody());
+            return state.closePairList();
+        }
+    }
+
+    private static Object serializeLanguageObject(RSerialize.State state, Object obj) {
+        if (obj instanceof RFunction) {
+            return RSerialize.serializeFunction(state, (RFunction) obj);
+        } else if (obj instanceof RLanguage) {
+            return RSerialize.serializeLanguage(state, (RLanguage) obj);
+        } else if (obj instanceof RPromise) {
+            return RSerialize.serializePromise(state, (RPromise) obj);
+        } else {
+            throw RInternalError.unimplemented("serialize");
+        }
+    }
+
+    private static Object serializeFunction(State state, RFunction f) {
+        RSyntaxFunction function = (RSyntaxFunction) f.getRootNode();
+        REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
+        state.openPairList().setTag(env);
+        serializeFunctionDefinition(state, function);
+        return state.closePairList();
+    }
+
+    private static void serializeFunctionDefinition(State state, RSyntaxFunction function) {
+        SerializeVisitor visitor = new SerializeVisitor(state);
+        state.setCar(visitor.visitFunctionFormals(function));
+        state.setCdr(visitor.visitFunctionBody(function));
+    }
+
+    private static Object serializeLanguage(State state, RLanguage lang) {
+        RSyntaxElement element = lang.getRep().asRSyntaxNode();
+        state.openPairList(SEXPTYPE.LANGSXP);
+        new SerializeVisitor(state).accept(element);
+        return state.closePairList();
+    }
+
+    private static Object serializePromise(State state, RPromise promise) {
+        /*
+         * If the promise is evaluated, we store the value (in car) and the tag is set to RNull,
+         * else we record the environment in the tag and store RUnboundValue. In either case we
+         * record the expression.
+         */
+        Object value;
+        Object tag;
+        if (promise.isEvaluated()) {
+            value = promise.getValue();
+            tag = RNull.instance;
+        } else {
+            value = RUnboundValue.instance;
+            tag = promise.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(promise.getFrame());
+        }
+        state.openPairList().setTag(tag);
+        state.setCar(value);
+        state.openPairList();
+        new SerializeVisitor(state).accept(promise.getRep().asRSyntaxNode());
+        state.setCdr(state.closePairList());
+        return state.closePairList();
     }
 }

@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.MUST_BE_NONNULL_STRING;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -31,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -38,9 +42,9 @@ import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -65,6 +69,14 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
+        // RAttributable.
+        casts.arg("x"); // disallows null
+        casts.arg("which").defaultError(SHOW_CALLER, MUST_BE_NONNULL_STRING, "name").mustBe(stringValue()).asStringVector().findFirst();
+    }
 
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
@@ -101,7 +113,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private String intern(String name) {
         if (cachedName == null) {
             // unoptimized case
-            return name.intern();
+            return Utils.intern(name);
         }
         if (cachedName == name) {
             // cached case
@@ -112,12 +124,12 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (cachedName == "") {
             // Checkstyle: resume StringLiteralEquality
             cachedName = name;
-            cachedInternedName = name.intern();
+            cachedInternedName = Utils.intern(name);
         } else {
             cachedName = null;
             cachedInternedName = null;
         }
-        return name.intern();
+        return Utils.intern(name);
     }
 
     @Specialization
@@ -180,11 +192,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
         return result;
     }
 
-    @Specialization(guards = "!nullValue(value)")
-    protected RAbstractContainer updateAttr(RAbstractVector vector, RStringVector name, Object value) {
-        return updateAttr(vector, name.getDataAt(0), value);
-    }
-
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
     // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
     protected boolean nullValue(Object value) {
@@ -196,16 +203,12 @@ public abstract class UpdateAttr extends RBuiltinNode {
      */
     @Fallback
     protected Object updateAttr(Object obj, Object name, Object value) {
+        assert name instanceof String : "casts should not pass anything but String";
         Object object = obj;
-        String sname = RRuntime.asString(name);
-        if (sname == null) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "name");
-        }
         if (object instanceof RShareable) {
             object = ((RShareable) object).getNonShared();
         }
-        String internedName = intern(sname);
+        String internedName = intern((String) name);
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {
@@ -215,12 +218,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             }
             return object;
         } else {
-            errorProfile.enter();
-            if (object instanceof RNull) {
-                throw RError.error(this, Message.GENERIC, "attempt to set an attribute on NULL");
-            } else {
-                throw RError.nyi(this, "object cannot be attributed");
-            }
+            throw RError.nyi(this, "object cannot be attributed");
         }
     }
 }

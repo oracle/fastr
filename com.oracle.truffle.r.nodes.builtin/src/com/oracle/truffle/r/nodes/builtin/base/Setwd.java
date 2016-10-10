@@ -22,31 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.CHAR_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 @RBuiltin(name = "setwd", visibility = OFF, kind = INTERNAL, parameterNames = "path", behavior = IO)
 public abstract class Setwd extends RBuiltinNode {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("path").defaultError(SHOW_CALLER, CHAR_ARGUMENT).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+    }
+
     @Specialization
     @TruffleBoundary
-    protected Object setwd(RAbstractStringVector path) {
-        if (path.getLength() == 0) {
-            throw RError.error(this, RError.Message.CHAR_ARGUMENT);
-        }
+    protected Object setwd(String path) {
         String owd = RFFIFactory.getRFFI().getBaseRFFI().getwd();
-        String nwd = Utils.tildeExpand(path.getDataAt(0));
+        String nwd = Utils.tildeExpand(path);
         int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(nwd);
         if (rc != 0) {
             throw RError.error(this, RError.Message.CANNOT_CHANGE_DIRECTORY);
@@ -55,11 +60,5 @@ public abstract class Setwd extends RBuiltinNode {
             Utils.updateCurwd(nwdAbs);
             return owd;
         }
-    }
-
-    @Fallback
-    @TruffleBoundary
-    protected Object setwd(@SuppressWarnings("unused") Object path) {
-        throw RError.error(this, RError.Message.CHAR_ARGUMENT);
     }
 }

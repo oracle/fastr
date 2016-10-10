@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.base.TraceFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimUnTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -50,7 +51,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -77,7 +77,7 @@ public class FastRTrace {
                 topEnv = insert(TopEnvNodeGen.create(null));
                 parentFrame = insert(ParentFrameNodeGen.create(null));
             }
-            return topEnv.execute(frame, parentFrame.execute(frame, 1), RNull.instance);
+            return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);
         }
 
         protected Object getFunction(VirtualFrame frame, Object what, Object where) {
@@ -85,7 +85,7 @@ public class FastRTrace {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create(null));
             }
-            return getNode.execute(frame, what, where, RType.Function.getName(), true);
+            return getNode.executeBuiltin(frame, what, where, RType.Function.getName(), true);
         }
 
         protected void checkWhat(Object what) {
@@ -114,6 +114,7 @@ public class FastRTrace {
 
         @Child private TraceFunctions.PrimTrace primTrace;
         @Child private CastLogicalNode castLogical;
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Specialization
         protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
@@ -136,8 +137,8 @@ public class FastRTrace {
                     primTrace = insert(PrimTraceNodeGen.create(null));
                 }
 
-                Object result = primTrace.execute(frame, func);
-                RContext.getInstance().setVisible(false);
+                Object result = primTrace.executeBuiltin(frame, func);
+                visibility.execute(frame, false);
                 return result;
             }
 
@@ -153,7 +154,7 @@ public class FastRTrace {
                 print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
             }
             complexCase(func, tracer, exit, at, print, signature);
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
             return func.toString();
         }
 
@@ -181,7 +182,6 @@ public class FastRTrace {
 
         @Specialization
         protected Object untrace(VirtualFrame frame, Object whatObj, Object signature, Object whereObj) {
-            RContext.getInstance().setVisible(false);
             Object what = whatObj;
             checkWhat(what);
             Object where = whereObj;
@@ -198,7 +198,7 @@ public class FastRTrace {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     primUnTrace = insert(PrimUnTraceNodeGen.create(null));
                 }
-                primUnTrace.execute(frame, func);
+                primUnTrace.executeBuiltin(frame, func);
             } else {
                 throw RError.nyi(this, "method tracing");
             }

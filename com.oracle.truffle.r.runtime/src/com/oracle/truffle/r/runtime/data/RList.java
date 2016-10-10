@@ -25,10 +25,11 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
-public final class RList extends RListBase {
+public final class RList extends RListBase implements RAbstractListVector {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
     public String elementNamePrefix;
 
@@ -47,14 +48,14 @@ public final class RList extends RListBase {
     }
 
     @Override
-    protected RVector internalDeepCopy() {
+    protected RList internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
         RList listCopy = new RList(Arrays.copyOf(data, data.length), dimensions, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {
-                Object elCopy = ((RVector) el).deepCopy();
+                Object elCopy = ((RVector<?>) el).deepCopy();
                 listCopy.updateDataAt(i, elCopy, null);
             }
         }
@@ -80,5 +81,4 @@ public final class RList extends RListBase {
     public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader);
     }
-
 }

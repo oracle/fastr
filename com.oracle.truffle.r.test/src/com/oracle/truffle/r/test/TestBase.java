@@ -37,8 +37,8 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -129,8 +129,13 @@ public class TestBase {
         private static final String EXPECTED = "expected=";
         private static final String GEN_FASTR = "gen-fastr=";
         private static final String GEN_DIFFS = "gen-diff=";
-        private static final String KEEP_TRAILING_WHITESPACEG = "keep-trailing-whitespace";
+        private static final String KEEP_TRAILING_WHITESPACE = "keep-trailing-whitespace";
+        private static final String TRACE_TESTS = "trace-tests";
         private static final String TEST_METHODS = "test-methods=";
+        /**
+         * The dir where 'mx' puts the output from building this project.
+         */
+        private static final String TEST_PROJECT_OUTPUT_DIR = "test-project-output-dir=";
 
         private final String arg;
 
@@ -164,8 +169,12 @@ public class TestBase {
                             genExpectedQuiet = true;
                         } else if (directive.equals(CHECK_EXPECTED)) {
                             checkExpected = true;
-                        } else if (directive.equals(KEEP_TRAILING_WHITESPACEG)) {
+                        } else if (directive.equals(KEEP_TRAILING_WHITESPACE)) {
                             keepTrailingWhiteSpace = true;
+                        } else if (directive.equals(TRACE_TESTS)) {
+                            traceTests = true;
+                        } else if (directive.startsWith(TEST_PROJECT_OUTPUT_DIR)) {
+                            testProjectOutputDir = Paths.get(directive.replace(TEST_PROJECT_OUTPUT_DIR, ""));
                         } else if (directive.equals(TEST_METHODS)) {
                             testMethodsPattern = directive.replace(TEST_METHODS, "");
                         } else {
@@ -178,6 +187,7 @@ public class TestBase {
                 }
                 expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
+                addOutputHook();
             } catch (Throwable ex) {
                 throw new AssertionError("R initialization failure", ex);
             }
@@ -203,7 +213,6 @@ public class TestBase {
                 if (diffsOutputFile != null) {
                     TestOutputManager.writeDiffsTestOutputFile(diffsOutputFile, expectedOutputManager, fastROutputManager);
                 }
-                RPerfStats.report();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -213,15 +222,25 @@ public class TestBase {
         @Override
         public void testStarted(Description description) {
             testElementName = description.getClassName() + "." + description.getMethodName();
+            if (traceTests) {
+                System.out.println(testElementName);
+            }
             failedMicroTests = new ArrayList<>();
         }
     }
 
     @Before
     public void beforeTest() {
+        checkOutputManagersInitialized();
+    }
+
+    private static void checkOutputManagersInitialized() {
         if (expectedOutputManager == null) {
-            // assume we are running a unit test in an IDE and the RunListener was not invoked.
-            // In this case we can expect the test output file to exist and open it as a resource
+            /*
+             * Assume we are running a unit test in an IDE/non-JUnit setup and therefore the
+             * RunListener was not invoked. In this case we can expect the test output file to exist
+             * and open it as a resource.
+             */
             URL expectedTestOutputURL = ResourceHandlerFactory.getHandler().getResource(TestBase.class, TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
             if (expectedTestOutputURL == null) {
                 Assert.fail("cannot find " + TestOutputManager.TEST_EXPECTED_OUTPUT_FILE + " resource");
@@ -229,10 +248,38 @@ public class TestBase {
                 try {
                     expectedOutputManager = new ExpectedTestOutputManager(new File(expectedTestOutputURL.getPath()), false, false, false);
                     fastROutputManager = new FastRTestOutputManager(null);
+                    addOutputHook();
                 } catch (IOException ex) {
                     Assert.fail("error reading: " + expectedTestOutputURL.getPath() + ": " + ex);
                 }
             }
+        }
+    }
+
+    /**
+     * Method for non-JUnit implementation to emulate important behavior of {@link RunListener}.
+     */
+    public static void emulateRunListener() {
+        checkOutputManagersInitialized();
+    }
+
+    /**
+     * Method for non-JUnit implementation to set test tracing.
+     */
+    public static void setTraceTests() {
+        traceTests = true;
+    }
+
+    /**
+     * Set the test context explicitly (for non-JUnit implementation). N.B. The {@code lineno} is
+     * not the micro-test line, but that of the method declaration.
+     */
+    public void doBeforeTest(String className, int lineno, String methodName) {
+        testElementName = className + "." + methodName;
+        failedMicroTests = new ArrayList<>();
+        explicitTestContext = String.format("%s:%d (%s)", className, lineno, methodName);
+        if (traceTests) {
+            System.out.println(testElementName);
         }
     }
 
@@ -344,6 +391,13 @@ public class TestBase {
      */
     private static boolean keepTrailingWhiteSpace;
 
+    /**
+     * Trace the test methods as they are executed (debugging).
+     */
+    private static boolean traceTests;
+
+    private static Path testProjectOutputDir;
+
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
 
@@ -415,14 +469,56 @@ public class TestBase {
 
     private static Path cwd;
 
-    /**
-     * Return a path that is relative to the cwd when running tests.
-     */
-    public static Path relativize(Path path) {
+    private static Path getCwd() {
         if (cwd == null) {
             cwd = Paths.get(System.getProperty("user.dir"));
         }
-        return cwd.relativize(path);
+        return cwd;
+    }
+
+    public static void setTestProjectOutputDir(String path) {
+        testProjectOutputDir = Paths.get(path);
+    }
+
+    private static final String TEST_OUTPUT = "tmptest";
+
+    /**
+     * Return a path that is relative to the 'cwd/testoutput' when running tests.
+     */
+    public static Path relativize(Path path) {
+        return getCwd().relativize(path);
+    }
+
+    /**
+     * Creates a directory with suffix {@code name} in the {@code testoutput} directory and returns
+     * a relative path to it.
+     */
+    public static Path createTestDir(String name) {
+        Path dir = Paths.get(getCwd().toString(), TEST_OUTPUT, name);
+        if (!dir.toFile().exists()) {
+            if (!dir.toFile().mkdirs()) {
+                Assert.fail("failed to create dir: " + dir.toString());
+            }
+        }
+        return relativize(dir);
+    }
+
+    private static final String TEST_PROJECT = "com.oracle.truffle.r.test";
+    private static final String TEST_NATIVE_PROJECT = "com.oracle.truffle.r.test.native";
+
+    /**
+     * Returns a path to {@code baseName}, assumed to be nested in {@link #testProjectOutputDir}.
+     * The path is return relativized to the cwd.
+     */
+    public static Path getProjectFile(Path baseName) {
+        Path baseNamePath = Paths.get(TEST_PROJECT.replace('.', '/'), baseName.toString());
+        Path result = relativize(testProjectOutputDir.resolve(baseNamePath));
+        return result;
+    }
+
+    public static Path getNativeProjectFile(Path baseName) {
+        Path path = Paths.get(TEST_NATIVE_PROJECT, baseName.toString());
+        return path;
     }
 
     private static void microTestFailed() {
@@ -440,18 +536,25 @@ public class TestBase {
         if (explicitTestContext != null) {
             return explicitTestContext;
         }
-        // We want the stack trace as if the JUnit test failed
+        // We want the stack trace as if the JUnit test failed.
         RuntimeException ex = new RuntimeException();
         // The first method not in TestBase is the culprit
         StackTraceElement culprit = null;
-        for (StackTraceElement se : ex.getStackTrace()) {
-            if (!se.getClassName().endsWith("TestBase")) {
-                culprit = se;
-                break;
+        try {
+            // N.B. This may not always be available (AOT).
+            StackTraceElement[] stackTrace = ex.getStackTrace();
+            for (int i = 0; i < stackTrace.length; i++) {
+                StackTraceElement se = stackTrace[i];
+                if (!se.getClassName().endsWith("TestBase")) {
+                    culprit = se;
+                    break;
+                }
             }
+            String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
+            return context;
+        } catch (NullPointerException npe) {
+            return "no test context available";
         }
-        String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
-        return context;
     }
 
     private void evalAndCompare(String[] inputs, TestTrait... traits) {
@@ -508,7 +611,9 @@ public class TestBase {
                 } else {
                     failedInputCount++;
                     microTestFailed();
-                    System.out.print('E');
+                    if (inputs.length > 1) {
+                        System.out.print('E');
+                    }
                 }
                 allOk &= ok;
                 afterMicroTest();
@@ -657,7 +762,8 @@ public class TestBase {
             try {
                 String message = matcher.group("msg" + i);
                 Matcher messageMatcher = warningMessagePattern.matcher(message);
-                assert messageMatcher.matches() : "unexpected format in warning message: " + message;
+                boolean messageMatches = messageMatcher.matches();
+                assert messageMatches : "unexpected format in warning message: " + message;
                 str.append(messageMatcher.group("m").trim()).append('|');
             } catch (IllegalArgumentException e) {
                 break;
@@ -690,11 +796,11 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected static String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
+    protected String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
         microTestInfo.expression = input;
         String result;
         try {
-            result = fastROutputManager.fastRSession.eval(input, contextInfo, longTimeout);
+            result = fastROutputManager.fastRSession.eval(this, input, contextInfo, longTimeout);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
@@ -722,6 +828,19 @@ public class TestBase {
 
     protected static boolean checkOnly() {
         return expectedOutputManager.checkOnly;
+    }
+
+    /**
+     * Used only for package installation to avoid explicitly using {@link ProcessBuilder}. Instead
+     * we go via the {@code system2} R function (which may call {@link ProcessBuilder} internally).
+     *
+     */
+    protected static Object evalInstallPackage(String system2Command) throws Throwable {
+        if (generatingExpected()) {
+            return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
+        } else {
+            return fastROutputManager.fastRSession.evalAsObject(null, system2Command, null, true);
+        }
     }
 
     /**
@@ -764,6 +883,13 @@ public class TestBase {
         return TestOutputManager.join(arrays);
     }
 
+    /**
+     * Tests that require additional {@link PolyglotEngine} global symbols should override this,
+     * which will be called just prior to the evaluation.
+     */
+    public void addPolyglotSymbols(@SuppressWarnings("unused") PolyglotEngine.Builder builder) {
+    }
+
     private static final LocalDiagnosticHandler localDiagnosticHandler = new LocalDiagnosticHandler();
 
     private static class LocalDiagnosticHandler implements TestOutputManager.DiagnosticHandler {
@@ -794,7 +920,7 @@ public class TestBase {
     protected static boolean deleteDir(Path dir) {
         try {
             Files.walkFileTree(dir, DELETE_VISITOR);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return false;
         }
         return true;
@@ -820,7 +946,7 @@ public class TestBase {
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
 
-    static {
+    private static void addOutputHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

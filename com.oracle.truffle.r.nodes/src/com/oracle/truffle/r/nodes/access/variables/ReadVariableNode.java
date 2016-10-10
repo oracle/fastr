@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -47,22 +48,22 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -128,6 +129,8 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -164,11 +167,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setCarAsSymbol(identifierAsString);
-    }
-
-    @Override
     public boolean isSyntax() {
         return identifier instanceof String;
     }
@@ -185,7 +183,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         if (kind != ReadKind.Silent) {
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
         }
 
         Object result;
@@ -305,6 +303,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
         private Match(FrameSlot slot) {
             this.slot = slot;
@@ -316,7 +315,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
-            return value;
+            return valueProfile.profile(value);
         }
 
         @Override
@@ -885,6 +884,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 /*
  * This is RRuntime.checkType in the node form.
  */
+@TypeSystemReference(RTypes.class)
 abstract class CheckTypeNode extends RBaseNode {
 
     public abstract boolean executeBoolean(Object o);
@@ -926,12 +926,17 @@ abstract class CheckTypeNode extends RBaseNode {
         return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
     }
 
+    @Specialization(guards = "isExternalObject(o)")
+    boolean checkType(@SuppressWarnings("unused") TruffleObject o) {
+        return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
+    }
+
+    protected static boolean isExternalObject(TruffleObject o) {
+        return !(o instanceof RTypedValue);
+    }
+
     @Fallback
-    boolean checkType(Object o) {
-        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
-            return o instanceof TruffleObject && !(o instanceof RTypedValue);
-        } else {
-            return false;
-        }
+    boolean checkType(@SuppressWarnings("unused") Object o) {
+        return false;
     }
 }

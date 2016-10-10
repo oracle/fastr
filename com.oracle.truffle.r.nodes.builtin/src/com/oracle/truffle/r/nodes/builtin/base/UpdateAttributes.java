@@ -22,18 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.RError.Message.ATTRIBUTES_LIST_OR_NULL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -58,25 +60,32 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
-    @Child private CastListNode castList;
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
+        // RAttributable.
+        casts.arg("obj"); // by default disallows RNull
+        casts.arg("value").conf(c -> c.allowNull()).mustBe(instanceOf(RList.class), this, ATTRIBUTES_LIST_OR_NULL);
+    }
 
     // it's OK for the following two methods to update attributes in-place as the container has been
     // already materialized to non-shared
 
-    private void updateNames(RAbstractContainer container, Object o) {
+    private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesNodeGen.create(null));
         }
-        updateNames.executeStringVector(container, o);
+        return (RAbstractContainer) updateNames.executeStringVector(container, o);
     }
 
-    private void updateDimNames(RAbstractContainer container, Object o) {
+    private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
         }
-        updateDimNames.executeRAbstractContainer(container, o);
+        return updateDimNames.executeRAbstractContainer(container, o);
     }
 
     private RAbstractIntVector castInteger(RAbstractVector vector) {
@@ -96,8 +105,8 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector updateAttributes(RAbstractVector abstractVector, @SuppressWarnings("unused") RNull list) {
-        RAbstractVector resultVector = (RAbstractVector) abstractVector.getNonShared();
+    protected RAbstractContainer updateAttributes(RAbstractContainer abstractContainer, @SuppressWarnings("unused") RNull list) {
+        RAbstractContainer resultVector = (RAbstractContainer) abstractContainer.getNonShared();
         resultVector.resetAllAttributes(true);
         return resultVector;
     }
@@ -176,9 +185,9 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
                 continue;
             } else if (attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
-                updateNames(res, value);
+                res = updateNames(res, value);
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                updateDimNames(res, value);
+                res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
                     res = (RAbstractContainer) result.setClassAttr(null);
@@ -198,47 +207,67 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         return res;
     }
 
+    protected static boolean isAbstractContainer(Object value) {
+        return RTypesGen.isImplicitRAbstractContainer(value);
+    }
+
     /**
-     * All other, non-performance centric, {@link RAttributable} types, or error case.
+     * All other, non-performance centric, {@link RAttributable} types, or error case for RNull
+     * value.
      */
-    @Fallback
+    @Specialization(guards = {"!isAbstractContainer(o)"})
     @TruffleBoundary
-    protected Object doOther(Object o, Object operand) {
-        Object obj = o;
-        if (obj instanceof RShareable) {
-            obj = ((RShareable) obj).getNonShared();
+    protected Object doOtherNull(Object o, @SuppressWarnings("unused") RNull operand) {
+        checkAttributable(o);
+        Object obj = getNonShared(o);
+        RAttributable attrObj = (RAttributable) obj;
+        attrObj.removeAllAttributes();
+        attrObj.setClassAttr(null);
+        return obj;
+    }
+
+    /**
+     * All other, non-performance centric, {@link RAttributable} types, or error case for list
+     * value.
+     */
+    @Specialization(guards = {"!isAbstractContainer(o)"})
+    @TruffleBoundary
+    protected Object doOtherList(Object o, RList operand) {
+        checkAttributable(o);
+        Object obj = getNonShared(o);
+        RAttributable attrObj = (RAttributable) obj;
+        attrObj.removeAllAttributes();
+        RStringVector listNames = operand.getNames(attrProfiles);
+        if (listNames == null) {
+            throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
-        if (obj instanceof RAttributable) {
-            RAttributable attrObj = (RAttributable) obj;
-            attrObj.removeAllAttributes();
-            if (operand == RNull.instance) {
-                attrObj.setClassAttr(null);
-            } else if (operand instanceof RList) {
-                RList list = (RList) operand;
-                RStringVector listNames = list.getNames(attrProfiles);
-                if (listNames == null) {
-                    throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
-                }
-                for (int i = 0; i < list.getLength(); i++) {
-                    String attrName = listNames.getDataAt(i);
-                    if (attrName == null) {
-                        throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
-                    }
-                    if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
-                        Object attrValue = list.getDataAt(i);
-                        if (attrValue == null) {
-                            throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
-                        }
-                        attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
-                    } else {
-                        attrObj.setAttr(attrName, list.getDataAt(i));
-                    }
-                }
-            } else {
-                throw RError.error(this, RError.Message.ATTRIBUTES_LIST_OR_NULL);
+        for (int i = 0; i < operand.getLength(); i++) {
+            String attrName = listNames.getDataAt(i);
+            if (attrName == null) {
+                throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
             }
-        } else {
+            if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                Object attrValue = operand.getDataAt(i);
+                if (attrValue == null) {
+                    throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
+                }
+                attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
+            } else {
+                attrObj.setAttr(attrName, operand.getDataAt(i));
+            }
+        }
+        return obj;
+    }
+
+    private void checkAttributable(Object obj) {
+        if (!(obj instanceof RAttributable)) {
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+    }
+
+    private static Object getNonShared(Object obj) {
+        if (obj instanceof RShareable) {
+            return ((RShareable) obj).getNonShared();
         }
         return obj;
     }

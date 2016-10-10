@@ -11,25 +11,34 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.Function;
+
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.binary.CastTypeNode;
-import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -37,13 +46,10 @@ public class BitwiseFunctions {
 
     public abstract static class BasicBitwise extends RBuiltinNode {
 
-        private final BranchProfile errorProfile = BranchProfile.create();
         private final NACheck naCheckA = NACheck.create();
         private final NACheck naCheckB = NACheck.create();
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
-        @Child private CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
-        @Child private CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
         @Child private TypeofNode typeofA = TypeofNodeGen.create();
         @Child private TypeofNode typeofB = TypeofNodeGen.create();
 
@@ -62,10 +68,7 @@ public class BitwiseFunctions {
             }
         }
 
-        protected Object basicBit(RAbstractVector a, RAbstractVector b, Operation op) {
-            checkBasicBit(a, b, op);
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(a, RType.Integer);
-            RAbstractIntVector bVec = (RAbstractIntVector) castTypeB.execute(b, RType.Integer);
+        protected Object basicBit(RAbstractIntVector aVec, RAbstractIntVector bVec, Operation op) {
             naCheckA.enable(aVec);
             naCheckB.enable(bVec);
             int aLen = aVec.getLength();
@@ -119,8 +122,7 @@ public class BitwiseFunctions {
             return RDataFactory.createIntVector(ans, completeVector);
         }
 
-        protected Object bitNot(RAbstractVector a) {
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(a, RType.Integer);
+        protected Object bitNot(RAbstractIntVector aVec) {
             int[] ans = new int[aVec.getLength()];
             for (int i = 0; i < aVec.getLength(); i++) {
                 ans[i] = ~aVec.getDataAt(i);
@@ -136,107 +138,146 @@ public class BitwiseFunctions {
             return RDataFactory.createIntVector(na, RDataFactory.INCOMPLETE_VECTOR);
         }
 
-        protected void checkBasicBit(RAbstractVector a, RAbstractVector b, Operation op) {
-            hasSameTypes(a, b);
-            hasSupportedType(a, op);
+        protected Function<Object, String> getArgType() {
+            return x -> typeofA.execute(x).getName();
         }
 
-        protected void checkShiftOrNot(RAbstractVector a, Operation op) {
-            hasSupportedType(a, op);
-        }
-
-        protected void hasSameTypes(RAbstractVector a, RAbstractVector b) {
-            RType aType = typeofA.execute(a);
-            RType bType = typeofB.execute(b);
-            boolean aCorrectType = (aType == RType.Integer || aType == RType.Double) ? true : false;
-            boolean bCorrectType = (bType == RType.Integer || bType == RType.Double) ? true : false;
-            if ((aCorrectType && bCorrectType) || aType == bType) {
-                return;
-            } else {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
-            }
-        }
-
-        protected void hasSupportedType(RAbstractVector a, Operation op) {
-            if (!(a instanceof RAbstractIntVector) && !(a instanceof RAbstractDoubleVector)) {
-                errorProfile.enter();
-                String type = typeofA.execute(a).getName();
-                throw RError.error(this, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op.name);
-            }
-        }
-
-        protected boolean shiftByCharacter(RAbstractVector n) {
-            return typeofB.execute(n) == RType.Character;
-        }
     }
 
     @RBuiltin(name = "bitwiseAnd", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseAnd extends BasicBitwise {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        }
+
         @Specialization
-        protected Object bitwAnd(RAbstractVector a, RAbstractVector b) {
+        protected Object bitwAnd(RAbstractIntVector a, RAbstractIntVector b) {
             return basicBit(a, b, Operation.AND);
         }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected Object differentTypes(Object a, Object b) {
+            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
+        }
+
     }
 
     @RBuiltin(name = "bitwiseOr", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseOr extends BasicBitwise {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        }
+
         @Specialization
-        protected Object bitwOr(RAbstractVector a, RAbstractVector b) {
+        protected Object bitwOr(RAbstractIntVector a, RAbstractIntVector b) {
             return basicBit(a, b, Operation.OR);
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected Object differentTypes(Object a, Object b) {
+            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
         }
     }
 
     @RBuiltin(name = "bitwiseXor", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseXor extends BasicBitwise {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        }
+
         @Specialization
-        protected Object bitwXor(RAbstractVector a, RAbstractVector b) {
+        protected Object bitwXor(RAbstractIntVector a, RAbstractIntVector b) {
             return basicBit(a, b, Operation.XOR);
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected Object differentTypes(Object a, Object b) {
+            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
         }
     }
 
     @RBuiltin(name = "bitwiseShiftR", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftR extends BasicBitwise {
 
-        @Specialization(guards = {"!shiftByCharacter(n)"})
-        protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("n").mapIf(stringValue(), asStringVector(), asIntegerVector());
+        }
+
+        @Specialization
+        protected Object bitwShiftR(RAbstractIntVector a, RAbstractIntVector n) {
             return basicBit(a, n, Operation.SHIFTR);
         }
 
-        @Specialization(guards = {"shiftByCharacter(n)"})
+        @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
-            checkShiftOrNot(a, Operation.SHIFTR);
+        protected Object bitwShiftR(RAbstractIntVector a, RNull n) {
+            return RDataFactory.createEmptyIntVector();
+        }
+
+        @Specialization
+        @SuppressWarnings("unused")
+        protected Object bitwShiftRChar(RAbstractIntVector a, RAbstractStringVector n) {
             return makeNA(a.getLength());
         }
+
     }
 
     @RBuiltin(name = "bitwiseShiftL", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftL extends BasicBitwise {
 
-        @Specialization(guards = {"!shiftByCharacter(n)"})
-        protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).mustBe(
+                            doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
+                            asIntegerVector());
+        }
+
+        @Specialization
+        protected Object bitwShiftL(RAbstractIntVector a, RAbstractIntVector n) {
             return basicBit(a, n, Operation.SHIFTL);
         }
 
-        @Specialization(guards = {"shiftByCharacter(n)"})
+        @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
-            checkShiftOrNot(a, Operation.SHIFTL);
+        protected Object bitwShiftL(RAbstractIntVector a, RNull n) {
+            return RDataFactory.createEmptyIntVector();
+        }
+
+        @Specialization
+        @SuppressWarnings("unused")
+        protected Object bitwShiftLChar(RAbstractVector a, RAbstractStringVector n) {
             return makeNA(a.getLength());
         }
+
     }
 
     @RBuiltin(name = "bitwiseNot", kind = INTERNAL, parameterNames = {"a"}, behavior = PURE)
     public abstract static class BitwiseNot extends BasicBitwise {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.NOT.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        }
+
         @Specialization
-        protected Object bitwNot(RAbstractVector a) {
-            checkShiftOrNot(a, Operation.NOT);
+        protected Object bitwNot(RAbstractIntVector a) {
             return bitNot(a);
         }
+
     }
 }

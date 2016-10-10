@@ -30,10 +30,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -41,23 +40,32 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."}, behavior = PURE)
 public abstract class ListBuiltin extends RBuiltinNode {
 
     protected static final int CACHE_LIMIT = 2;
-    protected static final int MAX_PROFILES = 16;
+    protected static final int MAX_SHARE_OBJECT_NODES = 16;
 
-    @CompilationFinal private final ValueProfile[] valueProfiles = new ValueProfile[MAX_PROFILES];
+    @Children private final ShareObjectNode[] shareObjectNodes = new ShareObjectNode[MAX_SHARE_OBJECT_NODES];
     private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
-    private final BranchProfile shareable = BranchProfile.create();
-    private final BranchProfile temporary = BranchProfile.create();
 
     @CompilationFinal private RStringVector suppliedSignatureArgNames;
 
-    protected RStringVector argNameVector(ArgumentsSignature signature) {
+    /**
+     * Creates a shared permanent vector so that it can be re-used for every list(...) with the same
+     * arguments.
+     */
+    protected final RStringVector cachedArgNameVector(ArgumentsSignature signature) {
+        RStringVector result = argNameVector(signature);
+        if (result != null) {
+            result.makeSharedPermanent();
+        }
+        return result;
+    }
+
+    protected final RStringVector argNameVector(ArgumentsSignature signature) {
         if (namesNull.profile(signature.getNonNullCount() == 0)) {
             return null;
         }
@@ -66,48 +74,36 @@ public abstract class ListBuiltin extends RBuiltinNode {
             String orgName = signature.getName(i);
             names[i] = (orgName == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : orgName);
         }
-        return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    private void shareListElement(Object value) {
-        if (value instanceof RShareable) {
-            shareable.enter();
-            if (((RShareable) value).isTemporary()) {
-                temporary.enter();
-                ((RShareable) value).incRefCount();
-            }
-        }
+        RStringVector result = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
+        return result;
     }
 
     /**
-     * This specialization unrolls the loop that shares the list elements, uses value profiles for
-     * each element, and keeps a cached version of the name vector.
+     * This specialization unrolls the loop that shares the list elements, uses a different
+     * {@link ShareObjectNode} for each element, and keeps a cached version of the name vector.
      */
     @Specialization(limit = "CACHE_LIMIT", guards = {"!args.isEmpty()", //
-                    "args.getLength() <= MAX_PROFILES", //
+                    "args.getLength() <= MAX_SHARE_OBJECT_NODES", //
                     "cachedLength == args.getLength()", //
                     "cachedSignature == args.getSignature()"})
     @ExplodeLoop
     protected RList listCached(RArgsValuesAndNames args, //
                     @Cached("args.getLength()") int cachedLength, //
                     @SuppressWarnings("unused") @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
-                    @Cached("argNameVector(cachedSignature)") RStringVector cachedArgNames) {
+                    @Cached("cachedArgNameVector(cachedSignature)") RStringVector cachedArgNames) {
         Object[] argArray = args.getArguments();
         for (int i = 0; i < cachedLength; i++) {
-            if (valueProfiles[i] == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                valueProfiles[i] = ValueProfile.createClassProfile();
-            }
-            shareListElement(valueProfiles[i].profile(argArray[i]));
+            getShareObjectNode(i).execute(argArray[i]);
         }
         return RDataFactory.createList(argArray, cachedArgNames);
     }
 
     @Specialization(guards = "!args.isEmpty()")
-    protected RList list(RArgsValuesAndNames args) {
+    protected RList list(RArgsValuesAndNames args,
+                    @Cached("create()") ShareObjectNode shareObjectNode) {
         Object[] argArray = args.getArguments();
         for (int i = 0; i < argArray.length; i++) {
-            shareListElement(argArray[i]);
+            shareObjectNode.execute(argArray[i]);
         }
         return RDataFactory.createList(argArray, argNameVector(args.getSignature()));
     }
@@ -123,12 +119,21 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!isRArgsValuesAndNames(value)", "!isRMissing(value)"})
-    protected RList listSingleElement(Object value) {
-        shareListElement(value);
+    protected RList listSingleElement(Object value,
+                    @Cached("create()") ShareObjectNode shareObjectNode) {
+        shareObjectNode.execute(value);
         if (suppliedSignatureArgNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             suppliedSignatureArgNames = argNameVector(ArgumentsSignature.empty(1));
         }
         return RDataFactory.createList(new Object[]{value}, suppliedSignatureArgNames);
+    }
+
+    private ShareObjectNode getShareObjectNode(int index) {
+        if (shareObjectNodes[index] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObjectNodes[index] = insert(ShareObjectNode.create());
+        }
+        return shareObjectNodes[index];
     }
 }

@@ -29,7 +29,7 @@ static jmethodID findSymbolID;
 
 void init_dynload(JNIEnv *env) {
     DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
-    JNI_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/JNI_PkgInit");
+    JNI_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/JNI_PkgInit");
     DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
     RegisteredNativeSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$RegisteredNativeSymbol");
 
@@ -85,7 +85,7 @@ void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1PkgInit_setSymbol(JNIEnv *env, jclass c, jint nstOrd, jlong routinesAddr, jint index) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PkgInit_setSymbol(JNIEnv *env, jclass c, jint nstOrd, jlong routinesAddr, jint index) {
 	const char *name;
 	long fun;
 	int numArgs;

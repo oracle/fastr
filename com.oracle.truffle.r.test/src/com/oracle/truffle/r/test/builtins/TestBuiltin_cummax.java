@@ -45,7 +45,7 @@ public class TestBuiltin_cummax extends TestBase {
 
     @Test
     public void testcummax6() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);cummax(argv[[1]]);");
+        assertEval("argv <- list(NULL);cummax(argv[[1]]);");
     }
 
     @Test

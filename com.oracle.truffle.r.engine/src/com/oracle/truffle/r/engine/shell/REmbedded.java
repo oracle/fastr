@@ -22,13 +22,12 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -70,16 +69,17 @@ public class REmbedded {
     private static PolyglotEngine initializeR(String[] args) {
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
-        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true);
-        try {
-            vm.eval(INIT);
-        } catch (IOException ex) {
-            Utils.rSuicideDefault("initializeR");
-        }
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out, null);
+        vm.eval(INIT);
         return vm;
     }
 
-    private static final Source INIT = RSource.fromTextInternal("1", RSource.Internal.GET_ECHO);
+    /**
+     * N.B. This expression cannot contain any R functions, e.g. "invisible", because at the time it
+     * is evaluated the R builtins have not been installed, see {@link #initializeR}. The
+     * suppression of printing is handled a a special case based on {@link Internal#INIT_EMBEDDED}.
+     */
+    private static final Source INIT = RSource.fromTextInternal("1", RSource.Internal.INIT_EMBEDDED);
 
     /**
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have

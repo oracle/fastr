@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -37,7 +38,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
-    public abstract void execute(RAbstractVector source, RVector target);
+    private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
+
+    public abstract void execute(RAbstractVector source, RVector<?> target);
 
     public static CopyOfRegAttributesNode create() {
         return CopyOfRegAttributesNodeGen.create();
@@ -45,7 +48,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(RAbstractVector source, RVector target) {
+    protected void copyNoAttributes(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
@@ -56,44 +59,44 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyAttributes(source)", contains = "copyNoAttributes")
-    protected void copyEmptyAttributes(RAbstractVector source, RVector target) {
+    protected void copyEmptyAttributes(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
-    protected static final boolean onlyDimAttribute(RAbstractVector source) {
+    protected final boolean onlyDimAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(RAbstractVector source, RVector target) {
+    protected void copyDimOnly(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
-    protected static final boolean onlyNamesAttribute(RAbstractVector source) {
+    protected final boolean onlyNamesAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(RAbstractVector source, RVector target) {
+    protected void copyNamesOnly(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }
 
-    protected static final boolean onlyClassAttribute(RAbstractVector source) {
+    protected final boolean onlyClassAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
-        return attributes != null && attributes.size() == 1 && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAbstractVector source, RVector target) {
+    protected void copyClassOnly(RAbstractVector source, RVector<?> target) {
         target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValueAtIndex(0)}));
     }
 
     @Specialization
-    protected void copyGeneric(RAbstractVector source, RVector target) {
+    protected void copyGeneric(RAbstractVector source, RVector<?> target) {
         RAttributes orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Object newRowNames = null;

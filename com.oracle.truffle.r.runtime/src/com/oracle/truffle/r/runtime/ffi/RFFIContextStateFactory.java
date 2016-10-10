@@ -37,7 +37,7 @@ public class RFFIContextStateFactory {
         theFactory = factory;
     }
 
-    public static ContextState newContext(RContext context) {
-        return theFactory.newContext(context);
+    public static ContextState newContextState() {
+        return theFactory.newContextState();
     }
 }

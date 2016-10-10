@@ -27,17 +27,21 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = ".fastr.debug", visibility = OFF, kind = PRIMITIVE, parameterNames = {"values"}, behavior = COMPLEX)
 public abstract class FastRDebug extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("values").asStringVector();
+    }
 
     @Specialization
     @TruffleBoundary
@@ -48,9 +52,4 @@ public abstract class FastRDebug extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object fallback(Object a1) {
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "element");
-    }
 }

@@ -12,10 +12,14 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -28,13 +32,26 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "merge", kind = INTERNAL, parameterNames = {"xinds", "xinds", "all.x", "all.y"}, behavior = PURE)
+/**
+ * Note: invoked from merge.data.frame.
+ */
+@RBuiltin(name = "merge", kind = INTERNAL, parameterNames = {"xinds", "yinds", "all.x", "all.y"}, behavior = PURE)
 public abstract class Merge extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstLogical(2);
-        casts.firstLogical(3);
+        addIntegerCast(casts, "xinds");
+        addIntegerCast(casts, "yinds");
+        addLogicalCast(casts, "all.x");
+        addLogicalCast(casts, "all.y");
+    }
+
+    private static void addIntegerCast(CastBuilder casts, String name) {
+        casts.arg(name).mustBe(integerValue()).asIntegerVector().mustBe(notEmpty());
+    }
+
+    private static void addLogicalCast(CastBuilder casts, String name) {
+        casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").mustBe(numericValue()).asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     private static void isortWithIndex(int[] x, int[] indx, int n) {
@@ -62,8 +79,8 @@ public abstract class Merge extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"xIndsAbstract.getLength() > 0", "xIndsAbstract.getLength() > 0", "!isNA(allX)", "!isNA(allY)"})
-    RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, byte allX, byte allY) {
+    @Specialization
+    RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, boolean allX, boolean allY) {
         RIntVector xInds = xIndsAbstract.materialize();
         RIntVector yInds = yIndsAbstract.materialize();
 
@@ -139,7 +156,7 @@ public abstract class Merge extends RBuiltinNode {
         ans.updateDataAt(0, RDataFactory.createIntVector(ansXData, RDataFactory.COMPLETE_VECTOR), null);
         ans.updateDataAt(1, RDataFactory.createIntVector(ansYData, RDataFactory.COMPLETE_VECTOR), null);
 
-        if (allX == RRuntime.LOGICAL_TRUE) {
+        if (allX) {
             int[] xLoneData = new int[nxLone];
             ans.updateDataAt(2, RDataFactory.createIntVector(xLoneData, RDataFactory.COMPLETE_VECTOR), null);
             for (int i = 0, ll = 0; i < nxLone; i++) {
@@ -149,7 +166,7 @@ public abstract class Merge extends RBuiltinNode {
             ans.updateDataAt(2, RNull.instance, null);
         }
 
-        if (allY == RRuntime.LOGICAL_TRUE) {
+        if (allY) {
             int[] yLoneData = new int[nyLone];
             ans.updateDataAt(3, RDataFactory.createIntVector(yLoneData, RDataFactory.COMPLETE_VECTOR), null);
             for (int i = 0, ll = 0; i < nyLone; i++) {
@@ -188,23 +205,4 @@ public abstract class Merge extends RBuiltinNode {
         return ans;
     }
 
-    @Fallback
-    Object merge(Object xInds, Object yInds, byte allX, byte allY) {
-        if (!(xInds instanceof Integer || (xInds instanceof RAbstractIntVector && ((RAbstractIntVector) xInds).getLength() > 0))) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "xinds");
-        }
-        if (!(yInds instanceof Integer || (yInds instanceof RAbstractIntVector && ((RAbstractIntVector) yInds).getLength() > 0))) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "yinds");
-        }
-        if (RRuntime.isNA(allX)) {
-            throw RError.error(this, RError.Message.INVALID_LOGICAL, "all.x");
-        } else {
-            assert RRuntime.isNA(allY);
-            throw RError.error(this, RError.Message.INVALID_LOGICAL, "all.y");
-        }
-    }
-
-    protected boolean isNA(byte v) {
-        return RRuntime.isNA(v);
-    }
 }

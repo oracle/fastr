@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.IOException;
 import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
 
-    class ParseException extends IOException {
+    class ParseException extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         private final Source source;
@@ -57,6 +57,7 @@ public interface Engine {
             this.line = line;
         }
 
+        @TruffleBoundary
         public RError throwAsRError() {
             if (source.getLineCount() == 1) {
                 throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, token, substring);
@@ -65,6 +66,7 @@ public interface Engine {
             }
         }
 
+        @TruffleBoundary
         public void report(ConsoleHandler consoleHandler) {
             String msg;
             if (source.getLineCount() == 1) {

@@ -71,7 +71,8 @@ public class TestBuiltin_asmatrix extends TestBase {
         assertEval("{ matrix(1:6, ncol=3:5,byrow=TRUE)}");
 
         assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
-        assertEval("{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
+        // prints as NA not NaN
+        assertEval(Ignored.Unknown, "{ matrix(c(NaN,4+5i,2+0i,5+10i)) } ");
 
         // FIXME missing warning
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ matrix(c(1,2,3,4),3,2) }");

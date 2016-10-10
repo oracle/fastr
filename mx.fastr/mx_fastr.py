@@ -26,6 +26,11 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
+import mx_fastr_dists
+from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
+import mx_copylib
+import mx_fastr_mkgramrd
+
 import os
 
 '''
@@ -87,7 +92,13 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
 
-    vmArgs += _graal_options()
+    if 'nocompile' in kwargs:
+        nocompile = True
+        del kwargs['nocompile']
+    else:
+        nocompile = False
+
+    vmArgs += set_graal_options(nocompile)
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -126,7 +137,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
         i = i + 1
     return xargs
 
-def _graal_options(nocompile=False):
+def set_graal_options(nocompile=False):
     if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         if nocompile:
@@ -223,12 +234,12 @@ def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
     run_r(args, 'rembed')
 
 def _fastr_gate_runner(args, tasks):
-    # Until fixed, we call Checkstyle here and limit to primary
-    with mx_gate.Task('Checkstyle check', tasks) as t:
-        if t:
-            if mx.checkstyle(['--primary']) != 0:
-                t.abort('Checkstyle warnings were found')
-
+    '''
+    The specific additional gates tasks provided by FastR:
+    1. Copyright check
+    2. Check that ExpectedTestOutput file is in sync with unit tests
+    3. Unit tests
+    '''
     # FastR has custom copyright check
     with mx_gate.Task('Copyright check', tasks) as t:
         if t:
@@ -248,14 +259,17 @@ def _fastr_gate_runner(args, tasks):
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
-def gate(args):
-    '''Run the R gate'''
-    # exclude findbugs until compliant
-    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
-
-def original_gate(args):
-    '''Run the R gate (without filtering gate tasks)'''
+def rgate(args):
+    '''
+    Run 'mx.gate' with given args (used in CI system).
+    N.B. This will fail if run without certain exclusions; use the local
+    'gate' command for that.
+    '''
     mx_gate.gate(args)
+
+def gate(args):
+    '''Run 'mx.gate' with some standard tasks excluded as they currently fail'''
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -298,9 +312,16 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
         runlistener_arg = add_arg_separator()
         runlistener_arg += 'gen-diff=' + args.gen_diff_output
 
+    if args.trace_tests:
+        runlistener_arg = add_arg_separator()
+        runlistener_arg += 'trace-tests'
+
 #    if args.test_methods:
 #        runlistener_arg = add_arg_separator()
 #        runlistener_arg = 'test-methods=' + args.test_methods
+
+    runlistener_arg = add_arg_separator()
+    runlistener_arg += 'test-project-output-dir=' + mx.project('com.oracle.truffle.r.test').output_dir()
 
     # use a custom junit.RunListener
     runlistener = 'com.oracle.truffle.r.test.TestBase$RunListener'
@@ -314,7 +335,7 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # no point in printing errors to file when running tests (that contain errors on purpose)
     vmArgs += ['-DR:-PrintErrorStacktracesToFile']
 
-    vmArgs += _graal_options(nocompile=True)
+    vmArgs += set_graal_options(nocompile=True)
 
     setREnvironment()
 
@@ -329,6 +350,7 @@ def junit(args):
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
+    parser.add_argument('--trace-tests', action='store_true', help='trace the actual @Test methods as they are executed')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
@@ -341,6 +363,9 @@ def junit_simple(args):
 
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
+
+def junit_nopkgs(args):
+    return mx.command_function('junit')(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
 
 def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
@@ -408,14 +433,11 @@ def testgen(args):
         except subprocess.CalledProcessError:
             mx.abort('RVersionNumber.main failed')
 
-    # clean the test project to invoke the test analyzer AP
-    testOnly = ['--projects', 'com.oracle.truffle.r.test']
-    mx.clean(['--no-dist', ] + testOnly)
-    mx.build(testOnly)
     # now just invoke junit with the appropriate options
     mx.log("generating expected output for packages: ")
     for pkg in args.tests.split(','):
         mx.log("    " + str(pkg))
+    os.environ["TZDIR"] = "/usr/share/zoneinfo/"
     junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
 
 def unittest(args):
@@ -443,11 +465,18 @@ def rbdiag(args):
 	-v		Verbose output including the list of unimplemented specializations
 	-n		Ignore RNull as an argument type
 	-m		Ignore RMissing as an argument type
+    --mnonly		Uses the RMissing and RNull values as the only samples for the chimney-sweeping
+    --noSelfTest	Does not perform the pipeline self-test using the generated samples as the intro to each chimney-sweeping. It has no effect when --mnonly is specified as the self-test is never performed in that case.
     --sweep		Performs the 'chimney-sweeping'. The sample combination selection method is determined automatically.
-    --sweep-lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
-    --sweep-total	Performs the 'chimney-sweeping'. The total sample selection method is used.
+    --sweep=lite	Performs the 'chimney-sweeping'. The diagonal sample selection method is used.
+    --sweep=total	Performs the 'chimney-sweeping'. The total sample selection method is used.
+    --matchLevel=same	Outputs produced by FastR and GnuR must be same (default)
+    --matchLevel=error	Outputs are considered matching if none or both outputs contain an error
+    --maxSweeps=N		Sets the maximum number of sweeps
+    --outMaxLev=N		Sets the maximum output detail level for report messages. Use 0 for the basic messages only.
 
 	If no builtin is specified, all registered builtins are diagnosed.
+	An external builtin is specified by the fully qualified name of its node class.
 
 	Examples:
 
@@ -455,6 +484,7 @@ def rbdiag(args):
 		mx rbdiag colSums colMeans -v
 		mx rbdiag scan -m -n
     	mx rbdiag colSums --sweep
+    	mx rbdiag com.oracle.truffle.r.library.stats.Rnorm
     '''
     cp = mx.classpath('com.oracle.truffle.r.nodes.test')
 
@@ -486,22 +516,8 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
-def _cran_test_project():
-    return 'com.oracle.truffle.r.test.cran'
-
-def _cran_test_project_dir():
-    return mx.project(_cran_test_project()).dir
-
-def installpkgs(args):
-    _installpkgs(args)
-
-def _installpkgs_script():
-    cran_test = _cran_test_project_dir()
-    return join(cran_test, 'r', 'install.cran.packages.R')
-
-def _installpkgs(args, **kwargs):
-    script = _installpkgs_script()
-    return rscript([script] + args, **kwargs)
+def mx_post_parse_cmd_line(opts):
+    mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
 _commands = {
     'r' : [rshell, '[options]'],
@@ -509,23 +525,26 @@ _commands = {
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
-    'originalgate' : [original_gate, '[options]'],
+    'rgate' : [rgate, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
     'junitnoapps' : [junit_noapps, ['options']],
+    'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
-    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep-lite | --sweep-total'],
+    'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
     'rcmplib' : [rcmplib, ['options']],
-    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
-    'installpkgs' : [installpkgs, '[options]'],
-    'installcran' : [installpkgs, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
+    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
+    'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
+    'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
+    'rcopylib' : [mx_copylib.copylib, '[]'],
+    'rupdatelib' : [mx_copylib.updatelib, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

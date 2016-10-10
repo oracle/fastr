@@ -26,9 +26,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -47,15 +46,15 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall {
 
     @Child private WriteVariableNode writeSuperFrameVariableNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    protected WriteSuperVariableNode(SourceSection src) {
+    protected WriteSuperVariableNode(SourceSection src, String name, RNode rhs) {
         super(src);
+        writeSuperFrameVariableNode = WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR);
     }
 
     static WriteSuperVariableNode create(SourceSection src, String name, RNode rhs) {
-        WriteSuperVariableNode result = new WriteSuperVariableNode(src);
-        result.writeSuperFrameVariableNode = result.insert(WriteSuperFrameVariableNode.create(name, rhs, Mode.REGULAR));
-        return result;
+        return new WriteSuperVariableNode(src, name, rhs);
     }
 
     @Override
@@ -71,18 +70,13 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     @Override
     public Object execute(VirtualFrame frame) {
         Object result = writeSuperFrameVariableNode.execute(frame);
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         return result;
     }
 
     @Override
     public void execute(VirtualFrame frame, Object value) {
         writeSuperFrameVariableNode.execute(frame, value);
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        serializeHelper(state, "<<-");
     }
 
     @Override

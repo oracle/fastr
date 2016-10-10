@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -42,6 +44,7 @@ public abstract class FilterNode extends CastNode {
     private final boolean isWarning;
 
     private final BranchProfile warningProfile = BranchProfile.create();
+    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
@@ -52,6 +55,10 @@ public abstract class FilterNode extends CastNode {
         this.message = message;
         this.messageArgs = messageArgs;
         this.boxPrimitives = boxPrimitives;
+    }
+
+    public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
+        return FilterNodeGen.create(filter, isWarning, callObj, message, messageArgs, boxPrimitives);
     }
 
     public ArgumentFilter getFilter() {
@@ -73,14 +80,21 @@ public abstract class FilterNode extends CastNode {
         }
     }
 
-    @Specialization(guards = "evalCondition(x)")
-    protected Object onTrue(Object x) {
-        return x;
+    @Specialization
+    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
+        return RNull.instance;
     }
 
-    @Fallback
-    protected Object onFalse(Object x) {
-        handleMessage(x);
+    @Specialization
+    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
+        return RMissing.instance;
+    }
+
+    @Specialization
+    public Object executeRest(Object x) {
+        if (!conditionProfile.profile(evalCondition(x))) {
+            handleMessage(x);
+        }
         return x;
     }
 
@@ -88,5 +102,4 @@ public abstract class FilterNode extends CastNode {
         Object y = boxPrimitives ? boxPrimitiveNode.execute(x) : x;
         return filter.test(y);
     }
-
 }

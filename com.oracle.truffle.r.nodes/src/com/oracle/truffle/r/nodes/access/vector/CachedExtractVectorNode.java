@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
@@ -42,7 +41,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -99,7 +97,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
         if (error == null && vectorType != RType.Null && vectorType != RType.Environment) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
+            this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false, false);
         }
     }
 
@@ -162,10 +160,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        final RVector extractedVector;
+        final RVector<?> extractedVector;
         switch (vectorType) {
-            case Language:
             case Expression:
+                extractedVector = RType.Expression.create(extractedVectorLength, false);
+                break;
+            case Language:
             case PairList:
                 extractedVector = RType.List.create(extractedVectorLength, false);
                 break;
@@ -195,7 +195,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
             switch (vectorType) {
                 case Expression:
-                    return new RExpression((RList) extractedVector);
+                    return extractedVector;
                 case Language:
                     return materializeLanguage(extractedVector);
                 default:
@@ -274,9 +274,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();
     private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
     private final ConditionProfile selectPositionsProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile originalDimNamesPRofile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
-    private void applyDimensions(RAbstractContainer originalTarget, RVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
+    private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
         int dimCount = countDimensions(positionProfile);
 
@@ -311,9 +313,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (newDimNames != null) {
                 extractedTarget.setDimNames(RDataFactory.createList(newDimNames));
             }
-        } else if (newDimNames != null && originalDimNames.getLength() > 0) {
+        } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
-            if (foundNames != null) {
+            if (foundNamesProfile.profile(foundNames != null)) {
                 foundNames = foundDimNamesProfile.profile(foundNames);
                 if (foundNames.getLength() > 0) {
                     metadataApplied.enter();
@@ -323,7 +325,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private final BranchProfile droppedDimensionProfile = BranchProfile.create();
+    private final ConditionProfile droppedDimensionProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
     private int countDimensions(PositionProfile[] boundsProfile) {
@@ -331,8 +333,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             int dimCount = numberOfDimensions;
             for (int i = 0; i < numberOfDimensions; i++) {
                 int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
-                if (selectedPositionsCount == 1) {
-                    droppedDimensionProfile.enter();
+                if (droppedDimensionProfile.profile(selectedPositionsCount == 1)) {
                     dimCount--;
                 }
             }
@@ -342,6 +343,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
+    private final ConditionProfile srcNamesProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile srcNamesValueProfile = ValueProfile.createClassProfile();
     private final ConditionProfile newNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
@@ -353,8 +356,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 continue;
             }
 
-            Object srcNames = originalDimNames.getDataAt(currentDimIndex);
-            if (srcNames != RNull.instance) {
+            Object srcNames = srcNamesValueProfile.profile(originalDimNames.getDataAt(currentDimIndex));
+            if (srcNamesProfile.profile(srcNames != RNull.instance)) {
                 Object position = positions[currentDimIndex];
 
                 Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex,
@@ -403,7 +406,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private void setNames(RVector vector, Object newNames) {
+    private void setNames(RVector<?> vector, Object newNames) {
         if (setNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setNamesNode = insert(SetNamesNodeGen.create());
@@ -413,10 +416,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
-        public abstract void execute(RVector container, Object newNames);
+        public abstract void execute(RVector<?> container, Object newNames);
 
         @Specialization
-        protected void setNames(RVector container, RAbstractStringVector newNames) {
+        protected void setNames(RVector<?> container, RAbstractStringVector newNames) {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
             assert container.getInternalDimensions() == null;
@@ -435,13 +438,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         @Specialization
-        protected void setNames(RVector container, String newNames) {
+        protected void setNames(RVector<?> container, String newNames) {
             // TODO: why materialize()?
             setNames(container, RString.valueOf(newNames).materialize());
         }
 
         @Specialization
-        protected void setNames(RVector container, @SuppressWarnings("unused") RNull newNames) {
+        protected void setNames(RVector<?> container, @SuppressWarnings("unused") RNull newNames) {
             assert container.getAttributes() == null;
         }
     }

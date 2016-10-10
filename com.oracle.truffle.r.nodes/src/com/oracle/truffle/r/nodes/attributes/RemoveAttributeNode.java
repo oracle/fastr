@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -39,7 +40,7 @@ public abstract class RemoveAttributeNode extends RBaseNode {
     protected final String name;
 
     protected RemoveAttributeNode(String name) {
-        this.name = name.intern();
+        this.name = Utils.intern(name);
     }
 
     public static RemoveAttributeNode create(String name) {

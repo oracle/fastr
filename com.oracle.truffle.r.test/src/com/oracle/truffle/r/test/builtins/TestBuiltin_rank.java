@@ -85,4 +85,11 @@ public class TestBuiltin_rank extends TestBase {
         assertEval("{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
         assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
     }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval(".Internal(rank(c(1,2), -3L, 'max'))");
+        assertEval(".Internal(rank(c(1,2), 2L, 'something'))");
+        assertEval(".Internal(rank(as.raw(42), 42L, 'max'))");
+    }
 }

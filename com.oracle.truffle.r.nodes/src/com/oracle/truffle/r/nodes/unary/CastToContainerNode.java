@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -59,11 +58,6 @@ public abstract class CastToContainerNode extends CastBaseNode {
     @Specialization
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
-    }
-
-    @Specialization
-    protected RExpression cast(RExpression expression) {
-        return expression;
     }
 
     @Specialization

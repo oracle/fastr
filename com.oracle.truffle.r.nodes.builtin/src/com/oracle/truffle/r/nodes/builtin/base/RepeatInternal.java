@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -54,9 +57,16 @@ public abstract class RepeatInternal extends RBuiltinNode {
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER2, RError.Message.ATTEMPT_TO_REPLICATE, argType);
+        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
+                        RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "times");
     }
 
     @FunctionalInterface
@@ -76,6 +86,10 @@ public abstract class RepeatInternal extends RBuiltinNode {
         int valueLength = value.getLength();
         if (timesOneProfile.profile(timesLength == 1)) {
             int timesValue = times.getDataAt(0);
+            if (timesValue < 0) {
+                errorProfile.enter();
+                RError.error(this, RError.Message.INVALID_VALUE, "times");
+            }
             int count = timesValue * valueLength;
             result = arrayConstructor.apply(count);
             int pos = 0;

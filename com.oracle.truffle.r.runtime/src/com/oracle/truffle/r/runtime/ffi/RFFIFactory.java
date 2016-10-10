@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
@@ -32,7 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * choice of factory is made by the R engine and set here by the call to {@link #setRFFIFactory}.
  *
  * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link #newContext(RContext)} method. However, since we don't know exactly which
+ * must support the {@link #newContextState()} method. However, since we don't know exactly which
  * factory will be used, {@link RContext} references the {@link RFFIContextStateFactory} class.
  */
 public abstract class RFFIFactory {
@@ -66,49 +65,5 @@ public abstract class RFFIFactory {
      */
     protected abstract RFFI createRFFI();
 
-    public LapackRFFI getLapackRFFI() {
-        throw missing("Lapack");
-    }
-
-    public StatsRFFI getStatsRFFI() {
-        throw missing("Stats");
-    }
-
-    public ToolsRFFI getToolsRFFI() {
-        throw missing("Tools");
-    }
-
-    public GridRFFI getGridRFFI() {
-        throw missing("Grid");
-    }
-
-    public RApplRFFI getRApplRFFI() {
-        throw missing("RDerived");
-    }
-
-    public CRFFI getCRFFI() {
-        throw missing("C");
-    }
-
-    public CallRFFI getCallRFFI() {
-        throw missing("Call");
-    }
-
-    public UserRngRFFI getUserRngRFFI() {
-        throw missing("UserRNG");
-    }
-
-    public PCRERFFI getPCRERFFI() {
-        throw missing("PCRE");
-    }
-
-    public ZipRFFI getZipRFFI() {
-        throw missing("Zip");
-    }
-
-    private static RuntimeException missing(String ffi) throws RuntimeException {
-        throw Utils.rSuicide(ffi + " FFI not implemented");
-    }
-
-    public abstract ContextState newContext(RContext context);
+    public abstract ContextState newContextState();
 }

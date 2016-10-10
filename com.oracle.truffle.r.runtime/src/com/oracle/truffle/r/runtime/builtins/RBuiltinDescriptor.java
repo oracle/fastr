@@ -45,12 +45,14 @@ public abstract class RBuiltinDescriptor {
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
     private final RBehavior behavior;
+    private final RSpecialFactory specialCall;
 
     private final int primitiveMethodIndex;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior) {
+                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior, RSpecialFactory specialCall) {
+        this.specialCall = specialCall;
         this.name = name.intern();
         this.builtinNodeClass = builtinNodeClass;
         this.visibility = visibility;
@@ -130,5 +132,9 @@ public abstract class RBuiltinDescriptor {
 
     public RBehavior getBehavior() {
         return behavior;
+    }
+
+    public RSpecialFactory getSpecialCall() {
+        return specialCall;
     }
 }

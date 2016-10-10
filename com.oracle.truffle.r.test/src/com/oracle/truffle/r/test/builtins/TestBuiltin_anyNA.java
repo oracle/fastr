@@ -22,4 +22,13 @@ public class TestBuiltin_anyNA extends TestBase {
     public void testanyNA1() {
         assertEval("argv <- list(c(1.81566026854212e-304, 0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0, 0, 0));do.call('anyNA', argv)");
     }
+
+    @Test
+    public void testanyNA2() {
+        assertEval("anyNA(list(list(c(NA)),c(1)), recursive=TRUE)");
+        assertEval("anyNA(list(list(c(NA)),c(1)), recursive=FALSE)");
+        assertEval("anyNA(list(list(c(NA)),c(1)), recursive=c(FALSE,TRUE))");
+        assertEval("anyNA(list(list(4,5,NA), 3), recursive=TRUE)");
+    }
+
 }

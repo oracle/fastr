@@ -35,7 +35,7 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
     }
 
     @Override
-    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 

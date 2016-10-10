@@ -28,20 +28,19 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
+import com.oracle.truffle.api.interop.ForeignAccess.Factory18;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.builtin.base.InfixFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public final class RAbstractVectorAccessFactory implements Factory10 {
+public final class RAbstractVectorAccessFactory implements Factory18 {
 
     static class VectorSizeNode extends RootNode {
 
@@ -60,7 +59,6 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
     abstract static class VectorReadNode extends RootNode {
 
         @CompilationFinal private boolean lengthAccess;
-        @Child private AccessArraySubscriptBuiltin builtin;
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
@@ -175,6 +173,11 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
     @Override
     @SuppressWarnings("all")
     public CallTarget accessNew(int argumentsLength) {
+        return null;
+    }
+
+    @Override
+    public CallTarget accessKeys() {
         return null;
     }
 }

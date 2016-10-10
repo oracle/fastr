@@ -135,13 +135,13 @@ public abstract class ExtractVectorNode extends Node {
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doReplaceSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(frame, vector, positions, exact, dropDimensions);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doReplaceRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(frame, vector, positions, exact, dropDimensions);
     }
@@ -158,7 +158,7 @@ public abstract class ExtractVectorNode extends Node {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
-    protected Object doReplaceDefaultCached(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractDefaultCached(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createDefaultCache(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);
         return cached.apply(vector, positions, null, exact, dropDimensions);
@@ -168,9 +168,9 @@ public abstract class ExtractVectorNode extends Node {
         return new CachedExtractVectorNode(node.getMode(), (RTypedValue) vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
     }
 
-    @Specialization(contains = "doReplaceDefaultCached")
+    @Specialization(contains = "doExtractDefaultCached")
     @TruffleBoundary
-    protected Object doReplaceDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {
         return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
     }
@@ -196,5 +196,4 @@ public abstract class ExtractVectorNode extends Node {
             return cached;
         }
     }
-
 }

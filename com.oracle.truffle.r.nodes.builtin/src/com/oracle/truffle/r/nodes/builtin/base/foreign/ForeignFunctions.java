@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.library.stats.Covcor;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.Pbinom;
+import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
@@ -66,8 +68,8 @@ import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
+import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
-import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -146,7 +148,8 @@ public class ForeignFunctions {
 
         private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-        protected String lookupName(RList f) {
+        protected static String lookupName(RList f) {
+            CompilerAsserts.neverPartOfCompilation();
             if (f.getNames() != null) {
                 RAbstractStringVector names = f.getNames();
                 for (int i = 0; i < names.getLength(); i++) {
@@ -159,6 +162,7 @@ public class ForeignFunctions {
             return UNKNOWN_EXTERNAL_BUILTIN;
         }
 
+        @TruffleBoundary
         protected RuntimeException fallback(Object fobj) {
             String name = null;
             if (fobj instanceof RList) {
@@ -284,6 +288,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             switch (name) {
@@ -364,6 +369,8 @@ public class ForeignFunctions {
                     return RbinomNodeGen.create();
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
+                case "pf":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
                 case "cutree":
                 case "isoreg":
                 case "monoFC_m":
@@ -402,7 +409,6 @@ public class ForeignFunctions {
                 case "binomial_dev_resids":
                 case "rWishart":
                 case "Cdist":
-                case "updateform":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
@@ -444,8 +450,12 @@ public class ForeignFunctions {
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
 
+                case "updateform":
+                    return getExternalModelBuiltinNode("updateform");
+
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+
                 case "dnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 
@@ -550,6 +560,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
@@ -576,8 +587,9 @@ public class ForeignFunctions {
                     return getExternalModelBuiltinNode("termsform");
                 case "Rprof":
                     return RprofNodeGen.create();
-                case "unzip":
                 case "Rprofmem":
+                    return RprofmemNodeGen.create();
+                case "unzip":
                 case "addhistory":
                 case "loadhistory":
                 case "savehistory":
@@ -639,6 +651,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -709,6 +722,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -770,6 +784,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 default:
@@ -796,6 +811,7 @@ public class ForeignFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             long func = DLL.findSymbol(name, packageName, rns);

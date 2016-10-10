@@ -62,7 +62,8 @@ public abstract class Round extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        // TODO: this should also accept vectors:
+        casts.arg("digits").asIntegerVector().findFirst();
     }
 
     @Specialization

@@ -51,6 +51,11 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     Object getDataAtAsObject(int index);
 
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
     default Object getDataAtAsObject(@SuppressWarnings("unused") Object store, int index) {
         return getDataAtAsObject(index);
     }

@@ -33,14 +33,12 @@ export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 all: 
 	$(MAKE) -C gnur
 	$(MAKE) -C include
-	$(MAKE) -C osextras
 	$(MAKE) -C fficall
 	$(MAKE) -C library
 	$(MAKE) -C run
 
 clean: 
 	$(MAKE) -C include clean
-	$(MAKE) -C osextras clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C library clean
 	$(MAKE) -C run clean

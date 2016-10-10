@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -42,14 +45,16 @@ public abstract class PMatch extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(2).toLogical(3);
+        casts.arg("x").asStringVector();
+        casts.arg("table").asStringVector();
+        casts.arg("nomatch").mapNull(constant(RRuntime.INT_NA)).asIntegerVector();
+        casts.arg("duplicates.ok").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization
-    protected RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, byte duplicatesOk) {
+    protected RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, boolean duplicatesOk) {
         int xl = x.getLength();
         int tl = table.getLength();
-        boolean dupsOk = RRuntime.fromLogical(duplicatesOk);
         int[] matches = new int[xl];
         boolean[] matched = new boolean[xl];
         boolean[] used = new boolean[tl];
@@ -77,7 +82,7 @@ public abstract class PMatch extends RBuiltinNode {
                         if (match) {
                             matches[i] = t + 1;
                             matched[i] = true;
-                            if (!dupsOk) {
+                            if (!duplicatesOk) {
                                 used[t] = true;
                             }
                         }

@@ -152,6 +152,6 @@ public class TestBuiltin_abs extends TestBase {
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
 
-        assertEval("{ is.integer(abs(FALSE) }");
+        assertEval("{ is.integer(abs(FALSE)) }");
     }
 }

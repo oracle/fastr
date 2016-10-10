@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 
 /**
  * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
@@ -74,7 +75,9 @@ public class RSource {
         DEPARSE_ERROR("<package_deparse_error>"),
         LAPPLY("<lapply>"),
         R_PARSEVECTOR("<R_ParseVector>"),
-        PAIRLIST_DEPARSE("<pairlist deparse>");
+        PAIRLIST_DEPARSE("<pairlist deparse>"),
+        INIT_EMBEDDED("<init embedded>"),
+        R_IMPL("<internal R code>");
 
         public final String string;
 
@@ -88,14 +91,10 @@ public class RSource {
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}. The simulates the behavior of {@link #fromFile}.
      */
-    public static Source fromFileName(String text, String path) {
+    public static Source fromFileName(String text, String path) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
-        try {
-            URI uri = new URI("file://" + file.getAbsolutePath());
-            return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
-        } catch (URISyntaxException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        URI uri = new URI("file://" + file.getAbsolutePath());
+        return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
     }
 
     /**
@@ -155,6 +154,13 @@ public class RSource {
      */
     public static Source fromURL(URL url, String name) throws IOException {
         return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
+    }
+
+    /**
+     * Create an unknown source with the given name.
+     */
+    public static SourceSection createUnknown(String name) {
+        return Source.newBuilder("").name(name).mimeType(RRuntime.R_APP_MIME).build().createSection(0, 0);
     }
 
     /**

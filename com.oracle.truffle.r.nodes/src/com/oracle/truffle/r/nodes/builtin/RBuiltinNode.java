@@ -51,14 +51,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends RNode {
 
-    public abstract Object execute(VirtualFrame frame, Object... args);
+    public abstract Object executeBuiltin(VirtualFrame frame, Object... args);
 
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
         // nothing to do
     }
 
     public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder(this);
+        CastBuilder builder = new CastBuilder(getRBuiltin());
         createCasts(builder);
         return builder.getCasts();
     }

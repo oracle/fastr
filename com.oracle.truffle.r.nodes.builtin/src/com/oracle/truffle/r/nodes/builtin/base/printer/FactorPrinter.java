@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -43,11 +44,12 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
     @SuppressWarnings("unused") private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
+    @TruffleBoundary
     protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {
         // TODO: this should be handled by an S3 function. Should it? For example, in C code for
         // split, there is direct call to getAttrib. This should be refactored to use
         // AttributeAccess node or even Factor.GetLevels node. The same holds for the access
-        RVector levels = RFactor.getLevels(operand);
+        RVector<?> levels = RFactor.getLevels(operand);
         String[] strings;
         if (levels == null) {
             strings = new String[0];
@@ -61,7 +63,8 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
         RAbstractVector v = RClosures.createFactorToVector(operand, true, levels);
         PrintContext vectorPrintCtx = printCtx.cloneContext();
         vectorPrintCtx.parameters().setQuote(false);
-        ValuePrinters.INSTANCE.println(v, vectorPrintCtx);
+        ValuePrinters.INSTANCE.print(v, vectorPrintCtx);
+        ValuePrinters.printNewLine(printCtx);
 
         final PrintWriter out = printCtx.output();
         out.print("Levels:");

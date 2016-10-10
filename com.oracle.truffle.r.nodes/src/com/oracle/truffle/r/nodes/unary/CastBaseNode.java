@@ -93,7 +93,7 @@ public abstract class CastBaseNode extends CastNode {
         }
     }
 
-    protected void preserveDimensionNames(RAbstractContainer operand, RVector ret) {
+    protected void preserveDimensionNames(RAbstractContainer operand, RVector<?> ret) {
         if (preserveDimensions()) {
             RList dimNames = operand.getDimNames(attrProfiles);
             if (hasDimNamesProfile.profile(dimNames != null)) {

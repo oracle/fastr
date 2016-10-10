@@ -90,7 +90,7 @@ package com.oracle.truffle.r.parser;
     private SourceSection src(Token t) {
         CommonToken token = (CommonToken) t;
         int startIndex = token.getStartIndex();
-        return source.createSection(null, token.getLine(), token.getCharPositionInLine() + 1, startIndex, token.getStopIndex() - startIndex + 1);
+        return source.createSection(startIndex, token.getStopIndex() - startIndex + 1);
     }
     
     /**
@@ -102,7 +102,7 @@ package com.oracle.truffle.r.parser;
         int startIndex = cstart.getStartIndex();
         int stopIndex = cstop.getStopIndex();
         int length = stopIndex - startIndex + (cstop.getType() == Token.EOF ? 0 : 1);
-        return source.createSection(null, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
+        return source.createSection(startIndex, length);
     }
 
 	// without this override, the parser will not throw exceptions if it can recover    

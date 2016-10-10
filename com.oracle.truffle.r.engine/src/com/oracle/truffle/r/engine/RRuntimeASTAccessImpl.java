@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,6 +37,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.engine.shell.RCommand;
+import com.oracle.truffle.r.engine.shell.RscriptCommand;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -39,6 +47,8 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -47,7 +57,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -57,7 +66,6 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -65,6 +73,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -73,10 +82,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -387,54 +393,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object serialize(RSerialize.State state, Object obj) {
-        if (obj instanceof RFunction) {
-            RFunction f = (RFunction) obj;
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
-            REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
-            state.openPairList().setTag(env);
-            fdn.serializeImpl(state);
-            return state.closePairList();
-        } else if (obj instanceof RLanguage) {
-            RLanguage lang = (RLanguage) obj;
-            RSyntaxNode node = lang.getRep().asRSyntaxNode();
-            state.openPairList(SEXPTYPE.LANGSXP);
-            node.serializeImpl(state);
-            return state.closePairList();
-        } else if (obj instanceof RPromise) {
-            RPromise promise = (RPromise) obj;
-            RSyntaxNode node = (RSyntaxNode) RASTUtils.unwrap(promise.getRep());
-            /*
-             * If the promise is evaluated, we store the value (in car) and the tag is set to RNull,
-             * else we record the environment in the tag and store RUnboundValue. In either case we
-             * record the expression.
-             */
-            Object value;
-            Object tag;
-            if (promise.isEvaluated()) {
-                value = promise.getValue();
-                tag = RNull.instance;
-            } else {
-                value = RUnboundValue.instance;
-                tag = promise.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(promise.getFrame());
-            }
-            state.openPairList().setTag(tag);
-            state.setCar(value);
-            state.openPairList();
-            node.serializeImpl(state);
-            state.setCdr(state.closePairList());
-            return state.closePairList();
-        } else {
-            throw RInternalError.unimplemented("serialize");
-        }
-    }
-
-    @Override
-    public void serializeNode(RSerialize.State state, Object node) {
-        ((RBaseNode) node).serialize(state);
-    }
-
-    @Override
     public ArgumentsSignature getArgumentsSignature(RFunction f) {
         return ((RRootNode) f.getRootNode()).getSignature();
     }
@@ -635,16 +593,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public RBaseNode createReadVariableNode(String name) {
-        return RASTUtils.createReadVariableNode(name);
-    }
-
-    @Override
-    public RBaseNode createConstantNode(Object o) {
-        return ConstantNode.create(o);
-    }
-
-    @Override
     public boolean enableDebug(RFunction func, boolean once) {
         return DebugHandling.enableDebug(func, "", RNull.instance, once, false);
     }
@@ -659,4 +607,133 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return DebugHandling.undebug(func);
     }
 
+    @Override
+    public Object rcommandMain(String[] args, String[] env, boolean intern) {
+        IORedirect redirect = handleIORedirect(args, intern);
+        Object result = RCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
+        return redirect.getInternResult(result);
+    }
+
+    @Override
+    public Object rscriptMain(String[] args, String[] env, boolean intern) {
+        IORedirect redirect = handleIORedirect(args, intern);
+        // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
+        // nested context
+        Object result = RscriptCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
+        return redirect.getInternResult(result);
+    }
+
+    private static final class IORedirect {
+        private final InputStream in;
+        private final OutputStream out;
+        private final String[] args;
+        private final boolean intern;
+
+        private IORedirect(InputStream in, OutputStream out, String[] args, boolean intern) {
+            this.in = in;
+            this.out = out;
+            this.args = args;
+            this.intern = intern;
+        }
+
+        private Object getInternResult(Object result) {
+            if (intern) {
+                int status = (int) result;
+                ByteArrayOutputStream bos = (ByteArrayOutputStream) out;
+                String s = new String(bos.toByteArray());
+                RStringVector sresult;
+                if (s.length() == 0) {
+                    sresult = RDataFactory.createEmptyStringVector();
+                } else {
+                    String[] lines = s.split("\n");
+                    sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
+                }
+                if (status != 0) {
+                    sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
+                }
+                return sresult;
+            } else {
+                return result;
+            }
+
+        }
+    }
+
+    private static IORedirect handleIORedirect(String[] args, boolean intern) {
+        /*
+         * This code is primarily intended to handle the "system" .Internal so the possible I/O
+         * redirects are taken from the system/system2 R code. N.B. stdout redirection is never set
+         * if "intern == true. Both input and output can be redirected to /dev/null.
+         */
+        InputStream in = System.in;
+        OutputStream out = System.out;
+        ArrayList<String> newArgsList = new ArrayList<>();
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i];
+            if (arg.equals("<")) {
+                String file;
+                if (i < args.length - 1) {
+                    file = Utils.tildeExpand(Utils.unShQuote(args[i + 1]));
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
+                }
+                try {
+                    in = new FileInputStream(file);
+                } catch (IOException ex) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
+                }
+                arg = null;
+                i++;
+            } else if (arg.startsWith("2>")) {
+                if (arg.equals("2>&1")) {
+                    // happens anyway
+                } else {
+                    assert !intern;
+                    throw RError.nyi(RError.NO_CALLER, "stderr redirect");
+                }
+                arg = null;
+            } else if (arg.startsWith(">")) {
+                assert !intern;
+                arg = null;
+                throw RError.nyi(RError.NO_CALLER, "stdout redirect");
+            }
+            if (arg != null) {
+                newArgsList.add(arg);
+            }
+            i++;
+        }
+        String[] newArgs;
+        if (newArgsList.size() == args.length) {
+            newArgs = args;
+        } else {
+            newArgs = new String[newArgsList.size()];
+            newArgsList.toArray(newArgs);
+        }
+        // to implement intern, we create a ByteArryOutputStream to capture the output
+        if (intern) {
+            out = new ByteArrayOutputStream();
+        }
+        return new IORedirect(in, out, newArgs, intern);
+    }
+
+    @Override
+    public String encodeDouble(double x) {
+        return DoubleVectorPrinter.encodeReal(x);
+    }
+
+    @Override
+    public String encodeDouble(double x, int digits) {
+        return DoubleVectorPrinter.encodeReal(x, digits);
+    }
+
+    @Override
+    public String encodeComplex(RComplex x) {
+        return ComplexVectorPrinter.encodeComplex(x);
+    }
+
+    @Override
+    public String encodeComplex(RComplex x, int digits) {
+        return ComplexVectorPrinter.encodeComplex(x, digits);
+    }
 }

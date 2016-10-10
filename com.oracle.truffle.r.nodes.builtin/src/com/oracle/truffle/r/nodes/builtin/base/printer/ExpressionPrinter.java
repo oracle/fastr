@@ -25,10 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
@@ -42,15 +42,15 @@ final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
+    @TruffleBoundary
     protected void printValue(RExpression expr, PrintContext printCtx) throws IOException {
         final PrintWriter out = printCtx.output();
         final PrintContext valPrintCtx = printCtx.cloneContext();
         valPrintCtx.parameters().setSuppressIndexLabels(true);
 
         out.print("expression(");
-        RList exprs = expr.getList();
         RStringVector names = (RStringVector) expr.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY);
-        for (int i = 0; i < exprs.getLength(); i++) {
+        for (int i = 0; i < expr.getLength(); i++) {
             if (i != 0) {
                 out.print(", ");
             }
@@ -58,7 +58,7 @@ final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
                 out.print(names.getDataAt(i));
                 out.print(" = ");
             }
-            ValuePrinters.INSTANCE.print(exprs.getDataAt(i), valPrintCtx);
+            ValuePrinters.INSTANCE.print(expr.getDataAt(i), valPrintCtx);
         }
         out.print(')');
     }

@@ -29,6 +29,8 @@ import java.io.Console;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -66,12 +68,16 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
+        doMain(args, null, true, System.in, System.out);
+        // never returns
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false);
-        // never returns
-        readEvalPrint(vm);
-        throw RInternalError.shouldNotReachHere();
+        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream, env);
+        return readEvalPrint(vm);
     }
 
     /**
@@ -81,7 +87,7 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded) {
+    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream, String[] env) {
         RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
@@ -120,13 +126,21 @@ public class RCommand {
             List<String> lines;
             String filePath;
             try {
-                File file = new File(fileArg);
+                /*
+                 * If initial==false, ~ expansion will not have been done and the open will fail.
+                 * It's harmless to always do it.
+                 */
+                File file = new File(Utils.tildeExpand(fileArg));
                 lines = Files.readAllLines(file.toPath());
                 filePath = file.getCanonicalPath();
             } catch (IOException e) {
-                throw Utils.rSuicide("cannot open file '" + fileArg + "': " + e.getMessage());
+                if (initial) {
+                    throw Utils.rSuicide(String.format(RError.Message.NO_SUCH_FILE.message, fileArg));
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, fileArg);
+                }
             }
-            consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
+            consoleHandler = new StringConsoleHandler(lines, outStream, filePath);
         } else if (options.getStringList(EXPR) != null) {
             List<String> exprs = options.getStringList(EXPR);
             for (int i = 0; i < exprs.size(); i++) {
@@ -137,7 +151,7 @@ public class RCommand {
             }
             // cf GNU R
             rsp.setInteractive(false);
-            consoleHandler = new StringConsoleHandler(exprs, System.out, RSource.Internal.EXPRESSION_INPUT.string);
+            consoleHandler = new StringConsoleHandler(exprs, outStream, RSource.Internal.EXPRESSION_INPUT.string);
         } else {
             /*
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -148,23 +162,28 @@ public class RCommand {
              * should be lazy, as these may not be necessary and can cause hangs if stdin has been
              * redirected.
              */
-            Console sysConsole = System.console();
+            Console sysConsole = System.console(); // TODO fix for context sessions
             boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
             if (!isInteractive && rsp.getSaveAction() != SA_TYPE.SAVE && rsp.getSaveAction() != SA_TYPE.NOSAVE) {
-                throw Utils.rSuicide("you must specify '--save', '--no-save' or '--vanilla'");
+                String msg = "you must specify '--save', '--no-save' or '--vanilla'";
+                if (initial) {
+                    throw Utils.rSuicide(msg);
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, msg);
+                }
             }
             if (embedded) {
                 consoleHandler = new EmbeddedConsoleHandler(rsp);
             } else {
                 boolean useReadLine = !rsp.getNoReadline();
                 if (useReadLine) {
-                    consoleHandler = new JLineConsoleHandler(rsp);
+                    consoleHandler = new JLineConsoleHandler(rsp, inStream, outStream);
                 } else {
-                    consoleHandler = new DefaultConsoleHandler(System.in, System.out);
+                    consoleHandler = new DefaultConsoleHandler(inStream, outStream);
                 }
             }
         }
-        return ContextInfo.create(rsp, ContextKind.SHARE_NOTHING, null, consoleHandler).createVM();
+        return ContextInfo.create(rsp, env, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler).createVM();
     }
 
     private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);
@@ -181,9 +200,10 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    static void readEvalPrint(PolyglotEngine vm) {
+    static int readEvalPrint(PolyglotEngine vm) {
         int lastStatus = 0;
-        ConsoleHandler consoleHandler = ContextInfo.getContextInfo(vm).getConsoleHandler();
+        ContextInfo contextInfo = ContextInfo.getContextInfo(vm);
+        ConsoleHandler consoleHandler = contextInfo.getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -204,16 +224,18 @@ public class RCommand {
                     StringBuffer sb = new StringBuffer(input);
                     Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                     while (true) {
-                        /*
-                         * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
-                         * exceptions that are <: Exception are converted to IOException, Error
-                         * subclasses pass through.
-                         */
                         lastStatus = 0;
                         try {
-                            vm.eval(source);
-                            emitIO();
-                        } catch (IncompleteSourceException | com.oracle.truffle.api.vm.IncompleteSourceException e) {
+                            try {
+                                vm.eval(source);
+                                // checked exceptions are wrapped in RuntimeExceptions
+                            } catch (RuntimeException e) {
+                                if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
+                                    throw e.getCause().getCause();
+                                }
+                                throw e;
+                            }
+                        } catch (IncompleteSourceException e) {
                             // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();
@@ -226,27 +248,27 @@ public class RCommand {
                             continue;
                         } catch (ParseException e) {
                             e.report(consoleHandler);
-                        } catch (IOException e) {
-                            /*
-                             * We have to extract the underlying cause and handle the special cases
-                             * appropriately.
-                             */
                             lastStatus = 1;
-                            Throwable cause = e.getCause();
-                            if (cause instanceof RError) {
-                                // drop through to continue REPL and remember last eval was an error
-                            } else if (cause instanceof JumpToTopLevelException) {
-                                // drop through to continue REPL
-                            } else if (cause instanceof DebugExitException) {
-                                throw (RuntimeException) cause;
-                            } else if (cause instanceof ExitException) {
-                                // usually from quit
+                        } catch (RError e) {
+                            // drop through to continue REPL and remember last eval was an error
+                            lastStatus = 1;
+                        } catch (JumpToTopLevelException e) {
+                            // drop through to continue REPL
+                        } catch (DebugExitException e) {
+                            throw (RuntimeException) e.getCause();
+                        } catch (ExitException e) {
+                            // usually from quit
+                            int status = e.getStatus();
+                            if (contextInfo.getParent() == null) {
                                 vm.dispose();
-                                System.exit(((ExitException) cause).getStatus());
+                                Utils.systemExit(status);
                             } else {
-                                RInternalError.reportErrorAndConsoleLog(cause, consoleHandler, 0);
-                                // We continue the repl even though the system may be broken
+                                return status;
                             }
+                        } catch (Throwable e) {
+                            RInternalError.reportErrorAndConsoleLog(e, consoleHandler, 0);
+                            // We continue the repl even though the system may be broken
+                            lastStatus = 1;
                         }
                         continue REPL;
                     }
@@ -254,47 +276,43 @@ public class RCommand {
                     // interrupted by ctrl-c
                 }
             }
-        } catch (JumpToTopLevelException e) {
-            // can happen if user profile invokes browser (unlikely but possible)
-        } catch (EOFException ex) {
+        } catch (JumpToTopLevelException | EOFException ex) {
+            // JumpToTopLevelException can happen if user profile invokes browser (unlikely but
+            // possible)
             try {
                 vm.eval(QUIT_EOF);
-            } catch (Throwable e) {
-                if (e.getCause() instanceof ExitException) {
-                    // normal quit, but with exit code based on lastStatus
-                    System.exit(lastStatus);
+            } catch (JumpToTopLevelException e) {
+                Utils.systemExit(0);
+            } catch (ExitException e) {
+                // normal quit, but with exit code based on lastStatus
+                if (contextInfo.getParent() == null) {
+                    Utils.systemExit(lastStatus);
+                } else {
+                    return lastStatus;
                 }
+            } catch (Throwable e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         } finally {
             vm.dispose();
         }
+        return 0;
     }
 
     private static boolean doEcho(PolyglotEngine vm) {
-        PolyglotEngine.Value echoValue;
-        try {
-            echoValue = vm.eval(GET_ECHO);
-            emitIO();
-            Object echo = echoValue.get();
-            if (echo instanceof TruffleObject) {
-                RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
-                return RRuntime.fromLogical(echoVec.getDataAt(0));
-            } else if (echo instanceof Byte) {
-                return RRuntime.fromLogical((Byte) echo);
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        } catch (IOException e) {
-            throw RInternalError.shouldNotReachHere(e);
+        PolyglotEngine.Value echoValue = vm.eval(GET_ECHO);
+        Object echo = echoValue.get();
+        if (echo instanceof TruffleObject) {
+            RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
+            return RRuntime.fromLogical(echoVec.getDataAt(0));
+        } else if (echo instanceof Byte) {
+            return RRuntime.fromLogical((Byte) echo);
+        } else {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
     private static String getContinuePrompt() {
         return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
-    }
-
-    @SuppressWarnings("unused")
-    private static void emitIO() throws IOException {
     }
 }

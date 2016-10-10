@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -52,6 +53,7 @@ public final class RInternalCode {
         this.basePackage = basePackage;
     }
 
+    @TruffleBoundary
     public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
         return Utils.getResourceAsSource(clazz, fileName);
     }
@@ -64,7 +66,7 @@ public final class RInternalCode {
             evaluatedEnvironment.setParent(statsPackage);
             // caller is put into arguments by eval, internal code is assumed to be well-behaved and
             // not accessing it
-            context.getThisEngine().eval(parsedCode, evaluatedEnvironment, /* caller: */null);
+            context.getThisEngine().eval(parsedCode, evaluatedEnvironment, RCaller.createInvalid(null));
             return evaluatedEnvironment;
         } catch (ParseException e) {
             throw e.throwAsRError();
@@ -102,7 +104,7 @@ public final class RInternalCode {
             codes.put(source, code);
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+        public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
 

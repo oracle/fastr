@@ -250,8 +250,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             ((RShareable) b).incRefCount();
         }
 
-        RVector aMaterialized = a.copy().materialize();
-        RVector bMaterialized = b.copy().materialize();
+        RVector<?> aMaterialized = a.copy().materialize();
+        RVector<?> bMaterialized = b.copy().materialize();
 
         aMaterialized.setAttr("a", "a");
         bMaterialized.setAttr("b", "b");
@@ -387,6 +387,6 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     private static NodeHandle<BinaryArithmeticNode> create(BinaryArithmeticFactory factory) {
         return createHandle(BinaryArithmeticNode.create(factory, null), //
-                        (node, args) -> node.execute(null, args[0], args[1]));
+                        (node, args) -> node.executeBuiltin(null, args[0], args[1]));
     }
 }

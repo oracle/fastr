@@ -59,10 +59,10 @@ import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -159,7 +158,7 @@ public class FrameFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "which");
+            casts.arg("which").asIntegerVector().findFirst();
         }
 
         @Override
@@ -176,8 +175,7 @@ public class FrameFunctions {
             if (RArguments.getFunction(cframe) == null) {
                 return RNull.instance;
             }
-            RLanguage createCall = createCall(RArguments.getCall(cframe));
-            return createCall;
+            return createCall(RArguments.getCall(cframe));
         }
 
         @TruffleBoundary
@@ -207,6 +205,14 @@ public class FrameFunctions {
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("definition").mustBe(RFunction.class);
+            casts.arg("call").mustBe(RLanguage.class);
+            casts.arg("expand.dots").asLogicalVector().findFirst();
+            casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
         }
 
         @Specialization
@@ -281,20 +287,7 @@ public class FrameFunctions {
                         RPairList prev = null;
                         for (int i2 = 0; i2 < varArgNodes.length; i2++) {
                             RNode n = varArgNodes[i2];
-                            Object listValue;
-                            if (n instanceof ConstantNode) {
-                                listValue = ((ConstantNode) n).getValue();
-                            } else if (n instanceof ReadVariableNode) {
-                                String id = ((ReadVariableNode) n).getIdentifier();
-                                assert id == id.intern();
-                                listValue = RDataFactory.createSymbol(id);
-                            } else if (n instanceof VarArgNode) {
-                                listValue = createVarArgSymbol((VarArgNode) n);
-                            } else if (n instanceof RCallNode) {
-                                listValue = RDataFactory.createLanguage(n);
-                            } else {
-                                throw RInternalError.shouldNotReachHere("node: " + n + " at " + i2);
-                            }
+                            Object listValue = RASTUtils.createLanguageElement(n.asRSyntaxNode());
                             pl.setCar(listValue);
                             if (varArgSignature.getName(i2) != null) {
                                 pl.setTag(RDataFactory.createSymbolInterned(varArgSignature.getName(i2)));
@@ -350,12 +343,6 @@ public class FrameFunctions {
                 return rvn.getLength() == 0;
             }
             return false;
-        }
-
-        private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
-            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
-            String varArgSymbol = createVarArgName(varArgNode);
-            return RDataFactory.createSymbolInterned(varArgSymbol);
         }
 
         private static String createVarArgName(VarArgNode varArgNode) {
@@ -424,6 +411,11 @@ public class FrameFunctions {
             return FrameAccess.MATERIALIZE;
         }
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
+        }
+
         @Specialization
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
             REnvironment result;
@@ -438,11 +430,6 @@ public class FrameFunctions {
             deoptFrameNode.deoptimizeFrame(result.getFrame());
 
             return result;
-        }
-
-        @Specialization
-        protected REnvironment sysFrame(VirtualFrame frame, double which) {
-            return sysFrame(frame, (int) which);
         }
     }
 
@@ -528,7 +515,7 @@ public class FrameFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -560,6 +547,11 @@ public class FrameFunctions {
             return FrameAccess.READ_ONLY;
         }
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
+        }
+
         @Specialization
         protected Object sysFunction(VirtualFrame frame, int which) {
             // N.B. Despite the spec, n==0 is treated as the current function
@@ -571,11 +563,6 @@ public class FrameFunctions {
             } else {
                 return func;
             }
-        }
-
-        @Specialization
-        protected Object sysFunction(VirtualFrame frame, double which) {
-            return sysFunction(frame, (int) which);
         }
     }
 
@@ -630,11 +617,11 @@ public class FrameFunctions {
         private final BranchProfile promiseProfile = BranchProfile.create();
         private final BranchProfile nonNullCallerProfile = BranchProfile.create();
 
-        public abstract Object execute(VirtualFrame frame, int n);
+        public abstract REnvironment execute(VirtualFrame frame, int n);
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_VALUE, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Override
@@ -685,11 +672,6 @@ public class FrameFunctions {
             // parentDepth--;
             // }
             return REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
-        }
-
-        @Specialization
-        protected REnvironment parentFrame(VirtualFrame frame, double n) {
-            return parentFrame(frame, (int) n);
         }
     }
 }

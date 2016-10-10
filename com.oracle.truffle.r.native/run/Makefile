@@ -44,7 +44,7 @@ FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
-SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcmd config javareconf)
+BIN_FILES := $(wildcard $(GNUR_HOME)/bin/*)
 
 DOC_FILES := $(wildcard $(GNUR_HOME)/doc/*)
 
@@ -66,18 +66,20 @@ rundirs:
 rcmds: $(FASTR_BIN_DIR)/R
 
 $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
+	cp -r $(BIN_FILES) $(FASTR_BIN_DIR)
+    # overide bin/R
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
+	# override bin/Rscript
 	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRextras/Rscript
 	cp Rscript.sh $(FASTR_BIN_DIR)/Rscript
+	# for embedded support
 	cp Rclasspath.sh $(FASTR_BIN_DIR)/execRextras/Rclasspath
 	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRextras/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/execRextras/Rclasspath
-	cp $(SUPPORT_SCRIPTS) $(FASTR_BIN_DIR)
+	# update R_HOME_DIR to FastR
 	sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
 	touch $(FASTR_ETC_DIR)/ldpaths
 	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
-	# set R_INSTALL_TAR
-	ed $(FASTR_ETC_DIR)/Renviron < edRenviron
 	cp $(GNUR_HOME)/etc/Makeconf Makeconf.etc
 	cp $(GNUR_HOME)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME)/etc/repositories $(FASTR_ETC_DIR)/repositories

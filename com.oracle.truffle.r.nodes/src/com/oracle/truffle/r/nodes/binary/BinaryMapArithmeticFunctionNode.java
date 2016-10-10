@@ -81,6 +81,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     @Override
     public double applyDouble(double left, double right) {
         if (leftNACheck.check(left)) {
+            // Note: these corner cases also apply in BinaryArithmeticSpecial node
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right == 0) {
                 // CORNER: Make sure NA^0 == 1
                 return 1;

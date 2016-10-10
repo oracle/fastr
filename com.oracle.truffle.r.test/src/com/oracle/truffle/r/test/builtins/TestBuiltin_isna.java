@@ -29,8 +29,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(17L, 18L, 18L, 18L), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N')));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(c(17L, 18L, 18L, 18L), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -50,8 +49,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c('V5', 'V6', 'V7', 'V8', 'V9'))));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c('V5', 'V6', 'V7', 'V8', 'V9'))));is.na(argv[[1]]);");
     }
 
     @Test
@@ -177,8 +175,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna34() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('Min.   : 1.00  ', '1st Qu.: 9.00  ', 'Median :18.00  ', 'Mean   :14.74  ', '3rd Qu.:20.00  ', 'Max.   :23.00  ', NA, 'Min.   :5.000  ', '1st Qu.:5.300  ', 'Median :6.100  ', 'Mean   :6.084  ', '3rd Qu.:6.600  ', 'Max.   :7.700  ', NA, '117    :  5  ', '1028   :  4  ', '113    :  4  ', '112    :  3  ', '135    :  3  ', '(Other):147  ', 'NAs   : 16  ', 'Min.   :  0.50  ', '1st Qu.: 11.32  ', 'Median : 23.40  ', 'Mean   : 45.60  ', '3rd Qu.: 47.55  ', 'Max.   :370.00  ', NA, 'Min.   :0.00300  ', '1st Qu.:0.04425  ', 'Median :0.11300  ', 'Mean   :0.15422  ', '3rd Qu.:0.21925  ', 'Max.   :0.81000  ', NA), .Dim = c(7L, 5L), .Dimnames = list(c('', '', '', '', '', '', ''), c('    event', '     mag', '   station', '     dist', '    accel')), class = 'table'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(c('Min.   : 1.00  ', '1st Qu.: 9.00  ', 'Median :18.00  ', 'Mean   :14.74  ', '3rd Qu.:20.00  ', 'Max.   :23.00  ', NA, 'Min.   :5.000  ', '1st Qu.:5.300  ', 'Median :6.100  ', 'Mean   :6.084  ', '3rd Qu.:6.600  ', 'Max.   :7.700  ', NA, '117    :  5  ', '1028   :  4  ', '113    :  4  ', '112    :  3  ', '135    :  3  ', '(Other):147  ', 'NAs   : 16  ', 'Min.   :  0.50  ', '1st Qu.: 11.32  ', 'Median : 23.40  ', 'Mean   : 45.60  ', '3rd Qu.: 47.55  ', 'Max.   :370.00  ', NA, 'Min.   :0.00300  ', '1st Qu.:0.04425  ', 'Median :0.11300  ', 'Mean   :0.15422  ', '3rd Qu.:0.21925  ', 'Max.   :0.81000  ', NA), .Dim = c(7L, 5L), .Dimnames = list(c('', '', '', '', '', '', ''), c('    event', '     mag', '   station', '     dist', '    accel')), class = 'table'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -198,14 +195,12 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna38() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(2L, 6L, 2L, 5L, 4L, 2L, 5L, 4L), .Dim = 8L, .Dimnames = structure(list(statef = c('act', 'nsw', 'nt', 'qld', 'sa', 'tas', 'vic', 'wa')), .Names = 'statef'), class = 'table'));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(c(2L, 6L, 2L, 5L, 4L, 2L, 5L, 4L), .Dim = 8L, .Dimnames = structure(list(statef = c('act', 'nsw', 'nt', 'qld', 'sa', 'tas', 'vic', 'wa')), .Names = 'statef'), class = 'table'));is.na(argv[[1]]);");
     }
 
     @Test
     public void testisna39() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0), .Dim = 3:4, .Dimnames = structure(list(x1 = c('a', 'b', 'c'), x2 = c('a', 'b', 'c', NA)), .Names = c('x1', 'x2')), class = c('xtabs', 'table')));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(c(2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0), .Dim = 3:4, .Dimnames = structure(list(x1 = c('a', 'b', 'c'), x2 = c('a', 'b', 'c', NA)), .Names = c('x1', 'x2')), class = c('xtabs', 'table')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -254,9 +249,10 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
         assertEval(Output.IgnoreWarningContext, "is.na(quote(x()))");
-        assertEval("is.na(is.na))");
+        assertEval("is.na(is.na)");
 
         // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error
+        // Probably the same error as in testisna13
         assertEval(Ignored.Unimplemented, "is.na(data.frame(col1=1:5, col2=c(NA, 1, NA, 2, NA)))");
     }
 }

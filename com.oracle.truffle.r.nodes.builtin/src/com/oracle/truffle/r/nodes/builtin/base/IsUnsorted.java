@@ -22,16 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryMapBooleanFunctionNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.Order.CmpNode;
+import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 
@@ -41,14 +51,28 @@ import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 public abstract class IsUnsorted extends RBuiltinNode {
 
     @Child private BinaryMapBooleanFunctionNode ge = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_EQUAL.create());
+    @Child private BinaryMapBooleanFunctionNode gt = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_THAN.create());
+
+    private final ConditionProfile strictlyProfile = ConditionProfile.createBinaryProfile();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("strictly").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).notNA().map(toBoolean());
+    }
 
     @Specialization
-    protected byte isUnsorted(RAbstractDoubleVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractDoubleVector x, boolean strictly) {
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             double current = x.getDataAt(k);
-            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
-                return RRuntime.LOGICAL_TRUE;
+            if (strictlyProfile.profile(strictly)) {
+                if (ge.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            } else {
+                if (gt.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
             }
             last = current;
         }
@@ -56,12 +80,18 @@ public abstract class IsUnsorted extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractIntVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractIntVector x, boolean strictly) {
         int last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             int current = x.getDataAt(k);
-            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
-                return RRuntime.LOGICAL_TRUE;
+            if (strictlyProfile.profile(strictly)) {
+                if (ge.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            } else {
+                if (gt.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
             }
             last = current;
         }
@@ -69,15 +99,69 @@ public abstract class IsUnsorted extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractStringVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractStringVector x, boolean strictly) {
         String last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             String current = x.getDataAt(k);
-            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
-                return RRuntime.LOGICAL_TRUE;
+            if (strictlyProfile.profile(strictly)) {
+                if (ge.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            } else {
+                if (gt.applyLogical(last, current) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
             }
             last = current;
         }
         return RRuntime.LOGICAL_FALSE;
     }
+
+    protected CmpNode createCmpNode() {
+        return CmpNodeGen.create();
+    }
+
+    @Specialization
+    protected byte isUnsorted(RAbstractRawVector x, boolean strictly) {
+        RRaw last = x.getDataAt(0);
+        for (int k = 1; k < x.getLength(); k++) {
+            RRaw current = x.getDataAt(k);
+            if (strictlyProfile.profile(strictly)) {
+                if (ge.applyRaw(last.getValue(), current.getValue()) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            } else {
+                if (gt.applyRaw(last.getValue(), current.getValue()) == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            }
+            last = current;
+        }
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isUnsorted(RAbstractComplexVector x, boolean strictly, @Cached("createCmpNode()") CmpNode cmpNode) {
+        int last = 0;
+        for (int k = 1; k < x.getLength(); k++) {
+            if (strictlyProfile.profile(strictly)) {
+                if (cmpNode.ccmp(x, last, k, true) >= 0) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            } else {
+                if (cmpNode.ccmp(x, last, k, true) > 0) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            }
+            last = k;
+        }
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Fallback
+    @SuppressWarnings("unused")
+    protected byte isUnsortedFallback(Object x, Object strictly) {
+        return RRuntime.LOGICAL_NA;
+    }
+
 }

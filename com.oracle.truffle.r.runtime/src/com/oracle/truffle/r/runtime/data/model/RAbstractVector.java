@@ -24,11 +24,11 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.MemoryTracer;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RVector;
 
 /**
- * When implementing, make sure to invoke related {@link MemoryTracer} methods.
+ * When implementing, make sure to invoke related {@link MemoryCopyTracer} methods.
  */
 public interface RAbstractVector extends RAbstractContainer {
 
@@ -43,17 +43,17 @@ public interface RAbstractVector extends RAbstractContainer {
         return copy();
     }
 
-    RVector copyResized(int size, boolean fillNA);
+    RVector<?> copyResized(int size, boolean fillNA);
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
-    RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA);
+    RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA);
 
     RAbstractVector copyDropAttributes();
 
-    RVector createEmptySameType(int newLength, boolean newIsComplete);
+    RVector<?> createEmptySameType(int newLength, boolean newIsComplete);
 
-    RVector materialize();
+    RVector<?> materialize();
 
     boolean isMatrix();
 

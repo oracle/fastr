@@ -15,6 +15,7 @@
 /com.oracle.truffle.r.native/builtinlibs/lib/*
 /com.oracle.truffle.r.native/library/*/lib/*
 /com.oracle.truffle.r.native/library/stats/src/fft.c
+/com.oracle.truffle.r.native/library/tools/src/gramRd.c
 /com.oracle.truffle.r.native/platform.mk
 /com.oracle.truffle.r.native/gnur/Makeconf.done
 /com.oracle.truffle.r.native/gnur/platform.mk.temp*
@@ -23,9 +24,16 @@
 /com.oracle.truffle.r.native/include/*.h
 /com.oracle.truffle.r.native/include/R_ext/*.h
 /com.oracle.truffle.r.native/include/linked
+/com.oracle.truffle.r.test.native/packages/copy_recommended
+/com.oracle.truffle.r.test.native/packages/recommended
 /com.oracle.truffle.r.test.native/packages/*/lib/*
-/com.oracle.truffle.r.test/rpackages/testrlibs_user
 /com.oracle.truffle.r.test.native/urand/lib/liburand.so
+/tmptest/
+/com.oracle.truffle.r.release/lib/
+/com.oracle.truffle.r.release/library/
+/com.oracle.truffle.r.release/LICENSE
+/com.oracle.truffle.r.release/COPYRIGHT
+/com.oracle.truffle.r.release/README.md
 /DEPARSE_ERROR
 /Rpkgsource/*
 /install.cran.logs/

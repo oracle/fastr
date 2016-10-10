@@ -63,6 +63,6 @@ public class TestBuiltin_allnames extends TestBase {
         assertEval("{ all.names(expression(sin(x+y+x)), unique=F) }");
         assertEval("{ all.names(expression(sin(x+y+x)), unique=T) }");
         assertEval("{ all.names(expression(sin(x+y+x)), unique=NULL) }");
-        assertEval("{ all.names(expression(sin(x+y+x)), unique=(NA) }");
+        assertEval("{ all.names(expression(sin(x+y+x)), unique=NA) }");
     }
 }

@@ -26,14 +26,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -46,6 +44,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
     @Child private RNode elsePart;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
@@ -72,7 +71,7 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
     @Override
     public Object execute(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
-        RContext.getInstance().setVisible(elsePart != null || cond == RRuntime.LOGICAL_TRUE);
+        visibility.execute(frame, elsePart != null || cond == RRuntime.LOGICAL_TRUE);
 
         if (cond == RRuntime.LOGICAL_NA) {
             // NA is the only remaining option
@@ -103,23 +102,6 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     public RNode getElsePart() {
         return elsePart;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin("if");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        // condition
-        state.serializeNodeSetCar(condition);
-        // then, with brace
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(thenPart);
-        if (elsePart != null) {
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.serializeNodeSetCar(elsePart);
-        }
-        state.linkPairList(elsePart == null ? 2 : 3);
-        state.setCdr(state.closePairList());
     }
 
     @Override

@@ -94,7 +94,7 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     @Override
     public RLogicalVector materialize() {
         RLogicalVector result = RDataFactory.createLogicalVectorFromScalar(value);
-        MemoryTracer.reportCopying(this, result);
+        MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 

@@ -33,6 +33,9 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 
 @MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
@@ -62,34 +65,54 @@ public class RListMR {
     @Resolve(message = "READ")
     public abstract static class RListReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field) {
-            Object x = extract.applyAccessField(frame, receiver, field);
-            return x;
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                return extract.applyAccessField(frame, receiver, field);
+            }
         }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class RListWriteNode extends Node {
         @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
-            Object value = valueObj;
-            if (value instanceof Short) {
-                value = (int) ((Short) value).shortValue();
-            } else if (value instanceof Float) {
-                float floatValue = ((Float) value).floatValue();
-                value = new Double(floatValue);
-            } else if (value instanceof Boolean) {
-                boolean booleanValue = ((Boolean) value).booleanValue();
-                value = booleanValue ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-            } else if (value instanceof Character) {
-                value = (int) ((Character) value).charValue();
-            } else if (value instanceof Byte) {
-                value = (int) ((Byte) value).byteValue();
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                Object value = valueObj;
+                if (value instanceof Short) {
+                    value = (int) ((Short) value).shortValue();
+                } else if (value instanceof Float) {
+                    float floatValue = ((Float) value).floatValue();
+                    value = new Double(floatValue);
+                } else if (value instanceof Boolean) {
+                    boolean booleanValue = ((Boolean) value).booleanValue();
+                    value = booleanValue ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                } else if (value instanceof Character) {
+                    value = (int) ((Character) value).charValue();
+                } else if (value instanceof Byte) {
+                    value = (int) ((Byte) value).byteValue();
+                }
+                Object x = extract.apply(frame, receiver, new Object[]{field}, value);
+                return x;
             }
-            Object x = extract.apply(frame, receiver, new Object[]{field}, value);
-            return x;
+        }
+    }
+
+    @Resolve(message = "KEYS")
+    public abstract static class RListKeysNode extends Node {
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @SuppressWarnings("try")
+        protected Object access(RList receiver) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                return receiver.getNames(attrProfiles);
+            }
         }
     }
 

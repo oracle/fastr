@@ -30,11 +30,12 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -83,12 +84,12 @@ public class RowsumFunctions {
             int offsetg = 0;
 
             boolean isInt = xv instanceof RIntVector;
-            RVector result;
+            RVector<?> result;
             na.enable(xv);
             boolean complete = xv.isComplete();
 
             if (typeProfile.profile(isInt)) {
-                RIntVector xi = (RIntVector) xv;
+                RAbstractIntVector xi = (RAbstractIntVector) xv;
                 int[] ansi = new int[ng * p];
                 for (int i = 0; i < p; i++) {
                     for (int j = 0; j < n; j++) {
@@ -117,7 +118,7 @@ public class RowsumFunctions {
                 }
                 result = RDataFactory.createIntVector(ansi, complete, new int[]{ng, p});
             } else {
-                RDoubleVector xd = (RDoubleVector) xv;
+                RAbstractDoubleVector xd = (RAbstractDoubleVector) xv;
                 double[] ansd = new double[ng * p];
                 for (int i = 0; i < p; i++) {
                     for (int j = 0; j < n; j++) {

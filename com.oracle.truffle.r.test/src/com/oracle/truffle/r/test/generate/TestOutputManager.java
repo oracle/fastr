@@ -130,6 +130,10 @@ public class TestOutputManager {
         this.rSessionName = session.name();
     }
 
+    public RSession getRSession() {
+        return rSession;
+    }
+
     /**
      * Associates a name with the manager, for the case where {@link #rSession} is unset.
      */
@@ -360,7 +364,7 @@ public class TestOutputManager {
             String expected = null;
             if (!checkOnly) {
                 try {
-                    expected = rSession.eval(test, null, false);
+                    expected = rSession.eval(null, test, null, false);
                 } catch (Throwable e) {
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }

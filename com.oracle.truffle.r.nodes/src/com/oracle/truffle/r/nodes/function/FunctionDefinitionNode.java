@@ -47,9 +47,10 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -58,14 +59,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -115,6 +113,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode dotDefinedSlot;
     @Child private FrameSlotNode dotTargetSlot;
     @Child private FrameSlotNode dotMethodsSlot;
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     @Child private PostProcessArgumentsNode argPostProcess;
 
@@ -287,6 +287,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
+            visibility.executeEndOfFunction(frame);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
@@ -299,18 +300,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                     }
                     ArrayList<Object> current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
-                    // Preserve the visibility state as may be changed by the on.exit
-                    boolean isVisible = RContext.getInstance().isVisible();
-                    try {
-                        for (Object expr : current) {
-                            if (!(expr instanceof RNode)) {
-                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
-                            }
-                            RNode node = (RNode) expr;
-                            onExitExpressionCache.execute(frame, node);
+                    /*
+                     * We do not need to preserve visibility, since visibility.executeEndOfFunction
+                     * was already called.
+                     */
+                    for (Object expr : current) {
+                        if (!(expr instanceof RNode)) {
+                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
                         }
-                    } finally {
-                        RContext.getInstance().setVisible(isVisible);
+                        RNode node = (RNode) expr;
+                        onExitExpressionCache.execute(frame, node);
                     }
                 }
             }
@@ -386,60 +385,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public String toString() {
         return getName();
-    }
-
-    /**
-     * Serialize a function. On entry {@code state} has an active pairlist, whose {@code tag} is the
-     * enclosing {@link REnvironment}. The {@code car} must be set to the pairlist representing the
-     * formal arguments (or {@link RNull} if none) and the {@code cdr} to the pairlist representing
-     * the body. Each formal argument is represented as a pairlist:
-     * <ul>
-     * <li>{@code tag}: RSymbol(name)</li>
-     * <li>{@code car}: Missing or default value</li>
-     * <li>{@code cdr}: if last formal then RNull else pairlist for next argument.
-     * </ul>
-     * N.B. The body is never empty as the syntax "{}" has a value, however if the body is a simple
-     * expression, e.g. {@code function(x) x}, the body is not represented as a pairlist, just a
-     * SYMSXP, which is handled transparently in {@code RSerialize.State.closePairList()}.
-     *
-     */
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        serializeFormals(state);
-        serializeBody(state);
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public void serializeBody(RSerialize.State state) {
-        state.openPairList();
-        body.serialize(state);
-        state.setCdr(state.closePairList());
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public void serializeFormals(RSerialize.State state) {
-        FormalArguments formals = getFormalArguments();
-        int formalsLength = formals.getSignature().getLength();
-        if (formalsLength > 0) {
-            for (int i = 0; i < formalsLength; i++) {
-                RNode defaultArg = formals.getDefaultArgument(i);
-                state.openPairList();
-                state.setTagAsSymbol(formals.getSignature().getName(i));
-                if (defaultArg != null) {
-                    state.serializeNodeSetCar(defaultArg);
-                } else {
-                    state.setCarMissing();
-                }
-            }
-            state.linkPairList(formalsLength);
-            state.setCar(state.closePairList());
-        } else {
-            state.setCar(RNull.instance);
-        }
     }
 
     public void setName(String name) {

@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
@@ -57,6 +58,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -145,7 +147,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
                                         RSyntaxNode[]::new);
 
-        return RCallNode.createCall(source, lhs.asRNode(), signature, nodes);
+        return RCallSpecialNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
     private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
@@ -203,7 +205,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
      * {@code newLhs}, its target turned into an update function ("foo<-"), with the given value
      * added to the arguments list.
      */
-    private RCallNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
+    private RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         ArgumentsSignature signature = fun.getSyntaxSignature();
@@ -223,8 +225,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             String symbol = lookupLHS.getIdentifier();
             if ("slot".equals(symbol) || "@".equals(symbol)) {
                 // this is pretty gross, but at this point seems like the only way to get setClass
-                // to
-                // work properly
+                // to work properly
                 argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
             }
             newSyntaxLHS = lookup(lookupLHS.getSourceSection(), symbol + "<-", true);
@@ -237,7 +238,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
             newSyntaxLHS = RCallNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        return RCallNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes);
+        return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
     }
 
     /*
@@ -287,15 +288,18 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         RSyntaxElement current = lhs;
         while (!(current instanceof RSyntaxLookup)) {
             if (!(current instanceof RSyntaxCall)) {
-                throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+                if (current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.INVALID_LHS, "NULL");
+                } else {
+                    throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+                }
             }
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
             RSyntaxElement syntaxLHS = call.getSyntaxLHS();
             if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
-                // TODO: this should only be signaled when run, not when parsed
-                throw RInternalError.unimplemented("proper error message for RError.INVALID_LHS");
+                return new ReplacementNode.LHSError(source, operator, new RSyntaxElement[]{lhs, rhs});
             }
             current = call.getSyntaxArguments()[0];
         }
@@ -317,12 +321,12 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
          * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`.
          */
         for (int i = 0; i < calls.size(); i++) {
-            RCallNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), ReadVariableNode.create("*tmpr*" + (tempNamesIndex + i - 1)),
+            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), ReadVariableNode.create("*tmpr*" + (tempNamesIndex + i - 1)),
                             calls.get(i));
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
             } else {
-                instructions.add(WriteVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.INVISIBLE, isSuper));
+                instructions.add(WriteVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.REGULAR, isSuper));
             }
         }
 

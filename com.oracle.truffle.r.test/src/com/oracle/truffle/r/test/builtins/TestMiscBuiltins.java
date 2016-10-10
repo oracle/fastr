@@ -247,8 +247,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testWorkingDirectory() {
         assertEval("{ cur <- getwd(); cur1 <- setwd(getwd()) ; cur2 <- getwd() ; cur == cur1 && cur == cur2 }");
-        assertEval(Output.IgnoreErrorContext, "{ setwd(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ setwd(character()) }");
+        assertEval("{ setwd(1) }");
+        assertEval("{ setwd(character()) }");
         assertEval("{ cur <- getwd(); cur1 <- setwd(c(cur, \"dummy\")) ; cur2 <- getwd() ; cur == cur1  }");
     }
 
@@ -269,7 +269,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testSimpleRm() {
         assertEval("{ x <- 200 ; rm(\"x\") ; x }");
-        assertEval(Output.IgnoreWarningContext, "{ rm(\"ieps\") }");
+        assertEval("{ rm(\"ieps\") }");
+        assertEval("{ rm(\"sum\", envir=getNamespace(\"stats\")) }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");

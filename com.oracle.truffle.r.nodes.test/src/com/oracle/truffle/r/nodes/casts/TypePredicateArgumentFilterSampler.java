@@ -38,9 +38,8 @@ public class TypePredicateArgumentFilterSampler<T, R extends T> extends TypePred
     private final String desc;
 
     @SuppressWarnings("unchecked")
-    public TypePredicateArgumentFilterSampler(String desc, Predicate<? super T> valuePredicate, Set<? extends R> positiveSamples, Set<?> negativeSamples, Set<Class<?>> allowedTypeSet,
-                    boolean isNullable) {
-        super(valuePredicate, isNullable);
+    public TypePredicateArgumentFilterSampler(String desc, Predicate<? super T> valuePredicate, Set<? extends R> positiveSamples, Set<?> negativeSamples, Set<Class<?>> allowedTypeSet) {
+        super(valuePredicate);
 
         this.trueBranchTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
         Predicate<Object> posMembership = x -> trueBranchTypes.isInstance(x) && test((T) x);
@@ -68,20 +67,19 @@ public class TypePredicateArgumentFilterSampler<T, R extends T> extends TypePred
 
     public static <T, R extends T> TypePredicateArgumentFilterSampler<T, R> fromLambda(Predicate<? super T> predicate, Set<? extends R> positiveSamples, Set<?> negativeSamples,
                     Class<?>... resultClass) {
-        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Arrays.asList(resultClass).stream().collect(Collectors.toSet()),
-                        true);
+        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Arrays.asList(resultClass).stream().collect(Collectors.toSet()));
     }
 
     public static <T, R extends T> TypePredicateArgumentFilterSampler<T, R> fromLambda(Predicate<T> predicate, Class<?>... resultClass) {
         return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, Collections.emptySet(), Collections.emptySet(),
-                        Arrays.asList(resultClass).stream().collect(Collectors.toSet()), true);
+                        Arrays.asList(resultClass).stream().collect(Collectors.toSet()));
     }
 
     public static <T, R extends T> TypePredicateArgumentFilterSampler<T, R> fromLambda(Predicate<T> predicate, Set<? extends R> positiveSamples, Set<?> negativeSamples) {
-        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Collections.emptySet(), true);
+        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Collections.emptySet());
     }
 
     public static <T, R extends T> TypePredicateArgumentFilterSampler<T, R> fromLambda(Predicate<T> predicate, @SuppressWarnings("unused") Class<R> commonAncestorClass, Set<Class<?>> resultClasses) {
-        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, Collections.emptySet(), Collections.emptySet(), resultClasses, true);
+        return new TypePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, Collections.emptySet(), Collections.emptySet(), resultClasses);
     }
 }

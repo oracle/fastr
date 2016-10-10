@@ -66,9 +66,10 @@ public class ValuePredicateArgumentMapperSampler<T, R> extends ValuePredicateArg
     }
 
     public static <T, R> ValuePredicateArgumentMapperSampler<T, R> fromLambda(Function<T, R> mapper, Function<R, T> unmapper, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
-                    Class<T> inputClass, Class<R> resultClass) {
-        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, positiveSamples, negativeSamples, Collections.singleton(inputClass),
-                        Collections.singleton(resultClass));
+                    Class<T> inputClass, Class<?> resultClass) {
+        return new ValuePredicateArgumentMapperSampler<>(CastUtils.getPredefStepDesc(), mapper, unmapper, positiveSamples, negativeSamples,
+                        inputClass == null ? Collections.emptySet() : Collections.singleton(inputClass),
+                        resultClass == null ? Collections.emptySet() : Collections.singleton(resultClass));
     }
 
     @Override

@@ -28,8 +28,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class VectorPredicateArgumentFilter<T extends RAbstractVector> extends ValuePredicateArgumentFilter<T> {
 
-    public VectorPredicateArgumentFilter(Predicate<T> valuePredicate, boolean isNullable) {
-        super(valuePredicate, isNullable);
+    public VectorPredicateArgumentFilter(Predicate<T> valuePredicate) {
+        super(valuePredicate);
     }
 
 }

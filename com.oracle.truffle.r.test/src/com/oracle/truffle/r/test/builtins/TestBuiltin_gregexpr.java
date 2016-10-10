@@ -103,5 +103,15 @@ public class TestBuiltin_gregexpr extends TestBase {
         assertEval(Ignored.Unknown, "gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
         // NOTE: this is without attributes
         assertEval(Ignored.Unknown, "gregexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
+
+        assertEval("{ x<-gregexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=T); as.integer(c(x[[1]], x[[2]])) }");
+        assertEval("{ x<-gregexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=F); as.integer(c(x[[1]], x[[2]])) }");
+        assertEval("{ x<-gregexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=T); list(attr(x[[1]], \"match.length\"), attr(x[[2]], \"match.length\")) }");
+        assertEval("{ x<-gregexpr(\"foo\", c(\"bar foo foo\", \"foo\"), fixed=F); list(attr(x[[1]], \"match.length\"), attr(x[[2]], \"match.length\")) }");
+
+        assertEval("{ .Internal(gregexpr(7, \"42\", F, F, F, F)) }");
+        assertEval("{ .Internal(gregexpr(character(), \"42\", F, F, F, F)) }");
+        assertEval("{ .Internal(gregexpr(\"7\", 42, F, F, F, F)) }");
+
     }
 }

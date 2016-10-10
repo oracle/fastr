@@ -45,16 +45,22 @@ public final class REnvVars implements RContext.ContextState {
 
     private final Map<String, String> envVars = new HashMap<>(System.getenv());
 
-    private REnvVars(RContext context) {
+    private REnvVars() {
+    }
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
+        // explicit environment settings in nested contexts must be installed first
+        checkExplciitEnvSettings(context);
         // set the standard vars defined by R
-        String rHome = System.getenv("R_HOME");
+        String rHome = envVars.get("R_HOME");
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
         safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
-        String rLibsUserProperty = System.getenv("R_LIBS_USER");
+        String rLibsUserProperty = envVars.get("R_LIBS_USER");
         if (rLibsUserProperty == null) {
             String os = System.getProperty("os.name");
             if (os.contains("Mac OS")) {
@@ -101,10 +107,26 @@ public final class REnvVars implements RContext.ContextState {
                 System.setProperty("http.proxyPort", port);
             }
         }
+        return this;
     }
 
-    public static REnvVars newContext(RContext context) {
-        return new REnvVars(context);
+    public static REnvVars newContextState() {
+        return new REnvVars();
+    }
+
+    private void checkExplciitEnvSettings(RContext context) {
+        String[] envs = context.getEnvSettings();
+        if (envs == null || envs.length == 0) {
+            return;
+        }
+        for (String envdef : envs) {
+            String[] parts = envdef.split("=");
+            if (parts.length == 2) {
+                envVars.put(parts[0], parts[1]);
+            } else {
+                // for now just ignore
+            }
+        }
     }
 
     private String getEitherCase(String var) {

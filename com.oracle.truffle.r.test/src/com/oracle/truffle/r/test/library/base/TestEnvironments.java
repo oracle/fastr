@@ -56,8 +56,8 @@ public class TestEnvironments extends TestBase {
         assertEval("{ x <- 3 ; f <- function() { exists(\"x\", inherits=FALSE) } ; f() }");
 
         assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
-        assertEval(Output.IgnoreErrorContext, "{ get(\"x\") }");
+        assertEval("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
+        assertEval("{ get(\"x\") }");
 
         assertEval("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; sort(f()) }");
         assertEval("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; sort(f()) }");
@@ -238,26 +238,26 @@ public class TestEnvironments extends TestBase {
         assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");
 
         // rm
-        assertEval(Output.IgnoreErrorContext, "{ rm(\"foo\", envir = baseenv()) }");
-        assertEval(Output.IgnoreErrorContext, "{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); rm(\"a\",envir = e); }");
+        assertEval("{ rm(\"foo\", envir = baseenv()) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); rm(\"a\",envir = e); }");
         // ok to removed a locked binding
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockBinding(\"a\", e); rm(\"a\",envir = e); ls() }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; rm(\"a\",envir = e); ls() }");
 
         // get
-        assertEval(Output.IgnoreErrorContext, "{ e<-new.env(); get(\"x\", e) }");
+        assertEval("{ e<-new.env(); get(\"x\", e) }");
         assertEval("{ e<-new.env(); x<-1; get(\"x\", e) }");
         assertEval("{ e<-new.env(); assign(\"x\", 1, e); get(\"x\", e) }");
-        assertEval(Output.IgnoreErrorContext, "{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
-        assertEval(Output.IgnoreErrorContext, "{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
+        assertEval("{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
+        assertEval("{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
 
         // misc
-        assertEval(Output.IgnoreErrorContext, "{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
         assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
         assertEval("{ ls(.GlobalEnv) }");
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-        assertEval(Output.IgnoreErrorContext, "{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
-        assertEval(Output.IgnoreErrorContext, "{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+        assertEval("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+        assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 

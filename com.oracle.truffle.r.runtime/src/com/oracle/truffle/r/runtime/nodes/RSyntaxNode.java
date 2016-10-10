@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -52,12 +53,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@link #SOURCE_UNAVAILABLE}, that can be used instead of {@code null} and identify the situation.
  * One particular case is {@link #LAZY_DEPARSE} which indicates that a valid {@link SourceSection}
  * can be produced for the associated node, but it is computed lazily, when requested.
- *
- * Every implementor of this interface must provide an implementation of the {@link #serializeImpl}
- * method. These are invoked by the corresponding method on {@link RBaseNode} after the correct
- * {@link RSyntaxNode} is located.
  */
-public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
+public interface RSyntaxNode extends RSyntaxElement {
 
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
@@ -87,26 +84,26 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      * Indicates the case where a node that should have a valid {@link SourceSection} but for reason
      * does not have. Ideally never required.
      */
-    SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
+    SourceSection SOURCE_UNAVAILABLE = RSource.createUnknown("unavailable");
 
     /**
      * Indicates a node that was created as part of an AST transformation related to the internal
      * execution process. This should never be used for a node that could manifest to the R
      * programmer.
      */
-    SourceSection INTERNAL = SourceSection.createUnavailable("R", "internal");
+    SourceSection INTERNAL = RSource.createUnknown("internal");
 
     /**
      * Indicates that this {@link SourceSection} can be created on demand if required.
      */
-    SourceSection LAZY_DEPARSE = SourceSection.createUnavailable("R", "lazy deparse");
+    SourceSection LAZY_DEPARSE = RSource.createUnknown("lazy deparse");
 
     /**
      * Indicates that, after creating the node, which requires a non-null {@link SourceSection} it
      * should be created and updated by deparsing. This is generally used in specific situations,
      * e.g., the {@code substitute} builtin.
      */
-    SourceSection EAGER_DEPARSE = SourceSection.createUnavailable("R", "eager deparse");
+    SourceSection EAGER_DEPARSE = RSource.createUnknown("eager deparse");
 
     /*
      * Every implementor of this interface must either inherit or directly implement the following

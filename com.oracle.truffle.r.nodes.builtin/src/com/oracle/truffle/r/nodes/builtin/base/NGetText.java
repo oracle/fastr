@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -43,9 +42,9 @@ public abstract class NGetText extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("n").asIntegerVector().findFirst().mustBe(gte0());
 
-        casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
-        casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
     }
 

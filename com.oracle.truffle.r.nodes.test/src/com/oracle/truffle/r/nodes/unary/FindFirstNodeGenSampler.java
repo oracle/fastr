@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -36,7 +34,6 @@ import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
@@ -118,16 +115,19 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
 
     @Override
     public TypeExpr resultTypes(TypeExpr inputType) {
+        TypeExpr rt;
         if (elementClass == null || elementClass == Object.class) {
             if (inputType.isAnything()) {
-                return TypeExpr.atom(RAbstractVector.class).not();
+                rt = TypeExpr.atom(RAbstractVector.class).not();
             } else {
                 Set<Type> resTypes = inputType.classify().stream().map(c -> CastUtils.elementType(c)).collect(Collectors.toSet());
-                return TypeExpr.union(resTypes);
+                rt = TypeExpr.union(resTypes);
             }
         } else {
-            return TypeExpr.atom(elementClass);
+            rt = TypeExpr.atom(elementClass);
         }
+
+        return rt;
     }
 
 }

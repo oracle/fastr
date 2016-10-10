@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
@@ -82,7 +83,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                                     rresult = (RAbstractContainer) rresult.setClassAttr((RStringVector) v);
                                 }
                             } else {
-                                rresult.setAttr(attrName.intern(), v);
+                                rresult.setAttr(Utils.intern(attrName), v);
                             }
                         }
                         return rresult;
@@ -120,6 +121,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Specialization
     protected Object update(Object x, Object value) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.NULL_VALUE);
+        throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "value");
     }
 }

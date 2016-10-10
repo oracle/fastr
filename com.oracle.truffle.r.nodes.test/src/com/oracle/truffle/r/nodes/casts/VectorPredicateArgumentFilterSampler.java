@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.oracle.truffle.r.nodes.builtin.VectorPredicateArgumentFilter;
 import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler.ArgumentValueFilterSampler;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -40,8 +40,8 @@ public class VectorPredicateArgumentFilterSampler<T extends RAbstractVector> ext
     private final String desc;
     private final List<Integer> invalidVectorSize;
 
-    public VectorPredicateArgumentFilterSampler(String desc, Predicate<T> valuePredicate, boolean isNullable, Integer... invalidVectorSize) {
-        super(valuePredicate, isNullable);
+    public VectorPredicateArgumentFilterSampler(String desc, Predicate<T> valuePredicate, Integer... invalidVectorSize) {
+        super(valuePredicate);
         this.desc = desc;
         this.invalidVectorSize = invalidVectorSize == null ? Collections.emptyList() : Arrays.asList(invalidVectorSize);
     }
@@ -52,8 +52,9 @@ public class VectorPredicateArgumentFilterSampler<T extends RAbstractVector> ext
             return test((T) x);
         } else {
             Object v = CastUtils.singletonVector(x);
-            if (v == RNull.instance) {
-                v = null;
+            if (v == RNull.instance || v == RMissing.instance) {
+                // these values are ignored, they should never appear in a filter or a mapper
+                return true;
             }
             return test((T) v);
         }

@@ -1503,7 +1503,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[3] <- NULL ; b }");
 
         // weird problems with fluctuating error messages in GNU R
-        assertEval("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
+        assertEval(Ignored.Unstable, "{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
         assertEval(Ignored.Unstable, Output.IgnoreErrorContext, "{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
     }
 
@@ -2066,7 +2066,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(list(a=1,b=c(a=2)),1+2i,1:3) }");
         assertEval(" { f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(list(a=1,b=c(a=2)),c(TRUE,TRUE),3) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(f,TRUE,3) }");
-        assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
+        assertEval(Ignored.Unstable, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",as.raw(12)) }");
         assertEval(Output.IgnoreErrorMessage, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),c(1+2i,3+4i),as.raw(12)) }");
         assertEval("{ l <- list(a=1,b=2,cd=list(c=3,d=4)) ; x <- list(l,xy=list(x=l,y=l)) ; x[[c(2,2,3,2)]] <- 10 ; l }");
@@ -2075,7 +2075,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l <- matrix(list(1,2)) ; l[[3]] <- NULL ; l }");
         assertEval("{ l <- matrix(list(1,2)) ; l[[4]] <- NULL ; l }");
 
-        assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
+        assertEval(Ignored.Unstable, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
     }
 
     @Test
@@ -2362,6 +2362,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(a, i1, i2) {a[i1, i2]}; a <- rep(c('1'),14); dim(a) <- c(2,7); dimnames(a) <- list(c('a','b'), rep('c',7)); temp <- f(a, ,1); dimnames(a) <- list(NULL, rep('c',7)); f(a,,1) }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
+
+        assertEval("{ x<-quote(foo(42)); x[character(0)]<-list(); typeof(x) }");
+        assertEval("{ x<-as.pairlist(list(7,42)); x[character(0)]<-list(); typeof(x) }");
+        assertEval("{ x<-expression(y, z, 7 + 42); x[character(0)]<-list(); typeof(x) }");
 
     }
 }
