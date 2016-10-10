@@ -108,5 +108,11 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ .Internal(regexpr(7, \"42\", F, F, F, F)) }");
         assertEval("{ .Internal(regexpr(character(), \"42\", F, F, F, F)) }");
         assertEval("{ .Internal(regexpr(\"7\", 42, F, F, F, F)) }");
+
+        assertEval("{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('regexpr', argv) }");
+        assertEval("{ x<-c(\"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+
     }
 }

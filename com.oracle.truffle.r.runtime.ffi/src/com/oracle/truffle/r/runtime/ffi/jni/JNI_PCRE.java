@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
@@ -37,6 +39,27 @@ public class JNI_PCRE implements PCRERFFI {
     }
 
     @Override
+    public int getCaptureCount(long code, long extra) {
+        int res = nativeGetCaptureCount(code, extra);
+        if (res < 0) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+        }
+        return res;
+    }
+
+    @Override
+    public String[] getCaptureNames(long code, long extra, int captureCount) {
+        String[] ret = new String[captureCount];
+        int res = nativeGetCaptureNames(code, extra, ret);
+        if (res < 0) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+        }
+        return ret;
+    }
+
+    @Override
     public Result study(long code, int options) {
         throw RInternalError.unimplemented("pcre_study");
     }
@@ -49,6 +72,10 @@ public class JNI_PCRE implements PCRERFFI {
     private static native long nativeMaketables();
 
     private static native Result nativeCompile(String pattern, int options, long tables);
+
+    private static native int nativeGetCaptureCount(long code, long extra);
+
+    private static native int nativeGetCaptureNames(long code, long extra, String[] res);
 
     private static native int nativeExec(long code, long extra, String subject, int offset,
                     int options, int[] ovector, int ovectorLen);

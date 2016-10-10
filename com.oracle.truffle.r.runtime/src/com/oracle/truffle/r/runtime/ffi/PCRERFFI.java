@@ -51,6 +51,10 @@ public interface PCRERFFI {
 
     Result compile(String pattern, int options, long tables);
 
+    int getCaptureCount(long code, long extra);
+
+    String[] getCaptureNames(long code, long extra, int captureCount);
+
     Result study(long code, int options);
 
     int exec(long code, long extra, String subject, int offset, int options, int[] ovector);

@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -200,6 +202,18 @@ public class GrepFunctions {
             }
             return RDataFactory.createIntVector(naData, RDataFactory.INCOMPLETE_VECTOR);
         }
+
+        protected PCRERFFI.Result compilePerlPattern(String pattern, boolean ignoreCase) {
+            int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
+            long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
+            PCRERFFI.Result pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
+            if (pcre.result == 0) {
+                // TODO output warning if pcre.errorMessage not NULL
+                throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
+            }
+            return pcre;
+        }
+
     }
 
     private abstract static class GrepAdapter extends CommonCodeAdapter {
@@ -226,13 +240,7 @@ public class GrepFunctions {
                 }
                 findAllMatches(matches, pattern, vector, fixed, ignoreCase);
             } else {
-                int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-                long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
-                PCRERFFI.Result pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
-                if (pcre.result == 0) {
-                    // TODO output warning if pcre.errorMessage not NULL
-                    throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
-                }
+                PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
                 // TODO pcre_study for vectors > 10 ? (cf GnuR)
                 int[] ovector = new int[30];
                 for (int i = 0; i < len; i++) {
@@ -398,14 +406,7 @@ public class GrepFunctions {
                 if (fixed) {
                     // TODO case
                 } else if (perl) {
-                    int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-                    long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
-                    pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
-                    if (pcre.result == 0) {
-                        // TODO output warning if pcre.errorMessage not NULL
-                        throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
-                    }
-                    // TODO pcre_study for vectors > 10 ? (cf GnuR)
+                    pcre = compilePerlPattern(pattern, ignoreCase);
                 } else {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
@@ -672,37 +673,106 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        protected static final class IndexAndSize {
-            protected int index;
-            protected int size;
+        protected static final class Info {
+            protected final int index;
+            protected final int size;
+            protected final int[] captureStart;
+            protected final int[] captureLength;
+            protected final String[] captureNames;
+            protected final boolean hasCapture;
 
-            public IndexAndSize(int index, int size) {
+            public Info(int index, int size, int[] captureStart, int[] captureLength, String[] captureNames) {
                 this.index = index;
                 this.size = size;
+                this.captureStart = captureStart;
+                this.captureLength = captureLength;
+                this.captureNames = captureNames;
+                this.hasCapture = captureStart != null && captureLength != null;
+            }
+        }
+
+        private static void setNoCaptureValues(int[] captureStart, int[] captureLength, int namesLen, int vecLen, int index) {
+            for (int j = 0; j < namesLen; j++) {
+                captureStart[j * vecLen + index] = -1;
+                captureLength[j * vecLen + index] = -1;
             }
         }
 
         @Specialization
         @TruffleBoundary
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
+            boolean fixed = RRuntime.fromLogical(fixedL);
+            boolean perl = RRuntime.fromLogical(perlL);
+            if (patternArg.getLength() > 1) {
+                throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
+            }
+            String pattern = patternArg.getDataAt(0);
+            if (!perl) {
+                pattern = RegExp.checkPreDefinedClasses(pattern);
+            }
+            // TODO: useBytes normally depends on the value of the parameter and (if false) on
+            // whether the string is ASCII
+            boolean useBytes = true;
+            boolean hasAnyCapture = false;
             int[] result = new int[vector.getLength()];
             int[] matchLength = new int[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                IndexAndSize res = findIndexAndSize(pattern, vector.getDataAt(i), ignoreCase, fixedL == RRuntime.LOGICAL_TRUE).get(0);
-                result[i] = res.index;
-                matchLength[i] = res.size;
+            String[] captureNames = null;
+            int[] captureStart = null;
+            int[] captureLength = null;
+            if (pattern.length() == 0) {
+                // emtpy pattern
+                Arrays.fill(result, 1);
+            } else {
+                for (int i = 0; i < vector.getLength(); i++) {
+                    Info res = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed).get(0);
+                    result[i] = res.index;
+                    matchLength[i] = res.size;
+                    if (res.hasCapture) {
+                        hasAnyCapture = true;
+                        if (captureNames == null) {
+                            // first time we see captures
+                            captureNames = res.captureNames;
+                            captureStart = new int[captureNames.length * vector.getLength()];
+                            captureLength = new int[captureNames.length * vector.getLength()];
+                            // previous matches had no capture - fill in result with -1-s
+                            for (int k = 0; k < i; k++) {
+                                setNoCaptureValues(captureStart, captureLength, captureNames.length, vector.getLength(), k);
+                            }
+                        }
+                        assert captureNames.length == res.captureStart.length;
+                        assert captureNames.length == res.captureLength.length;
+                        for (int j = 0; j < captureNames.length; j++) {
+                            captureStart[j * vector.getLength() + i] = res.captureStart[j];
+                            captureLength[j * vector.getLength() + i] = res.captureLength[j];
+                        }
+                    } else if (hasAnyCapture) {
+                        // no capture for this part of the vector, but there are previous captures
+                        setNoCaptureValues(captureStart, captureLength, captureNames.length, vector.getLength(), i);
+                    }
+                }
             }
-            // TODO useBytes attribute as per spec
             RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
             ret.setAttr("match.length", RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
+            if (useBytes) {
+                ret.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+            }
+            if (hasAnyCapture) {
+                RStringVector captureNamesVec = RDataFactory.createStringVector(captureNames, RDataFactory.COMPLETE_VECTOR);
+                RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
+                captureStartVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                ret.setAttr("capture.start", captureStartVec);
+                RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
+                captureLengthVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                ret.setAttr("capture.length", captureLengthVec);
+                ret.setAttr("capture.names", captureNamesVec);
+            }
             return ret;
         }
 
-        protected static List<IndexAndSize> findIndexAndSize(String pattern, String text, boolean ignoreCase, boolean fixed) {
-            List<IndexAndSize> list = new ArrayList<>();
+        protected List<Info> getInfo(String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed) {
+            List<Info> list = new ArrayList<>();
             if (fixed) {
                 int index = 0;
                 while (true) {
@@ -714,20 +784,49 @@ public class GrepFunctions {
                     if (index == -1) {
                         break;
                     }
-                    list.add(new IndexAndSize(index + 1, pattern.length()));
+                    list.add(new Info(index + 1, pattern.length(), null, null, null));
                     index += pattern.length();
+                }
+            } else if (perl) {
+                PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
+                int maxCaptureCount = RFFIFactory.getRFFI().getPCRERFFI().getCaptureCount(pcre.result, 0);
+                int[] ovector = new int[(maxCaptureCount + 1) * 3];
+                int offset = 0;
+                while (true) {
+                    int captureCount = RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, offset, 0, ovector);
+                    if (captureCount >= 0) {
+                        String[] captureNames = RFFIFactory.getRFFI().getPCRERFFI().getCaptureNames(pcre.result, 0, maxCaptureCount);
+                        assert captureCount - 1 == captureNames.length;
+                        int[] captureStart = null;
+                        int[] captureLength = null;
+                        if (captureCount > 1) {
+                            captureStart = new int[captureCount - 1];
+                            captureLength = new int[captureCount - 1];
+                            int ind = 0;
+                            for (int i = 2; i < captureCount * 2; i += 2) {
+                                captureStart[ind] = ovector[i] + 1;
+                                captureLength[ind] = ovector[i + 1] - ovector[i];
+                                ind++;
+                            }
+                        }
+                        // R starts counting at index 1
+                        list.add(new Info(ovector[0] + 1, ovector[1] - ovector[0], captureStart, captureLength, captureNames));
+                        offset = ovector[1];
+                    } else {
+                        break;
+                    }
                 }
             } else {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
                 while (m.find()) {
                     // R starts counting at index 1
-                    list.add(new IndexAndSize(m.start() + 1, m.end() - m.start()));
+                    list.add(new Info(m.start() + 1, m.end() - m.start(), null, null, null));
                 }
             }
             if (list.size() > 0) {
                 return list;
             }
-            list.add(new IndexAndSize(-1, -1));
+            list.add(new Info(-1, -1, null, null, null));
             return list;
         }
 
@@ -750,35 +849,131 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
+        private static void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
+            int len = captureNames.getLength();
+            int[] captureStartData = new int[len];
+            int[] captureLengthData = new int[len];
+            Arrays.fill(captureStartData, -1);
+            Arrays.fill(captureLengthData, -1);
+            RIntVector captureStart = RDataFactory.createIntVector(captureStartData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
+            captureStart.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            RIntVector captureLength = RDataFactory.createIntVector(captureLengthData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
+            captureLength.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            vec.setAttr("capture.start", captureStart);
+            vec.setAttr("capture.length", captureLength);
+            vec.setAttr("capture.names", captureNames);
+        }
+
         @Specialization
         @TruffleBoundary
         @Override
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             boolean fixed = RRuntime.fromLogical(fixedL);
+            boolean perl = RRuntime.fromLogical(perlL);
+            if (patternArg.getLength() > 1) {
+                throw RInternalError.unimplemented("multi-element patterns in gregexpr not implemented yet");
+            }
+            String pattern = patternArg.getDataAt(0);
+            if (!perl) {
+                pattern = RegExp.checkPreDefinedClasses(pattern);
+            }
+            // TODO: useBytes normally depends on the value of the parameter and (if false) on
+            // whether the string is ASCII
+            boolean useBytes = true;
             Object[] result = new Object[vector.getLength()];
+            boolean hasAnyCapture = false;
+            RStringVector captureNames = null;
             for (int i = 0; i < vector.getLength(); i++) {
-                List<IndexAndSize> l = findIndexAndSize(pattern, vector.getDataAt(i), ignoreCase, fixed);
-                int[] indexes = toIndexOrSizeArray(l, true);
-                int[] sizes = toIndexOrSizeArray(l, false);
-                RIntVector res = RDataFactory.createIntVector(indexes, RDataFactory.COMPLETE_VECTOR);
-                res.setAttr("match.length", RDataFactory.createIntVector(sizes, RDataFactory.COMPLETE_VECTOR));
+                RIntVector res;
+                if (pattern.length() == 0) {
+                    String txt = vector.getDataAt(i);
+                    res = RDataFactory.createIntVector(txt.length());
+                    for (int j = 0; j < txt.length(); j++) {
+                        res.setDataAt(res.getDataWithoutCopying(), j, j + 1);
+                    }
+                    res.setAttr("match.length", RDataFactory.createIntVector(txt.length()));
+                    if (useBytes) {
+                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                    }
+                } else {
+                    List<Info> l = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed);
+                    res = toIndexOrSizeVector(l, true);
+                    res.setAttr("match.length", toIndexOrSizeVector(l, false));
+                    if (useBytes) {
+                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                    }
+                    RIntVector captureStart = toCaptureStartOrLength(l, true);
+                    if (captureStart != null) {
+                        RIntVector captureLength = toCaptureStartOrLength(l, false);
+                        assert captureLength != null;
+                        captureNames = getCaptureNamesVector(l);
+                        assert captureNames.getLength() > 0;
+                        if (!hasAnyCapture) {
+                            // set previous result list elements to "no capture"
+                            for (int j = 0; j < i; j++) {
+                                setNoCaptureAttributes((RIntVector) result[j], captureNames);
+                            }
+                        }
+                        hasAnyCapture = true;
+                        res.setAttr("capture.start", captureStart);
+                        res.setAttr("capture.length", captureLength);
+                        res.setAttr("capture.names", captureNames);
+                    } else if (hasAnyCapture) {
+                        assert captureNames != null;
+                        // it's capture names from previous iteration, so copy
+                        setNoCaptureAttributes(res, (RStringVector) captureNames.copy());
+                    }
+                }
+
                 result[i] = res;
-                // TODO useBytes attributes as per spec
             }
             return RDataFactory.createList(result);
         }
 
-        private static int[] toIndexOrSizeArray(List<IndexAndSize> list, boolean index) {
+        private static RIntVector toIndexOrSizeVector(List<Info> list, boolean index) {
             int[] arr = new int[list.size()];
             for (int i = 0; i < list.size(); i++) {
-                IndexAndSize res = list.get(i);
+                Info res = list.get(i);
                 arr[i] = index ? res.index : res.size;
             }
-            return arr;
+            return RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR);
         }
+
+        private static RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
+            assert list.size() > 0;
+            Info firstInfo = list.get(0);
+            if (!firstInfo.hasCapture) {
+                return null;
+            }
+            assert firstInfo.captureNames.length > 0;
+            int[] arr = new int[list.size() * firstInfo.captureNames.length];
+            int ind = 0;
+            for (int i = 0; i < firstInfo.captureNames.length; i++) {
+                for (int j = 0; j < list.size(); j++) {
+                    Info info = list.get(j);
+                    assert info.captureNames.length == firstInfo.captureNames.length;
+                    assert info.captureStart.length == firstInfo.captureStart.length;
+                    assert info.captureLength.length == firstInfo.captureLength.length;
+                    arr[ind++] = start ? info.captureStart[i] : info.captureLength[i];
+                }
+            }
+            RIntVector ret = RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR, new int[]{list.size(), firstInfo.captureNames.length});
+            ret.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
+            return ret;
+        }
+
+        private static RStringVector getCaptureNamesVector(List<Info> list) {
+            assert list.size() > 0;
+            Info firstInfo = list.get(0);
+            if (!firstInfo.hasCapture) {
+                return null;
+            }
+            assert firstInfo.captureNames.length > 0;
+            return RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR);
+        }
+
     }
 
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
