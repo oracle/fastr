@@ -665,7 +665,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Subscript.DefaultBuiltin.class, SubscriptNodeGen::create, Subscript::special);
         add(Subset.class, SubsetNodeGen::create, Subset::special);
         add(Subset.DefaultBuiltin.class, SubsetNodeGen::create, Subset::special);
-        add(AccessField.class, AccessFieldNodeGen::create);
+        add(AccessField.class, AccessFieldNodeGen::create, AccessField::createSpecial);
         add(AssignBuiltin.class, AssignBuiltinNodeGen::create);
         add(AssignBuiltinEq.class, AssignBuiltinEqNodeGen::create);
         add(AssignOuterBuiltin.class, AssignOuterBuiltinNodeGen::create);
