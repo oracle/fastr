@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -132,8 +133,8 @@ public abstract class Subscript extends RBuiltinNode {
         // same implementation as "[[", with different dispatch
     }
 
-    public static RNode special(RNode[] arguments) {
-        return arguments.length == 2 ? SubscriptSpecialNodeGen.create(arguments) : null;
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
+        return signature.getNonNullCount() == 0 && arguments.length == 2 ? SubscriptSpecialNodeGen.create(arguments) : null;
     }
 
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
