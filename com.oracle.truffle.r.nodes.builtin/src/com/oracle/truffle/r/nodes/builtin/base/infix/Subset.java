@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -134,8 +135,8 @@ public abstract class Subset extends RBuiltinNode {
         // same implementation as "[", with different dispatch
     }
 
-    public static RNode special(RNode[] arguments) {
-        return arguments.length == 2 ? SubsetSpecialNodeGen.create(arguments) : null;
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
+        return signature.getNonNullCount() == 0 && arguments.length == 2 ? SubsetSpecialNodeGen.create(arguments) : null;
     }
 
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSET, false);

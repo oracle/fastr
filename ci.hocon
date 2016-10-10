@@ -1,35 +1,12 @@
+# This is part of the framework used by FastR for continuous integration testing.
+# It is not intended that this "code" is directly usable by third-party developers
+# but it provide details on the commands that are used and these should be
+# executable in isolation; see further comments below.
+
+# java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
-#java8 : {name : oraclejdk, version : "8u66", platformspecific: true}
+# java 8 must be a jvmci enabled variant
 java8 : {name : labsjdk, version : "8u92-jvmci-0.21", platformspecific: true}
-logfiles : [
-    "fastr_errors.log"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
-    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
-  ]
-
-common : {
-  packages : {
-    git : ">=1.8.3"
-    mercurial : ">=2.2"
-    "pip:astroid" : "==1.1.0"
-    "pip:pylint" : "==1.1.0"
-    make : ">=3.83"
-    gcc-build-essentials : ">=4.9.1" # GCC 4.9.0 fails on cluster
-    readline : "==6.3"
-  }
-  # TODO this will eventually relocate elsewhere
-  environment : {
-    PKG_INCLUDE_FLAGS_OVERRIDE : """"-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include""""
-    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1//lib""""
-  }
-  logs: ${logfiles}
-  timelimit : "1:00:00"
-}
-
-gateCmd : ["mx", "--strict-compliance", "originalgate", "--strict-mode", "-t"]
 
 java8Downloads : {
   downloads : {
@@ -40,29 +17,88 @@ java8Downloads : {
   }
 }
 
-gateTest : ${common} ${java8Downloads} {
+logfiles : [
+    "fastr_errors.log"
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
+    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
+    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
+    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
+  ]
+
+# This is needed by all (Linux) builds but is specific to the module system employed
+# on the CI cluster. Not all of the modules are needed by FastR but all are needed by the
+# embedded GNU R that is built within FastR.
+
+pkgEnvironment: {
+  environment : {
+    PKG_INCLUDE_FLAGS_OVERRIDE : """"-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include""""
+    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1//lib -L/cm/shared/apps/gcc/4.9.1/lib64""""
+  }
+}
+
+packagesLinux : ${pkgEnvironment} {
+  packages : {
+    git : ">=1.8.3"
+    mercurial : ">=2.2"
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+    make : ">=3.83"
+    gcc-build-essentials : "==4.9.1" # GCC 4.9.0 fails on cluster
+    readline : "==6.3"
+    pcre : ">=8.38"
+    z : ">=1.2.8"
+  }
+}
+
+packagesDarwin : {
+  "pip:astroid" : "==1.1.0"
+  "pip:pylint" : "==1.1.0"
+  "xz" : ""
+  # assume pcre/z system installed
+}
+
+# Common settings for all builds but note that it uses the Linux package settings,
+# so these must be overridden in any darwin builds
+
+common : ${java8Downloads} ${packagesLinux}  {
+  logs: ${logfiles}
+  timelimit : "1:00:00"
+}
+
+# Every "pull request" (PR) is subject to a series of "gate" commands that must pass
+# for the PR to be accepted into the master branch. The gate commands are run under
+# the "mx" tool. This defines a common prefix for all gate commands. The "-t"
+# arg indicates the exact set of gate "tasks" that will be run.
+
+gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
+
+# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
+
+# The standard set of gate tasks: the actual executable tests are in the "UnitTests" task.
+
+gateTestCommon : ${common} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,LDD, UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
   ]
 }
 
-gateTestDarwin : ${java8Downloads} {
-  packages : {
-    "pip:astroid" : "==1.1.0"
-    "pip:pylint" : "==1.1.0"
-    "xz" : ""
-  }
+gateTestLinux : ${gateTestCommon} {
+}
+
+darwinEnvironment : {
   environment :  {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     F77: "/usr/local/bin/gfortran-4.9"
   }
-  logs: ${logfiles}
-  timelimit : "1:00:00"
-
-  run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,LDD, UnitTests: ExpectedTestOutput file check,UnitTests"]
-  ]
 }
+
+gateTestDarwin : ${gateTestCommon} ${darwinEnvironment} {
+  packages : ${packagesDarwin} {
+  }
+}
+
+# This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
 gateStyle : ${common} {
   # need pyhocon fix
@@ -72,7 +108,7 @@ gateStyle : ${common} {
     JDT : {name: ecj, version: "4.5.1", platformspecific: false}
     ECLIPSE : {name: eclipse, version: "4.5.2", platformspecific: true}
   }
-  environment : ${common.environment} {
+  environment : {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
@@ -80,20 +116,21 @@ gateStyle : ${common} {
   ]
 }
 
-rbcheck : ${common} ${java8Downloads} {
+# This check runs diagnostics on the implementation of the R "builtins" in FastR, e.g., that the argument processing is sound.
+
+rbcheck : ${common} {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
     ["mx", "rbdiag", "-n", "-m"]
-  ]  
+  ]
 }
 
-# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
+# The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
 builds = [
-  ${gateTest}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
-  ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
+  ${gateTestLinux}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
   ${gateTestDarwin} {capabilities : [darwin, amd64],   targets : [gate, post-merge],  name: "gate-test-darwin-amd64"}
+  ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
   ${rbcheck}        {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-rbcheck-linux-amd64"}
-#  ${gateTest}      {capabilities : [linux, sparcv9], targets : [gate, post-merge],  name: "gate-test-linux-sparcv9"}
 ]

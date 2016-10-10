@@ -205,7 +205,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
      * {@code newLhs}, its target turned into an update function ("foo<-"), with the given value
      * added to the arguments list.
      */
-    private RCallNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
+    private RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         ArgumentsSignature signature = fun.getSyntaxSignature();
@@ -238,7 +238,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
             newSyntaxLHS = RCallNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        return RCallNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes);
+        return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
     }
 
     /*
@@ -321,7 +321,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
          * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`.
          */
         for (int i = 0; i < calls.size(); i++) {
-            RCallNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), ReadVariableNode.create("*tmpr*" + (tempNamesIndex + i - 1)),
+            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), ReadVariableNode.create("*tmpr*" + (tempNamesIndex + i - 1)),
                             calls.get(i));
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));

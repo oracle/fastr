@@ -1,31 +1,27 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
+ * Copyright (c) 1997-2015,  The R Core Team
+ * Copyright (c) 2016, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 
 #include <rffiutils.h>
 
+#define PCRE_INFO_CAPTURECOUNT       2
+#define PCRE_INFO_NAMEENTRYSIZE      7
+#define PCRE_INFO_NAMECOUNT          8
+#define PCRE_INFO_NAMETABLE          9
+
 char *pcre_maketables();
-void *pcre_compile(char * pattern, int options, char ** errorMessage, int *errOffset, char * tables);
-int  pcre_exec(void * code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
+void *pcre_compile(char *pattern, int options, char **errorMessage, int *errOffset, char *tables);
+int  pcre_exec(void *code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
+int pcre_fullinfo(void *code, void *extra, int what, void *where);
+void pcre_free(void *code);
 
 jclass JNI_PCRE_ResultClass;
 jmethodID ResultClassConstructorID;
@@ -55,8 +51,42 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeExec(JNIEnv *env, jclass c,jlong code, jlong extra, jstring subject,
-		jint startOffset, jint options, jintArray ovector, jint ovectorLen) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureCount(JNIEnv *env, jclass c, jlong code, jlong extra) {
+    int captureCount;
+	int rc = pcre_fullinfo(code, extra, PCRE_INFO_CAPTURECOUNT, &captureCount);
+    return rc < 0 ? rc : captureCount;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureNames(JNIEnv *env, jclass c, jlong code, jlong extra, jobjectArray ret) {
+    int nameCount;
+    int nameEntrySize;
+    char* nameTable;
+    int res;
+	res = pcre_fullinfo(code, extra, PCRE_INFO_NAMECOUNT, &nameCount);
+    if (res < 0) {
+        return res;
+    }
+    res = pcre_fullinfo(code, extra, PCRE_INFO_NAMEENTRYSIZE, &nameEntrySize);
+    if (res < 0) {
+        return res;
+    }
+	res = pcre_fullinfo(code, extra, PCRE_INFO_NAMETABLE, &nameTable);
+    if (res < 0) {
+        return res;
+    }
+    // from GNU R's grep.c
+	for(int i = 0; i < nameCount; i++) {
+	    char* entry = nameTable + nameEntrySize * i;
+	    int captureNum = (entry[0] << 8) + entry[1] - 1;
+        (*env)->SetObjectArrayElement(env, ret, captureNum, (*env)->NewStringUTF(env, entry + 2));
+    }
+    return res;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeExec(JNIEnv *env, jclass c, jlong code, jlong extra, jstring subject,
+	jint startOffset, jint options, jintArray ovector, jint ovectorLen) {
 	const char *subjectChars = (*env)->GetStringUTFChars(env, subject, NULL);
 	int subjectLength = (*env)->GetStringUTFLength(env, subject);
 	int* ovectorElems = (*env)->GetIntArrayElements(env, ovector, NULL);

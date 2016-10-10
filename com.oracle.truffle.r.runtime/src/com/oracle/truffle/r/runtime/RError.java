@@ -743,7 +743,8 @@ public final class RError extends RuntimeException {
         INVALID_FILE_EXT("invalid file extension"),
         NO("no '%s'"),
         APPLIES_TO_VECTORS("%s applies only to vectors"),
-        GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer");
+        GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer"),
+        WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' ");
 
         public final String message;
         final boolean hasArgs;
