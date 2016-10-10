@@ -45,12 +45,12 @@ If this is None, then we run under the standard VM in interpreted mode only.
 '''
 _mx_graal = mx.suite("graal-core", fatalIfMissing=False)
 
-_r_command_project = 'com.oracle.truffle.r.engine'
+_r_command_package = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
-_command_class_dict = {'r': _r_command_project + ".shell.RCommand",
-                       'rscript': _r_command_project + ".shell.RscriptCommand",
+_command_class_dict = {'r': _r_command_package + ".shell.RCommand",
+                       'rscript': _r_command_package + ".shell.RscriptCommand",
                         'rrepl': _repl_command,
-                        'rembed': _r_command_project + ".shell.REmbedded",
+                        'rembed': _r_command_package + ".shell.REmbedded",
                     }
 # benchmarking support
 def r_path():
@@ -88,7 +88,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath(_r_command_project)]
+    vmArgs = ['-cp', mx.classpath()]
 
     if 'nocompile' in kwargs:
         nocompile = True
@@ -111,7 +111,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
-    print mx.classpath(_r_command_project)
+    print mx.classpath()
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
