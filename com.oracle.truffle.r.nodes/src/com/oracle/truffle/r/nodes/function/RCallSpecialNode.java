@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -71,8 +72,6 @@ final class PeekLocalVariableNode extends RNode {
 
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
-    public static final RuntimeException FULL_CALL_NEEDED = new FullCallNeededException();
-
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
     @CompilationFinal private SourceSection sourceSectionR;
@@ -88,17 +87,9 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         return sourceSectionR;
     }
 
-    @SuppressWarnings("serial")
-    private static class FullCallNeededException extends RuntimeException {
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return null;
-        }
-    }
-
     public static RuntimeException fullCallNeeded() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw FULL_CALL_NEEDED;
+        throw RSpecialFactory.FULL_CALL_NEEDED;
     }
 
     @Child private ForcePromiseNode functionNode;
@@ -130,10 +121,6 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     private static RCallSpecialNode tryCreate(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments) {
-        if (signature.getNonNullCount() > 0) {
-            // complex signature -> bail out
-            return null;
-        }
         RSyntaxNode syntaxFunction = functionNode.asRSyntaxNode();
         if (!(syntaxFunction instanceof RSyntaxLookup)) {
             // LHS is not a simple lookup -> bail out
@@ -141,14 +128,19 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         for (RSyntaxNode argument : arguments) {
             if (!(argument instanceof RSyntaxLookup || argument instanceof RSyntaxConstant)) {
-                // argument is not a simple lookup -> bail out
+                // argument is not a simple lookup or constant value -> bail out
                 return null;
             }
         }
         String name = ((RSyntaxLookup) syntaxFunction).getIdentifier();
         RBuiltinDescriptor builtinDescriptor = RContext.lookupBuiltinDescriptor(name);
-        if (builtinDescriptor == null || builtinDescriptor.getSpecialCall() == null) {
-            // no builtin or no special call definition -> bail out
+        if (builtinDescriptor == null) {
+            // no builtint -> bail out
+            return null;
+        }
+        RSpecialFactory specialCall = builtinDescriptor.getSpecialCall();
+        if (specialCall == null) {
+            // no special call definition -> bail out
             return null;
         }
         RNode[] localArguments = new RNode[arguments.length];
@@ -160,7 +152,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
             }
         }
-        RNode special = builtinDescriptor.getSpecialCall().apply(localArguments);
+        RNode special = specialCall.create(signature, localArguments);
         if (special == null) {
             // the factory refused to create a special call -> bail out
             return null;
@@ -179,7 +171,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 throw RCallSpecialNode.fullCallNeeded();
             }
             return special.execute(frame);
-        } catch (FullCallNeededException e) {
+        } catch (RSpecialFactory.FullCallNeededException e) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             RCallNode call = RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, arguments);
             return replace(call).execute(frame, function);

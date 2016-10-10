@@ -23,14 +23,12 @@
 package com.oracle.truffle.r.runtime.builtins;
 
 import java.util.Arrays;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public abstract class RBuiltinDescriptor {
 
@@ -47,13 +45,13 @@ public abstract class RBuiltinDescriptor {
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
     private final RBehavior behavior;
-    private final Function<RNode[], RNode> specialCall;
+    private final RSpecialFactory specialCall;
 
     private final int primitiveMethodIndex;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior, Function<RNode[], RNode> specialCall) {
+                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior, RSpecialFactory specialCall) {
         this.specialCall = specialCall;
         this.name = name.intern();
         this.builtinNodeClass = builtinNodeClass;
@@ -136,7 +134,7 @@ public abstract class RBuiltinDescriptor {
         return behavior;
     }
 
-    public Function<RNode[], RNode> getSpecialCall() {
+    public RSpecialFactory getSpecialCall() {
         return specialCall;
     }
 }
