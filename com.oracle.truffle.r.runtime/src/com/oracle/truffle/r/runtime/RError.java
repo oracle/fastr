@@ -744,7 +744,8 @@ public final class RError extends RuntimeException {
         NO("no '%s'"),
         APPLIES_TO_VECTORS("%s applies only to vectors"),
         GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer"),
-        WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' ");
+        WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' "),
+        BAD_FUNCTION_EXPR("badly formed function expression");
 
         public final String message;
         final boolean hasArgs;
