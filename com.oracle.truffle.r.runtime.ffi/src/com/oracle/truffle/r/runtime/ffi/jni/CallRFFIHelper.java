@@ -510,7 +510,7 @@ public class CallRFFIHelper {
 
     }
 
-    public static Object Rf_allocateMatrix(int mode, int ncol, int nrow) {
+    public static Object Rf_allocateMatrix(int mode, int nrow, int ncol) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_allocateMatrix", mode, ncol, nrow);
         }
