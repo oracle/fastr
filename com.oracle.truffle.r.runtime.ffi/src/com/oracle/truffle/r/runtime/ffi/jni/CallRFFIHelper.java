@@ -812,7 +812,7 @@ public class CallRFFIHelper {
             // at the moment, this can only be used to null out the pointer
             ((RExternalPtr) x).setTag(y);
         }
-        return x; // TODO check or y?
+        return y;
     }
 
     public static Object SETCAR(Object x, Object y) {
@@ -821,7 +821,7 @@ public class CallRFFIHelper {
         }
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCar(y);
-        return x; // TODO check or y?
+        return y;
     }
 
     public static Object SETCDR(Object x, Object y) {
@@ -830,7 +830,12 @@ public class CallRFFIHelper {
         }
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCdr(y);
-        return x; // TODO check or y?
+        return y;
+    }
+
+    public static Object SETCADR(Object x, Object y) {
+        SETCAR(CDR(x), y);
+        return y;
     }
 
     public static Object SYMVALUE(Object x) {

@@ -72,6 +72,7 @@ static jmethodID CDDR_MethodID;
 static jmethodID SET_TAG_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
+static jmethodID SETCADR_MethodID;
 static jmethodID SYMVALUE_MethodID;
 static jmethodID SET_SYMVALUE_MethodID;
 static jmethodID SET_STRING_ELT_MethodID;
@@ -172,6 +173,7 @@ void init_internals(JNIEnv *env) {
 	SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	SETCADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCADR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SYMVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	SET_SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
@@ -895,8 +897,10 @@ SEXP SETCDR(SEXP x, SEXP y) {
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
-    unimplemented("SETCADR");
-    return NULL;
+    TRACE(TARGpp, x, y);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCADR_MethodID, x, y);
+    return checkRef(thisenv, result);
 }
 
 SEXP SETCADDR(SEXP x, SEXP y) {
