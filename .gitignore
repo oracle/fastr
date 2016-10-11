@@ -20,10 +20,14 @@
 /com.oracle.truffle.r.native/gnur/Makeconf.done
 /com.oracle.truffle.r.native/gnur/platform.mk.temp*
 /com.oracle.truffle.r.native/gnur/R-*
+/com.oracle.truffle.r.native/gnur/rcopylib.done
 /com.oracle.truffle.r.native/run/Makeconf.etc
 /com.oracle.truffle.r.native/include/*.h
 /com.oracle.truffle.r.native/include/R_ext/*.h
 /com.oracle.truffle.r.native/include/linked
+/com.oracle.truffle.r.native/fficall/jni.done
+/com.oracle.truffle.r.native/fficall/jniboot.done
+
 /com.oracle.truffle.r.test.native/packages/copy_recommended
 /com.oracle.truffle.r.test.native/packages/recommended
 /com.oracle.truffle.r.test.native/packages/*/lib/*
@@ -123,4 +127,3 @@ test_fastr
 lib.install.cran*
 package.blacklist
 com.oracle.truffle.r.test.native/embedded/lib
-

@@ -38,9 +38,9 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # they were found in the standard system locations
 OTHER_LIB_TARGETS = pcre z gfortran quadmath gcc_s
 
-.PHONY: all other_lib_targets
+.PHONY: all
 
-all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) other_lib_targets
+all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) rcopylib.done
 
 $(FASTR_LIB_DIR):
 	mkdir -p $(FASTR_LIB_DIR)
@@ -60,12 +60,17 @@ ifeq ($(OS_NAME),Darwin)
 	install_name_tool -id @rpath/libRlapack.dylib $(LAPACK_TARGET)
 endif
 
-other_lib_targets:
+# we can't create exact dependencies since we don't know exactly
+# what versions of the lubs (if any) will be copied, so we use a sentinel
+# file to indicate that the check has been done. 
+rcopylib.done: 
 	for target in $(OTHER_LIB_TARGETS); do \
 		mx rcopylib $$target $(FASTR_LIB_DIR) || exit 1; \
 	done
-	
+	touch rcopylib.done
+
 clean:
 	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) 
 	rm -f $(foreach target,$(OTHER_LIB_TARGETS),$(wildcard $(FASTR_LIB_DIR)/lib$(target).*))
+	rm -f rcopylib.done
 
