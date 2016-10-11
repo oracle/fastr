@@ -986,6 +986,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             Object result = builtin.executeBuiltin(frame, castArguments(frame, orderedArguments.getArguments()));
+            assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
             visibility.execute(frame, builtinDescriptor.getVisibility());
             return result;
         }

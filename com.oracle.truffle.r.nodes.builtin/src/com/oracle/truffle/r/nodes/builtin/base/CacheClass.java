@@ -42,6 +42,6 @@ public abstract class CacheClass extends RBuiltinNode {
     @Specialization
     protected RAbstractStringVector getClass(String cl, RAbstractStringVector ext) {
         RContext.getInstance().putS4Extends(cl, ext.materialize());
-        return null;
+        return ext;
     }
 }
