@@ -90,7 +90,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath()]
+    vmArgs = ['-cp', mx.classpath(jdk=jdk)]
 
     if 'nocompile' in kwargs:
         nocompile = True
@@ -113,7 +113,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
-    print mx.classpath()
+    print mx.classpath(jdk=mx.get_jdk())
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
