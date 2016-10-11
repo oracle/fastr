@@ -796,6 +796,11 @@ public class GrepFunctions {
                     int captureCount = RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
                         String[] captureNames = RFFIFactory.getRFFI().getPCRERFFI().getCaptureNames(pcre.result, 0, maxCaptureCount);
+                        for (int i = 0; i < captureNames.length; i++) {
+                            if (captureNames[i] == null) {
+                                captureNames[i] = "";
+                            }
+                        }
                         assert captureCount - 1 == captureNames.length;
                         int[] captureStart = null;
                         int[] captureLength = null;
