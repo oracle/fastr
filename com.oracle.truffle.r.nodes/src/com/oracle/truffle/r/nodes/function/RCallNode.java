@@ -103,7 +103,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-class ForcePromiseNode extends RNode {
+final class ForcePromiseNode extends RNode {
 
     @Child private RNode valueNode;
     @Child private PromiseHelperNode promiseHelper;
@@ -536,7 +536,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args, s3DefaulArguments);
     }
 
-    protected class ForeignCall extends Node {
+    protected final class ForeignCall extends Node {
 
         @Child private CallArgumentsNode arguments;
         @Child private Node foreignCall;
