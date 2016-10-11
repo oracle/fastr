@@ -157,11 +157,12 @@ class FastRReleaseProject(FastRProjectAdapter):
 
     def getResults(self):
         results = []
-        for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
-            self._get_files(rdir, results)
-        results.append(join(self.dir, 'LICENSE'))
-        results.append(join(self.dir, 'COPYRIGHT'))
-        results.append(join(self.dir, 'README.md'))
+        if os.environ.has_key('FASTR_RELEASE'):
+            for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
+                self._get_files(rdir, results)
+            results.append(join(self.dir, 'LICENSE'))
+            results.append(join(self.dir, 'COPYRIGHT'))
+            results.append(join(self.dir, 'README.md'))
         return results
 
     def getBuildTask(self, args):
@@ -178,8 +179,8 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             targetFile.write(LauncherTemplate(open(source).read()).substitute(dictionary))
 
     def build(self):
-        if os.environ.has_key('FASTR_NO_RELEASE'):
-            mx.log('FastR: not updating release project')
+        if not os.environ.has_key('FASTR_RELEASE'):
+            mx.log('FastR: set FASTR_RELEASE to update release project')
             return
         # copy the release directories
         output_dir = self.subject.dir
@@ -284,7 +285,7 @@ class FastRArchiveParticipant:
         return False
 
     def __closing__(self):
-        if self.dist.name == "FASTR_RELEASE":
+        if self.dist.name == "FASTR_RELEASE" and os.environ.has_key('FASTR_RELEASE'):
             # the files copied  in can be confused as source files by
             # e.g., mx copyright, so delete them, specifically thne
             # include dir

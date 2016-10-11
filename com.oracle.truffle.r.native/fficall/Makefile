@@ -31,12 +31,12 @@ $(error no platform.mk available)
 endif
 endif
 
-.PHONY: all clean objs
+.PHONY: all clean
 
 R_LIBNAME := libR$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
-BOOTJNI_LIBNAME := libjniboot$(DYLIB_EXT)
-BOOTJNI_LIB := $(FASTR_LIB_DIR)/$(BOOTJNI_LIBNAME)
+JNIBOOT_LIBNAME := libjniboot$(DYLIB_EXT)
+JNIBOOT_LIB := $(FASTR_LIB_DIR)/$(JNIBOOT_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -45,9 +45,13 @@ endif
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
-all: $(R_LIB) $(BOOTJNI_LIB)
+all: $(R_LIB) $(JNIBOOT_LIB)
 
-$(R_LIB): objs 
+# use sentinels to avoid (usually unnecessary) rebuilds.
+# N.B. if things change in the subdirs, a clean must be invoked
+# to remove the sentinels
+
+$(R_LIB): jni.done 
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
@@ -59,22 +63,25 @@ else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
 
-objs:
+jni.done:
 	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
+	touch jni.done
 
-$(BOOTJNI_LIB): bootobjs
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(BOOTJNI_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
+$(JNIBOOT_LIB): jniboot.done
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(JNIBOOT_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -id @rpath/libjniboot.dylib $(BOOTJNI_LIB)
+	install_name_tool -id @rpath/libjniboot.dylib $(JNIBOOT_LIB)
 endif
 
-bootobjs:
+jniboot.done:
 	$(MAKE) -C src/jniboot all
+	touch jniboot.done
 
 clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
 	rm -rf $(R_LIB)
-	rm -rf $(BOOTJNI_LIB)
+	rm -rf $(JNIBOOT_LIB)
+	rm -rf jni.done jniboot.done
 	
