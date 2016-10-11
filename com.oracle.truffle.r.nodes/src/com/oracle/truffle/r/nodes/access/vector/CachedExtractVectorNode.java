@@ -272,6 +272,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles dimnamesNamesProfile = RAttributeProfiles.create();
     private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
     private final ConditionProfile selectPositionsProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile originalDimNamesPRofile = ConditionProfile.createBinaryProfile();
@@ -284,7 +285,18 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         int[] newDimensions = new int[dimCount];
         RList originalDimNames = originalTarget.getDimNames(null);
-        Object[] newDimNames = dimNamesNull.profile(originalDimNames == null) ? null : new Object[dimCount];
+        RStringVector originalDimNamesNames;
+        Object[] newDimNames;
+        String[] newDimNamesNames;
+        if (dimNamesNull.profile(originalDimNames == null)) {
+            newDimNames = null;
+            originalDimNamesNames = null;
+            newDimNamesNames = null;
+        } else {
+            newDimNames = new Object[dimCount];
+            originalDimNamesNames = originalDimNames.getNames(dimnamesNamesProfile);
+            newDimNamesNames = originalDimNamesNames == null ? null : new String[dimCount];
+        }
 
         int dimIndex = -1;
         for (int i = 0; i < numberOfDimensions; i++) {
@@ -303,6 +315,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                         result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);
                     }
                     newDimNames[dimIndex] = result;
+                    if (newDimNamesNames != null) {
+                        newDimNamesNames[dimIndex] = originalDimNamesNames.getDataAt(i);
+                    }
                 }
             }
         }
@@ -311,7 +326,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             metadataApplied.enter();
             extractedTarget.setDimensions(newDimensions);
             if (newDimNames != null) {
-                extractedTarget.setDimNames(RDataFactory.createList(newDimNames));
+                extractedTarget.setDimNames(RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
             }
         } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
