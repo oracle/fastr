@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -50,32 +49,23 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "arguments", type = RNode[].class)
-abstract class AccessFieldSpecial extends RNode {
+abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
-    @CompilationFinal String cachedField;
-    @CompilationFinal RStringVector cachedNames;
     @Child private ExtractListElement extractListElement = ExtractListElement.create();
 
-    @Specialization(guards = {"isCached(list, field)", "list.getNames() != null"})
-    @SuppressWarnings("unused")
+    @Specialization(guards = {"isSimpleList(list)", "isCached(list, field)", "list.getNames() != null"})
     public Object doList(RList list, String field, @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             throw RSpecialFactory.FULL_CALL_NEEDED;
         }
-        if (cachedField == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            cachedField = field;
-            cachedNames = list.getNames();
-        }
+        updateCache(list, field);
         return extractListElement.execute(list, index);
     }
 
@@ -83,20 +73,6 @@ abstract class AccessFieldSpecial extends RNode {
     @SuppressWarnings("unused")
     public void doFallback(Object container, Object field) {
         throw RSpecialFactory.FULL_CALL_NEEDED;
-    }
-
-    protected boolean isCached(RList list, String field) {
-        return cachedField == null || (cachedField == field && list.getNames() == cachedNames);
-    }
-
-    protected int getIndex(RAbstractStringVector names, String field) {
-        for (int i = 0; i < names.getLength(); i++) {
-            String current = names.getDataAt(i);
-            if (current == field || current.equals(field)) {
-                return i;
-            }
-        }
-        return -1;
     }
 }
 

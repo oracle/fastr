@@ -28,6 +28,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -35,13 +38,50 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+
+@NodeChild(value = "arguments", type = RNode[].class)
+abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
+
+    @Child private ShareObjectNode shareObject = ShareObjectNode.create();
+
+    /**
+     * {@link RNull} and lists have special handling when they are RHS of update. Nulls delete the
+     * field and lists can cause cycles.
+     */
+    protected static boolean isNotRNullRList(Object value) {
+        return value != RNull.instance && !(value instanceof RList);
+    }
+
+    @Specialization(guards = {"isSimpleList(list)", "!list.isShared()", "isCached(list, field)", "list.getNames() != null", "isNotRNullRList(value)"})
+    public RList doList(RList list, String field, Object value, @Cached("getIndex(list.getNames(), field)") int index) {
+        if (index == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            throw RSpecialFactory.FULL_CALL_NEEDED;
+        }
+        updateCache(list, field);
+        list.setElement(index, shareObject.execute(value));
+        return list;
+    }
+
+    @Fallback
+    @SuppressWarnings("unused")
+    public void doFallback(Object container, Object field, Object value) {
+        throw RSpecialFactory.FULL_CALL_NEEDED;
+    }
+}
 
 @RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateField extends RBuiltinNode {
@@ -54,6 +94,10 @@ public abstract class UpdateField extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue()).asStringVector().findFirst();
+    }
+
+    public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments) {
+        return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateFieldSpecialNodeGen.create(arguments) : null;
     }
 
     @Specialization
