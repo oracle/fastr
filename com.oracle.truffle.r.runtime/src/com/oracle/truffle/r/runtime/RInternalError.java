@@ -175,7 +175,8 @@ public final class RInternalError extends Error {
                     Utils.rSuicide("FastR internal error");
                 }
                 if (consoleHandler != null) {
-                    consoleHandler.println("internal error: " + t.getClass().getSimpleName() + " (see fastr_errors.log" + suffix + ")");
+                    String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+                    consoleHandler.println(message + " (see fastr_errors.log" + suffix + ")");
                 }
             }
         }
