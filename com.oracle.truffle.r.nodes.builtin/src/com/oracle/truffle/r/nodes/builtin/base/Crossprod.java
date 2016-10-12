@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"}, behavior = PURE)
 public abstract class Crossprod extends RBuiltinNode {
 
-    @Child private MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false, null);
+    @Child private MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false);
     @Child private Transpose transpose;
 
     @Override
@@ -56,7 +56,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private Object transpose(RAbstractVector value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(null));
+            transpose = insert(TransposeNodeGen.create());
         }
         return transpose.execute(value);
     }

@@ -74,7 +74,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
-        return BinaryArithmeticNodeGen.create(binary, unary, null);
+        return BinaryArithmeticNodeGen.create(binary, unary);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})

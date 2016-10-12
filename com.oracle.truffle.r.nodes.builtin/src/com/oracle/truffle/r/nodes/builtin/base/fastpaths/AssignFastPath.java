@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class AssignFastPath extends RFastPathNode {
 
-    @Child private Assign assign = AssignNodeGen.create(true, null);
+    @Child private Assign assign = AssignNodeGen.create(true);
 
     @Specialization
     @SuppressWarnings("unused")

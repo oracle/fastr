@@ -84,7 +84,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
-        return BinaryBooleanNodeGen.create(factory, null);
+        return BinaryBooleanNodeGen.create(factory);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})

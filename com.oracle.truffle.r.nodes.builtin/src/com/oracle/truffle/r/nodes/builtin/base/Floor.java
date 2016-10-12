@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class Floor extends UnaryArithmeticBuiltinNode {
 
-    public static final UnaryArithmeticFactory FLOOR = FloorNodeGen.create(null);
+    public static final UnaryArithmeticFactory FLOOR = FloorNodeGen.create();
 
     public Floor() {
         super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);

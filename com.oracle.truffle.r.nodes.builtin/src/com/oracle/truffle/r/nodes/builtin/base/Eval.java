@@ -147,7 +147,7 @@ public abstract class Eval extends RBuiltinNode {
     }
 
     protected static Get createGet() {
-        return GetNodeGen.create(null);
+        return GetNodeGen.create();
     }
 
     @Specialization

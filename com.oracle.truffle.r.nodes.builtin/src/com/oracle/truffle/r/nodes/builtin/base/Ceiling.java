@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 @RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
 
-    public static final UnaryArithmeticFactory CEILING = FloorNodeGen.create(null);
+    public static final UnaryArithmeticFactory CEILING = FloorNodeGen.create();
 
     public Ceiling() {
         super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);

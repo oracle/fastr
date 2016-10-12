@@ -75,7 +75,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesNodeGen.create(null));
+            updateNames = insert(UpdateNamesNodeGen.create());
         }
         return (RAbstractContainer) updateNames.executeStringVector(container, o);
     }
@@ -83,7 +83,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create());
         }
         return updateDimNames.executeRAbstractContainer(container, o);
     }

@@ -55,7 +55,7 @@ public abstract class Xtfrm extends RBuiltinNode {
          */
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(null));
+            getNode = insert(GetNodeGen.create());
         }
 
         REnvironment env = RArguments.getEnvironment(frame);

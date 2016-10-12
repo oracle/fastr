@@ -97,7 +97,7 @@ public abstract class Match extends RBuiltinNode {
     private Object matchRecursive(Object x, Object table, Object noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matchRecursive = insert(MatchNodeGen.create(null));
+            matchRecursive = insert(MatchNodeGen.create());
         }
         return matchRecursive.executeRIntVector(x, table, noMatch, incomparables);
     }

@@ -241,7 +241,7 @@ public class EnvFunctions {
             if (!(envir instanceof REnvironment)) {
                 if (parentFrameNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    parentFrameNode = insert(FrameFunctionsFactory.ParentFrameNodeGen.create(null));
+                    parentFrameNode = insert(FrameFunctionsFactory.ParentFrameNodeGen.create());
                 }
                 env = parentFrameNode.execute(frame, 2);
             } else {

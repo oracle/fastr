@@ -162,7 +162,7 @@ public abstract class AnyNA extends RBuiltinNode {
     }
 
     protected AnyNA createRecursive(boolean recursive) {
-        return AnyNANodeGen.create(recursive, null);
+        return AnyNANodeGen.create(recursive);
     }
 
     @Specialization(guards = "isRecursionAllowed()")

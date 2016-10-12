@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
@@ -54,12 +53,10 @@ import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class RBuiltinDiagnostics {
 
@@ -401,17 +398,8 @@ public class RBuiltinDiagnostics {
 
         @Override
         public CastNode[] getCasts() {
-            ArgumentsSignature signature = ArgumentsSignature.get(getParameterNames());
-
-            int total = signature.getLength();
-            RNode[] args = new RNode[total];
-            for (int i = 0; i < total; i++) {
-                args[i] = ReadVariableNode.create("dummy");
-            }
-
-            return fact.getConstructor().apply(args).getCasts();
+            return fact.getConstructor().get().getCasts();
         }
-
     }
 
     public static final class RExtBuiltinDiagFactory implements RBuiltinDiagFactory {

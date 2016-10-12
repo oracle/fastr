@@ -248,8 +248,8 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Sin sinNode = SinNodeGen.create(null);
-        @Child private Cos cosNode = CosNodeGen.create(null);
+        @Child private Sin sinNode = SinNodeGen.create();
+        @Child private Cos cosNode = CosNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -274,7 +274,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Tan tanNode = TanNodeGen.create(null);
+        @Child private Tan tanNode = TanNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -375,7 +375,7 @@ public class TrigExpFunctions {
     @RBuiltin(name = "asinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
 
-        @Child private Asin asinNode = AsinNodeGen.create(null);
+        @Child private Asin asinNode = AsinNodeGen.create();
 
         public Asinh() {
             super(RType.Double);
@@ -400,7 +400,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Asin asinNode = AsinNodeGen.create(null);
+        @Child private Asin asinNode = AsinNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -421,7 +421,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Acos acosNode = AcosNodeGen.create(null);
+        @Child private Acos acosNode = AcosNodeGen.create();
 
         @Override
         public double op(double x) {
@@ -472,7 +472,7 @@ public class TrigExpFunctions {
             super(RType.Double);
         }
 
-        @Child private Atan atanNode = AtanNodeGen.create(null);
+        @Child private Atan atanNode = AtanNodeGen.create();
 
         @Override
         public double op(double x) {

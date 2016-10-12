@@ -74,8 +74,8 @@ public class FastRTrace {
         protected Object getWhere(VirtualFrame frame) {
             if (topEnv == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                topEnv = insert(TopEnvNodeGen.create(null));
-                parentFrame = insert(ParentFrameNodeGen.create(null));
+                topEnv = insert(TopEnvNodeGen.create());
+                parentFrame = insert(ParentFrameNodeGen.create());
             }
             return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);
         }
@@ -83,7 +83,7 @@ public class FastRTrace {
         protected Object getFunction(VirtualFrame frame, Object what, Object where) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(null));
+                getNode = insert(GetNodeGen.create());
             }
             return getNode.executeBuiltin(frame, what, where, RType.Function.getName(), true);
         }
@@ -134,7 +134,7 @@ public class FastRTrace {
                 // simple case, nargs() == 1, corresponds to .primTrace that has invisible output
                 if (primTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    primTrace = insert(PrimTraceNodeGen.create(null));
+                    primTrace = insert(PrimTraceNodeGen.create());
                 }
 
                 Object result = primTrace.executeBuiltin(frame, func);
@@ -196,7 +196,7 @@ public class FastRTrace {
             if (signature == RMissing.instance) {
                 if (primUnTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    primUnTrace = insert(PrimUnTraceNodeGen.create(null));
+                    primUnTrace = insert(PrimUnTraceNodeGen.create());
                 }
                 primUnTrace.executeBuiltin(frame, func);
             } else {

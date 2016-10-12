@@ -47,7 +47,7 @@ public abstract class Prod extends RBuiltinNode {
     protected Object prod(RArgsValuesAndNames args) {
         if (prodRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            prodRecursive = insert(ProdNodeGen.create(null));
+            prodRecursive = insert(ProdNodeGen.create());
         }
         // TODO: eventually handle multiple vectors properly
         return prodRecursive.executeObject(args.getArgument(0));

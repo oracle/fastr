@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  */
 public abstract class ExistsFastPath extends RFastPathNode {
 
-    @Child private Exists exists = ExistsNodeGen.create(null);
+    @Child private Exists exists = ExistsNodeGen.create();
 
     @Specialization
     @SuppressWarnings("unused")

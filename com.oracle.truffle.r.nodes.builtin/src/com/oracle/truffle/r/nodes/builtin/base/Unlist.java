@@ -124,7 +124,7 @@ public abstract class Unlist extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(null));
+            lengthNode = insert(LengthNodeGen.create());
         }
     }
 

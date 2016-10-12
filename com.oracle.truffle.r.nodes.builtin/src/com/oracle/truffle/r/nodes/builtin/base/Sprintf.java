@@ -218,7 +218,7 @@ public abstract class Sprintf extends RBuiltinNode {
     protected Object sprintfOneElement(String fmt, RArgsValuesAndNames args) {
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sprintfRecursive = insert(SprintfNodeGen.create(null));
+            sprintfRecursive = insert(SprintfNodeGen.create());
         }
         return sprintfRecursive.executeObject(fmt, args.getArgument(0));
     }

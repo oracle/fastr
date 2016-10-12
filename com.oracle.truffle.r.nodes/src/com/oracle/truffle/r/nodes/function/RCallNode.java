@@ -58,7 +58,6 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -278,36 +277,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     public Object call(VirtualFrame frame, RFunction function, //
                     @Cached("createUninitializedCall()") FunctionDispatch call) {
         return call.execute(frame, function, lookupVarArgs(frame), null, null);
-    }
-
-    protected boolean isSpecialDispatch(RFunction function) {
-        return function.getRBuiltin().getDispatch() == RDispatch.SPECIAL;
-    }
-
-    protected RBuiltinNode createSpecial(RBuiltinDescriptor builtin) {
-        RNode[] nodes = new RNode[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            nodes[i] = arguments[i] == null ? null : RASTUtils.cloneNode(arguments[i].asRNode());
-        }
-        return ((RBuiltinFactory) builtin).getConstructor().apply(nodes);
-    }
-
-    @Specialization(limit = "5", guards = {"isSpecialDispatch(function)", "cachedBuiltin == function.getRBuiltin()"})
-    public Object callSpecial(VirtualFrame frame, @SuppressWarnings("unused") RFunction function,
-                    @Cached("function.getRBuiltin()") RBuiltinDescriptor cachedBuiltin,
-                    @Cached("createSpecial(cachedBuiltin)") RBuiltinNode call,
-                    @Cached("create()") SetVisibilityNode visibility) {
-        if (explicitArgs != null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_USE, cachedBuiltin.getName());
-        }
-        visibility.execute(frame, cachedBuiltin.getVisibility());
-        return call.execute(frame);
-    }
-
-    @Specialization(contains = "callSpecial", guards = "isSpecialDispatch(function)")
-    public Object callSpecialFallback(@SuppressWarnings("unused") RFunction function) {
-        throw RInternalError.shouldNotReachHere("too much polymorphism in SPECIAL dispatch");
     }
 
     protected RNode createDispatchArgument(int index) {
@@ -764,7 +733,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             FormalArguments formals = root.getFormalArguments();
             if (root instanceof RBuiltinRootNode) {
                 RBuiltinRootNode builtinRoot = (RBuiltinRootNode) root;
-                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin(), null), builtinRoot.getBuiltin(), formals, originalCall, explicitArgs);
+                return new BuiltinCallNode(RBuiltinNode.inline(builtinRoot.getBuiltin()), builtinRoot.getBuiltin(), formals, originalCall, explicitArgs);
             } else {
                 return new DispatchedCallNode(cachedTarget, originalCall);
             }
@@ -850,7 +819,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    private static final class BuiltinCallNode extends LeafCallNode {
+    public static final class BuiltinCallNode extends LeafCallNode {
 
         @Child private RBuiltinNode builtin;
         @Child private PromiseCheckHelperNode varArgsPromiseHelper;
@@ -868,7 +837,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final RBuiltinDescriptor builtinDescriptor;
         private final boolean explicitArgs;
 
-        BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
+        public BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);
             this.builtin = builtin;
             this.builtinDescriptor = builtinDescriptor;

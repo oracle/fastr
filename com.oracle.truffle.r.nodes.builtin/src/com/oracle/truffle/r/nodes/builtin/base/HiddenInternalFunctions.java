@@ -84,7 +84,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalNodeGen.create(null));
+                eval = insert(EvalNodeGen.create());
             }
         }
 

@@ -93,7 +93,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         RFunction func;
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(null));
+            getNode = insert(GetNodeGen.create());
         }
         func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), true);
         return doCall(frame, func, argsAsList, env);

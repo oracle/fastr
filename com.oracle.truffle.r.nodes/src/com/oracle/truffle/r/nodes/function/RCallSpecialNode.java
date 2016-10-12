@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-final class PeekLocalVariableNode extends RNode {
+final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
 
     @Child private LocalReadVariableNode read;
 
@@ -71,6 +71,21 @@ final class PeekLocalVariableNode extends RNode {
             return valueProfile.profile(promise.getValue());
         }
         return valueProfile.profile(value);
+    }
+
+    @Override
+    public void setSourceSection(SourceSection source) {
+        // nothing to do
+    }
+
+    @Override
+    public String getIdentifier() {
+        return (String) read.getIdentifier();
+    }
+
+    @Override
+    public boolean isFunctionLookup() {
+        return false;
     }
 }
 

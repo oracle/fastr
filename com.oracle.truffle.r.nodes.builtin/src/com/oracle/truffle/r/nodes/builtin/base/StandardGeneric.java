@@ -173,7 +173,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
         if (sysFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(null));
+            sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create());
             RError.performanceWarning("sys.frame usage in standardGeneric");
         }
         // TODO: GNU R counts to (i < n) - does their equivalent of getDepth return a different

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Arrays;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDispatch;
@@ -32,19 +32,18 @@ import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class RBuiltinFactory extends RBuiltinDescriptor {
 
-    private final Function<RNode[], RBuiltinNode> constructor;
+    private final Supplier<RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, Function<RNode[], RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
+                    boolean alwaysSplit, RDispatch dispatch, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
         super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior, specialCall);
         this.constructor = constructor;
     }
 
-    public Function<RNode[], RBuiltinNode> getConstructor() {
+    public Supplier<RBuiltinNode> getConstructor() {
         return constructor;
     }
 

@@ -52,7 +52,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         private void initContextRNode() {
             if (contextRNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                contextRNode = insert(FastRContextFactory.RNodeGen.create(null));
+                contextRNode = insert(FastRContextFactory.RNodeGen.create());
             }
 
         }
@@ -71,7 +71,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         private void initContextRscriptNode() {
             if (contextRscriptNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                contextRscriptNode = insert(FastRContextFactory.RscriptNodeGen.create(null));
+                contextRscriptNode = insert(FastRContextFactory.RscriptNodeGen.create());
             }
 
         }

@@ -77,12 +77,12 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class ValuePrinterNode extends RBaseNode {
 
-    @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create(null);
-    @Child private IsList isListBuiltIn = IsListNodeGen.create(null);
-    @Child private InheritsBuiltin inheritsBuiltinBuiltIn = InheritsBuiltinNodeGen.create(null);
-    @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create(null);
-    @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create(null);
-    @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create(null);
+    @Child private IsArray isArrayBuiltIn = IsArrayNodeGen.create();
+    @Child private IsList isListBuiltIn = IsListNodeGen.create();
+    @Child private InheritsBuiltin inheritsBuiltinBuiltIn = InheritsBuiltinNodeGen.create();
+    @Child private IsS4 isS4BuiltIn = IsS4NodeGen.create();
+    @Child private IsObject isObjectBuiltIn = IsObjectNodeGen.create();
+    @Child private IsMethodsDispatchOn isMethodDispatchOnBuiltIn = IsMethodsDispatchOnNodeGen.create();
     @Child private CastStringNode castStringNode = CastStringNode.createNonPreserving();
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
 

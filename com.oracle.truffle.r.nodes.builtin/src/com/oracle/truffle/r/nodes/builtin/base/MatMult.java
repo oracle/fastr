@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -85,8 +84,8 @@ public abstract class MatMult extends RBuiltinNode {
         this.na = NACheck.create();
     }
 
-    public static MatMult create(RNode[] arguments) {
-        return MatMultNodeGen.create(true, arguments);
+    public static MatMult create() {
+        return MatMultNodeGen.create(true);
     }
 
     @Specialization(guards = "bothZeroDim(a, b)")

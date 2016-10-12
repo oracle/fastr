@@ -88,8 +88,8 @@ public abstract class Mapply extends RBuiltinNode {
         private ElementNode(String vectorElementName, String argName) {
             // the name is a hack to treat ReadVariableNode-s as syntax nodes
             this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
-            this.lengthNode = insert(LengthNodeGen.create(null));
-            this.indexedLoadNode = insert(SubscriptNodeGen.create(null));
+            this.lengthNode = insert(LengthNodeGen.create());
+            this.indexedLoadNode = insert(SubscriptNodeGen.create());
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
             this.argName = argName;
         }
@@ -285,7 +285,7 @@ public abstract class Mapply extends RBuiltinNode {
         }
 
         protected Subscript createIndexedLoadNode() {
-            return SubscriptNodeGen.create(null);
+            return SubscriptNodeGen.create();
         }
 
         protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {
