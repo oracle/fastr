@@ -72,7 +72,12 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
             throw RSpecialFactory.throwFullCallNeeded();
         }
         updateCache(list, field);
-        list.setElement(index, shareObject.execute(value));
+        Object sharedValue = value;
+        // share only when necessary:
+        if (list.getDataAt(index) != value) {
+            sharedValue = getShareObjectNode().execute(value);
+        }
+        list.setElement(index, sharedValue);
         return list;
     }
 
@@ -80,6 +85,14 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     @SuppressWarnings("unused")
     public void doFallback(Object container, Object field, Object value) {
         throw RSpecialFactory.throwFullCallNeeded();
+    }
+
+    private ShareObjectNode getShareObjectNode() {
+        if (shareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObject = insert(ShareObjectNode.create());
+        }
+        return shareObject;
     }
 }
 
