@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElementNodeGen.UpdateStateOfListElementNodeGen;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -48,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * wrapper that performs the extraction as well as invocation of {@link UpdateStateOfListElement}.
  * See also the documentation of {@link RListBase}.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ExtractListElement extends Node {
 
     public abstract Object execute(RAbstractContainer container, int index);
@@ -71,6 +74,7 @@ public abstract class ExtractListElement extends Node {
         return !(x instanceof RAbstractListVector);
     }
 
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class UpdateStateOfListElement extends Node {
 
         public abstract void execute(Object owner, Object item);

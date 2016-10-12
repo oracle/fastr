@@ -27,18 +27,15 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
-import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -48,82 +45,38 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@NodeChild(value = "arguments", type = RNode[].class)
-abstract class SubsetSpecial extends RNode {
-
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+/**
+ * Subset special only handles single element integer/double index. In the case of list, we need to
+ * create the actual list otherwise we just return the primitive type.
+ */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+abstract class SubsetSpecial extends SubscriptSpecialBase {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
+    @Override
     protected boolean simpleVector(RAbstractVector vector) {
-        return classHierarchy.execute(vector) == null && vector.getNames(attrProfiles) == null;
+        return super.simpleVector(vector) && vector.getNames(attrProfiles) == null;
     }
 
-    protected static boolean inIntRange(RAbstractVector vector, int index) {
-        return index >= 1 && index <= vector.getLength();
+    @Override
+    protected int toIndex(double index) {
+        return toIndexSubset(index);
     }
 
-    protected static boolean inDoubleRange(RAbstractVector vector, double index) {
-        return index >= 1 && index <= vector.getLength();
-    }
-
-    private static int toInt(double index) {
-        int i = (int) index;
-        return i == 0 ? 1 : i - 1;
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
-    protected static int access(RAbstractIntVector vector, int index) {
-        return vector.getDataAt(index - 1);
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
-    protected static double access(RAbstractDoubleVector vector, int index) {
-        return vector.getDataAt(index - 1);
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
-    protected static String access(RAbstractStringVector vector, int index) {
-        return vector.getDataAt(index - 1);
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected static RList access(RList vector, int index,
                     @Cached("create()") ExtractListElement extract) {
         return RDataFactory.createList(new Object[]{extract.execute(vector, index - 1)});
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static int access(RAbstractIntVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static double access(RAbstractDoubleVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static String access(RAbstractStringVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
     protected static RList access(RList vector, double index,
                     @Cached("create()") ExtractListElement extract) {
-        return RDataFactory.createList(new Object[]{extract.execute(vector, toInt(index))});
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected static Object access(Object vector, Object index) {
-        throw RCallSpecialNode.fullCallNeeded();
+        return RDataFactory.createList(new Object[]{extract.execute(vector, toIndexSubset(index) - 1)});
     }
 }
 

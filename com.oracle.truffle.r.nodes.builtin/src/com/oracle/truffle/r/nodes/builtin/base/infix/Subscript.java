@@ -30,11 +30,14 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
@@ -54,8 +57,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
+/**
+ * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
+ */
 @NodeChild(value = "arguments", type = RNode[].class)
-abstract class SubscriptSpecial extends RNode {
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
 
@@ -63,65 +70,56 @@ abstract class SubscriptSpecial extends RNode {
         return classHierarchy.execute(vector) == null;
     }
 
-    protected static boolean inIntRange(RAbstractVector vector, int index) {
-        return index >= 1 && index <= vector.getLength();
-    }
-
-    protected static boolean inDoubleRange(RAbstractVector vector, double index) {
-        return index > 0 && index < (vector.getLength() + 1);
-    }
-
-    private static int toInt(double index) {
-        int i = (int) index;
-        return i == 0 ? 1 : i - 1;
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected static int access(RAbstractIntVector vector, int index) {
         return vector.getDataAt(index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected static double access(RAbstractDoubleVector vector, int index) {
         return vector.getDataAt(index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected static String access(RAbstractStringVector vector, int index) {
         return vector.getDataAt(index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "inIntRange(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
+    protected int access(RAbstractIntVector vector, double index) {
+        return vector.getDataAt(toIndex(index) - 1);
+    }
+
+    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
+    protected double access(RAbstractDoubleVector vector, double index) {
+        return vector.getDataAt(toIndex(index) - 1);
+    }
+
+    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
+    protected String access(RAbstractStringVector vector, double index) {
+        return vector.getDataAt(toIndex(index) - 1);
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected static Object access(Object vector, Object index) {
+        throw RCallSpecialNode.fullCallNeeded();
+    }
+}
+
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+abstract class SubscriptSpecial extends SubscriptSpecialBase {
+
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected static Object access(RList vector, int index,
                     @Cached("create()") ExtractListElement extract) {
         return extract.execute(vector, index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static int access(RAbstractIntVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static double access(RAbstractDoubleVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static String access(RAbstractStringVector vector, double index) {
-        return vector.getDataAt(toInt(index));
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "inDoubleRange(vector, index)"})
-    protected static Object access(RList vector, double index,
+    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
+    protected Object access(RList vector, double index,
                     @Cached("create()") ExtractListElement extract) {
-        return extract.execute(vector, toInt(index));
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object access(Object vector, Object index) {
-        throw RCallSpecialNode.fullCallNeeded();
+        return extract.execute(vector, toIndex(index) - 1);
     }
 }
 
