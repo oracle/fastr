@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -223,14 +224,14 @@ public class RASTUtils {
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
         if (fn instanceof ReadVariableNode) {
-            return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
+            return RCallSpecialNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof RCallBaseNode) {
-            return RCallNode.createCall(sourceSection, (RCallBaseNode) fn, signature, arguments);
+            return RCallSpecialNode.createCall(sourceSection, (RCallBaseNode) fn, signature, arguments);
         } else {
             // apart from RFunction, this of course would not make much sense if trying to evaluate
             // this call, yet it's syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
-            return RCallNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
+            return RCallSpecialNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
         }
     }
 

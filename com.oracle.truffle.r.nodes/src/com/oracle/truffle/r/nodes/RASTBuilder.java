@@ -185,11 +185,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
+    private RCallNode createFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
+        return null;
+    }
+
     /**
      * Creates a call that looks like {@code fun} but has the first argument replaced with
      * {@code newLhs}.
      */
-    private RCallNode createFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
+    private RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length];
@@ -197,7 +201,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             argNodes[i] = i == 0 ? newLhs : process(arguments[i]);
         }
 
-        return RCallNode.createCall(fun.getSourceSection(), process(fun.getSyntaxLHS()).asRNode(), fun.getSyntaxSignature(), argNodes);
+        return RCallSpecialNode.createCall(fun.getSourceSection(), process(fun.getSyntaxLHS()).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
     }
 
     /**
@@ -236,7 +240,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             RSyntaxNode[] newArgs = new RSyntaxNode[2];
             newArgs[0] = (RSyntaxNode) oldArgs[0];
             newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
-            newSyntaxLHS = RCallNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
+            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
         return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
     }
@@ -314,7 +318,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
          * like "a(b(x)) <- z" (where we would extract "b(x)").
          */
         for (int i = calls.size() - 1; i >= 1; i--) {
-            RCallNode update = createFunctionQuery(ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), calls.get(i));
+            ReadVariableNode newLhs = ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1));
+            RNode update = createSpecialFunctionQuery(newLhs, calls.get(i));
             instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
         }
         /*
