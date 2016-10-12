@@ -137,7 +137,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     /**
      * Global builtin cache.
      */
-    private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
+    private static final HashMap<String, RFunction> cachedBuiltinFunctions = new HashMap<>();
 
     @Override
     public RFunction lookupBuiltin(String methodName) {
@@ -156,8 +156,12 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
+            RFunction function = cachedBuiltinFunctions.get(methodName);
+            if (function != null) {
+                return function;
+            }
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            RFunction function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, null);
+            function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, null);
             cachedBuiltinFunctions.put(methodName, function);
             return function;
         } catch (Throwable t) {
