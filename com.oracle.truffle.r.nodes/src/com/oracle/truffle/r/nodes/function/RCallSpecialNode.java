@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -72,8 +74,9 @@ final class PeekLocalVariableNode extends RNode {
 
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
-    // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
+    private static final int NO_RECURSIVE_ARGUMENT_INDEX = -1;
 
+    // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
     @CompilationFinal private SourceSection sourceSectionR;
 
     @Override
@@ -93,6 +96,12 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private final RSyntaxNode[] arguments;
     private final ArgumentsSignature signature;
     private final RFunction expectedFunction;
+
+    /**
+     * If this instance is argument of another RCallSpecialNode (parent), then this will be the
+     * index into the parent arguments array, otherwise {@link #NO_RECURSIVE_ARGUMENT_INDEX}.
+     */
+    private int argumentIndex = NO_RECURSIVE_ARGUMENT_INDEX;
 
     private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special) {
         this.sourceSectionR = sourceSection;
@@ -122,8 +131,8 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             return null;
         }
         for (RSyntaxNode argument : arguments) {
-            if (!(argument instanceof RSyntaxLookup || argument instanceof RSyntaxConstant)) {
-                // argument is not a simple lookup or constant value -> bail out
+            if (!(argument instanceof RSyntaxLookup || argument instanceof RSyntaxConstant || argument instanceof RCallSpecialNode)) {
+                // argument is not a simple lookup or constant value or another special -> bail out
                 return null;
             }
         }
@@ -142,9 +151,12 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         for (int i = 0; i < arguments.length; i++) {
             if (arguments[i] instanceof RSyntaxLookup) {
                 localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
-            } else {
-                assert arguments[i] instanceof RSyntaxConstant;
+            } else if (arguments[i] instanceof RSyntaxConstant) {
                 localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+            } else {
+                assert arguments[i] instanceof RCallSpecialNode;
+                ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+                localArguments[i] = arguments[i].asRNode();
             }
         }
         RNode special = specialCall.create(signature, localArguments);
@@ -166,11 +178,55 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 throw RSpecialFactory.throwFullCallNeeded();
             }
             return special.execute(frame);
+        } catch (RecursiveSpecialBailout bailout) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            throwOnRecursiveSpecial();
+            return replace(getRCallNode(rewriteSpecialArgument(bailout))).execute(frame, function);
         } catch (RSpecialFactory.FullCallNeededException e) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            RCallNode call = RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, arguments);
-            return replace(call).execute(frame, function);
+            throwOnRecursiveSpecial();
+            return replace(getRCallNode()).execute(frame, function);
         }
+    }
+
+    private void throwOnRecursiveSpecial() {
+        if (isRecursiveSpecial()) {
+            throw new RecursiveSpecialBailout(argumentIndex);
+        }
+    }
+
+    private RSyntaxNode[] rewriteSpecialArgument(RecursiveSpecialBailout bailout) {
+        // Note: other arguments that may be specials too, stay specials, their parent node will be
+        // changed in createRCallNode, but we are never going to use the original parent, which is
+        // the 'this.special' node that bailed out.
+        // Note 2: we have to make a copy of the array, because this node may have been shallow
+        // copied and the other copy will keep its copied parent, i.e. bailout exception from here
+        // will not reach the copied parent, but we would rewrite one of its arguments to full-blown
+        // RCallNode. It seems that bailing out happens less frequently than Node.copy, so we do the
+        // copying here.
+        RSyntaxNode[] newArguments = Arrays.copyOf(arguments, arguments.length);
+        RCallSpecialNode arg = (RCallSpecialNode) arguments[bailout.argumentIndex];
+        newArguments[bailout.argumentIndex] = arg.getRCallNode();
+        return newArguments;
+    }
+
+    private boolean isRecursiveSpecial() {
+        // Note: we need to check the parent's parent, because it might have been rewritten by
+        // bailout of some of its other arguments. If parent is special node, then its parent must
+        // be RCallSpecialNode
+        return argumentIndex != NO_RECURSIVE_ARGUMENT_INDEX && getParent() != null && getParent().getParent() instanceof RCallSpecialNode;
+    }
+
+    private RCallNode getRCallNode(RSyntaxNode[] arguments) {
+        return RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, arguments);
+    }
+
+    private RCallNode getRCallNode() {
+        return getRCallNode(arguments);
+    }
+
+    private void setArgumentIndex(int index) {
+        argumentIndex = index;
     }
 
     @Override
@@ -192,5 +248,19 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return arguments == null ? new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "...", false)} : arguments;
+    }
+
+    @SuppressWarnings("serial")
+    private static final class RecursiveSpecialBailout extends RuntimeException {
+        public final int argumentIndex;
+
+        RecursiveSpecialBailout(int argumentIndex) {
+            this.argumentIndex = argumentIndex;
+        }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return null;
+        }
     }
 }
