@@ -515,6 +515,14 @@ public class RRuntime {
         }
     }
 
+    public static boolean isCachedNumberString(int value) {
+        return value >= MIN_CACHED_NUMBER && value <= MAX_CACHED_NUMBER;
+    }
+
+    public static String getCachedNumberString(int value) {
+        return numberStringCache[value - MIN_CACHED_NUMBER];
+    }
+
     public static String intToString(int operand) {
         return isNA(operand) ? STRING_NA : intToStringNoCheck(operand);
     }
