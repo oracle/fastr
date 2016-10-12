@@ -57,12 +57,12 @@ final class PeekLocalVariableNode extends RNode {
     public Object execute(VirtualFrame frame) {
         Object value = read.execute(frame);
         if (value == null) {
-            throw RCallSpecialNode.fullCallNeeded();
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         if (isPromiseProfile.profile(value instanceof RPromise)) {
             RPromise promise = (RPromise) value;
             if (!promise.isEvaluated()) {
-                throw RCallSpecialNode.fullCallNeeded();
+                throw RSpecialFactory.throwFullCallNeeded();
             }
             return promise.getValue();
         }
@@ -85,11 +85,6 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public SourceSection getSourceSection() {
         return sourceSectionR;
-    }
-
-    public static RuntimeException fullCallNeeded() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw RSpecialFactory.FULL_CALL_NEEDED;
     }
 
     @Child private ForcePromiseNode functionNode;
@@ -168,7 +163,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         try {
             if (function != expectedFunction) {
                 // the actual function differs from the expected function
-                throw RCallSpecialNode.fullCallNeeded();
+                throw RSpecialFactory.throwFullCallNeeded();
             }
             return special.execute(frame);
         } catch (RSpecialFactory.FullCallNeededException e) {

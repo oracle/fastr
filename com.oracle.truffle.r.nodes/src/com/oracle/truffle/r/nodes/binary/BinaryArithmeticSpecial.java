@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
  * empty type system to avoid conversions to vector types. Some binary operations have simple NA
  * handling, which is replicated here, others (notably pow and mul) throw
- * {@link RSpecialFactory#FULL_CALL_NEEDED} on NA.
+ * {@link RSpecialFactory#throwFullCallNeeded()} on NA.
  */
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "arguments", type = RNode[].class)
@@ -78,7 +78,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     @Fallback
     @SuppressWarnings("unused")
     protected void doFallback(Object left, Object right) {
-        throw RSpecialFactory.FULL_CALL_NEEDED;
+        throw RSpecialFactory.throwFullCallNeeded();
     }
 
     protected BinaryArithmetic getOperation() {
@@ -88,7 +88,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     protected void checkFullCallNeededOnNA() {
         if (!handleNA) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw RSpecialFactory.FULL_CALL_NEEDED;
+            throw RSpecialFactory.throwFullCallNeeded();
         }
     }
 

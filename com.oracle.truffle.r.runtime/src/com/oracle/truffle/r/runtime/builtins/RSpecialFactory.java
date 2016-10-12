@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.builtins;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -29,10 +30,13 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * A builtin can have a node that can handle very simple cases for which (unlike with fast-path) no
  * argument matching has to be performed. Such simple case node, called special, is created for the
  * built-in by AST builder by default. If the special node cannot handle its arguments, it throws
- * {@link #FULL_CALL_NEEDED} and the it will be replaced with call to the full blown built-in.
+ * {@link #throwFullCallNeeded()} and the it will be replaced with call to the full blown built-in.
  */
 public interface RSpecialFactory {
-    RuntimeException FULL_CALL_NEEDED = new FullCallNeededException();
+    static FullCallNeededException throwFullCallNeeded() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw FullCallNeededException.INSTANCE;
+    }
 
     /**
      * Returns a 'special node' if the given arguments with their signature can be handled by it. If
@@ -42,6 +46,12 @@ public interface RSpecialFactory {
 
     @SuppressWarnings("serial")
     final class FullCallNeededException extends RuntimeException {
+        private static RuntimeException INSTANCE = new FullCallNeededException();
+
+        private FullCallNeededException() {
+            // singleton
+        }
+
         @Override
         public synchronized Throwable fillInStackTrace() {
             return null;

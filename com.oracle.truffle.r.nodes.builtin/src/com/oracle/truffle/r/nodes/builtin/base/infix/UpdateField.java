@@ -69,7 +69,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     public RList doList(RList list, String field, Object value, @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw RSpecialFactory.FULL_CALL_NEEDED;
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         updateCache(list, field);
         list.setElement(index, shareObject.execute(value));
@@ -79,7 +79,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     @Fallback
     @SuppressWarnings("unused")
     public void doFallback(Object container, Object field, Object value) {
-        throw RSpecialFactory.FULL_CALL_NEEDED;
+        throw RSpecialFactory.throwFullCallNeeded();
     }
 }
 
