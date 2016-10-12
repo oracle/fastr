@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -56,9 +57,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @RBuiltin(name = "assign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"}, behavior = COMPLEX)
 public abstract class Assign extends RBuiltinNode {
 
-    public abstract Object execute(String x, Object value, REnvironment envir, byte inherits);
-
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile warningProfile = BranchProfile.create();
     private final boolean direct;
 
     protected Assign() {
@@ -71,6 +71,24 @@ public abstract class Assign extends RBuiltinNode {
 
     private RBaseNode errorContext() {
         return direct ? this : RError.SHOW_CALLER;
+    }
+
+    /**
+     * TODO: This method becomes obsolete when Assign and AssignFastPaths are modified to have the
+     * (String, Object, REnvironment, boolean) signature.
+     */
+    private String checkVariable(RAbstractStringVector xVec) {
+        int len = xVec.getLength();
+        if (len == 1) {
+            return xVec.getDataAt(0);
+        } else if (len == 0) {
+            errorProfile.enter();
+            throw RError.error(errorContext(), RError.Message.INVALID_FIRST_ARGUMENT);
+        } else {
+            warningProfile.enter();
+            RError.warning(errorContext(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
+            return xVec.getDataAt(0);
+        }
     }
 
     @Override
@@ -88,10 +106,11 @@ public abstract class Assign extends RBuiltinNode {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assign(String x, Object value, REnvironment envir, byte inherits, //
+    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isShareableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isRefCountUpdateable) {
+        String x = checkVariable(xVec);
         REnvironment env = envir;
         if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
             while (env != REnvironment.emptyEnv()) {
@@ -126,5 +145,4 @@ public abstract class Assign extends RBuiltinNode {
         }
         return value;
     }
-
 }

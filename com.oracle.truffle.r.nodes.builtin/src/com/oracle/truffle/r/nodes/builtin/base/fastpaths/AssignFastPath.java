@@ -24,10 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.base.Assign;
 import com.oracle.truffle.r.nodes.builtin.base.AssignNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -37,26 +39,26 @@ public abstract class AssignFastPath extends RFastPathNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object assign(String x, Object value, RMissing pos, REnvironment envir, byte inherits, Object immediate) {
-        return assign.execute(x, value, envir, inherits);
+    protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, RMissing pos, REnvironment envir, byte inherits, Object immediate) {
+        return assign.executeBuiltin(frame, x, value, envir, inherits);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object assign(String x, Object value, RMissing pos, REnvironment envir, RMissing inherits, Object immediate) {
-        return assign.execute(x, value, envir, RRuntime.LOGICAL_FALSE);
+    protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, RMissing pos, REnvironment envir, RMissing inherits, Object immediate) {
+        return assign.executeBuiltin(frame, x, value, envir, RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object assign(String x, Object value, REnvironment pos, RMissing envir, byte inherits, Object immediate) {
-        return assign.execute(x, value, pos, inherits);
+    protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, Object immediate) {
+        return assign.executeBuiltin(frame, x, value, pos, inherits);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object assign(String x, Object value, REnvironment pos, RMissing envir, RMissing inherits, Object immediate) {
-        return assign.execute(x, value, pos, RRuntime.LOGICAL_FALSE);
+    protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, RMissing inherits, Object immediate) {
+        return assign.executeBuiltin(frame, x, value, pos, RRuntime.LOGICAL_FALSE);
     }
 
     @Fallback

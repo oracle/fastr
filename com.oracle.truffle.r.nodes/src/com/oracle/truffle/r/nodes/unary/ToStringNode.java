@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -52,6 +53,7 @@ public abstract class ToStringNode extends RBaseNode {
 
     @Child private ToStringNode recursiveToString;
 
+    private final ConditionProfile isCachedIntProfile = ConditionProfile.createBinaryProfile();
     private final NACheck naCheck = NACheck.create();
 
     private String toStringRecursive(Object o, boolean quotes, String separator) {
@@ -117,6 +119,10 @@ public abstract class ToStringNode extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization
     protected String toString(double operand, boolean quotes, String separator) {
+        int intValue = (int) operand;
+        if (isCachedIntProfile.profile(intValue == operand && RRuntime.isCachedNumberString(intValue))) {
+            return RRuntime.getCachedNumberString(intValue);
+        }
         naCheck.enable(operand);
         return naCheck.convertDoubleToString(operand);
     }
