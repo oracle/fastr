@@ -703,12 +703,17 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object Rf_duplicate(Object x) {
+    public static Object Rf_duplicate(Object x, int deep) {
         if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_duplicate", x);
+            RFFIUtils.traceUpCall("Rf_duplicate", x, deep);
         }
-        guaranteeInstanceOf(x, RAbstractVector.class);
-        return ((RAbstractVector) x).copy();
+        guarantee(x != null, "unexpected type: null instead of " + x.getClass().getSimpleName());
+        guarantee(x instanceof RShareable || x instanceof RExternalPtr, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
+        if (x instanceof RShareable) {
+            return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
+        } else {
+            return ((RExternalPtr) x).copy();
+        }
     }
 
     public static int Rf_anyDuplicated(Object x, int fromLast) {

@@ -122,6 +122,10 @@ package com.oracle.truffle.r.parser;
     private static String hexChar(String... chars) {
         int value = 0;
         for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == null) {
+            	// not all digits must be present, eg. "0048" vs. "48"
+            	break;
+            }
             value = value * 16 + Integer.parseInt(chars[i], 16);
         }
         return new String(new int[]{value}, 0, 1);
@@ -644,8 +648,8 @@ fragment ESCAPE [StringBuilder buf]
       | a = OCT_DIGIT b = OCT_DIGIT { buf.append(octChar($a.text, $b.text)); }
       | a = OCT_DIGIT { buf.append(octChar($a.text)); }
       | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(hexChar($a.text, $b.text)); }
-      | 'u' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
-      | 'U' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT e = HEX_DIGIT f = HEX_DIGIT g = HEX_DIGIT h = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
+      | 'u' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
+      | 'U' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? e = HEX_DIGIT? f = HEX_DIGIT? g = HEX_DIGIT? h = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
       )
     ;
 

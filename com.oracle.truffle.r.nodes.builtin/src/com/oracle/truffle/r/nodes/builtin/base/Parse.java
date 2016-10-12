@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -228,6 +229,9 @@ public abstract class Parse extends RBuiltinNode {
             } else if (data instanceof RSymbol) {
                 srcrefData[i] = RNull.instance;
             } else if (data == RNull.instance) {
+                srcrefData[i] = data;
+            } else if (data instanceof Number || data instanceof RComplex || data instanceof String) {
+                // in simple cases, result of parsing can be a scalar constant
                 srcrefData[i] = data;
             } else {
                 throw RInternalError.unimplemented("attribute of type " + data.getClass().getSimpleName());

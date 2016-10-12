@@ -1,5 +1,6 @@
 /^CFLAGS/s/$/ -DFASTR/
 /^CXXFLAGS/s/$/ -DFASTR/
+/^CPPFLAGS/s/$/ -DFASTR/
 /LIBINTL=/
 d
 /LIBR =/

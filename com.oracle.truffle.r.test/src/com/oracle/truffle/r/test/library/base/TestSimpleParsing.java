@@ -57,6 +57,7 @@ public class TestSimpleParsing extends TestBase {
         assertEval(" \"\\011\\013\\036\" ");
         assertEval(" \"\\111\\413\\36f \7 \" ");
         assertEval(" '\\a\\b\\f \\v \\t \\r \\n\\' \\\"\\`\\011\\013\\036' ");
+        assertEval("{ \"\\U00A0\" }");
     }
 
     @Test
