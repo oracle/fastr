@@ -70,7 +70,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     protected double doDoubles(double left, double right) {
         if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
             checkFullCallNeededOnNA();
-            return RRuntime.DOUBLE_NA;
+            return isNaN(left) ? Double.NaN : RRuntime.DOUBLE_NA;
         }
         return getOperation().op(left, right);
     }
@@ -92,9 +92,14 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         }
     }
 
+    protected static boolean isNaN(double value) {
+        return Double.isNaN(value) && !RRuntime.isNA(value);
+    }
+
     /**
      * Adds integers handling.
      */
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class IntegerBinaryArithmeticSpecial extends BinaryArithmeticSpecial {
 
         IntegerBinaryArithmeticSpecial(BinaryArithmetic op, boolean handleNA) {
@@ -123,7 +128,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         public double doDoubleInt(double left, int right, @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
                 checkFullCallNeededOnNA();
-                return RRuntime.DOUBLE_NA;
+                return isNaN(left) ? Double.NaN : RRuntime.DOUBLE_NA;
             }
             return getOperation().op(left, right);
         }
