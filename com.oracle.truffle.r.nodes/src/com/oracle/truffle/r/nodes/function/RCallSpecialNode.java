@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -48,6 +49,7 @@ final class PeekLocalVariableNode extends RNode {
     @Child private LocalReadVariableNode read;
 
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     PeekLocalVariableNode(String name) {
         this.read = LocalReadVariableNode.create(name, false);
@@ -64,9 +66,9 @@ final class PeekLocalVariableNode extends RNode {
             if (!promise.isEvaluated()) {
                 throw RSpecialFactory.throwFullCallNeeded();
             }
-            return promise.getValue();
+            return valueProfile.profile(promise.getValue());
         }
-        return value;
+        return valueProfile.profile(value);
     }
 }
 
