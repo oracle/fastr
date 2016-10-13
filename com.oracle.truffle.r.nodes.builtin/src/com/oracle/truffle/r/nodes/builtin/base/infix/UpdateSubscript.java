@@ -41,10 +41,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
-import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -118,7 +118,7 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
     @SuppressWarnings("unused")
     @Fallback
     protected static Object access(Object vector, Object index, Object value) {
-        throw RCallSpecialNode.fullCallNeeded();
+        throw RSpecialFactory.throwFullCallNeeded();
     }
 }
 

@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -62,8 +61,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     @Specialization(guards = {"isSimpleList(list)", "isCached(list, field)", "list.getNames() != null"})
     public Object doList(RList list, String field, @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw RSpecialFactory.FULL_CALL_NEEDED;
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         updateCache(list, field);
         return extractListElement.execute(list, index);
@@ -72,7 +70,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     @Fallback
     @SuppressWarnings("unused")
     public void doFallback(Object container, Object field) {
-        throw RSpecialFactory.FULL_CALL_NEEDED;
+        throw RSpecialFactory.throwFullCallNeeded();
     }
 }
 

@@ -69,17 +69,30 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     public RList doList(RList list, String field, Object value, @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw RSpecialFactory.FULL_CALL_NEEDED;
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         updateCache(list, field);
-        list.setElement(index, shareObject.execute(value));
+        Object sharedValue = value;
+        // share only when necessary:
+        if (list.getDataAt(index) != value) {
+            sharedValue = getShareObjectNode().execute(value);
+        }
+        list.setElement(index, sharedValue);
         return list;
     }
 
     @Fallback
     @SuppressWarnings("unused")
     public void doFallback(Object container, Object field, Object value) {
-        throw RSpecialFactory.FULL_CALL_NEEDED;
+        throw RSpecialFactory.throwFullCallNeeded();
+    }
+
+    private ShareObjectNode getShareObjectNode() {
+        if (shareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObject = insert(ShareObjectNode.create());
+        }
+        return shareObject;
     }
 }
 

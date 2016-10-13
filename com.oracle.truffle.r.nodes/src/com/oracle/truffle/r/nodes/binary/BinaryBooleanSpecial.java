@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -37,7 +36,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
  * empty type system to avoid conversions to vector types. NA values cause
- * {@link RSpecialFactory#FULL_CALL_NEEDED} exception.
+ * {@link RSpecialFactory#throwFullCallNeeded()} exception.
  */
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "arguments", type = RNode[].class)
@@ -55,7 +54,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Specialization
     public byte doInts(int left, int right) {
         if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
-            return handleNA();
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
@@ -63,7 +62,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Specialization
     public byte doDoubles(double left, double right) {
         if (!RRuntime.isFinite(left) || !RRuntime.isFinite(right)) {
-            return handleNA();
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
@@ -71,7 +70,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Specialization
     public byte doIntDouble(int left, double right) {
         if (RRuntime.isNA(left) || !RRuntime.isFinite(right)) {
-            return handleNA();
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
@@ -79,7 +78,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Specialization
     public byte doDoubleInt(double left, int right) {
         if (!RRuntime.isFinite(left) || RRuntime.isNA(right)) {
-            return handleNA();
+            throw RSpecialFactory.throwFullCallNeeded();
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
@@ -87,11 +86,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Fallback
     @SuppressWarnings("unused")
     public void doFallback(Object left, Object right) {
-        throw RSpecialFactory.FULL_CALL_NEEDED;
+        throw RSpecialFactory.throwFullCallNeeded();
     }
 
-    private byte handleNA() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw RSpecialFactory.FULL_CALL_NEEDED;
-    }
 }
