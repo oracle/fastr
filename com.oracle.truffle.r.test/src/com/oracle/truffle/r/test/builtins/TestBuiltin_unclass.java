@@ -72,7 +72,8 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass11() {
-        assertEval("argv <- list(structure(list(y = c(0.219628047744843, 0.360454661130887, -1.14267533343616, 0.772374419482067, 0.681741904304867, 0.171869265068012, 2.08409180391906, 0.367547276775469), x1 = c(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L), x2 = c(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L), `(weights)` = c(0, 1, 1, 1, 1, 1, 1, 1)), .Names = c('y', 'x1', 'x2', '(weights)'), terms = quote(y ~ x1 + x2), row.names = c('a', 'b', 'e', 'f', 'g', 'h', 'i', 'j'), na.action = structure(3:4, .Names = c('c', 'd'), class = 'omit')));unclass(argv[[1]]);");
+        assertEval(Output.IgnoreWhitespace,
+                        "argv <- list(structure(list(y = c(0.219628047744843, 0.360454661130887, -1.14267533343616, 0.772374419482067, 0.681741904304867, 0.171869265068012, 2.08409180391906, 0.367547276775469), x1 = c(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L), x2 = c(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L), `(weights)` = c(0, 1, 1, 1, 1, 1, 1, 1)), .Names = c('y', 'x1', 'x2', '(weights)'), terms = quote(y ~ x1 + x2), row.names = c('a', 'b', 'e', 'f', 'g', 'h', 'i', 'j'), na.action = structure(3:4, .Names = c('c', 'd'), class = 'omit')));unclass(argv[[1]]);");
     }
 
     @Test
@@ -88,8 +89,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(title = 'foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n...', author = structure(list(structure(list(given = 'R Core Team', family = NULL, role = c('aut', 'cph', 'cre'), email = 'R-core@R-project.org', comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'), year = '2013', note = 'R package version 0.8-53', url = 'http://CRAN.R-project.org/package=foreign'), .Names = c('title', 'author', 'year', 'note', 'url'), bibtype = 'Manual', textVersion = 'R Core Team (2013). foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n.... R package version 0.8-53. http://CRAN.R-project.org/package=foreign', header = 'To cite package ‘foreign’ in publications use:')));unclass(argv[[1]]);");
+        assertEval("argv <- list(list(structure(list(title = 'foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n...', author = structure(list(structure(list(given = 'R Core Team', family = NULL, role = c('aut', 'cph', 'cre'), email = 'R-core@R-project.org', comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'), year = '2013', note = 'R package version 0.8-53', url = 'http://CRAN.R-project.org/package=foreign'), .Names = c('title', 'author', 'year', 'note', 'url'), bibtype = 'Manual', textVersion = 'R Core Team (2013). foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase,\\n.... R package version 0.8-53. http://CRAN.R-project.org/package=foreign', header = 'To cite package ‘foreign’ in publications use:')));unclass(argv[[1]]);");
     }
 
     @Test
@@ -114,8 +114,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(b = structure(c(3L, 1L, 2L), .Label = c('A', 'B', 'C'), class = 'factor'), a = structure(c(1386423981.90268, 1386403981.90268, 1386413981.90268), class = c('POSIXct', 'POSIXt'))), .Names = c('b', 'a'), row.names = c(3L, 1L, 2L)));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(list(b = structure(c(3L, 1L, 2L), .Label = c('A', 'B', 'C'), class = 'factor'), a = structure(c(1386423981.90268, 1386403981.90268, 1386413981.90268), class = c('POSIXct', 'POSIXt'))), .Names = c('b', 'a'), row.names = c(3L, 1L, 2L)));unclass(argv[[1]]);");
     }
 
     @Test
@@ -156,8 +155,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(label = 'FALSE', x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = c('left', 'centre'), hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = 'GRID.text.106', gp = structure(list(), class = 'gpar'), vp = NULL), .Names = c('label', 'x', 'y', 'just', 'hjust', 'vjust', 'rot', 'check.overlap', 'name', 'gp', 'vp'), class = c('text', 'grob', 'gDesc'))));unclass(argv[[1]]);");
+        assertEval("argv <- list(list(structure(list(label = 'FALSE', x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = c('left', 'centre'), hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = 'GRID.text.106', gp = structure(list(), class = 'gpar'), vp = NULL), .Names = c('label', 'x', 'y', 'just', 'hjust', 'vjust', 'rot', 'check.overlap', 'name', 'gp', 'vp'), class = c('text', 'grob', 'gDesc'))));unclass(argv[[1]]);");
     }
 
     @Test
@@ -167,8 +165,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure('R Core', class = 'AsIs'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = 7L));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(list(surname = structure('R Core', class = 'AsIs'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = 7L));unclass(argv[[1]]);");
     }
 
     @Test

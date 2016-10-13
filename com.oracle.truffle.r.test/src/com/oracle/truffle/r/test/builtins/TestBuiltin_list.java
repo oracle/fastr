@@ -19,8 +19,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(surname = structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables', 'R Core'), class = 'AsIs'), nationality = structure(c('Australia', 'UK', 'UK', 'US', 'US', 'Australia', NA), class = 'AsIs'), deceased = structure(c('no', 'no', 'no', 'no', 'yes', 'no', NA), class = 'AsIs'), title = structure(c('Interactive Data Analysis', 'Spatial Statistics', 'Stochastic Simulation', 'LISP-STAT', 'Exploratory Data Analysis', 'Modern Applied Statistics ...', 'An Introduction to R'), class = 'AsIs'), other.author = structure(c(NA, NA, NA, NA, NA, 'Ripley', 'Venables & Smith'), class = 'AsIs'));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
+        assertEval("argv <- list(surname = structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables', 'R Core'), class = 'AsIs'), nationality = structure(c('Australia', 'UK', 'UK', 'US', 'US', 'Australia', NA), class = 'AsIs'), deceased = structure(c('no', 'no', 'no', 'no', 'yes', 'no', NA), class = 'AsIs'), title = structure(c('Interactive Data Analysis', 'Spatial Statistics', 'Stochastic Simulation', 'LISP-STAT', 'Exploratory Data Analysis', 'Modern Applied Statistics ...', 'An Introduction to R'), class = 'AsIs'), other.author = structure(c(NA, NA, NA, NA, NA, 'Ripley', 'Venables & Smith'), class = 'AsIs'));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
     }
 
     @Test
@@ -36,14 +35,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(class = 'try-error', condition = structure(list(message = 'line 1 did not have 4 elements', call = quote(scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings, flush, fill, strip.white, quiet, blank.lines.skip, multi.line, comment.char, allowEscapes, encoding))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(class = 'try-error', condition = structure(list(message = 'line 1 did not have 4 elements', call = quote(scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings, flush, fill, strip.white, quiet, blank.lines.skip, multi.line, comment.char, allowEscapes, encoding))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Hair = structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), .Label = c('Black', 'Brown', 'Red', 'Blond'), class = 'factor'), Eye = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L), .Label = c('Brown', 'Blue', 'Hazel', 'Green'), class = 'factor'), Sex = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('Male', 'Female'), class = 'factor')), .Names = c('Hair', 'Eye', 'Sex'), out.attrs = structure(list(dim = structure(c(4L, 4L, 2L), .Names = c('Hair', 'Eye', 'Sex')), dimnames = structure(list(Hair = c('Hair=Black', 'Hair=Brown', 'Hair=Red', 'Hair=Blond'), Eye = c('Eye=Brown', 'Eye=Blue', 'Eye=Hazel', 'Eye=Green'), Sex = c('Sex=Male', 'Sex=Female')), .Names = c('Hair', 'Eye', 'Sex'))), .Names = c('dim', 'dimnames')), class = 'data.frame', row.names = c(NA, -32L)), Fr = c(32, 53, 10, 3, 11, 50, 10, 30, 10, 25, 7, 5, 3, 15, 7, 8, 36, 66, 16, 4, 9, 34, 7, 64, 5, 29, 7, 5, 2, 14, 7, 8));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(Hair = structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), .Label = c('Black', 'Brown', 'Red', 'Blond'), class = 'factor'), Eye = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L), .Label = c('Brown', 'Blue', 'Hazel', 'Green'), class = 'factor'), Sex = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c('Male', 'Female'), class = 'factor')), .Names = c('Hair', 'Eye', 'Sex'), out.attrs = structure(list(dim = structure(c(4L, 4L, 2L), .Names = c('Hair', 'Eye', 'Sex')), dimnames = structure(list(Hair = c('Hair=Black', 'Hair=Brown', 'Hair=Red', 'Hair=Blond'), Eye = c('Eye=Brown', 'Eye=Blue', 'Eye=Hazel', 'Eye=Green'), Sex = c('Sex=Male', 'Sex=Female')), .Names = c('Hair', 'Eye', 'Sex'))), .Names = c('dim', 'dimnames')), class = 'data.frame', row.names = c(NA, -32L)), Fr = c(32, 53, 10, 3, 11, 50, 10, 30, 10, 25, 7, 5, 3, 15, 7, 8, 36, 66, 16, 4, 9, 34, 7, 64, 5, 29, 7, 5, 2, 14, 7, 8));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -53,8 +50,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -81,14 +77,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist13() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(class = 'try-error', condition = structure(list(message = 'undefined columns selected', call = quote(`[.data.frame`(dd, , 'x'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(class = 'try-error', condition = structure(list(message = 'undefined columns selected', call = quote(`[.data.frame`(dd, , 'x'))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -104,8 +98,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(aa = structure(c('1', '2', '3'), class = 'AsIs'), ..dfd.row.names = structure(c('4', '5', '6', '7', '8', '9'), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('a', 'b'))));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(aa = structure(c('1', '2', '3'), class = 'AsIs'), ..dfd.row.names = structure(c('4', '5', '6', '7', '8', '9'), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('a', 'b'))));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -115,7 +108,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist18() {
-        assertEval(Ignored.Unknown, "argv <- list(date = structure(1065672000, class = c('POSIXct', 'POSIXt'), tzone = ''));list(argv[[1]]);");
+        assertEval("argv <- list(date = structure(1065672000, class = c('POSIXct', 'POSIXt'), tzone = ''));list(argv[[1]]);");
     }
 
     @Test
@@ -147,13 +140,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist24() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:5, .Tsp = c(-1, 3, 1), class = 'ts'), structure(1:5, .Tsp = c(1, 5, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1:5, .Tsp = c(-1, 3, 1), class = 'ts'), structure(1:5, .Tsp = c(1, 5, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist25() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(x = 1L, y = structure(1L, .Label = c('A', 'D', 'E'), class = 'factor'), z = 6), .Names = c('x', 'y', 'z'), row.names = 1L, class = 'data.frame'), structure(list(), .Names = character(0), row.names = 1L, class = 'data.frame'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(x = 1L, y = structure(1L, .Label = c('A', 'D', 'E'), class = 'factor'), z = 6), .Names = c('x', 'y', 'z'), row.names = 1L, class = 'data.frame'), structure(list(), .Names = character(0), row.names = 1L, class = 'data.frame'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -163,8 +155,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(24L, 13L, 15L, 68L, 39L, 74L, 22L, 1L, 8L, 55L, 24L, 20L, 51L, 13L, 3L, 4L, 5L, 6L, 15L, 2L, 8L, 60L, 67L, 23L, 58L, 24L, 22L, 21L, 37L, 74L, 59L, 39L, 14L, 14L, 19L, 23L, 70L, 21L, 22L, 31L, 29L, 30L, 45L, 58L, 17L, 7L, 19L, 26L, 39L, 74L, 57L, 59L, 12L, 72L, 70L, 37L, 64L, 16L, 18L, 21L, 22L, 8L, 62L, 61L, 63L, 71L, 105L, 64L, 10L, 41L, 8L, 27L, 11L, 34L, 32L, 33L, 68L, 107L, NA, 66L, NA, 65L, 48L, 52L, 43L, 47L, 46L, 44L, 41L, 54L, 28L, 50L, 40L, NA, 69L, NA, 75L, 109L, NA, 86L, 112L, 110L, 104L, 24L, 111L, 87L, NA, NA, 92L, 73L, 85L, 90L, 89L, NA, 83L, NA, 102L, NA, 108L, 88L, 91L, 93L, NA, 94L, 84L, NA, 106L, NA, 95L, 82L, 56L, 87L, 109L, 75L, 104L, 110L, 112L, 111L, 24L, 73L, 85L, 86L, 90L, 89L, 102L, 88L, 92L, 9L, 49L, 42L, 38L, 35L, 36L, 25L, NA, NA, 9L, 49L, 42L, NA, 36L, 38L, 25L, 53L, 79L, 78L, 103L, 77L, 80L, 114L, 97L, 113L, 76L, 96L, 81L, 116L, 99L, 117L, 115L, 98L, 101L, 100L), .Label = c('1008', '1011', '1013', '1014', '1015', '1016', '1027', '1028', '1030', '1032', '1051', '1052', '1083', '1093', '1095', '1096', '110', '1102', '111', '1117', '112', '113', '116', '117', '1219', '125', '1250', '1251', '126', '127', '128', '1291', '1292', '1293', '1298', '1299', '130', '1308', '135', '1376', '1377', '1383', '1408', '1409', '141', '1410', '1411', '1413', '1418', '1422', '1438', '1445', '1456', '1492', '2001', '2316', '262', '266', '269', '270', '2708', '2714', '2715', '272', '2728', '2734', '280', '283', '286', '290', '3501', '411', '412', '475', '5028', '5042', '5043', '5044', '5045', '5047', '5049', '5050', '5051', '5052', '5053', '5054', '5055', '5056', '5057', '5058', '5059', '5060', '5061', '5062', '5066', '5067', '5068', '5069', '5070', '5072', '5073', '5115', '5160', '5165', '655', '724', '885', '931', '942', '952', '955', '958', 'c118', 'c168', 'c203', 'c204', 'c266'), class = 'factor'));list(argv[[1]]);");
+        assertEval("argv <- list(structure(c(24L, 13L, 15L, 68L, 39L, 74L, 22L, 1L, 8L, 55L, 24L, 20L, 51L, 13L, 3L, 4L, 5L, 6L, 15L, 2L, 8L, 60L, 67L, 23L, 58L, 24L, 22L, 21L, 37L, 74L, 59L, 39L, 14L, 14L, 19L, 23L, 70L, 21L, 22L, 31L, 29L, 30L, 45L, 58L, 17L, 7L, 19L, 26L, 39L, 74L, 57L, 59L, 12L, 72L, 70L, 37L, 64L, 16L, 18L, 21L, 22L, 8L, 62L, 61L, 63L, 71L, 105L, 64L, 10L, 41L, 8L, 27L, 11L, 34L, 32L, 33L, 68L, 107L, NA, 66L, NA, 65L, 48L, 52L, 43L, 47L, 46L, 44L, 41L, 54L, 28L, 50L, 40L, NA, 69L, NA, 75L, 109L, NA, 86L, 112L, 110L, 104L, 24L, 111L, 87L, NA, NA, 92L, 73L, 85L, 90L, 89L, NA, 83L, NA, 102L, NA, 108L, 88L, 91L, 93L, NA, 94L, 84L, NA, 106L, NA, 95L, 82L, 56L, 87L, 109L, 75L, 104L, 110L, 112L, 111L, 24L, 73L, 85L, 86L, 90L, 89L, 102L, 88L, 92L, 9L, 49L, 42L, 38L, 35L, 36L, 25L, NA, NA, 9L, 49L, 42L, NA, 36L, 38L, 25L, 53L, 79L, 78L, 103L, 77L, 80L, 114L, 97L, 113L, 76L, 96L, 81L, 116L, 99L, 117L, 115L, 98L, 101L, 100L), .Label = c('1008', '1011', '1013', '1014', '1015', '1016', '1027', '1028', '1030', '1032', '1051', '1052', '1083', '1093', '1095', '1096', '110', '1102', '111', '1117', '112', '113', '116', '117', '1219', '125', '1250', '1251', '126', '127', '128', '1291', '1292', '1293', '1298', '1299', '130', '1308', '135', '1376', '1377', '1383', '1408', '1409', '141', '1410', '1411', '1413', '1418', '1422', '1438', '1445', '1456', '1492', '2001', '2316', '262', '266', '269', '270', '2708', '2714', '2715', '272', '2728', '2734', '280', '283', '286', '290', '3501', '411', '412', '475', '5028', '5042', '5043', '5044', '5045', '5047', '5049', '5050', '5051', '5052', '5053', '5054', '5055', '5056', '5057', '5058', '5059', '5060', '5061', '5062', '5066', '5067', '5068', '5069', '5070', '5072', '5073', '5115', '5160', '5165', '655', '724', '885', '931', '942', '952', '955', '958', 'c118', 'c168', 'c203', 'c204', 'c266'), class = 'factor'));list(argv[[1]]);");
     }
 
     @Test
@@ -207,8 +198,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist35() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(class = 'try-error', condition = structure(list(message = 'more columns than column names', call = quote(read.table('foo6', header = TRUE))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(class = 'try-error', condition = structure(list(message = 'more columns than column names', call = quote(read.table('foo6', header = TRUE))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -228,8 +218,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist39() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(srcfile = c('/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils'), frow = c(6889L, 6893L, 6897L, 6901L, 6902L, 6903L, 6903L, 6917L, 6918L, 6919L, 6919L, 6927L, 6928L), lrow = c(6889L, 6893L, 6900L, 6901L, 6902L, 6903L, 6903L, 6917L, 6918L, 6919L, 6919L, 6927L, 6928L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, 13L), class = 'data.frame'), structure(list(    srcfile = '/home/lzhao/hg/r-instrumented/library/utils/R/utils', frow = 6928L, lrow = 6928L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(srcfile = c('/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils', '/home/lzhao/hg/r-instrumented/library/utils/R/utils'), frow = c(6889L, 6893L, 6897L, 6901L, 6902L, 6903L, 6903L, 6917L, 6918L, 6919L, 6919L, 6927L, 6928L), lrow = c(6889L, 6893L, 6900L, 6901L, 6902L, 6903L, 6903L, 6917L, 6918L, 6919L, 6919L, 6927L, 6928L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, 13L), class = 'data.frame'), structure(list(    srcfile = '/home/lzhao/hg/r-instrumented/library/utils/R/utils', frow = 6928L, lrow = 6928L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -249,8 +238,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist43() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(raster = structure('#000000', .Dim = c(1L, 1L), class = 'raster'), x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), width = NULL, height = NULL, just = 'centre', hjust = NULL, vjust = NULL, interpolate = TRUE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]],argv[[12]]);");
+        assertEval("argv <- list(raster = structure('#000000', .Dim = c(1L, 1L), class = 'raster'), x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), width = NULL, height = NULL, just = 'centre', hjust = NULL, vjust = NULL, interpolate = TRUE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]],argv[[12]]);");
     }
 
     @Test
@@ -266,14 +254,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist46() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(srcfile = c(NA, '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R'), frow = c(NA, 832L, 833L, 834L, 842L, 845L, 845L, 849L, 858L, 860L, 862L, 863L), lrow = c(NA, 832L, 833L, 834L, 842L, 846L, 846L, 851L, 859L, 860L, 862L, 863L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, 12L), class = 'data.frame'), structure(list(    srcfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', frow = 863L, lrow = 863L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(srcfile = c(NA, '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R'), frow = c(NA, 832L, 833L, 834L, 842L, 845L, 845L, 849L, 858L, 860L, 862L, 863L), lrow = c(NA, 832L, 833L, 834L, 842L, 846L, 846L, 851L, 859L, 860L, 862L, 863L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, 12L), class = 'data.frame'), structure(list(    srcfile = '/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/R/lmList.R', frow = 863L, lrow = 863L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist48() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Month = c(5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L)), .Names = 'Month', class = 'data.frame', row.names = c(1L, 2L, 3L, 4L, 6L, 7L, 8L, 9L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23L, 24L, 28L, 29L, 30L, 31L, 38L, 40L, 41L, 44L, 47L, 48L, 49L, 50L, 51L, 62L, 63L, 64L, 66L, 67L, 68L, 69L, 70L, 71L, 73L, 74L, 76L, 77L, 78L, 79L, 80L, 81L, 82L, 85L, 86L, 87L, 88L, 89L, 90L, 91L, 92L, 93L, 94L, 95L, 96L, 97L, 98L, 99L, 100L, 101L, 104L, 105L, 106L, 108L, 109L, 110L, 111L, 112L, 113L, 114L, 116L, 117L, 118L, 120L, 121L, 122L, 123L, 124L, 125L, 126L, 127L, 128L, 129L, 130L, 131L, 132L, 133L, 134L, 135L, 136L, 137L, 138L, 139L, 140L, 141L, 142L, 143L, 144L, 145L, 146L, 147L, 148L, 149L, 151L, 152L, 153L)));list(argv[[1]]);");
+        assertEval("argv <- list(structure(list(Month = c(5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L, 9L)), .Names = 'Month', class = 'data.frame', row.names = c(1L, 2L, 3L, 4L, 6L, 7L, 8L, 9L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23L, 24L, 28L, 29L, 30L, 31L, 38L, 40L, 41L, 44L, 47L, 48L, 49L, 50L, 51L, 62L, 63L, 64L, 66L, 67L, 68L, 69L, 70L, 71L, 73L, 74L, 76L, 77L, 78L, 79L, 80L, 81L, 82L, 85L, 86L, 87L, 88L, 89L, 90L, 91L, 92L, 93L, 94L, 95L, 96L, 97L, 98L, 99L, 100L, 101L, 104L, 105L, 106L, 108L, 109L, 110L, 111L, 112L, 113L, 114L, 116L, 117L, 118L, 120L, 121L, 122L, 123L, 124L, 125L, 126L, 127L, 128L, 129L, 130L, 131L, 132L, 133L, 134L, 135L, 136L, 137L, 138L, 139L, 140L, 141L, 142L, 143L, 144L, 145L, 146L, 147L, 148L, 149L, 151L, 152L, 153L)));list(argv[[1]]);");
     }
 
     @Test
@@ -288,18 +274,17 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist51() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));list(argv[[1]]);");
+        assertEval(Output.IgnoreWhitespace, "argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));list(argv[[1]]);");
     }
 
     @Test
     public void testlist52() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1386392034.50546, class = c('POSIXct', 'POSIXt')));list(argv[[1]]);");
+        assertEval("argv <- list(structure(1386392034.50546, class = c('POSIXct', 'POSIXt')));list(argv[[1]]);");
     }
 
     @Test
     public void testlist53() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(sec = 54.5054557323456, min = 53L, hour = 23L, mday = 6L, mon = 11L, year = 113L, wday = 5L, yday = 339L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = c('', 'EST', 'EDT')));list(argv[[1]]);");
+        assertEval("argv <- list(structure(list(sec = 54.5054557323456, min = 53L, hour = 23L, mday = 6L, mon = 11L, year = 113L, wday = 5L, yday = 339L, isdst = 0L), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = c('', 'EST', 'EDT')));list(argv[[1]]);");
     }
 
     @Test
@@ -320,19 +305,17 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist57() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(srcfile = c('/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R', '/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R'), frow = 164:165, lrow = c(164L, 169L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = 1:2, class = 'data.frame'), structure(list(srcfile = '/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R', frow = 170L, lrow = 177L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(srcfile = c('/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R', '/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R'), frow = 164:165, lrow = c(164L, 169L)), .Names = c('srcfile', 'frow', 'lrow'), row.names = 1:2, class = 'data.frame'), structure(list(srcfile = '/home/lzhao/tmp/Rtmpe5iuYI/R.INSTALL2aa854a74188/foreign/R/spss.R', frow = 170L, lrow = 177L), .Names = c('srcfile', 'frow', 'lrow'), row.names = c(NA, -1L), class = 'data.frame'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist58() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(FALSE, .Names = 'Series 1', .Tsp = c(0, 0, 1), class = 'ts'), structure(FALSE, .Names = 'Series 1', .Tsp = c(1, 1, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(FALSE, .Names = 'Series 1', .Tsp = c(0, 0, 1), class = 'ts'), structure(FALSE, .Names = 'Series 1', .Tsp = c(1, 1, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist59() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts'), structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts'), structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts'));list(argv[[1]],argv[[2]]);");
     }
 
     @Test

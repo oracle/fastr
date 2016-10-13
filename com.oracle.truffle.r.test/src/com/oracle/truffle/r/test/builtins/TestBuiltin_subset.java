@@ -44,8 +44,7 @@ public class TestBuiltin_subset extends TestBase {
 
     @Test
     public void testsubset6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs'), nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c('no', 'yes'), class = 'factor'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = c(NA, -6L), class = 'data.frame'), -1);.subset(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(surname = structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs'), nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c('no', 'yes'), class = 'factor'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = c(NA, -6L), class = 'data.frame'), -1);.subset(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -85,8 +84,7 @@ public class TestBuiltin_subset extends TestBase {
 
     @Test
     public void testsubset14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(size = 1056, isdir = FALSE, mode = structure(420L, class = 'octmode'), mtime = structure(1393948130.23894, class = c('POSIXct', 'POSIXt')), ctime = structure(1393948130.23894, class = c('POSIXct', 'POSIXt')), atime = structure(1395074550.46596, class = c('POSIXct', 'POSIXt')), uid = 1001L, gid = 1001L, uname = 'roman', grname = 'roman'), .Names = c('size', 'isdir', 'mode', 'mtime', 'ctime', 'atime', 'uid', 'gid', 'uname', 'grname'), class = 'data.frame', row.names = '/home/roman/r-instrumented/library/grid/R/grid'), 'mtime');.subset(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(size = 1056, isdir = FALSE, mode = structure(420L, class = 'octmode'), mtime = structure(1393948130.23894, class = c('POSIXct', 'POSIXt')), ctime = structure(1393948130.23894, class = c('POSIXct', 'POSIXt')), atime = structure(1395074550.46596, class = c('POSIXct', 'POSIXt')), uid = 1001L, gid = 1001L, uname = 'roman', grname = 'roman'), .Names = c('size', 'isdir', 'mode', 'mtime', 'ctime', 'atime', 'uid', 'gid', 'uname', 'grname'), class = 'data.frame', row.names = '/home/roman/r-instrumented/library/grid/R/grid'), 'mtime');.subset(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -111,8 +109,7 @@ public class TestBuiltin_subset extends TestBase {
 
     @Test
     public void testsubset19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(x = 1:3, y = structure(4:6, .Dim = c(3L, 1L), class = 'AsIs'), z = structure(c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'), .Dim = c(3L, 3L), class = 'AsIs')), .Names = c('x', 'y', 'z'), row.names = c(NA, -3L), class = 'data.frame'), 'z');.subset(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(x = 1:3, y = structure(4:6, .Dim = c(3L, 1L), class = 'AsIs'), z = structure(c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'), .Dim = c(3L, 3L), class = 'AsIs')), .Names = c('x', 'y', 'z'), row.names = c(NA, -3L), class = 'data.frame'), 'z');.subset(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -137,8 +134,7 @@ public class TestBuiltin_subset extends TestBase {
 
     @Test
     public void testsubset24() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(size = 131, isdir = FALSE, mode = structure(436L, class = 'octmode'), mtime = structure(1386583148.91412, class = c('POSIXct', 'POSIXt')), ctime = structure(1386583148.91712, class = c('POSIXct', 'POSIXt')), atime = structure(1386583149.16512, class = c('POSIXct', 'POSIXt')), uid = 501L, gid = 501L, uname = 'lzhao', grname = 'lzhao'), .Names = c('size', 'isdir', 'mode', 'mtime', 'ctime', 'atime', 'uid', 'gid', 'uname', 'grname'), class = 'data.frame', row.names = 'startup.Rs'), 'mtime');.subset(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(size = 131, isdir = FALSE, mode = structure(436L, class = 'octmode'), mtime = structure(1386583148.91412, class = c('POSIXct', 'POSIXt')), ctime = structure(1386583148.91712, class = c('POSIXct', 'POSIXt')), atime = structure(1386583149.16512, class = c('POSIXct', 'POSIXt')), uid = 501L, gid = 501L, uname = 'lzhao', grname = 'lzhao'), .Names = c('size', 'isdir', 'mode', 'mtime', 'ctime', 'atime', 'uid', 'gid', 'uname', 'grname'), class = 'data.frame', row.names = 'startup.Rs'), 'mtime');.subset(argv[[1]],argv[[2]]);");
     }
 
     @Test
