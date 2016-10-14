@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -169,10 +170,18 @@ public class RPromise implements RTypedValue {
     }
 
     /**
-     * @return The raw {@link #value}.
+     * @return The {@link #value} of the promise - this must only be called for evaluated promises.
      */
     public final Object getValue() {
         assert isEvaluated();
+        return value;
+    }
+
+    /**
+     * @return The raw {@link #value}, which may be {@code null} if the promise was not evaluated
+     *         yet.
+     */
+    public final Object getRawValue() {
         return value;
     }
 
