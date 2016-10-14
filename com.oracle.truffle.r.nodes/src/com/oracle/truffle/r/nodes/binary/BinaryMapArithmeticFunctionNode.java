@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Div;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.IntegerDiv;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Subtract;
+import com.oracle.truffle.r.runtime.ops.Operation;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -102,9 +104,14 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             }
             return RRuntime.DOUBLE_NA;
         }
-        double value = arithmetic.op(left, right);
-        resultNACheck.check(value);
-        return value;
+        try {
+            double value = arithmetic.op(left, right);
+            resultNACheck.check(value);
+            return value;
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -117,9 +124,14 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         if (rightNACheck.check(right)) {
             return RRuntime.INT_NA;
         }
-        int value = arithmetic.op(left, right);
-        resultNACheck.check(value);
-        return value;
+        try {
+            int value = arithmetic.op(left, right);
+            resultNACheck.check(value);
+            return value;
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -132,9 +144,14 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         if (rightNACheck.check(right)) {
             return RRuntime.DOUBLE_NA;
         }
-        double value = arithmetic.op((double) left, (double) right);
-        resultNACheck.check(value);
-        return value;
+        try {
+            double value = arithmetic.op((double) left, (double) right);
+            resultNACheck.check(value);
+            return value;
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -159,9 +176,14 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             }
             return RRuntime.createComplexNA();
         }
-        RComplex value = arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
-        resultNACheck.check(value);
-        return value;
+        try {
+            RComplex value = arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
+            resultNACheck.check(value);
+            return value;
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     private RAbstractVector sequenceMulOperation(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
