@@ -87,7 +87,7 @@ public abstract class AccessField extends RBuiltinNode {
         casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName()).mustBe(stringValue()).asStringVector().findFirst();
     }
 
-    public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments) {
+    public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return signature.getNonNullCount() == 0 ? AccessFieldSpecialNodeGen.create(arguments) : null;
     }
 

@@ -131,7 +131,7 @@ public abstract class Subscript extends RBuiltinNode {
         // same implementation as "[[", with different dispatch
     }
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return signature.getNonNullCount() == 0 && arguments.length == 2 ? SubscriptSpecialNodeGen.create(arguments) : null;
     }
 

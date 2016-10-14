@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -54,7 +53,7 @@ import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import com.oracle.truffle.r.nodes.control.ReplacementNode;
+import com.oracle.truffle.r.nodes.control.ReplacementBlockNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -442,22 +441,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public String getCallerSource(RLanguage rl) {
-        RLanguage elem = rl;
-
-        /*
-         * This checks for the specific structure of replacements, to display the replacement
-         * instead of the "internal" form (with *tmp*, etc.) of the update call.
-         */
-
-        RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-        Node parent = RASTUtils.unwrapParent(sn.asNode());
-        if (parent instanceof WriteVariableNode) {
-            WriteVariableNode wvn = (WriteVariableNode) parent;
-            if (wvn.getParent() instanceof ReplacementNode) {
-                elem = RDataFactory.createLanguage((RNode) wvn.getParent());
-            }
-        }
-
+        // This checks for the specific structure of replacements
+        RLanguage replacement = ReplacementBlockNode.getRLanguage(rl);
+        RLanguage elem = replacement == null ? rl : replacement;
         String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, 0, -1);
         return string.split("\n")[0];
     }
@@ -517,8 +503,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RSyntaxNode[] isReplacementNode(Node node) {
-        if (node instanceof ReplacementNode) {
-            ReplacementNode rn = (ReplacementNode) node;
+        if (node instanceof ReplacementBlockNode) {
+            ReplacementBlockNode rn = (ReplacementBlockNode) node;
             return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
         } else {
             return null;

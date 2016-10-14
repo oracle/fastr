@@ -58,10 +58,11 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         final boolean handleNA = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.MOD);
         boolean handleIntegers = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.DIV);
         if (handleIntegers) {
-            return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2
+            return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
                             ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments) : null;
         } else {
-            return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments)
+            return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
+                            ? BinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments)
                             : null;
         }
     }

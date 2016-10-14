@@ -41,8 +41,13 @@ public interface RSpecialFactory {
     /**
      * Returns a 'special node' if the given arguments with their signature can be handled by it. If
      * if returns {@code null}, the full blown built-in node will be created.
+     *
+     * @param inReplacement whether a non-replacement call is part of replacement sequence, but not
+     *            whether the call itself is a replacement (i.e. with arrow '<-'). Example: f(g(x))
+     *            <- val, the call to g(x) will be constructed with {@code inReplacement == true},
+     *            but the call to `g<-(...)` won't.
      */
-    RNode create(ArgumentsSignature argumentsSignature, RNode[] arguments);
+    RNode create(ArgumentsSignature argumentsSignature, RNode[] arguments, boolean inReplacement);
 
     @SuppressWarnings("serial")
     final class FullCallNeededException extends RuntimeException {
