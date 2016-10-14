@@ -228,6 +228,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 case "dqrdc2":
