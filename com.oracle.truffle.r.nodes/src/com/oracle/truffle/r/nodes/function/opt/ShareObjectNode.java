@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
+import static com.oracle.truffle.api.nodes.NodeCost.NONE;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
 
@@ -33,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
  * If the object is not instance of {@link RShareable} or if it is shared permanent, then does
  * nothing.
  */
+@NodeInfo(cost = NONE)
 public abstract class ShareObjectNode extends Node {
     public abstract Object execute(Object obj);
 

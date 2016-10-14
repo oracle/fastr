@@ -22,6 +22,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -214,9 +216,12 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
                 out.println(tagbuf);
                 Object si = s.getDataAtAsObject(i);
-                ValuePrinters.INSTANCE.print(si, printCtx);
-                ValuePrinters.printNewLine(printCtx);
-
+                if (si instanceof RAttributable && ((RAttributable) si).isObject(dummyAttrProfiles)) {
+                    RContext.getEngine().printResult(si);
+                } else {
+                    ValuePrinters.INSTANCE.print(si, printCtx);
+                    ValuePrinters.printNewLine(printCtx);
+                }
                 tagbuf.setLength(taglen); // reset tag buffer to the original value
             }
 

@@ -246,14 +246,14 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             if (attrName == null) {
                 throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
             }
-            if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+            if (RRuntime.CLASS_ATTR_KEY.equals(attrName)) {
                 Object attrValue = operand.getDataAt(i);
                 if (attrValue == null) {
                     throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                 }
                 attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
             } else {
-                attrObj.setAttr(attrName, operand.getDataAt(i));
+                attrObj.setAttr(attrName.intern(), operand.getDataAt(i));
             }
         }
         return obj;

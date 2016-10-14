@@ -26,6 +26,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.util.ArrayList;
+
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -33,13 +36,20 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -67,12 +77,35 @@ public abstract class Call extends RBuiltinNode {
 
     @TruffleBoundary
     private static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        return makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), false, args);
+        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), false, args);
+    }
+
+    private static RLanguage makeFunction(RArgsValuesAndNames args) {
+        CompilerAsserts.neverPartOfCompilation();
+        Object body = RNull.instance;
+        if (args.getLength() >= 2) {
+            body = args.getArgument(1);
+        }
+        Object argList = args.getLength() == 0 ? RNull.instance : args.getArgument(0);
+        ArrayList<RCodeBuilder.Argument<RSyntaxNode>> finalArgs = new ArrayList<>();
+        while (argList != RNull.instance) {
+            if (!(argList instanceof RPairList)) {
+                throw RError.error(RError.SHOW_CALLER, Message.BAD_FUNCTION_EXPR);
+            }
+            RPairList pl = (RPairList) argList;
+            String name = ((RSymbol) pl.getTag()).getName();
+            RSyntaxNode value = RASTUtils.createNodeForValue(pl.car()).asRSyntaxNode();
+            finalArgs.add(RCodeBuilder.argument(RSyntaxNode.EAGER_DEPARSE, name, value));
+            argList = pl.cdr();
+        }
+        RSyntaxNode function = RContext.getASTBuilder().function(RSyntaxNode.EAGER_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
+        RDeparse.ensureSourceSection(function);
+        return RDataFactory.createLanguage(function.asRNode());
     }
 
     @TruffleBoundary
     protected static RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
-        return makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), true, args);
+        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), true, args);
     }
 
     @TruffleBoundary

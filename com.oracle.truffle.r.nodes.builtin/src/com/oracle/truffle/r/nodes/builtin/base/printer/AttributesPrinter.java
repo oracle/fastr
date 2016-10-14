@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
@@ -27,6 +28,8 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 final class AttributesPrinter implements ValuePrinter<RAttributable> {
 
     static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
+
+    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     private final boolean useSlots;
 
@@ -97,7 +100,11 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
                 // throw new UnsupportedOperationException("TODO");
             } else {
-                ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject(dummyAttrProfiles)) {
+                    RContext.getEngine().printResult(a.getValue());
+                } else {
+                    ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                }
             }
 
             // restore tag buffer to its original value

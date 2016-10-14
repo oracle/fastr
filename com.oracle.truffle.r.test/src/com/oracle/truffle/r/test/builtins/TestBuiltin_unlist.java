@@ -90,8 +90,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist15() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(structure(c(1395082040.29392, 1395082040.29392, 1395082040.29392, 1395082040.29392, 1395082040.29392), class = c('AsIs', 'POSIXct', 'POSIXt'))), row.names = c(NA, -5L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(structure(c(1395082040.29392, 1395082040.29392, 1395082040.29392, 1395082040.29392, 1395082040.29392), class = c('AsIs', 'POSIXct', 'POSIXt'))), row.names = c(NA, -5L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -129,8 +128,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist22() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(surname = structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'Ripley', 'McNeil'), class = 'AsIs'), nationality = structure(c(3L, 1L, 3L, 2L, 2L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(2L, 1L, 1L, 1L, 1L, 1L), .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = c('1', '2', '3', '4', '4.1', '5'), class = 'data.frame'), structure(list(title = structure(c(2L, 5L, 4L, 6L, 7L, 3L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, 1L, NA, NA, NA, NA), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = c(NA, 6L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(surname = structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'Ripley', 'McNeil'), class = 'AsIs'), nationality = structure(c(3L, 1L, 3L, 2L, 2L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(2L, 1L, 1L, 1L, 1L, 1L), .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = c('1', '2', '3', '4', '4.1', '5'), class = 'data.frame'), structure(list(title = structure(c(2L, 5L, 4L, 6L, 7L, 3L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, 1L, NA, NA, NA, NA), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = c(NA, 6L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -223,7 +221,7 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist40() {
-        assertEval(Ignored.Unknown,
+        assertEval(
                         "argv <- list(list(structure(list(structure(c('0.007239522', '0.014584634', '0.014207936', '0.018442267', '0.011128505', '0.019910082', '0.027072311', '0.034140379', '0.028320657', '0.037525507'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 1', ' 6', ' 7', ' 8', '13', '14', '15', '20', '21', '22'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 16', ' 16', '144', ' 16', ' 16', '128', ' 16', ' 16', '112', ' 16'), .Dim = 10L, .Dimnames = structure(list(c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22')), .Names = ''))), row.names = c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22'), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
@@ -249,14 +247,12 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist45() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('Australia', 'UK', 'UK', 'US', 'US', 'Australia'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('no', 'no', 'no', 'no', 'yes', 'no'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('Interactive Data Analysis', 'Spatial Statistics', 'Stochastic Simulation', 'LISP-STAT', 'Exploratory Data Analysis', 'Modern Applied Statistics ...'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c(NA, NA, NA, NA, NA, 'Ripley'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(structure(c('McNeil', 'Ripley', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('Australia', 'UK', 'UK', 'US', 'US', 'Australia'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('no', 'no', 'no', 'no', 'yes', 'no'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c('Interactive Data Analysis', 'Spatial Statistics', 'Stochastic Simulation', 'LISP-STAT', 'Exploratory Data Analysis', 'Modern Applied Statistics ...'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame'), structure(list(structure(c(NA, NA, NA, NA, NA, 'Ripley'), class = 'AsIs')), row.names = c(NA, -6L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist46() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(surname = structure(c(4L, 5L, 3L, 2L, 2L, 1L, 6L), .Label = c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables', 'R Core'), class = 'factor'), nationality = structure(c(3L, 1L, 3L, 2L, 2L, 1L, NA), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(2L, 1L, 1L, 1L, 1L, 1L, NA), .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = c('1', '2', '3', '4', '4.1', '5', '7'), class = 'data.frame'),     structure(list(title = structure(c(2L, 5L, 4L, 6L, 7L, 3L, 1L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, 1L, NA, NA, NA, NA, 2L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = c(NA, 7L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(surname = structure(c(4L, 5L, 3L, 2L, 2L, 1L, 6L), .Label = c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables', 'R Core'), class = 'factor'), nationality = structure(c(3L, 1L, 3L, 2L, 2L, 1L, NA), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(2L, 1L, 1L, 1L, 1L, 1L, NA), .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = c('1', '2', '3', '4', '4.1', '5', '7'), class = 'data.frame'),     structure(list(title = structure(c(2L, 5L, 4L, 6L, 7L, 3L, 1L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, 1L, NA, NA, NA, NA, 2L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = c(NA, 7L), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

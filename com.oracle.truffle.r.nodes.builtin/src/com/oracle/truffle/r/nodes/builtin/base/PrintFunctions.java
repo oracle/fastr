@@ -98,7 +98,7 @@ public class PrintFunctions {
             } else {
                 printDefault(frame, showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             }
-            return null;
+            return o;
         }
 
         protected boolean isS4(Object o) {

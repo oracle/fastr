@@ -29,9 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -60,6 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * parent of the the {@code .Internal}, which will be an {@code RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NONE)
 @RBuiltin(name = ".Internal", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class Internal extends RBuiltinNode {

@@ -34,6 +34,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -50,6 +51,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -103,7 +105,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-class ForcePromiseNode extends RNode {
+final class ForcePromiseNode extends RNode {
 
     @Child private RNode valueNode;
     @Child private PromiseHelperNode promiseHelper;
@@ -133,6 +135,7 @@ class ForcePromiseNode extends RNode {
     }
 }
 
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = ForcePromiseNode.class)
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
@@ -536,7 +539,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args, s3DefaulArguments);
     }
 
-    protected class ForeignCall extends Node {
+    protected final class ForeignCall extends Node {
 
         @Child private CallArgumentsNode arguments;
         @Child private Node foreignCall;
@@ -732,6 +735,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class FunctionDispatch extends Node {
 
         /**
@@ -986,6 +990,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             Object result = builtin.executeBuiltin(frame, castArguments(frame, orderedArguments.getArguments()));
+            assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
             visibility.execute(frame, builtinDescriptor.getVisibility());
             return result;
         }

@@ -2355,17 +2355,23 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ e <- quote(x(y=z)); typeof(e[[2]]) }");
     }
 
-    // Checkstyle: stop
     @Test
     public void testUpdateOther() {
         assertEval("{ a <- c(TRUE, FALSE); b <- c(a=3, b=4); a[b] <- c(TRUE, FALSE); a }");
-        assertEval("{ f <- function(a, i1, i2) {a[i1, i2]}; a <- rep(c('1'),14); dim(a) <- c(2,7); dimnames(a) <- list(c('a','b'), rep('c',7)); temp <- f(a, ,1); dimnames(a) <- list(NULL, rep('c',7)); f(a,,1) }");
+        assertEval("{ f <- function(a, i1, i2) {a[i1, i2]}; a <- rep(c('1'),14); dim(a) <- c(2,7); dimnames(a) <- list(c('a','b'), rep('c',7)); temp <- f(a,,1); dimnames(a) <- list(NULL, rep('c',7)); f(a,,1) }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
 
         assertEval("{ x<-quote(foo(42)); x[character(0)]<-list(); typeof(x) }");
         assertEval("{ x<-as.pairlist(list(7,42)); x[character(0)]<-list(); typeof(x) }");
         assertEval("{ x<-expression(y, z, 7 + 42); x[character(0)]<-list(); typeof(x) }");
-
     }
+
+    @Test
+    public void testDimnamesNames() {
+        assertEval("v <- 1:8; dim(v) <- c(2,2,2); dimnames(v) <- list(foo=c('a','b'), bar=c('x','y'), baz=c('u','v')); v[,,1]");
+        assertEval("v <- 1:8; dim(v) <- c(2,2,2); dimnames(v) <- list(foo=c('a','b'), bar=c('x','y'), baz=c('u','v')); v[,,2,drop=FALSE]");
+        assertEval("v <- 1:8; dim(v) <- c(2,2,2); dimnames(v) <- list(foo=c('a','b'), bar=c('x','y'), baz=c('u','v')); v[,,1,drop=TRUE]");
+    }
+
 }

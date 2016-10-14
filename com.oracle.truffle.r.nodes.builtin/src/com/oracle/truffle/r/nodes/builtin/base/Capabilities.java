@@ -51,7 +51,10 @@ public abstract class Capabilities extends RBuiltinNode {
         iconv(false, null),
         nls(false, "NLS"),
         profmem(false, null),
-        cairo(false, null);
+        cairo(false, null),
+        icu(false, "ICU"),
+        long_double(false, "long.double"),
+        libcurl(false, null);
 
         private final boolean defValue;
         private final String rName;

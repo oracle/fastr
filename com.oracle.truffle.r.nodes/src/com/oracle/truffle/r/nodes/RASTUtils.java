@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -175,7 +176,12 @@ public class RASTUtils {
         if (value instanceof RNode) {
             return (RNode) value;
         } else if (value instanceof RSymbol) {
-            return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) value).getName(), false).asRNode();
+            RSymbol symbol = (RSymbol) value;
+            if (symbol.isMissing()) {
+                return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, REmpty.instance).asRNode();
+            } else {
+                return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) value).getName(), false).asRNode();
+            }
         } else if (value instanceof RLanguage) {
             RLanguage l = (RLanguage) value;
             return RASTUtils.cloneNode(l.getRep());

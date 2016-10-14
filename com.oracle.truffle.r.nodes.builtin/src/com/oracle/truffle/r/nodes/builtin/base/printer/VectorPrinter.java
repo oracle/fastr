@@ -330,7 +330,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                     w[j] = formatVector(0, 0);
                 }
 
-                if (cl != null) {
+                if (cl != null && cl.getDataAt(j) != null) {
                     String clj = cl.getDataAt(j);
                     if (RRuntime.isNA(clj)) {
                         clabw = pp.getNaWidthNoquote();
@@ -413,7 +413,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         private void matrixColumnLabel(RAbstractStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
-            if (cl != null) {
+            if (cl != null && cl.getDataAt(j) != null) {
                 String tmp = cl.getDataAt(j);
                 int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 int gap = w - l;
@@ -433,7 +433,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected void rightMatrixColumnLabel(RAbstractStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
-            if (cl != null) {
+            if (cl != null && cl.getDataAt(j) != null) {
                 String tmp = cl.getDataAt(j);
                 int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 /*
@@ -458,7 +458,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected void leftMatrixColumnLabel(RAbstractStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
-            if (cl != null) {
+            if (cl != null && cl.getDataAt(j) != null) {
                 String tmp = cl.getDataAt(j);
                 int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 String g1 = asBlankArg(pp.getGap());
@@ -480,7 +480,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected void matrixRowLabel(RAbstractStringVector rl, int i, int rlabw, int lbloff) {
             PrintParameters pp = printCtx.parameters();
 
-            if (rl != null) {
+            if (rl != null && rl.getDataAt(i) != null) {
                 String tmp = rl.getDataAt(i);
                 int l = (RRuntime.isNA(tmp)) ? pp.getNaWidthNoquote() : tmp.length();
                 String gap = asBlankArg(rlabw - l - lbloff);

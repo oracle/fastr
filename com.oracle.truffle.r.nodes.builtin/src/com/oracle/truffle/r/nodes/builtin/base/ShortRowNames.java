@@ -76,6 +76,10 @@ public abstract class ShortRowNames extends RBuiltinNode {
             rowNames = type == 1 ? n : Math.abs(n);
         }
 
+        if (rowNames == null) {
+            return RNull.instance;
+        }
+
         return rowNames;
     }
 

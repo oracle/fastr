@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -50,7 +52,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
@@ -307,7 +309,7 @@ public class TrigExpFunctions {
 
         @Override
         public RComplex op(double re, double im) {
-            throw new UnsupportedOperationException();
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
     }
 
@@ -496,8 +498,8 @@ public class TrigExpFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
+            casts.arg(0).mapIf(numericValue(), asDoubleVector());
+            casts.arg(1).mapIf(numericValue(), asDoubleVector());
         }
 
         private double doFunDouble(double y, double x) {
@@ -568,12 +570,10 @@ public class TrigExpFunctions {
         @Fallback
         @TruffleBoundary
         protected Object atan2(Object x, Object y) {
-            if (x instanceof RMissing) {
-                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
-            } else if (y instanceof RMissing) {
-                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
+            if (x instanceof RAbstractComplexVector || y instanceof RAbstractComplexVector) {
+                throw RInternalError.unimplemented("atan2 for complex values");
             }
-            throw RInternalError.unimplemented();
+            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
     }
 }
