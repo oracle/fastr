@@ -76,11 +76,23 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public abstract Object execute(VirtualFrame frame);
 
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectInteger(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (int) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public RRaw executeRRaw(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRRaw(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (RRaw) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public RAbstractVector executeRAbstractVector(VirtualFrame frame) throws UnexpectedResultException {
@@ -88,7 +100,13 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     }
 
     public RComplex executeRComplex(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRComplex(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (RComplex) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public RIntSequence executeRIntSequence(VirtualFrame frame) throws UnexpectedResultException {
@@ -152,11 +170,23 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     }
 
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectDouble(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (double) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectByte(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (byte) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
@@ -176,7 +206,13 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     }
 
     public String executeString(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectString(execute(frame));
+        Object value = execute(frame);
+        assert value != null;
+        try {
+            return (String) value;
+        } catch (ClassCastException e) {
+            throw new UnexpectedResultException(value);
+        }
     }
 
     public REnvironment executeREnvironment(VirtualFrame frame) throws UnexpectedResultException {
