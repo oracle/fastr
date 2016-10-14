@@ -311,11 +311,11 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot);
+            Object value = valueProfile.profile(profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot));
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
-            return valueProfile.profile(value);
+            return value;
         }
 
         @Override
