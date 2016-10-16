@@ -400,16 +400,12 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_call4(JNIEnv *env, jclass c,
 		jobject arg3, jobject arg4) {
 	jmp_buf error_jmpbuf;
 	jobject result = NULL;
-	printf("in call4\n");
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call4func call4 = (call4func) address;
-		printf("calling\n");
 		result = (*call4)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4));
 	}
-	printf("callexit\n");
 	callExit(env);
-	printf("done\n");
 	return result;
 }
 
