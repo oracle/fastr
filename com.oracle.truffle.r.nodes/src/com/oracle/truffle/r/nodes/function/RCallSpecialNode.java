@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -77,6 +78,7 @@ final class PeekLocalVariableNode extends RNode {
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     private static final int NO_RECURSIVE_ARGUMENT_INDEX = -1;
+    private static final boolean useSpecials = FastROptions.UseSpecials.getBooleanValue();
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
     @CompilationFinal private SourceSection sourceSectionR;
@@ -115,7 +117,10 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     public static RSyntaxNode createCall(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments) {
-        RCallSpecialNode special = tryCreate(sourceSection, functionNode, signature, arguments);
+        RCallSpecialNode special = null;
+        if (useSpecials) {
+            special = tryCreate(sourceSection, functionNode, signature, arguments);
+        }
         if (special != null) {
             if (sourceSection == RSyntaxNode.EAGER_DEPARSE) {
                 RDeparse.ensureSourceSection(special);
