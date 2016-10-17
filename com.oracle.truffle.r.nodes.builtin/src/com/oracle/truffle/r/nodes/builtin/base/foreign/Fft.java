@@ -11,28 +11,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-public final class Fft extends RExternalBuiltinNode {
+public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
 
-    // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Override
-    public RComplexVector call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        RComplexVector zVec = castComplexVector(castVector(argValues[0]));
-        double[] z = zVec.getDataTemp();
-        byte inverse = castLogical(castVector(argValues[1]));
-        int inv = RRuntime.isNA(inverse) || inverse == RRuntime.LOGICAL_FALSE ? -2 : 2;
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustNotBeNull().asComplexVector(false, true, false);
+        casts.arg(1).mustNotBeNull().asLogicalVector().findFirst().map(Predef.toBoolean());
+    }
+
+    // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
+    @Specialization
+    public Object execute(RAbstractComplexVector zVec, boolean inverse) {
+        double[] z = zVec.materialize().getDataTemp();
+        int inv = inverse ? 2 : -2;
         @SuppressWarnings("unused")
         int retCode = 7;
         if (zVecLgt1.profile(zVec.getLength() > 1)) {
@@ -83,10 +87,8 @@ public final class Fft extends RExternalBuiltinNode {
                         RFFIFactory.getRFFI().getStatsRFFI().fft_work(z, nseg, n, nspn, inv, work, iwork);
                     }
                 }
-
             }
         }
-
         return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
     }
 }

@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -105,14 +103,6 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
             castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
         return (RAbstractDoubleVector) castDouble.execute(operand);
-    }
-
-    protected RComplexVector castComplexVector(Object operand) {
-        if (castComplex == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(true, true, false));
-        }
-        return (RComplexVector) castComplex.execute(operand);
     }
 
     protected RAbstractVector castVector(Object value) {

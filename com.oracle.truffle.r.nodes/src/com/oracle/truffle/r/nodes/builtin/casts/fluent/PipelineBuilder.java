@@ -78,44 +78,17 @@ public final class PipelineBuilder {
         append(new FindFirstStep<>(defaultValue, elementClass, createMessage(callObj, message, messageArgs)));
     }
 
-    public void appendAsAttributable(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new AttributableCoercionStep<>(preserveNames, dimensionsPreservation, attrPreservation));
+    public void appendAsAttributable(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        append(new AttributableCoercionStep<>(preserveNames, preserveDimensions, preserveAttributes));
     }
 
     public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
         append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
     }
 
-    public void appendAsVector() {
-        appendAsVector(false, false, false, true);
-    }
-
-    public void appendAsRawVector() {
-        append(new CoercionStep<>(RType.Raw, true, false, false, false));
-    }
-
-    public void appendAsComplexVector() {
-        append(new CoercionStep<>(RType.Complex, true, false, false, false));
-    }
-
-    public void appendAsStringVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(RType.Character, true, preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public void appendAsStringVector() {
-        append(new CoercionStep<>(RType.Character, true, false, false, false));
-    }
-
-    public void appendAsLogicalVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(RType.Logical, true, preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public void appendAsDoubleVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(RType.Double, true, preserveNames, dimensionsPreservation, attrPreservation));
-    }
-
-    public void appendAsIntegerVector(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        append(new CoercionStep<>(RType.Integer, true, preserveNames, dimensionsPreservation, attrPreservation));
+    public void appendAsVector(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
+        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes));
     }
 
     public void appendNotNA(Object naReplacement, RBaseNode callObj, Message message, Object[] messageArgs) {
