@@ -534,6 +534,13 @@ public class TestBuiltin_c extends TestBase {
     }
 
     @Test
+    public void testRecursive() {
+        assertEval("argv <- list(c(list(c(1,2),c(3,4)),c(5,6), recursive=TRUE));c(argv[[1]]);");
+        assertEval("argv <- list(c(1,2),c(3,4),c(5,6), recursive=TRUE));c(argv[[1]]);");
+        assertEval("argv <- list(list(), recursive=TRUE));c(argv[[1]]);");
+    }
+
+    @Test
     public void testCombineBroken() {
         assertEval(Ignored.Unknown, "{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
         // inconsistency with as.complex(0/0)
