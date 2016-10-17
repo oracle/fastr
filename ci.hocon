@@ -86,6 +86,12 @@ gateTestCommon : ${common} {
 gateTestLinux : ${gateTestCommon} {
 }
 
+gateTestNoSpecialsLinux : ${common} {
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
+  ]
+}
+
 darwinEnvironment : {
   environment :  {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
@@ -130,6 +136,7 @@ rbcheck : ${common} {
 
 builds = [
   ${gateTestLinux}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64"}
+  ${gateTestNoSpecialsLinux}       {capabilities : [linux, amd64],  targets : [gate, post-merge],  name: "gate-test-linux-amd64-nospecials"}
   ${gateTestDarwin} {capabilities : [darwin, amd64],   targets : [gate, post-merge],  name: "gate-test-darwin-amd64"}
   ${gateStyle}      {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-style-linux-amd64"}
   ${rbcheck}        {capabilities : [linux, amd64],   targets : [gate, post-merge],  name: "gate-rbcheck-linux-amd64"}
