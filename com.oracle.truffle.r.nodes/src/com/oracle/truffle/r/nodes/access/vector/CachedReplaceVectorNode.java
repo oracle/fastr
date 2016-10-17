@@ -22,16 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import static com.oracle.truffle.api.nodes.NodeCost.NONE;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNodeFactory.ValueProfileNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -465,10 +473,26 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             throw RError.error(this, ex);
         }
         return env;
-
     }
 
-    private final ConditionProfile sharedConditionProfile = ConditionProfile.createBinaryProfile();
+    @NodeInfo(cost = NONE)
+    public abstract static class ValueProfileNode extends Node {
+
+        public abstract boolean execute(boolean value);
+
+        @Specialization(limit = "1", guards = "cachedValue == value")
+        protected static boolean profile(@SuppressWarnings("unused") boolean value,
+                        @Cached("value") boolean cachedValue) {
+            return cachedValue;
+        }
+
+        @Specialization(contains = "profile")
+        protected static boolean generic(boolean value) {
+            return value;
+        }
+    }
+
+    @Child private ValueProfileNode sharedConditionProfile = ValueProfileNodeGen.create();
 
     private final ValueProfile sharedClassProfile = ValueProfile.createClassProfile();
 
@@ -483,7 +507,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (returnVector instanceof RShareable) {
             RShareable shareable = (RShareable) returnVector;
             // TODO find out if we need to copy always in the recursive case
-            if (sharedConditionProfile.profile(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
+            if (sharedConditionProfile.execute(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
                 sharedProfile.enter();
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
