@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -42,7 +41,6 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 public final class GetVisibilityNode extends Node {
 
     @CompilationFinal private FrameSlot frameSlot;
-    private final ConditionProfile isUninitializedProfile = ConditionProfile.createBinaryProfile();
 
     private GetVisibilityNode() {
     }
@@ -54,15 +52,10 @@ public final class GetVisibilityNode extends Node {
     public boolean execute(Frame frame) {
         if (frameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
+            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean);
         }
         try {
-            Object visibility = frame.getObject(frameSlot);
-            if (isUninitializedProfile.profile(visibility == null)) {
-                return false;
-            } else {
-                return visibility == Boolean.TRUE;
-            }
+            return frame.getBoolean(frameSlot);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

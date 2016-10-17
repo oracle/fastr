@@ -148,8 +148,9 @@ public class PromiseHelperNode extends RBaseNode {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
-        if (isEvaluated(promise)) {
-            return promise.getValue();
+        Object value = promise.getRawValue();
+        if (isEvaluatedProfile.profile(value != null)) {
+            return value;
         }
 
         Object obj;

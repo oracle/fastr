@@ -56,13 +56,13 @@ public final class SetVisibilityNode extends Node {
     private void ensureFrameSlot(Frame frame) {
         if (frameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object);
+            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean);
         }
     }
 
     public void execute(Frame frame, boolean value) {
         ensureFrameSlot(frame);
-        frame.setObject(frameSlot, value);
+        frame.setBoolean(frameSlot, value);
     }
 
     public void execute(VirtualFrame frame, RVisibility visibility) {
@@ -79,7 +79,7 @@ public final class SetVisibilityNode extends Node {
      */
     public void executeAfterCall(VirtualFrame frame, RCaller caller) {
         ensureFrameSlot(frame);
-        frame.setObject(frameSlot, caller.getVisibility());
+        frame.setBoolean(frameSlot, caller.getVisibility());
     }
 
     /**
@@ -89,7 +89,7 @@ public final class SetVisibilityNode extends Node {
     public void executeEndOfFunction(VirtualFrame frame) {
         ensureFrameSlot(frame);
         try {
-            Object visibility = frame.getObject(frameSlot);
+            Object visibility = frame.getBoolean(frameSlot);
             if (visibility != null) {
                 RArguments.getCall(frame).setVisibility(visibility == Boolean.TRUE);
             }
@@ -102,6 +102,6 @@ public final class SetVisibilityNode extends Node {
      * Slow-path version of {@link #executeAfterCall(VirtualFrame, RCaller)}.
      */
     public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
-        frame.setObject(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Object), caller.getVisibility());
+        frame.setBoolean(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean), caller.getVisibility());
     }
 }

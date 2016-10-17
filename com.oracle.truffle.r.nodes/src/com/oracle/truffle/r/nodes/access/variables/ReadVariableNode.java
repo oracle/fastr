@@ -104,8 +104,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
-        return rvn;
+        return new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
     }
 
     public static ReadVariableNode createSilent(String name, RType mode) {
@@ -113,18 +112,15 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
-        return rvn;
+        return new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
     }
 
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
-        return result;
+        return new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
     }
 
     public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
-        ReadVariableNode result = new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
-        return result;
+        return new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
     }
 
     @Child private PromiseHelperNode promiseHelper;
@@ -311,11 +307,11 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot);
+            Object value = valueProfile.profile(profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot));
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
-            return valueProfile.profile(value);
+            return value;
         }
 
         @Override

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -30,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.Operation;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic.Negate;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic.Plus;
@@ -75,7 +77,12 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
         if (operandNACheck.check(operand)) {
             return RRuntime.DOUBLE_NA;
         }
-        return arithmetic.op(operand);
+        try {
+            return arithmetic.op(operand);
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -83,7 +90,12 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
         if (operandNACheck.check(operand)) {
             return RRuntime.DOUBLE_NA;
         }
-        return arithmetic.opd(operand.getRealPart(), operand.getImaginaryPart());
+        try {
+            return arithmetic.opd(operand.getRealPart(), operand.getImaginaryPart());
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -91,7 +103,12 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
         if (operandNACheck.check(operand)) {
             return RComplex.createNA();
         }
-        return arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());
+        try {
+            return arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -99,6 +116,11 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
         if (operandNACheck.check(operand)) {
             return RRuntime.INT_NA;
         }
-        return arithmetic.op(operand);
+        try {
+            return arithmetic.op(operand);
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 }

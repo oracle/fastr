@@ -251,7 +251,7 @@ public final class RArguments {
     }
 
     public static boolean getIsIrregular(Frame frame) {
-        return (boolean) frame.getArguments()[INDEX_IS_IRREGULAR];
+        return frame.getArguments()[INDEX_IS_IRREGULAR] == Boolean.TRUE;
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
