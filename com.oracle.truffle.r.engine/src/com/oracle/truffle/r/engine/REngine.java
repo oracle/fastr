@@ -85,6 +85,7 @@ import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -99,6 +100,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -594,13 +596,19 @@ final class REngine implements Engine, Engine.Timings {
         result = RRuntime.asAbstractVector(result);
         if (result instanceof RTypedValue || result instanceof TruffleObject) {
             Object resultValue = evaluatePromise(result);
-            Object printMethod = REnvironment.globalEnv().findFunction("print");
-            RFunction function = (RFunction) evaluatePromise(printMethod);
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).incRefCount();
             }
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
+            if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
+                Object printMethod = REnvironment.getRegisteredNamespace("methods").get("show");
+                RFunction function = (RFunction) evaluatePromise(printMethod);
+                CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue}, null);
+            } else {
+                Object printMethod = REnvironment.globalEnv().findFunction("print");
+                RFunction function = (RFunction) evaluatePromise(printMethod);
+                CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
+            }
             if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                 ((RShareable) resultValue).decRefCount();
             }
@@ -608,6 +616,27 @@ final class REngine implements Engine, Engine.Timings {
             // this supports printing of non-R values (via toString for now)
             RContext.getInstance().getConsoleHandler().println(toString(result));
         }
+    }
+
+    /*
+     * This abstracts the calling convention, etc. behind the RASTBuilder, but creating large
+     * amounts of CallTargets during testing is too much overhead at the moment.
+     */
+    @SuppressWarnings("unused")
+    private void printAlternative(Object result) {
+        Object printFunction;
+        if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
+            printFunction = REnvironment.getRegisteredNamespace("methods").get("show");
+        } else {
+            printFunction = REnvironment.getRegisteredNamespace("base").get("print");
+        }
+        RFunction function = (RFunction) evaluatePromise(printFunction);
+
+        MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
+        // create a piece of AST to perform the call
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+        RSyntaxNode call = builder.call(RSyntaxNode.LAZY_DEPARSE, builder.constant(RSyntaxNode.LAZY_DEPARSE, function), builder.constant(RSyntaxNode.LAZY_DEPARSE, result));
+        doMakeCallTarget(call.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false).call(callingFrame);
     }
 
     private static String toString(Object originalResult) {
