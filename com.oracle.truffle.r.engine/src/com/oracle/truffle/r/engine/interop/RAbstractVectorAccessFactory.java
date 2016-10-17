@@ -36,7 +36,6 @@ import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.V
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -105,7 +104,7 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
 
     @Override
     public CallTarget accessIsExecutable() {
-        throw RInternalError.shouldNotReachHere("message: accessIsExecutable");
+        return null;
     }
 
     @Override
@@ -152,26 +151,25 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
 
     @Override
     public CallTarget accessWrite() {
-        throw RInternalError.shouldNotReachHere("message: accessWrite");
+        return null;
     }
 
     @Override
     public CallTarget accessExecute(int argumentsLength) {
-        throw RInternalError.shouldNotReachHere("message: accessExecute");
+        return null;
     }
 
     @Override
     public CallTarget accessInvoke(int argumentsLength) {
-        throw RInternalError.shouldNotReachHere("message: accessInvoke");
+        return null;
     }
 
     @Override
     public CallTarget accessMessage(Message unknown) {
-        throw RInternalError.shouldNotReachHere("message: " + unknown);
+        return null;
     }
 
     @Override
-    @SuppressWarnings("all")
     public CallTarget accessNew(int argumentsLength) {
         return null;
     }
