@@ -105,36 +105,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-final class ForcePromiseNode extends RNode {
-
-    @Child private RNode valueNode;
-    @Child private PromiseHelperNode promiseHelper;
-    private final BranchProfile nonPromiseProfile = BranchProfile.create();
-
-    ForcePromiseNode(RNode valueNode) {
-        this.valueNode = valueNode;
-    }
-
-    public RNode getValueNode() {
-        return valueNode;
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        Object value = valueNode.execute(frame);
-        if (value instanceof RPromise) {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            return promiseHelper.evaluate(frame, (RPromise) value);
-        } else {
-            nonPromiseProfile.enter();
-            return value;
-        }
-    }
-}
-
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = ForcePromiseNode.class)

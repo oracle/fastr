@@ -25,14 +25,13 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -68,8 +66,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
     }
 
     public static ForNode create(SourceSection src, WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
-        ForNode result = new ForNode(src, cvar, range.asRNode(), body.asRNode());
-        return result;
+        return new ForNode(src, cvar, range.asRNode(), body.asRNode());
     }
 
     @Override
@@ -82,23 +79,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         return RNull.instance;
     }
 
-    public WriteVariableNode getCvar() {
-        return getForRepeatingNode().writeElementNode;
-    }
-
-    public RNode getRange() {
-        return writeRangeNode.getRhs();
-    }
-
-    public RNode getBody() {
-        return getForRepeatingNode().body;
-    }
-
-    private ForRepeatingNode getForRepeatingNode() {
-        return (ForRepeatingNode) loopNode.getRepeatingNode();
-    }
-
-    private static final class ForRepeatingNode extends RBaseNode implements RepeatingNode {
+    private static final class ForRepeatingNode extends Node implements RepeatingNode {
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
@@ -112,7 +93,6 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         @Child private WriteVariableNode writeIndexNode;
         @Child private RNode loadElement;
 
-        // used as RSyntaxNode
         private final ForNode forNode;
 
         ForRepeatingNode(ForNode forNode, WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
@@ -166,23 +146,8 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         }
 
         @Override
-        protected RSyntaxNode getRSyntaxNode() {
-            return forNode;
-        }
-
-        @Override
         public String toString() {
-            RootNode rootNode = getRootNode();
-            String function = "?";
-            if (rootNode instanceof RRootNode) {
-                function = rootNode.toString();
-            }
-            SourceSection sourceSection = getRSyntaxNode().getSourceSection();
-            int startLine = -1;
-            if (sourceSection != null) {
-                startLine = sourceSection.getStartLine();
-            }
-            return String.format("for-<%s:%d>", function, startLine);
+            return forNode.toString();
         }
     }
 
