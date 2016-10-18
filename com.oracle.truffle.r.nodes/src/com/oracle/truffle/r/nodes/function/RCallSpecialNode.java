@@ -234,8 +234,8 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         return argumentIndex != NO_RECURSIVE_ARGUMENT_INDEX && getParent() != null && getParent().getParent() instanceof RCallSpecialNode;
     }
 
-    private RCallNode getRCallNode(RSyntaxNode[] arguments) {
-        return RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, arguments);
+    private RCallNode getRCallNode(RSyntaxNode[] newArguments) {
+        return RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
     }
 
     private RCallNode getRCallNode() {

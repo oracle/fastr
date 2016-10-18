@@ -86,7 +86,7 @@ public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallB
     }
 
     @Override
-    public com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode createWrapper(RCallBaseNode node, ProbeNode probe) {
+    public InstrumentableFactory.WrapperNode createWrapper(RCallBaseNode node, ProbeNode probe) {
         return new RCallBaseNodeWrapper(node, probe);
     }
 }

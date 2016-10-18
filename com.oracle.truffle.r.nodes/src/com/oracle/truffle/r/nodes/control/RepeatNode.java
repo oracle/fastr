@@ -28,12 +28,9 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.ConvertBooleanNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -41,18 +38,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
+public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private LoopNode loop;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private WhileNode(SourceSection src, RSyntaxNode condition, RSyntaxNode body) {
+    private RepeatNode(SourceSection src, RSyntaxNode body) {
         super(src);
-        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
+        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, body.asRNode()));
     }
 
-    public static WhileNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode body) {
-        return new WhileNode(src, condition, body);
+    public static RepeatNode create(SourceSection src, RSyntaxNode body) {
+        return new RepeatNode(src, body);
     }
 
     @Override
@@ -64,34 +61,25 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     private static final class WhileRepeatingNode extends Node implements RepeatingNode {
 
-        @Child private ConvertBooleanNode condition;
         @Child private RNode body;
 
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile normalBlock = BranchProfile.create();
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
-        private final WhileNode whileNode;
+        private final RepeatNode whileNode;
 
-        WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
+        WhileRepeatingNode(RepeatNode whileNode, RNode body) {
             this.whileNode = whileNode;
-            this.condition = condition;
             this.body = body;
-            // pre-initialize the profile so that loop exits to not deoptimize
-            conditionProfile.profile(false);
         }
 
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
             try {
-                if (conditionProfile.profile(condition.executeByte(frame) == RRuntime.LOGICAL_TRUE)) {
-                    body.execute(frame);
-                    normalBlock.enter();
-                    return true;
-                } else {
-                    return false;
-                }
+                body.execute(frame);
+                normalBlock.enter();
+                return true;
             } catch (BreakException e) {
                 breakBlock.enter();
                 return false;
@@ -109,17 +97,16 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "while", true);
+        return RSyntaxLookup.createDummyLookup(getSourceSection(), "repeat", true);
     }
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        WhileRepeatingNode repeatingNode = (WhileRepeatingNode) loop.getRepeatingNode();
-        return new RSyntaxElement[]{repeatingNode.condition.asRSyntaxNode(), repeatingNode.body.asRSyntaxNode()};
+        return new RSyntaxElement[]{((WhileRepeatingNode) loop.getRepeatingNode()).body.asRSyntaxNode()};
     }
 
     @Override
     public ArgumentsSignature getSyntaxSignature() {
-        return ArgumentsSignature.empty(2);
+        return ArgumentsSignature.empty(1);
     }
 }

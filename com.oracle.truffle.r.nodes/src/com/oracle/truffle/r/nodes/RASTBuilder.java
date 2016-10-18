@@ -40,13 +40,13 @@ import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
+import com.oracle.truffle.r.nodes.control.RepeatNode;
 import com.oracle.truffle.r.nodes.control.ReplacementNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
@@ -102,14 +102,14 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             } else if (args.size() == 1) {
                 switch (symbol) {
                     case "repeat":
-                        return WhileNode.create(source, ConstantNode.create(RRuntime.LOGICAL_TRUE), args.get(0).value, true);
+                        return RepeatNode.create(source, args.get(0).value);
                     case "(":
                         return args.get(0).value;
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {
                     case "while":
-                        return WhileNode.create(source, args.get(0).value, args.get(1).value, false);
+                        return WhileNode.create(source, args.get(0).value, args.get(1).value);
                     case "if":
                         return IfNode.create(source, args.get(0).value, args.get(1).value, null);
                     case "=":
@@ -183,10 +183,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             String functionBody = source.getCode();
             return functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
         }
-    }
-
-    private RCallNode createFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
-        return null;
     }
 
     /**

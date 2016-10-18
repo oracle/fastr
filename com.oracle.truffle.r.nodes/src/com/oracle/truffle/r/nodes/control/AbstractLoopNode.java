@@ -22,12 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /** Marker class for loops. */
 public abstract class AbstractLoopNode extends RSourceSectionNode {
     protected AbstractLoopNode(SourceSection sourceSection) {
         super(sourceSection);
+    }
+
+    @Override
+    public String toString() {
+        RootNode rootNode = getRootNode();
+        String function = "?";
+        if (rootNode instanceof RRootNode) {
+            function = rootNode.toString();
+        }
+        SourceSection sourceSection = getSourceSection();
+        int startLine = -1;
+        if (sourceSection != null) {
+            startLine = sourceSection.getStartLine();
+        }
+        RSyntaxElement call = ((RSyntaxCall) this).getSyntaxLHS();
+        String name = ((RSyntaxLookup) call).getIdentifier();
+        return String.format(name + "-<%s:%d>", function, startLine);
     }
 }
