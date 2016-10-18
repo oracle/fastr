@@ -64,7 +64,7 @@ import com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGe
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
 import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
-import com.oracle.truffle.r.library.utils.Download;
+import com.oracle.truffle.r.library.utils.DownloadNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
@@ -343,7 +343,7 @@ public class ForeignFunctions {
                 // stats
 
                 case "fft":
-                    return new Fft();
+                    return FftNodeGen.create();
                 case "cov":
                     return new Covcor(false);
                 case "cor":
@@ -583,7 +583,7 @@ public class ForeignFunctions {
                 case "readtablehead":
                     return new ReadTableHead();
                 case "download":
-                    return new Download();
+                    return DownloadNodeGen.create();
                 case "termsform":
                     return getExternalModelBuiltinNode("termsform");
                 case "Rprof":
