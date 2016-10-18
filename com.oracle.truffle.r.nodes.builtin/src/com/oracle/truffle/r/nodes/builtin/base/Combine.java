@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.COMPLEX_PRECEDENCE;
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.DOUBLE_PRECEDENCE;
 import static com.oracle.truffle.r.nodes.unary.PrecedenceNode.EXPRESSION_PRECEDENCE;
@@ -46,6 +47,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
@@ -76,7 +78,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Combine extends RBuiltinNode {
 
     public static Combine create() {
@@ -101,19 +103,24 @@ public abstract class Combine extends RBuiltinNode {
     private final ConditionProfile hasNewNamesProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private final ValueProfile[] argProfiles = new ValueProfile[MAX_PROFILES];
 
-    public abstract Object executeCombine(Object value);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+    }
+
+    public abstract Object executeCombine(Object value, Object recursive);
 
     protected boolean isSimpleArguments(RArgsValuesAndNames args) {
         return !signatureHasNames(args.getSignature()) && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector);
     }
 
-    @Specialization(guards = "isSimpleArguments(args)")
-    protected Object combineSimple(RArgsValuesAndNames args) {
+    @Specialization(guards = {"isSimpleArguments(args)", "!recursive"})
+    protected Object combineSimple(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive) {
         return args.getArgument(0);
     }
 
-    @Specialization(contains = "combineSimple", limit = "1", guards = {"args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
-    protected Object combineCached(RArgsValuesAndNames args, //
+    @Specialization(contains = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
+    protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive, //
                     @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
                     @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
@@ -142,6 +149,39 @@ public abstract class Combine extends RBuiltinNode {
         RNode.reportWork(this, size);
 
         return result;
+    }
+
+    @Specialization(guards = "recursive")
+    protected Object combineRecursive(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
+                    @Cached("create()") Combine recursiveCombine, //
+                    @Cached("createBinaryProfile()") ConditionProfile useNewArgsProfile) {
+        return combineRecursive(args, recursiveCombine, useNewArgsProfile);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExplodeLoop
+    private Object combineRecursive(RArgsValuesAndNames args, Combine recursiveCombine, ConditionProfile useNewArgsProfile) {
+        Object[] argsArray = args.getArguments();
+        Object[] newArgsArray = new Object[argsArray.length];
+        boolean useNewArgs = false;
+        for (int i = 0; i < argsArray.length; i++) {
+            Object arg = argsArray[i];
+            if (arg instanceof RList) {
+                Object[] argsFromList = ((RList) arg).getDataWithoutCopying();
+                newArgsArray[i] = recursiveCombine.executeCombine(new RArgsValuesAndNames(argsFromList,
+                                ArgumentsSignature.empty(argsFromList.length)), true);
+                useNewArgs = true;
+            } else {
+                newArgsArray[i] = arg;
+            }
+        }
+
+        if (useNewArgsProfile.profile(useNewArgs)) {
+            return recursiveCombine.executeCombine(new RArgsValuesAndNames(newArgsArray,
+                            args.getSignature()), false);
+        } else {
+            return recursiveCombine.executeCombine(args, false);
+        }
     }
 
     @ExplodeLoop
@@ -280,19 +320,18 @@ public abstract class Combine extends RBuiltinNode {
 
     @TruffleBoundary
     @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = "cachedPrecedence == precedence(args)")
-    protected Object combine(RArgsValuesAndNames args, //
+    protected Object combine(RArgsValuesAndNames args, boolean recursive, //
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("create()") BranchProfile naNameBranch, //
                     @Cached("create()") NACheck naNameCheck, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
-        return combineCached(args, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile);
+        return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile);
     }
 
     @Specialization(guards = "!isArguments(args)")
-    protected Object nonArguments(Object args,
-                    @Cached("create()") Combine combine) {
-        return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE));
+    protected Object nonArguments(Object args, boolean recursive, @Cached("create()") Combine combine) {
+        return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE), recursive);
     }
 
     private Object readAndCast(CastNode castNode, Object arg, int precedence) {

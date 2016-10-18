@@ -82,7 +82,7 @@ public abstract class Range extends RBuiltinNode {
     @Specialization(contains = "rangeLengthOne")
     protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
                     @Cached("create()") Combine combine) {
-        Object combined = combine.executeCombine(args);
+        Object combined = combine.executeCombine(args, false);
         Object min = minReduce.executeReduce(combined, naRm, finite);
         Object max = maxReduce.executeReduce(combined, naRm, finite);
         return createResult(min, max);
