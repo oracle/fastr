@@ -41,7 +41,7 @@ public abstract class Prod extends RBuiltinNode {
 
     public abstract Object executeObject(Object x);
 
-    @Child private BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
+    @Child private BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.createOperation();
 
     @Specialization
     protected Object prod(RArgsValuesAndNames args) {

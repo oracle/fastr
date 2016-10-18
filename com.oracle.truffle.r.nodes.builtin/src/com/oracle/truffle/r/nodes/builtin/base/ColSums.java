@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 @RBuiltin(name = "colSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColSums extends ColSumsBase {
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
     private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();

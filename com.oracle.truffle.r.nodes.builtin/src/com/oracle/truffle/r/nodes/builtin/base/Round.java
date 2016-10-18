@@ -298,7 +298,7 @@ public abstract class Round extends RBuiltinNode {
             if (RRuntime.isFinite(x) && RRuntime.isFinite(y)) {
                 if (pow == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    pow = insert(BinaryArithmetic.POW.create());
+                    pow = insert(BinaryArithmetic.POW.createOperation());
                 }
                 return pow.op(x, y);
             }

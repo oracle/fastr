@@ -43,8 +43,8 @@ public abstract class Mean extends RBuiltinNode {
 
     private final BranchProfile emptyProfile = BranchProfile.create();
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
-    @Child private BinaryArithmetic div = BinaryArithmetic.DIV.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
+    @Child private BinaryArithmetic div = BinaryArithmetic.DIV.createOperation();
 
     @Specialization
     protected double mean(RAbstractDoubleVector x) {

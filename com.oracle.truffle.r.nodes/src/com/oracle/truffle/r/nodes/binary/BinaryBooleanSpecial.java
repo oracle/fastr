@@ -48,7 +48,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
     }
 
     public static RSpecialFactory createSpecialFactory(final BooleanOperationFactory opFactory) {
-        return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryBooleanSpecialNodeGen.create(opFactory.create(), arguments) : null;
+        return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryBooleanSpecialNodeGen.create(opFactory.createOperation(), arguments) : null;
     }
 
     @Specialization

@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 @RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColMeans extends ColSumsBase {
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     @Specialization(guards = "!naRm")
     protected RDoubleVector colMeansNaRmFalse(RAbstractDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {

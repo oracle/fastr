@@ -61,8 +61,8 @@ public abstract class MatMult extends RBuiltinNode {
 
     private static final int BLOCK_SIZE = 64;
 
-    @Child private BinaryMapArithmeticFunctionNode mult = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.MULTIPLY.create());
-    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
+    @Child private BinaryMapArithmeticFunctionNode mult = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.MULTIPLY.createOperation());
+    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.createOperation());
     private final boolean promoteDimNames;
 
     private final BranchProfile errorProfile = BranchProfile.create();

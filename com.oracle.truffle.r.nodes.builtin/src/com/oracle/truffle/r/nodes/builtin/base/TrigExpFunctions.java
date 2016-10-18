@@ -78,7 +78,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             if (calculatePowNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                calculatePowNode = insert(BinaryArithmetic.POW.create());
+                calculatePowNode = insert(BinaryArithmetic.POW.createOperation());
             }
             return calculatePowNode.op(Math.E, 0, re, im);
         }
@@ -102,7 +102,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             if (calculatePowNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                calculatePowNode = insert(BinaryArithmetic.POW.create());
+                calculatePowNode = insert(BinaryArithmetic.POW.createOperation());
             }
             RComplex x = calculatePowNode.op(Math.E, 0, re, im);
             return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());

@@ -60,7 +60,7 @@ public abstract class CumSum extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     @Override
     protected void createCasts(CastBuilder casts) {

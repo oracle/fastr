@@ -42,7 +42,7 @@ public abstract class RowSumsBase extends ColSumsBase {
      */
     private static final int UNROLL = 8;
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     private final ConditionProfile remainderProfile = ConditionProfile.createBinaryProfile();
     private final LoopConditionProfile outerProfile = LoopConditionProfile.createCountingProfile();

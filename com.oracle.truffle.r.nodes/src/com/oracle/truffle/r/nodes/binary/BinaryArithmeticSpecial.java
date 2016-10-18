@@ -59,9 +59,9 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         boolean handleIntegers = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.DIV);
         if (handleIntegers) {
             return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2
-                            ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory.create(), handleNA, arguments) : null;
+                            ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments) : null;
         } else {
-            return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryArithmeticSpecialNodeGen.create(opFactory.create(), handleNA, arguments)
+            return (signature, arguments) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments)
                             : null;
         }
     }

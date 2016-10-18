@@ -87,7 +87,7 @@ public abstract class PMinMax extends RBuiltinNode {
     protected PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.semantics = semantics;
         this.factory = factory;
-        this.op = factory.create();
+        this.op = factory.createOperation();
     }
 
     @Override
@@ -396,7 +396,7 @@ public abstract class PMinMax extends RBuiltinNode {
         protected MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
-            this.op = factory.create();
+            this.op = factory.createOperation();
             this.na = na;
         }
 
