@@ -66,6 +66,6 @@ public abstract class Max extends RBuiltinNode {
     @Specialization(contains = "maxLengthOne")
     protected Object max(RArgsValuesAndNames args, boolean naRm, //
                     @Cached("create()") Combine combine) {
-        return reduce.executeReduce(combine.executeCombine(args), naRm, false);
+        return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);
     }
 }

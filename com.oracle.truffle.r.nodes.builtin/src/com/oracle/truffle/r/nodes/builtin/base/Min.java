@@ -66,6 +66,6 @@ public abstract class Min extends RBuiltinNode {
     @Specialization(contains = "minLengthOne")
     protected Object min(RArgsValuesAndNames args, boolean naRm, //
                     @Cached("create()") Combine combine) {
-        return reduce.executeReduce(combine.executeCombine(args), naRm, false);
+        return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);
     }
 }
