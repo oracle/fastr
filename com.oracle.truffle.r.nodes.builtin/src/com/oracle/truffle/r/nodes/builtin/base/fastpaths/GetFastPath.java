@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class GetFastPath extends RFastPathNode {
 
-    @Child private Get get = GetNodeGen.create(null);
+    @Child private Get get = GetNodeGen.create();
 
     @Specialization
     @SuppressWarnings("unused")

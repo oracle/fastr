@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -61,8 +60,8 @@ public abstract class MatMult extends RBuiltinNode {
 
     private static final int BLOCK_SIZE = 64;
 
-    @Child private BinaryMapArithmeticFunctionNode mult = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.MULTIPLY.create());
-    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
+    @Child private BinaryMapArithmeticFunctionNode mult = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.MULTIPLY.createOperation());
+    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.createOperation());
     private final boolean promoteDimNames;
 
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -85,8 +84,8 @@ public abstract class MatMult extends RBuiltinNode {
         this.na = NACheck.create();
     }
 
-    public static MatMult create(RNode[] arguments) {
-        return MatMultNodeGen.create(true, arguments);
+    public static MatMult create() {
+        return MatMultNodeGen.create(true);
     }
 
     @Specialization(guards = "bothZeroDim(a, b)")

@@ -223,7 +223,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
                 this.builtinDescriptor = function.getRBuiltin();
-                this.builtin = RBuiltinNode.inline(builtinDescriptor, null);
+                this.builtin = RBuiltinNode.inline(builtinDescriptor);
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = CallRFunctionNode.create(function.getTarget());

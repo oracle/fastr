@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RDispatch.SPECIAL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -40,9 +39,9 @@ import com.oracle.truffle.r.nodes.builtin.base.MissingFactory.MissingCheckCacheN
 import com.oracle.truffle.r.nodes.function.GetMissingValueNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -50,10 +49,9 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = SPECIAL, behavior = COMPLEX)
-public final class Missing extends RBuiltinNode {
+@RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
+public final class Missing extends RNode {
 
     private final String symbol;
 
@@ -186,20 +184,24 @@ public final class Missing extends RBuiltinNode {
     }
 
     @Override
-    public Object executeBuiltin(VirtualFrame frame, Object... args) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
     public Object execute(VirtualFrame frame) {
         return RRuntime.asLogical(cache.execute(frame, symbol));
     }
 
-    public static RBuiltinNode create(RNode[] arguments) {
+    public static RBuiltinNode create() {
+        return new RBuiltinNode() {
+            @Override
+            public Object executeBuiltin(VirtualFrame frame, Object... args) {
+                throw RError.error(this, Message.INVALID_USE, "missing");
+            }
+        };
+    }
+
+    public static RNode createSpecial(@SuppressWarnings("unused") ArgumentsSignature signature, RNode[] arguments) {
         if (arguments.length != 1) {
             throw RError.error(RError.SHOW_CALLER, Message.ARGUMENTS_REQUIRED_COUNT, arguments.length, "missing", 1);
         }
-        RSyntaxNode arg = arguments[0].asRSyntaxNode();
+        RNode arg = arguments[0];
         String symbol = null;
         if (arg instanceof RSyntaxLookup) {
             symbol = ((RSyntaxLookup) arg).getIdentifier();

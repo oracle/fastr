@@ -61,7 +61,7 @@ public abstract class IsNA extends RBuiltinNode {
     private Object isNARecursive(Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveIsNA = insert(IsNANodeGen.create(null));
+            recursiveIsNA = insert(IsNANodeGen.create());
         }
         return recursiveIsNA.execute(o);
     }

@@ -47,7 +47,7 @@ public abstract class CumProd extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.create();
+    @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.createOperation();
 
     @Override
     protected void createCasts(CastBuilder casts) {

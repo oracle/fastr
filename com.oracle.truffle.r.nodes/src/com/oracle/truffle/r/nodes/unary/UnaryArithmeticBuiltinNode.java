@@ -52,7 +52,7 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
     }
 
     @Override
-    public UnaryArithmetic create() {
+    public UnaryArithmetic createOperation() {
         return new UnaryArithmetic() {
 
             @Override

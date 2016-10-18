@@ -89,7 +89,7 @@ public abstract class Substitute extends RBuiltinNode {
         if (env == REnvironment.globalEnv()) {
             if (quote == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                quote = insert(QuoteNodeGen.create(null));
+                quote = insert(QuoteNodeGen.create());
             }
             return quote.execute(expr);
         }

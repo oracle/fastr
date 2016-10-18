@@ -71,7 +71,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
         this.semantics = semantics;
-        this.arithmetic = factory.create();
+        this.arithmetic = factory.createOperation();
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -456,7 +456,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         MultiElemStringHandlerNode(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
-            this.arithmetic = factory.create();
+            this.arithmetic = factory.createOperation();
             this.na = na;
         }
 

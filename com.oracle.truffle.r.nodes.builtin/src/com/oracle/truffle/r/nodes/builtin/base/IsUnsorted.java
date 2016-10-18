@@ -50,8 +50,8 @@ import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 // TODO support lists
 public abstract class IsUnsorted extends RBuiltinNode {
 
-    @Child private BinaryMapBooleanFunctionNode ge = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_EQUAL.create());
-    @Child private BinaryMapBooleanFunctionNode gt = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_THAN.create());
+    @Child private BinaryMapBooleanFunctionNode ge = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_EQUAL.createOperation());
+    @Child private BinaryMapBooleanFunctionNode gt = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_THAN.createOperation());
 
     private final ConditionProfile strictlyProfile = ConditionProfile.createBinaryProfile();
 

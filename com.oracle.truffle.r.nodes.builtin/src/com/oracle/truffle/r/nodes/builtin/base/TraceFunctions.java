@@ -81,7 +81,7 @@ public class TraceFunctions {
         protected Object getFunction(VirtualFrame frame, String funcName) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(null));
+                getNode = insert(GetNodeGen.create());
             }
             return getNode.execute(frame, funcName, RContext.getInstance().stateREnvironment.getGlobalEnv(), RType.Function.getName(), true);
         }

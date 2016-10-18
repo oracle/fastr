@@ -26,5 +26,5 @@ package com.oracle.truffle.r.runtime.ops;
 public interface UnaryArithmeticFactory extends OperationFactory {
 
     @Override
-    UnaryArithmetic create();
+    UnaryArithmetic createOperation();
 }

@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -92,7 +91,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursive(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursive = insert(IdenticalNodeGen.create(null));
+            identicalRecursive = insert(IdenticalNodeGen.create());
         }
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -100,7 +99,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursiveAttr(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursiveAttr == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursiveAttr = insert(IdenticalNodeGen.create(null));
+            identicalRecursiveAttr = insert(IdenticalNodeGen.create());
         }
         return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -369,7 +368,7 @@ public abstract class Identical extends RBuiltinNode {
         return x instanceof RConnection && y instanceof RConnection;
     }
 
-    public static Identical create(RNode[] arguments) {
-        return IdenticalNodeGen.create(arguments);
+    public static Identical create() {
+        return IdenticalNodeGen.create();
     }
 }

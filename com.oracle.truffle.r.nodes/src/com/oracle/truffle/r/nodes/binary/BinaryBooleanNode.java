@@ -84,7 +84,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
-        return BinaryBooleanNodeGen.create(factory, null);
+        return BinaryBooleanNodeGen.create(factory);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
@@ -96,7 +96,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @Specialization(contains = "doNumericVectorCached", guards = "isSupported(left, right)")
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right, //
-                    @Cached("factory.create()") BooleanOperation operation, //
+                    @Cached("factory.createOperation()") BooleanOperation operation, //
                     @Cached("new(createCached(operation, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
@@ -105,7 +105,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isSupported(left, right)) {
-            return createCached(factory.create(), left, right);
+            return createCached(factory.createOperation(), left, right);
         }
         return null;
     }
@@ -166,7 +166,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
     protected Object doOneArg(Object left, Object right) {
-        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.create().opName(), 2);
+        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
     }
 
     protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {

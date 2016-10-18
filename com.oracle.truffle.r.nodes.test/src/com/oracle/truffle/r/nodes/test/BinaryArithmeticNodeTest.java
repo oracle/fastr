@@ -181,7 +181,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     private static RType getResultType(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
         RType resultType = getArgumentType(a, b);
-        if (!factory.create().isSupportsIntResult() && resultType == RType.Integer) {
+        if (!factory.createOperation().isSupportsIntResult() && resultType == RType.Integer) {
             resultType = RType.Double;
         }
         return resultType;

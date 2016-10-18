@@ -159,11 +159,11 @@ public class BasePackage extends RBuiltinPackage {
         addBinaryCompare(BinaryCompare.LessBuiltin.class, BinaryCompare.LESS_THAN);
         addBinaryCompare(BinaryCompare.LessEqualBuiltin.class, BinaryCompare.LESS_EQUAL);
 
-        add(BinaryLogic.AndBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryLogic.AND, arguments));
-        add(BinaryLogic.OrBuiltin.class, arguments -> BinaryBooleanNodeGen.create(BinaryLogic.OR, arguments));
+        add(BinaryLogic.AndBuiltin.class, () -> BinaryBooleanNodeGen.create(BinaryLogic.AND));
+        add(BinaryLogic.OrBuiltin.class, () -> BinaryBooleanNodeGen.create(BinaryLogic.OR));
 
-        add(BinaryLogic.NonVectorAndBuiltin.class, arguments -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_AND, arguments));
-        add(BinaryLogic.NonVectorOrBuiltin.class, arguments -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR, arguments));
+        add(BinaryLogic.NonVectorAndBuiltin.class, () -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_AND));
+        add(BinaryLogic.NonVectorOrBuiltin.class, () -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR));
 
         // Now load the rest of the builtins in "base"
         add(APerm.class, APermNodeGen::create);
@@ -492,7 +492,7 @@ public class BasePackage extends RBuiltinPackage {
         add(MakeNames.class, MakeNamesNodeGen::create);
         add(MakeUnique.class, MakeUniqueNodeGen::create);
         add(Mapply.class, MapplyNodeGen::create);
-        add(MatMult.class, MatMultNodeGen::create);
+        add(MatMult.class, MatMult::create);
         add(Match.class, MatchNodeGen::create);
         add(MatchFun.class, MatchFunNodeGen::create);
         add(Matrix.class, MatrixNodeGen::create);
@@ -500,7 +500,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Mean.class, MeanNodeGen::create);
         add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
-        add(Missing.class, Missing::create);
+        add(Missing.class, Missing::create, Missing::createSpecial);
         add(NumericalFunctions.Mod.class, NumericalFunctionsFactory.ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
         add(NChar.class, NCharNodeGen::create);
@@ -685,12 +685,11 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private void addBinaryArithmetic(Class<?> builtinClass, BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        add(builtinClass, arguments -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory, arguments),
-                        BinaryArithmeticSpecial.createSpecialFactory(binaryFactory));
+        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory));
     }
 
     private void addBinaryCompare(Class<?> builtinClass, BooleanOperationFactory factory) {
-        add(builtinClass, arguments -> BinaryBooleanNodeGen.create(factory, arguments), BinaryBooleanSpecial.createSpecialFactory(factory));
+        add(builtinClass, () -> BinaryBooleanNodeGen.create(factory), BinaryBooleanSpecial.createSpecialFactory(factory));
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {

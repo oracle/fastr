@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -161,8 +160,8 @@ public class WhichFunctions {
             super(true);
         }
 
-        public static WhichMinMax create(RNode[] arguments) {
-            return WhichMaxNodeGen.create(arguments);
+        public static WhichMinMax create() {
+            return WhichMaxNodeGen.create();
         }
     }
 
@@ -172,8 +171,8 @@ public class WhichFunctions {
             super(false);
         }
 
-        public static WhichMinMax create(RNode[] arguments) {
-            return WhichMinNodeGen.create(arguments);
+        public static WhichMinMax create() {
+            return WhichMinNodeGen.create();
         }
     }
 }

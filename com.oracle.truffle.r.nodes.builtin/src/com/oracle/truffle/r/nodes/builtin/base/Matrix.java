@@ -58,7 +58,7 @@ public abstract class Matrix extends RBuiltinNode {
     private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create());
         }
         return (RAbstractVector) updateDimNames.executeRAbstractContainer(vector, o);
     }
@@ -90,7 +90,7 @@ public abstract class Matrix extends RBuiltinNode {
                 if (byrowProfile.profile(byrow)) {
                     if (transpose == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        transpose = insert(TransposeNodeGen.create(null));
+                        transpose = insert(TransposeNodeGen.create());
                     }
                     res = (RVector<?>) transpose.execute(res);
                 }
@@ -106,7 +106,7 @@ public abstract class Matrix extends RBuiltinNode {
             if (byrowProfile.profile(byrow)) {
                 if (transpose == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    transpose = insert(TransposeNodeGen.create(null));
+                    transpose = insert(TransposeNodeGen.create());
                 }
                 res = (RVector<?>) transpose.execute(res);
             }

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an R package that is (partially) built-in to the implementation. Historically, several of
@@ -156,11 +155,11 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor) {
+    protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor) {
         add(builtinClass, constructor, null);
     }
 
-    protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor, RSpecialFactory specialCall) {
+    protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
         RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
