@@ -151,6 +151,17 @@ public abstract class Combine extends RBuiltinNode {
         return result;
     }
 
+    @TruffleBoundary
+    @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
+    protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive, //
+                    @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
+                    @Cached("createCast(cachedPrecedence)") CastNode cast, //
+                    @Cached("create()") BranchProfile naNameBranch, //
+                    @Cached("create()") NACheck naNameCheck, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
+        return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile);
+    }
+
     @Specialization(guards = "recursive")
     protected Object combineRecursive(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("create()") Combine recursiveCombine, //
@@ -316,17 +327,6 @@ public abstract class Combine extends RBuiltinNode {
 
     private static boolean signatureHasNames(ArgumentsSignature signature) {
         return signature != null && signature.getNonNullCount() > 0;
-    }
-
-    @TruffleBoundary
-    @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = "cachedPrecedence == precedence(args)")
-    protected Object combine(RArgsValuesAndNames args, boolean recursive, //
-                    @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
-                    @Cached("createCast(cachedPrecedence)") CastNode cast, //
-                    @Cached("create()") BranchProfile naNameBranch, //
-                    @Cached("create()") NACheck naNameCheck, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
-        return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile);
     }
 
     @Specialization(guards = "!isArguments(args)")
