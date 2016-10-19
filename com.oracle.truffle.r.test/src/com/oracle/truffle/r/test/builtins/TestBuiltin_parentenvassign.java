@@ -31,9 +31,9 @@ public class TestBuiltin_parentenvassign extends TestBase {
     @Test
     public void testParentEnv() {
         assertEval("parent.env() <- new.env()");
-        assertEval(Output.IgnoreErrorContext, "parent.env(NULL) <- new.env()");
-        assertEval(Output.IgnoreErrorContext, "parent.env(1) <- new.env()");
-        assertEval(Output.IgnoreErrorContext, "parent.env(c(1,2,3)) <- new.env()");
+        assertEval("parent.env(NULL) <- new.env()");
+        assertEval("parent.env(1) <- new.env()");
+        assertEval("parent.env(c(1,2,3)) <- new.env()");
         assertEval("parent.env(emptyenv()) <- new.env()");
         assertEval(Output.IgnoreErrorContext, "e <- new.env(); parent.env(e) <- 44");
         assertEval(Output.IgnoreErrorContext, Output.IgnoreErrorMessage, "e <- new.env(); parent.env(e) <- NULL");
