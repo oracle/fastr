@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -58,6 +59,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
+    @TruffleBoundary
     protected int download(String urlString, String destFile, @SuppressWarnings("unused") boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK) {
         try {
             try (InputStream in = new URL(urlString).openStream()) {

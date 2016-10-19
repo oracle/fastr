@@ -69,9 +69,9 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        if (value instanceof Integer) {
             return (int) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
@@ -79,9 +79,9 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public RRaw executeRRaw(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        if (value instanceof RRaw) {
             return (RRaw) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
@@ -93,9 +93,10 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public RComplex executeRComplex(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        assert value != null;
+        if (value instanceof RComplex) {
             return (RComplex) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
@@ -163,9 +164,9 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        if (value instanceof Double) {
             return (double) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
@@ -173,9 +174,9 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        if (value instanceof Byte) {
             return (byte) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
@@ -199,9 +200,9 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
     public String executeString(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;
-        try {
+        if (value instanceof String) {
             return (String) value;
-        } catch (ClassCastException e) {
+        } else {
             throw new UnexpectedResultException(value);
         }
     }
