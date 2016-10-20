@@ -53,7 +53,6 @@ import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
@@ -159,8 +158,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 name = ((RSyntaxLookup) replacementLhs).getIdentifier();
             } else if (replacementLhs instanceof RSyntaxConstant) {
                 RSyntaxConstant c = (RSyntaxConstant) replacementLhs;
-                assert c.getValue() instanceof String;
-                name = (String) c.getValue();
+                if (c.getValue() instanceof String) {
+                    name = (String) c.getValue();
+                } else {
+                    return new ReplacementNode.LHSError(source, operator, replacementLhs, replacementRhs, false);
+                }
             } else {
                 throw RInternalError.unimplemented("unexpected lhs type: " + replacementLhs.getClass());
             }
@@ -288,18 +290,14 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         RSyntaxElement current = lhs;
         while (!(current instanceof RSyntaxLookup)) {
             if (!(current instanceof RSyntaxCall)) {
-                if (current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance) {
-                    throw RError.error(RError.NO_CALLER, RError.Message.INVALID_LHS, "NULL");
-                } else {
-                    throw RError.error(RError.NO_CALLER, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
-                }
+                return new ReplacementNode.LHSError(source, operator, lhs, rhs, current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance);
             }
             RSyntaxCall call = (RSyntaxCall) current;
             calls.add(call);
 
             RSyntaxElement syntaxLHS = call.getSyntaxLHS();
             if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
-                return new ReplacementNode.LHSError(source, operator, new RSyntaxElement[]{lhs, rhs});
+                return new ReplacementNode.LHSError(source, operator, lhs, rhs, true);
             }
             current = call.getSyntaxArguments()[0];
         }

@@ -33,10 +33,10 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -130,18 +130,28 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
     public static final class LHSError extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
         private final String operator;
-        private final RSyntaxElement[] arguments;
+        private final RSyntaxElement lhs;
+        private final RSyntaxElement rhs;
+        private final boolean nullError;
 
-        public LHSError(SourceSection sourceSection, String operator, RSyntaxElement[] arguments) {
+        public LHSError(SourceSection sourceSection, String operator, RSyntaxElement lhs, RSyntaxElement rhs, boolean nullError) {
             super(sourceSection);
             this.operator = operator;
-            this.arguments = arguments;
+            this.lhs = lhs;
+            this.rhs = rhs;
+            this.nullError = nullError;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, Message.INVALID_LHS, "NULL");
+            if (nullError) {
+                throw RError.error(this, RError.Message.INVALID_NULL_LHS);
+            } else if (lhs instanceof RSyntaxConstant) {
+                throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
+            } else {
+                throw RError.error(this, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+            }
         }
 
         @Override
@@ -151,7 +161,7 @@ public final class ReplacementNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public RSyntaxElement[] getSyntaxArguments() {
-            return arguments;
+            return new RSyntaxElement[]{lhs, rhs};
         }
 
         @Override

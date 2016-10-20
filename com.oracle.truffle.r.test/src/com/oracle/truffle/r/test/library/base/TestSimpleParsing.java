@@ -99,4 +99,22 @@ public class TestSimpleParsing extends TestBase {
         assertEval("{ ..77foo <- 42 }");
     }
 
+    @Test
+    public void testReplacement() {
+        assertEval("a <- 123");
+        assertEval("'a' <- 123");
+        assertEval("`a` <- 123");
+        assertEval("\"a\" <- 123");
+        assertEval("123 <- 123");
+        assertEval("if (FALSE) 123 <- 123");
+        assertEval("NULL <- 123");
+        assertEval("if (FALSE) NULL <- 123");
+        assertEval("'' <- 123");
+        assertEval("if (FALSE) '' <- 123");
+        assertEval("if (FALSE) foo() <- 123");
+        assertEval("if (FALSE) foo(x) <- 123");
+        assertEval("if (FALSE) foo(NULL) <- 123");
+        assertEval("if (FALSE) foo(123) <- 123");
+    }
+
 }
