@@ -28,9 +28,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -42,6 +44,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -472,27 +475,35 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = PURE)
     public abstract static class IsVector extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final ConditionProfile attrNull = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile attrNames = ConditionProfile.createBinaryProfile();
 
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
-            casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1));
+            casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            // INTERNAL does not need default parameters
-            return RNode.EMPTY_OBJECT_ARRAY;
+        @TruffleBoundary
+        protected static RType typeFromMode(String mode) {
+            return RType.fromMode(mode);
         }
 
-        @Specialization
-        protected byte isVector(RAbstractVector x, String mode) {
-            if (!namesOnlyOrNoAttr(x) || !modeIsAnyOrMatches(x, mode)) {
-                return RRuntime.LOGICAL_FALSE;
-            } else {
+        @Specialization(limit = "5", guards = "cachedMode == mode")
+        protected byte isVectorCached(RAbstractVector x, String mode,
+                        @Cached("mode") String cachedMode,
+                        @Cached("typeFromMode(mode)") RType type) {
+            if (namesOnlyOrNoAttr(x) && (type == RType.Any || x.getRType() == type)) {
                 return RRuntime.LOGICAL_TRUE;
+            } else {
+                return RRuntime.LOGICAL_FALSE;
             }
+        }
+
+        @Specialization(contains = "isVectorCached")
+        protected byte isVector(RAbstractVector x, String mode) {
+            return isVectorCached(x, mode, mode, typeFromMode(mode));
         }
 
         @Fallback
@@ -501,19 +512,12 @@ public class IsTypeFunctions {
         }
 
         private boolean namesOnlyOrNoAttr(RAbstractVector x) {
-            // there should be no attributes other than names
-            if (x.getNames(attrProfiles) == null) {
-                assert x.getAttributes() == null || x.getAttributes().size() > 0;
-                return x.getAttributes() == null ? true : false;
+            RAttributes attributes = x.getAttributes();
+            if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
+                return true;
             } else {
-                assert x.getAttributes() != null;
-                return x.getAttributes().size() == 1 ? true : false;
+                return attributes.size() == 1 && attrNames.profile(attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY);
             }
-        }
-
-        private static boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-            return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
-                            RRuntime.classToString(x.getElementClass()).equals(mode);
         }
     }
 }
