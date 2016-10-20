@@ -132,14 +132,4 @@ public abstract class ArgumentStatePush extends Node {
     protected boolean isShareable(Object o) {
         return o instanceof RShareable;
     }
-
-    public static void transitionStateSlowPath(Object o) {
-        // this is expected to be used in rare cases where no RNode is easily available
-        if (o instanceof RShareable) {
-            RShareable shareable = (RShareable) o;
-            if (!shareable.isSharedPermanent()) {
-                shareable.incRefCount();
-            }
-        }
-    }
 }
