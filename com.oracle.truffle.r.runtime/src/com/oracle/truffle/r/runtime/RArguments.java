@@ -264,18 +264,6 @@ public final class RArguments {
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + getArgumentsLength(frame));
     }
 
-    /**
-     * <b>Only to be called from AccessArgumentNode!</b>
-     *
-     * @param frame
-     * @param argIndex
-     * @param newValue
-     */
-    public static void setArgument(Frame frame, int argIndex, Object newValue) {
-        assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        frame.getArguments()[INDEX_ARGUMENTS + argIndex] = newValue;
-    }
-
     public static int getArgumentsLength(Frame frame) {
         return getNArgs(frame);
     }
