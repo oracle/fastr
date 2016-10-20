@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -113,13 +112,9 @@ public final class AccessArgumentNode extends RNode {
         assert !(getRootNode() instanceof RBuiltinRootNode) : getRootNode();
         // Insert default value
         checkPromiseFactory();
-        Object result;
         if (canBeOptimized()) {
             if (checkInsertOptDefaultArg()) {
-                result = optDefaultArgNode.execute(frame);
-                // Update RArguments for S3 dispatch to work
-                RArguments.setArgument(frame, index, result);
-                return result;
+                return optDefaultArgNode.execute(frame);
             } else {
                 /*
                  * Default arg cannot be optimized: Rewrite to default and assure that we don't take
@@ -130,10 +125,7 @@ public final class AccessArgumentNode extends RNode {
             }
         }
         // Insert default value
-        result = factory.createPromise(frame.materialize());
-        // Update RArguments for S3 dispatch to work
-        RArguments.setArgument(frame, index, result);
-        return result;
+        return factory.createPromise(frame.materialize());
     }
 
     private Object doArgument(VirtualFrame frame, Object arg) {

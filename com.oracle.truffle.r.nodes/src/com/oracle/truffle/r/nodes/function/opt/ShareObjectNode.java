@@ -26,9 +26,11 @@ import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.data.RShareable;
 
 /**
@@ -36,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
  * If the object is not instance of {@link RShareable} or if it is shared permanent, then does
  * nothing.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NONE)
 public abstract class ShareObjectNode extends Node {
     public abstract Object execute(Object obj);
@@ -45,7 +48,8 @@ public abstract class ShareObjectNode extends Node {
     }
 
     @Specialization
-    protected Object doShareable(RShareable obj, @Cached("createBinaryProfile()") ConditionProfile sharedPermanent) {
+    protected Object doShareable(RShareable obj,
+                    @Cached("createBinaryProfile()") ConditionProfile sharedPermanent) {
         if (sharedPermanent.profile(!obj.isSharedPermanent())) {
             obj.incRefCount();
         }
@@ -59,5 +63,24 @@ public abstract class ShareObjectNode extends Node {
 
     protected static boolean isRShareable(Object value) {
         return value instanceof RShareable;
+    }
+
+    public static <T> T share(T value) {
+        if (value instanceof RShareable) {
+            RShareable shareable = (RShareable) value;
+            if (!shareable.isSharedPermanent()) {
+                shareable.incRefCount();
+            }
+        }
+        return value;
+    }
+
+    public static void unshare(Object value) {
+        if (value instanceof RShareable) {
+            RShareable shareable = (RShareable) value;
+            if (!shareable.isSharedPermanent()) {
+                shareable.decRefCount();
+            }
+        }
     }
 }

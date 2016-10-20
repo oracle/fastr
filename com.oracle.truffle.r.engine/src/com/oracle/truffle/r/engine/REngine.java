@@ -59,6 +59,7 @@ import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -93,7 +94,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -595,10 +595,7 @@ final class REngine implements Engine, Engine.Timings {
         Object result = evaluatePromise(originalResult);
         result = RRuntime.asAbstractVector(result);
         if (result instanceof RTypedValue || result instanceof TruffleObject) {
-            Object resultValue = evaluatePromise(result);
-            if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
-                ((RShareable) resultValue).incRefCount();
-            }
+            Object resultValue = ShareObjectNode.share(evaluatePromise(result));
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
             if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
                 Object printMethod = REnvironment.getRegisteredNamespace("methods").get("show");
@@ -609,9 +606,7 @@ final class REngine implements Engine, Engine.Timings {
                 RFunction function = (RFunction) evaluatePromise(printMethod);
                 CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
             }
-            if (resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
-                ((RShareable) resultValue).decRefCount();
-            }
+            ShareObjectNode.unshare(resultValue);
         } else {
             // this supports printing of non-R values (via toString for now)
             RContext.getInstance().getConsoleHandler().println(toString(result));

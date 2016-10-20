@@ -36,6 +36,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -46,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     @RBuiltin(name = "set.seed", visibility = OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"}, behavior = MODIFIES_STATE)
     public abstract static class SetSeed extends RBuiltinNode {
 
@@ -76,6 +79,7 @@ public class RNGFunctions {
         }
     }
 
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"}, behavior = MODIFIES_STATE)
     public abstract static class RNGkind extends RBuiltinNode {
 

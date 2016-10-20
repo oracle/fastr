@@ -35,10 +35,10 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -108,8 +108,7 @@ public abstract class Assign extends RBuiltinNode {
     @Specialization
     protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isShareableProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isRefCountUpdateable) {
+                    @Cached("create()") ShareObjectNode share) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
         if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
@@ -131,14 +130,8 @@ public abstract class Assign extends RBuiltinNode {
                 throw RError.error(errorContext(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
         }
-        if (isShareableProfile.profile(value instanceof RShareable)) {
-            RShareable shareable = (RShareable) value;
-            if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
-                shareable.incRefCount();
-            }
-        }
         try {
-            env.put(x, value);
+            env.put(x, share.execute(value));
         } catch (PutException ex) {
             errorProfile.enter();
             throw RError.error(errorContext(), ex);
