@@ -141,10 +141,14 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                             info.maybeAssignedNames.add(((RSyntaxLookup) arguments[0]).getIdentifier());
                         } else {
                             info.addBefore(accept(arguments[0]));
-                            while (!(current instanceof RSyntaxLookup)) {
+                            while (current instanceof RSyntaxCall) {
                                 current = ((RSyntaxCall) current).getSyntaxArguments()[0];
                             }
-                            info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
+                            if (current instanceof RSyntaxLookup) {
+                                info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
+                            } else {
+                                return Info.ANY;
+                            }
                         }
                         info.addBefore(accept(arguments[1]));
                         return info;
