@@ -61,22 +61,24 @@ def _copylib(lib, libpath, target):
         except subprocess.CalledProcessError:
             mx.abort('copylib: otool failed')
     # copy both files
-    shutil.copy(real_libpath, target)
+    shutil.copyfile(real_libpath, os.path.join(target, os.path.basename(real_libpath)))
+    mx.log('copied ' + lib + ' library from ' + real_libpath + ' to ' + target)
     libpath_base = os.path.basename(libpath)
     os.chdir(target)
-    if libpath != real_libpath:
+    mx.log('libpath: ' + libpath + ' real_libpath: ' + real_libpath)
+    if os.path.basename(libpath) != os.path.basename(real_libpath):
         # create a symlink
         if os.path.exists(libpath_base):
             os.remove(libpath_base)
+        mx.log('ln -s ' + os.path.basename(real_libpath) + ' ' + libpath_base)
         os.symlink(os.path.basename(real_libpath), libpath_base)
     # On Darwin we change the id to use @rpath
     if platform.system() == 'Darwin':
         try:
+            mx.log('install_name_tool -id @rpath/' + libpath_base + ' ' + libpath_base)
             subprocess.check_call(['install_name_tool', '-id', '@rpath/' + libpath_base, libpath_base])
         except subprocess.CalledProcessError:
             mx.abort('copylib: install_name_tool failed')
-    # TODO @rpath references within the library?
-    mx.log('copied ' + lib + ' library from ' + libpath + ' to ' + target)
 
 def copylib(args):
     '''
@@ -110,6 +112,9 @@ def copylib(args):
                         if not os.path.exists(os.path.join(target_dir, f)):
                             _copylib(args[0], os.path.join(path, f), args[1])
                         return 0
+
+    if os.environ.has_key('FASTR_RELEASE'):
+        mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
 
