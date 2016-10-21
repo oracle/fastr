@@ -257,7 +257,7 @@ def _fastr_gate_runner(args, tasks):
             if junit(['--J', '@-DR:-UseSpecials', '--tests', _gate_noapps_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
-    with mx_gate.Task('UnitTests', tasks) as t:
+    with mx_gate.Task('UnitTests: with specials', tasks) as t:
         if t:
             if junit(['--tests', _gate_unit_tests()]) != 0:
                 t.abort('unit tests failed')
