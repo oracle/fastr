@@ -500,7 +500,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Mean.class, MeanNodeGen::create);
         add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
-        add(Missing.class, Missing::create, Missing::createSpecial);
+        add(Missing.class, MissingNodeGen::create);
         add(NumericalFunctions.Mod.class, NumericalFunctionsFactory.ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
         add(NChar.class, NCharNodeGen::create);

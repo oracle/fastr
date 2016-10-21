@@ -50,6 +50,7 @@ import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
+import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -138,6 +139,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             switch (symbol) {
                 case "{":
                     return new BlockNode(source, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
+                case "missing":
+                    return new MissingNode(source, lhs, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
             }
         }
 
