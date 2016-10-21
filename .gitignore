@@ -10,6 +10,7 @@
 /mx.fastr/eclipse-config.zip
 /mx.fastr/netbeans-config.zip
 /mxbuild/
+/com.oracle.truffle.r.release/include/*
 /com.oracle.truffle.r.native/fficall/src/common/copy_appl_objects
 /com.oracle.truffle.r.native/fficall/lib/copy_appl_objects
 /com.oracle.truffle.r.native/builtinlibs/lib/*
@@ -127,3 +128,4 @@ test_fastr
 lib.install.cran*
 package.blacklist
 com.oracle.truffle.r.test.native/embedded/lib
+bench-results.json

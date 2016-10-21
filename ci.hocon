@@ -79,7 +79,7 @@ gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
 
 gateTestCommon : ${common} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: ExpectedTestOutput file check,UnitTests"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials"]
   ]
 }
 
@@ -118,7 +118,7 @@ gateStyle : ${common} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check, UnitTests: ExpectedTestOutput file check"]
   ]
 }
 
