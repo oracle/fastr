@@ -94,7 +94,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange17() {
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(c(1012633320L, 1012633620L), class = c('POSIXct', 'POSIXt'), tzone = ''));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
+        assertEval("argv <- list(structure(c(1012633320L, 1012633620L), class = c('POSIXct', 'POSIXt'), tzone = ''));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
     }
 
     @Test
@@ -104,8 +104,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange21() {
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c(12053, 12054, 12055, 12056, 12057, 12058, 12059, 12060, 12061, 12062), class = 'Date'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
+        assertEval("argv <- list(structure(c(12053, 12054, 12055, 12056, 12057, 12058, 12059, 12060, 12061, 12062), class = 'Date'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
     }
 
     @Test
@@ -115,7 +114,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange23() {
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(c(13823, NA), class = 'Date'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
+        assertEval("argv <- list(structure(c(13823, NA), class = 'Date'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
     }
 
     @Test
@@ -145,8 +144,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1208822400, 1209168000, 1208822400, 1209168000), class = c('POSIXct', 'POSIXt'), tzone = 'GMT'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
+        assertEval("argv <- list(structure(c(1208822400, 1209168000, 1208822400, 1209168000), class = c('POSIXct', 'POSIXt'), tzone = 'GMT'));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
     }
 
     @Test
