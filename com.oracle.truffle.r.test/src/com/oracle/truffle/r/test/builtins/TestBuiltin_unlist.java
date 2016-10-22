@@ -215,14 +215,12 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist39() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(structure(list(b = structure(2L, .Label = c('C', 'D'), class = 'factor')), .Names = 'b', row.names = 2L, class = 'data.frame'), structure(list(a = structure(NA_real_, class = c('POSIXct', 'POSIXt'))), .Names = 'a', row.names = 'NA', class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(b = structure(2L, .Label = c('C', 'D'), class = 'factor')), .Names = 'b', row.names = 2L, class = 'data.frame'), structure(list(a = structure(NA_real_, class = c('POSIXct', 'POSIXt'))), .Names = 'a', row.names = 'NA', class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testunlist40() {
-        assertEval(
-                        "argv <- list(list(structure(list(structure(c('0.007239522', '0.014584634', '0.014207936', '0.018442267', '0.011128505', '0.019910082', '0.027072311', '0.034140379', '0.028320657', '0.037525507'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 1', ' 6', ' 7', ' 8', '13', '14', '15', '20', '21', '22'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 16', ' 16', '144', ' 16', ' 16', '128', ' 16', ' 16', '112', ' 16'), .Dim = 10L, .Dimnames = structure(list(c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22')), .Names = ''))), row.names = c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22'), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(structure(list(structure(c('0.007239522', '0.014584634', '0.014207936', '0.018442267', '0.011128505', '0.019910082', '0.027072311', '0.034140379', '0.028320657', '0.037525507'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 1', ' 6', ' 7', ' 8', '13', '14', '15', '20', '21', '22'), class = 'AsIs')), row.names = c(NA, -10L), class = 'data.frame'), structure(list(structure(c(' 16', ' 16', '144', ' 16', ' 16', '128', ' 16', ' 16', '112', ' 16'), .Dim = 10L, .Dimnames = structure(list(c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22')), .Names = ''))), row.names = c('1', '6', '7', '8', '13', '14', '15', '20', '21', '22'), class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
