@@ -32,6 +32,7 @@ public class TestBuiltin_sample2 extends TestBase {
     public void testSample2() {
         assertEval("set.seed(42);  .Internal(sample2(10, 2))");
         assertEval("set.seed(42);  .Internal(sample2(10L, 3L))");
+        assertEval("set.seed(42);  x <- .Internal(sample2(10L, 3L)); y <- .Internal(sample2(10L, 3L)); list(x, y); ");
         // test with n > MAX_INT
         assertEval("set.seed(42);  .Internal(sample2(4147483647, 10))");
     }

@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -431,4 +432,22 @@ public class RRNG {
         }
     }
 
+    @TruffleBoundary
+    public static void putRNGState() {
+        int lenSeed = getContextState().currentGenerator.getNSeed();
+        int[] seeds = new int[lenSeed + 1];
+        seeds[0] = currentKindAsInt() + 100 * currentNormKindAsInt();
+        int[] currentGeneratorSeeds = currentGenerator().getSeeds();
+        for (int i = 0; i < lenSeed; i++) {
+            seeds[i + 1] = currentGeneratorSeeds[i];
+        }
+
+        currentGenerator().setISeed(seeds);
+        RIntVector seedsVector = RDataFactory.createIntVector(seeds, true);
+        try {
+            REnvironment.globalEnv().put(RANDOM_SEED, seedsVector);
+        } catch (PutException e) {
+            throw RInternalError.shouldNotReachHere("Cannot set .Random.seed in global environment");
+        }
+    }
 }

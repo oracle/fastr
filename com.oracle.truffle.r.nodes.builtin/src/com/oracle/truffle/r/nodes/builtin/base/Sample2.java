@@ -80,6 +80,8 @@ public abstract class Sample2 extends RBuiltinNode {
                 }
             }
         }
+
+        RRNG.putRNGState();
         return RDataFactory.createDoubleVector(result, true);
     }
 
@@ -99,6 +101,8 @@ public abstract class Sample2 extends RBuiltinNode {
                 }
             }
         }
+
+        RRNG.putRNGState();
         return RDataFactory.createIntVector(result, true);
     }
 
