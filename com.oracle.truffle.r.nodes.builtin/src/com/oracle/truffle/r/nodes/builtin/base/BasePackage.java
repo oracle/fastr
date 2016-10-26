@@ -559,6 +559,7 @@ public class BasePackage extends RBuiltinPackage {
         add(S3DispatchFunctions.NextMethod.class, S3DispatchFunctionsFactory.NextMethodNodeGen::create);
         add(S3DispatchFunctions.UseMethod.class, S3DispatchFunctionsFactory.UseMethodNodeGen::create);
         add(Sample.class, SampleNodeGen::create);
+        add(Sample2.class, Sample2NodeGen::create);
         add(Scan.class, ScanNodeGen::create);
         add(Seq.class, SeqNodeGen::create);
         add(SeqAlong.class, SeqAlongNodeGen::create);
