@@ -28,6 +28,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +42,9 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * Repository for environment variables, including those set by FastR itself, e.g.
  * {@code R_LIBS_USER}.
  *
- * N.B. We assert that the R_HOME environment variable is set (correctly) buy the launch script(s).
+ * N.B. We assert that the {@code R_HOME} environment variable is set by the launch script(s) with
+ * one exception, when run under the GraalVM shell, in which case it is set explicitly in
+ * {@link #rHome()}.
  */
 public final class REnvVars implements RContext.ContextState {
 
@@ -53,7 +58,7 @@ public final class REnvVars implements RContext.ContextState {
         // explicit environment settings in nested contexts must be installed first
         checkExplciitEnvSettings(context);
         // set the standard vars defined by R
-        String rHome = envVars.get("R_HOME");
+        checkRHome();
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
         safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
@@ -134,9 +139,48 @@ public final class REnvVars implements RContext.ContextState {
         return val != null ? val : envVars.get(var.toUpperCase());
     }
 
+    private static final String R_HOME = "R_HOME";
+
+    /**
+     * Cached value of {@code R_HOME}.
+     */
+    private static String rHome;
+
+    /**
+     * Returns the value of the {@code R_HOME} environment variable (setting it in the unusual case
+     * where it it is not set by the initiating shell scripts. This is called very early in the
+     * startup as it is required to access the native libraries, before the initial context is
+     * initialized and, therefore, before {@link #envVars} is available.
+     */
     public static String rHome() {
-        String rHome = System.getenv("R_HOME");
+        if (rHome == null) {
+            rHome = System.getenv(R_HOME);
+            Path rHomePath;
+            if (rHome == null) {
+                /*
+                 * The only time this can happen legitimately is when run under the graalvm shell,
+                 * which does not execute the shell script that normally sets R_HOME.
+                 */
+                rHomePath = Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+            } else {
+                rHomePath = Paths.get(rHome);
+            }
+            // Sanity check on the expected structure of an R_HOME
+            Path bin = rHomePath.resolve("bin");
+            if (!(Files.exists(bin) && Files.isDirectory(bin) && Files.exists(bin.resolve("R")))) {
+                Utils.rSuicide("R_HOME is not set correctly");
+            }
+            rHome = rHomePath.toString();
+        }
         return rHome;
+    }
+
+    private void checkRHome() {
+        String envRHome = envVars.get(R_HOME);
+        if (envRHome == null) {
+            assert rHome != null;
+            envVars.put(R_HOME, rHome);
+        }
     }
 
     public String put(String key, String value) {
