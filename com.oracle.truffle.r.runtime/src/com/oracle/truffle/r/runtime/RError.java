@@ -526,6 +526,7 @@ public final class RError extends RuntimeException {
         INVALID_TIES_FOR_RANK("invalid ties.method for rank() [should never happen]"),
         UNIMPLEMENTED_TYPE_IN_GREATER("unimplemented type '%s' in greater"),
         RANK_LARGE_N("parameter 'n' is greater than length(x), GnuR output is non-deterministic, FastR will use n=length(x)"),
+        ALGORITHM_FOR_SIZE_N_DIV_2("This algorithm is for size <= n/2"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),
