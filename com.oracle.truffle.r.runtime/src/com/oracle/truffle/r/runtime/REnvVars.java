@@ -161,7 +161,7 @@ public final class REnvVars implements RContext.ContextState {
                  * The only time this can happen legitimately is when run under the graalvm shell,
                  * which does not execute the shell script that normally sets R_HOME.
                  */
-                rHomePath = Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+                rHomePath = getRHomePath();
             } else {
                 rHomePath = Paths.get(rHome);
             }
@@ -173,6 +173,13 @@ public final class REnvVars implements RContext.ContextState {
             rHome = rHomePath.toString();
         }
         return rHome;
+    }
+
+    /**
+     * Separated for substitution in AOT environment.
+     */
+    private static Path getRHomePath() {
+        return Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
     }
 
     private void checkRHome() {
