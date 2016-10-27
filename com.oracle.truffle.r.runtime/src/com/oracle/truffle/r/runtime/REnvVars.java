@@ -175,9 +175,6 @@ public final class REnvVars implements RContext.ContextState {
         return rHome;
     }
 
-    /**
-     * Separated for substitution in AOT environment.
-     */
     private static Path getRHomePath() {
         return Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
     }
