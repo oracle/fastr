@@ -52,7 +52,10 @@ def _copylib(lib, libpath, target):
         real_libpath = _darwin_extract_realpath(lib, libpath)
     else:
         try:
-            output = subprocess.check_output(['objdump', '-p', libpath])
+            if platform.system() == 'Linux':
+                output = subprocess.check_output(['objdump', '-p', libpath])
+            elif platform.system() == 'SunOS':
+                output = subprocess.check_output(['elfdump', '-d', libpath])
             lines = output.split('\n')
             for line in lines:
                 if 'SONAME' in line:
