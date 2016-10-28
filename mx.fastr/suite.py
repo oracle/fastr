@@ -331,7 +331,7 @@ suite = {
              "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
            },
         },
-         "SunOS" : {
+         "solaris" : {
            "amd64" : {
              "path" : "mxbuild/dists/solaris/amd64/fastr-unit-tests-native.jar",
            }
@@ -357,7 +357,7 @@ suite = {
              "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
           },
         },
-         "SunOS" : {
+         "solaris" : {
            "amd64" : {
              "path" : "mxbuild/dists/solaris/amd64/fastr-native-dev.jar",
           },
@@ -379,7 +379,7 @@ suite = {
              "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
            }
         },
-         "SunOS" : {
+         "solaris" : {
            "amd64" : {
              "path" : "mxbuild/dists/solaris/amd64/fastr-release.jar",
            }
