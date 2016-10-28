@@ -691,11 +691,15 @@ public class RRuntime {
                     break;
                 default:
                     if (codepoint < 32 || codepoint == 0x7f) {
-                        str.append("\\").append(codepoint / 64).append((codepoint / 8) % 8).append(codepoint % 8);
+                        str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
                     } else if (encodeNonASCII && codepoint > 0x7f && codepoint <= 0xff) {
                         str.append("\\x" + Integer.toHexString(codepoint));
-                        // } else if (codepoint > 0x7f && codepoint <= 0xff) {
-                        // str.append("\\u" + Integer.toHexString(codepoint));
+                    } else if (codepoint > 64967) { // determined by experimentation
+                        if (codepoint < 0x10000) {
+                            str.append("\\u").append(String.format("%04x", codepoint));
+                        } else {
+                            str.append("\\U").append(String.format("%08x", codepoint));
+                        }
                     } else {
                         str.appendCodePoint(codepoint);
                     }

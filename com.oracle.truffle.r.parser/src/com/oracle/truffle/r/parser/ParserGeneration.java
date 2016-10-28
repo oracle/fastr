@@ -84,6 +84,7 @@ public class ParserGeneration {
         "properly throw errors in lexer",
         "remove deprecated calls to SourceSection functions",
         "remove deprecated calls to Source functions",
-        "remove restricion on fixed number of digits in UTF codes"
+        "remove restricion on fixed number of digits in UTF codes",
+        "support ? for help"
     };
 }

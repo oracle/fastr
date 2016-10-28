@@ -337,7 +337,7 @@ colon_expr returns [T v]
     ;
 
 unary_expression returns [T v]
-    : op=(PLUS | MINUS | NOT) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : op=(PLUS | MINUS | NOT | QM) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
@@ -532,6 +532,7 @@ RBRAKET : ']' { incompleteNesting--; } ;
 CARET : '^' | '**' ;
 TILDE : '~' ;
 NOT   : '!' ;
+QM    : '?' ;
 PLUS  : '+' ;
 MULT  : '*' ;
 MOD   : '%%' ;

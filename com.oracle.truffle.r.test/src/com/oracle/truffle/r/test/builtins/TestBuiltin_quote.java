@@ -36,5 +36,10 @@ public class TestBuiltin_quote extends TestBase {
         assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
+
+        assertEval("quote(?sum)");
+        assertEval("quote(??show)");
+        assertEval("quote(?`[[`)");
+        assertEval("quote(?'+')");
     }
 }

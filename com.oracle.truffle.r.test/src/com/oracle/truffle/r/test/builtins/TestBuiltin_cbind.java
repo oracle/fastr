@@ -87,5 +87,10 @@ public class TestBuiltin_cbind extends TestBase {
         // Note: CachedExtractVectorNode replaces vector 'a', 'b', with a scalar 'b', which caused
         // cbind to fail
         assertEval("x <- matrix(1:20, 10, 2); dimnames(x) <- list(1:10, c('a','b')); cbind(1, x[,-1,drop=FALSE]);");
+
+        assertEval("cbind(character(0))");
+        assertEval("cbind(character(0), 'f')");
+        assertEval("cbind(55, character(0))");
+        assertEval("cbind(a=55, character(0))");
     }
 }
