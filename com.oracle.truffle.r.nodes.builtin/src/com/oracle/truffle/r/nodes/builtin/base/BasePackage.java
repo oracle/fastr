@@ -372,11 +372,11 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.FilePath.class, FileFunctionsFactory.FilePathNodeGen::create);
         add(FileFunctions.FileRemove.class, FileFunctionsFactory.FileRemoveNodeGen::create);
         add(FileFunctions.FileRename.class, FileFunctionsFactory.FileRenameNodeGen::create);
+        add(FileFunctions.FileShow.class, FileFunctionsFactory.FileShowNodeGen::create);
         add(FileFunctions.FileSymLink.class, FileFunctionsFactory.FileSymLinkNodeGen::create);
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
-        add(FileShow.class, FileShowNodeGen::create);
         add(Floor.class, FloorNodeGen::create);
         add(DotC.class, DotCNodeGen::create);
         add(ForceAndCall.class, ForceAndCallNodeGen::create);
