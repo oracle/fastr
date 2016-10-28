@@ -39,6 +39,6 @@ final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
     @Override
     @TruffleBoundary
     protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_Cutoff, false, 0, -1));
+        printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_Cutoff, true, 0, -1));
     }
 }
