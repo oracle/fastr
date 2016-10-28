@@ -117,9 +117,12 @@ def copylib(args):
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
+        if args[0] == 'quadmath' and platform.system() == 'SunOS':
+            return 0
         mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
+    return 0
 
 def updatelib(args):
     '''
