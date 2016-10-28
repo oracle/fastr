@@ -40,6 +40,7 @@ def _create_libinstall(s):
     os.mkdir(libinstall)
     install_tmp = join(s.dir, "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
+    os.mkdir(install_tmp)
     test = join(s.dir, "test")
     shutil.rmtree(test, ignore_errors=True)
     os.mkdir(test)
