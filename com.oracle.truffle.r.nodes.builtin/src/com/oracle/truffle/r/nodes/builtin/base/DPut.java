@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 
@@ -45,15 +46,15 @@ public abstract class DPut extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("file").mustBe(RConnection.class);
+        casts.arg("file").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
         casts.arg("opts").asIntegerVector().findFirst();
     }
 
     @Specialization
     @TruffleBoundary
-    protected Object dput(Object x, RConnection file, int opts) {
+    protected Object dput(Object x, int file, int opts) {
         String string = RDeparse.deparse(x, RDeparse.DEFAULT_Cutoff, true, opts, -1);
-        try (RConnection openConn = file.forceOpen("wt")) {
+        try (RConnection openConn = RConnection.fromIndex(file).forceOpen("wt")) {
             openConn.writeString(string, true);
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());

@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -554,9 +553,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                         // valid classes when it reaches this error.
                         throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
                     }
-                } else if (RType.Connection.getName().equals(attr)) {
-                    // convert to RConnection
-                    return ConnectionSupport.fromVector(vector, classAttr);
                 }
             }
             vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);

@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -209,10 +208,6 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     public REnvironment executeREnvironment(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectREnvironment(execute(frame));
-    }
-
-    public RConnection executeRConnection(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRConnection(execute(frame));
     }
 
     public RExpression executeRExpression(VirtualFrame frame) throws UnexpectedResultException {

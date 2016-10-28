@@ -31,19 +31,25 @@ public class RExternalPtr extends RAttributeStorage {
     private long addr;
     private Object tag;
     private Object prot;
+    private Object externalObject;
 
-    RExternalPtr(long addr, Object tag, Object prot) {
+    RExternalPtr(long addr, Object externalObject, Object tag, Object prot) {
         this.addr = addr;
+        this.externalObject = externalObject;
         this.tag = tag;
         this.prot = prot;
     }
 
     public RExternalPtr copy() {
-        return RDataFactory.createExternalPtr(addr, tag, prot);
+        return RDataFactory.createExternalPtr(addr, externalObject, tag, prot);
     }
 
     public long getAddr() {
         return addr;
+    }
+
+    public Object getExternalObject() {
+        return externalObject;
     }
 
     public Object getTag() {
@@ -56,6 +62,10 @@ public class RExternalPtr extends RAttributeStorage {
 
     public void setAddr(long value) {
         this.addr = value;
+    }
+
+    public void setExternalObject(Object externalObject) {
+        this.externalObject = externalObject;
     }
 
     public void setTag(Object tag) {

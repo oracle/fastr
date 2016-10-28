@@ -581,7 +581,7 @@ public class ForeignFunctions {
                 case "countfields":
                     return new CountFields();
                 case "readtablehead":
-                    return new ReadTableHead();
+                    return ReadTableHeadNodeGen.create();
                 case "download":
                     return DownloadNodeGen.create();
                 case "termsform":
@@ -664,7 +664,7 @@ public class ForeignFunctions {
             switch (name) {
                 // tools
                 case "writetable":
-                    return new WriteTable();
+                    return WriteTableNodeGen.create();
                 case "typeconvert":
                     return TypeConvertNodeGen.create();
                 case "C_parseRd":

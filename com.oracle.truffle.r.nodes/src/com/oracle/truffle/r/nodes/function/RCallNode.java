@@ -87,6 +87,7 @@ import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -930,6 +931,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
             Object result = builtin.executeBuiltin(frame, castArguments(frame, orderedArguments.getArguments()));
             assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
+            assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();
             visibility.execute(frame, builtinDescriptor.getVisibility());
             return result;
         }

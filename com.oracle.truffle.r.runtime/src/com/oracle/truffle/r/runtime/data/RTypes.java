@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -50,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 @TypeSystem({boolean.class, byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class,
                 RRawVector.class, RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REmpty.class, REnvironment.class, RExpression.class,
-                RConnection.class, MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
+                MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
                 RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RSymbol.class, RPromise.class, RLanguage.class,
                 RPairList.class, RExternalPtr.class, RS4Object.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RTypedValue.class, RType.class, Object[].class})
 public class RTypes {

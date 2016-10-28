@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -102,7 +103,7 @@ public abstract class Scan extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("file").mustBe(RConnection.class);
+        casts.arg("file").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
 
         casts.arg("what").asVector();
 
@@ -145,7 +146,7 @@ public abstract class Scan extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object doScan(RConnection file, RAbstractVector what, int nmax, String sep, String dec, String quotes, int nskip,
+    protected Object doScan(int file, RAbstractVector what, int nmax, String sep, String dec, String quotes, int nskip,
                     int nlines, RAbstractStringVector naStringsVec, boolean flush, boolean fill, RAbstractLogicalVector stripVec,
                     boolean quiet, boolean blSkip, boolean multiLine, int commentChar, boolean escapes,
                     String encoding, boolean skipNull) {
@@ -185,7 +186,7 @@ public abstract class Scan extends RBuiltinNode {
         data.skipNull = skipNull;
 
         // TODO: quite a few more things happen in GNU R around connections
-        data.con = file;
+        data.con = RConnection.fromIndex(file);
 
         data.save = 0;
 

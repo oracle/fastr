@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -56,14 +57,15 @@ public class LoadSaveFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("con").mustBe(instanceOf(RConnection.class));
+            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
             casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("verbose").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") boolean verbose) {
+        protected RStringVector load(int conIndex, REnvironment envir, @SuppressWarnings("unused") boolean verbose) {
+            RConnection con = RConnection.fromIndex(conIndex);
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
@@ -191,7 +193,7 @@ public class LoadSaveFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("list").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_CHARVEC).findFirst();
-            casts.arg("con").mustBe(instanceOf(RConnection.class));
+            ConnectionFunctions.Casts.connection(casts);
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
             casts.arg("version").allowNull().mustBe(integerValue());
             casts.arg("environment").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
@@ -199,8 +201,7 @@ public class LoadSaveFunctions {
         }
 
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir,
-                        boolean evalPromises, //
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseCheckHelperNode promiseHelper) {
             RPairList prev = null;
             Object toSave = RNull.instance;
@@ -223,7 +224,7 @@ public class LoadSaveFunctions {
                 prev = pl;
             }
             boolean ascii = RRuntime.fromLogical(asciiLogical);
-            doSaveConn(toSave, conn, ascii);
+            doSaveConn(toSave, RConnection.fromIndex(con), ascii);
             return RNull.instance;
         }
 

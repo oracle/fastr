@@ -99,7 +99,7 @@ public abstract class Parse extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         // Note: string is captured by the R wrapper and transformed to a file, other types not
-        casts.arg("conn").mustBe(RConnection.class, MUST_BE_STRING_OR_CONNECTION, "file");
+        casts.arg("conn").defaultError(MUST_BE_STRING_OR_CONNECTION, "file").mustNotBeNull().asIntegerVector().findFirst();
         casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).notNA(-1);
         casts.arg("text").allowNull().asStringVector();
         casts.arg("prompt").asStringVector().findFirst("?");
@@ -108,27 +108,28 @@ public abstract class Parse extends RBuiltinNode {
 
     @TruffleBoundary
     @Specialization
-    protected Object parse(RConnection conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
+    protected Object parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
         String[] lines;
-        if (conn == StdConnections.getStdin()) {
+        RConnection connection = RConnection.fromIndex(conn);
+        if (connection == StdConnections.getStdin()) {
             throw RError.nyi(this, "parse from stdin not implemented");
         }
-        try (RConnection openConn = conn.forceOpen("r")) {
+        try (RConnection openConn = connection.forceOpen("r")) {
             lines = openConn.readLines(0, false, false);
         } catch (IOException ex) {
             throw RError.error(this, RError.Message.PARSE_ERROR);
         }
-        return doParse(conn, n, lines, prompt, srcFile, encoding);
+        return doParse(connection, n, lines, prompt, srcFile, encoding);
     }
 
     @TruffleBoundary
     @Specialization
-    protected Object parse(RConnection conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
-        return doParse(conn, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
+    protected Object parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
+        RConnection connection = RConnection.fromIndex(conn);
+        return doParse(connection, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
     }
 
-    @SuppressWarnings("unused")
-    private Object doParse(RConnection conn, int n, String[] lines, String prompt, Object srcFile, String encoding) {
+    private Object doParse(RConnection conn, int n, String[] lines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
         String coalescedLines = coalesce(lines);
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(new Object[0]);
