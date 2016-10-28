@@ -84,5 +84,7 @@ public class TestBuiltin_nchar extends TestBase {
         assertEval("{ nchar(c(10,130)) }");
         assertEval("{ .Internal(nchar(c(10,130), 'chars', FALSE)) }");
         assertEval("{ .Internal(nchar('ff', 'chars', FALSE)) }");
+
+        assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); nchar(v)");
     }
 }

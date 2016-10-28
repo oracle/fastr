@@ -254,5 +254,8 @@ public class TestBuiltin_isna extends TestBase {
         // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error
         // Probably the same error as in testisna13
         assertEval(Ignored.Unimplemented, "is.na(data.frame(col1=1:5, col2=c(NA, 1, NA, 2, NA)))");
+
+        assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); is.na(v)");
+
     }
 }
