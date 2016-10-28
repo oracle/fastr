@@ -1233,25 +1233,80 @@ public class GrepFunctions {
 
         private static RStringVector splitPerl(String data, PCRERFFI.Result pcre) {
             ArrayList<String> matches = new ArrayList<>();
-            int offset = 0;
+            int lastEndOffset = 0;
+            int lastEndIndex = 0;
             int[] ovector = new int[30];
-            while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, data, offset, 0, ovector) >= 0) {
-                String match;
-                if (ovector[1] > 0) {
-                    match = data.substring(offset, ovector[0]);
-                    offset = ovector[1];
-                } else {
-                    match = data.substring(offset, offset + 1);
-                    offset++;
-                }
+            int[] fromByteMapping = getFromByteMapping(data); // non-null if it's necessary
+
+            while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
+                // offset == byte position
+                // index == character position
+                int startOffset = ovector[0];
+                int endOffset = ovector[1];
+                int startIndex = (fromByteMapping != null) ? fromByteMapping[startOffset] : startOffset;
+                int endIndex = (fromByteMapping != null) ? fromByteMapping[endOffset] : endOffset;
+                String match = data.substring(lastEndIndex, startIndex);
+                lastEndOffset = endOffset;
+                lastEndIndex = endIndex;
                 matches.add(match);
             }
-            if (offset < data.length()) {
-                matches.add(data.substring(offset));
+            if (lastEndOffset < data.length()) {
+                matches.add(data.substring(lastEndOffset));
             }
             String[] result = new String[matches.size()];
             matches.toArray(result);
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static int getByteLength(String data) {
+            int byteLength = 0;
+            int pos = 0;
+            while (pos < data.length()) {
+                char c = data.charAt(pos);
+                if (c < 128) {
+                    byteLength++;
+                } else if (c < 2048) {
+                    byteLength += 2;
+                } else {
+                    if (Character.isHighSurrogate(c)) {
+                        byteLength += 4;
+                        pos++;
+                    } else {
+                        byteLength += 3;
+                    }
+                }
+                pos++;
+            }
+            return byteLength;
+        }
+
+        private static int[] getFromByteMapping(String data) {
+            int byteLength = getByteLength(data);
+            if (byteLength == data.length()) {
+                return null;
+            }
+            int[] result = new int[byteLength + 1];
+            byteLength = 0;
+            int pos = 0;
+            while (pos < data.length()) {
+                result[byteLength] = pos;
+                char c = data.charAt(pos);
+                if (c < 128) {
+                    byteLength++;
+                } else if (c < 2048) {
+                    byteLength += 2;
+                } else {
+                    if (Character.isHighSurrogate(c)) {
+                        byteLength += 4;
+                        pos++;
+                    } else {
+                        byteLength += 3;
+                    }
+                }
+                pos++;
+            }
+            result[byteLength] = pos;
+            return result;
         }
     }
 }
