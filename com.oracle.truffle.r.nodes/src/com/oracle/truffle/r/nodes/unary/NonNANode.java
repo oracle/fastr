@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class NonNANode extends CastNode {
@@ -145,6 +146,20 @@ public abstract class NonNANode extends CastNode {
     @Specialization
     protected Object onNull(RNull x) {
         return x;
+    }
+
+    protected boolean isComplete(RAbstractContainer x) {
+        return x.isComplete();
+    }
+
+    @Specialization(guards = "isComplete(x)")
+    protected Object onCompleteContainer(RAbstractContainer x) {
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onIncompleteContainer(RAbstractContainer x) {
+        return handleNA(x);
     }
 
 }
