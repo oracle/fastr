@@ -15,8 +15,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -206,14 +204,22 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             return new Object[]{RNull.instance, RNull.instance, RArgsValuesAndNames.EMPTY};
         }
 
-        @Specialization
-        protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull nullGeneric, Object obj, RArgsValuesAndNames args) {
+        /**
+         * When {@code NextMethod} is invoked with first argument which is not a string, the
+         * argument is swallowed and ignored.
+         */
+        @Specialization(guards = "isNotString(ignoredGeneric)")
+        protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") Object ignoredGeneric, Object obj, RArgsValuesAndNames args) {
             String generic = (String) rvnGeneric.execute(frame);
             if (generic == null || generic.isEmpty()) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
             }
             return nextMethod(frame, generic, obj, args);
+        }
+
+        protected static boolean isNotString(Object obj) {
+            return !(obj instanceof String);
         }
 
         @SuppressWarnings("unused")
@@ -223,22 +229,24 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             MaterializedFrame genericDefFrame = getDefFrame(frame);
             String group = (String) rvnGroup.execute(frame);
 
-            ArgumentsSignature suppliedSignature;
-            ArgumentsSignature parameterSignature = suppliedParameterSignatureProfile.profile(RArguments.getSuppliedSignature(frame));
+            // The signature that will be used for the target of NextMethod is concatenation of the
+            // actual signature used when invoking the S3 dispatch function combined with any named
+            // arguments passed to NextMethod, the later override the former on a name clash
+            ArgumentsSignature finalSignature;
+            ArgumentsSignature suppliedSignature = suppliedParameterSignatureProfile.profile(RArguments.getSuppliedSignature(frame));
             Object[] suppliedArguments = collectArguments.execute(frame, parameterSignatureProfile.profile(RArguments.getSignature(frame)));
             if (emptyArgsProfile.profile(args == RArgsValuesAndNames.EMPTY)) {
-                suppliedSignature = parameterSignature;
+                finalSignature = suppliedSignature;
             } else {
                 if (combineSignatures == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     combineSignatures = insert(CombineSignaturesNodeGen.create());
                 }
-                suppliedSignature = combineSignatures.execute(parameterSignature, args.getSignature());
-
-                suppliedArguments = Arrays.copyOf(suppliedArguments, suppliedSignature.getLength());
-                System.arraycopy(args.getArguments(), 0, suppliedArguments, parameterSignature.getLength(), suppliedSignature.getLength() - parameterSignature.getLength());
+                RArgsValuesAndNames combinedResult = combineSignatures.execute(suppliedSignature, suppliedArguments, args.getSignature(), args.getArguments());
+                suppliedArguments = combinedResult.getArguments();
+                finalSignature = combinedResult.getSignature();
             }
-            return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, suppliedSignature, suppliedArguments);
+            return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
         }
 
         private MaterializedFrame getDefFrame(VirtualFrame frame) {
