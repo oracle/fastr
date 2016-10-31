@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Quantifier extends RBuiltinNode {
@@ -70,7 +71,8 @@ public abstract class Quantifier extends RBuiltinNode {
 
     private void createArgCast(int index) {
         CastBuilder argCastBuilder = new CastBuilder();
-        argCastBuilder.arg(0).allowNull().shouldBe(integerValue().or(logicalValue()), RError.Message.COERCING_ARGUMENT, argTypeName, "logical").asLogicalVector();
+        argCastBuilder.arg(0).allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))), RError.Message.COERCING_ARGUMENT, argTypeName,
+                        "logical").asLogicalVector();
         argCastNodes[index] = insert(argCastBuilder.getCasts()[0]);
     }
 
