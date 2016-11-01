@@ -220,7 +220,6 @@ public final class REnvVars implements RContext.ContextState {
                 }
                 String var = line.substring(0, ix);
                 String value = expandParameters(line.substring(ix + 1)).trim();
-                // GnuR does not seem to remove quotes, although the spec says it should
                 envVars.put(var, value);
             }
         }
@@ -243,7 +242,7 @@ public final class REnvVars implements RContext.ContextState {
             }
             String paramValue = envVars.get(paramName);
             if (paramValue == null || paramValue.length() == 0) {
-                paramValue = paramDefault;
+                paramValue = stripQuotes(paramDefault);
             }
             result.append(paramValue);
             x = paramEnd + 1;
@@ -251,6 +250,17 @@ public final class REnvVars implements RContext.ContextState {
         }
         result.append(value.substring(x));
         return result.toString();
+    }
+
+    private static String stripQuotes(String s) {
+        if (s.length() == 0) {
+            return s;
+        }
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
     }
 
     @TruffleBoundary
