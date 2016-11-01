@@ -58,11 +58,15 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1setwd(JNIEnv *env, j
 
 JNIEXPORT jint JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1mkdtemp(JNIEnv *env, jclass c, jbyteArray jtemplate) {
-    char *template = (*env)->GetPrimitiveArrayCritical(env, jtemplate, NULL);
+    char *template = (char*) (*env)->GetByteArrayElements(env, jtemplate, NULL);
     char *r = mkdtemp(template);
-    if (r == NULL) return 0;
-    (*env)->ReleasePrimitiveArrayCritical(env, jtemplate, template, 0);
-    return 1;
+    int rc = 1;
+    if (r == NULL) {
+    	// printf("mkdtemp errno: %d\n", errno);
+    	rc = 0;
+    }
+    (*env)->ReleaseByteArrayElements(env, jtemplate, (jbyte*) template, rc == 1 ? 0 : JNI_ABORT);
+    return rc;
 }
 
 JNIEXPORT jint JNICALL
