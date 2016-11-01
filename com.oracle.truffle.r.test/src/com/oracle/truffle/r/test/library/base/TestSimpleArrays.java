@@ -175,7 +175,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ array(1,c(3,3,3))[[,,]]; }");
 
         // selection on multiple elements fails in arrays
-        assertEval("{ array(1,c(3,3,3))[[c(1,2),1,1]]; }");
+        assertEval(Output.IgnoreErrorContext, "{ array(1,c(3,3,3))[[c(1,2),1,1]]; }");
 
         // last column
         assertEval("{ m <- array(1:24, dim=c(2,3,4)) ; m[,,2] }");
@@ -196,7 +196,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ matrix(1,3,3)[[,]]; }");
 
         // selection on multiple elements fails in matrices
-        assertEval("{ matrix(1,3,3)[[c(1,2),1]]; }");
+        assertEval(Output.IgnoreErrorContext, "{ matrix(1,3,3)[[c(1,2),1]]; }");
 
         assertEval("{  m <- matrix(1:6, nrow=2) ;  m[1,NULL] }");
     }

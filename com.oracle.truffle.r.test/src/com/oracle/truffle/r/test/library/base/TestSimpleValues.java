@@ -24,8 +24,8 @@ package com.oracle.truffle.r.test.library.base;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.ArithmeticWhiteList;
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.WhiteList;
 
 /**
  * Testing of simple values. Most of the tests in this class are generated from templates using the
@@ -48,32 +48,6 @@ public class TestSimpleValues extends TestBase {
     private static final String[] ALL_ARITHMETIC_VALUES = join(SCALAR_VALUES, VECTOR_VALUES);
     private static final String[] BINARY_OPERATORS = {"+", "-", "*", "/", "^", "%%"};
     private static final String[] UNARY_BUILTINS = {"length", "abs", "rev", "names"};
-
-    private static final WhiteList BINARY_ARITHMETIC_WHITELIST = new WhiteList("binary arithmetic");
-
-    /**
-     * This list was generated on Mac OS X El Capitan on Mar 12th 2016 using the results from
-     * running R-3.2.4, and the {@code AnalyzeExpectedTestOutput} tool. Since FastR is consistent in
-     * its results across platforms, unlike GnuR, this whitelist can be used on any platform with an
-     * {@code ExpectedTestOutput.test} file generated on a Mac OS X system.
-     *
-     * However, if the entire {@code ExpectedTestOutput.test} file were to be regenerated on, say, a
-     * Linux platform, this whitelist would be incomplete and need to be updated.
-     */
-    static {
-        BINARY_ARITHMETIC_WHITELIST.add("1i/(-(1/0))", "[1] 0+0i\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("1i/(1/0)", "[1] 0+0i\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(-(1/0))", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(1/0)", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(1/0)^((0/0)+1i)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(1/0))^((0/0)+1i)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("((0/0)+1i)^(1/0)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(1i+NA)^(1/0)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(1/0)^(1i+NA)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(-(1/0))^(1i+NA)", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("((0/0)+1i)^(-(1/0))", "[1] NA\n", "[1] NaN+NaNi\n");
-        BINARY_ARITHMETIC_WHITELIST.add("(1i+NA)^(-(1/0))", "[1] NA\n", "[1] NaN+NaNi\n");
-    }
 
     @Test
     public void testPrintValues() {
@@ -172,12 +146,12 @@ public class TestSimpleValues extends TestBase {
     @Test
     public void testBinaryArithmetic() {
         assertEval("FALSE^(-3)");
-        assertEval(Output.MayIgnoreErrorContext, BINARY_ARITHMETIC_WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayIgnoreErrorContext, ArithmeticWhiteList.WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
     }
 
     @Test
     public void testAmbiguousExpression() {
-        assertEval(BINARY_ARITHMETIC_WHITELIST, new String[]{"exp(-abs((0+1i)/(0+0i)))"});
+        assertEval(ArithmeticWhiteList.WHITELIST, new String[]{"exp(-abs((0+1i)/(0+0i)))"});
     }
 
     @Test

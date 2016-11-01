@@ -36,7 +36,7 @@ public class TestBuiltin_levels extends TestBase {
         assertEval("{ x <- 1 ; levels(x)<-c(\"cat\", \"dog\"); levels(x)}");
         assertEval("{ x <- 1 ; levels(x)<-c(3, \"cat\"); levels(x);}");
         assertEval("{ x <- 1 ; levels(x)<-c(1, \"cat\", 4.5, \"3\"); levels(x);}");
-        assertEval("{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
+        assertEval(Output.IgnoreErrorContext, "{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
         assertEval(Ignored.Unknown, "{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
     }
 }

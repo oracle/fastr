@@ -125,7 +125,7 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static double convertInf(double d) {
-        // This code is transcribed from FastR.
+        // This code is transcribed from Purdue FastR.
         return Math.copySign(Double.isInfinite(d) ? 1 : 0, d);
     }
 
@@ -279,7 +279,7 @@ public abstract class BinaryArithmetic extends Operation {
             return left * right;
         }
 
-        // The code for complex multiplication is transcribed from FastR:
+        // The code for complex multiplication is transcribed from Purdue FastR:
         // LICENSE: this code is derived from the multiplication code, which is transcribed code
         // from GCC, which is licensed under GPL
 
@@ -350,7 +350,7 @@ public abstract class BinaryArithmetic extends Operation {
             return left / right;
         }
 
-        // The code for complex division is transcribed from FastR:
+        // The code for complex division is transcribed from Purdue FastR:
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // libgcc2
 
@@ -605,7 +605,7 @@ public abstract class BinaryArithmetic extends Operation {
             return result;
         }
 
-        // The code for complex pow is transcribed from FastR:
+        // The code for complex pow is transcribed from Purdue FastR:
         // LICENSE: transcribed code from GNU R, which is licensed under GPL
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // LICENSE: transcribed code from GCC, which is licensed under GPL
@@ -700,7 +700,7 @@ public abstract class BinaryArithmetic extends Operation {
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
 
-        // The code for chypot was transcribed from FastR:
+        // The code for chypot was transcribed from Purdue FastR:
         // after libgcc2's x86 hypot - note the sign of NaN below (what GNU-R uses)
         // note that Math.hypot in Java is _very_ slow as it tries to be more precise
 

@@ -74,7 +74,7 @@ public class RRuntime {
     public static final String R_TEXT_MIME = "text/x-r";
 
     public static final String STRING_NA = new String("NA");
-    private static final String STRING_NaN = "NaN";
+    public static final String STRING_NaN = "NaN";
     private static final String STRING_TRUE = "TRUE";
     private static final String STRING_FALSE = "FALSE";
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -87,7 +87,7 @@ public class RRuntime {
     public static final double EPSILON = Math.pow(2.0, -52.0);
 
     public static final double COMPLEX_NA_REAL_PART = DOUBLE_NA;
-    public static final double COMPLEX_NA_IMAGINARY_PART = 0.0;
+    public static final double COMPLEX_NA_IMAGINARY_PART = DOUBLE_NA;
 
     public static final byte LOGICAL_TRUE = 1;
     public static final byte LOGICAL_FALSE = 0;
@@ -202,6 +202,9 @@ public class RRuntime {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }
 
+    /**
+     * Since a distinguished NaN value is used for NA, checking for {@code isNaN} suffices.
+     */
     public static boolean isNAorNaN(double d) {
         return Double.isNaN(d);
     }
@@ -648,7 +651,7 @@ public class RRuntime {
     }
 
     public static boolean isNA(RComplex value) {
-        return isNA(value.getRealPart());
+        return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
     }
 
     @TruffleBoundary

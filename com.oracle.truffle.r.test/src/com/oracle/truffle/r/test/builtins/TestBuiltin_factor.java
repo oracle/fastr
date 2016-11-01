@@ -36,16 +36,16 @@ public class TestBuiltin_factor extends TestBase {
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order; } ");
         // Checkstyle: resume line length check
 
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
 
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L); x  }");
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7, 42); x }");
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(FALSE, TRUE); x }");
-        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7+7i, 42+42i); x }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L); x  }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7, 42); x }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(FALSE, TRUE); x }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7+7i, 42+42i); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); x }");
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); x == \"a\" }");

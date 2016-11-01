@@ -122,7 +122,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             return RComplex.createNA();
         }
         RComplex result = RRuntime.string2complexNoCheck(operand);
-        if (RRuntime.isNA(result)) {
+        if (RRuntime.isNA(result) && !operand.equals(RRuntime.STRING_NaN)) {
             warningBranch.enter();
             RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }

@@ -101,7 +101,7 @@ public abstract class IsNA extends RBuiltinNode {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             RComplex complex = vector.getDataAt(i);
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(complex.getRealPart()) || RRuntime.isNAorNaN(complex.getImaginaryPart()));
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(complex));
         }
         return createResult(resultVector, vector);
     }

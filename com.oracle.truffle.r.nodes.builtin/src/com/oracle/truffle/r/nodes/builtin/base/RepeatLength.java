@@ -156,6 +156,15 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
+    protected RLogicalVector repLen(RLogicalVector value, int length) {
+        byte[] array = new byte[length];
+        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
+            array[i] = value.getDataAt(j);
+        }
+        return RDataFactory.createLogicalVector(array, value.isComplete());
+    }
+
+    @Specialization
     protected RList repLen(RList list, int length) {
         Object[] data = new Object[length];
         for (int i = 0; i < length; i++) {
