@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.ArgumentsSignature.VarArgsInfo;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -76,7 +75,7 @@ public abstract class CombineSignaturesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile noVarArgsProfile) {
         Object[] flatLeftValues = leftValues;
         if (noVarArgsProfile.profile(resultCached.varArgsInfo.hasVarArgs())) {
-            flatLeftValues = left.flattenValues(leftValues, resultCached.varArgsInfo);
+            flatLeftValues = resultCached.varArgsInfo.flattenValues(left, leftValues);
         }
         return new RArgsValuesAndNames(resultCached.getValues(flatLeftValues, rightValues, shufflingProfile), resultCached.signature);
     }
@@ -84,10 +83,10 @@ public abstract class CombineSignaturesNode extends RBaseNode {
     @TruffleBoundary
     protected CombineResult combine(ArgumentsSignature leftOriginal, Object[] leftValues, ArgumentsSignature right) {
         // flatten any varargs, note there should not be any in right
-        VarArgsInfo varArgsInfo = leftOriginal.getVarArgsInfo(leftValues);
+        VarArgsHelper varArgsInfo = VarArgsHelper.create(leftOriginal, leftValues);
         ArgumentsSignature left = leftOriginal;
         if (varArgsInfo.hasVarArgs()) {
-            left = leftOriginal.flattenNames(varArgsInfo);
+            left = varArgsInfo.flattenNames(leftOriginal);
         }
 
         // calculate the size of the resulting signature - some values in left are overridden by the
@@ -157,9 +156,9 @@ public abstract class CombineSignaturesNode extends RBaseNode {
          */
         private final int[] valuesIndexes;
 
-        private final VarArgsInfo varArgsInfo;
+        private final VarArgsHelper varArgsInfo;
 
-        CombineResult(ArgumentsSignature signature, int[] valuesIndexes, VarArgsInfo varArgsInfo) {
+        CombineResult(ArgumentsSignature signature, int[] valuesIndexes, VarArgsHelper varArgsInfo) {
             this.varArgsInfo = varArgsInfo;
             assert valuesIndexes == null || signature.getLength() == valuesIndexes.length;
             this.signature = signature;

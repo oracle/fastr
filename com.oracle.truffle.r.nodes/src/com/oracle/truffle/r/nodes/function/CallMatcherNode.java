@@ -27,10 +27,10 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.ArgumentsSignature.VarArgsInfo;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -85,15 +85,15 @@ public abstract class CallMatcherNode extends RBaseNode {
         int argCount = suppliedArguments.length;
 
         // extract vararg signatures from the arguments
-        VarArgsInfo varArgsInfo = suppliedSignature.getVarArgsInfo(suppliedArguments);
+        VarArgsHelper varArgsInfo = VarArgsHelper.create(suppliedSignature, suppliedArguments);
         int argListSize = varArgsInfo.getArgListSize();
 
         // see flattenIndexes for the interpretation of the values
         long[] preparePermutation;
         ArgumentsSignature resultSignature;
         if (varArgsInfo.hasVarArgs()) {
-            resultSignature = suppliedSignature.flattenNames(varArgsInfo);
-            preparePermutation = suppliedSignature.flattenIndexes(varArgsInfo);
+            resultSignature = varArgsInfo.flattenNames(suppliedSignature);
+            preparePermutation = varArgsInfo.flattenIndexes(suppliedSignature);
         } else {
             preparePermutation = new long[argListSize];
             String[] newSuppliedSignature = new String[argListSize];
@@ -193,7 +193,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final ArgumentsSignature[] cachedVarArgSignatures;
         private final RFunction cachedFunction;
         /**
-         * {@link ArgumentsSignature#flattenNames(VarArgsInfo)} for the interpretation of the
+         * {@link VarArgsHelper#flattenNames(ArgumentsSignature)} for the interpretation of the
          * values.
          */
         @CompilationFinal private final long[] preparePermutation;
@@ -300,9 +300,9 @@ public abstract class CallMatcherNode extends RBaseNode {
             Object[] values = new Object[preparePermutation.length];
             for (int i = 0; i < values.length; i++) {
                 long source = preparePermutation[i];
-                if (ArgumentsSignature.isVarArgsIndex(source)) {
-                    int varArgsIdx = ArgumentsSignature.extractVarArgsIndex(source);
-                    int argsIdx = ArgumentsSignature.extractVarArgsArgumentIndex(source);
+                if (VarArgsHelper.isVarArgsIndex(source)) {
+                    int varArgsIdx = VarArgsHelper.extractVarArgsIndex(source);
+                    int argsIdx = VarArgsHelper.extractVarArgsArgumentIndex(source);
                     RArgsValuesAndNames varargs = (RArgsValuesAndNames) arguments[varArgsIdx];
                     values[i] = varargs.getArguments()[argsIdx];
                 } else {
