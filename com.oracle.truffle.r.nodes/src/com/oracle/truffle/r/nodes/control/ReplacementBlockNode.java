@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.control;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -56,8 +55,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class ReplacementBlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
-    private static AtomicInteger rhsNameIndex = new AtomicInteger(-1);
-
     @Child private ReplacementNode replacementNode;
 
     @Child private WriteVariableNode storeRhs;
@@ -68,17 +65,19 @@ public final class ReplacementBlockNode extends RSourceSectionNode implements RS
     private final RSyntaxNode lhs;
     private final boolean isSuper;
     private final String rhsName;
+    private final int tempNamesStartIndex;
 
-    public ReplacementBlockNode(SourceSection src, String operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper) {
+    public ReplacementBlockNode(SourceSection src, String operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
         super(src);
         assert "<-".equals(operator) || "<<-".equals(operator) || "=".equals(operator);
         assert lhs != null && rhs != null;
-        rhsName = "*rhs*" + rhsNameIndex.incrementAndGet();
+        rhsName = "*rhs*" + tempNamesStartIndex;
         storeRhs = WriteVariableNode.createAnonymous(rhsName, rhs.asRNode(), WriteVariableNode.Mode.INVISIBLE);
         removeRhs = RemoveAndAnswerNode.create(rhsName);
         this.operator = operator;
         this.lhs = lhs;
         this.isSuper = isSuper;
+        this.tempNamesStartIndex = tempNamesStartIndex;
     }
 
     @Override
@@ -158,7 +157,7 @@ public final class ReplacementBlockNode extends RSourceSectionNode implements RS
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
         ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return ReplacementNodeGen.create(getSourceSection(), calls, rhsName, variable.getIdentifier(), isSuper, varRead);
+        return ReplacementNodeGen.create(getSourceSection(), calls, rhsName, variable.getIdentifier(), isSuper, tempNamesStartIndex, varRead);
     }
 
     private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {

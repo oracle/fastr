@@ -48,6 +48,26 @@ public interface RCodeBuilder<T> {
         }
     }
 
+    final class CodeBuilderContext {
+        public static CodeBuilderContext DEFAULT = new CodeBuilderContext(0);
+
+        private final int replacementVarsStartIndex;
+
+        public CodeBuilderContext(int replacementVarsStartIndex) {
+            this.replacementVarsStartIndex = replacementVarsStartIndex;
+        }
+
+        /**
+         * Used to initialize {@code ReplacementBlockNode}. When we are processing a replacement AST
+         * that is within another replacement, example {@code x[x[1]<-2]<-3}, we set this value so
+         * that newly created replacements within the original replacement have different temporary
+         * variable names.
+         */
+        public int getReplacementVarsStartIndex() {
+            return replacementVarsStartIndex;
+        }
+    }
+
     /**
      * Creates a function call argument.
      */
@@ -98,6 +118,10 @@ public interface RCodeBuilder<T> {
      */
     RootCallTarget rootFunction(SourceSection source, List<Argument<T>> arguments, T body, String name);
 
+    void setContext(CodeBuilderContext context);
+
+    CodeBuilderContext getContext();
+
     /**
      * This method returns a newly created AST fragment for the given original element. This
      * functionality can be used to quickly create new AST snippets for existing code.
@@ -135,6 +159,15 @@ public interface RCodeBuilder<T> {
                 return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
             }
         }.accept(original);
+    }
+
+    /** @see #process(RSyntaxElement) */
+    default T process(RSyntaxElement original, CodeBuilderContext context) {
+        CodeBuilderContext saved = getContext();
+        setContext(context);
+        T result = process(original);
+        setContext(saved);
+        return result;
     }
 
     /**

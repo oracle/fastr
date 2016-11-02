@@ -78,6 +78,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private final Map<String, Object> constants;
+    private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
 
     public RASTBuilder() {
         this.constants = null;
@@ -194,7 +195,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
-        return new ReplacementBlockNode(source, operator, lhs, rhs, isSuper);
+        return new ReplacementBlockNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
     }
 
     public static FastPathFactory createFunctionFastPath(RSyntaxElement body, ArgumentsSignature signature) {
@@ -258,6 +259,16 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
         return Truffle.getRuntime().createCallTarget(rootNode);
+    }
+
+    @Override
+    public void setContext(CodeBuilderContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public CodeBuilderContext getContext() {
+        return context;
     }
 
     @Override

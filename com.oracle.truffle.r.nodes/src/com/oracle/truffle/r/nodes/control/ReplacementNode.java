@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededExcep
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.CodeBuilderContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -57,13 +58,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 abstract class ReplacementNode extends RNode {
 
-    /**
-     * Used to initialize {@link #tempNamesStartIndex}. When we are processing a replacement AST, we
-     * set this value so that newly created replacements within the original replacement have
-     * different temporary variable names. Example {@code x[x[1]<-2]<-3}.
-     */
-    public static int tempNamesCount = 0;
-
     private final int tempNamesStartIndex;
     private final SourceSection source;
     private final List<RSyntaxCall> calls;
@@ -71,13 +65,13 @@ abstract class ReplacementNode extends RNode {
     private final String rhsVarName;
     private final boolean isSuper;
 
-    ReplacementNode(SourceSection source, List<RSyntaxCall> calls, String rhsVarName, String targetVarName, boolean isSuper) {
+    ReplacementNode(SourceSection source, List<RSyntaxCall> calls, String rhsVarName, String targetVarName, boolean isSuper, int tempNamesStartIndex) {
         this.source = source;
         this.calls = calls;
         this.rhsVarName = rhsVarName;
         this.targetVarName = targetVarName;
         this.isSuper = isSuper;
-        tempNamesStartIndex = tempNamesCount;
+        this.tempNamesStartIndex = tempNamesStartIndex;
     }
 
     @Specialization
@@ -136,11 +130,12 @@ abstract class ReplacementNode extends RNode {
      * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
      */
     private SpecialReplacementNode createSpecialReplacement(SourceSection source, List<RSyntaxCall> calls) {
+        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
         RNode extractFunc = ReadVariableNode.create(getTargetTmpName());
         for (int i = calls.size() - 1; i >= 1; i--) {
-            extractFunc = createSpecialFunctionQuery(extractFunc.asRSyntaxNode(), calls.get(i));
+            extractFunc = createSpecialFunctionQuery(extractFunc.asRSyntaxNode(), calls.get(i), codeBuilderContext);
         }
-        RNode updateFunc = createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create(rhsVarName), calls.get(0));
+        RNode updateFunc = createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create(rhsVarName), calls.get(0), codeBuilderContext);
         assert updateFunc instanceof RCallSpecialNode : "should be only specials";
         return new SpecialReplacementNode((RCallSpecialNode) updateFunc);
     }
@@ -151,7 +146,7 @@ abstract class ReplacementNode extends RNode {
      */
     private GenericReplacementNode createGenericReplacement(SourceSection source, List<RSyntaxCall> calls) {
         List<RNode> instructions = new ArrayList<>();
-        tempNamesCount += tempNamesStartIndex + calls.size() + 1;
+        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
 
         /*
          * Create the calls that extract inner components - only needed for complex replacements
@@ -162,7 +157,7 @@ abstract class ReplacementNode extends RNode {
          */
         for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
             ReadVariableNode newLhs = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
-            RNode update = createSpecialFunctionQuery(newLhs, calls.get(i));
+            RNode update = createSpecialFunctionQuery(newLhs, calls.get(i), codeBuilderContext);
             instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
         }
         /*
@@ -172,7 +167,7 @@ abstract class ReplacementNode extends RNode {
         for (int i = 0; i < calls.size(); i++) {
             int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
             String tmprName = i == 0 ? rhsVarName : "*tmpr*" + (tempNamesStartIndex + i - 1);
-            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i));
+            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
             } else {
@@ -181,7 +176,6 @@ abstract class ReplacementNode extends RNode {
         }
 
         GenericReplacementNode newReplacementNode = new GenericReplacementNode(instructions);
-        tempNamesCount -= calls.size() + 1;
         return newReplacementNode;
     }
 
@@ -189,15 +183,15 @@ abstract class ReplacementNode extends RNode {
      * Creates a call that looks like {@code fun} but has the first argument replaced with
      * {@code newLhs}.
      */
-    private static RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
+    private static RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i]);
+            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
         }
 
-        return RCallSpecialNode.createCallInReplace(fun.getSourceSection(), process(fun.getSyntaxLHS()).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
+        return RCallSpecialNode.createCallInReplace(fun.getSourceSection(), process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
     }
 
     /**
@@ -205,7 +199,7 @@ abstract class ReplacementNode extends RNode {
      * {@code newLhs}, its target turned into an update function ("foo<-"), with the given value
      * added to the arguments list.
      */
-    private static RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
+    private static RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         ArgumentsSignature signature = fun.getSyntaxSignature();
@@ -213,7 +207,7 @@ abstract class ReplacementNode extends RNode {
         String[] names = new String[argNodes.length];
         for (int i = 0; i < arguments.length; i++) {
             names[i] = signature.getName(i);
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i]);
+            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
         }
         argNodes[argNodes.length - 1] = rhs;
         names[argNodes.length - 1] = "value";
@@ -241,8 +235,8 @@ abstract class ReplacementNode extends RNode {
         return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
     }
 
-    private static RSyntaxNode process(RSyntaxElement original) {
-        return RContext.getASTBuilder().process(original);
+    private static RSyntaxNode process(RSyntaxElement original, CodeBuilderContext codeBuilderContext) {
+        return RContext.getASTBuilder().process(original, codeBuilderContext);
     }
 
     private static RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
