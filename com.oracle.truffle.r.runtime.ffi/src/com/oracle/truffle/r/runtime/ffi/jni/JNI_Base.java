@@ -72,12 +72,19 @@ public class JNI_Base implements BaseRFFI {
 
     @Override
     public String mkdtemp(String template) {
+        /*
+         * Not only must the (C) string end in XXXXXX it must also be null-terminated. Since it is
+         * modified by mkdtemp we must make a copy.
+         */
         byte[] bytes = template.getBytes();
-        long result = native_mkdtemp(bytes);
+        byte[] ztbytes = new byte[bytes.length + 1];
+        System.arraycopy(bytes, 0, ztbytes, 0, bytes.length);
+        ztbytes[bytes.length] = 0;
+        long result = native_mkdtemp(ztbytes);
         if (result == 0) {
             return null;
         } else {
-            return new String(bytes);
+            return new String(ztbytes, 0, bytes.length);
         }
     }
 
