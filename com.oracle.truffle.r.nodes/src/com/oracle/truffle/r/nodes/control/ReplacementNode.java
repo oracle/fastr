@@ -109,7 +109,7 @@ abstract class ReplacementNode extends RNode {
     private ReplacementBase createReplacementNode(boolean useSpecials) {
         CompilerAsserts.neverPartOfCompilation();
         // Note: if specials are turned off in FastR, onlySpecials will never be true
-        boolean createSpecial = hasOnlySpecialCalls() && useSpecials && !isSuper;
+        boolean createSpecial = hasOnlySpecialCalls() && useSpecials;
         return createSpecial ? createSpecialReplacement(source, calls) : createGenericReplacement(source, calls);
     }
 
