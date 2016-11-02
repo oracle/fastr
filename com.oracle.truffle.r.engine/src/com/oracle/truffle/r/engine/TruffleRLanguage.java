@@ -41,6 +41,7 @@ import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
@@ -80,7 +81,17 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
         } catch (Throwable t) {
             t.printStackTrace();
-            Utils.rSuicide("error during R language initialization");
+            /*
+             * Truffle currently has no distinguished exception to indicate language initialization
+             * failure, so nothing good can come from throwing the exception, which is what
+             * Utils.rSuicide does. For now we catch it and exit the process.
+             */
+            try {
+                Utils.rSuicide("error during R language initialization");
+            } catch (ExitException ex) {
+                System.exit(ex.getStatus());
+            }
+
         }
     }
 

@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.ArgumentsSignature.VarArgsInfo;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -82,29 +83,17 @@ public abstract class CallMatcherNode extends RBaseNode {
         // the newly created CallMatcherCachedNode.
 
         int argCount = suppliedArguments.length;
-        int argListSize = argCount;
 
         // extract vararg signatures from the arguments
-        ArgumentsSignature[] varArgSignatures = null;
-        for (int i = 0; i < suppliedArguments.length; i++) {
-            Object arg = suppliedArguments[i];
-            if (arg instanceof RArgsValuesAndNames) {
-                if (varArgSignatures == null) {
-                    varArgSignatures = new ArgumentsSignature[suppliedArguments.length];
-                }
-                varArgSignatures[i] = ((RArgsValuesAndNames) arg).getSignature();
-                argListSize += ((RArgsValuesAndNames) arg).getLength() - 1;
-            } else if (suppliedSignature.isUnmatched(i)) {
-                argListSize--;
-            }
-        }
+        VarArgsInfo varArgsInfo = suppliedSignature.getVarArgsInfo(suppliedArguments);
+        int argListSize = varArgsInfo.getArgListSize();
 
         // see flattenIndexes for the interpretation of the values
         long[] preparePermutation;
         ArgumentsSignature resultSignature;
-        if (varArgSignatures != null) {
-            resultSignature = ArgumentsSignature.flattenNames(suppliedSignature, varArgSignatures, argListSize);
-            preparePermutation = ArgumentsSignature.flattenIndexes(varArgSignatures, suppliedSignature, argListSize);
+        if (varArgsInfo.hasVarArgs()) {
+            resultSignature = suppliedSignature.flattenNames(varArgsInfo);
+            preparePermutation = suppliedSignature.flattenIndexes(varArgsInfo);
         } else {
             preparePermutation = new long[argListSize];
             String[] newSuppliedSignature = new String[argListSize];
@@ -123,7 +112,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(function);
         MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, this, forNextMethod, function.getRBuiltin());
 
-        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
+        return new CallMatcherCachedNode(suppliedSignature, varArgsInfo.getVarArgsSignatures(), function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {
@@ -204,8 +193,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final ArgumentsSignature[] cachedVarArgSignatures;
         private final RFunction cachedFunction;
         /**
-         * {@link ArgumentsSignature#flattenNames(ArgumentsSignature, ArgumentsSignature[], int)}
-         * for the interpretation of the values.
+         * {@link ArgumentsSignature#flattenNames(VarArgsInfo)} for the interpretation of the
+         * values.
          */
         @CompilationFinal private final long[] preparePermutation;
         private final MatchPermutation permutation;
