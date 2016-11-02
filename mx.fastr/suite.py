@@ -265,6 +265,19 @@ suite = {
       "class" : "FastRReleaseProject",
       "output" : "com.oracle.truffle.r.release"
     },
+
+    "com.oracle.truffle.r.native.recommended" : {
+      "sourceDirs" : [],
+      "dependencies" : [
+        "com.oracle.truffle.r.native",
+        "com.oracle.truffle.r.engine",
+        "com.oracle.truffle.r.runtime.ffi"
+      ],
+      "native" : "true",
+      "output" : "com.oracle.truffle.r.native.recommended",
+      "workingSets" : "FastR",
+    },
+
   },
 
   "distributions" : {
