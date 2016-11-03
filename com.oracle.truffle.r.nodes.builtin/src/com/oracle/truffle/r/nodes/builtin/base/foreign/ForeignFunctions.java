@@ -45,7 +45,7 @@ import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildN
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
-import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
+import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
@@ -362,7 +362,7 @@ public class ForeignFunctions {
                 case "runif":
                     return RunifNodeGen.create();
                 case "qgamma":
-                    return QgammaNodeGen.create();
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":

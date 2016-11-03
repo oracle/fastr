@@ -41,17 +41,10 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.rqp01check;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Java implementation of the qgamma function. The logic was derived from GNU R (see inline
@@ -62,39 +55,10 @@ public abstract class GammaFunctions {
 
     // This is derived from distn.c.
 
-    public abstract static class Qgamma extends RExternalBuiltinNode.Arg5 {
-
-        private final NACheck naCheck = NACheck.create();
-
-        @TruffleBoundary
-        private RDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
-            int pLen = p.getLength();
-            int shapeLen = shape.getLength();
-            int scaleLen = scale.getLength();
-            double[] result = new double[Math.max(pLen, Math.max(shapeLen, scaleLen))];
-            RAbstractDoubleVector attrSource = null;
-            if (result.length > 1) {
-                attrSource = pLen == result.length ? p : (shapeLen == result.length ? shape : scale);
-            }
-            naCheck.enable(true);
-            for (int i = 0, l = 0, j = 0, k = 0; i < result.length; ++i, l = Utils.incMod(l, pLen), j = Utils.incMod(j, shapeLen), k = Utils.incMod(k, scaleLen)) {
-                double pv = p.getDataAt(l);
-                result[i] = GammaFunctions.qgamma(pv, shape.getDataAt(j), scale.getDataAt(k), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
-                naCheck.check(result[i]);
-            }
-            RDoubleVector res = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
-            if (attrSource != null) {
-                res.copyAttributesFrom(attrProfiles, attrSource);
-            }
-            return res;
-        }
-
-        @Specialization
-        public RAbstractDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, RAbstractLogicalVector lowerTail, RAbstractLogicalVector logP) {
-            if (shape.getLength() == 0 || scale.getLength() == 0) {
-                return RDataFactory.createEmptyDoubleVector();
-            }
-            return qgamma(p, shape, scale, castLogical(lowerTail), castLogical(logP));
+    public static final class QgammaFunc implements Function3_2 {
+        @Override
+        public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
+            return GammaFunctions.qgamma(p, shape, scale, lowerTail, logP);
         }
     }
 
