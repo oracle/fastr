@@ -30,7 +30,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -58,10 +57,4 @@ public abstract class AsInteger extends RBuiltinNode {
             return (RAbstractIntVector) v.copyDropAttributes();
         }
     }
-
-    @Specialization
-    protected int asInteger(RConnection conn) {
-        return conn.getDescriptor();
-    }
-
 }

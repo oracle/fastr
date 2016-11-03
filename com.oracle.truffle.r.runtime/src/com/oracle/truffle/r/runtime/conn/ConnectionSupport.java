@@ -34,14 +34,12 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
@@ -79,14 +77,18 @@ public class ConnectionSupport {
         }
 
         @TruffleBoundary
-        public BaseRConnection getConnection(int index) {
+        public BaseRConnection getConnection(int index, boolean throwError) {
+            BaseRConnection conn = null;
             if (index >= 0 && index <= hwm) {
                 WeakReference<BaseRConnection> ref = allConnections.get(index);
                 if (ref != null) {
-                    return ref.get();
+                    conn = ref.get();
                 }
             }
-            return null;
+            if (conn == null && throwError) {
+                throw RError.error(RError.SHOW_CALLER, Message.INVALID_CONNECTION);
+            }
+            return conn;
         }
 
         private int setStdConnection(int index, BaseRConnection con) {
@@ -100,7 +102,7 @@ public class ConnectionSupport {
             return index;
         }
 
-        public RIntVector getAllConnections() {
+        public RAbstractIntVector getAllConnections() {
             ArrayList<Integer> list = new ArrayList<>();
             for (int i = 0; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
@@ -302,7 +304,7 @@ public class ConnectionSupport {
         }
     }
 
-    enum ConnectionClass {
+    public enum ConnectionClass {
         Terminal("terminal"),
         File("file"),
         GZFile("gzfile"),
@@ -311,10 +313,14 @@ public class ConnectionSupport {
         URL("url"),
         Internal("internal");
 
-        final String printName;
+        private final String printName;
 
         ConnectionClass(String printName) {
             this.printName = printName;
+        }
+
+        public String getPrintName() {
+            return printName;
         }
     }
 
@@ -326,22 +332,6 @@ public class ConnectionSupport {
         } else {
             return path;
         }
-    }
-
-    /**
-     * In GnuR a connection is just an numeric vector and can be created by setting the class, even
-     * if the result isn't actually a valid connection, e.g.
-     * {@code structure(2, class=c("terminal","connection"))}.
-     */
-    public static RConnection fromVector(RVector<?> vector, @SuppressWarnings("unused") RStringVector classAttr) {
-        int index = RRuntime.asInteger(vector);
-        RConnection result = RContext.getInstance().stateRConnection.getConnection(index);
-        if (result == null) {
-            // non-existent connection, still legal according to GnuR
-            // we cannot throw an error here as this can be used by parallel packages - do it lazily
-            return InvalidConnection.instance;
-        }
-        return result;
     }
 
     // TODO implement all open modes
@@ -521,6 +511,8 @@ public class ConnectionSupport {
          */
         private int descriptor;
 
+        private final ConnectionClass conClass;
+
         /**
          * The constructor for every connection class except {@link StdConnections}.
          *
@@ -548,13 +540,12 @@ public class ConnectionSupport {
          * Primitive constructor that just assigns state.
          */
         private BaseRConnection(ConnectionClass conClass, OpenMode mode) {
+            this.conClass = conClass;
             this.openMode = mode;
-            String[] classes = new String[2];
-            classes[0] = conClass.printName;
-            classes[1] = "connection";
-            initAttributes().put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR));
-            // For GnuR compatibility we define the "conn_id" attribute
-            getAttributes().put("conn_id", RDataFactory.createExternalPtr(0, RDataFactory.createSymbol("connection")));
+        }
+
+        public final ConnectionClass getConnectionClass() {
+            return conClass;
         }
 
         protected void openNonLazyConnection() throws IOException {

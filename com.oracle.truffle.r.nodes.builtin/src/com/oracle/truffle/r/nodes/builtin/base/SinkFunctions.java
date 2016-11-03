@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -34,6 +32,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -46,7 +45,7 @@ public class SinkFunctions {
     public abstract static class Sink extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("file").mustBe(instanceOf(RConnection.class).or(integerValue()));
+            casts.arg("file").mustNotBeNull().mustBe(Predef.integerValue()).asIntegerVector().findFirst();
             casts.arg("closeOnExit").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("split").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -54,31 +53,27 @@ public class SinkFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull sink(RConnection conn, boolean closeOnExit, boolean errcon, boolean split) {
+        protected RNull sink(int file, boolean closeOnExit, boolean errcon, boolean split) {
             if (split) {
                 // TODO
                 throw RError.nyi(this, "split");
             }
-            if (errcon) {
-                StdConnections.divertErr(conn);
+            if (file == -1) {
+                try {
+                    StdConnections.popDivertOut();
+                } catch (IOException ex) {
+                    throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+                }
             } else {
-                StdConnections.pushDivertOut(conn, closeOnExit);
+                RConnection conn = RConnection.fromIndex(file);
+                if (errcon) {
+                    StdConnections.divertErr(conn);
+                } else {
+                    StdConnections.pushDivertOut(conn, closeOnExit);
+                }
             }
             return RNull.instance;
         }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        @TruffleBoundary
-        protected RNull sink(int conn, boolean closeOnExit, boolean isMessage, boolean split) {
-            try {
-                StdConnections.popDivertOut();
-            } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
-            }
-            return RNull.instance;
-        }
-
     }
 
     @RBuiltin(name = "sink.number", kind = INTERNAL, parameterNames = {"type"}, behavior = IO)

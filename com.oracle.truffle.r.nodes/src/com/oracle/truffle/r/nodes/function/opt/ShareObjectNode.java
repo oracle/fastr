@@ -75,6 +75,13 @@ public abstract class ShareObjectNode extends Node {
         return value;
     }
 
+    public static <T> T sharePermanent(T value) {
+        if (value instanceof RShareable) {
+            ((RShareable) value).makeSharedPermanent();
+        }
+        return value;
+    }
+
     public static void unshare(Object value) {
         if (value instanceof RShareable) {
             RShareable shareable = (RShareable) value;

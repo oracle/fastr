@@ -42,6 +42,6 @@ public abstract class InheritsBuiltin extends RBuiltinNode {
 
     @Specialization
     protected Object doesInherit(Object x, RAbstractStringVector what, boolean which) {
-        return inheritsNode.executeObject(x, what, which);
+        return inheritsNode.execute(x, what, which);
     }
 }

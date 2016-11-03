@@ -11,17 +11,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -37,51 +43,94 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 //Transcribed from GnuR, library/utils/src/io.c
 
-public final class WriteTable extends RExternalBuiltinNode {
+public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        // file
+        casts.arg(1).defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
+        // nrows
+        casts.arg(2).mustNotBeNull().asIntegerVector().findFirst().notNA();
+        // nc
+        casts.arg(3).mustNotBeNull().asIntegerVector().findFirst().notNA();
+        // rnames
+        casts.arg(4).allowNull().mustBe(stringValue()).asStringVector();
+        // sep
+        casts.arg(5).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        // eol
+        casts.arg(6).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        // na
+        casts.arg(7).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        // dec
+        casts.arg(8).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst().mustBe(Predef.length(1), RError.Message.GENERIC, "'dec' must be a single character");
+        // quote
+        casts.arg(9).mustNotBeNull().asIntegerVector();
+        // qmethod
+        casts.arg(10).mustNotBeNull().asLogicalVector().findFirst().notNA().map(toBoolean());
+    }
+
+    // Transcribed from GnuR, library/utils/src/io.c
+
+    @Specialization
     @TruffleBoundary
-    private static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn)
-                    throws IOException, IllegalArgumentException {
-        String tmp = null;
-        if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
-            executeDataFrame(con, (RVector<?>) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
-        } else { /* A matrix */
-
-            // if (!isVectorAtomic(x))
-            // UNIMPLEMENTED_TYPE("write.table, matrix method", x);
-            RVector<?> x = (RVector<?>) xx;
-            /* quick integrity check */
-            if (x.getLength() != nr * nc) {
-                throw new IllegalArgumentException("corrupt matrix -- dims not not match length");
+    protected static Object writetable(Object xx, int file, int nr, int nc, Object rnames, String csep, String ceol, String cna, String dec, RAbstractIntVector quote, boolean qmethod) {
+        char cdec = dec.charAt(0);
+        boolean[] quoteCol = new boolean[nc];
+        boolean quoteRn = false;
+        for (int i = 0; i < quote.getLength(); i++) {
+            int qi = quote.getDataAt(i);
+            if (qi == 0) {
+                quoteRn = true;
             }
+            if (qi > 0) {
+                quoteCol[qi - 1] = true;
+            }
+        }
+        try (RConnection con = RConnection.fromIndex(file).forceOpen("wt")) {
+            String tmp = null;
+            if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
+                executeDataFrame(con, (RVector<?>) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
+            } else { /* A matrix */
 
-            for (int i = 0; i < nr; i++) {
-                if (i % 1000 == 999) {
-                    // R_CheckUserInterrupt();
+                // if (!isVectorAtomic(x))
+                // UNIMPLEMENTED_TYPE("write.table, matrix method", x);
+                RVector<?> x = (RVector<?>) xx;
+                /* quick integrity check */
+                if (x.getLength() != nr * nc) {
+                    throw new IllegalArgumentException("corrupt matrix -- dims not not match length");
                 }
-                if (!(rnames instanceof RNull)) {
-                    con.writeString(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec), false);
-                    con.writeString(csep, false);
-                }
-                for (int j = 0; j < nc; j++) {
-                    if (j > 0) {
+
+                for (int i = 0; i < nr; i++) {
+                    if (i % 1000 == 999) {
+                        // R_CheckUserInterrupt();
+                    }
+                    if (!(rnames instanceof RNull)) {
+                        con.writeString(encodeElement2((RAbstractStringVector) rnames, i, quoteRn, qmethod, cdec), false);
                         con.writeString(csep, false);
                     }
-                    if (isna(x, i + j * nr)) {
-                        tmp = cna;
-                    } else {
-                        tmp = encodeElement2(x, i + j * nr, quoteCol[j], qmethod, cdec);
-                        /* if(cdec) change_dec(tmp, cdec, TYPEOF(x)); */
+                    for (int j = 0; j < nc; j++) {
+                        if (j > 0) {
+                            con.writeString(csep, false);
+                        }
+                        if (isna(x, i + j * nr)) {
+                            tmp = cna;
+                        } else {
+                            tmp = encodeElement2(x, i + j * nr, quoteCol[j], qmethod, cdec);
+                            /* if(cdec) change_dec(tmp, cdec, TYPEOF(x)); */
+                        }
+                        con.writeString(tmp, false);
                     }
-                    con.writeString(tmp, false);
+                    con.writeString(ceol, false);
                 }
-                con.writeString(ceol, false);
-            }
 
+            }
+        } catch (IOException | IllegalArgumentException ex) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }
@@ -215,8 +264,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    private static String encodeElement(Object x, int indx, char quote, char dec) {
+    private static String encodeElement(Object x, int indx, @SuppressWarnings("unused") char quote, @SuppressWarnings("unused") char dec) {
         if (x instanceof RAbstractDoubleVector) {
             RAbstractDoubleVector v = (RAbstractDoubleVector) x;
             return DoubleVectorPrinter.encodeReal(v.getDataAt(indx));
@@ -247,89 +295,5 @@ public final class WriteTable extends RExternalBuiltinNode {
             }
         }
         return false;
-    }
-
-    private void invalidArgument(String name) throws RError {
-        errorProfile.enter();
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
-    }
-
-    // Transcribed from GnuR, library/utils/src/io.c
-    @TruffleBoundary
-    @Override
-    public Object call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        Object conArg = argValues[1];
-        RConnection conn;
-        if (!(conArg instanceof RConnection)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, "'file' is not a connection");
-        } else {
-            conn = (RConnection) conArg;
-        }
-        // TODO check connection writeable
-
-        int nr = castInt(castVector(argValues[2]));
-        int nc = castInt(castVector(argValues[3]));
-        Object rnamesArg = argValues[4];
-        Object sepArg = argValues[5];
-        Object eolArg = argValues[6];
-        Object naArg = argValues[7];
-        Object decArg = argValues[8];
-        Object quoteArg = argValues[9];
-        byte qmethod = castLogical(castVector(argValues[10]));
-
-        String csep;
-        String ceol;
-        String cna;
-        String cdec;
-
-        if (nr == RRuntime.INT_NA) {
-            invalidArgument("nr");
-        }
-        if (nc == RRuntime.INT_NA) {
-            invalidArgument("nc");
-        }
-        if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
-            invalidArgument("rnames");
-        }
-        if ((csep = isString(sepArg)) == null) {
-            invalidArgument("sep");
-        }
-        if ((ceol = isString(eolArg)) == null) {
-            invalidArgument("eol");
-        }
-        if ((cna = isString(naArg)) == null) {
-            invalidArgument("na");
-        }
-        if ((cdec = isString(decArg)) == null) {
-            invalidArgument("dec");
-        }
-        if (qmethod == RRuntime.LOGICAL_NA) {
-            invalidArgument("qmethod");
-        }
-        if (cdec.length() != 1) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, "'dec' must be a single character");
-        }
-        boolean[] quoteCol = new boolean[nc];
-        boolean quoteRn = false;
-        RAbstractIntVector quote = (RAbstractIntVector) castVector(quoteArg);
-        for (int i = 0; i < quote.getLength(); i++) {
-            int qi = quote.getDataAt(i);
-            if (qi == 0) {
-                quoteRn = true;
-            }
-            if (qi > 0) {
-                quoteCol[qi - 1] = true;
-            }
-        }
-        try (RConnection openConn = conn.forceOpen("wt")) {
-            execute(openConn, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
-        } catch (IOException | IllegalArgumentException ex) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
-        }
-        return RNull.instance;
     }
 }

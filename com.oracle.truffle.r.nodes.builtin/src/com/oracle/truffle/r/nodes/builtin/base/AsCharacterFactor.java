@@ -43,13 +43,14 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "asCharacterFactor", kind = INTERNAL, parameterNames = "x", behavior = PURE)
 public abstract class AsCharacterFactor extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
+    private static final RStringVector CLASS_FACTOR_VEC = RDataFactory.createStringVectorFromScalar(RRuntime.CLASS_FACTOR);
 
     @Child InheritsNode inheritsNode = InheritsNodeGen.create();
     @Child CastToVectorNode castToVectorNode = CastToVectorNode.create();
 
     @Specialization
     protected RStringVector doAsCharacterFactor(Object x) {
-        byte isFactor = (byte) inheritsNode.executeObject(x, RRuntime.CLASS_FACTOR, false);
+        byte isFactor = (byte) inheritsNode.execute(x, CLASS_FACTOR_VEC, false);
         if (isFactor == RRuntime.LOGICAL_FALSE) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.COERCE_NON_FACTOR);
         }

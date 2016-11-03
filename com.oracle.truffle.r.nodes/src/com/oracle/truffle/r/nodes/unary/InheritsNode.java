@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @TypeSystemReference(RTypes.class)
 public abstract class InheritsNode extends RBaseNode {
 
-    public abstract Object executeObject(Object x, Object what, boolean which);
+    public abstract Object execute(Object x, RAbstractStringVector what, boolean which);
 
     protected ClassHierarchyNode createClassHierarchy() {
         return ClassHierarchyNodeGen.create(true, true);

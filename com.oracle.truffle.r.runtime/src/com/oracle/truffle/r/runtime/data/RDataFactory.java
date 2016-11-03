@@ -494,12 +494,21 @@ public final class RDataFactory {
         return traceDataCreated(new RS4Object());
     }
 
+    public static RExternalPtr createExternalPtr(long value, Object externalObject, Object tag, Object prot) {
+        assert tag != null : "null tag, use RNull.instance instead";
+        assert prot != null : "null prot, use RNull.instance instead";
+        return traceDataCreated(new RExternalPtr(value, externalObject, tag, prot));
+    }
+
     public static RExternalPtr createExternalPtr(long value, Object tag, Object prot) {
-        return traceDataCreated(new RExternalPtr(value, tag, prot));
+        assert tag != null : "null tag, use RNull.instance instead";
+        assert prot != null : "null prot, use RNull.instance instead";
+        return traceDataCreated(new RExternalPtr(value, null, tag, prot));
     }
 
     public static RExternalPtr createExternalPtr(long value, Object tag) {
-        return traceDataCreated(new RExternalPtr(value, tag, RNull.instance));
+        assert tag != null : "null tag, use RNull.instance instead";
+        return traceDataCreated(new RExternalPtr(value, null, tag, RNull.instance));
     }
 
     /*
