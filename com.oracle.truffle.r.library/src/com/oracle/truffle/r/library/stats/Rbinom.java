@@ -13,62 +13,50 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Int;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 // transcribed from rbinom.c
 
-public abstract class Rbinom extends RExternalBuiltinNode.Arg3 {
+public final class Rbinom implements RandFunction2_Int {
+
+    private final Qbinom qbinom = new Qbinom();
 
     @TruffleBoundary
     private static double unifRand() {
         return RRNG.unifRand();
     }
 
-    private final Qbinom qbinom = new Qbinom();
-
-    double rbinom(double nin, double pp, BranchProfile nanProfile) {
+    @Override
+    public int evaluate(double nin, double pp) {
         double psave = -1.0;
         int nsave = -1;
 
         if (!Double.isFinite(nin)) {
-            nanProfile.enter();
-            return Double.NaN;
+            return RRuntime.INT_NA;
         }
         double r = MathConstants.forceint(nin);
         if (r != nin) {
-            nanProfile.enter();
-            return Double.NaN;
+            return RRuntime.INT_NA;
         }
         /* n=0, p=0, p=1 are not errors <TSL> */
         if (!Double.isFinite(pp) || r < 0 || pp < 0. || pp > 1.) {
-            nanProfile.enter();
-            return Double.NaN;
+            return RRuntime.INT_NA;
         }
 
         if (r == 0 || pp == 0.) {
             return 0;
         }
         if (pp == 1.) {
-            return r;
+            return (int) r;
         }
 
         if (r >= Integer.MAX_VALUE) {
             /*
              * evade integer overflow, and r == INT_MAX gave only even values
              */
-            return qbinom.evaluate(unifRand(), r, pp, /* lower_tail */false, /* log_p */false);
+            return (int) qbinom.evaluate(unifRand(), r, pp, /* lower_tail */false, /* log_p */false);
         }
         /* else */
         int n = (int) r;
@@ -257,48 +245,5 @@ public abstract class Rbinom extends RExternalBuiltinNode.Arg3 {
             ix = n - ix;
         }
         return ix;
-    }
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.arg(0).asDoubleVector();
-        casts.arg(1).asDoubleVector();
-        casts.arg(2).asDoubleVector();
-    }
-
-    @Specialization
-    protected Object rbinom(RAbstractDoubleVector n, RAbstractDoubleVector size, RAbstractDoubleVector prob,  //
-                    @Cached("create()") NAProfile na, //
-                    @Cached("create()") BranchProfile nanProfile, //
-                    @Cached("create()") VectorLengthProfile sizeProfile, //
-                    @Cached("create()") VectorLengthProfile probProfile) {
-        int length = n.getLength();
-        RNode.reportWork(this, length);
-        if (length == 1) {
-            double l = n.getDataAt(0);
-            if (Double.isNaN(l) || l < 0 || l > Integer.MAX_VALUE) {
-                throw RError.error(RError.SHOW_CALLER, Message.INVALID_UNNAMED_ARGUMENTS);
-            }
-            length = (int) l;
-        }
-        int sizeLength = sizeProfile.profile(size.getLength());
-        int probLength = probProfile.profile(prob.getLength());
-
-        double[] result = new double[length];
-        boolean complete = true;
-        boolean nans = false;
-        for (int i = 0; i < length; i++) {
-            double value = rbinom(size.getDataAt(i % sizeLength), prob.getDataAt(i % probLength), nanProfile);
-            if (na.isNA(value)) {
-                complete = false;
-            } else if (Double.isNaN(value)) {
-                nans = true;
-            }
-            result[i] = value;
-        }
-        if (nans) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.NAN_PRODUCED);
-        }
-        return RDataFactory.createDoubleVector(result, complete);
     }
 }
