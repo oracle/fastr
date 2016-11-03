@@ -228,8 +228,9 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             if isinstance(dep, mx.JARDistribution):
                 shutil.copy(join(dep.suite.dir, dep.path), jars_dir)
             elif isinstance(dep, mx.Library):
-                jar_name = dep.name.lower() + '.jar'
-                shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
+                if not dep.name.lower() == 'jdk_tools':
+                    jar_name = dep.name.lower() + '.jar'
+                    shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
             elif isinstance(dep, mx.JavaProject):
                 if 'com.oracle.truffle.r' in dep.name:
                     classfiles_dir = dep.output_dir()
