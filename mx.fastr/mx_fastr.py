@@ -27,7 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
-from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
 
@@ -90,7 +90,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath(jdk=jdk)]
+    vmArgs = ['-cp', mx.classpath('FASTR', jdk=jdk)]
 
     if 'nocompile' in kwargs:
         nocompile = True

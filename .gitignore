@@ -28,7 +28,7 @@
 /com.oracle.truffle.r.native/include/linked
 /com.oracle.truffle.r.native/fficall/jni.done
 /com.oracle.truffle.r.native/fficall/jniboot.done
-
+/com.oracle.truffle.r.native.recommended/install.recommended
 /com.oracle.truffle.r.test.native/packages/copy_recommended
 /com.oracle.truffle.r.test.native/packages/recommended
 /com.oracle.truffle.r.test.native/packages/*/lib/*
