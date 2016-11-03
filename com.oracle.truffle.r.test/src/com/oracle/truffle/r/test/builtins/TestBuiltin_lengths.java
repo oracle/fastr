@@ -49,7 +49,7 @@ public class TestBuiltin_lengths extends TestBase {
 
     @Test
     public void wrongArgs() {
-        assertEval(Output.IgnoreErrorContext, "lengths(quote(a))");
-        assertEval(Output.IgnoreErrorContext, "lengths(42, use.names='as')");
+        assertEval("lengths(quote(a))");
+        assertEval("lengths(42, use.names='as')");
     }
 }

@@ -45,7 +45,7 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ l <- list(1,2,3) ; l[[5]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[0] }");
-        assertEval("{ l <- list(1,2,3) ; l[[0]] }");
+        assertEval(Output.IgnoreErrorContext, "{ l <- list(1,2,3) ; l[[0]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[[NA]] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[[NA]]) }");
@@ -56,10 +56,10 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ l <- list(1,2,3) ; l[-2] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[-2]) }");
 
-        assertEval("{ l <- list(1,2,3) ; l[[-2]] }");
+        assertEval(Output.IgnoreErrorContext, "{ l <- list(1,2,3) ; l[[-2]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[-5] }");
-        assertEval("{ l <- list(1,2,3) ; l[[-5]] }");
+        assertEval(Output.IgnoreErrorContext, "{ l <- list(1,2,3) ; l[[-5]] }");
 
         assertEval("{ a <- list(1,NULL,list()) ; a[3] }");
         assertEval("{ a <- list(1,NULL,list()) ; a[[3]] }");
@@ -67,7 +67,7 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ a <- list(1,NULL,list()) ; typeof(a[[3]]) }");
 
         assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[x] }");
-        assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
+        assertEval(Output.IgnoreErrorContext, "{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test

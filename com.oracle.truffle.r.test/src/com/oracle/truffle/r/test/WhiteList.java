@@ -37,7 +37,9 @@ import java.util.Map;
  * that the FastR output is in fact acceptable for the test input.
  *
  */
-public class WhiteList implements TestTrait {
+public final class WhiteList implements TestTrait {
+    private static final Map<String, WhiteList> all = new HashMap<>();
+
     public static class Results {
 
         public final String fastR;
@@ -58,8 +60,17 @@ public class WhiteList implements TestTrait {
     private final Map<String, Results> map = new HashMap<>();
     private final String name;
 
-    public WhiteList(String name) {
+    private WhiteList(String name) {
         this.name = name;
+    }
+
+    public static WhiteList create(String name) {
+        WhiteList result = all.get(name);
+        if (result == null) {
+            result = new WhiteList(name);
+            all.put(name, result);
+        }
+        return result;
     }
 
     public void add(String input, String actual, String expected) {
@@ -74,17 +85,25 @@ public class WhiteList implements TestTrait {
         map.get(expression).used = true;
     }
 
-    public void report() {
-        int unusedCount = map.size();
-        for (Map.Entry<String, Results> entry : map.entrySet()) {
-            if (entry.getValue().used) {
-                unusedCount--;
-            } else {
-                System.out.println("unused entry: " + entry.getKey());
+    public static void report() {
+        for (Map.Entry<String, WhiteList> whiteListEntry : all.entrySet()) {
+            Map<String, Results> map = whiteListEntry.getValue().map;
+            int unusedCount = map.size();
+            for (Map.Entry<String, Results> entry : map.entrySet()) {
+                if (entry.getValue().used) {
+                    unusedCount--;
+                } else {
+                    System.out.println("unused entry: " + entry.getKey());
+                }
+            }
+            if (unusedCount > 0) {
+                System.out.printf("%n%d unused entries in whitelist (%s)%n", unusedCount, whiteListEntry.getKey());
             }
         }
-        if (unusedCount > 0) {
-            System.out.printf("%n%d unused entries in whitelist (%s)%n", unusedCount, name);
-        }
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

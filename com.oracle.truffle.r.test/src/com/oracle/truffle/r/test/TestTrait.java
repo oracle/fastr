@@ -39,4 +39,6 @@ public interface TestTrait {
     static <T> T[] collect(TestTrait[] traits, Class<T> clazz) {
         return Arrays.stream(traits).filter(t -> clazz.isInstance(t)).toArray(len -> (T[]) Array.newInstance(clazz, len));
     }
+
+    String getName();
 }

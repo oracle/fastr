@@ -19,6 +19,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
+import com.oracle.truffle.r.nodes.access.AccessSlotNode;
+import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
@@ -154,6 +156,14 @@ public class MethodsListDispatch {
     }
 
     public abstract static class R_M_setPrimitiveMethods extends RExternalBuiltinNode.Arg5 {
+        @Child private AccessSlotNode accessSlotNode;
+
+        private AccessSlotNode initAccessSlotNode() {
+            if (accessSlotNode == null) {
+                accessSlotNode = insert(AccessSlotNodeGen.create(true, null, null));
+            }
+            return accessSlotNode;
+        }
 
         @Specialization
         @TruffleBoundary
@@ -176,7 +186,16 @@ public class MethodsListDispatch {
                 return value;
             }
 
-            setPrimitiveMethodsInternal(op, codeVecString, fundef, mlist);
+            Object opx = op;
+            if ((op instanceof RFunction) && !((RFunction) op).isBuiltin()) {
+                String internalName = RRuntime.asString(initAccessSlotNode().executeAccess(op, "internal"));
+                opx = RContext.lookupBuiltin(internalName);
+                if (opx == null) {
+                    throw RError.error(this, RError.Message.GENERIC, "'internal' slot does not name an internal function: " + internalName);
+                }
+            }
+
+            setPrimitiveMethodsInternal(opx, codeVecString, fundef, mlist);
             return fnameString;
         }
 

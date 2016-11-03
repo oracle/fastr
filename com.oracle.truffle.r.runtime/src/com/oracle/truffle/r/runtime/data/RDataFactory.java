@@ -138,7 +138,7 @@ public final class RDataFactory {
                 data[i + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
             }
         }
-        return createComplexVector(data, false, null, null);
+        return createComplexVector(data, !fillNA, null, null);
     }
 
     public static RComplexVector createComplexVector(double[] data, boolean complete) {

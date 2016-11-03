@@ -72,6 +72,10 @@ typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
 
 CCODE (PRIMFUN)(SEXP x);
 
+/* main/sort.c */
+void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
+		  Rboolean decreasing, SEXP rho);
+
 #define Unix
 #ifdef Unix
 # define OSTYPE      "unix"

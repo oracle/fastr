@@ -105,7 +105,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     @Override
     public boolean isNA() {
-        return RRuntime.isNA(realPart);
+        return RRuntime.isNA(this);
     }
 
     public boolean isZero() {

@@ -39,11 +39,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -52,8 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * The internal functions mandated by {@code base/sort.R}. N.B. We use the standard JDK sorting
- * algorithms and not the specific algorithms specified in the R manual entry. TODO: implement psort
- * and radixsort.
+ * algorithms and not the specific algorithms specified in the R manual entry.
  */
 public class SortFunctions {
 
@@ -230,18 +232,59 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"zz", "na.last", "decreasing"}, behavior = PURE)
+    /**
+     * This a helper function for the code in sort.R. It does NOT return the input vectors sorted,
+     * but returns an {@link RIntVector} of indices (positions) indicating the sort order (Or
+     * {@link RNull#instance} if no vectors). In short it is a special variant of {@code order}. For
+     * now we delegate to {@code order} and do not implement the {@code retgrp} argument.
+     */
+    @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "retgrp", "sortstr", "..."}, behavior = PURE)
     public abstract static class RadixSort extends Adapter {
+        @Child private Order orderNode = OrderNodeGen.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            addCastForDecreasing(casts);
+            casts.arg("na.last").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("decreasing").mustBe(numericValue(), SHOW_CALLER, INVALID_LOGICAL, "decreasing").asLogicalVector();
+            casts.arg("retgrp").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("sortstr").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object radixSort(Object zz, Object naLast, Object decreasing) {
-            throw RError.nyi(this, ".Internal(raxdixsort)");
+        protected Object radixSort(boolean naLast, RAbstractLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
+            // Partial implementation just to get startup to work
+            if (retgrp) {
+                // sortstr only has an effect when retrgrp == true
+                throw RError.nyi(this, "radixsort: retgrp == TRUE not implemented");
+            }
+            int nargs = zz.getLength();
+            if (nargs == 0) {
+                return RNull.instance;
+            }
+            if (nargs != decreasingVec.getLength()) {
+                throw RError.error(this, RError.Message.RADIX_SORT_DEC_MATCH);
+            }
+            /*
+             * Order takes a single decreasing argument that applies to all the vectors. We
+             * potentially have a different value for each vector, so we have to process one by one.
+             * However, OrderNode can't yet handle that, so we abort if nargs > 1 and the decreasing
+             * values don't match.
+             */
+            byte lastdb = RRuntime.LOGICAL_NA;
+            for (int i = 0; i < nargs; i++) {
+                byte db = decreasingVec.getDataAt(i);
+                if (RRuntime.isNA(db)) {
+                    throw RError.error(this, RError.Message.RADIX_SORT_DEC_NOT_LOGICAL);
+                }
+                if (lastdb != RRuntime.LOGICAL_NA && db != lastdb) {
+                    throw RError.nyi(this, "radixsort: args > 1 with differing 'decreasing' values not implemented");
+                }
+                lastdb = db;
+            }
+            boolean decreasing = RRuntime.fromLogical(decreasingVec.getDataAt(0));
+            Object result = orderNode.execute(naLast, decreasing, zz);
+            return result;
         }
     }
 }

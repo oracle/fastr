@@ -60,7 +60,7 @@ def r_path():
 
 def r_version():
     # Could figure this out dynamically
-    return 'R-3.2.4'
+    return 'R-3.3.0'
 
 def get_default_jdk():
     if _mx_graal:
@@ -358,14 +358,14 @@ def junit(args):
     parser.add_argument('--gen-expected-quiet', action='store_true', help='suppress output on new tests being added')
     parser.add_argument('--keep-trailing-whitespace', action='store_true', help='keep trailing whitespace in expected test output file')
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
-    parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
-    parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
+    parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file in given directory (e.g. ".")')
+    parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file in given directory (e.g. ".")')
     parser.add_argument('--trace-tests', action='store_true', help='trace the actual @Test methods as they are executed')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
     if os.environ.has_key('R_PROFILE_USER'):
         mx.abort('unset R_PROFILE_USER before running unit tests')
-
+    _unset_conflicting_envs()
     return mx.junit(args, _junit_r_harness, parser=parser, jdk_default=get_default_jdk())
 
 def junit_simple(args):
@@ -422,12 +422,9 @@ def testgen(args):
     def need_version_check():
         vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
         varval = os.environ['FASTR_TESTGEN_GNUR'] if vardef else None
-        version_check = not vardef or varval != 'internal'
+        version_check = vardef and varval != 'internal'
         if version_check:
-            if vardef and varval != 'internal':
-                rpath = join(varval, 'bin', 'R')
-            else:
-                rpath = 'R'
+            rpath = join(varval, 'bin', 'R')
         else:
             rpath = None
         return version_check, rpath
@@ -448,7 +445,16 @@ def testgen(args):
     for pkg in args.tests.split(','):
         mx.log("    " + str(pkg))
     os.environ["TZDIR"] = "/usr/share/zoneinfo/"
+    _unset_conflicting_envs()
     junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
+
+def _unset_conflicting_envs():
+    # this can interfere with the recommended packages
+    if os.environ.has_key('R_LIBS_USER'):
+        del os.environ['R_LIBS_USER']
+    # the default must be vi for unit tests
+    if os.environ.has_key('EDITOR'):
+        del os.environ['EDITOR']
 
 def unittest(args):
     print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"
@@ -526,6 +532,24 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
+def _gnur_path():
+    np = mx.project('com.oracle.truffle.r.native')
+    return join(np.dir, 'gnur', r_version(), 'bin')
+
+def gnu_r(args):
+    '''
+    run the internally built GNU R executable'
+    '''
+    cmd = [join(_gnur_path(), 'R')] + args
+    return mx.run(cmd, nonZeroIsFatal=False)
+
+def gnu_rscript(args):
+    '''
+    run the internally built GNU Rscript executable'
+    '''
+    cmd = [join(_gnur_path(), 'Rscript')] + args
+    return mx.run(cmd, nonZeroIsFatal=False)
+
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
@@ -555,6 +579,8 @@ _commands = {
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
+    'gnu-r' : [gnu_r, '[]'],
+    'gnu-rscript' : [gnu_rscript, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)
