@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
 public final class ArgumentsSignature implements Iterable<String> {
 
@@ -149,6 +150,19 @@ public final class ArgumentsSignature implements Iterable<String> {
         return names[index] == UNMATCHED;
     }
 
+    /**
+     * Returns the index of given name, {@code -1} if it is not present. The search key must be
+     * interned string.
+     */
+    public int indexOfName(String find) {
+        for (int i = 0; i < names.length; i++) {
+            if (names[i] == find) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public int hashCode() {
         return Arrays.hashCode(names);
@@ -197,6 +211,28 @@ public final class ArgumentsSignature implements Iterable<String> {
     }
 
     /**
+     * Creates instance of {@link VarArgsInfo} for this signature and supplied arguments values.
+     * This object is required by other utility methods handling varargs.
+     */
+    public VarArgsInfo getVarArgsInfo(Object[] suppliedArguments) {
+        ArgumentsSignature[] varArgs = null;
+        int argListSize = getLength();
+        for (int i = 0; i < suppliedArguments.length; i++) {
+            Object arg = suppliedArguments[i];
+            if (arg instanceof RArgsValuesAndNames) {
+                if (varArgs == null) {
+                    varArgs = new ArgumentsSignature[suppliedArguments.length];
+                }
+                varArgs[i] = ((RArgsValuesAndNames) arg).getSignature();
+                argListSize += ((RArgsValuesAndNames) arg).getLength() - 1;
+            } else if (isUnmatched(i)) {
+                argListSize--;
+            }
+        }
+        return new VarArgsInfo(varArgs, argListSize);
+    }
+
+    /**
      * Returns an array where each index is either index into the variables array (positive number)
      * or it is a packed representation of two indices: one into the variables array pointing to
      * varargs instance and the other is index into this varargs' arguments array. Use static
@@ -204,39 +240,89 @@ public final class ArgumentsSignature implements Iterable<String> {
      * {@link #extractVarArgsArgumentIndex(long)} to access the data packed in the {@code long}
      * value. This method also removes arguments that are marked as 'unmatched' in the signature.
      *
-     * @param argListSize length of the result -- sum of lengths of all varargs contained within
-     *            varArgSignatures minus any unmatched arguments.
+     * Note: where {@link VarArgsInfo#hasVarArgs()} returns {@code false}, then the flattening may
+     * not be necessary. This optimization is left to the caller.
      */
-    public static long[] flattenIndexes(ArgumentsSignature[] varArgSignatures, ArgumentsSignature suppliedSignature, int argListSize) {
-        long[] preparePermutation = new long[argListSize];
+    public long[] flattenIndexes(VarArgsInfo varArgsInfo) {
+        long[] preparePermutation = new long[varArgsInfo.argListSize];
         int index = 0;
-        for (int i = 0; i < varArgSignatures.length; i++) {
-            ArgumentsSignature varArgSignature = varArgSignatures[i];
+        for (int i = 0; i < varArgsInfo.varArgs.length; i++) {
+            ArgumentsSignature varArgSignature = varArgsInfo.varArgs[i];
             if (varArgSignature != null) {
                 for (int j = 0; j < varArgSignature.getLength(); j++) {
                     preparePermutation[index++] = -((((long) i) << 32) + j) - 1;
                 }
-            } else if (!suppliedSignature.isUnmatched(i)) {
+            } else if (!isUnmatched(i)) {
                 preparePermutation[index++] = i;
             }
         }
         return preparePermutation;
     }
 
-    /** {@link #flattenIndexes(ArgumentsSignature[], ArgumentsSignature, int)}. */
-    public static ArgumentsSignature flattenNames(ArgumentsSignature signature, ArgumentsSignature[] varArgSignatures, int argListSize) {
-        String[] argNames = new String[argListSize];
+    /** @see #flattenIndexes(VarArgsInfo varArgsInfo) */
+    public Object[] flattenValues(Object[] values, VarArgsInfo varArgsInfo) {
+        Object[] result = new Object[varArgsInfo.argListSize];
+        int resultIdx = 0;
+        for (int valuesIdx = 0; valuesIdx < values.length; valuesIdx++) {
+            if (varArgsInfo.varArgs[valuesIdx] != null) {
+                assert values[valuesIdx] instanceof RArgsValuesAndNames;
+                assert ((RArgsValuesAndNames) values[valuesIdx]).getSignature() == varArgsInfo.varArgs[valuesIdx];
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) values[valuesIdx];
+                for (int i = 0; i < varArgs.getLength(); i++) {
+                    result[resultIdx++] = varArgs.getArgument(i);
+                }
+            } else if (!isUnmatched(valuesIdx)) {
+                result[resultIdx++] = values[valuesIdx];
+            }
+        }
+        return result;
+    }
+
+    /** @see #flattenIndexes(VarArgsInfo varArgsInfo) */
+    public ArgumentsSignature flattenNames(VarArgsInfo varArgsInfo) {
+        String[] argNames = new String[varArgsInfo.argListSize];
         int index = 0;
-        for (int i = 0; i < varArgSignatures.length; i++) {
-            ArgumentsSignature varArgSignature = varArgSignatures[i];
+        for (int i = 0; i < varArgsInfo.varArgs.length; i++) {
+            ArgumentsSignature varArgSignature = varArgsInfo.varArgs[i];
             if (varArgSignature != null) {
                 for (int j = 0; j < varArgSignature.getLength(); j++) {
                     argNames[index++] = varArgSignature.getName(j);
                 }
-            } else if (!signature.isUnmatched(i)) {
-                argNames[index++] = signature.getName(i);
+            } else if (!isUnmatched(i)) {
+                argNames[index++] = getName(i);
             }
         }
         return ArgumentsSignature.get(argNames);
+    }
+
+    public static final class VarArgsInfo {
+        /**
+         * Array of the same size as the original signature with {@code null} in places where there
+         * are regular arguments and with {@link ArgumentsSignature} instances under the same
+         * indexes of their corresponding {@link RArgsValuesAndNames}.
+         */
+        private final ArgumentsSignature[] varArgs;
+
+        /**
+         * The total number of arguments including those in varargs, and excluding unmatched ones.
+         */
+        private final int argListSize;
+
+        private VarArgsInfo(ArgumentsSignature[] varArgs, int argListSize) {
+            this.varArgs = varArgs;
+            this.argListSize = argListSize;
+        }
+
+        public boolean hasVarArgs() {
+            return varArgs != null;
+        }
+
+        public ArgumentsSignature[] getVarArgsSignatures() {
+            return varArgs;
+        }
+
+        public int getArgListSize() {
+            return argListSize;
+        }
     }
 }

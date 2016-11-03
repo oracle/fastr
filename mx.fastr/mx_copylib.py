@@ -52,7 +52,10 @@ def _copylib(lib, libpath, target):
         real_libpath = _darwin_extract_realpath(lib, libpath)
     else:
         try:
-            output = subprocess.check_output(['objdump', '-p', libpath])
+            if platform.system() == 'Linux':
+                output = subprocess.check_output(['objdump', '-p', libpath])
+            elif platform.system() == 'SunOS':
+                output = subprocess.check_output(['elfdump', '-d', libpath])
             lines = output.split('\n')
             for line in lines:
                 if 'SONAME' in line:
@@ -114,9 +117,12 @@ def copylib(args):
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
+        if args[0] == 'quadmath' and platform.system() == 'SunOS':
+            return 0
         mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
+    return 0
 
 def updatelib(args):
     '''

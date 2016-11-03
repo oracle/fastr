@@ -25,7 +25,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -46,10 +45,10 @@ public final class Covcor extends RExternalBuiltinNode {
         if (argValues[0] == RNull.instance) {
             throw RError.error(this, RError.Message.IS_NULL, "x");
         }
-        // TODO error checks/coercions
-        RAbstractDoubleVector x = (RAbstractDoubleVector) argValues[0];
-        RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : (RAbstractDoubleVector) argValues[1];
-        int method = ((RAbstractIntVector) argValues[2]).getDataAt(0);
+
+        RAbstractDoubleVector x = castDouble(castVector(argValues[0]));
+        RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : castDouble(castVector(argValues[1]));
+        int method = castInt(castVector(argValues[2]));
         if (method != 4) {
             throw RError.nyi(this, "method");
         }

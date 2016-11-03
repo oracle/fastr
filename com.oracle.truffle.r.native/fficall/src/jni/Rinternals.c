@@ -1307,6 +1307,10 @@ char *dgettext(const char *domainname, const char *msgid) {
 	return (char*) msgid;
 }
 
+char *libintl_dgettext(const char *domainname, const char *msgid) {
+	return dgettext(domainname, msgid);
+}
+
 char *dngettext(const char *domainname, const char *msgid, const char * msgid_plural, unsigned long int n) {
     printf("dngettext: singular - '%s' ; plural - '%s'\n", msgid, msgid_plural);
     return (char*) (n == 1 ? msgid : msgid_plural);

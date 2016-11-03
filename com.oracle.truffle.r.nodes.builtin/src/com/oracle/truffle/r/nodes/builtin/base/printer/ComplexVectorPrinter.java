@@ -412,7 +412,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
     @TruffleBoundary
     static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, int digits, String naString) {
-        if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
+        if (x.isNA()) {
             return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', naString);
         } else {
             String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, '.', digits, naString);

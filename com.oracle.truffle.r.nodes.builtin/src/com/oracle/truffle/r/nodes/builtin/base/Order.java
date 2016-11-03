@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RPrecedenceBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.SortFunctions.RadixSort;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -63,6 +64,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     @Child private CmpNode cmpNode;
 
     private final BranchProfile error = BranchProfile.create();
+
+    /**
+     * For use by {@link RadixSort}.
+     */
+    public abstract Object execute(boolean naLast, boolean decreasing, RArgsValuesAndNames args);
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 

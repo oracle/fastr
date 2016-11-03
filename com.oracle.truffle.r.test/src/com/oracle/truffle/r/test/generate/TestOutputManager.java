@@ -40,6 +40,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.test.TestTrait;
+import com.oracle.truffle.r.test.WhiteList;
+import com.oracle.truffle.r.test.TestBase.Context;
+import com.oracle.truffle.r.test.TestBase.Ignored;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 /**
  * Supports the management of expected test output.
@@ -71,11 +76,16 @@ public class TestOutputManager {
          */
         private boolean inCode;
 
+        /**
+         * The {@link TestTrait}s associated with this test.
+         */
+        private TestTrait[] traits;
+
         public boolean inCode() {
             return inCode;
         }
 
-        public void setInCode() {
+        void setInCode() {
             inCode = true;
         }
 
@@ -83,14 +93,23 @@ public class TestOutputManager {
             return elementName;
         }
 
-        public void setElementName(String elementName) {
+        void setElementName(String elementName) {
             this.elementName = elementName;
         }
 
-        public TestInfo(String elementName, String expected, final boolean inCode) {
+        public TestTrait[] testTraits() {
+            return traits;
+        }
+
+        void setTestTraits(TestTrait[] traits) {
+            this.traits = traits;
+        }
+
+        public TestInfo(String elementName, String expected, final boolean inCode, TestTrait... traits) {
             this.elementName = elementName;
             this.output = expected;
             this.inCode = inCode;
+            this.traits = traits;
         }
     }
 
@@ -117,7 +136,7 @@ public class TestOutputManager {
     private String rSessionName;
 
     /**
-     * The file containing the associates test output (being read or being generated).
+     * The file containing the associated test output (being read or being generated).
      */
     public final File outputFile;
 
@@ -210,7 +229,35 @@ public class TestOutputManager {
                 if (!line.startsWith("##")) {
                     throw new IOException("expected line to start with ##");
                 }
-                String elementName = line.substring(2);
+                String[] elementNameAndTraits = line.substring(2).split("#");
+                String elementName = elementNameAndTraits[0];
+                TestTrait[] traits = new TestTrait[0];
+                if (elementNameAndTraits.length > 1) {
+                    traits = new TestTrait[elementNameAndTraits.length - 1];
+                    for (int i = 1; i < elementNameAndTraits.length; i++) {
+                        String traitClass = elementNameAndTraits[i];
+                        String[] traitParts = traitClass.split("\\.");
+                        // no reflection (AOT)
+                        TestTrait trait = null;
+                        switch (traitParts[0]) {
+                            case "Ignored":
+                                trait = Ignored.valueOf(traitParts[1]);
+                                break;
+                            case "Output":
+                                trait = Output.valueOf(traitParts[1]);
+                                break;
+                            case "Context":
+                                trait = Context.valueOf(traitParts[1]);
+                                break;
+                            case "WhiteList":
+                                trait = WhiteList.create(traitParts[1]);
+                                break;
+                            default:
+                                System.err.println("unrecognized TestTrait: " + traitClass);
+                        }
+                        traits[i - 1] = trait;
+                    }
+                }
                 line = in.readLine();
                 if (!line.startsWith("#")) {
                     throw new IOException("expected line to start with #");
@@ -226,7 +273,7 @@ public class TestOutputManager {
                 }
                 output.deleteCharAt(output.length() - 1);
                 Map<String, TestInfo> testMap = getTestMap(elementName);
-                testMap.put(input, new TestInfo(elementName, output.toString(), false));
+                testMap.put(input, new TestInfo(elementName, output.toString(), false, traits));
             }
         }
         createFastLookupMap();
@@ -249,7 +296,11 @@ public class TestOutputManager {
             for (Map.Entry<String, TestInfo> entrySet : testMap.entrySet()) {
                 TestInfo testInfo = entrySet.getValue();
                 if (testInfo.inCode) {
-                    prSwr.printf("##%s%n", testInfo.elementName);
+                    prSwr.printf("##%s#", testInfo.elementName);
+                    for (TestTrait trait : testInfo.traits) {
+                        prSwr.printf("%s.%s#", trait.getClass().getSimpleName(), trait.getName());
+                    }
+                    prSwr.println();
                     prSwr.printf("#%s%n", escapeTestInput(entrySet.getKey()));
                     prSwr.println(testInfo.output);
                 }
@@ -323,10 +374,12 @@ public class TestOutputManager {
 
     /**
      * May be called at runtime to add a test result.
+     *
+     * @param keepTrailingWhiteSpace TODO
      */
-    public void addTestResult(String testElementName, String input, String result) {
+    public void addTestResult(String testElementName, String input, String result, boolean keepTrailingWhiteSpace) {
         SortedMap<String, TestInfo> testMap = getTestMap(testElementName);
-        testMap.put(input, new TestInfo(testElementName, result, true));
+        testMap.put(input, new TestInfo(testElementName, prepareResult(result, keepTrailingWhiteSpace), true));
     }
 
     public interface DiagnosticHandler {
@@ -345,10 +398,10 @@ public class TestOutputManager {
      * @param test R test string
      * @param d handler for diagnostics
      * @param checkOnly if {@code true} do not invoke GnuR, just update map
-     * @param keepTrailingWhiteSpace TODO
+     * @param keepTrailingWhiteSpace if {@code true} preserve trailing white space, otherwise trim
      * @return the GnuR output
      */
-    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace) {
+    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace, TestTrait... traits) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
         TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
@@ -357,6 +410,7 @@ public class TestOutputManager {
                 d.warning("test '" + test + "' is duplicated in " + testInfo.elementName() + " and " + testElementName);
             }
             testInfo.setInCode();
+            testInfo.setTestTraits(traits);
             testInfo.setElementName(testElementName);
             return testInfo.output;
         } else {
@@ -370,7 +424,7 @@ public class TestOutputManager {
                 }
                 expected = prepareResult(expected, keepTrailingWhiteSpace);
             }
-            testMap.put(test, new TestInfo(testElementName, expected, true));
+            testMap.put(test, new TestInfo(testElementName, expected, true, traits));
             return expected;
         }
     }

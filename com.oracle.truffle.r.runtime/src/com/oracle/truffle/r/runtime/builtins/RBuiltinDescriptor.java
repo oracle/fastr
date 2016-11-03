@@ -72,7 +72,7 @@ public abstract class RBuiltinDescriptor {
             evaluatesArgument[index] = false;
         }
 
-        if (kind == RBuiltinKind.PRIMITIVE) {
+        if (kind == RBuiltinKind.PRIMITIVE || (kind == RBuiltinKind.INTERNAL && dispatch == RDispatch.INTERNAL_GENERIC)) {
             // TODO: assert that static count is only incremented in the primordial context (it's
             // currently tough to do as builtin descriptors seem to be created before the primordial
             // context is fully initialized but code inspection shows that the assertion holds)

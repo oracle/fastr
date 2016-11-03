@@ -90,6 +90,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -585,6 +586,22 @@ public class CastBuilderTest {
                         Message.NON_POSITIVE_FILL).mapIf(atomicLogicalValue(), asBoolean(), asInteger());
         // TODO: asserts
         testPipeline();
+    }
+
+    @Test
+    public void testSampleNonNASequence() {
+        arg.notNA(RError.Message.GENERIC, "Error");
+        RIntSequence seq = RDataFactory.createIntSequence(1, 1, 1);
+        Object res = cast(seq);
+        Assert.assertSame(seq, res);
+    }
+
+    @Test
+    public void testSampleNAVector() {
+        arg.notNA("REPLACEMENT");
+        RDoubleVector vec = RDataFactory.createDoubleVector(new double[]{0, 1, RRuntime.DOUBLE_NA, 3}, false);
+        Object res = cast(vec);
+        Assert.assertEquals("REPLACEMENT", res);
     }
 
     @Test

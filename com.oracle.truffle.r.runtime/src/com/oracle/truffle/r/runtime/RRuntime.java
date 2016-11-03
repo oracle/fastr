@@ -74,7 +74,7 @@ public class RRuntime {
     public static final String R_TEXT_MIME = "text/x-r";
 
     public static final String STRING_NA = new String("NA");
-    private static final String STRING_NaN = "NaN";
+    public static final String STRING_NaN = "NaN";
     private static final String STRING_TRUE = "TRUE";
     private static final String STRING_FALSE = "FALSE";
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -87,7 +87,7 @@ public class RRuntime {
     public static final double EPSILON = Math.pow(2.0, -52.0);
 
     public static final double COMPLEX_NA_REAL_PART = DOUBLE_NA;
-    public static final double COMPLEX_NA_IMAGINARY_PART = 0.0;
+    public static final double COMPLEX_NA_IMAGINARY_PART = DOUBLE_NA;
 
     public static final byte LOGICAL_TRUE = 1;
     public static final byte LOGICAL_FALSE = 0;
@@ -202,6 +202,9 @@ public class RRuntime {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }
 
+    /**
+     * Since a distinguished NaN value is used for NA, checking for {@code isNaN} suffices.
+     */
     public static boolean isNAorNaN(double d) {
         return Double.isNaN(d);
     }
@@ -648,7 +651,7 @@ public class RRuntime {
     }
 
     public static boolean isNA(RComplex value) {
-        return isNA(value.getRealPart());
+        return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
     }
 
     @TruffleBoundary
@@ -691,11 +694,15 @@ public class RRuntime {
                     break;
                 default:
                     if (codepoint < 32 || codepoint == 0x7f) {
-                        str.append("\\").append(codepoint / 64).append((codepoint / 8) % 8).append(codepoint % 8);
+                        str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
                     } else if (encodeNonASCII && codepoint > 0x7f && codepoint <= 0xff) {
                         str.append("\\x" + Integer.toHexString(codepoint));
-                        // } else if (codepoint > 0x7f && codepoint <= 0xff) {
-                        // str.append("\\u" + Integer.toHexString(codepoint));
+                    } else if (codepoint > 64967) { // determined by experimentation
+                        if (codepoint < 0x10000) {
+                            str.append("\\u").append(String.format("%04x", codepoint));
+                        } else {
+                            str.append("\\U").append(String.format("%08x", codepoint));
+                        }
                     } else {
                         str.appendCodePoint(codepoint);
                     }

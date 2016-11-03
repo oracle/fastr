@@ -25,7 +25,7 @@ public class TestBuiltin_switch extends TestBase {
 
     @Test
     public void testswitch2() {
-        assertEval("argv <- list(3L);do.call('switch', argv)");
+        assertEval(Output.IgnoreWarningContext, "argv <- list(3L);do.call('switch', argv)");
     }
 
     @Test

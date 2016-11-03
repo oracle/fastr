@@ -177,6 +177,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Array.class, ArrayNodeGen::create);
         add(AsCall.class, AsCallNodeGen::create);
         add(AsCharacter.class, AsCharacterNodeGen::create);
+        add(AsCharacterFactor.class, AsCharacterFactorNodeGen::create);
         add(AsComplex.class, AsComplexNodeGen::create);
         add(AsDouble.class, AsDoubleNodeGen::create);
         add(AsFunction.class, AsFunctionNodeGen::create);
@@ -222,7 +223,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Combine.class, CombineNodeGen::create);
         add(CommandArgs.class, CommandArgsNodeGen::create);
         add(Complex.class, ComplexNodeGen::create);
-        add(CompilePKGS.class, CompilePKGSNodeGen::create);
+        add(CompileFunctions.CompilePKGS.class, CompileFunctionsFactory.CompilePKGSNodeGen::create);
+        add(CompileFunctions.EnableJIT.class, CompileFunctionsFactory.EnableJITNodeGen::create);
         add(NumericalFunctions.Conj.class, NumericalFunctionsFactory.ConjNodeGen::create);
         add(ConditionFunctions.AddCondHands.class, ConditionFunctionsFactory.AddCondHandsNodeGen::create);
         add(ConditionFunctions.AddRestart.class, ConditionFunctionsFactory.AddRestartNodeGen::create);
@@ -372,6 +374,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.FilePath.class, FileFunctionsFactory.FilePathNodeGen::create);
         add(FileFunctions.FileRemove.class, FileFunctionsFactory.FileRemoveNodeGen::create);
         add(FileFunctions.FileRename.class, FileFunctionsFactory.FileRenameNodeGen::create);
+        add(FileFunctions.FileShow.class, FileFunctionsFactory.FileShowNodeGen::create);
         add(FileFunctions.FileSymLink.class, FileFunctionsFactory.FileSymLinkNodeGen::create);
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
@@ -430,6 +433,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
         add(IntToBits.class, IntToBitsNodeGen::create);
+        add(IntToUtf8.class, IntToUtf8NodeGen::create);
         add(Invisible.class, InvisibleNodeGen::create);
         add(IsATTY.class, IsATTYNodeGen::create);
         add(IsFiniteFunctions.IsFinite.class, IsFiniteFunctionsFactory.IsFiniteNodeGen::create);
@@ -584,8 +588,11 @@ public class BasePackage extends RBuiltinPackage {
         add(Sprintf.class, SprintfNodeGen::create);
         add(NumericalFunctions.Sqrt.class, NumericalFunctionsFactory.SqrtNodeGen::create);
         add(StandardGeneric.class, StandardGenericNodeGen::create);
+        add(StartsEndsWithFunctions.StartsWith.class, StartsEndsWithFunctionsFactory.StartsWithNodeGen::create);
+        add(StartsEndsWithFunctions.EndsWith.class, StartsEndsWithFunctionsFactory.EndsWithNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
+        add(Strrep.class, StrrepNodeGen::create);
         add(Strtrim.class, StrtrimNodeGen::create);
         add(Substitute.class, SubstituteNodeGen::create);
         add(Substr.class, SubstrNodeGen::create);

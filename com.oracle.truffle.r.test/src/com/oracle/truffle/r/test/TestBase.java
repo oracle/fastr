@@ -71,6 +71,11 @@ public class TestBase {
         MayIgnoreWarningContext,
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
         IgnoreWhitespace;
+
+        @Override
+        public String getName() {
+            return name();
+        }
     }
 
     public enum Ignored implements TestTrait {
@@ -93,6 +98,11 @@ public class TestBase {
             this.description = description;
         }
 
+        @Override
+        public String getName() {
+            return name();
+        }
+
         public String getDescription() {
             return description;
         }
@@ -101,6 +111,11 @@ public class TestBase {
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
         LongTimeout; // Test requires a long timeout
+
+        @Override
+        public String getName() {
+            return name();
+        }
     }
 
     /**
@@ -577,7 +592,7 @@ public class TestBase {
         int index = 1;
         boolean allOk = true;
         for (String input : inputs) {
-            String expected = expectedEval(input);
+            String expected = expectedEval(input, traits);
             if (ignored || generatingExpected()) {
                 ignoredInputCount++;
             } else {
@@ -630,11 +645,6 @@ public class TestBase {
         } else {
             failedTestCount++;
         }
-        if (!generatingExpected()) {
-            for (WhiteList list : whiteLists) {
-                list.report();
-            }
-        }
     }
 
     private static class CheckResult {
@@ -659,9 +669,6 @@ public class TestBase {
             result = convertReferencesInOutput(result);
             expected = convertReferencesInOutput(expected);
         }
-        if (input.equals("c(1i,1i,1i)/(-(1/0))")) {
-            System.console();
-        }
         if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences)) {
             ok = true;
             if (containsError && !ambiguousError) {
@@ -682,7 +689,7 @@ public class TestBase {
             }
             if (ok) {
                 if (containsError || (mayContainError && expected.startsWith(ERROR))) {
-                    ok = result.startsWith(ERROR) && (ambiguousError || checkMessageStripped(expected, result));
+                    ok = result.startsWith(ERROR) && (ambiguousError || checkMessageStripped(expected, result) || checkMessageVectorInIndex(expected, result));
                 } else {
                     ok = expected.equals(result);
                 }
@@ -782,14 +789,45 @@ public class TestBase {
      * removing whitespace.
      */
     private static boolean checkMessageStripped(String expected, String result) {
+        String[] stripped = splitAndStripMessage(expected, result);
+        if (stripped == null) {
+            return false;
+        }
+        String expectedStripped = stripped[0];
+        String resultStripped = stripped[1];
+        return resultStripped.equals(expectedStripped);
+    }
+
+    private static final Pattern VECTOR_INDEX_PATTERN = Pattern.compile("(?<prefix>(attempt to select (more|less) than one element)).*");
+
+    /**
+     * Deal with R 3.3.x "selected more/less than one element in xxxIndex.
+     */
+    private static boolean checkMessageVectorInIndex(String expected, String result) {
+        String[] stripped = splitAndStripMessage(expected, result);
+        if (stripped == null) {
+            return false;
+        }
+        String expectedStripped = stripped[0];
+        String resultStripped = stripped[1];
+        Matcher matcher = VECTOR_INDEX_PATTERN.matcher(expectedStripped);
+        if (matcher.find()) {
+            String prefix = matcher.group("prefix");
+            return prefix.equals(resultStripped);
+        } else {
+            return false;
+        }
+    }
+
+    private static String[] splitAndStripMessage(String expected, String result) {
         int cxr = result.lastIndexOf(':');
         int cxe = expected.lastIndexOf(':');
         if (cxr < 0 || cxe < 0) {
-            return false;
+            return null;
         }
         String resultStripped = result.substring(cxr + 1).trim();
         String expectedStripped = expected.substring(cxe + 1).trim();
-        return resultStripped.equals(expectedStripped);
+        return new String[]{expectedStripped, resultStripped};
     }
 
     /**
@@ -816,7 +854,7 @@ public class TestBase {
             }
         }
         if (fastROutputManager.outputFile != null) {
-            fastROutputManager.addTestResult(testElementName, input, result);
+            fastROutputManager.addTestResult(testElementName, input, result, keepTrailingWhiteSpace);
         }
         microTestInfo.fastROutput = result;
         return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
@@ -847,10 +885,10 @@ public class TestBase {
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
-    protected static String expectedEval(String input) {
+    protected static String expectedEval(String input, TestTrait... traits) {
         if (generatingExpected()) {
             // generation mode
-            return genTestResult(input);
+            return genTestResult(input, traits);
         } else {
             // unit test mode
             String expected = expectedOutputManager.getOutput(input);
@@ -867,8 +905,8 @@ public class TestBase {
         }
     }
 
-    private static String genTestResult(String input) {
-        return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace);
+    private static String genTestResult(String input, TestTrait... traits) {
+        return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace, traits);
     }
 
     /**
@@ -950,6 +988,9 @@ public class TestBase {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                if (!generatingExpected()) {
+                    WhiteList.report();
+                }
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");
                     for (String test : new TreeSet<>(unexpectedSuccessfulMicroTests)) {

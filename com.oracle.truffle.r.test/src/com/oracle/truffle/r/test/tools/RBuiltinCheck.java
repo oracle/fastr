@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
+import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -62,7 +63,7 @@ import com.oracle.truffle.r.test.TestBase.Ignored;
  */
 public final class RBuiltinCheck {
 
-    private static final String DEFAULT_NAMESC = "com.oracle.truffle.r.native/gnur/R-3.2.4/src/main/names.c";
+    private static final String DEFAULT_NAMESC = "com.oracle.truffle.r.native/gnur/" + RVersionNumber.R_HYPHEN_FULL + "/src/main/names.c";
     private static final String BUILTIN_TEST_PATH = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_%s.java";
 
     // old-style code annotation to get rid of javadoc error.

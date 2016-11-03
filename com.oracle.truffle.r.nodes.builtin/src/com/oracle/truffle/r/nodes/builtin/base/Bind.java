@@ -100,6 +100,7 @@ public abstract class Bind extends RBaseNode {
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile allEmptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullNames = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -189,11 +190,31 @@ public abstract class Bind extends RBaseNode {
             }
         }
         if (emptyVectorProfile.profile(ind < args.length)) {
-            if (vecNames != null) {
-                nonNullNames.enter();
-                vecNames = Arrays.copyOf(vecNames, ind);
+            if (allEmptyVectorProfile.profile(ind == 0)) {
+                for (int i = 0; i < args.length; i++) {
+                    if (vecNames != null) {
+                        nonNullNames.enter();
+                        vecNames[i] = signature.getName(i);
+                        naCheck.check(vecNames[i]);
+                    }
+                    Object result = castNode.execute(args[i]);
+                    RAbstractVector vector;
+                    if (needsVectorCast) {
+                        vector = castVector(result);
+                    } else {
+                        vector = (RAbstractVector) result;
+                    }
+                    vectors[i] = vector;
+                    complete &= vector.isComplete();
+                }
+                ind = args.length;
+            } else {
+                if (vecNames != null) {
+                    nonNullNames.enter();
+                    vecNames = Arrays.copyOf(vecNames, ind);
+                }
+                vectors = Arrays.copyOf(vectors, ind);
             }
-            vectors = Arrays.copyOf(vectors, ind);
         }
         if (type == BindType.cbind) {
             return genericCBind(promiseArgs, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);

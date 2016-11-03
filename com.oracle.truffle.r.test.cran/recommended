@@ -1,0 +1,15 @@
+KernSmooth
+MASS
+Matrix
+boot
+class
+cluster
+codetools
+foreign
+lattice
+mgcv
+nlme
+nnet
+rpart
+spatial
+survival

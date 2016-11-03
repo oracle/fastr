@@ -41,7 +41,8 @@ import com.oracle.truffle.r.test.TestBase;
  * distribution and avoid any dependency on source paths.
  */
 public class TestRecommendedPackages extends TestRPackages {
-    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
+    // order matters due to dependencies
+    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "Matrix", "survival", "KernSmooth", "foreign", "nlme",
                     "rpart"};
     private static String[] packages = DEFAULT_PACKAGES;
 

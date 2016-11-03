@@ -40,6 +40,12 @@
 
 OSNAME := $(shell uname)
 
+OPT_FLAGS := -g -O2
+
+CFLAGS := $(OPT_FLAGS)
+CPPFLAGS := $(OPT_FLAGS)
+CXXFLAGS := $(OPT_FLAGS)
+
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
 else ifeq ($(OSNAME), SunOS)
@@ -54,6 +60,7 @@ all: Makefile $(GNUR_HOME) iconv config build
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
 
+# After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
 #
 # Configuring GnuR for Solaris is slightly complicated for three reasons:
@@ -74,12 +81,13 @@ ifeq ($(OSNAME), SunOS)
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
     ICONV_INSTALL := $(abspath iconv_install)
-    ICONV_FLAGS := "-m64 -xcode=pic32 -L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
-    ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+    ICONV_CFLAGS := "$(CFLAGS) -m64 -xcode=pic32 -I$(ICONV_INSTALL)/include"
+    ICONV_LDFLAGS := -L$(ICONV_INSTALL)/lib 
+    ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_CFLAGS) LDFLAGS=$(ICONV_LDFLAGS)
 # required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
 # http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
     GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)prod/lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
-    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_FLAGS) DYLIB_LDFLAGS=$(ICONV_FLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
+    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_CFLAGS) DYLIB_LDFLAGS=$(ICONV_LDFLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
 
 iconv: $(ICONV) iconv_config iconv_build
 
@@ -96,10 +104,23 @@ iconv_build: $(ICONV)/lib/libcharset.so
 $(ICONV)/lib/libcharset.so:
 	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
 else
-    GNUR_CONFIG_FLAGS := CFLAGS=-DLIBICONV_PLUG CPPFLAGS=-DLIBICONV_PLUG CXXFLAGS=-DLIBICONV_PLUG
+# nothing to do for iconv on Linux/Darwin
 iconv:
+
+# check for overrides of the locations of required packages
+
+ifneq ($(PKG_INCLUDE_FLAGS_OVERRIDE),)
+    GNUR_CONFIG_FLAGS := CFLAGS="$(CFLAGS) $(PKG_INCLUDE_FLAGS_OVERRIDE)" \
+                         CPPFLAGS="$(CPPFLAGS) $(PKG_INCLUDE_FLAGS_OVERRIDE)" \
+                         CXXFLAGS="$(CXXFLAGS) $(PKG_INCLUDE_FLAGS_OVERRIDE)"
 endif
-# end SunOS
+
+ifneq ($(PKG_LDFLAGS_OVERRIDE),)
+        GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) LDFLAGS=$(PKG_LDFLAGS_OVERRIDE)
+endif
+
+endif
+# End of platform check
 
 config: $(GNUR_HOME)/Makefile config_update
 
@@ -114,9 +135,12 @@ config_update:
 endif
 # end FORCE_PIC
 
+ifndef FASTR_RELEASE
+RECPKGS := "--without-recommended-packages"
+endif
+
 $(GNUR_HOME)/Makefile:
-	ed $(GNUR_HOME)/src/extra/xz/Makefile.in < patchXzMakefile
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
+	(cd $(GNUR_HOME); ./configure --with-x=no $(RECPKGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 build: $(GNUR_HOME)/bin/R
 

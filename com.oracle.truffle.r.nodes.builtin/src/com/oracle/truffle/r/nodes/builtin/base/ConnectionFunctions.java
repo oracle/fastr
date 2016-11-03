@@ -180,7 +180,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"}, behavior = IO)
+    @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
     public abstract static class File extends RBuiltinNode {
 
         @Override
@@ -189,15 +189,16 @@ public abstract class ConnectionFunctions {
             Casts.open(casts);
             casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
             Casts.encoding(casts);
+            casts.arg("method").asStringVector().findFirst();
             Casts.raw(casts);
         }
 
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, boolean raw) {
+        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, String method, boolean raw) {
             String open = openArg;
-            // TODO handle http/ftp prefixes and redirect
+            // TODO handle http/ftp prefixes and redirect and method
             String path = removeFileURLPrefix(description);
             if (path.length() == 0) {
                 // special case, temp file opened in "w+" or "w+b" only

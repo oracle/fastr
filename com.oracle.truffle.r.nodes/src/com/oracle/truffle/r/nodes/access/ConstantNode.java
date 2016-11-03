@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -91,7 +90,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
             // this can be created during argument matching and "call"
             return new ConstantObjectNode(sourceSection, value);
         } else {
-            assert value instanceof TruffleObject || value instanceof RTypedValue && !(value instanceof RPromise) : value;
+            assert value instanceof TruffleObject && !(value instanceof RPromise) : value;
             return new ConstantObjectNode(sourceSection, value);
         }
     }

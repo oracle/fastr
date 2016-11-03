@@ -60,9 +60,9 @@ suite = {
   # explicitly referenced in the Parser annotation processor.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.2.4.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz"],
-        "sha1" : "632664b3caa8d39f5fe6ac2ee9611b0f89ad6ed9",
+        "path" : "libdownloads/R-3.3.0.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.0.tar.gz"],
+        "sha1" : "166a25a7996150c9c83cdafcc89bfcd81578a887",
         "resource" : "true"
     },
 
@@ -265,6 +265,19 @@ suite = {
       "class" : "FastRReleaseProject",
       "output" : "com.oracle.truffle.r.release"
     },
+
+    "com.oracle.truffle.r.native.recommended" : {
+      "sourceDirs" : [],
+      "dependencies" : [
+        "com.oracle.truffle.r.native",
+        "com.oracle.truffle.r.engine",
+        "com.oracle.truffle.r.runtime.ffi"
+      ],
+      "native" : "true",
+      "output" : "com.oracle.truffle.r.native.recommended",
+      "workingSets" : "FastR",
+    },
+
   },
 
   "distributions" : {
@@ -331,6 +344,11 @@ suite = {
              "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
            },
         },
+         "solaris" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/solaris/amd64/fastr-unit-tests-native.jar",
+           }
+        },
       },
     },
 
@@ -352,6 +370,11 @@ suite = {
              "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
           },
         },
+         "solaris" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/solaris/amd64/fastr-native-dev.jar",
+          },
+        },
       },
     },
 
@@ -367,6 +390,11 @@ suite = {
          "darwin" : {
            "amd64" : {
              "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
+           }
+        },
+         "solaris" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/solaris/amd64/fastr-release.jar",
            }
         },
       },
