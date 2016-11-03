@@ -11,15 +11,22 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -31,7 +38,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 /*
  * Logic derived from GNU-R, library/stats/src/cov.c
  */
-public final class Covcor extends RExternalBuiltinNode {
+public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
     private final boolean isCor;
 
@@ -40,20 +47,21 @@ public final class Covcor extends RExternalBuiltinNode {
     }
 
     @Override
-    public Object call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        if (argValues[0] == RNull.instance) {
-            throw RError.error(this, RError.Message.IS_NULL, "x");
-        }
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustNotBeNull(SHOW_CALLER, Message.IS_NULL, "x").asDoubleVector();
+        casts.arg(1).allowNull().asDoubleVector();
+        casts.arg(2).asIntegerVector().findFirst().mustBe(eq(4), this, Message.NYI, "covcor: other method than 4 not implemented.");
+        casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
+    }
 
-        RAbstractDoubleVector x = castDouble(castVector(argValues[0]));
-        RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : castDouble(castVector(argValues[1]));
-        int method = castInt(castVector(argValues[2]));
-        if (method != 4) {
-            throw RError.nyi(this, "method");
-        }
-        boolean iskendall = RRuntime.fromLogical(castLogical(castVector(argValues[3])));
-        return corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, this);
+    @Specialization
+    public Object call(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall) {
+        return corcov(x.materialize(), null, method, iskendall, this);
+    }
+
+    @Specialization
+    public Object call(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, boolean iskendall) {
+        return corcov(x.materialize(), y.materialize(), method, iskendall, this);
     }
 
     private final NACheck check = NACheck.create();
@@ -730,9 +738,8 @@ public final class Covcor extends RExternalBuiltinNode {
         }
     }
 
-    private static void error(String string) {
-        // TODO should be an R error
-        throw new UnsupportedOperationException("error: " + string);
+    private static void error(String message) {
+        RError.error(NO_CALLER, Message.GENERIC, message);
     }
 
     private boolean checkNAs(double... xs) {
