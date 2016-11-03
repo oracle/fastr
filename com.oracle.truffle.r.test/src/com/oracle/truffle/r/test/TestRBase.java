@@ -83,6 +83,8 @@ public class TestRBase extends TestBase {
                             testTrait = Output.IgnoreErrorContext;
                         } else if (l.contains("IgnoreWarningContext")) {
                             testTrait = Output.IgnoreWarningContext;
+                        } else if (l.contains("Ignored")) {
+                            testTrait = Ignored.Unknown;
                         }
                     }
                 }
