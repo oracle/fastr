@@ -60,9 +60,9 @@ suite = {
   # explicitly referenced in the Parser annotation processor.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.3.0.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.0.tar.gz"],
-        "sha1" : "166a25a7996150c9c83cdafcc89bfcd81578a887",
+        "path" : "libdownloads/R-3.3.1.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.1.tar.gz"],
+        "sha1" : "df853188d3e2b1c2d32393016401c432a5192c4d",
         "resource" : "true"
     },
 

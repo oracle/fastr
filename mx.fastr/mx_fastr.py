@@ -60,7 +60,7 @@ def r_path():
 
 def r_version():
     # Could figure this out dynamically
-    return 'R-3.3.0'
+    return 'R-3.3.1'
 
 def get_default_jdk():
     if _mx_graal:

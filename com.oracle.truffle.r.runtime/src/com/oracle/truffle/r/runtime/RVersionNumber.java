@@ -33,9 +33,9 @@ package com.oracle.truffle.r.runtime;
 public class RVersionNumber {
     public static final String MAJOR = "3";
     public static final String MINOR = "3";
-    public static final String PATCH = "0";
+    public static final String PATCH = "1";
 
-    public static final int R_VERSION = (3 << 16) + (3 << 8) + 0;
+    public static final int R_VERSION = (3 << 16) + (3 << 8) + 1;
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
@@ -43,8 +43,8 @@ public class RVersionNumber {
     public static final String R_HYPHEN_FULL = "R-" + FULL;
 
     public static final String RELEASE_YEAR = "2016";
-    public static final String RELEASE_MONTH = "05";
-    public static final String RELEASE_DAY = "03";
+    public static final String RELEASE_MONTH = "06";
+    public static final String RELEASE_DAY = "21";
 
     public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
