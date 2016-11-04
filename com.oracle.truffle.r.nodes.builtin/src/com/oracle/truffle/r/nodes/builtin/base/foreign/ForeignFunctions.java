@@ -42,7 +42,7 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
-import com.oracle.truffle.r.library.stats.Covcor;
+import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.Pbinom;
@@ -345,9 +345,9 @@ public class ForeignFunctions {
                 case "fft":
                     return FftNodeGen.create();
                 case "cov":
-                    return new Covcor(false);
+                    return CovcorNodeGen.create(false);
                 case "cor":
-                    return new Covcor(true);
+                    return CovcorNodeGen.create(true);
                 case "SplineCoef":
                     return SplineCoefNodeGen.create();
                 case "SplineEval":

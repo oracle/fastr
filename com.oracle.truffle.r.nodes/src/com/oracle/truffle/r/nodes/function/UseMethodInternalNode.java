@@ -24,7 +24,7 @@ public final class UseMethodInternalNode extends RNode {
 
     @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);
-    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
+    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false);
     @Child private PreProcessArgumentsNode argPreProcess;
 
     private final String generic;
