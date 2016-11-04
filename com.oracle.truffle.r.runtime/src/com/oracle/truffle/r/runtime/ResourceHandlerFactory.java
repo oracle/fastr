@@ -44,6 +44,12 @@ public abstract class ResourceHandlerFactory {
          * See {@link java.lang.Class#getResourceAsStream(String)}.
          */
         InputStream getResourceAsStream(Class<?> accessor, String name);
+
+        /**
+         * Return the contents of all "R" files (ending with ".r" or ".R") relative to
+         * {@code accessor} and {@code pkgname/R}. I.e. essentially a directory search.
+         */
+        String[] getRFiles(Class<?> accessor, String pkgName);
     }
 
     static {
