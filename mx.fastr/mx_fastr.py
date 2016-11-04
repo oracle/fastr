@@ -92,13 +92,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs = ['-cp', mx.classpath('FASTR', jdk=jdk)]
 
-    if 'nocompile' in kwargs:
-        nocompile = True
-        del kwargs['nocompile']
-    else:
-        nocompile = False
-
-    vmArgs += set_graal_options(nocompile)
+    vmArgs += set_graal_options()
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -137,11 +131,12 @@ def _sanitize_vmArgs(jdk, vmArgs):
         i = i + 1
     return xargs
 
-def set_graal_options(nocompile=False):
+def set_graal_options():
+    '''
+    If Graal is enabled, set some options specific to FastR
+    '''
     if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
-        if nocompile:
-            result += ['-Dgraal.TruffleCompilationThreshold=100000']
         return result
     else:
         return []
@@ -344,8 +339,6 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     vmArgs += ['-Xss12m']
     # no point in printing errors to file when running tests (that contain errors on purpose)
     vmArgs += ['-DR:-PrintErrorStacktracesToFile']
-
-    vmArgs += set_graal_options(nocompile=True)
 
     setREnvironment()
 
