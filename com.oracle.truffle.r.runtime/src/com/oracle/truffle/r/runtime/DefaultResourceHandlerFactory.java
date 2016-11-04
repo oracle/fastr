@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,26 +63,43 @@ class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Ha
         CodeSource source = accessor.getProtectionDomain().getCodeSource();
         ArrayList<String> list = new ArrayList<>();
         try {
-            URL jarURL = source.getLocation();
-            JarFile fastrJar = new JarFile(new File(jarURL.toURI()));
-            Enumeration<JarEntry> iter = fastrJar.entries();
-            while (iter.hasMoreElements()) {
-                JarEntry entry = iter.nextElement();
-                String name = entry.getName();
-                if (name.endsWith(".R") || name.endsWith(".r")) {
-                    Path p = Paths.get(name);
-                    String entryPkg = p.getName(p.getNameCount() - 3).getFileName().toString();
-                    String entryParent = p.getName(p.getNameCount() - 2).getFileName().toString();
-                    if (entryParent.equals("R") && entryPkg.equals(pkgName)) {
-                        int size = (int) entry.getSize();
-                        byte[] buf = new byte[size];
-                        InputStream is = fastrJar.getInputStream(entry);
-                        int totalRead = 0;
-                        int n;
-                        while ((n = is.read(buf, totalRead, buf.length - totalRead)) > 0) {
-                            totalRead += n;
+            URL url = source.getLocation();
+            Path sourcePath = Paths.get(url.toURI().getPath());
+            File sourceFile = sourcePath.toFile();
+            if (sourceFile.isDirectory()) {
+                InputStream is = accessor.getResourceAsStream(pkgName + "/R");
+                if (is != null) {
+                    try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
+                        String line;
+                        while ((line = r.readLine()) != null) {
+                            if (line.endsWith(".r") || line.endsWith(".R")) {
+                                final String rResource = pkgName + "/R/" + line.trim();
+                                list.add(Utils.getResourceAsString(accessor, rResource, true));
+                            }
                         }
-                        list.add(new String(buf));
+                    }
+                }
+            } else {
+                JarFile fastrJar = new JarFile(sourceFile);
+                Enumeration<JarEntry> iter = fastrJar.entries();
+                while (iter.hasMoreElements()) {
+                    JarEntry entry = iter.nextElement();
+                    String name = entry.getName();
+                    if (name.endsWith(".R") || name.endsWith(".r")) {
+                        Path p = Paths.get(name);
+                        String entryPkg = p.getName(p.getNameCount() - 3).getFileName().toString();
+                        String entryParent = p.getName(p.getNameCount() - 2).getFileName().toString();
+                        if (entryParent.equals("R") && entryPkg.equals(pkgName)) {
+                            int size = (int) entry.getSize();
+                            byte[] buf = new byte[size];
+                            InputStream is = fastrJar.getInputStream(entry);
+                            int totalRead = 0;
+                            int n;
+                            while ((n = is.read(buf, totalRead, buf.length - totalRead)) > 0) {
+                                totalRead += n;
+                            }
+                            list.add(new String(buf));
+                        }
                     }
                 }
             }
