@@ -89,7 +89,7 @@ Rboolean R_interrupts_suspended;
 int R_interrupts_pending;
 Rboolean mbcslocale;
 Rboolean useaqua;
-char OutDec = '.';
+char* OutDec = ".";
 Rboolean utf8locale = FALSE;
 Rboolean mbcslocale = FALSE;
 Rboolean latin1locale = FALSE;
