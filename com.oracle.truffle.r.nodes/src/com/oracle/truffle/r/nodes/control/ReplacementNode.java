@@ -247,7 +247,7 @@ abstract class ReplacementNode extends RNode {
         Node parent = wvn.getParent();
         if (parent instanceof ReplacementBase) {
             Node replacementBlock = ((ReplacementBase) parent).getReplacementNodeParent().getParent();
-            assert replacementBlock instanceof ReplacementBlockNode;
+            assert replacementBlock instanceof ReplacementDispatchNode;
             return RDataFactory.createLanguage((RNode) replacementBlock);
         }
         return null;

@@ -40,8 +40,8 @@ import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
-import com.oracle.truffle.r.nodes.control.ReplacementBlockNode;
-import com.oracle.truffle.r.nodes.control.ReplacementBlockNode.LHSError;
+import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
+import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode.LHSError;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -195,7 +195,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
-        return new ReplacementBlockNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
+        return new ReplacementDispatchNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
     }
 
     public static FastPathFactory createFunctionFastPath(RSyntaxElement body, ArgumentsSignature signature) {

@@ -48,12 +48,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Represents a replacement block consisting of execution of the RHS, call to the actual replacement
+ * Represents a replacement consisting of execution of the RHS, call to the actual replacement
  * sequence and removal of RHS returning the RHS value to the caller. The actual replacement is
  * created lazily. Moreover, we use 'special' fast-path version of replacement where possible with
  * fallback to generic implementation.
  */
-public final class ReplacementBlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class ReplacementDispatchNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
     @Child private ReplacementNode replacementNode;
 
@@ -67,7 +67,7 @@ public final class ReplacementBlockNode extends RSourceSectionNode implements RS
     private final String rhsName;
     private final int tempNamesStartIndex;
 
-    public ReplacementBlockNode(SourceSection src, String operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
+    public ReplacementDispatchNode(SourceSection src, String operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
         super(src);
         assert "<-".equals(operator) || "<<-".equals(operator) || "=".equals(operator);
         assert lhs != null && rhs != null;
@@ -84,12 +84,9 @@ public final class ReplacementBlockNode extends RSourceSectionNode implements RS
     public Object execute(VirtualFrame frame) {
         storeRhs.execute(frame);
         getReplacementNode().execute(frame);
-        try {
-            Object result = removeRhs.execute(frame);
-            return result;
-        } finally {
-            visibility.execute(frame, false);
-        }
+        Object result = removeRhs.execute(frame);
+        visibility.execute(frame, false);
+        return result;
     }
 
     /**
@@ -193,7 +190,6 @@ public final class ReplacementBlockNode extends RSourceSectionNode implements RS
      * instead of the "internal" form (with *tmp*, etc.) of the update call.
      */
     public static RLanguage getRLanguage(RLanguage language) {
-        // TODO: fix me!
         RSyntaxNode sn = (RSyntaxNode) language.getRep();
         Node parent = RASTUtils.unwrapParent(sn.asNode());
         if (parent instanceof WriteVariableNode) {

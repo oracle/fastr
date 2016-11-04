@@ -53,7 +53,7 @@ import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import com.oracle.truffle.r.nodes.control.ReplacementBlockNode;
+import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -442,7 +442,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public String getCallerSource(RLanguage rl) {
         // This checks for the specific structure of replacements
-        RLanguage replacement = ReplacementBlockNode.getRLanguage(rl);
+        RLanguage replacement = ReplacementDispatchNode.getRLanguage(rl);
         RLanguage elem = replacement == null ? rl : replacement;
         String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, 0, -1);
         return string.split("\n")[0];
@@ -503,8 +503,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RSyntaxNode[] isReplacementNode(Node node) {
-        if (node instanceof ReplacementBlockNode) {
-            ReplacementBlockNode rn = (ReplacementBlockNode) node;
+        if (node instanceof ReplacementDispatchNode) {
+            ReplacementDispatchNode rn = (ReplacementDispatchNode) node;
             return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
         } else {
             return null;
