@@ -45,7 +45,7 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
     private final Source code;
     private final String functionName;
 
-    @Child private CallMatcherNode call = CallMatcherNode.create(false, true);
+    @Child private CallMatcherNode call = CallMatcherNode.create(true);
     @CompilationFinal private RFunction function;
 
     public RInternalCodeBuiltinNode(RContext context, String basePackage, Source code, String functionName) {

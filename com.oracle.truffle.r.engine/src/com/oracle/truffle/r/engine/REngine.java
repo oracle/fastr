@@ -429,8 +429,7 @@ final class REngine implements Engine, Engine.Timings {
             }
         }
         RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func,
-                        names == null ? ArgumentsSignature.empty(args.length) : ArgumentsSignature.get(names.getDataWithoutCopying()), false,
-                        RError.NO_CALLER);
+                        names == null ? ArgumentsSignature.empty(args.length) : ArgumentsSignature.get(names.getDataWithoutCopying()), RError.NO_CALLER);
         Object[] newArgs = reorderedArgs.getArguments();
         for (int i = 0; i < newArgs.length; i++) {
             Object arg = newArgs[i];

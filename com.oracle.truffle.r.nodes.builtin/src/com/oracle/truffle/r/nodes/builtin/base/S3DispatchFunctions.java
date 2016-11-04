@@ -65,7 +65,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
     protected S3DispatchFunctions(boolean nextMethod) {
         methodLookup = S3FunctionLookupNode.create(true, nextMethod);
-        callMatcher = CallMatcherNode.create(nextMethod, false);
+        callMatcher = CallMatcherNode.create(false);
     }
 
     protected MaterializedFrame getCallerFrame(VirtualFrame frame) {

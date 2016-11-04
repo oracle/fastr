@@ -123,7 +123,7 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
     }
 }
 
-@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Subscript extends RBuiltinNode {
 
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)

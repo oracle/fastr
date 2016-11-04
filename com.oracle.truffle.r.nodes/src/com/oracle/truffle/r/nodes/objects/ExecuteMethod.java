@@ -42,7 +42,7 @@ final class ExecuteMethod extends RBaseNode {
         if (collectArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
-            callMatcher = insert(CallMatcherNode.create(false, false));
+            callMatcher = insert(CallMatcherNode.create(false));
         }
 
         FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
