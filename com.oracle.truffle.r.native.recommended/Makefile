@@ -33,10 +33,10 @@ FASTR_R_HOME := $(abspath $(CURDIR)/..)
 NATIVE_PROJECT := $(subst native.recommended,native,$(CURDIR))
 R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
 GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
-GNUR_RECOMMENDED_TARS := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
+# order matters due to inter-package dependencies
+GNUR_RECOMMENDED_PKGNAMES := MASS boot class cluster codetools lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
+GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME)/src/library/Recommended/$(pkg).tgz)
 #$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
-GNUR_RECOMMENDED_PKGNAMES := $(foreach tar,$(GNUR_RECOMMENDED_TARS),$(notdir $(basename $(tar))))
-#$(info GNUR_RECOMMENDED_PKGNAMES=$(GNUR_RECOMMENDED_PKGNAMES))
 
 all: install.recommended
 
