@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -41,24 +40,24 @@ import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
-import com.oracle.truffle.r.nodes.control.ReplacementNode;
+import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
+import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode.LHSError;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -79,6 +78,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private final Map<String, Object> constants;
+    private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
 
     public RASTBuilder() {
         this.constants = null;
@@ -86,6 +86,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     public RASTBuilder(Map<String, Object> constants) {
         this.constants = constants;
+    }
+
+    private RCallNode unused() {
+        return null; // we need reference to RCallNode, otherwise it won't compile, compilation bug?
     }
 
     @Override
@@ -164,7 +168,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 if (c.getValue() instanceof String) {
                     name = (String) c.getValue();
                 } else {
-                    return new ReplacementNode.LHSError(source, operator, replacementLhs, replacementRhs, false);
+                    return new LHSError(source, operator, replacementLhs, replacementRhs);
                 }
             } else {
                 throw RInternalError.unimplemented("unexpected lhs type: " + replacementLhs.getClass());
@@ -190,162 +194,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
-    /**
-     * Creates a call that looks like {@code fun} but has the first argument replaced with
-     * {@code newLhs}.
-     */
-    private RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun) {
-        RSyntaxElement[] arguments = fun.getSyntaxArguments();
-
-        RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i]);
-        }
-
-        return RCallSpecialNode.createCall(fun.getSourceSection(), process(fun.getSyntaxLHS()).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
-    }
-
-    /**
-     * Creates a call that looks like {@code fun}, but has its first argument replaced with
-     * {@code newLhs}, its target turned into an update function ("foo<-"), with the given value
-     * added to the arguments list.
-     */
-    private RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun) {
-        RSyntaxElement[] arguments = fun.getSyntaxArguments();
-
-        ArgumentsSignature signature = fun.getSyntaxSignature();
-        RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length + 1];
-        String[] names = new String[argNodes.length];
-        for (int i = 0; i < arguments.length; i++) {
-            names[i] = signature.getName(i);
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i]);
-        }
-        argNodes[argNodes.length - 1] = rhs;
-        names[argNodes.length - 1] = "value";
-
-        RSyntaxElement syntaxLHS = fun.getSyntaxLHS();
-        RSyntaxNode newSyntaxLHS;
-        if (syntaxLHS instanceof RSyntaxLookup) {
-            RSyntaxLookup lookupLHS = (RSyntaxLookup) syntaxLHS;
-            String symbol = lookupLHS.getIdentifier();
-            if ("slot".equals(symbol) || "@".equals(symbol)) {
-                // this is pretty gross, but at this point seems like the only way to get setClass
-                // to work properly
-                argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
-            }
-            newSyntaxLHS = lookup(lookupLHS.getSourceSection(), symbol + "<-", true);
-        } else {
-            // data types (and lengths) are verified in isNamespaceLookupCall
-            RSyntaxCall callLHS = (RSyntaxCall) syntaxLHS;
-            RSyntaxElement[] oldArgs = callLHS.getSyntaxArguments();
-            RSyntaxNode[] newArgs = new RSyntaxNode[2];
-            newArgs[0] = (RSyntaxNode) oldArgs[0];
-            newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
-            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
-        }
-        return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
-    }
-
-    /*
-     * Determines if syntax call is of the form foo::bar
-     */
-    private static boolean isNamespaceLookupCall(RSyntaxElement e) {
-        if (e instanceof RSyntaxCall) {
-            RSyntaxCall call = (RSyntaxCall) e;
-            // check for syntax nodes as this will be required to recreate a call during
-            // replacement form construction in createFunctionUpdate
-            if (call.getSyntaxLHS() instanceof RSyntaxLookup && call.getSyntaxLHS() instanceof RSyntaxNode) {
-                if (((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("::")) {
-                    RSyntaxElement[] args = call.getSyntaxArguments();
-                    if (args.length == 2 && args[0] instanceof RSyntaxLookup && args[0] instanceof RSyntaxNode && args[1] instanceof RSyntaxLookup && args[1] instanceof RSyntaxNode) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    // used to create unique temp names for nested replacements
-    private int tempNamesCount;
-
-    /**
-     * This method builds the sequence of calls needed to represent a replacement.<br/>
-     * For example, the replacement {@code a(b(c(x),i),j) <- z} should be decomposed into the
-     * following statements:
-     *
-     * <pre>
-     * t3 <- x
-     * t2 <- c(t3)
-     * t1 <- b(t2,i)
-     * tt0 <- z
-     * tt1 <- `a<-`(t1, j, tt0) // b(...) with a replaced
-     * tt2 <- `b<-`(t2, i, tt1) // a(...) with b replaced
-     * x <- `c<-`(t3, tt2) // x with c replaced
-     * </pre>
-     */
     private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
-        /*
-         * Collect all the function calls in this replacement. For "a(b(x)) <- z", this would be
-         * "a(...)" and "b(...)".
-         */
-        List<RSyntaxCall> calls = new ArrayList<>();
-        RSyntaxElement current = lhs;
-        while (!(current instanceof RSyntaxLookup)) {
-            if (!(current instanceof RSyntaxCall)) {
-                return new ReplacementNode.LHSError(source, operator, lhs, rhs, current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance);
-            }
-            RSyntaxCall call = (RSyntaxCall) current;
-            calls.add(call);
-
-            RSyntaxElement syntaxLHS = call.getSyntaxLHS();
-            if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
-                return new ReplacementNode.LHSError(source, operator, lhs, rhs, true);
-            }
-            current = call.getSyntaxArguments()[0];
-        }
-        RSyntaxLookup variable = (RSyntaxLookup) current;
-
-        List<RNode> instructions = new ArrayList<>();
-        int tempNamesIndex = tempNamesCount;
-        tempNamesCount += calls.size() + 1;
-
-        /*
-         * Create the calls that extract inner components - only needed for complex replacements
-         * like "a(b(x)) <- z" (where we would extract "b(x)").
-         */
-        for (int i = calls.size() - 1; i >= 1; i--) {
-            ReadVariableNode newLhs = ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1));
-            RNode update = createSpecialFunctionQuery(newLhs, calls.get(i));
-            instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
-        }
-        /*
-         * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`.
-         */
-        for (int i = 0; i < calls.size(); i++) {
-            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + (tempNamesIndex + i + 1)), ReadVariableNode.create("*tmpr*" + (tempNamesIndex + i - 1)),
-                            calls.get(i));
-            if (i < calls.size() - 1) {
-                instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
-            } else {
-                instructions.add(WriteVariableNode.createAnonymous(variable.getIdentifier(), update, WriteVariableNode.Mode.REGULAR, isSuper));
-            }
-        }
-
-        ReadVariableNode variableValue = createReplacementForVariableUsing(variable, isSuper);
-        ReplacementNode newReplacementNode = new ReplacementNode(source, operator, lhs, rhs, "*tmpr*" + (tempNamesIndex - 1),
-                        variableValue, "*tmp*" + (tempNamesIndex + calls.size()), instructions);
-
-        tempNamesCount -= calls.size() + 1;
-        return newReplacementNode;
-    }
-
-    private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {
-        if (isSuper) {
-            return ReadVariableNode.createSuperLookup(var.getSourceSection(), var.getIdentifier());
-        } else {
-            return ReadVariableNode.create(var.getSourceSection(), var.getIdentifier(), true);
-        }
+        return new ReplacementDispatchNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
     }
 
     public static FastPathFactory createFunctionFastPath(RSyntaxElement body, ArgumentsSignature signature) {
@@ -409,6 +259,16 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
         return Truffle.getRuntime().createCallTarget(rootNode);
+    }
+
+    @Override
+    public void setContext(CodeBuilderContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public CodeBuilderContext getContext() {
+        return context;
     }
 
     @Override

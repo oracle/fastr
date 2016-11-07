@@ -60,7 +60,7 @@ public abstract class UpdateSubset extends RBuiltinNode {
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSET, false);
     private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateSubsetSpecialNodeGen.create(arguments) : null;
     }
 

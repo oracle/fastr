@@ -82,7 +82,6 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     }
 
     @Fallback
-    @SuppressWarnings("unused")
     public void doFallback(Object container, Object field, Object value) {
         throw RSpecialFactory.throwFullCallNeeded();
     }
@@ -109,7 +108,7 @@ public abstract class UpdateField extends RBuiltinNode {
         casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue()).asStringVector().findFirst();
     }
 
-    public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments) {
+    public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateFieldSpecialNodeGen.create(arguments) : null;
     }
 

@@ -74,50 +74,60 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RIntVector access(RIntVector vector, int index, int value) {
+    protected RIntVector set(RIntVector vector, int index, int value) {
         return vector.updateDataAt(index - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RDoubleVector access(RDoubleVector vector, int index, double value) {
+    protected RDoubleVector set(RDoubleVector vector, int index, double value) {
         return vector.updateDataAt(index - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RStringVector access(RStringVector vector, int index, String value) {
+    protected RStringVector set(RStringVector vector, int index, String value) {
         return vector.updateDataAt(index - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
-    protected static Object access(RList list, int index, Object value) {
+    protected static Object set(RList list, int index, Object value) {
         list.setDataAt(list.getInternalStore(), index - 1, value);
         return list;
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RIntVector accessDoubleIndex(RIntVector vector, double index, int value) {
+    protected RIntVector setDoubleIndex(RIntVector vector, double index, int value) {
+        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value) {
         return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RDoubleVector accessDoubleIndex(RDoubleVector vector, double index, double value) {
+    protected RDoubleVector setDoubleIndexIntValue(RDoubleVector vector, double index, int value) {
         return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RStringVector accessDoubleIndex(RStringVector vector, double index, String value) {
+    protected RDoubleVector setDoubleIndex(RDoubleVector vector, double index, double value) {
+        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
+    protected RStringVector setDoubleIndex(RStringVector vector, double index, String value) {
         return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
     }
 
     @Specialization(guards = {"simple(list)", "!list.isShared()", "isValidDoubleIndex(list, index)", "isSingleElement(value)"})
-    protected Object accessDoubleIndex(RList list, double index, Object value) {
+    protected Object setDoubleIndex(RList list, double index, Object value) {
         list.setDataAt(list.getInternalStore(), toIndex(index) - 1, value);
         return list;
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static Object access(Object vector, Object index, Object value) {
+    protected static Object setFallback(Object vector, Object index, Object value) {
         throw RSpecialFactory.throwFullCallNeeded();
     }
 }
@@ -129,7 +139,7 @@ public abstract class UpdateSubscript extends RBuiltinNode {
 
     private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateSubscriptSpecialNodeGen.create(arguments) : null;
     }
 
