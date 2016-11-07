@@ -1377,4 +1377,10 @@ public class CallRFFIHelper {
         return x == y ? 1 : 0;
     }
 
+    public static Object Rf_classgets(Object x, Object y) {
+        RAbstractVector vector = guaranteeInstanceOf(x, RAbstractVector.class);
+        vector.setClassAttr(guaranteeInstanceOf(y, RStringVector.class));
+        return RNull.instance;
+    }
+
 }
