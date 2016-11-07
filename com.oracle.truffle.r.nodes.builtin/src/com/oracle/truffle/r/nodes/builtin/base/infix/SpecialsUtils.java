@@ -97,7 +97,7 @@ class SpecialsUtils {
             return cachedField == null || (cachedField == field && list.getNames() == cachedNames);
         }
 
-        protected final int getIndex(RAbstractStringVector names, String field) {
+        protected static int getIndex(RAbstractStringVector names, String field) {
             for (int i = 0; i < names.getLength(); i++) {
                 String current = names.getDataAt(i);
                 if (current == field || current.equals(field)) {

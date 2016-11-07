@@ -115,9 +115,9 @@ public final class VarArgsHelper {
             if (varArgs[valuesIdx] != null) {
                 assert values[valuesIdx] instanceof RArgsValuesAndNames;
                 assert ((RArgsValuesAndNames) values[valuesIdx]).getSignature() == varArgs[valuesIdx];
-                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) values[valuesIdx];
-                for (int i = 0; i < varArgs.getLength(); i++) {
-                    result[resultIdx++] = varArgs.getArgument(i);
+                RArgsValuesAndNames varArgsValues = (RArgsValuesAndNames) values[valuesIdx];
+                for (int i = 0; i < varArgsValues.getLength(); i++) {
+                    result[resultIdx++] = varArgsValues.getArgument(i);
                 }
             } else if (!signature.isUnmatched(valuesIdx)) {
                 result[resultIdx++] = values[valuesIdx];

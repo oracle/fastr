@@ -113,7 +113,7 @@ public abstract class Sample2 extends RBuiltinNode {
         }
     }
 
-    private double ru() {
+    private static double ru() {
         return (Math.floor(U * RRNG.unifRand()) + RRNG.unifRand()) / U;
     }
 }
