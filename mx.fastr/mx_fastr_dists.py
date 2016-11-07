@@ -228,8 +228,9 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             if isinstance(dep, mx.JARDistribution):
                 shutil.copy(join(dep.suite.dir, dep.path), jars_dir)
             elif isinstance(dep, mx.Library):
-                jar_name = dep.name.lower() + '.jar'
-                shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
+                if not dep.name.lower() == 'jdk_tools':
+                    jar_name = dep.name.lower() + '.jar'
+                    shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
             elif isinstance(dep, mx.JavaProject):
                 if 'com.oracle.truffle.r' in dep.name:
                     classfiles_dir = dep.output_dir()
@@ -263,6 +264,30 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
+class FastRNativeRecommendedProject(mx.NativeProject):
+    '''
+    This finesses an ordering problem on installing the recommended R packages.
+    These must be installed by FastR using bin/R CMD INSTALL. That will invoke a
+    nested 'mx R' invocation which requires the FASTR distribution to be available.
+    However, this dependency cannt be specified in the suite.py file so we achieve
+    it here by ensuring that it is built prior to the native.recommended project.
+    '''
+    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
+        mx.NativeProject.__init__(self, suite, name, None, [], deps, workingSets, None, None, join(suite.dir, name), theLicense)
+
+    def getBuildTask(self, args):
+        return NativeRecommendedBuildTask(self, args)
+
+class NativeRecommendedBuildTask(mx.NativeBuildTask):
+    def __init__(self, project, args):
+        mx.NativeBuildTask.__init__(self, args, project)
+
+    def build(self):
+        # must archive FASTR before build so that nested mx R CMD INSTALL can execute
+        mx.archive(['@FASTR'])
+        mx.NativeBuildTask.build(self)
+
+
 class FastRArchiveParticipant:
     def __init__(self, dist):
         self.dist = dist
@@ -291,7 +316,6 @@ class FastRArchiveParticipant:
             # include dir
             include_dir = join(self.release_project.dir, 'include')
             shutil.rmtree(include_dir)
-
 
 def mx_post_parse_cmd_line(opts):
     for dist in mx_fastr._fastr_suite.dists:

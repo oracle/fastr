@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class S3DispatchFunctions extends RBuiltinNode {
 
@@ -64,7 +65,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
     protected S3DispatchFunctions(boolean nextMethod) {
         methodLookup = S3FunctionLookupNode.create(true, nextMethod);
-        callMatcher = CallMatcherNode.create(nextMethod, false);
+        callMatcher = CallMatcherNode.create(false);
     }
 
     protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
@@ -219,6 +220,9 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         }
 
         protected static boolean isNotString(Object obj) {
+            // Note: if RAbstractStringVector becomes expected, then it must have length == 1, GnuR
+            // ignores character vectors longer than 1 as the "generic" argument of NextMethod
+            assert !(obj instanceof RAbstractStringVector) || ((RAbstractStringVector) obj).getLength() != 1 : "unexpected RAbstractStringVector with length != 1";
             return !(obj instanceof String);
         }
 

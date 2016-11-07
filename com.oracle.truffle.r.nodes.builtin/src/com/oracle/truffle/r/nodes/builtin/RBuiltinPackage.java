@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,8 +32,8 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -93,7 +89,6 @@ public abstract class RBuiltinPackage {
 
     protected RBuiltinPackage(String name) {
         this.name = name;
-
         // Check for overriding R code
         ArrayList<Source> componentList = getRFiles(getName());
         if (componentList.size() > 0) {
@@ -111,22 +106,10 @@ public abstract class RBuiltinPackage {
      */
     public static ArrayList<Source> getRFiles(String pkgName) {
         ArrayList<Source> componentList = new ArrayList<>();
-        try {
-            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(RBuiltinPackage.class, pkgName + "/R");
-            if (is != null) {
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
-                    String line;
-                    while ((line = r.readLine()) != null) {
-                        if (line.endsWith(".r") || line.endsWith(".R")) {
-                            final String rResource = pkgName + "/R/" + line.trim();
-                            Source content = Utils.getResourceAsSource(RBuiltinPackage.class, rResource);
-                            componentList.add(content);
-                        }
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            Utils.rSuicide("error loading R code from " + pkgName + " : " + ex);
+        String[] rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
+        for (String rFileContent : rFileContents) {
+            Source content = RSource.fromTextInternal(rFileContent, RSource.Internal.R_IMPL);
+            componentList.add(content);
         }
         return componentList;
     }

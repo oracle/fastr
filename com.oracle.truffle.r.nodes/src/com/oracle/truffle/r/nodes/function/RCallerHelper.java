@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -133,12 +134,12 @@ public final class RCallerHelper {
                     String[] names = new String[preparePermutation.length];
                     for (int i = 0; i < values.length; i++) {
                         long source = preparePermutation[i];
-                        if (!ArgumentsSignature.isVarArgsIndex(source)) {
+                        if (!VarArgsHelper.isVarArgsIndex(source)) {
                             values[i] = suppliedArguments[(int) source];
                             names[i] = suppliedSignature.getName((int) source);
                         } else {
-                            int varArgsIdx = ArgumentsSignature.extractVarArgsIndex(source);
-                            int argsIdx = ArgumentsSignature.extractVarArgsArgumentIndex(source);
+                            int varArgsIdx = VarArgsHelper.extractVarArgsIndex(source);
+                            int argsIdx = VarArgsHelper.extractVarArgsArgumentIndex(source);
                             RArgsValuesAndNames varargs = (RArgsValuesAndNames) suppliedArguments[varArgsIdx];
                             values[i] = varargs.getArguments()[argsIdx];
                             names[i] = varargs.getSignature().getName(argsIdx);

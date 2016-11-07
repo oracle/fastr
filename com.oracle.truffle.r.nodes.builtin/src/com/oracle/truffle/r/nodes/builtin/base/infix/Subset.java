@@ -88,8 +88,14 @@ public abstract class Subset extends RBuiltinNode {
         // same implementation as "[", with different dispatch
     }
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments) {
-        return signature.getNonNullCount() == 0 && arguments.length == 2 ? SubsetSpecialNodeGen.create(arguments) : null;
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
+        boolean correctSignature = signature.getNonNullCount() == 0 && arguments.length == 2;
+        if (!correctSignature) {
+            return null;
+        }
+        // Subset adds support for lists returning newly created list, which cannot work when used
+        // in replacement, because we need the reference to the existing (materialized) list element
+        return inReplacement ? SubscriptSpecialBaseNodeGen.create(arguments) : SubsetSpecialNodeGen.create(arguments);
     }
 
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSET, false);

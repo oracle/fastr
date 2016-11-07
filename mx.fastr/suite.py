@@ -261,22 +261,19 @@ suite = {
 
     "com.oracle.truffle.r.release" : {
       "sourceDirs" : ["src"],
-      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi", "com.oracle.truffle.r.native"],
+      "dependencies" : ["com.oracle.truffle.r.native.recommended"],
       "class" : "FastRReleaseProject",
       "output" : "com.oracle.truffle.r.release"
     },
 
     "com.oracle.truffle.r.native.recommended" : {
-      "sourceDirs" : [],
-      # these dependencies ensure that all distributions are built
-      # before the nested mx that does the CMD INSTALL runs
       "dependencies" : [
-        "com.oracle.truffle.r.release",
-        "com.oracle.truffle.r.test",
-        "com.oracle.truffle.r.test.native"
+        "com.oracle.truffle.r.native",
+        "com.oracle.truffle.r.engine",
+        "com.oracle.truffle.r.runtime.ffi"
       ],
+      "class" : "FastRNativeRecommendedProject",
       "native" : "true",
-      "output" : "com.oracle.truffle.r.native.recommended",
       "workingSets" : "FastR",
     },
 

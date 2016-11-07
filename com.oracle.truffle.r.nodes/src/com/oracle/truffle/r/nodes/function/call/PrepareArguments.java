@@ -183,7 +183,7 @@ public abstract class PrepareArguments extends Node {
         CachedExplicitPrepareArguments(PrepareArguments next, RRootNode target, RCallNode call, ArgumentsSignature explicitArgSignature) {
             this.next = next;
             formals = target.getFormalArguments();
-            permutation = ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, false, target.getBuiltin());
+            permutation = ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, target.getBuiltin());
             cachedExplicitArgSignature = explicitArgSignature;
         }
 
@@ -208,7 +208,7 @@ public abstract class PrepareArguments extends Node {
         public RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, RCallNode call) {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, s3DefaultArguments, false, RError.ROOTNODE);
+            return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, s3DefaultArguments, RError.ROOTNODE);
         }
     }
 }

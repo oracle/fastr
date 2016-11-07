@@ -27,7 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
-from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
 
@@ -90,15 +90,9 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath(jdk=jdk)]
+    vmArgs = ['-cp', mx.classpath('FASTR', jdk=jdk)]
 
-    if 'nocompile' in kwargs:
-        nocompile = True
-        del kwargs['nocompile']
-    else:
-        nocompile = False
-
-    vmArgs += set_graal_options(nocompile)
+    vmArgs += set_graal_options()
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -113,7 +107,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
-    print mx.classpath(jdk=mx.get_jdk())
+    print mx.classpath('FASTR', jdk=mx.get_jdk())
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -137,11 +131,12 @@ def _sanitize_vmArgs(jdk, vmArgs):
         i = i + 1
     return xargs
 
-def set_graal_options(nocompile=False):
+def set_graal_options():
+    '''
+    If Graal is enabled, set some options specific to FastR
+    '''
     if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
-        if nocompile:
-            result += ['-Dgraal.TruffleCompilationThreshold=100000']
         return result
     else:
         return []
@@ -345,8 +340,6 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     # no point in printing errors to file when running tests (that contain errors on purpose)
     vmArgs += ['-DR:-PrintErrorStacktracesToFile']
 
-    vmArgs += set_graal_options(nocompile=True)
-
     setREnvironment()
 
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
@@ -511,27 +504,6 @@ def rbdiag(args):
 
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
 
-def rcmplib(args):
-    '''compare FastR library R sources against GnuR'''
-    parser = ArgumentParser(prog='mx rcmplib')
-    parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
-    parser.add_argument('--package', action='store', help='package to check', default="base")
-    parser.add_argument('--paths', action='store_true', help='print full paths of files that differ')
-    parser.add_argument('--diffapp', action='store', help='diff application', default="diff")
-    args = parser.parse_args(args)
-    cmpArgs = []
-    cmpArgs.append("--gnurhome")
-    cmpArgs.append(args.gnurhome)
-    cmpArgs.append("--package")
-    cmpArgs.append(args.package)
-    if args.paths:
-        cmpArgs.append("--paths")
-        cmpArgs.append("--diffapp")
-        cmpArgs.append(args.diffapp)
-
-    cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
-    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
-
 def _gnur_path():
     np = mx.project('com.oracle.truffle.r.native')
     return join(np.dir, 'gnur', r_version(), 'bin')
@@ -570,7 +542,6 @@ _commands = {
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
-    'rcmplib' : [rcmplib, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
     'r-cp' : [r_classpath, '[options]'],

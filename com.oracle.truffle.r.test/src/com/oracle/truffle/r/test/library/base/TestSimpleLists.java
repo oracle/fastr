@@ -73,6 +73,10 @@ public class TestSimpleLists extends TestBase {
     @Test
     public void testListUpdate() {
         assertEval("{ l <- list(c(1,2,3),c(4,5,6)) ; l[[1]] <- c(7,8,9) ; l[[1]] }");
+        assertEval("{ l <- list(42); l[1][1] <- 7; l }");
+        assertEval("{ l <- list(c(42)); l[1][1] <- 7; l }");
+        assertEval("{ l <- list(c(42, 43)); l[[1]][1] <- 7; l }");
+        assertEval("{ l <- list(c(42)); idx <- TRUE; l[idx] <- list(c(1,2,3)); l }");
     }
 
     @Test
