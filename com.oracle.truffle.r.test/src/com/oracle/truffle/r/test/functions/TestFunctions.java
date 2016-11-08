@@ -230,6 +230,8 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
         assertEval("{ f <- function(a) { a } ; f(1,2) }");
 
+        assertEval("{ f <- function(xy, x) xy + x; f(xy=1,x=2) }");
+
         // with ... partial-match only if formal parameter are before ...
         assertEval("{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }");
         assertEval("{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }");
