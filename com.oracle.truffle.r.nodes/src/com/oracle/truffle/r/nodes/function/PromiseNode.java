@@ -318,6 +318,11 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
+        public SourceSection getLazySourceSection() {
+            return RSyntaxNode.INTERNAL;
+        }
+
+        @Override
         public SourceSection getSourceSection() {
             /*
              * These nodes can (currently) be visited by RSyntaxNode.accept in an already evaluated

@@ -86,7 +86,7 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
+        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, (String) getName(), false), getRhs().asRSyntaxNode()};
     }
 
     @Override

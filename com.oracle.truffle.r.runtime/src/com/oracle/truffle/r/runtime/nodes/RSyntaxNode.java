@@ -98,13 +98,6 @@ public interface RSyntaxNode extends RSyntaxElement {
      */
     SourceSection LAZY_DEPARSE = RSource.createUnknown("lazy deparse");
 
-    /**
-     * Indicates that, after creating the node, which requires a non-null {@link SourceSection} it
-     * should be created and updated by deparsing. This is generally used in specific situations,
-     * e.g., the {@code substitute} builtin.
-     */
-    SourceSection EAGER_DEPARSE = RSource.createUnknown("eager deparse");
-
     /*
      * Every implementor of this interface must either inherit or directly implement the following
      * methods.

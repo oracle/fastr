@@ -45,6 +45,11 @@ public interface RSyntaxFunction extends RSyntaxElement {
     static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body, String debugName) {
         return new RSyntaxFunction() {
             @Override
+            public SourceSection getLazySourceSection() {
+                return originalSource;
+            }
+
+            @Override
             public SourceSection getSourceSection() {
                 return originalSource;
             }

@@ -118,7 +118,6 @@ public class HiddenInternalFunctions {
                 RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
                     // We want this call to have a SourceSection
-                    RDeparse.ensureSourceSection(expr0);
                     aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(expr0), eenv.getFrame()));
                 } catch (PutException ex) {
                     /*

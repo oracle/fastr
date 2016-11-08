@@ -223,7 +223,7 @@ public class RASTUtils {
         } else {
             fnNode = (RNode) unwrap(fn);
         }
-        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
+        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.LAZY_DEPARSE;
         return RCallSpecialNode.createCall(sourceSection, fnNode, signature, arguments);
     }
 

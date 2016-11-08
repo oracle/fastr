@@ -101,7 +101,7 @@ public final class RCallerHelper {
                             index++;
                         }
                     }
-                    Object replacedFunction = function instanceof String ? ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, (String) function) : function;
+                    Object replacedFunction = function instanceof String ? ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, (String) function) : function;
                     syntaxNode = RASTUtils.createCall(replacedFunction, true, ArgumentsSignature.get(signature), syntaxArguments);
                 }
                 return syntaxNode;

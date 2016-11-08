@@ -121,7 +121,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Override
+    public final SourceSection getLazySourceSection() {
+        return sourceSectionR;
+    }
+
+    @Override
     public final SourceSection getSourceSection() {
+        RDeparse.ensureSourceSection(this);
         return sourceSectionR;
     }
 
@@ -610,7 +616,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         for (int i = 0; i < args.length; i++) {
             args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments[i];
         }
-        return RCallNodeGen.create(call.getSourceSection(), args, call.signature, RASTUtils.cloneNode(call.getFunction()));
+        return RCallNodeGen.create(call.getLazySourceSection(), args, call.signature, RASTUtils.cloneNode(call.getFunction()));
     }
 
     /**
@@ -618,11 +624,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        RCallNode call = RCallNodeGen.create(src, arguments, signature, new ForcePromiseNode(function));
-        if (src == RSyntaxNode.EAGER_DEPARSE) {
-            RDeparse.ensureSourceSection(call);
-        }
-        return call;
+        return RCallNodeGen.create(src, arguments, signature, new ForcePromiseNode(function));
     }
 
     public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {

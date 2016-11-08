@@ -24,8 +24,10 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
+abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode implements RSyntaxNode {
     @CompilationFinal private SourceSection sourceSectionR;
 
     protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
@@ -33,12 +35,19 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
         this.sourceSectionR = sourceSection;
     }
 
+    @Override
     public void setSourceSection(SourceSection sourceSection) {
         this.sourceSectionR = sourceSection;
     }
 
     @Override
+    public SourceSection getLazySourceSection() {
+        return sourceSectionR;
+    }
+
+    @Override
     public SourceSection getSourceSection() {
+        RDeparse.ensureSourceSection(this);
         return sourceSectionR;
     }
 }

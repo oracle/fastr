@@ -45,6 +45,11 @@ public interface RSyntaxLookup extends RSyntaxElement {
         SourceSection source = originalSource == null || originalSource.getCharEndIndex() == 0 ? null : originalSource.getSource().createSection(originalSource.getCharIndex(), 1);
         return new RSyntaxLookup() {
             @Override
+            public SourceSection getLazySourceSection() {
+                return source;
+            }
+
+            @Override
             public SourceSection getSourceSection() {
                 return source;
             }

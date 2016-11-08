@@ -89,6 +89,11 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     public boolean isFunctionLookup() {
         return false;
     }
+
+    @Override
+    public SourceSection getLazySourceSection() {
+        return null;
+    }
 }
 
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
@@ -106,7 +111,13 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     @Override
+    public SourceSection getLazySourceSection() {
+        return sourceSectionR;
+    }
+
+    @Override
     public SourceSection getSourceSection() {
+        RDeparse.ensureSourceSection(this);
         return sourceSectionR;
     }
 
@@ -147,9 +158,6 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             special = tryCreate(sourceSection, functionNode, signature, arguments, inReplace);
         }
         if (special != null) {
-            if (sourceSection == RSyntaxNode.EAGER_DEPARSE) {
-                RDeparse.ensureSourceSection(special);
-            }
             return special;
         } else {
             return RCallNode.createCall(sourceSection, functionNode, signature, arguments);

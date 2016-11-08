@@ -229,8 +229,8 @@ public class RDeparse {
      * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
      */
     public static void ensureSourceSection(RSyntaxElement node) {
-        SourceSection ss = node.getSourceSection();
-        if (ss == RSyntaxNode.EAGER_DEPARSE) {
+        SourceSection ss = node.getLazySourceSection();
+        if (ss == RSyntaxNode.LAZY_DEPARSE) {
             new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0, null).append(node).fixupSources();
         }
     }

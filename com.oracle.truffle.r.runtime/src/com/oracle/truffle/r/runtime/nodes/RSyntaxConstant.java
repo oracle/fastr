@@ -38,6 +38,11 @@ public interface RSyntaxConstant extends RSyntaxElement {
     static RSyntaxConstant createDummyConstant(SourceSection originalSource, Object value) {
         return new RSyntaxConstant() {
             @Override
+            public SourceSection getLazySourceSection() {
+                return originalSource;
+            }
+
+            @Override
             public SourceSection getSourceSection() {
                 return originalSource;
             }
