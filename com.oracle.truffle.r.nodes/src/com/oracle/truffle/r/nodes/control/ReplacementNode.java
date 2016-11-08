@@ -54,9 +54,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@NodeChild(value = "target")
+@NodeChild(value = "target", type = RNode.class)
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
-abstract class ReplacementNode extends RNode {
+abstract class ReplacementNode extends Node {
 
     private final int tempNamesStartIndex;
     private final SourceSection source;
@@ -74,8 +74,10 @@ abstract class ReplacementNode extends RNode {
         this.tempNamesStartIndex = tempNamesStartIndex;
     }
 
+    public abstract void execute(VirtualFrame frame);
+
     @Specialization
-    protected Object doRObject(VirtualFrame frame, Object target,
+    protected void doRObject(VirtualFrame frame, Object target,
                     @Cached("createTargetTmpWrite()") WriteVariableNode targetTmpWrite,
                     @Cached("createTargetTmpRemove()") RemoveAndAnswerNode targetTmpRemove,
                     @Cached("createTargetWrite()") WriteVariableNode targetWrite,
@@ -83,7 +85,6 @@ abstract class ReplacementNode extends RNode {
         targetTmpWrite.execute(frame, target);
         replacement.execute(frame);
         targetWrite.execute(frame, targetTmpRemove.execute(frame));
-        return null;
     }
 
     protected final WriteVariableNode createTargetTmpWrite() {
@@ -102,7 +103,7 @@ abstract class ReplacementNode extends RNode {
         return createReplacementNode(true);
     }
 
-    private RNode createReplacementNodeWithoutSpecials() {
+    private ReplacementBase createReplacementNodeWithoutSpecials() {
         return createReplacementNode(false);
     }
 
@@ -256,7 +257,10 @@ abstract class ReplacementNode extends RNode {
     /**
      * Base class for nodes implementing the actual replacement.
      */
-    protected abstract static class ReplacementBase extends RNode {
+    protected abstract static class ReplacementBase extends Node {
+
+        public abstract void execute(VirtualFrame frame);
+
         protected final ReplacementNode getReplacementNodeParent() {
             // Note: new DSL puts another node in between ReplacementBase instance and
             // ReplacementNode, to be flexible we traverse the parents until we reach it
@@ -282,7 +286,7 @@ abstract class ReplacementNode extends RNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
+        public void execute(VirtualFrame frame) {
             try {
                 // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
                 // argument is shared, it bails out. Moreover, if that call's argument is not
@@ -290,10 +294,8 @@ abstract class ReplacementNode extends RNode {
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
             } catch (FullCallNeededException | RecursiveSpecialBailout e) {
-                RNode newReplacement = getReplacementNodeParent().createReplacementNodeWithoutSpecials();
-                return replace(newReplacement).execute(frame);
+                replace(getReplacementNodeParent().createReplacementNodeWithoutSpecials()).execute(frame);
             }
-            return null;
         }
     }
 
@@ -309,11 +311,10 @@ abstract class ReplacementNode extends RNode {
 
         @Override
         @ExplodeLoop
-        public Object execute(VirtualFrame frame) {
+        public void execute(VirtualFrame frame) {
             for (RNode update : updates) {
                 update.execute(frame);
             }
-            return null;
         }
     }
 }
