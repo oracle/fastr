@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.nodes;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
@@ -98,50 +97,4 @@ public interface RSyntaxNode extends RSyntaxElement {
      */
     SourceSection LAZY_DEPARSE = RSource.createUnknown("lazy deparse");
 
-    /*
-     * Every implementor of this interface must either inherit or directly implement the following
-     * methods.
-     */
-
-    @Override
-    SourceSection getSourceSection();
-
-    @Override
-    void setSourceSection(SourceSection sourceSection);
-
-    /**
-     * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
-     * {@code true} to {@code instanceof RSyntaxNode} and {@link #isSyntax()}. Similar therefore to
-     * {@code Node#accept}. Note that AST transformations can change the shape of the tree in
-     * drastic ways; in particular one cannot truncate the walk on encountering a non-syntax node,
-     * as the related {@link RSyntaxNode} may be have been transformed into a child of a non-syntax
-     * node.
-     *
-     * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
-     * transformation denoted by the child nodes (which include syntax nodes), so we use the special
-     * lhs/rhs accessors and visit those. In some cases we don't want to visit the children at all,
-     * which is controlled by {@code visitReplacement}.
-     */
-    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor, boolean visitReplacement) {
-        boolean visitChildren = true;
-        int incDepth = 0;
-        if (RBaseNode.isRSyntaxNode(node)) {
-            RSyntaxNode syntaxNode = (RSyntaxNode) node;
-            visitChildren = nodeVisitor.visit(syntaxNode, depth);
-            incDepth = 1;
-        }
-        if (visitChildren) {
-            RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
-            if (rnChildren == null) {
-                for (Node child : node.getChildren()) {
-                    if (child != null) {
-                        accept(child, depth + incDepth, nodeVisitor, visitReplacement);
-                    }
-                }
-            } else if (visitReplacement) {
-                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-            }
-        }
-    }
 }

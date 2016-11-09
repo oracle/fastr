@@ -502,16 +502,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public RSyntaxNode[] isReplacementNode(Node node) {
-        if (node instanceof ReplacementDispatchNode) {
-            ReplacementDispatchNode rn = (ReplacementDispatchNode) node;
-            return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
-        } else {
-            return null;
-        }
-    }
-
-    @Override
     public boolean isFunctionDefinitionNode(Node node) {
         return node instanceof FunctionDefinitionNode;
     }

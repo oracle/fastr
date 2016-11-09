@@ -55,9 +55,12 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * The implementation of the R debug functions.
@@ -157,17 +160,35 @@ public class DebugHandling {
         instrumenter.attachListener(statementBuilder.build(), fser.getStatementListener());
         // Finally attach loop listeners to all loop nodes
         SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LoopTag.class);
-        RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
+        new RSyntaxVisitor<Void>() {
 
             @Override
-            public boolean visit(RSyntaxNode node, int depth) {
-                if (node instanceof AbstractLoopNode) {
-                    instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver(node));
+            protected Void visit(RSyntaxCall element) {
+                if (element instanceof AbstractLoopNode) {
+                    instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver((AbstractLoopNode) element));
                 }
-                return true;
+                accept(element.getSyntaxLHS());
+                for (RSyntaxElement arg : element.getSyntaxArguments()) {
+                    accept(arg);
+                }
+                return null;
             }
 
-        }, false);
+            @Override
+            protected Void visit(RSyntaxConstant element) {
+                return null;
+            }
+
+            @Override
+            protected Void visit(RSyntaxLookup element) {
+                return null;
+            }
+
+            @Override
+            protected Void visit(RSyntaxFunction element) {
+                return null;
+            }
+        }.accept(fdn);
         return fser;
     }
 
