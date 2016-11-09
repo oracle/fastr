@@ -186,7 +186,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             } else {
                 result = call.getSyntaxArguments()[index - 1];
                 if (result == null) {
-                    result = RSyntaxLookup.createDummyLookup(null, "", false);
+                    result = RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "", false);
                 }
             }
         } else if (s instanceof RSyntaxFunction) {

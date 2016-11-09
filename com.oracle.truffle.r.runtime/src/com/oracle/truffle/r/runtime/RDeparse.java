@@ -772,7 +772,7 @@ public class RDeparse {
         private static RSyntaxElement wrap(Object v, boolean isCallLHS) {
             Object value = RRuntime.asAbstractVector(v);
             if (value instanceof RSymbol) {
-                return RSyntaxLookup.createDummyLookup(null, ((RSymbol) value).getName(), isCallLHS);
+                return RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, ((RSymbol) value).getName(), isCallLHS);
             } else if (value instanceof RLanguage) {
                 return ((RLanguage) value).getRep().asRSyntaxNode();
             } else if (value instanceof RPairList) {

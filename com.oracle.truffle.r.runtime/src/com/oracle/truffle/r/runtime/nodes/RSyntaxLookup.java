@@ -41,8 +41,7 @@ public interface RSyntaxLookup extends RSyntaxElement {
      * characters of the original source section (if non-null) will be used as the new source
      * section.
      */
-    static RSyntaxLookup createDummyLookup(SourceSection originalSource, String identifier, boolean isFunctionLookup) {
-        SourceSection source = originalSource == null || originalSource.getCharEndIndex() == 0 ? null : originalSource.getSource().createSection(originalSource.getCharIndex(), 1);
+    static RSyntaxLookup createDummyLookup(SourceSection source, String identifier, boolean isFunctionLookup) {
         return new RSyntaxLookup() {
             @Override
             public SourceSection getLazySourceSection() {

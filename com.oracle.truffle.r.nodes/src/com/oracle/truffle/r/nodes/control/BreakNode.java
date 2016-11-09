@@ -27,12 +27,13 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 public final class BreakNode extends OperatorNode {
 
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public BreakNode(SourceSection src, RSyntaxElement operator) {
+    public BreakNode(SourceSection src, RSyntaxLookup operator) {
         super(src, operator);
     }
 
