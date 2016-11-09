@@ -32,15 +32,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -57,34 +54,25 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     @Child private ReplacementNode replacementNode;
 
-    @Child private WriteVariableNode storeRhs;
-    @Child private RemoveAndAnswerNode removeRhs;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
-
     private final RSyntaxNode lhs;
+    private final RSyntaxNode rhs;
     private final boolean isSuper;
-    private final String rhsName;
     private final int tempNamesStartIndex;
 
     public ReplacementDispatchNode(SourceSection src, RSyntaxElement operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
         super(src, operator);
         assert lhs != null && rhs != null;
-        rhsName = "*rhs*" + tempNamesStartIndex;
-        storeRhs = WriteVariableNode.createAnonymous(rhsName, rhs.asRNode(), WriteVariableNode.Mode.INVISIBLE);
-        removeRhs = RemoveAndAnswerNode.create(rhsName);
-        this.operator = operator;
         this.lhs = lhs;
+        this.rhs = rhs;
         this.isSuper = isSuper;
         this.tempNamesStartIndex = tempNamesStartIndex;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        storeRhs.execute(frame);
-        getReplacementNode().execute(frame);
-        Object result = removeRhs.execute(frame);
-        visibility.execute(frame, false);
-        return result;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+
+        return replace(getReplacementNode()).execute(frame);
     }
 
     /**
@@ -98,7 +86,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
      * Support for syntax tree visitor.
      */
     public RSyntaxNode getRhs() {
-        return storeRhs.getRhs().asRSyntaxNode();
+        return rhs;
     }
 
     @Override
@@ -108,7 +96,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[]{lhs, storeRhs.getRhs().asRSyntaxNode()};
+        return new RSyntaxElement[]{lhs, rhs};
     }
 
     private ReplacementNode getReplacementNode() {
@@ -147,14 +135,14 @@ public final class ReplacementDispatchNode extends OperatorNode {
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
         ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return ReplacementNodeGen.create(getSourceSection(), calls, rhsName, variable.getIdentifier(), isSuper, tempNamesStartIndex, varRead);
+        return new ReplacementNode(getLazySourceSection(), operator, varRead, lhs, rhs.asRNode(), calls, "*rhs*" + tempNamesStartIndex, variable.getIdentifier(), isSuper, tempNamesStartIndex);
     }
 
     private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {
         if (isSuper) {
-            return ReadVariableNode.createSuperLookup(var.getSourceSection(), var.getIdentifier());
+            return ReadVariableNode.createSuperLookup(var.getLazySourceSection(), var.getIdentifier());
         } else {
-            return ReadVariableNode.create(var.getSourceSection(), var.getIdentifier(), true);
+            return ReadVariableNode.create(var.getLazySourceSection(), var.getIdentifier(), true);
         }
     }
 
