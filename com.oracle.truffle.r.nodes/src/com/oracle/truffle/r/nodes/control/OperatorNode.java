@@ -22,33 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class NextNode extends OperatorNode {
+public abstract class OperatorNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    protected final RSyntaxElement operator;
 
-    public NextNode(SourceSection src, RSyntaxElement operator) {
-        super(src, operator);
+    public OperatorNode(SourceSection src, RSyntaxElement operator) {
+        super(src);
+        this.operator = operator;
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        visibility.execute(frame, false);
-        throw NextException.instance;
-    }
-
-    @Override
-    public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[0];
-    }
-
-    @Override
-    public ArgumentsSignature getSyntaxSignature() {
-        return ArgumentsSignature.empty(0);
+    public final RSyntaxElement getSyntaxLHS() {
+        return operator;
     }
 }

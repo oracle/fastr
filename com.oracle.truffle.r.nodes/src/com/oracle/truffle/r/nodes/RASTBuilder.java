@@ -88,6 +88,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         this.constants = constants;
     }
 
+    @SuppressWarnings({"unused", "static-method"})
     private RCallNode unused() {
         return null; // we need reference to RCallNode, otherwise it won't compile, compilation bug?
     }
@@ -99,23 +100,23 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             if (args.size() == 0) {
                 switch (symbol) {
                     case "break":
-                        return new BreakNode(source);
+                        return new BreakNode(source, lhs);
                     case "next":
-                        return new NextNode(source);
+                        return new NextNode(source, lhs);
                 }
             } else if (args.size() == 1) {
                 switch (symbol) {
                     case "repeat":
-                        return RepeatNode.create(source, args.get(0).value);
+                        return new RepeatNode(source, lhs, args.get(0).value);
                     case "(":
                         return args.get(0).value;
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {
                     case "while":
-                        return WhileNode.create(source, args.get(0).value, args.get(1).value);
+                        return new WhileNode(source, lhs, args.get(0).value, args.get(1).value);
                     case "if":
-                        return IfNode.create(source, args.get(0).value, args.get(1).value, null);
+                        return new IfNode(source, lhs, args.get(0).value, args.get(1).value, null);
                     case "=":
                     case "<-":
                     case ":=":
@@ -124,7 +125,13 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "->>":
                         boolean isSuper = "<<-".equals(symbol) || "->>".equals(symbol);
                         boolean switchArgs = "->".equals(symbol) || "->>".equals(symbol);
-                        String operator = "=".equals(symbol) ? "=" : isSuper ? "<<-" : "<-";
+                        RSyntaxLookup operator = (RSyntaxLookup) lhs;
+                        // fix the operators while keeping the correct source sections
+                        if ("->>".equals(symbol)) {
+                            operator = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<<-");
+                        } else if ("->".equals(symbol)) {
+                            operator = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<-");
+                        }
                         return createReplacement(source, operator, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
                 }
             } else if (args.size() == 3) {
@@ -133,16 +140,16 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         if (args.get(0).value instanceof RSyntaxLookup) {
                             String name = ((RSyntaxLookup) args.get(0).value).getIdentifier();
                             WriteVariableNode cvar = WriteVariableNode.create(source, name, null, false);
-                            return ForNode.create(source, cvar, args.get(1).value, args.get(2).value);
+                            return new ForNode(source, lhs, cvar, args.get(1).value.asRNode(), args.get(2).value.asRNode());
                         }
                         break;
                     case "if":
-                        return IfNode.create(source, args.get(0).value, args.get(1).value, args.get(2).value);
+                        return new IfNode(source, lhs, args.get(0).value, args.get(1).value, args.get(2).value);
                 }
             }
             switch (symbol) {
                 case "{":
-                    return new BlockNode(source, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
+                    return new BlockNode(source, lhs, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
                 case "missing":
                     return new MissingNode(source, lhs, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
             }
@@ -156,7 +163,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return RCallSpecialNode.createCall(source, lhs.asRNode(), signature, nodes);
     }
 
-    private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
+    private RSyntaxNode createReplacement(SourceSection source, RSyntaxLookup operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
         if (replacementLhs instanceof RSyntaxCall) {
             return createReplacement(source, replacementLhs, replacementRhs, operator, isSuper);
         } else {
@@ -194,7 +201,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
-    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
+    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, RSyntaxElement operator, boolean isSuper) {
         return new ReplacementDispatchNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
     }
 

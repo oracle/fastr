@@ -53,8 +53,8 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
     @Child private LoopNode loopNode;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
-        super(src);
+    public ForNode(SourceSection src, RSyntaxElement operator, WriteVariableNode cvar, RNode range, RNode body) {
+        super(src, operator);
         String indexName = AnonymousFrameVariable.create("FOR_INDEX");
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
@@ -63,10 +63,6 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
         this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName)), Mode.REGULAR);
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, cvar, body, indexName, lengthName, rangeName));
-    }
-
-    public static ForNode create(SourceSection src, WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
-        return new ForNode(src, cvar, range.asRNode(), body.asRNode());
     }
 
     @Override
@@ -149,11 +145,6 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         public String toString() {
             return forNode.toString();
         }
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "for", true);
     }
 
     @Override

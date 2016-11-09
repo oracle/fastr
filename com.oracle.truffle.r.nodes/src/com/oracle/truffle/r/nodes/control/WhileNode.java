@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
@@ -46,13 +45,9 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
     @Child private LoopNode loop;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private WhileNode(SourceSection src, RSyntaxNode condition, RSyntaxNode body) {
-        super(src);
+    public WhileNode(SourceSection src, RSyntaxElement operator, RSyntaxNode condition, RSyntaxNode body) {
+        super(src, operator);
         this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
-    }
-
-    public static WhileNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode body) {
-        return new WhileNode(src, condition, body);
     }
 
     @Override
@@ -105,11 +100,6 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         public String toString() {
             return whileNode.toString();
         }
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "while", true);
     }
 
     @Override

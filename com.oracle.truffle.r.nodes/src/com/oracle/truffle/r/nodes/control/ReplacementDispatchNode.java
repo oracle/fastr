@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * created lazily. Moreover, we use 'special' fast-path version of replacement where possible with
  * fallback to generic implementation.
  */
-public final class ReplacementDispatchNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class ReplacementDispatchNode extends OperatorNode {
 
     @Child private ReplacementNode replacementNode;
 
@@ -61,15 +61,13 @@ public final class ReplacementDispatchNode extends RSourceSectionNode implements
     @Child private RemoveAndAnswerNode removeRhs;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private final String operator;
     private final RSyntaxNode lhs;
     private final boolean isSuper;
     private final String rhsName;
     private final int tempNamesStartIndex;
 
-    public ReplacementDispatchNode(SourceSection src, String operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
-        super(src);
-        assert "<-".equals(operator) || "<<-".equals(operator) || "=".equals(operator);
+    public ReplacementDispatchNode(SourceSection src, RSyntaxElement operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
+        super(src, operator);
         assert lhs != null && rhs != null;
         rhsName = "*rhs*" + tempNamesStartIndex;
         storeRhs = WriteVariableNode.createAnonymous(rhsName, rhs.asRNode(), WriteVariableNode.Mode.INVISIBLE);
@@ -101,11 +99,6 @@ public final class ReplacementDispatchNode extends RSourceSectionNode implements
      */
     public RSyntaxNode getRhs() {
         return storeRhs.getRhs().asRSyntaxNode();
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(null, operator, true);
     }
 
     @Override
@@ -203,15 +196,13 @@ public final class ReplacementDispatchNode extends RSourceSectionNode implements
      * Used by the parser for assignments that miss a left hand side. This node will raise an error
      * once executed.
      */
-    public static final class LHSError extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+    public static final class LHSError extends OperatorNode {
 
-        private final String operator;
         private final RSyntaxElement lhs;
         private final RSyntaxElement rhs;
 
-        public LHSError(SourceSection sourceSection, String operator, RSyntaxElement lhs, RSyntaxElement rhs) {
-            super(sourceSection);
-            this.operator = operator;
+        public LHSError(SourceSection sourceSection, RSyntaxLookup operator, RSyntaxElement lhs, RSyntaxElement rhs) {
+            super(sourceSection, operator);
             this.lhs = lhs;
             this.rhs = rhs;
         }
@@ -220,11 +211,6 @@ public final class ReplacementDispatchNode extends RSourceSectionNode implements
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
-        }
-
-        @Override
-        public RSyntaxElement getSyntaxLHS() {
-            return RSyntaxLookup.createDummyLookup(null, operator, true);
         }
 
         @Override

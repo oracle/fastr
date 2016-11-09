@@ -33,13 +33,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class IfNode extends OperatorNode {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -48,16 +45,11 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    private IfNode(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
-        super(src);
+    public IfNode(SourceSection src, RSyntaxElement operator, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+        super(src, operator);
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart.asRNode();
         this.elsePart = elsePart == null ? null : elsePart.asRNode();
-    }
-
-    public static IfNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
-        IfNode ifNode = new IfNode(src, condition, thenPart, elsePart == null ? null : elsePart);
-        return ifNode;
     }
 
     /**
@@ -102,11 +94,6 @@ public final class IfNode extends RSourceSectionNode implements RSyntaxNode, RSy
 
     public RNode getElsePart() {
         return elsePart;
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "if", true);
     }
 
     @Override

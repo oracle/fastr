@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.GetMissingValueNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
@@ -45,13 +46,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class MissingNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class MissingNode extends OperatorNode {
 
     public abstract static class MissingCheckCache extends Node {
 
@@ -178,12 +176,10 @@ public final class MissingNode extends RSourceSectionNode implements RSyntaxNode
     @Child private LocalReadVariableNode readVarArgs;
 
     private final ArgumentsSignature signature;
-    private final RSyntaxElement lhs;
     private final RSyntaxElement[] args;
 
-    public MissingNode(SourceSection source, RSyntaxElement lhs, ArgumentsSignature signature, RSyntaxElement[] args) {
-        super(source);
-        this.lhs = lhs;
+    public MissingNode(SourceSection source, RSyntaxElement operator, ArgumentsSignature signature, RSyntaxElement[] args) {
+        super(source, operator);
         this.signature = signature;
         this.args = args;
     }
@@ -218,11 +214,6 @@ public final class MissingNode extends RSourceSectionNode implements RSyntaxNode
             return RRuntime.asLogical(varArgs.getLength() == 0);
         }
         throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return lhs;
     }
 
     @Override

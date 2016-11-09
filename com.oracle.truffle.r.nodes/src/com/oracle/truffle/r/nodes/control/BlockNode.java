@@ -30,24 +30,21 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A {@link BlockNode} represents a sequence of statements created by "{ ... }" in source code.
  */
-public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class BlockNode extends OperatorNode {
 
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     @Children protected final RNode[] sequence;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public BlockNode(SourceSection src, RNode[] sequence) {
-        super(src);
+    public BlockNode(SourceSection src, RSyntaxElement operator, RNode[] sequence) {
+        super(src, operator);
         this.sequence = sequence;
     }
 
@@ -64,11 +61,6 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
             lastResult = sequence[i].execute(frame);
         }
         return lastResult;
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "{", true);
     }
 
     @Override
