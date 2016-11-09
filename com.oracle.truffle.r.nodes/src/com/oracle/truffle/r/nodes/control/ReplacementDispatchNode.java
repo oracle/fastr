@@ -33,11 +33,13 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableSyntaxNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -52,18 +54,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class ReplacementDispatchNode extends OperatorNode {
 
-    @Child private ReplacementNode replacementNode;
+    // these are only @Child to make instrumentation work
+    @Child private RNode lhs;
+    @Child private RNode rhs;
 
-    private final RSyntaxNode lhs;
-    private final RSyntaxNode rhs;
     private final boolean isSuper;
     private final int tempNamesStartIndex;
 
-    public ReplacementDispatchNode(SourceSection src, RSyntaxElement operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
+    public ReplacementDispatchNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
         super(src, operator);
         assert lhs != null && rhs != null;
-        this.lhs = lhs;
-        this.rhs = rhs;
+        this.lhs = lhs.asRNode();
+        this.rhs = rhs.asRNode();
         this.isSuper = isSuper;
         this.tempNamesStartIndex = tempNamesStartIndex;
     }
@@ -72,21 +74,14 @@ public final class ReplacementDispatchNode extends OperatorNode {
     public Object execute(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
 
-        return replace(getReplacementNode()).execute(frame);
-    }
+        RNode replacement;
+        if (lhs instanceof RSyntaxCall) {
+            replacement = createReplacementNode();
+        } else {
+            replacement = new WriteVariableSyntaxNode(getLazySourceSection(), operator, lhs.asRSyntaxNode(), rhs, isSuper);
+        }
 
-    /**
-     * Support for syntax tree visitor.
-     */
-    public RSyntaxNode getLhs() {
-        return lhs;
-    }
-
-    /**
-     * Support for syntax tree visitor.
-     */
-    public RSyntaxNode getRhs() {
-        return rhs;
+        return replace(replacement).execute(frame);
     }
 
     @Override
@@ -96,15 +91,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[]{lhs, rhs};
-    }
-
-    private ReplacementNode getReplacementNode() {
-        if (replacementNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            replacementNode = insert(createReplacementNode());
-        }
-        return replacementNode;
+        return new RSyntaxElement[]{lhs.asRSyntaxNode(), rhs.asRSyntaxNode()};
     }
 
     private ReplacementNode createReplacementNode() {
@@ -115,7 +102,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
          * "a(...)" and "b(...)".
          */
         List<RSyntaxCall> calls = new ArrayList<>();
-        RSyntaxElement current = lhs;
+        RSyntaxElement current = lhs.asRSyntaxNode();
         while (!(current instanceof RSyntaxLookup)) {
             if (!(current instanceof RSyntaxCall)) {
                 if (current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance) {
@@ -135,7 +122,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
         ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return new ReplacementNode(getLazySourceSection(), operator, varRead, lhs, rhs.asRNode(), calls, "*rhs*" + tempNamesStartIndex, variable.getIdentifier(), isSuper, tempNamesStartIndex);
+        return new ReplacementNode(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, "*rhs*" + tempNamesStartIndex, variable.getIdentifier(), isSuper, tempNamesStartIndex);
     }
 
     private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {
@@ -154,10 +141,10 @@ public final class ReplacementDispatchNode extends OperatorNode {
             RSyntaxCall call = (RSyntaxCall) e;
             // check for syntax nodes as this will be required to recreate a call during
             // replacement form construction in createFunctionUpdate
-            if (call.getSyntaxLHS() instanceof RSyntaxLookup && call.getSyntaxLHS() instanceof RSyntaxNode) {
+            if (call.getSyntaxLHS() instanceof RSyntaxLookup) {
                 if (((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("::")) {
                     RSyntaxElement[] args = call.getSyntaxArguments();
-                    if (args.length == 2 && args[0] instanceof RSyntaxLookup && args[0] instanceof RSyntaxNode && args[1] instanceof RSyntaxLookup && args[1] instanceof RSyntaxNode) {
+                    if (args.length == 2 && args[0] instanceof RSyntaxLookup && args[1] instanceof RSyntaxLookup) {
                         return true;
                     }
                 }
@@ -178,37 +165,5 @@ public final class ReplacementDispatchNode extends OperatorNode {
             return ReplacementNode.getLanguage(wvn);
         }
         return null;
-    }
-
-    /**
-     * Used by the parser for assignments that miss a left hand side. This node will raise an error
-     * once executed.
-     */
-    public static final class LHSError extends OperatorNode {
-
-        private final RSyntaxElement lhs;
-        private final RSyntaxElement rhs;
-
-        public LHSError(SourceSection sourceSection, RSyntaxLookup operator, RSyntaxElement lhs, RSyntaxElement rhs) {
-            super(sourceSection, operator);
-            this.lhs = lhs;
-            this.rhs = rhs;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
-        }
-
-        @Override
-        public RSyntaxElement[] getSyntaxArguments() {
-            return new RSyntaxElement[]{lhs, rhs};
-        }
-
-        @Override
-        public ArgumentsSignature getSyntaxSignature() {
-            return ArgumentsSignature.empty(2);
-        }
     }
 }

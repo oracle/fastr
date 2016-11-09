@@ -27,14 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
@@ -49,6 +46,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededExcep
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.CodeBuilderContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -104,10 +102,6 @@ final class ReplacementNode extends OperatorNode {
         removeRhs.execute(frame);
         visibility.execute(frame, false);
         return rhsValue;
-    }
-
-    private ReplacementBase createReplacementNodeWithoutSpecials() {
-        return createReplacementNode(false);
     }
 
     private ReplacementBase createReplacementNode(boolean useSpecials) {
@@ -187,14 +181,15 @@ final class ReplacementNode extends OperatorNode {
      * {@code newLhs}.
      */
     private static RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
+            argNodes[i] = i == 0 ? newLhs : builder.process(arguments[i], codeBuilderContext);
         }
 
-        return RCallSpecialNode.createCallInReplace(fun.getLazySourceSection(), process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
+        return RCallSpecialNode.createCallInReplace(fun.getLazySourceSection(), builder.process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
     }
 
     /**
@@ -203,6 +198,7 @@ final class ReplacementNode extends OperatorNode {
      * added to the arguments list.
      */
     private static RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         ArgumentsSignature signature = fun.getSyntaxSignature();
@@ -210,7 +206,7 @@ final class ReplacementNode extends OperatorNode {
         String[] names = new String[argNodes.length];
         for (int i = 0; i < arguments.length; i++) {
             names[i] = signature.getName(i);
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
+            argNodes[i] = i == 0 ? newLhs : builder.process(arguments[i], codeBuilderContext);
         }
         argNodes[argNodes.length - 1] = rhs;
         names[argNodes.length - 1] = "value";
@@ -225,25 +221,17 @@ final class ReplacementNode extends OperatorNode {
                 // to work properly
                 argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
             }
-            newSyntaxLHS = lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
+            newSyntaxLHS = builder.lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
         } else {
             // data types (and lengths) are verified in isNamespaceLookupCall
             RSyntaxCall callLHS = (RSyntaxCall) syntaxLHS;
             RSyntaxElement[] oldArgs = callLHS.getSyntaxArguments();
             RSyntaxNode[] newArgs = new RSyntaxNode[2];
             newArgs[0] = (RSyntaxNode) oldArgs[0];
-            newArgs[1] = lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
+            newArgs[1] = builder.lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
             newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
         return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
-    }
-
-    private static RSyntaxNode process(RSyntaxElement original, CodeBuilderContext codeBuilderContext) {
-        return RContext.getASTBuilder().process(original, codeBuilderContext);
-    }
-
-    private static RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
-        return RContext.getASTBuilder().lookup(source, symbol, functionLookup);
     }
 
     static RLanguage getLanguage(WriteVariableNode wvn) {
@@ -295,13 +283,14 @@ final class ReplacementNode extends OperatorNode {
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
             } catch (FullCallNeededException | RecursiveSpecialBailout e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
 // String code = getReplacementNodeParent().source.getCode();
 // System.out.println("fallback to generic: " + code);
 // if (code.contains("season$previousSeasonalIndex.isOnAWeekday <-
 // previousSeasonalIndex.isOnAWeekday")) {
 // System.out.println("...");
 // }
-                replace(getReplacementNodeParent().createReplacementNodeWithoutSpecials()).execute(frame);
+                replace(getReplacementNodeParent().createReplacementNode(false)).execute(frame);
             }
         }
     }
