@@ -25,6 +25,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/DevicesC
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/fastrgd/FastRGraphicsDevice.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/NullGraphicsDevice.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/pdf/PdfGraphicsDevice.java,gnu_r_graphics.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grid/GridFunctions.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/MethodsListDispatch.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/Slot.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Arithmetic.java,gnu_r_gentleman_ihaka.copyright
@@ -82,17 +83,6 @@ com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/src/libintl.h,no.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/grDevices/src/gzio.c,gnu_r_gentleman_ihaka.copyright
-com.oracle.truffle.r.native/library/grid/src/gpar.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/grid.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/grid.h,no.copyright
-com.oracle.truffle.r.native/library/grid/src/just.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/layout.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/matrix.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/register.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/state.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/unit.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/util.c,no.copyright
-com.oracle.truffle.r.native/library/grid/src/viewport.c,no.copyright
 com.oracle.truffle.r.native/library/methods/src/methods_dummy.c,no.copyright
 com.oracle.truffle.r.native/library/parallel/src/glpi.h,no.copyright
 com.oracle.truffle.r.native/library/parallel/src/rngstream.c,no.copyright
