@@ -122,13 +122,12 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
         RAttributes attributes;
-        RAttributable profiledArg;
         if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
             // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
             attributes = ((RAttributeStorage) arg).getAttributes();
         } else {
-            profiledArg = argProfile.profile(arg);
-            attributes = profiledArg.getAttributes();
+            arg = argProfile.profile(arg);
+            attributes = arg.getAttributes();
         }
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
@@ -147,7 +146,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 return classHierarchy;
             }
         }
-        return withImplicitTypes ? arg.getImplicitClass() : null;
+        return withImplicitTypes ? argProfile.profile(arg).getImplicitClass() : null;
     }
 
     protected static boolean isRTypedValue(Object obj) {

@@ -49,7 +49,7 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
         if (rShareable != null) {
             shareable.enter();
             if (isShared.profile(rShareable.isShared())) {
-                return ((RShareable) result).copy();
+                return rShareable.copy();
             } else {
                 ((RShareable) result).incRefCount();
             }
