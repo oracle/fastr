@@ -523,20 +523,15 @@ public class RDeparse {
                         }
                         switch (info.kind) {
                             case CURLY:
-                                boolean braces = args.length != 1 || hasBraces(call);
-                                if (braces) {
-                                    append("{", lhs);
-                                    try (C i = indent(); C c = inCurly()) {
-                                        for (RSyntaxElement statement : args) {
-                                            printline();
-                                            append(statement);
-                                        }
+                                append("{", lhs);
+                                try (C i = indent(); C c = inCurly()) {
+                                    for (RSyntaxElement statement : args) {
+                                        printline();
+                                        append(statement);
                                     }
-                                    printline();
-                                    append('}');
-                                } else {
-                                    append(args[0]);
                                 }
+                                printline();
+                                append('}');
                                 return null;
                             case SUBSET:
                                 if (args.length > 0) {
@@ -568,16 +563,6 @@ public class RDeparse {
                 appendWithParens(lhs, info, true);
                 append('(').appendArgs(call.getSyntaxSignature(), args, 0, false).append(')');
                 return null;
-            }
-
-            public boolean hasBraces(RSyntaxElement node) {
-                SourceSection ss = node.getSourceSection();
-                if (ss == null || ss == RSyntaxNode.SOURCE_UNAVAILABLE) {
-                    // this is statistical guess
-                    return true;
-                } else {
-                    return ss.getCode().startsWith("{");
-                }
             }
 
             @Override
@@ -671,7 +656,7 @@ public class RDeparse {
                     if (c.getSyntaxLHS() instanceof RSyntaxLookup) {
                         RSyntaxLookup l = (RSyntaxLookup) c.getSyntaxLHS();
                         if ("{".equals(l.getIdentifier())) {
-                            newline = c.getSyntaxArguments().length == 1 && !hasBraces(c);
+                            newline = false;
                         }
                     }
                 }
