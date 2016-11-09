@@ -81,8 +81,8 @@ ifeq ($(OSNAME), SunOS)
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
     ICONV_INSTALL := $(abspath iconv_install)
-    ICONV_CFLAGS := "$(CFLAGS) -m64 -xcode=pic32 -I$(ICONV_INSTALL)/include"
-    ICONV_LDFLAGS := -L$(ICONV_INSTALL)/lib 
+    ICONV_CFLAGS := "$(CFLAGS) -m64 -xcode=pic32 -I$(ICONV_INSTALL)/include -I$(XZ_HOME)/include"
+    ICONV_LDFLAGS := "-m64 -L$(ICONV_INSTALL)/lib -L$(XZ_HOME)/lib"
     ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_CFLAGS) LDFLAGS=$(ICONV_LDFLAGS)
 # required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
 # http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
