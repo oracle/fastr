@@ -897,6 +897,10 @@ public final class Utils {
         return s.intern();
     }
 
+    public static boolean isInterned(String s) {
+        return s == s.intern();
+    }
+
     @TruffleBoundary
     public static String toString(Object obj) {
         return obj.toString();
