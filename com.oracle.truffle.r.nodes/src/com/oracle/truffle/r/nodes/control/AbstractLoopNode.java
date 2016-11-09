@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 /** Marker class for loops. */
 public abstract class AbstractLoopNode extends OperatorNode {
 
-    protected AbstractLoopNode(SourceSection sourceSection, RSyntaxElement operator) {
+    protected AbstractLoopNode(SourceSection sourceSection, RSyntaxLookup operator) {
         super(sourceSection, operator);
     }
 

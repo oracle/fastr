@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
@@ -42,7 +43,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
     @Child private LoopNode loop;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public RepeatNode(SourceSection src, RSyntaxElement operator, RSyntaxNode body) {
+    public RepeatNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode body) {
         super(src, operator);
         this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, body.asRNode()));
     }

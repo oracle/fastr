@@ -178,7 +178,7 @@ public final class MissingNode extends OperatorNode {
     private final ArgumentsSignature signature;
     private final RSyntaxElement[] args;
 
-    public MissingNode(SourceSection source, RSyntaxElement operator, ArgumentsSignature signature, RSyntaxElement[] args) {
+    public MissingNode(SourceSection source, RSyntaxLookup operator, ArgumentsSignature signature, RSyntaxElement[] args) {
         super(source, operator);
         this.signature = signature;
         this.args = args;

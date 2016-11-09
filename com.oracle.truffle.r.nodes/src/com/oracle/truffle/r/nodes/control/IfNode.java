@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class IfNode extends OperatorNode {
@@ -45,7 +46,7 @@ public final class IfNode extends OperatorNode {
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    public IfNode(SourceSection src, RSyntaxElement operator, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+    public IfNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
         super(src, operator);
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart.asRNode();

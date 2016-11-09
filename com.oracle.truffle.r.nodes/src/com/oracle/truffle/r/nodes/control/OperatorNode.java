@@ -25,20 +25,20 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class OperatorNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
-    protected final RSyntaxElement operator;
+    protected final RSyntaxLookup operator;
 
-    public OperatorNode(SourceSection src, RSyntaxElement operator) {
+    public OperatorNode(SourceSection src, RSyntaxLookup operator) {
         super(src);
         this.operator = operator;
     }
 
     @Override
-    public final RSyntaxElement getSyntaxLHS() {
+    public final RSyntaxLookup getSyntaxLHS() {
         return operator;
     }
 }

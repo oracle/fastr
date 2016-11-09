@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -43,7 +43,7 @@ public final class BlockNode extends OperatorNode {
     @Children protected final RNode[] sequence;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public BlockNode(SourceSection src, RSyntaxElement operator, RNode[] sequence) {
+    public BlockNode(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
         super(src, operator);
         this.sequence = sequence;
     }

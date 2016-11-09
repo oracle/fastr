@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
@@ -45,7 +46,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
     @Child private LoopNode loop;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public WhileNode(SourceSection src, RSyntaxElement operator, RSyntaxNode condition, RSyntaxNode body) {
+    public WhileNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode condition, RSyntaxNode body) {
         super(src, operator);
         this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
     }

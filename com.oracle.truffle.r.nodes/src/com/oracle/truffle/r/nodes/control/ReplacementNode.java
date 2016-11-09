@@ -76,7 +76,7 @@ final class ReplacementNode extends OperatorNode {
     private final String rhsVarName;
     private final RSyntaxElement lhs;
 
-    ReplacementNode(SourceSection source, RSyntaxElement operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String rhsVarName, String targetVarName, boolean isSuper,
+    ReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String rhsVarName, String targetVarName, boolean isSuper,
                     int tempNamesStartIndex) {
         super(source, operator);
         this.lhs = lhs;
