@@ -33,9 +33,26 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * {@link #throwFullCallNeeded()} and the it will be replaced with call to the full blown built-in.
  */
 public interface RSpecialFactory {
+
+    /**
+     * Signals that the current special call cannot fulfill the requested action because of some
+     * restriction, and that the call should be rewritten to the generic call. This function must
+     * not be used if the rhs value of an update call was already computed - in this case, use the
+     * {@link #throwFullCallNeeded(Object)} function instead.
+     */
     static FullCallNeededException throwFullCallNeeded() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        throw FullCallNeededException.INSTANCE;
+        throw new FullCallNeededException(null);
+    }
+
+    /**
+     * Signals that the current special call cannot fulfill the requested action because of some
+     * restriction, and that the call should be rewritten to the generic call. This function must be
+     * used when a rhs value of an update call was already computed and must not be recomputed.
+     */
+    static FullCallNeededException throwFullCallNeeded(Object rhsValue) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw new FullCallNeededException(rhsValue);
     }
 
     /**
@@ -51,10 +68,11 @@ public interface RSpecialFactory {
 
     @SuppressWarnings("serial")
     final class FullCallNeededException extends RuntimeException {
-        private static RuntimeException INSTANCE = new FullCallNeededException();
 
-        private FullCallNeededException() {
-            // singleton
+        public Object rhsValue;
+
+        private FullCallNeededException(Object rhsValue) {
+            this.rhsValue = rhsValue;
         }
 
         @Override

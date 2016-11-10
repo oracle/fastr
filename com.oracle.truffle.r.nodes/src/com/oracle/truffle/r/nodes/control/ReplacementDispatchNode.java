@@ -73,15 +73,23 @@ public final class ReplacementDispatchNode extends OperatorNode {
     @Override
     public Object execute(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
+        return create(false).execute(frame);
+    }
 
+    @Override
+    public void voidExecute(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        create(true).voidExecute(frame);
+    }
+
+    public RNode create(boolean isVoid) {
         RNode replacement;
         if (lhs instanceof RSyntaxCall) {
-            replacement = createReplacementNode();
+            replacement = createReplacementNode(isVoid);
         } else {
             replacement = new WriteVariableSyntaxNode(getLazySourceSection(), operator, lhs.asRSyntaxNode(), rhs, isSuper);
         }
-
-        return replace(replacement).execute(frame);
+        return replace(replacement);
     }
 
     @Override
@@ -94,7 +102,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
         return new RSyntaxElement[]{lhs.asRSyntaxNode(), rhs.asRSyntaxNode()};
     }
 
-    private ReplacementNode createReplacementNode() {
+    private ReplacementNode createReplacementNode(boolean isVoid) {
         CompilerAsserts.neverPartOfCompilation();
 
         /*
@@ -122,7 +130,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
         ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return ReplacementNode.create(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, variable.getIdentifier(), isSuper, tempNamesStartIndex);
+        return ReplacementNode.create(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, variable.getIdentifier(), isSuper, tempNamesStartIndex, isVoid);
     }
 
     private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {
