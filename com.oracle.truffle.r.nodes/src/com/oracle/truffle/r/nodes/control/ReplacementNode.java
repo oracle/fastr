@@ -70,7 +70,7 @@ abstract class ReplacementNode extends OperatorNode {
         // Note: if specials are turned off in FastR, onlySpecials will never be true
         boolean createSpecial = hasOnlySpecialCalls(calls);
         if (createSpecial) {
-            return createSpecialReplacement(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            return new SpecialReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
         } else {
             return createGenericReplacement(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
         }
@@ -87,22 +87,6 @@ abstract class ReplacementNode extends OperatorNode {
             }
         }
         return true;
-    }
-
-    /**
-     * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
-     */
-    private static SpecialReplacementNode createSpecialReplacement(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls,
-                    String targetVarName, boolean isSuper, int tempNamesStartIndex) {
-        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
-        RNode extractFunc = ReadVariableNode.create(getTargetTmpName(tempNamesStartIndex));
-        for (int i = calls.size() - 1; i >= 1; i--) {
-            extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
-            assert extractFunc instanceof RCallSpecialNode;
-        }
-        RNode updateFunc = createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
-        assert updateFunc instanceof RCallSpecialNode : "should be only specials";
-        return new SpecialReplacementNode((RCallSpecialNode) updateFunc, source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
     }
 
     /**
@@ -199,7 +183,7 @@ abstract class ReplacementNode extends OperatorNode {
             newArgs[1] = builder.lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
             newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
+        return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
     }
 
     static RLanguage getLanguage(WriteVariableNode wvn) {
@@ -216,13 +200,7 @@ abstract class ReplacementNode extends OperatorNode {
      */
     private static final class SpecialReplacementNode extends ReplacementNode {
 
-        @Child private RNode target;
         @Child private RNode rhs;
-
-        @Child private WriteVariableNode targetTmpWrite;
-        @Child private RemoveAndAnswerNode targetTmpRemove;
-        @Child private WriteVariableNode targetWrite;
-
         @Child private WriteVariableNode storeRhs;
         @Child private RemoveAndAnswerNode removeRhs;
         @Child private RCallSpecialNode replaceCall;
@@ -232,21 +210,26 @@ abstract class ReplacementNode extends OperatorNode {
         private final int tempNamesStartIndex;
         private final boolean isSuper;
         private final String targetVarName;
+        private final RNode target;
 
-        SpecialReplacementNode(RCallSpecialNode replaceCall, SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName,
+        SpecialReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName,
                         boolean isSuper, int tempNamesStartIndex) {
             super(source, operator, lhs);
-            this.replaceCall = replaceCall;
             this.target = target;
+            CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
+            RNode extractFunc = target;
+            for (int i = calls.size() - 1; i >= 1; i--) {
+                extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
+                assert extractFunc instanceof RCallSpecialNode;
+            }
+            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
+            this.replaceCall.setPropagateFullCallNeededException(true);
+
             this.rhs = rhs;
             this.calls = calls;
             this.targetVarName = targetVarName;
             this.isSuper = isSuper;
             this.tempNamesStartIndex = tempNamesStartIndex;
-            this.replaceCall.setPropagateFullCallNeededException(true);
-            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), null, WriteVariableNode.Mode.INVISIBLE);
-            this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
-            this.targetWrite = WriteVariableNode.createAnonymous(targetVarName, null, WriteVariableNode.Mode.INVISIBLE, isSuper);
 
             this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, null, WriteVariableNode.Mode.INVISIBLE);
             this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
@@ -257,14 +240,11 @@ abstract class ReplacementNode extends OperatorNode {
             try {
                 Object rhsValue = rhs.execute(frame);
                 storeRhs.execute(frame, rhsValue);
-                targetTmpWrite.execute(frame, target.execute(frame));
                 // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
                 // argument is shared, it bails out. Moreover, if that call's argument is not
                 // shared, it could not be extracted from a shared container (list), so we should be
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
-
-                targetWrite.execute(frame, targetTmpRemove.execute(frame));
                 removeRhs.execute(frame);
                 visibility.execute(frame, false);
                 return rhsValue;

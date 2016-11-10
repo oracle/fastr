@@ -122,8 +122,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
         ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return ReplacementNode.create(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, variable.getIdentifier(), isSuper,
-                        tempNamesStartIndex);
+        return ReplacementNode.create(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, variable.getIdentifier(), isSuper, tempNamesStartIndex);
     }
 
     private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {

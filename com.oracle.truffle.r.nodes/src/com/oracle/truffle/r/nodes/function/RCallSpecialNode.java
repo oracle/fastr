@@ -144,6 +144,11 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         this.signature = signature;
     }
 
+    /**
+     * This passes {@code true} for the isReplacement parameter and ignores the first argument,
+     * i.e., does not modify the first argument in any way before passing it to
+     * {@link RSpecialFactory#create(ArgumentsSignature, RNode[], boolean)}.
+     */
     public static RSyntaxNode createCallInReplace(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments) {
         return createCall(sourceSection, functionNode, signature, arguments, true);
     }
@@ -189,14 +194,21 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         RNode[] localArguments = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            if (arguments[i] instanceof RSyntaxLookup) {
-                localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
-            } else if (arguments[i] instanceof RSyntaxConstant) {
-                localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
-            } else {
-                assert arguments[i] instanceof RCallSpecialNode;
-                ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+            if (inReplace && i == 0) {
+                if (arguments[i] instanceof RCallSpecialNode) {
+                    ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+                }
                 localArguments[i] = arguments[i].asRNode();
+            } else {
+                if (arguments[i] instanceof RSyntaxLookup) {
+                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
+                } else if (arguments[i] instanceof RSyntaxConstant) {
+                    localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+                } else {
+                    assert arguments[i] instanceof RCallSpecialNode;
+                    ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+                    localArguments[i] = arguments[i].asRNode();
+                }
             }
         }
         RNode special = specialCall.create(signature, localArguments, inReplace);
