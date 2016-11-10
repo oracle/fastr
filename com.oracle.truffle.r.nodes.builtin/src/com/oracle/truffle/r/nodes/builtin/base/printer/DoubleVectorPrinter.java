@@ -151,11 +151,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                     mnl = left; /* min digits to left of . */
                 }
                 if (sleft > mxsl) {
-                    mxsl = sleft; /*
-                                   * max left includingimport static
-                                   * com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
-                                   * sign(s)
-                                   */
+                    mxsl = sleft; /* max left including sign(s) */
                 }
                 if (nsig > mxns) {
                     mxns = nsig; /* max sig digits */
@@ -191,7 +187,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         e = (mxl > 100 || mnl <= -99) ? 2 : 1; /* 3 digit exponent */
         if (mxns != RRuntime.INT_MIN_VALUE) {
             d = mxns - 1;
-            w = neg + (d != 0 ? 1 : 1) + d + 4 + e; /* width for E format */
+            w = neg + (d > 0 ? 1 : 0) + d + 4 + e; /* width for E format */
             if (wF <= w + sciPen) { /* Fixpoint if it needs less space */
                 e = 0;
                 if (nsmall > rgt) {

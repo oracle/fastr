@@ -63,7 +63,7 @@ public class TestBuiltin_Im extends TestBase {
 
         assertEval("{ Im(as.raw(12)) }");
 
-        assertEval(Ignored.ImplementationError, "Im(c(NaN, 1+1i))");
+        assertEval("Im(c(NaN, 1+1i))");
         assertEval("Im(NaN)");
     }
 }

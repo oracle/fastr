@@ -19,6 +19,6 @@ public class TestBuiltin_pushBackLength extends TestBase {
 
     @Test
     public void testpushBackLength1() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(pushBackLength(argv[[1]]))");
+        assertEval("argv <- list(FALSE); .Internal(pushBackLength(argv[[1]]))");
     }
 }

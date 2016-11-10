@@ -24,7 +24,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod2() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1000L, 1000L));prod(argv[[1]]);");
+        assertEval("argv <- list(c(1000L, 1000L));prod(argv[[1]]);");
     }
 
     @Test

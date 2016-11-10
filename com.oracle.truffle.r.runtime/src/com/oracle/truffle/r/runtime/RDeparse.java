@@ -11,8 +11,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -917,7 +915,7 @@ public class RDeparse {
                     break;
                 case REALSXP:
                     double d = (double) element;
-                    append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : encodeReal(d));
+                    append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : RContext.getRRuntimeASTAccess().encodeDouble(d));
                     break;
                 case INTSXP:
                     int i = (int) element;
@@ -932,11 +930,7 @@ public class RDeparse {
                     if (RRuntime.isNA(c)) {
                         append((singleElement ? "NA_complex_" : "NA"));
                     } else {
-                        append(encodeReal(c.getRealPart()));
-                        if (c.getImaginaryPart() >= 0) {
-                            append('+');
-                        }
-                        append(encodeReal(c.getImaginaryPart())).append('i');
+                        append(RContext.getRRuntimeASTAccess().encodeComplex(c));
                     }
                     break;
                 default:
@@ -1069,39 +1063,6 @@ public class RDeparse {
     @TruffleBoundary
     public static String deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
         return new DeparseVisitor(false, cutoff, backtick, opts, nlines, null).process(expr).getContents();
-    }
-
-    // TODO: this should use the DoubleVectorPrinter
-
-    private static final DecimalFormatSymbols decimalFormatSymbols;
-    private static final DecimalFormat decimalFormat;
-    private static final DecimalFormat simpleDecimalFormat;
-
-    static {
-        decimalFormatSymbols = new DecimalFormatSymbols();
-        decimalFormatSymbols.setExponentSeparator("e");
-        decimalFormatSymbols.setNaN("NaN");
-        decimalFormatSymbols.setInfinity("Inf");
-        decimalFormat = new DecimalFormat("#.##################E0", decimalFormatSymbols);
-        simpleDecimalFormat = new DecimalFormat("#.##################", decimalFormatSymbols);
-    }
-
-    private static String encodeReal(double x) {
-        double d = RRuntime.normalizeZero(x);
-        if (d == 0 || withinSimpleRealRange(d)) {
-            return simpleDecimalFormat.format(d);
-        } else {
-            String str = decimalFormat.format(d);
-            if (!str.contains("e-") && str.contains("e")) {
-                return str.replace("e", "e+");
-            } else {
-                return str;
-            }
-        }
-    }
-
-    private static boolean withinSimpleRealRange(double d) {
-        return (d > 0.0001 || d < -0.0001) && d < 100000 && d > -100000;
     }
 
     private static String quotify(String name, char qc) {

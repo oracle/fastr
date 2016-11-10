@@ -105,8 +105,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter18() {
-        assertEval(Ignored.Unknown, "argv <- list(list(epsilon = 1e-08, maxit = 25, trace = FALSE));as.character(argv[[1]]);");
-        // 1e-08 prints as 1e-8
+        assertEval("argv <- list(list(epsilon = 1e-08, maxit = 25, trace = FALSE));as.character(argv[[1]]);");
     }
 
     @Test
