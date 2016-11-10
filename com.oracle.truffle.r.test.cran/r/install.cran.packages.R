@@ -67,11 +67,12 @@
 # test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
 # stored in a subdirectory named after the package.
 
-# There are three ways to specify the packages to be installed
+# There are three ways to specify the packages to be installed/tested
 # --pkg-pattern a regular expression to match packages
 # --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
 # --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
 # --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+# --no-install gets the list of packages from the lib install directory (evidently only useful with --run-tests)
 
 # TODO At some point this will need to upgraded to support installation from other repos, e.g. BioConductor, github
 
