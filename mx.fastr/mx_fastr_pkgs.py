@@ -21,30 +21,69 @@
 # questions.
 #
 
-from os.path import join, exists, relpath, dirname
+'''
+The pkgtest command operates in two modes:
+1. In development mode it uses the FastR 'Rscript' command and the internal GNU R for test comparison
+2. In production mode it uses the GraalVM 'Rscript' command and a GNU R loaded as a sibling suite. This is indicated
+by the environment variable 'GRAALVM_FASTR' being set.
+
+Evidently in case 2, there is the potential for a version mismatch between FastR and GNU R, and this is checked.
+
+In either case all the output is placed in the fastr suite dir. Separate directories are used for FastR and GNU R package installs
+and tests, namely 'lib.install.cran.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
+'''
+from os.path import join, relpath
 import shutil, os, re
+import subprocess
 import mx
 import mx_fastr
 
 quiet = False
+graalvm = None
+
+def _fastr_suite_dir():
+    return mx_fastr._fastr_suite.dir
 
 def _mx_gnur():
     return mx.suite('gnur')
 
-def _create_libinstall(s):
-    '''Create lib.install.cran/install.tmp/test for suite s
+def _gnur_rscript():
+    return _mx_gnur().extensions._gnur_rscript_path()
+
+def _graalvm_rscript():
+    assert graalvm is not None
+    return join(graalvm, 'bin', 'Rscript')
+
+def _graalvm():
+    global graalvm
+    if graalvm is None:
+        if os.environ.has_key('GRAALVM_FASTR'):
+            graalvm = os.environ['GRAALVM_FASTR']
+            # version check
+            gnur_version = _mx_gnur().extensions.r_version().split('-')[1]
+            graalvm_version = subprocess.check_output([_graalvm_rscript(), '--version'], stderr=subprocess.STDOUT).rstrip()
+            if not gnur_version in graalvm_version:
+                mx.abort('graalvm R version does not match gnur suite')
+    return graalvm
+
+def _create_libinstall(rvm, test_installed):
     '''
-    libinstall = join(s.dir, "lib.install.cran")
-    # make sure its empty
-    shutil.rmtree(libinstall, ignore_errors=True)
-    os.mkdir(libinstall)
-    install_tmp = join(s.dir, "install.tmp")
+    Create lib.install.cran.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
+    If use_installed_pkgs is True, assume lib.install exists and is populated (development)
+    '''
+    libinstall = join(_fastr_suite_dir(), "lib.install.cran." + rvm)
+    if not test_installed:
+        # make sure its empty
+        shutil.rmtree(libinstall, ignore_errors=True)
+        os.mkdir(libinstall)
+    install_tmp = join(_fastr_suite_dir(), "install.tmp." + rvm)
+#    install_tmp = join(_fastr_suite_dir(), "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
-    test = join(s.dir, "test")
-    shutil.rmtree(test, ignore_errors=True)
-    os.mkdir(test)
-    return libinstall, install_tmp
+    testdir = join(_fastr_suite_dir(), "test." + rvm)
+    shutil.rmtree(testdir, ignore_errors=True)
+    os.mkdir(testdir)
+    return libinstall, install_tmp, testdir
 
 def _log_step(state, step, rvariant):
     if not quiet:
@@ -63,12 +102,6 @@ def _installpkgs_script():
     cran_test = _cran_test_project_dir()
     return join(cran_test, 'r', 'install.cran.packages.R')
 
-def _is_graalvm():
-    return os.environ.has_key('GRAALVM_FASTR')
-
-def _graalvm():
-    return os.environ['GRAALVM_FASTR']
-
 def _installpkgs(args, **kwargs):
     '''
     Runs the R script that does package/installation and testing.
@@ -77,11 +110,10 @@ def _installpkgs(args, **kwargs):
     FastR, but instead have to invoke the command directly.
     '''
     script = _installpkgs_script()
-    if _is_graalvm():
-        rscript = join(_graalvm(), 'bin', 'Rscript')
-        return mx.run([rscript, script] + args, **kwargs)
-    else:
+    if _graalvm() is None:
         return mx_fastr.rscript([script] + args, **kwargs)
+    else:
+        return mx.run([_graalvm_rscript(), script] + args, **kwargs)
 
 
 def pkgtest(args):
@@ -90,12 +122,10 @@ def pkgtest(args):
     rc: 0 for success; 1: install fail, 2: test fail, 3: install&test fail
     '''
 
-    libinstall, install_tmp = _create_libinstall(mx.suite('fastr'))
+    test_installed = '--no-install' in args
+    fastr_libinstall, fastr_install_tmp, fastr_testdir = _create_libinstall('fastr', test_installed)
+    gnur_libinstall, gnur_install_tmp, gnur_testdir = _create_libinstall('gnur', test_installed)
 
-    if _is_graalvm():
-        stacktrace_args = ['-J:-DR:-PrintErrorStacktracesToFile', '-J:-DR:+PrintErrorStacktraces']
-    else:
-        stacktrace_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
     if "--quiet" in args:
         global quiet
         quiet = True
@@ -154,11 +184,15 @@ def pkgtest(args):
                     if time_match:
                         pkg_name = time_match.group(1)
                         test_time = time_match.group(2)
-                        with open(join('test', pkg_name, 'test_time'), 'w') as f:
+                        with open(join(_pkg_testdir('fastr', pkg_name), 'test_time'), 'w') as f:
                             f.write(test_time)
     env = os.environ.copy()
-    env["TMPDIR"] = install_tmp
-    env['R_LIBS_USER'] = libinstall
+    env["TMPDIR"] = fastr_install_tmp
+    env['R_LIBS'] = fastr_libinstall
+    if not env.has_key('FASTR_PROCESS_TIMEOUT'):
+        env['FASTR_PROCESS_TIMEOUT'] = '5'
+    env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
+    env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
 
     # TODO enable but via installing Suggests
     #_install_vignette_support('FastR', env)
@@ -167,12 +201,13 @@ def pkgtest(args):
     # install and test the packages, unless just listing versions
     if not '--list-versions' in install_args:
         install_args += ['--run-tests']
+        install_args += ['--testdir', 'test.fastr']
         if not '--print-install-status' in install_args:
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.cran.packages.R)
-    rc = _installpkgs(stacktrace_args + install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
         mx.abort(rc)
@@ -187,9 +222,9 @@ def pkgtest(args):
     install_failure = single_pkg and rc == 1
     if '--run-tests' in install_args and not install_failure:
         # in order to compare the test output with GnuR we have to install/test the same
-        # set of packages with GnuR, which must be present as a sibling suite
+        # set of packages with GnuR
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
-        _gnur_install_test(ok_pkgs)
+        _gnur_install_test(ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
@@ -197,7 +232,11 @@ def pkgtest(args):
                 rc = rc | 2
             print '{0}: {1}'.format(pkg, test_status.status)
 
-    shutil.rmtree(install_tmp, ignore_errors=True)
+        # tar up the test results
+        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, fastr_testdir + '.tar'), os.path.basename(fastr_testdir)])
+        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, gnur_testdir + '.tar'), os.path.basename(gnur_testdir)])
+
+    shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
 
 class TestFileStatus:
@@ -219,11 +258,11 @@ class TestStatus:
         self.status = "UNKNOWN"
         self.testfile_outputs = dict()
 
-def _pkg_testdir(suite, pkg_name):
-    return join(mx.suite(suite).dir, 'test', pkg_name)
+def _pkg_testdir(rvm, pkg_name):
+    return join(_fastr_suite_dir(), 'test.' + rvm, pkg_name)
 
-def _get_test_outputs(suite, pkg_name, test_info):
-    pkg_testdir = _pkg_testdir(suite, pkg_name)
+def _get_test_outputs(rvm, pkg_name, test_info):
+    pkg_testdir = _pkg_testdir(rvm, pkg_name)
     for root, _, files in os.walk(pkg_testdir):
         if not test_info.has_key(pkg_name):
             test_info[pkg_name] = TestStatus()
@@ -246,44 +285,42 @@ def _get_test_outputs(suite, pkg_name, test_info):
             relfile = relpath(absfile, pkg_testdir)
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
-def _install_vignette_support(rvariant, env):
+def _install_vignette_support(rvm, env):
     # knitr is needed for vignettes, but FastR  can't handle it yet
-    if rvariant == 'FastR':
+    if rvm == 'FastR':
         return
-    _log_step('BEGIN', 'install vignette support', rvariant)
-    args = ['--ignore-blacklist', '^rmarkdown$|^knitr$']
-    _gnur_installpkgs(args, env)
-    _log_step('END', 'install vignette support', rvariant)
+    _log_step('BEGIN', 'install vignette support', rvm)
+    args = [_installpkgs_script(), '--ignore-blacklist', '^rmarkdown$|^knitr$']
+    mx_fastr.gnu_rscript(args, env)
+    _log_step('END', 'install vignette support', rvm)
 
-def _gnur_installpkgs(args, env, **kwargs):
-    return mx.run(['Rscript', _installpkgs_script()] + args, env=env, **kwargs)
-
-def _gnur_install_test(pkgs):
-    gnur_packages = join(_mx_gnur().dir, 'gnur.packages')
+def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
+    gnur_packages = join(_fastr_suite_dir(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
             f.write(pkg)
             f.write('\n')
-    # clone the cran test project into gnur
-    gnur_cran_test_project_dir = join(_mx_gnur().dir, _cran_test_project())
-    if not exists(gnur_cran_test_project_dir):
-        shutil.copytree(_cran_test_project_dir(), gnur_cran_test_project_dir)
-    gnur_libinstall, gnur_install_tmp = _create_libinstall(_mx_gnur())
     env = os.environ.copy()
-    gnur = _mx_gnur().extensions
-    path = env['PATH']
-    env['PATH'] = dirname(gnur._gnur_rscript_path()) + os.pathsep + path
     env["TMPDIR"] = gnur_install_tmp
-    env['R_LIBS_USER'] = gnur_libinstall
+    env['R_LIBS'] = gnur_libinstall
 
     # TODO enable but via installing Suggests
     # _install_vignette_support('GnuR', env)
 
-    args = ['--pkg-filelist', gnur_packages]
+    args = []
+    if _graalvm():
+        args += [_gnur_rscript()]
+    args += [_installpkgs_script()]
+    args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
+    args += ['--run-mode', 'internal']
     args += ['--ignore-blacklist']
+    args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
-    _gnur_installpkgs(args, env=env, cwd=_mx_gnur().dir, nonZeroIsFatal=False)
+    if _graalvm():
+        mx.run(args, nonZeroIsFatal=False, env=env)
+    else:
+        mx_fastr.gnu_rscript(args, env=env)
     _log_step('END', 'install/test', 'GnuR')
 
 def _set_test_status(fastr_test_info):

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -35,6 +36,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
+    /**
+     * Temporary support for (test) processes that hang.
+     */
+    private static final String TIMEOUT = "FASTR_PROCESS_TIMEOUT";
 
     @Override
     public Object execute(VirtualFrame frame, String command, boolean intern) {
@@ -65,7 +70,20 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
                 readThread = new ProcessOutputManager.OutputThreadVariable("system", os);
                 readThread.start();
             }
-            rc = p.waitFor();
+            String timeoutVar = System.getenv(TIMEOUT);
+            if (timeoutVar != null) {
+                long timeout;
+                try {
+                    timeout = Integer.parseInt(timeoutVar);
+                } catch (NumberFormatException ex) {
+                    timeout = 5;
+                }
+                boolean exited = p.waitFor(timeout, TimeUnit.MINUTES);
+                rc = exited ? 0 : 127;
+            } else {
+                rc = p.waitFor();
+            }
+
             if (intern) {
                 // capture output in character vector
                 String output = new String(readThread.getData(), 0, readThread.getTotalRead());
