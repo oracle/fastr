@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -102,7 +101,7 @@ class SpecialsUtils {
             return cachedField == null || (cachedField == field && list.getNames() == cachedNames);
         }
 
-        protected static int getIndex(RAbstractStringVector names, String field) {
+        protected static int getIndex(RStringVector names, String field) {
             int fieldHash = field.hashCode();
             for (int i = 0; i < names.getLength(); i++) {
                 String current = names.getDataAt(i);
