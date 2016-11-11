@@ -124,6 +124,9 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         RAttributes attributes;
         if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
             // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
+            // Note2: the attrStorageProfile and cast is better at helping compiler to inline
+            // 'getAttributes' than just the ValueProfile in else branch, which degrades when it
+            // sees two different classes
             attributes = ((RAttributeStorage) arg).getAttributes();
         } else {
             arg = argProfile.profile(arg);
