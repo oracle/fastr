@@ -188,6 +188,10 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return missing;
     }
 
+    public static CastLogicalNode create() {
+        return CastLogicalNodeGen.create(true, true, true);
+    }
+
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
     }

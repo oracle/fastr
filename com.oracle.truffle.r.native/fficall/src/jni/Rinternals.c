@@ -125,6 +125,8 @@ static jmethodID externalPtrSetProtMethodID;
 static jmethodID R_computeIdenticalMethodID;
 static jmethodID Rf_copyListMatrixMethodID;
 static jmethodID Rf_copyMatrixMethodID;
+static jmethodID Rf_nrowsMethodID;
+static jmethodID Rf_ncolsMethodID;
 
 static jclass CharSXPWrapperClass;
 static jfieldID CharSXPWrapperContentsFieldID;
@@ -227,6 +229,8 @@ void init_internals(JNIEnv *env) {
     R_computeIdenticalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 1);
     Rf_copyListMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
     Rf_copyMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
+    Rf_nrowsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_nrows", "(Ljava/lang/Object;)I", 1);
+    Rf_ncolsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ncols", "(Ljava/lang/Object;)I", 1);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
@@ -531,13 +535,15 @@ SEXP Rf_mkString(const char *s) {
 }
 
 int Rf_ncols(SEXP x) {
-	unimplemented("Rf_ncols");
-	return 0;
+	TRACE(TARGs, x);
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ncolsMethodID, x);
 }
 
 int Rf_nrows(SEXP x) {
-	unimplemented("Rf_nrows");
-	return 0;
+	TRACE(TARGs, x);
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_nrowsMethodID, x);
 }
 
 

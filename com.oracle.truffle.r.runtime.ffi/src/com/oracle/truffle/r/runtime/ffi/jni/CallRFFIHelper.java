@@ -536,6 +536,43 @@ public class CallRFFIHelper {
         }
     }
 
+    public static int Rf_nrows(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("Rf_nrows", x);
+        }
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                return xa.getDimensions()[0];
+            } else {
+                return xa.getLength();
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
+    public static int Rf_ncols(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("Rf_ncols", x);
+        }
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                int[] dims = xa.getDimensions();
+                if (dims.length >= 2) {
+                    return dims[1];
+                } else {
+                    return 1;
+                }
+            } else {
+                return 1;
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
     public static int LENGTH(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("LENGTH", x);

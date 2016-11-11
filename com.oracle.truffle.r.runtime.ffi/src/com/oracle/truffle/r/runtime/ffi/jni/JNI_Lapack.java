@@ -92,6 +92,11 @@ public class JNI_Lapack implements LapackRFFI {
         return native_dgecon(norm, n, a, lda, anorm, rcond, work, iwork);
     }
 
+    @Override
+    public int dsyevr(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m,
+                    double[] w, double[] z, int ldz, int[] isuppz, double[] work, int lwork, int[] iwork, int liwork) {
+        return native_dsyevr(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
+    }
     // Checkstyle: stop method name
 
     private static native void native_ilaver(int[] version);
@@ -115,5 +120,8 @@ public class JNI_Lapack implements LapackRFFI {
     private static native double native_dlange(char norm, int m, int n, double[] a, int lda, double[] work);
 
     private static native int native_dgecon(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork);
+
+    private static native int native_dsyevr(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m,
+                    double[] w, double[] z, int ldz, int[] isuppz, double[] work, int lwork, int[] iwork, int liwork);
 
 }

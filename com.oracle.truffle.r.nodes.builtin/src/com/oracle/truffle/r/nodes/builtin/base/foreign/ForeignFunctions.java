@@ -372,6 +372,10 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "Approx":
+                    return StatsFunctionsFactory.ApproxNodeGen.create();
+                case "ApproxTest":
+                    return StatsFunctionsFactory.ApproxTestNodeGen.create();
                 case "cutree":
                 case "isoreg":
                 case "monoFC_m":
@@ -426,8 +430,6 @@ public class ForeignFunctions {
                 case "pKolmogorov2x":
                 case "pKS2":
                 case "ksmooth":
-                case "Approx":
-                case "ApproxTest":
                 case "LogLin":
                 case "pAnsari":
                 case "qAnsari":

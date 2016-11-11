@@ -202,3 +202,29 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgecon(JNIEnv *env
     return info;
 }
 
+extern int dsyevr_(char *jobz, char *range, char *uplo, int *n, double* a, int *lda, double *vl, double *vu, int *il, int *iu, double *abstol, int* m, double* w,
+                double* z, int *ldz, int* isuppz, double* work, int *lwork, int* iwork, int *liwork, int* info);
+
+JNIEXPORT jint JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dsyevr(JNIEnv *env, jclass klass,
+		char jobz, char range, char uplo, int n, jdoubleArray ja, int lda, double vl, double vu, int il, int iu, double abstol, jintArray jm, jdoubleArray jw,
+		                    jdoubleArray jz, int ldz, jintArray jisuppz, jdoubleArray jwork, int lwork, jintArray jiwork, int liwork) {
+    double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
+    int *m = (*env)->GetPrimitiveArrayCritical(env, jm, NULL);
+    double *w = (*env)->GetPrimitiveArrayCritical(env, jw, NULL);
+    double *z = jz == NULL ? NULL : (*env)->GetPrimitiveArrayCritical(env, jz, NULL);
+    int *isuppz = (*env)->GetPrimitiveArrayCritical(env, jisuppz, NULL);
+    double *work = (*env)->GetPrimitiveArrayCritical(env, jwork, NULL);
+    int *iwork = (*env)->GetPrimitiveArrayCritical(env, jiwork, NULL);
+    int info;
+    dsyevr_(&jobz, &range, &uplo, &n, a, &lda, &vl, &vu, &il, &iu, &abstol, m, w,
+            z, &ldz, isuppz, work, &lwork, iwork, &liwork, &info);
+    (*env)->ReleasePrimitiveArrayCritical(env, ja, a, 0);
+    (*env)->ReleasePrimitiveArrayCritical(env, jm, m, 0);
+    (*env)->ReleasePrimitiveArrayCritical(env, jw, w, 0);
+    if (jz != NULL) (*env)->ReleasePrimitiveArrayCritical(env, jz, z, 0);
+    (*env)->ReleasePrimitiveArrayCritical(env, jisuppz, isuppz, 0);
+    (*env)->ReleasePrimitiveArrayCritical(env, jwork, work, 0);
+    (*env)->ReleasePrimitiveArrayCritical(env, jiwork, iwork, 0);
+    return info;
+}

@@ -30,8 +30,7 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa3a() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-21.2222451396881, 306.936914624821, 0, 0, 0, -101.353437863947, -21.2222451396881, 0, 0, 0, 45.8768670002026, 63.2672432400162, -11.7486843755171, 0, 0, 65.1621918666428, 125.787781278037, -111.869521123473, 61.0965873274467, -54.389932439947, -26.0785375270079, -209.347244886481, 112.817924425406, 108.385517228532, 61.0965873274467), .Dim = c(5L, 5L), .Dimnames = list(NULL, NULL)), FALSE); .Internal(La_rg(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(-21.2222451396881, 306.936914624821, 0, 0, 0, -101.353437863947, -21.2222451396881, 0, 0, 0, 45.8768670002026, 63.2672432400162, -11.7486843755171, 0, 0, 65.1621918666428, 125.787781278037, -111.869521123473, 61.0965873274467, -54.389932439947, -26.0785375270079, -209.347244886481, 112.817924425406, 108.385517228532, 61.0965873274467), .Dim = c(5L, 5L), .Dimnames = list(NULL, NULL)), FALSE); .Internal(La_rg(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -47,8 +46,7 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.842723988615538, 1, 0, 1, 0.636010690700881, 1, 0, 1, 0.842723988615537), .Dim = c(3L, 3L)), FALSE); .Internal(La_rs(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(0.842723988615538, 1, 0, 1, 0.636010690700881, 1, 0, 1, 0.842723988615537), .Dim = c(3L, 3L)), FALSE); .Internal(La_rs(argv[[1]], argv[[2]]))");
     }
 
     @Test

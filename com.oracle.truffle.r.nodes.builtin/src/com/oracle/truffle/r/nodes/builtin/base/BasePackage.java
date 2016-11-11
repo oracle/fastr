@@ -470,6 +470,7 @@ public class BasePackage extends RBuiltinPackage {
         add(LaFunctions.Qr.class, LaFunctionsFactory.QrNodeGen::create);
         add(LaFunctions.QrCoefReal.class, LaFunctionsFactory.QrCoefRealNodeGen::create);
         add(LaFunctions.Rg.class, LaFunctionsFactory.RgNodeGen::create);
+        add(LaFunctions.Rs.class, LaFunctionsFactory.RsNodeGen::create);
         add(LaFunctions.Version.class, LaFunctionsFactory.VersionNodeGen::create);
         add(LaFunctions.LaSolve.class, LaFunctionsFactory.LaSolveNodeGen::create);
         add(Lapply.class, LapplyNodeGen::create);
