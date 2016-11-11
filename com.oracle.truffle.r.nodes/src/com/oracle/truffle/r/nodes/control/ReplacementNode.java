@@ -137,11 +137,11 @@ abstract class ReplacementNode extends OperatorNode {
             if (i < calls.size() - 1) {
                 instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
             } else {
-                instructions.add(WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), update, WriteVariableNode.Mode.REGULAR));
+                instructions.add(WriteVariableNode.createAnonymous(targetVarName, update, WriteVariableNode.Mode.REGULAR, isSuper));
             }
         }
 
-        return new GenericReplacementNode(instructions, source, operator, target, lhs, rhs, targetVarName, isSuper, tempNamesStartIndex);
+        return new GenericReplacementNode(instructions, source, operator, target, lhs, rhs, tempNamesStartIndex);
     }
 
     /**
@@ -277,15 +277,13 @@ abstract class ReplacementNode extends OperatorNode {
         @Children private final RNode[] updates;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-        GenericReplacementNode(List<RNode> updates, SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, String targetVarName, boolean isSuper,
-                        int tempNamesStartIndex) {
+        GenericReplacementNode(List<RNode> updates, SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, int tempNamesStartIndex) {
             super(source, operator, lhs);
             this.target = target;
             this.rhs = rhs;
             this.updates = updates.toArray(new RNode[updates.size()]);
             this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), null, WriteVariableNode.Mode.INVISIBLE);
             this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
-            this.targetWrite = WriteVariableNode.createAnonymous(targetVarName, null, WriteVariableNode.Mode.INVISIBLE, isSuper);
 
             this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, null, WriteVariableNode.Mode.INVISIBLE);
             this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
@@ -301,7 +299,7 @@ abstract class ReplacementNode extends OperatorNode {
                 update.execute(frame);
             }
 
-            targetWrite.execute(frame, targetTmpRemove.execute(frame));
+            targetTmpRemove.execute(frame);
             removeRhs.execute(frame);
             visibility.execute(frame, false);
             return rhsValue;
