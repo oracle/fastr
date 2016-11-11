@@ -237,21 +237,21 @@ abstract class ReplacementNode extends OperatorNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            Object rhsValue = rhs.execute(frame);
+            storeRhs.execute(frame, rhsValue);
             try {
-                Object rhsValue = rhs.execute(frame);
-                storeRhs.execute(frame, rhsValue);
                 // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
                 // argument is shared, it bails out. Moreover, if that call's argument is not
                 // shared, it could not be extracted from a shared container (list), so we should be
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
-                removeRhs.execute(frame);
-                visibility.execute(frame, false);
-                return rhsValue;
             } catch (FullCallNeededException | RecursiveSpecialBailout e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(createGenericReplacement(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).execute(frame);
+                return replace(createGenericReplacement(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).execute(frame, rhsValue);
             }
+            removeRhs.execute(frame);
+            visibility.execute(frame, false);
+            return rhsValue;
         }
 
         @Override
@@ -292,7 +292,11 @@ abstract class ReplacementNode extends OperatorNode {
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
-            Object rhsValue = rhs.execute(frame);
+            return execute(frame, rhs.execute(frame));
+        }
+
+        @ExplodeLoop
+        public Object execute(VirtualFrame frame, Object rhsValue) {
             storeRhs.execute(frame, rhsValue);
             targetTmpWrite.execute(frame, target.execute(frame));
             for (RNode update : updates) {
