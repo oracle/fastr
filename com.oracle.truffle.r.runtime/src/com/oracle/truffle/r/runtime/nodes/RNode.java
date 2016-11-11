@@ -65,6 +65,15 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     public abstract Object execute(VirtualFrame frame);
 
+    /**
+     * This function can be called when the result is not needed, and normally just dispatches to
+     * {@link #execute(VirtualFrame)}. Its name does not start with "execute" so that the DSL does
+     * not treat it like an execute function.
+     */
+    public void voidExecute(VirtualFrame frame) {
+        execute(frame);
+    }
+
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
         Object value = execute(frame);
         assert value != null;

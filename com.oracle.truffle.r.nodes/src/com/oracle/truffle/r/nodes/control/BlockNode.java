@@ -56,11 +56,21 @@ public final class BlockNode extends OperatorNode {
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
         visibility.execute(frame, true);
-        Object lastResult = RNull.instance;
-        for (int i = 0; i < sequence.length; i++) {
-            lastResult = sequence[i].execute(frame);
+        if (sequence.length == 0) {
+            return RNull.instance;
         }
-        return lastResult;
+        for (int i = 0; i < sequence.length - 1; i++) {
+            sequence[i].voidExecute(frame);
+        }
+        return sequence[sequence.length - 1].execute(frame);
+    }
+
+    @Override
+    @ExplodeLoop
+    public void voidExecute(VirtualFrame frame) {
+        for (int i = 0; i < sequence.length; i++) {
+            sequence[i].voidExecute(frame);
+        }
     }
 
     @Override

@@ -72,7 +72,7 @@ abstract class ReplacementNode extends OperatorNode {
         if (createSpecial) {
             return new SpecialReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
         } else {
-            return createGenericReplacement(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            return new GenericReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
         }
     }
 
@@ -103,45 +103,6 @@ abstract class ReplacementNode extends OperatorNode {
         }
 
         return RCallSpecialNode.createCallInReplace(fun.getLazySourceSection(), builder.process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
-    }
-
-    /**
-     * When there are more than two function calls in LHS, then we save some function calls by
-     * saving the intermediate results into temporary variables and reusing them.
-     */
-    private static GenericReplacementNode createGenericReplacement(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls,
-                    String targetVarName, boolean isSuper, int tempNamesStartIndex) {
-        List<RNode> instructions = new ArrayList<>();
-        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
-
-        /*
-         * Create the calls that extract inner components - only needed for complex replacements
-         * like "a(b(x)) <- z" (where we would extract "b(x)"). The extracted values are saved into
-         * temporary variables *tmp*{index} indexed from tempNamesIndex to (tempNamesIndex +
-         * calls.size()-1), the first such temporary variable holds the "target" of the replacement,
-         * 'x' in our example (the assignment from 'x' is not done in this loop).
-         */
-        for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
-            ReadVariableNode newFirstArg = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
-            RNode update = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
-            instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
-        }
-        /*
-         * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
-         * intermediate results are stored to temporary variables *tmpr*{index}.
-         */
-        for (int i = 0; i < calls.size(); i++) {
-            int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
-            String tmprName = i == 0 ? ("*rhs*" + tempNamesStartIndex) : ("*tmpr*" + (tempNamesStartIndex + i - 1));
-            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
-            if (i < calls.size() - 1) {
-                instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
-            } else {
-                instructions.add(WriteVariableNode.createAnonymous(targetVarName, update, WriteVariableNode.Mode.REGULAR, isSuper));
-            }
-        }
-
-        return new GenericReplacementNode(instructions, source, operator, target, lhs, rhs, tempNamesStartIndex);
     }
 
     /**
@@ -194,17 +155,59 @@ abstract class ReplacementNode extends OperatorNode {
         return null;
     }
 
+    private abstract static class ReplacementWithRhsNode extends ReplacementNode {
+
+        @Child private WriteVariableNode storeRhs;
+        @Child private RemoveAndAnswerNode removeRhs;
+        @Child private SetVisibilityNode visibility;
+
+        protected final RNode rhs;
+
+        ReplacementWithRhsNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs, RNode rhs, int tempNamesStartIndex) {
+            super(source, operator, lhs);
+            this.rhs = rhs;
+
+            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, rhs, WriteVariableNode.Mode.INVISIBLE);
+            this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
+        }
+
+        @Override
+        public final Object execute(VirtualFrame frame) {
+            storeRhs.execute(frame);
+            executeReplacement(frame);
+            try {
+                return removeRhs.execute(frame);
+            } finally {
+                if (visibility == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    visibility = insert(SetVisibilityNode.create());
+                }
+                visibility.execute(frame, false);
+            }
+        }
+
+        @Override
+        public final void voidExecute(VirtualFrame frame) {
+            storeRhs.execute(frame);
+            executeReplacement(frame);
+            removeRhs.execute(frame);
+        }
+
+        protected abstract void executeReplacement(VirtualFrame frame);
+
+        @Override
+        public final RSyntaxElement[] getSyntaxArguments() {
+            return new RSyntaxElement[]{lhs, rhs.asRSyntaxNode()};
+        }
+    }
+
     /**
      * Replacement that is made of only special calls, if one of the special calls falls back to
      * full version, the replacement also falls back to {@link ReplacementNode}.
      */
-    private static final class SpecialReplacementNode extends ReplacementNode {
+    private static final class SpecialReplacementNode extends ReplacementWithRhsNode {
 
-        @Child private RNode rhs;
-        @Child private WriteVariableNode storeRhs;
-        @Child private RemoveAndAnswerNode removeRhs;
         @Child private RCallSpecialNode replaceCall;
-        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final List<RSyntaxCall> calls;
         private final int tempNamesStartIndex;
@@ -214,8 +217,16 @@ abstract class ReplacementNode extends OperatorNode {
 
         SpecialReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName,
                         boolean isSuper, int tempNamesStartIndex) {
-            super(source, operator, lhs);
+            super(source, operator, lhs, rhs, tempNamesStartIndex);
             this.target = target;
+            this.calls = calls;
+            this.targetVarName = targetVarName;
+            this.isSuper = isSuper;
+            this.tempNamesStartIndex = tempNamesStartIndex;
+
+            /*
+             * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
+             */
             CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
             RNode extractFunc = target;
             for (int i = calls.size() - 1; i >= 1; i--) {
@@ -224,21 +235,10 @@ abstract class ReplacementNode extends OperatorNode {
             }
             this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
             this.replaceCall.setPropagateFullCallNeededException(true);
-
-            this.rhs = rhs;
-            this.calls = calls;
-            this.targetVarName = targetVarName;
-            this.isSuper = isSuper;
-            this.tempNamesStartIndex = tempNamesStartIndex;
-
-            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, null, WriteVariableNode.Mode.INVISIBLE);
-            this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            Object rhsValue = rhs.execute(frame);
-            storeRhs.execute(frame, rhsValue);
+        protected void executeReplacement(VirtualFrame frame) {
             try {
                 // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
                 // argument is shared, it bails out. Moreover, if that call's argument is not
@@ -247,71 +247,70 @@ abstract class ReplacementNode extends OperatorNode {
                 replaceCall.execute(frame);
             } catch (FullCallNeededException | RecursiveSpecialBailout e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(createGenericReplacement(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).execute(frame, rhsValue);
+                replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).executeReplacement(frame);
             }
-            removeRhs.execute(frame);
-            visibility.execute(frame, false);
-            return rhsValue;
-        }
-
-        @Override
-        public RSyntaxElement[] getSyntaxArguments() {
-            return new RSyntaxElement[]{lhs, rhs.asRSyntaxNode()};
         }
     }
 
     /**
      * Holds the sequence of nodes created for R's replacement assignment.
      */
-    private static final class GenericReplacementNode extends ReplacementNode {
-
-        @Child private RNode target;
-        @Child private RNode rhs;
+    private static final class GenericReplacementNode extends ReplacementWithRhsNode {
 
         @Child private WriteVariableNode targetTmpWrite;
         @Child private RemoveAndAnswerNode targetTmpRemove;
-        @Child private WriteVariableNode targetWrite;
 
-        @Child private WriteVariableNode storeRhs;
-        @Child private RemoveAndAnswerNode removeRhs;
         @Children private final RNode[] updates;
-        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-        GenericReplacementNode(List<RNode> updates, SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, int tempNamesStartIndex) {
-            super(source, operator, lhs);
-            this.target = target;
-            this.rhs = rhs;
-            this.updates = updates.toArray(new RNode[updates.size()]);
-            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), null, WriteVariableNode.Mode.INVISIBLE);
+        GenericReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName, boolean isSuper,
+                        int tempNamesStartIndex) {
+            super(source, operator, lhs, rhs, tempNamesStartIndex);
+            /*
+             * When there are more than two function calls in LHS, then we save some function calls
+             * by saving the intermediate results into temporary variables and reusing them.
+             */
+            List<RNode> instructions = new ArrayList<>();
+            CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
+            /*
+             * Create the calls that extract inner components - only needed for complex replacements
+             * like "a(b(x)) <- z" (where we would extract "b(x)"). The extracted values are saved
+             * into temporary variables *tmp*{index} indexed from tempNamesIndex to (tempNamesIndex
+             * + calls.size()-1), the first such temporary variable holds the "target" of the
+             * replacement, 'x' in our example (the assignment from 'x' is not done in this loop).
+             */
+            for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
+                ReadVariableNode newFirstArg = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
+                RNode update = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
+                instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
+            }
+            /*
+             * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
+             * intermediate results are stored to temporary variables *tmpr*{index}.
+             */
+            for (int i = 0; i < calls.size(); i++) {
+                int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
+                String tmprName = i == 0 ? ("*rhs*" + tempNamesStartIndex) : ("*tmpr*" + (tempNamesStartIndex + i - 1));
+                RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
+                if (i < calls.size() - 1) {
+                    instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
+                } else {
+                    instructions.add(WriteVariableNode.createAnonymous(targetVarName, update, WriteVariableNode.Mode.REGULAR, isSuper));
+                }
+            }
+
+            this.updates = instructions.toArray(new RNode[instructions.size()]);
+            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), target, WriteVariableNode.Mode.INVISIBLE);
             this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
-
-            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, null, WriteVariableNode.Mode.INVISIBLE);
-            this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
         }
 
         @Override
         @ExplodeLoop
-        public Object execute(VirtualFrame frame) {
-            return execute(frame, rhs.execute(frame));
-        }
-
-        @ExplodeLoop
-        public Object execute(VirtualFrame frame, Object rhsValue) {
-            storeRhs.execute(frame, rhsValue);
-            targetTmpWrite.execute(frame, target.execute(frame));
+        protected void executeReplacement(VirtualFrame frame) {
+            targetTmpWrite.execute(frame);
             for (RNode update : updates) {
                 update.execute(frame);
             }
-
             targetTmpRemove.execute(frame);
-            removeRhs.execute(frame);
-            visibility.execute(frame, false);
-            return rhsValue;
-        }
-
-        @Override
-        public RSyntaxElement[] getSyntaxArguments() {
-            return new RSyntaxElement[]{lhs, rhs.asRSyntaxNode()};
         }
     }
 
