@@ -80,6 +80,14 @@
 
 # All fatal errors terminate with a return code of 100
 
+# N.B. There are two unresolved problems testing some packages:
+# 1. Some test files refer to packages that do not exist in the "Depends" list. Instead they
+#    exists in the "Suggests" list. Unfortunately only a subset of the "Suggests" list is required and
+#    there is no way to tell which. Since many of the "Suggests" packages fail to install on FastR,
+#    routinely including them this can cause the entire installation to fail.
+# 2. Testing vignettes requires the "knitr" and possibly the "rmarkdown" packages, which also have
+#    a long list of dependents, some of which do not install on FastR.
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
