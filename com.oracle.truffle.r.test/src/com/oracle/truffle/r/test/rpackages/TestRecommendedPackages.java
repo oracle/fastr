@@ -39,11 +39,15 @@ import com.oracle.truffle.r.test.TestBase;
  * N.B. The package 'tgz' files have been copied to the com.oracle.truffle.r.test project output
  * directory by the com.oracle.truffle.r.test.native Makefile. to allow them to be packaged into a
  * distribution and avoid any dependency on source paths.
+ *
+ * FIXME {@codetools} is installed last because when it is installed, some of the other packages use
+ * it and it currently provokes a bug.
  */
 public class TestRecommendedPackages extends TestRPackages {
     // order matters due to dependencies
-    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "Matrix", "survival", "KernSmooth", "foreign", "nlme",
-                    "rpart"};
+    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster",
+                    "lattice", "nnet", "spatial", "Matrix", "survival", "KernSmooth", "foreign", "nlme",
+                    "rpart", "codetools"};
     private static String[] packages = DEFAULT_PACKAGES;
 
     /**

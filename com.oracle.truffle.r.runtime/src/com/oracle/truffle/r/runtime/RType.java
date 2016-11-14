@@ -143,6 +143,7 @@ public enum RType {
                 return Builtin;
             case "special":
                 return Special;
+            case "name":
             case "symbol":
                 return Symbol;
             case "environment":

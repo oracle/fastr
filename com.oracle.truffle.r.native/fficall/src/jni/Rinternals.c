@@ -54,6 +54,7 @@ static jmethodID Rf_warningcallMethodID;
 static jmethodID Rf_warningMethodID;
 static jmethodID Rf_errorMethodID;
 static jmethodID Rf_NewHashedEnvMethodID;
+static jmethodID Rf_classgetsMethodID;
 static jmethodID Rf_rPsortMethodID;
 static jmethodID Rf_iPsortMethodID;
 static jmethodID RprintfMethodID;
@@ -156,6 +157,7 @@ void init_internals(JNIEnv *env) {
 	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
+	Rf_classgetsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
 	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 1);
 	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -681,9 +683,10 @@ SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 	return checkRef(thisenv, result);
 }
 
-SEXP Rf_classgets(SEXP x, SEXP y) {
-	unimplemented("Rf_classgets");
-	return NULL;
+SEXP Rf_classgets(SEXP vec, SEXP klass) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, Rf_classgetsMethodID, vec, klass);
+	return checkRef(thisenv, result);
 }
 
 const char *Rf_translateChar(SEXP x) {

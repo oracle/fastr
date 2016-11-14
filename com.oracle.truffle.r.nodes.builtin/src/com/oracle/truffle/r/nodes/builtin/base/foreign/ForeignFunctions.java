@@ -28,6 +28,7 @@ import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
+import com.oracle.truffle.r.library.grid.GridFunctionsFactory.ValidUnitsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
@@ -513,6 +514,8 @@ public class ForeignFunctions {
                 // grid
                 case "L_initGrid":
                     return InitGridNodeGen.create();
+                case "L_validUnits":
+                    return ValidUnitsNodeGen.create();
 
                 // parallel
                 case "mc_is_child":

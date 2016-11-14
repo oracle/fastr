@@ -34,7 +34,7 @@ NATIVE_PROJECT := $(subst native.recommended,native,$(CURDIR))
 R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
 GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
 # order matters due to inter-package dependencies
-GNUR_RECOMMENDED_PKGNAMES := MASS boot class cluster codetools lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
+GNUR_RECOMMENDED_PKGNAMES := MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart codetools
 GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME)/src/library/Recommended/$(pkg).tgz)
 #$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 

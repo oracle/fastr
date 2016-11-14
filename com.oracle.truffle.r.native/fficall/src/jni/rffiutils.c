@@ -384,7 +384,7 @@ SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
 
 SEXP checkRef(JNIEnv *env, SEXP obj) {
 	SEXP gref = findCachedGlobalRef(env, obj);
-	TRACE(TARGpp, obj, global);
+	TRACE(TARGpp, obj, gref);
 	if (gref == NULL) {
 		return obj;
 	} else {

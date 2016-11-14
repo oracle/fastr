@@ -60,9 +60,9 @@ suite = {
   # explicitly referenced in the Parser annotation processor.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.3.1.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.1.tar.gz"],
-        "sha1" : "df853188d3e2b1c2d32393016401c432a5192c4d",
+        "path" : "libdownloads/R-3.3.2.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.2.tar.gz"],
+        "sha1" : "0e39e9c2d28fe6bab9c55ca23e08ba8727fd2fca",
         "resource" : "true"
     },
 
@@ -344,8 +344,8 @@ suite = {
            },
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-unit-tests-native.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
            }
         },
       },
@@ -370,8 +370,8 @@ suite = {
           },
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-native-dev.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
           },
         },
       },
@@ -392,8 +392,8 @@ suite = {
            }
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-release.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
            }
         },
       },
