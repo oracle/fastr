@@ -35,7 +35,7 @@
 # If unset, defaults to "http://cran.cnr.berkeley.edu/"
 # However, a local copy of the CRAN repo can be used either by setting the LOCAL_CRAN_REPO env variable or setting --contrib-url
 
-# Packages are installed into the directory specified by the --lib arg (or R_LIBS env var)
+# Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
 
 # Blacklisted packages nor their dependents will not be installed. By default the list of blacklisted
 # packages will be read from the file in the --blacklist-file arg or the PACKAGE_BLACKLIST env var.
@@ -46,10 +46,12 @@
 # Package: name
 # Reason: reason
 
-# The env var R_LIBS or the option --lib must be set to the directory where the install should take place.
+# The env var R_LIBS_USER or the option --lib must be set to the directory where the install should take place.
 # N.B. --lib works for installation. However, when running tests ( --run-tests), it does not and
-# R_LIBS must be set instead (as well) since some of the test code has explicit "library(foo)" calls
-# without a "lib.loc" argument.
+# R_LIBS_USER must be set instead (as well) since some of the test code has explicit "library(foo)" calls
+# without a "lib.loc" argument. N.B. For reasons I do not understand tools::testInstalledPackage
+# explicitly sets R_LIBS to the empty string before testing the main test file (but paradoxically not when
+# testing the "examples"), which is why we use R_LIBS_USER.
 
 # A single package install can be handled in three ways, based on the run-mode argument (default system):
 #   system: use a subprocess via the system2 command
@@ -808,9 +810,9 @@ cat.args <- function() {
 }
 
 check.libs <- function() {
-    lib.install <<- Sys.getenv("R_LIBS", unset=NA)
+    lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
 	if (is.na(lib.install)) {
-		abort("R_LIBS must be set")
+		abort("R_LIBS_USER must be set")
 	}
 	if (!file.exists(lib.install) || is.na(file.info(lib.install)$isdir)) {
 		abort(paste(lib.install, "does not exist or is not a directory"))

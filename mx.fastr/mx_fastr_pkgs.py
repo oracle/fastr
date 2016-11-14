@@ -188,7 +188,7 @@ def pkgtest(args):
                             f.write(test_time)
     env = os.environ.copy()
     env["TMPDIR"] = fastr_install_tmp
-    env['R_LIBS'] = fastr_libinstall
+    env['R_LIBS_USER'] = fastr_libinstall
     if not env.has_key('FASTR_PROCESS_TIMEOUT'):
         env['FASTR_PROCESS_TIMEOUT'] = '5'
     env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
@@ -233,15 +233,18 @@ def pkgtest(args):
             print '{0}: {1}'.format(pkg, test_status.status)
 
         # tar up the test results
-        fastr_tar = join(_fastr_suite_dir, fastr_testdir + '.tar')
-        subprocess.call(['tar', 'cf', fastr_tar, os.path.basename(fastr_testdir)])
-        subprocess.call(['gzip', fastr_tar])
-        gnur_tar = join(_fastr_suite_dir, gnur_testdir + '.tar')
-        subprocess.call(['tar', 'cf', gnur_tar, os.path.basename(gnur_testdir)])
-        subprocess.call(['gzip', gnur_tar])
+        tar_tests(fastr_testdir)
+        tar_tests(gnur_testdir)
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
+
+def tar_tests(testdir):
+        test_tar = join(_fastr_suite_dir, testdir + '.tar')
+        subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
+        if os.path.exists(test_tar + '.gz'):
+            os.remove(test_tar + '.gz')
+        subprocess.call(['gzip', test_tar])
 
 class TestFileStatus:
     '''
@@ -306,7 +309,7 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
             f.write('\n')
     env = os.environ.copy()
     env["TMPDIR"] = gnur_install_tmp
-    env['R_LIBS'] = gnur_libinstall
+    env['R_LIBS_USER'] = gnur_libinstall
 
     # TODO enable but via installing Suggests
     # _install_vignette_support('GnuR', env)
@@ -317,7 +320,8 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     args += [_installpkgs_script()]
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
-    args += ['--run-mode', 'internal']
+# GNU R will abort the entire run otherwise if a failure occurs
+#    args += ['--run-mode', 'internal']
     args += ['--ignore-blacklist']
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
