@@ -88,6 +88,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
 
+    private final ValueProfile vectorTypeProfile = ValueProfile.createClassProfile();
+
     private final RType valueType;
     private final RType castType;
     private final boolean updatePositionNames;
@@ -262,6 +264,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         // resizing/materializing 'vector', it will be marked as 'temporary' and its refCount
         // incremented during the assignment step.
 
+        vector = vectorTypeProfile.profile(vector);
         vectorLength = targetLengthProfile.profile(vector.getLength());
 
         if (mode.isSubset()) {

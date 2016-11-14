@@ -59,6 +59,7 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
 
     @Override
     protected boolean simpleVector(RAbstractVector vector) {
+        vector = vectorClassProfile.profile(vector);
         return super.simpleVector(vector) && vector.getNames(attrProfiles) == null;
     }
 

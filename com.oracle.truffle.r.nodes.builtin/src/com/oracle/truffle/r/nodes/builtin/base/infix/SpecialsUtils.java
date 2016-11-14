@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -49,7 +50,10 @@ class SpecialsUtils {
      */
     abstract static class SubscriptSpecialCommon extends RNode {
 
-        protected static boolean isValidIndex(RAbstractVector vector, int index) {
+        protected final ValueProfile vectorClassProfile = ValueProfile.createClassProfile();
+
+        protected boolean isValidIndex(RAbstractVector vector, int index) {
+            vector = vectorClassProfile.profile(vector);
             return index >= 1 && index <= vector.getLength();
         }
 

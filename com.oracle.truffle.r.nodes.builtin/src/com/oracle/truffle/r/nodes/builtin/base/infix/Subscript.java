@@ -71,33 +71,33 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected static int access(RAbstractIntVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    protected int access(RAbstractIntVector vector, int index) {
+        return vectorClassProfile.profile(vector).getDataAt(index - 1);
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected static double access(RAbstractDoubleVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    protected double access(RAbstractDoubleVector vector, int index) {
+        return vectorClassProfile.profile(vector).getDataAt(index - 1);
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected static String access(RAbstractStringVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    protected String access(RAbstractStringVector vector, int index) {
+        return vectorClassProfile.profile(vector).getDataAt(index - 1);
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
     protected int access(RAbstractIntVector vector, double index) {
-        return vector.getDataAt(toIndex(index) - 1);
+        return vectorClassProfile.profile(vector).getDataAt(toIndex(index) - 1);
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
     protected double access(RAbstractDoubleVector vector, double index) {
-        return vector.getDataAt(toIndex(index) - 1);
+        return vectorClassProfile.profile(vector).getDataAt(toIndex(index) - 1);
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
     protected String access(RAbstractStringVector vector, double index) {
-        return vector.getDataAt(toIndex(index) - 1);
+        return vectorClassProfile.profile(vector).getDataAt(toIndex(index) - 1);
     }
 
     @SuppressWarnings("unused")
