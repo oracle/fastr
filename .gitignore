@@ -88,8 +88,8 @@ output.cfg
 **/nbproject/**
 **/build.xml
 /scratch/
-/test/
-/test_gnur/
+/test.fastr/
+/test.gnur/
 scratch/
 bin/
 share/

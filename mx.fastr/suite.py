@@ -344,8 +344,8 @@ suite = {
            },
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-unit-tests-native.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
            }
         },
       },
@@ -370,8 +370,8 @@ suite = {
           },
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-native-dev.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
           },
         },
       },
@@ -392,8 +392,8 @@ suite = {
            }
         },
          "solaris" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/solaris/amd64/fastr-release.jar",
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
            }
         },
       },

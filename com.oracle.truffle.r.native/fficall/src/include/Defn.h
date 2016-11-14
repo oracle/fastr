@@ -61,7 +61,7 @@ extern Rboolean mbcslocale;
 extern Rboolean latin1locale;
 
 #define INI_as(v)
-extern char OutDec	INI_as('.');
+extern char* OutDec	INI_as(".");
 extern Rboolean known_to_be_latin1 INI_as(FALSE);
 extern Rboolean known_to_be_utf8 INI_as(FALSE);
 

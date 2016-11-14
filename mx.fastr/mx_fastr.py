@@ -515,12 +515,13 @@ def gnu_r(args):
     cmd = [join(_gnur_path(), 'R')] + args
     return mx.run(cmd, nonZeroIsFatal=False)
 
-def gnu_rscript(args):
+def gnu_rscript(args, env=None):
     '''
-    run the internally built GNU Rscript executable'
+    run the internally built GNU Rscript executable
+    env arg is used by pkgtest
     '''
     cmd = [join(_gnur_path(), 'Rscript')] + args
-    return mx.run(cmd, nonZeroIsFatal=False)
+    return mx.run(cmd, nonZeroIsFatal=False, env=env)
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)

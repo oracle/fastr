@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.SortedMap;
 
-import com.oracle.truffle.r.test.ArithmeticWhiteList;
-import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestBase.Output;
 import com.oracle.truffle.r.test.TestTrait;
 import com.oracle.truffle.r.test.WhiteList;

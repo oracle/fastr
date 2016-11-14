@@ -501,7 +501,7 @@ public class ArgumentMatcher {
         int varArgIndex = formalSignature.getVarArgIndex();
         boolean hasVarArgs = varArgIndex != ArgumentsSignature.NO_VARARG;
 
-        // MATCH by exact name
+        // MATCH by exact and partial name
         int[] resultPermutation = new int[formalSignature.getLength()];
         String[] resultSignature = new String[formalSignature.getLength()];
         Arrays.fill(resultPermutation, MatchPermutation.UNMATCHED);
@@ -509,20 +509,19 @@ public class ArgumentMatcher {
 
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
         for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
-            if (signature.getName(suppliedIndex) == null || signature.getName(suppliedIndex).isEmpty()) {
+            String suppliedName = signature.getName(suppliedIndex);
+            if (suppliedName == null || suppliedName.isEmpty()) {
                 continue;
             }
 
             // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin);
+            int formalIndex = findParameterPosition(formalSignature, suppliedName, resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
-                resultSignature[formalIndex] = signature.getName(suppliedIndex);
+                resultSignature[formalIndex] = suppliedName;
                 matchedSuppliedArgs[suppliedIndex] = true;
             }
         }
-
-        // TODO MATCH by partial name (up to the vararg, which consumes all non-exact matches)
 
         // MATCH by position
         int suppliedIndex = -1;
@@ -631,36 +630,40 @@ public class ArgumentMatcher {
      */
     private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, RBaseNode callingNode,
                     int varArgIndex, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
+        assert suppliedName != null && !suppliedName.isEmpty();
+        for (int i = 0; i < formalsSignature.getLength(); i++) {
+            String formalName = formalsSignature.getName(i);
+            if (formalName != null) {
+                if (formalName.equals(suppliedName)) {
+                    if (resultPermutation[i] != MatchPermutation.UNMATCHED) {
+                        if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {
+                            // for primitives, the first argument is matched, and the others are
+                            // folded
+                            // into varargs, for example:
+                            // x<-1:64; dim(x)<-c(4,4,2,2); x[1,drop=FALSE,1,drop=TRUE,-1]
+                            return MatchPermutation.UNMATCHED;
+                        } else {
+                            // Has already been matched: Error!
+                            throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                        }
+                    }
+                    return i;
+                }
+            }
+        }
         int found = MatchPermutation.UNMATCHED;
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
-            if (formalName == null) {
-                continue;
-            }
-
-            if (formalName.equals(suppliedName)) {
-                found = i;
-                if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
-                    if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {
-                        // for primitives, the first argument is matched, and the others are folded
-                        // into varargs, for example:
-                        // x<-1:64; dim(x)<-c(4,4,2,2); x[1,drop=FALSE,1,drop=TRUE,-1]
-                        found = MatchPermutation.UNMATCHED;
-                    } else {
-                        // Has already been matched: Error!
+            if (formalName != null) {
+                if (formalName.startsWith(suppliedName) && ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
+                    // partial-match only if the formal argument is positioned before ...
+                    if (found >= 0) {
+                        throw RError.error(callingNode, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
+                    }
+                    found = i;
+                    if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
                         throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                     }
-                }
-                break;
-            } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) &&
-                            ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
-                // partial-match only if the formal argument is positioned before ...
-                if (found >= 0) {
-                    throw RError.error(callingNode, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
-                }
-                found = i;
-                if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
-                    throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                 }
             }
         }

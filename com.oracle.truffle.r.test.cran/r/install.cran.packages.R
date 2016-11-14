@@ -35,7 +35,7 @@
 # If unset, defaults to "http://cran.cnr.berkeley.edu/"
 # However, a local copy of the CRAN repo can be used either by setting the LOCAL_CRAN_REPO env variable or setting --contrib-url
 
-# Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
+# Packages are installed into the directory specified by the --lib arg (or R_LIBS env var)
 
 # Blacklisted packages nor their dependents will not be installed. By default the list of blacklisted
 # packages will be read from the file in the --blacklist-file arg or the PACKAGE_BLACKLIST env var.
@@ -46,9 +46,9 @@
 # Package: name
 # Reason: reason
 
-# The env var R_LIBS_USER or the option --lib must be set to the directory where the install should take place.
+# The env var R_LIBS or the option --lib must be set to the directory where the install should take place.
 # N.B. --lib works for installation. However, when running tests ( --run-tests), it does not and
-# R_LIBS_USER must be set instead (as well) since some of the test code has explicit "library(foo)" calls
+# R_LIBS must be set instead (as well) since some of the test code has explicit "library(foo)" calls
 # without a "lib.loc" argument.
 
 # A single package install can be handled in three ways, based on the run-mode argument (default system):
@@ -67,13 +67,16 @@
 # test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
 # stored in a subdirectory named after the package.
 
-# There are three ways to specify the packages to be installed
+# There are three ways to specify the packages to be installed/tested
 # --pkg-pattern a regular expression to match packages
 # --pkg-filelist a file containing an explicit list of package names (not regexps), one per line
 # --alpha-daily implicitly sets --pkg-pattern from the day of the year modulo 26. E.g., 0 is ^[Aa], 1 is ^[Bb]
 # --ok-only implicitly sets --pkg-filelist to a list of packages known to install
+# --no-install gets the list of packages from the lib install directory (evidently only useful with --run-tests)
 
 # TODO At some point this will need to upgraded to support installation from other repos, e.g. BioConductor, github
+
+# All fatal errors terminate with a return code of 100
 
 args <- commandArgs(TRUE)
 
@@ -98,7 +101,7 @@ usage <- function() {
 					  "[--count-daily count]",
 					  "[--ok-only]",
                       "[--pkg.pattern package-pattern] \n"))
-	quit(status=1)
+	quit(status=100)
 }
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
@@ -211,7 +214,7 @@ create.blacklist <- function() {
 
 abort <- function(msg) {
 	print(msg)
-	quit("no", 1)
+	quit("no", status=100)
 }
 
 set.contriburl <- function() {
@@ -516,6 +519,16 @@ get.blacklist <- function() {
 	blacklist
 }
 
+show.install.status <- function(test.pkgnames) {
+	if (print.install.status) {
+		cat("BEGIN install status\n")
+		for (pkgname.i in test.pkgnames) {
+			cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
+		}
+		cat("END install status\n")
+	}
+}
+
 # performs the installation, or logs what it would install if dry.run = T
 do.it <- function() {
 	test.pkgnames <- get.pkgs()
@@ -523,7 +536,7 @@ do.it <- function() {
 	if (list.versions) {
 		for (pkgname in test.pkgnames) {
 			pkg <- toinstall.pkgs[pkgname, ]
-			# pretend we are acessing CRAN if list.canonical
+			# pretend we are accessing CRAN if list.canonical
 			list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", contriburl)
 			cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
@@ -533,14 +546,7 @@ do.it <- function() {
 		cat("BEGIN package installation\n")
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
-
-		if (print.install.status) {
-			cat("BEGIN install status\n")
-			for (pkgname.i in test.pkgnames) {
-				cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
-			}
-			cat("END install status\n")
-		}
+		show.install.status(test.pkgnames)
 	}
 
 	if (run.tests) {
@@ -554,6 +560,8 @@ do.it <- function() {
 			}
 			matched.pkgnames <- sapply(test.pkgnames, match.fun)
 			test.pkgnames <- test.pkgnames[matched.pkgnames]
+			# fake the install
+			show.install.status(test.pkgnames)
 		}
 
 		cat("BEGIN package tests\n")
@@ -608,12 +616,18 @@ install.pkg <- function(pkgname) {
 	return(rc)
 }
 
+gnu_rscript <- function() {
+	rv <- R.Version()
+	dirv <- paste0('R-', rv$major, '.', rv$minor)
+	file.path("com.oracle.truffle.r.native/gnur", dirv, 'bin/Rscript')
+}
+
 system.install <- function(pkgname) {
 	script <- normalizePath("com.oracle.truffle.r.test.cran/r/install.package.R")
 	if (is.fastr()) {
 		rscript = file.path(R.home(), "bin", "Rscript")
 	} else {
-		rscript = "Rscript"
+		rscript = gnu_rscript()
 	}
 	args <- c(script, pkgname, contriburl, lib.install)
 	rc <- system2(rscript, args)
@@ -657,7 +671,7 @@ system.test <- function(pkgname) {
 	if (is.fastr()) {
 		rscript = file.path(R.home(), "bin", "Rscript")
 	} else {
-		rscript = "Rscript"
+		rscript = gnu_rscript()
 	}
 	args <- c(script, pkgname, file.path(testdir, pkgname), lib.install)
 	rc <- system2(rscript, args)
@@ -794,9 +808,9 @@ cat.args <- function() {
 }
 
 check.libs <- function() {
-    lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
+    lib.install <<- Sys.getenv("R_LIBS", unset=NA)
 	if (is.na(lib.install)) {
-		abort("R_LIBS_USER must be set")
+		abort("R_LIBS must be set")
 	}
 	if (!file.exists(lib.install) || is.na(file.info(lib.install)$isdir)) {
 		abort(paste(lib.install, "does not exist or is not a directory"))
