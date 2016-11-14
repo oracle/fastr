@@ -233,8 +233,12 @@ def pkgtest(args):
             print '{0}: {1}'.format(pkg, test_status.status)
 
         # tar up the test results
-        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, fastr_testdir + '.tar'), os.path.basename(fastr_testdir)])
-        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, gnur_testdir + '.tar'), os.path.basename(gnur_testdir)])
+        fastr_tar = join(_fastr_suite_dir, fastr_testdir + '.tar')
+        subprocess.call(['tar', 'cf', fastr_tar, os.path.basename(fastr_testdir)])
+        subprocess.call(['gzip', fastr_tar])
+        gnur_tar = join(_fastr_suite_dir, gnur_testdir + '.tar')
+        subprocess.call(['tar', 'cf', gnur_tar, os.path.basename(gnur_testdir)])
+        subprocess.call(['gzip', gnur_tar])
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
