@@ -69,7 +69,7 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("{ substitute(x <- x + 1, list(x = 1) }");
 
         assertEval("{ f <- function(y) { substitute(y) } ; f() }");
-        assertEval(Ignored.Unknown, "{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
+        assertEval(Output.IgnoreWhitespace, "{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
 
         // GNU R generates warning here, but the test has been included nevertheless to make sure
         // that FastR does not crash here

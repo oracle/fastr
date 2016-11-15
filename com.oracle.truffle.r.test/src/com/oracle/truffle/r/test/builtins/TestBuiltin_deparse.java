@@ -280,12 +280,13 @@ public class TestBuiltin_deparse extends TestBase {
     public void testDeparse() {
         assertEval(template("deparse(%0)", VALUES));
         assertEval(template("deparse(quote(cat(%0)))", VALUES));
-        assertEval(template("deparse(-5i)", VALUES));
+        assertEval("deparse(-5i)");
         assertEval(Ignored.OutputFormatting, "deparse(quote(cat(-5i)))");
-        assertEval(template("deparse(199.1234-5i)", VALUES));
+        assertEval("deparse(199.1234-5i)");
         assertEval(Ignored.OutputFormatting, "deparse(quote(cat(199.1234-5i)))");
-        assertEval(template("deparse(-199.1234-5i)", VALUES));
+        assertEval("deparse(-199.1234-5i)");
         assertEval(Ignored.OutputFormatting, "deparse(quote(cat(-199.1234-5i)))");
+        assertEval(Ignored.OutputFormatting, "deparse(1.53160350210786e-322)");
         assertEval("{ deparse(new.env()) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");

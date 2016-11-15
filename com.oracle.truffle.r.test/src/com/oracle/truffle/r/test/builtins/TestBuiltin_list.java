@@ -29,7 +29,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist3() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(x = c(9.5367431640625e-07, 1.9073486328125e-06, 3.814697265625e-06, 7.62939453125e-06, 1.52587890625e-05, 3.0517578125e-05, 6.103515625e-05, 0.0001220703125, 0.000244140625, 0.00048828125, 0.0009765625, 0.001953125, 0.00390625, 0.0078125, 0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024), y = c(3.69420518444359e+25, 2.30887824027777e+24, 1.44304890017492e+23, 9.01905562612606e+21, 5.63690976641081e+20, 35230686042118275072, 2201917878145066496, 137619867512235136, 8601241751556820, 537577617482832, 33598603095309.8, 2099913194115.17, 131244699796.888, 8202825028.58974, 512684387.219832, 32044730.0464007, 2003284.70114408, 125327.674230857, 7863.68742857025, 499.272560819512, 33.2784230289721, 2.7659432263306, 0.488936768533843, -0.282943224311172, 7.32218543045282e-05, -0.00636442868227041, -0.0483709204009262, -0.0704795507649514, 0.0349437746169591, -0.0264830837608839, 0.0200901469411759), xlab = NULL, ylab = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
     }
 
@@ -65,13 +65,13 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist10() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(linkfun = function (mu) .Call(C_logit_link, mu), linkinv = function (eta) .Call(C_logit_linkinv, eta), mu.eta = function (eta) .Call(C_logit_mu_eta, eta), valideta = function (eta) TRUE, name = 'logit');list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
     }
 
     @Test
     public void testlist11() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(linkfun = function (mu) log(mu), linkinv = function (eta) pmax(exp(eta), .Machine$double.eps), mu.eta = function (eta) pmax(exp(eta), .Machine$double.eps), valideta = function (eta) TRUE, name = 'log');list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]]);");
     }
 
@@ -87,12 +87,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist14() {
-        assertEval(Ignored.Unknown, "argv <- list(error = function (e) -1);list(argv[[1]]);");
+        assertEval(Output.IgnoreWhitespace, "argv <- list(error = function (e) -1);list(argv[[1]]);");
     }
 
     @Test
     public void testlist15() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(error = function (e) warning(gettextf('%s namespace cannot be unloaded:\\n  ', sQuote(pkgname)), conditionMessage(e), call. = FALSE, domain = NA));list(argv[[1]]);");
     }
 
@@ -113,14 +113,14 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist19() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(arguments = structure('object', simpleOnly = TRUE), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')));list(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testlist20() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('Residuals vs Fitted', 'Normal Q-Q', 'Scale-Location', 'Cook's distance', 'Residuals vs Leverage', expression('Cook's dist vs Leverage  ' * h[ii]/(1 - h[ii])));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]]);");
+        assertEval(Output.IgnoreWhitespace,
+                        "argv <- list('Residuals vs Fitted', 'Normal Q-Q', 'Scale-Location', 'Cooks distance', 'Residuals vs Leverage', expression('Cooks dist vs Leverage  ' * h[ii]/(1 - h[ii])));list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]]);");
     }
 
     @Test
@@ -170,7 +170,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist30() {
-        assertEval(Ignored.Unknown, "argv <- list(function (x, i, j, ...) x@aa[[i]]);list(argv[[1]]);");
+        assertEval(Output.IgnoreWhitespace, "argv <- list(function (x, i, j, ...) x@aa[[i]]);list(argv[[1]]);");
     }
 
     @Test
@@ -180,13 +180,13 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist32() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to 'Ops' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')));list(argv[[1]]);");
+        assertEval(Ignored.ImplementationError,
+                        "argv <- list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to Ops (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')));list(argv[[1]]);");
     }
 
     @Test
     public void testlist33() {
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(tables = structure(list(`Grand mean` = 103.87323943662, N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), class = 'mtable'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c('Golden.rain', 'Marvellous', 'Victory'), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N')), class = 'mtable')), .Names = c('Grand mean', 'N', 'V:N')), n = structure(list(N = structure(c(17, 18, 18, 18), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N')), `V:N` = structure(c(6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6), .Dim = 3:4, .Dimnames = structure(list(V = c('Golden.rain', 'Marvellous', 'Victory'), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N')))), .Names = c('N', 'V:N')));list(argv[[1]],argv[[2]]);");
     }
 
@@ -247,7 +247,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist45() {
-        assertEval(Ignored.Unknown, "argv <- list(error = function (...) {});list(argv[[1]]);");
+        assertEval(Output.IgnoreWhitespace, "argv <- list(error = function (...) {});list(argv[[1]]);");
     }
 
     @Test
