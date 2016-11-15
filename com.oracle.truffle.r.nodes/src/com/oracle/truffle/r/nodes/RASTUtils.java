@@ -212,33 +212,19 @@ public class RASTUtils {
      * Create an {@link RCallNode}. Where {@code fn} is either a:
      * <ul>
      * <li>{@link RFunction}\
-     * <li>{@code ConstantFunctionNode}</li>
-     * <li>{@code ConstantStringNode}</li>
-     * <li>{@link ReadVariableNode}</li>
-     * <li>{@link RCallNode}</li>
-     * <li>GroupDispatchNode</li>
+     * <li>{@code RNode}</li>
      * </ul>
      */
     @TruffleBoundary
-    public static RSyntaxNode createCall(Object fna, boolean sourceUnavailable, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        Object fn = fna;
-        if (fn instanceof Node) {
-            fn = unwrap(fn);
-        }
-        if (fn instanceof ConstantNode) {
-            fn = ((ConstantNode) fn).getValue();
+    public static RSyntaxNode createCall(Object fn, boolean sourceUnavailable, ArgumentsSignature signature, RSyntaxNode... arguments) {
+        RNode fnNode;
+        if (fn instanceof RFunction) {
+            fnNode = ConstantNode.create(fn);
+        } else {
+            fnNode = (RNode) unwrap(fn);
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
-        if (fn instanceof ReadVariableNode) {
-            return RCallSpecialNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
-        } else if (fn instanceof RCallBaseNode) {
-            return RCallSpecialNode.createCall(sourceSection, (RCallBaseNode) fn, signature, arguments);
-        } else {
-            // apart from RFunction, this of course would not make much sense if trying to evaluate
-            // this call, yet it's syntactically possible, for example as a result of:
-            // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
-            return RCallSpecialNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
-        }
+        return RCallSpecialNode.createCall(sourceSection, fnNode, signature, arguments);
     }
 
     @TruffleBoundary
