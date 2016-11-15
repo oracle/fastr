@@ -122,11 +122,15 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 		"compiler", "grDevices", "methods", "stats", "stats4",
 		"datasets", "graphics", "parallel", "tools", "tcltk")
 
-# returns a vector of package names that are the direct dependents of pkg
-direct.depends <- function(pkg) {
+choice.depends <- function(pkg, choice=c("direct","suggests")) {
+	if (choice == "direct") {
+		depends <- c("Depends", "Imports", "LinkingTo")
+	} else {
+		depends <- "Suggests"
+	}
 	pkgName <- pkg["Package"]
 	all.deps <- character()
-	for (dep in c("Depends", "Imports", "LinkingTo")) {
+	for (dep in depends) {
 		deps <- pkg[dep]
 		if (!is.na(deps)) {
 			if (very.verbose) {
@@ -141,8 +145,20 @@ direct.depends <- function(pkg) {
 	unname(all.deps)
 }
 
+# returns a vector of package names that are the direct dependents of pkg
+direct.depends <- function(pkg) {
+	choice.depends(pkg, "direct")
+}
+
+# returns a vector of package names that are the "Suggests" dependents of pkg
+suggest.depends <- function(pkg) {
+	choice.depends(pkg, "suggests")
+}
+
 # returns the transitive set of dependencies in install order
-install.order <- function(pkgs, pkg, depth=0L) {
+# the starting set of dependencies may be "direct" or "suggests"
+# although once we start recursing, it becomes "direct"
+install.order <- function(pkgs, pkg, choice, depth=0L) {
 
 	ndup.append <- function(v, name) {
 		if (!name %in% v) {
@@ -153,12 +169,12 @@ install.order <- function(pkgs, pkg, depth=0L) {
 
 	pkgName <- pkg["Package"]
 	result <- character()
-	directs <- direct.depends(pkg)
-	for (direct in directs) {
+	depends <- choice.depends(pkg, choice)
+	for (depend in depends) {
 		# check it is in avail.pkgs (cran)
-		if (direct %in% avail.pkgs.rownames) {
-			direct.result <- install.order(pkgs, pkgs[direct, ], depth=depth + 1)
-			for (dr in direct.result) {
+		if (depend %in% avail.pkgs.rownames) {
+			depend.result <- install.order(pkgs, pkgs[depend, ], "direct", depth=depth + 1)
+			for (dr in depend.result) {
 				result <- ndup.append(result, dr)
 		    }
 	    }
@@ -434,7 +450,7 @@ get.pkgs <- function() {
 # If dependents.install=T, this is a nested install of the dependents
 # of one of the initial list. N.B. In this case pkgnames is the
 # transitively computed list so this never recurses more than one level
-install.pkgs <- function(pkgnames, dependents.install=F) {
+install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 	if (verbose && !dry.run) {
 		cat("packages to install (+dependents):\n")
 		for (pkgname in pkgnames) {
@@ -445,10 +461,12 @@ install.pkgs <- function(pkgnames, dependents.install=F) {
 	install.total <- length(pkgnames)
 	result <- TRUE
 	for (pkgname in pkgnames) {
-		cat("BEGIN processing:", pkgname, "\n")
+		if (log) {
+		    cat("BEGIN processing:", pkgname, "\n")
+		}
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
-			dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ])
+			dependents <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "direct")
 			if (length(dependents) > 0) {
 				# not a leaf package
 				dep.status <- install.status[dependents]
@@ -506,13 +524,39 @@ install.pkgs <- function(pkgnames, dependents.install=F) {
 				}
 			}
 		}
-		cat("END processing:", pkgname, "\n")
+		if (log) {
+		    cat("END processing:", pkgname, "\n")
+		}
 
 		install.count = install.count + 1
 	}
 	return(result)
 }
 
+install.suggests <- function(pkgnames) {
+	for (pkgname in pkgnames) {
+		suggests <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "suggests")
+		if (length(suggests) > 0) {
+			dep.status <- install.status[suggests]
+			# three cases:
+			# 1. all TRUE: nothing to do all already installed ok
+			# 2. any FALSE: ignore; tests will fail but that's ok
+			# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
+			if (any(!dep.status, na.rm=T)) {
+				# case 2
+				cat("not installing Suggests of:", pkgname, ", one or more previously failed", "\n")
+			} else {
+				if (anyNA(dep.status)) {
+					# case 3
+					cat("installing Suggests of:", pkgname, "\n")
+					dependent.install.ok <- install.pkgs(suggests, dependents.install=T, log=F)
+				} else {
+					# case 1
+				}
+			}
+		}
+	}
+}
 
 get.blacklist <- function() {
 	if (create.blacklist.file) {
@@ -573,6 +617,11 @@ do.it <- function() {
 			# fake the install
 			show.install.status(test.pkgnames)
 		}
+
+		# need to install the Suggests packages as they may be used
+		cat('BEGIN suggests install\n')
+		install.suggests(test.pkgnames)
+		cat('END suggests install\n')
 
 		cat("BEGIN package tests\n")
 		test.count = 1
@@ -846,8 +895,8 @@ get.initial.package.blacklist <- function() {
 	}
 }
 
-run <- function() {
-    parse.args()
+run.setup <- function() {
+	parse.args()
 	check.libs()
 	check.pkgfilelist()
 	set.contriburl()
@@ -855,6 +904,10 @@ run <- function() {
 	set.package.blacklist()
 	lib.install <<- normalizePath(lib.install)
 	cat.args()
+}
+
+run <- function() {
+	run.setup()
     do.it()
 }
 
