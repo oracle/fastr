@@ -39,7 +39,7 @@ public class TestBuiltin_levelsassign extends TestBase {
 
     @Test
     public void testlevelsassign6() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);`levels<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(NULL, NULL);`levels<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
