@@ -40,14 +40,12 @@ import com.oracle.truffle.r.test.TestBase;
  * directory by the com.oracle.truffle.r.test.native Makefile. to allow them to be packaged into a
  * distribution and avoid any dependency on source paths.
  *
- * FIXME {@codetools} is installed last because when it is installed, some of the other packages use
- * it and it currently provokes a bug.
  */
 public class TestRecommendedPackages extends TestRPackages {
     // order matters due to dependencies
-    private static final String[] DEFAULT_PACKAGES = new String[]{"MASS", "boot", "class", "cluster",
+    private static final String[] DEFAULT_PACKAGES = new String[]{"codetools", "MASS", "boot", "class", "cluster",
                     "lattice", "nnet", "spatial", "Matrix", "survival", "KernSmooth", "foreign", "nlme",
-                    "rpart", "codetools"};
+                    "rpart"};
     private static String[] packages = DEFAULT_PACKAGES;
 
     /**
