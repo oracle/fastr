@@ -194,9 +194,6 @@ def pkgtest(args):
     env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
     env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
 
-    # TODO enable but via installing Suggests
-    #_install_vignette_support('FastR', env)
-
     out = OutputCapture()
     # install and test the packages, unless just listing versions
     if not '--list-versions' in install_args:
@@ -240,11 +237,11 @@ def pkgtest(args):
     return rc
 
 def tar_tests(testdir):
-        test_tar = join(_fastr_suite_dir, testdir + '.tar')
-        subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
-        if os.path.exists(test_tar + '.gz'):
-            os.remove(test_tar + '.gz')
-        subprocess.call(['gzip', test_tar])
+    test_tar = join(_fastr_suite_dir, testdir + '.tar')
+    subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
+    if os.path.exists(test_tar + '.gz'):
+        os.remove(test_tar + '.gz')
+    subprocess.call(['gzip', test_tar])
 
 class TestFileStatus:
     '''
@@ -292,15 +289,6 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             relfile = relpath(absfile, pkg_testdir)
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
-def _install_vignette_support(rvm, env):
-    # knitr is needed for vignettes, but FastR  can't handle it yet
-    if rvm == 'FastR':
-        return
-    _log_step('BEGIN', 'install vignette support', rvm)
-    args = [_installpkgs_script(), '--ignore-blacklist', '^rmarkdown$|^knitr$']
-    mx_fastr.gnu_rscript(args, env)
-    _log_step('END', 'install vignette support', rvm)
-
 def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     gnur_packages = join(_fastr_suite_dir(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
@@ -310,9 +298,7 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     env = os.environ.copy()
     env["TMPDIR"] = gnur_install_tmp
     env['R_LIBS_USER'] = gnur_libinstall
-
-    # TODO enable but via installing Suggests
-    # _install_vignette_support('GnuR', env)
+    env["TZDIR"] = "/usr/share/zoneinfo/"
 
     args = []
     if _graalvm():
