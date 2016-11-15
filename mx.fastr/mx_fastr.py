@@ -20,13 +20,14 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import platform, subprocess, sys
+import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
+import mx_fastr_junit
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
@@ -213,6 +214,13 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
 
     return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, **kwargs)
 
+def split_j_args(extraVmArgsList):
+    extraVmArgs = []
+    if extraVmArgsList:
+        for e in extraVmArgsList:
+            extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
+    return extraVmArgs
+
 def rshell(args):
     '''run R shell'''
     return run_r(args, 'r')
@@ -359,22 +367,22 @@ def junit(args):
     if os.environ.has_key('R_PROFILE_USER'):
         mx.abort('unset R_PROFILE_USER before running unit tests')
     _unset_conflicting_envs()
-    return mx.junit(args, _junit_r_harness, parser=parser, jdk_default=get_default_jdk())
+    return mx_fastr_junit.junit(args, _junit_r_harness, parser=parser, jdk_default=get_default_jdk())
 
 def junit_simple(args):
-    return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
+    return junit(['--tests', _simple_unit_tests()] + args)
 
 def junit_noapps(args):
-    return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
+    return junit(['--tests', _gate_noapps_unit_tests()] + args)
 
 def junit_nopkgs(args):
-    return mx.command_function('junit')(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
+    return junit(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
 
 def junit_default(args):
-    return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
+    return junit(['--tests', _all_unit_tests()] + args)
 
 def junit_gate(args):
-    return mx.command_function('junit')(['--tests', _gate_unit_tests()] + args)
+    return junit(['--tests', _gate_unit_tests()] + args)
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
