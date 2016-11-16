@@ -79,6 +79,9 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
                     timeout = 5;
                 }
                 boolean exited = p.waitFor(timeout, TimeUnit.MINUTES);
+                if (!exited) {
+                    p.destroy();
+                }
                 rc = exited ? 0 : 127;
             } else {
                 rc = p.waitFor();
