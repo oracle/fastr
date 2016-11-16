@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertSubset;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -37,7 +39,10 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -52,36 +57,63 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * Subset special only handles single element integer/double index. In the case of list, we need to
  * create the actual list otherwise we just return the primitive type.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 abstract class SubsetSpecial extends SubscriptSpecialBase {
 
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
+    protected SubsetSpecial(boolean inReplacement) {
+        super(inReplacement);
+    }
+
     @Override
     protected boolean simpleVector(RAbstractVector vector) {
-        vector = vectorClassProfile.profile(vector);
         return super.simpleVector(vector) && getNamesNode.getNames(vector) == null;
     }
 
-    @Override
-    protected int toIndex(double index) {
-        return toIndexSubset(index);
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)", "!inReplacement"})
     protected static RList access(RList vector, int index,
                     @Cached("create()") ExtractListElement extract) {
         return RDataFactory.createList(new Object[]{extract.execute(vector, index - 1)});
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidDoubleIndex(vector, index)"})
-    protected static RList access(RList vector, double index,
+    protected static ExtractVectorNode createAccess() {
+        return ExtractVectorNode.create(ElementAccessMode.SUBSET, false);
+    }
+
+    @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
+    protected static Object access(VirtualFrame frame, RAbstractVector vector, Object index,
+                    @Cached("createAccess()") ExtractVectorNode extract) {
+        return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
+    }
+}
+
+/**
+ * Subset special only handles single element integer/double index. In the case of list, we need to
+ * create the actual list otherwise we just return the primitive type.
+ */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
+
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+
+    protected SubsetSpecial2(boolean inReplacement) {
+        super(inReplacement);
+    }
+
+    @Override
+    protected boolean simpleVector(RAbstractVector vector) {
+        return super.simpleVector(vector) && getNamesNode.getNames(vector) == null;
+    }
+
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)", "!inReplacement"})
+    protected RList access(RList vector, int index1, int index2,
                     @Cached("create()") ExtractListElement extract) {
-        return RDataFactory.createList(new Object[]{extract.execute(vector, toIndexSubset(index) - 1)});
+        return RDataFactory.createList(new Object[]{extract.execute(vector, matrixIndex(vector, index1, index2))});
     }
 }
 
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class Subset extends RBuiltinNode {
 
     @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE)
@@ -89,14 +121,17 @@ public abstract class Subset extends RBuiltinNode {
         // same implementation as "[", with different dispatch
     }
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
-        boolean correctSignature = signature.getNonNullCount() == 0 && arguments.length == 2;
-        if (!correctSignature) {
-            return null;
+    public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
+        if (signature.getNonNullCount() == 0 && (args.length == 2 || args.length == 3)) {
+            ProfiledValue profiledVector = profile(args[0]);
+            ConvertIndex index = convertSubset(args[1]);
+            if (args.length == 2) {
+                return SubsetSpecialNodeGen.create(inReplacement, profiledVector, index);
+            } else {
+                return SubsetSpecial2NodeGen.create(inReplacement, profiledVector, index, convertSubset(args[2]));
+            }
         }
-        // Subset adds support for lists returning newly created list, which cannot work when used
-        // in replacement, because we need the reference to the existing (materialized) list element
-        return inReplacement ? SubscriptSpecialBaseNodeGen.create(arguments) : SubsetSpecialNodeGen.create(arguments);
+        return null;
     }
 
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSET, false);
