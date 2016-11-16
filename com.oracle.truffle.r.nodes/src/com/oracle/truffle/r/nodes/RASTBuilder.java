@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
@@ -82,11 +81,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     public RASTBuilder(Map<String, Object> constants) {
         this.constants = constants;
-    }
-
-    @SuppressWarnings({"unused", "static-method"})
-    private RCallNode unused() {
-        return null; // we need reference to RCallNode, otherwise it won't compile, compilation bug?
     }
 
     @Override

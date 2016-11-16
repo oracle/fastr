@@ -100,7 +100,7 @@ public abstract class RBaseNode extends Node {
     /**
      * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
      */
-    public RSyntaxNode asRSyntaxNode() {
+    public final RSyntaxNode asRSyntaxNode() {
         if (isRSyntaxNode()) {
             return (RSyntaxNode) this;
         } else {
@@ -111,7 +111,7 @@ public abstract class RBaseNode extends Node {
     /**
      * See comment on {@link #checkGetRSyntaxNode()}.
      */
-    public RSyntaxNode checkasRSyntaxNode() {
+    public final RSyntaxNode checkasRSyntaxNode() {
         if (isRSyntaxNode()) {
             return (RSyntaxNode) this;
         } else {
