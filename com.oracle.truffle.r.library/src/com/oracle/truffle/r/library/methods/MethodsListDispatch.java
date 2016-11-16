@@ -23,8 +23,7 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -94,15 +93,15 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
-        protected AttributeAccess createPckgAttrAccess() {
-            return AttributeAccessNodeGen.create(RRuntime.PCKG_ATTR_KEY);
+        protected FixedAttributeGetter createPckgAttrAccess() {
+            return FixedAttributeGetter.create(RRuntime.PCKG_ATTR_KEY);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table, //
-                        @Cached("createPckgAttrAccess()") AttributeAccess klassPckgAttrAccess, //
-                        @Cached("createPckgAttrAccess()") AttributeAccess valPckgAttrAccess) {
+                        @Cached("createPckgAttrAccess()") FixedAttributeGetter klassPckgAttrAccess, //
+                        @Cached("createPckgAttrAccess()") FixedAttributeGetter valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
             Object value = table.get(klassString);

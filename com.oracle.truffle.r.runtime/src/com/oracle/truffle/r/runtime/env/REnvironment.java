@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -428,7 +429,7 @@ public abstract class REnvironment extends RAttributeStorage {
         REnvironment newEnv = RDataFactory.createNewEnv(getName());
         RArguments.initializeEnclosingFrame(newEnv.getFrame(), parentClone.getFrame());
         if (attributes != null) {
-            newEnv.attributes = attributes.copy();
+            newEnv.initAttributes(RAttributesLayout.copy(attributes));
         }
         copyBindings(newEnv);
         return newEnv;

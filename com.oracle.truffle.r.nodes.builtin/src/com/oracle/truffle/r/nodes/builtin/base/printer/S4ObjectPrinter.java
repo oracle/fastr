@@ -28,7 +28,8 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 
@@ -45,13 +46,13 @@ final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
         final PrintWriter out = printCtx.output();
         out.print("<S4 Type Object>");
         if (object.getAttributes() != null) {
-            for (RAttribute attr : object.getAttributes()) {
+            for (RAttribute attr : RAttributesLayout.asIterable(object.getAttributes())) {
                 printAttribute(attr, printCtx);
             }
         }
     }
 
-    private static void printAttribute(RAttribute attr, PrintContext printCtx) throws IOException {
+    private static void printAttribute(RAttributesLayout.RAttribute attr, PrintContext printCtx) throws IOException {
         final PrintWriter out = printCtx.output();
         out.println();
         out.print("attr(,\"");

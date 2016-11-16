@@ -36,6 +36,8 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltinNodeGen;
@@ -56,7 +58,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -100,6 +102,8 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private Node isBoxedNode = com.oracle.truffle.api.interop.Message.IS_BOXED.createNode();
         @Child private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
         @Child private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
+        @Child private FixedAttributeSetter namesAttrSetter = FixedAttributeSetter.createNames();
+        @Child private FixedAttributeSetter isTruffleObjAttrSetter = FixedAttributeSetter.create("is.truffle.object");
 
         public Object convert(VirtualFrame frame, TruffleObject obj) {
             class RStringWrapper extends TruffleObjectWrapper implements RAbstractStringVector {
@@ -322,7 +326,9 @@ public final class ValuePrinterNode extends RBaseNode {
 
                         RListWrapper(int length) {
                             super(length);
-                            initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY, "is.truffle.object"}, new Object[]{names, RRuntime.LOGICAL_TRUE}));
+                            DynamicObject attrs = RAttributesLayout.createNames(names);
+                            initAttributes(attrs);
+                            isTruffleObjAttrSetter.execute(attrs, RRuntime.LOGICAL_TRUE);
                         }
 
                         @Override
@@ -425,7 +431,8 @@ public final class ValuePrinterNode extends RBaseNode {
         private final int length;
 
         TruffleObjectWrapper(int length) {
-            initAttributes(RAttributes.createInitialized(new String[]{"is.truffle.object"}, new Object[]{RRuntime.LOGICAL_TRUE}));
+            initAttributes().define("is.truffle.object", RRuntime.LOGICAL_TRUE);
+
             this.length = length;
         }
 

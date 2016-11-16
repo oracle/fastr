@@ -18,9 +18,8 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -36,8 +35,8 @@ public abstract class UpdateSlotNode extends RNode {
 
     public abstract Object executeUpdate(Object object, String name, Object value);
 
-    protected PutAttributeNode createAttrUpdate(String name) {
-        return PutAttributeNodeGen.create(name);
+    protected FixedAttributeSetter createAttrUpdate(String name) {
+        return FixedAttributeSetter.create(name);
     }
 
     private static Object prepareValue(Object value) {
@@ -48,7 +47,7 @@ public abstract class UpdateSlotNode extends RNode {
     @Specialization(guards = {"!isData(name)", "name == cachedName"})
     protected Object updateSlotS4Cached(RAttributable object, String name, Object value, //
                     @Cached("name") String cachedName, //
-                    @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate, //
+                    @Cached("createAttrUpdate(cachedName)") FixedAttributeSetter attributeUpdate, //
                     @Cached("create()") InitAttributesNode initAttributes) {
         attributeUpdate.execute(initAttributes.execute(object), prepareValue(value));
         return object;

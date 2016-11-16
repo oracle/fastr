@@ -20,8 +20,7 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -62,8 +61,8 @@ public abstract class AccessSlotNode extends RNode {
         this.asOperator = asOperator;
     }
 
-    protected AttributeAccess createAttrAccess(String name) {
-        return AttributeAccessNodeGen.create(name);
+    protected FixedAttributeGetter createAttrAccess(String name) {
+        return FixedAttributeGetter.create(name);
     }
 
     private Object getSlotS4Internal(RAttributable object, String name, Object value) {
@@ -113,7 +112,7 @@ public abstract class AccessSlotNode extends RNode {
 
     @Specialization(guards = {"slotAccessAllowed(object)", "name == cachedName"})
     protected Object getSlotS4Cached(RAttributable object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName,
-                    @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess, //
+                    @Cached("createAttrAccess(cachedName)") FixedAttributeGetter attrAccess, //
                     @Cached("create()") InitAttributesNode initAttrNode) {
         Object value = attrAccess.execute(initAttrNode.execute(object));
         return getSlotS4Internal(object, cachedName, value);

@@ -62,11 +62,12 @@ import org.junit.experimental.theories.Theory;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.RunWith;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -313,13 +314,13 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         RAbstractVector vector = (RAbstractVector) value;
         Set<String> expectedAttributes = new HashSet<>(Arrays.asList(keys));
 
-        RAttributes attributes = vector.getAttributes();
+        DynamicObject attributes = vector.getAttributes();
         if (attributes == null) {
             Assert.assertEquals(0, keys.length);
             return;
         }
         Set<Object> foundAttributes = new HashSet<>();
-        for (RAttribute attribute : attributes) {
+        for (RAttributesLayout.RAttribute attribute : RAttributesLayout.asIterable(attributes)) {
             foundAttributes.add(attribute.getName());
             foundAttributes.add(attribute.getValue());
         }

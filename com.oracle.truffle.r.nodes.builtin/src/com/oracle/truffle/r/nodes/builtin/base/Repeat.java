@@ -37,8 +37,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -152,7 +152,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(guards = {"each > 1", "hasNames(x)"})
     protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each,
                     @Cached("create()") InitAttributesNode initAttributes,
-                    @Cached("createNames()") PutAttributeNode putNames) {
+                    @Cached("createNames()") FixedAttributeSetter putNames) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
@@ -175,7 +175,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(guards = {"each <= 1", "hasNames(x)"})
     protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each,
                     @Cached("create()") InitAttributesNode initAttributes,
-                    @Cached("createNames()") PutAttributeNode putNames) {
+                    @Cached("createNames()") FixedAttributeSetter putNames) {
         RStringVector names;
         RVector<?> r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {

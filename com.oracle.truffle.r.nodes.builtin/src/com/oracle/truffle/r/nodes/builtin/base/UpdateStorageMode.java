@@ -15,7 +15,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
@@ -31,8 +33,8 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -48,7 +50,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
-    protected Object update(Object x, String value) {
+    protected Object update(Object x, String value, @Cached("create()") BranchProfile attrIterProfile) {
         RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
@@ -70,10 +72,10 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             if (result != null) {
                 if (x instanceof RAttributable && result instanceof RAbstractContainer) {
                     RAttributable rx = (RAttributable) x;
-                    RAttributes attrs = rx.getAttributes();
+                    DynamicObject attrs = rx.getAttributes();
                     if (attrs != null) {
                         RAbstractContainer rresult = (RAbstractContainer) result;
-                        for (RAttribute attr : attrs) {
+                        for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(attrs, attrIterProfile)) {
                             String attrName = attr.getName();
                             Object v = attr.getValue();
                             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {

@@ -34,6 +34,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -48,7 +49,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -195,9 +196,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case Language:
                 repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
-                RAttributes attrs = ((RLanguage) castVector).getAttributes();
+                DynamicObject attrs = ((RLanguage) castVector).getAttributes();
                 if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
-                    vector.initAttributes(attrs.copy());
+                    vector.initAttributes(RAttributesLayout.copy(attrs));
                 }
                 break;
             default:

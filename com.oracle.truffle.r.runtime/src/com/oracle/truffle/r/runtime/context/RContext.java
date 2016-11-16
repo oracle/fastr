@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
-import java.util.EnumSet;
 import java.lang.ref.WeakReference;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -465,6 +465,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
+
         state.add(State.CONSTRUCTED);
     }
 

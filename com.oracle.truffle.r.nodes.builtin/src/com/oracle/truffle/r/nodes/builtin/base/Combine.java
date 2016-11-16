@@ -47,6 +47,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
@@ -67,7 +68,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -475,12 +476,12 @@ public abstract class Combine extends RBuiltinNode {
 
             RStringVector vecNames = materialized.getInternalNames();
             if (hasNamesProfile.profile(vecNames != null)) {
-                result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{vecNames}));
+                result.initAttributes(RAttributesLayout.createNames(vecNames));
                 result.setInternalNames(vecNames);
             } else {
                 RList dimNames = materialized.getInternalDimNames();
                 if (hasDimNamesProfile.profile(dimNames != null)) {
-                    result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{dimNames}));
+                    result.initAttributes(RAttributesLayout.createDimNames(vecNames));
                     result.setInternalDimNames(dimNames);
                 }
             }

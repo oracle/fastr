@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -136,17 +137,17 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RAttributes initAttributes() {
+    public final DynamicObject initAttributes() {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public final void initAttributes(DynamicObject newAttributes) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
-    public final RAttributes getAttributes() {
+    public final DynamicObject getAttributes() {
         return null;
     }
 

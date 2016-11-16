@@ -26,11 +26,12 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -148,15 +149,15 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
             }
         }
         RList result = named ? RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)) : RDataFactory.createList(data);
-        RAttributes attrs = getAttributes();
+        DynamicObject attrs = getAttributes();
         if (attrs != null) {
-            RAttributes resultAttrs = result.initAttributes();
-            Iterator<RAttribute> iter = attrs.iterator();
+            DynamicObject resultAttrs = result.initAttributes();
+            Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
             while (iter.hasNext()) {
-                RAttribute attr = iter.next();
+                RAttributesLayout.RAttribute attr = iter.next();
                 String attrName = attr.getName();
                 if (!(attrName.equals(RRuntime.NAMES_ATTR_KEY) || attrName.equals(RRuntime.DIM_ATTR_KEY) || attrName.equals(RRuntime.DIMNAMES_ATTR_KEY))) {
-                    resultAttrs.put(attrName, attr.getValue());
+                    resultAttrs.define(attrName, attr.getValue());
                 }
             }
         }
@@ -275,9 +276,9 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
             original = origList.cdr;
         }
         if (getAttributes() != null) {
-            RAttributes newAttributes = result.initAttributes();
-            for (RAttribute attr : getAttributes()) {
-                newAttributes.put(attr.getName(), attr.getValue());
+            DynamicObject newAttributes = result.initAttributes();
+            for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(getAttributes())) {
+                newAttributes.define(attr.getName(), attr.getValue());
             }
         }
         return result;

@@ -29,24 +29,22 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -65,7 +63,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
 
-    @Child private AttributeAccess access;
+    @Child private FixedAttributeGetter access;
     @Child private S4Class s4Class;
 
     private final boolean withImplicitTypes;
@@ -121,7 +119,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
-        RAttributes attributes;
+        DynamicObject attributes;
         if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
             // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
             // Note2: the attrStorageProfile and cast is better at helping compiler to inline
@@ -135,7 +133,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                access = insert(AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY));
+                access = insert(FixedAttributeGetter.createClass());
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {

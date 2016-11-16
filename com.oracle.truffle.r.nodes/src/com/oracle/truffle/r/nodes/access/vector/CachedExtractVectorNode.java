@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -32,6 +33,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -39,7 +43,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -431,6 +435,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
+        @Child private FixedAttributeSetter namesAttrSetter = FixedAttributeSetter.create(RRuntime.NAMES_ATTR_KEY);
+        @Child private FixedAttributeGetter namesAttrGetter = FixedAttributeGetter.create(RRuntime.NAMES_ATTR_KEY);
+
         public abstract void execute(RVector<?> container, Object newNames);
 
         @Specialization
@@ -440,12 +447,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             assert container.getInternalDimensions() == null;
             if (container.getAttributes() == null) {
                 // usual case
-                container.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{newNames1}));
+                container.initAttributes(RAttributesLayout.createNames(newNames1));
+                namesAttrSetter.execute(container.initAttributes(), newNames1);
                 container.setInternalNames(newNames1);
             } else {
                 // from an RLanguage extraction that set a name
-                RAttributes attrs = container.getAttributes();
-                RStringVector oldNames = (RStringVector) attrs.get(RRuntime.NAMES_ATTR_KEY);
+                RStringVector oldNames = (RStringVector) namesAttrGetter.execute(container.getAttributes());
                 assert oldNames.getLength() == newNames.getLength();
                 assert oldNames.toString().equals(newNames1.toString());
                 // i.e. nothing actually needs to be done

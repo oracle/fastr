@@ -30,8 +30,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeRemover;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -94,7 +94,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
-                    @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
+                    @Cached("createDimNames()") FixedAttributeRemover remove) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector<?> vector = (RVector<?>) result;
@@ -110,15 +110,15 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "list.getLength() == 0")
     protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list, //
-                    @Cached("create(DIMNAMES_ATTR_KEY)") RemoveAttributeNode remove) {
+                    @Cached("createDimNames()") FixedAttributeRemover remove) {
         return updateDimnamesNull(container, RNull.instance, remove);
     }
 
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
-                    @Cached("create(DIMNAMES_ATTR_KEY)") PutAttributeNode put) {
+                    @Cached("createDimNames()") FixedAttributeSetter attrSetter) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
-        setDimNames(result, convertToListOfStrings(list), put);
+        setDimNames(result, convertToListOfStrings(list), attrSetter);
         return result;
     }
 
@@ -128,7 +128,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
 
-    private void setDimNames(RAbstractContainer container, RList newDimNames, PutAttributeNode put) {
+    private void setDimNames(RAbstractContainer container, RList newDimNames, FixedAttributeSetter attrSetter) {
         assert newDimNames != null;
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector<?> vector = (RVector<?>) container;
@@ -172,9 +172,9 @@ public abstract class UpdateDimNames extends RBuiltinNode {
                 }
             }
             if (vector.getAttributes() == null) {
-                vector.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{resDimNames}));
+                vector.initAttributes(RAttributesLayout.createDimNames(resDimNames));
             } else {
-                put.execute(vector.getAttributes(), resDimNames);
+                attrSetter.execute(vector.getAttributes(), resDimNames);
             }
             resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
             vector.setInternalDimNames(resDimNames);

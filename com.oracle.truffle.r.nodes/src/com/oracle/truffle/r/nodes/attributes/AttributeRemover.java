@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@NodeInfo(cost = NodeCost.NONE)
-public final class InitAttributesNode extends RBaseNode {
+public abstract class AttributeRemover extends RBaseNode {
 
-    private final ConditionProfile hasAttributes = ConditionProfile.createBinaryProfile();
-
-    public static InitAttributesNode create() {
-        return new InitAttributesNode();
+    protected AttributeRemover() {
     }
 
-    public DynamicObject execute(RAttributable attributable) {
-        DynamicObject attributes = attributable.getAttributes();
-        if (hasAttributes.profile(attributes == null)) {
-            attributes = attributable.initAttributes();
-        }
-        return attributes;
+    public static AttributeRemover create() {
+        return AttributeRemoverNodeGen.create();
+    }
+
+    public abstract boolean execute(DynamicObject attrs, String name);
+
+    @Specialization(limit = "5", guards = "name.equals(cachedName)")
+    @SuppressWarnings("unused")
+    protected boolean handleCached(DynamicObject attrs, String name,
+                    @Cached("name") String cachedName,
+                    @Cached("create(name)") FixedAttributeRemover attrRemover) {
+        return attrRemover.execute(attrs);
+    }
+
+    @Specialization
+    protected boolean handleNonCached(DynamicObject attrs, String name) {
+        return attrs.delete(name);
     }
 }

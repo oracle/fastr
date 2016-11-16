@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,36 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-/**
- * An adaptor class for the several R types that are attributable. Only useful for classes that
- * don't already inherit from another class, otherwise just cut and paste this code.
- */
-public abstract class RAttributeStorage extends RBaseObject implements RAttributable {
+public class AttributeAccessNode extends RBaseNode {
 
-    protected DynamicObject attributes;
+    protected static final int CACHE_LIMIT = 3;
 
-    @Override
-    public final DynamicObject getAttributes() {
-        return attributes;
+    protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
+        return shape != null && shape.check(attrs);
     }
 
-    @Override
-    public final DynamicObject initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributesLayout.createRAttributes();
-        }
-        return attributes;
+    protected static Shape lookupShape(DynamicObject attrs) {
+        CompilerAsserts.neverPartOfCompilation();
+        return attrs.getShape();
     }
 
-    @Override
-    public final void initAttributes(DynamicObject newAttributes) {
-        this.attributes = newAttributes;
-    }
-
-    @Override
-    public abstract RStringVector getImplicitClass();
 }
