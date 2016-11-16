@@ -43,8 +43,7 @@ run <- function() {
 	if (!file.exists(outDir)) {
 		dir.create(outDir)
 	}
-	# TODO add vignettes to types when practical
-	tools:::testInstalledPackage(pkgname, outDir=outDir, lib.loc=lib.install, types=c("examples", "tests"))
+	tools:::testInstalledPackage(pkgname, outDir=outDir, lib.loc=lib.install, types=c("examples", "tests", "vignettes"))
 }
 
 if (!interactive()) {

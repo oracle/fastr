@@ -348,6 +348,7 @@ public final class RError extends RuntimeException {
         AS_ENV_NULL_DEFUNCT("using 'as.environment(NULL)' is defunct"),
         REPLACEMENT_NOT_ENVIRONMENT("replacement object is not an environment"),
         ARGUMENT_NOT_MATRIX("argument is not a matrix"),
+        OBJECT_NOT_MATRIX("object is not a matrix"),
         ARGUMENT_NOT_ENVIRONMENT("argument is not an environment"),
         ARGUMENT_NAME_NOT_ENVIRONMENT("'%s' is not an environment"),
         DOLLAR_ATOMIC_VECTORS("$ operator is invalid for atomic vectors"),

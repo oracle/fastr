@@ -223,6 +223,12 @@ public abstract class Bind extends RBaseNode {
         }
     }
 
+    @Specialization(guards = {"precedence == LOGICAL_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
+    protected Object allLogical(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
+                    @Cached("create()") CastLogicalNode cast) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true);
+    }
+
     @Specialization(guards = {"precedence == INT_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
     protected Object allInt(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastIntegerNode cast) {

@@ -188,14 +188,9 @@ def pkgtest(args):
                             f.write(test_time)
     env = os.environ.copy()
     env["TMPDIR"] = fastr_install_tmp
-    env['R_LIBS'] = fastr_libinstall
-    if not env.has_key('FASTR_PROCESS_TIMEOUT'):
-        env['FASTR_PROCESS_TIMEOUT'] = '5'
+    env['R_LIBS_USER'] = fastr_libinstall
     env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
     env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
-
-    # TODO enable but via installing Suggests
-    #_install_vignette_support('FastR', env)
 
     out = OutputCapture()
     # install and test the packages, unless just listing versions
@@ -233,11 +228,18 @@ def pkgtest(args):
             print '{0}: {1}'.format(pkg, test_status.status)
 
         # tar up the test results
-        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, fastr_testdir + '.tar'), os.path.basename(fastr_testdir)])
-        subprocess.call(['tar', 'cf', join(_fastr_suite_dir, gnur_testdir + '.tar'), os.path.basename(gnur_testdir)])
+        tar_tests(fastr_testdir)
+        tar_tests(gnur_testdir)
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
+
+def tar_tests(testdir):
+    test_tar = join(_fastr_suite_dir, testdir + '.tar')
+    subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
+    if os.path.exists(test_tar + '.gz'):
+        os.remove(test_tar + '.gz')
+    subprocess.call(['gzip', test_tar])
 
 class TestFileStatus:
     '''
@@ -285,15 +287,6 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             relfile = relpath(absfile, pkg_testdir)
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
-def _install_vignette_support(rvm, env):
-    # knitr is needed for vignettes, but FastR  can't handle it yet
-    if rvm == 'FastR':
-        return
-    _log_step('BEGIN', 'install vignette support', rvm)
-    args = [_installpkgs_script(), '--ignore-blacklist', '^rmarkdown$|^knitr$']
-    mx_fastr.gnu_rscript(args, env)
-    _log_step('END', 'install vignette support', rvm)
-
 def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     gnur_packages = join(_fastr_suite_dir(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
@@ -302,10 +295,8 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
             f.write('\n')
     env = os.environ.copy()
     env["TMPDIR"] = gnur_install_tmp
-    env['R_LIBS'] = gnur_libinstall
-
-    # TODO enable but via installing Suggests
-    # _install_vignette_support('GnuR', env)
+    env['R_LIBS_USER'] = gnur_libinstall
+    env["TZDIR"] = "/usr/share/zoneinfo/"
 
     args = []
     if _graalvm():
@@ -313,7 +304,8 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     args += [_installpkgs_script()]
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
-    args += ['--run-mode', 'internal']
+# GNU R will abort the entire run otherwise if a failure occurs
+#    args += ['--run-mode', 'internal']
     args += ['--ignore-blacklist']
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')

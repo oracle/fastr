@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -70,19 +71,22 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
-    public abstract static class Rg extends RBuiltinNode {
-
-        @CompilationFinal private static final String[] NAMES = new String[]{"values", "vectors"};
-
-        private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
-        private final BranchProfile errorProfile = BranchProfile.create();
+    private abstract static class RsgAdapter extends RBuiltinNode {
+        protected static final String[] NAMES = new String[]{"values", "vectors"};
+        protected final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
             casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
+
+    }
+
+    @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
+    public abstract static class Rg extends RsgAdapter {
+
+        private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
         @Specialization
         protected Object doRg(RDoubleVector matrix, boolean onlyValues) {
@@ -93,15 +97,11 @@ public class LaFunctions {
             char jobVL = 'N';
             char jobVR = 'N';
             boolean vectors = !onlyValues;
-            if (vectors) {
-                // TODO fix
-                RError.nyi(this, "\"only.values == FALSE\"");
-            }
             double[] left = null;
             double[] right = null;
             if (vectors) {
                 jobVR = 'V';
-                right = new double[a.length];
+                right = new double[n * n];
             }
             double[] wr = new double[n];
             double[] wi = new double[n];
@@ -139,18 +139,102 @@ public class LaFunctions {
                 }
                 values = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
                 if (vectors) {
-                    // TODO
+                    vectorValues = unscramble(wi, n, right);
                 }
             } else {
                 values = RDataFactory.createDoubleVector(wr, RDataFactory.COMPLETE_VECTOR);
                 if (vectors) {
-                    // TODO
+                    double[] val = new double[n * n];
+                    for (int i = 0; i < n * n; i++) {
+                        val[i] = right[i];
+                    }
+                    vectorValues = RDataFactory.createComplexVector(val, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
                 }
             }
             RStringVector names = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
             RList result = RDataFactory.createList(new Object[]{values, vectorValues}, names);
             return result;
         }
+
+        private static RComplexVector unscramble(double[] imaginary, int n, double[] vecs) {
+            double[] s = new double[2 * (n * n)];
+            int j = 0;
+            while (j < n) {
+                if (imaginary[j] != 0) {
+                    int j1 = j + 1;
+                    for (int i = 0; i < n; i++) {
+                        s[(i + n * j) << 1] = s[(i + n * j1) << 1] = vecs[i + j * n];
+                        s[((i + n * j1) << 1) + 1] = -(s[((i + n * j) << 1) + 1] = vecs[i + j1 * n]);
+                    }
+                    j = j1;
+                } else {
+                    for (int i = 0; i < n; i++) {
+                        s[(i + n * j) << 1] = vecs[i + j * n];
+                        s[((i + n * j) << 1) + 1] = 0.0;
+                    }
+                }
+                j++;
+            }
+            return RDataFactory.createComplexVector(s, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
+        }
+
+    }
+
+    @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
+    public abstract static class Rs extends RsgAdapter {
+        @Specialization
+        protected Object doRs(RDoubleVector matrix, boolean onlyValues) {
+            int[] dims = matrix.getDimensions();
+            int n = dims[0];
+            char jobv = onlyValues ? 'N' : 'V';
+            char uplo = 'L';
+            char range = 'A';
+            double vl = 0.0;
+            double vu = 0.0;
+            int il = 0;
+            int iu = 0;
+            double abstol = 0.0;
+            double[] x = matrix.getDataCopy();
+
+            double[] values = new double[n];
+
+            double[] z = null;
+            if (!onlyValues) {
+                z = new double[n * n];
+            }
+            int lwork = -1;
+            int liwork = -1;
+            int[] m = new int[n];
+            int[] isuppz = new int[2 * n];
+            double[] work = new double[1];
+            int[] iwork = new int[1];
+            int info = RFFIFactory.getRFFI().getLapackRFFI().dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
+            if (info != 0) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dysevr");
+            }
+            lwork = (int) work[0];
+            liwork = iwork[0];
+            work = new double[lwork];
+            iwork = new int[liwork];
+            info = RFFIFactory.getRFFI().getLapackRFFI().dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
+            if (info != 0) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dysevr");
+            }
+            Object[] data = new Object[onlyValues ? 1 : 2];
+            RStringVector names;
+            data[0] = RDataFactory.createDoubleVector(values, RDataFactory.COMPLETE_VECTOR);
+            if (!onlyValues) {
+                data[1] = RDataFactory.createDoubleVector(z, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
+                names = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                names = RDataFactory.createStringVectorFromScalar(NAMES[0]);
+            }
+            return RDataFactory.createList(data, names);
+
+        }
+
     }
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)

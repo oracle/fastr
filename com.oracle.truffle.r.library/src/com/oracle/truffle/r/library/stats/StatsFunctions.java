@@ -23,6 +23,8 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -141,5 +143,130 @@ public final class StatsFunctions {
                         @Cached("create()") NACheck cCheck) {
             return evaluate3(this, function, a, b, c, x, false /* dummy */, nan, aCheck, bCheck, cCheck);
         }
+    }
+
+    public abstract static class ApproxTest extends RExternalBuiltinNode.Arg4 {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(2).asIntegerVector().findFirst();
+            casts.arg(3).asDoubleVector().findFirst();
+        }
+
+        @Specialization
+        protected RNull approxtest(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, double f) {
+            int nx = x.getLength();
+            switch (method) {
+                case 1:
+                    break;
+                case 2:
+                    if (!RRuntime.isFinite(f) || f < 0.0 || f > 1.0) {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "approx(): invalid f value");
+                    }
+                    break;
+                default:
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "approx(): invalid interpolation method");
+            }
+
+            for (int i = 0; i < nx; i++) {
+                if (RRuntime.isNAorNaN(x.getDataAt(i)) || RRuntime.isNAorNaN(y.getDataAt(i))) {
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ("approx(): attempted to interpolate NA values"));
+                }
+            }
+
+            return RNull.instance;
+        }
+    }
+
+    public abstract static class Approx extends RExternalBuiltinNode.Arg7 {
+        private static final NACheck naCheck = NACheck.create();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(2).asDoubleVector();
+            casts.arg(3).asIntegerVector().findFirst();
+            casts.arg(4).asDoubleVector().findFirst();
+            casts.arg(5).asDoubleVector().findFirst();
+            casts.arg(6).asDoubleVector().findFirst();
+        }
+
+        @Specialization
+        protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f) {
+            int nx = x.getLength();
+            int nout = v.getLength();
+            double[] yout = new double[nout];
+            ApprMeth apprMeth = new ApprMeth();
+
+            apprMeth.f2 = f;
+            apprMeth.f1 = 1 - f;
+            apprMeth.kind = method;
+            apprMeth.ylow = yl;
+            apprMeth.yhigh = yr;
+            for (int i = 0; i < nout; i++) {
+                double xouti = v.getDataAt(i);
+                yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, x.getDataWithoutCopying(), y.getDataWithoutCopying(), nx, apprMeth);
+                naCheck.check(yout[i]);
+            }
+            return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
+        }
+
+        private static class ApprMeth {
+            double ylow;
+            double yhigh;
+            double f1;
+            double f2;
+            int kind;
+        }
+
+        private static double approx1(double v, double[] x, double[] y, int n,
+                        ApprMeth apprMeth) {
+            /* Approximate y(v), given (x,y)[i], i = 0,..,n-1 */
+            int i;
+            int j;
+            int ij;
+
+            if (n == 0) {
+                return RRuntime.DOUBLE_NA;
+            }
+
+            i = 0;
+            j = n - 1;
+
+            /* handle out-of-domain points */
+            if (v < x[i]) {
+                return apprMeth.ylow;
+            }
+            if (v > x[j]) {
+                return apprMeth.yhigh;
+            }
+
+            /* find the correct interval by bisection */
+            while (i < j - 1) { /* x[i] <= v <= x[j] */
+                ij = (i + j) / 2; /* i+1 <= ij <= j-1 */
+                if (v < x[ij]) {
+                    j = ij;
+                } else {
+                    i = ij;
+                }
+                /* still i < j */
+            }
+            /* provably have i == j-1 */
+
+            /* interpolation */
+
+            if (v == x[j]) {
+                return y[j];
+            }
+            if (v == x[i]) {
+                return y[i];
+            }
+            /* impossible: if(x[j] == x[i]) return y[i]; */
+
+            if (apprMeth.kind == 1) { /* linear */
+                return y[i] + (y[j] - y[i]) * ((v - x[i]) / (x[j] - x[i]));
+            } else { /* 2 : constant */
+                return (apprMeth.f1 != 0.0 ? y[i] * apprMeth.f1 : 0.0) + (apprMeth.f2 != 0.0 ? y[j] * apprMeth.f2 : 0.0);
+            }
+        }/* approx1() */
+
     }
 }
