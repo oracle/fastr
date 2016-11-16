@@ -24,12 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -101,14 +101,25 @@ class SpecialsUtils {
             return cachedField == null || (cachedField == field && list.getNames() == cachedNames);
         }
 
-        protected static int getIndex(RAbstractStringVector names, String field) {
+        protected static int getIndex(RStringVector names, String field) {
+            int fieldHash = field.hashCode();
             for (int i = 0; i < names.getLength(); i++) {
                 String current = names.getDataAt(i);
-                if (current == field || current.equals(field)) {
+                if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
                     return i;
                 }
             }
             return -1;
+        }
+
+        @TruffleBoundary
+        private static boolean contentsEquals(String current, String field) {
+            return field.equals(current);
+        }
+
+        @TruffleBoundary
+        private static boolean hashCodeEquals(String current, int fieldHash) {
+            return current.hashCode() == fieldHash;
         }
     }
 }

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
@@ -393,7 +394,7 @@ public final class RDataFactory {
     }
 
     public static RSymbol createSymbol(String name) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         return traceDataCreated(new RSymbol(name));
     }
 

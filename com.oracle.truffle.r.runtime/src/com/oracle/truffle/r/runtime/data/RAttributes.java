@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special
@@ -161,7 +162,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     @TruffleBoundary
     private static boolean isInterned(String name) {
-        assert name == name.intern() : name;
+        assert Utils.isInterned(name) : name;
         return true;
     }
 

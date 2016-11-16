@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -144,7 +145,7 @@ public class RASTUtils {
             return value;
         } else if (element instanceof RSyntaxLookup) {
             String id = ((RSyntaxLookup) element).getIdentifier();
-            assert id == id.intern() : element;
+            assert Utils.isInterned(id);
             return RDataFactory.createSymbol(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
@@ -163,7 +164,7 @@ public class RASTUtils {
             return RDataFactory.createSymbolInterned(rvcn.getPrintForm());
         } else {
             String id = ((ReadVariableNode) readVariableNode).getIdentifier();
-            assert id == id.intern();
+            assert Utils.isInterned(id);
             return RDataFactory.createSymbol(id);
         }
     }
@@ -223,7 +224,7 @@ public class RASTUtils {
         } else {
             fnNode = (RNode) unwrap(fn);
         }
-        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.EAGER_DEPARSE;
+        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.LAZY_DEPARSE;
         return RCallSpecialNode.createCall(sourceSection, fnNode, signature, arguments);
     }
 

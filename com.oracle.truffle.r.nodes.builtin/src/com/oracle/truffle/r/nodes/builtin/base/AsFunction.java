@@ -147,7 +147,7 @@ public abstract class AsFunction extends RBuiltinNode {
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
-        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction", null);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction", null);
         RDeparse.ensureSourceSection(rootNode);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame());

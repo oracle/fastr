@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -118,7 +117,6 @@ public class HiddenInternalFunctions {
                 RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
                     // We want this call to have a SourceSection
-                    RDeparse.ensureSourceSection(expr0);
                     aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(expr0), eenv.getFrame()));
                 } catch (PutException ex) {
                     /*

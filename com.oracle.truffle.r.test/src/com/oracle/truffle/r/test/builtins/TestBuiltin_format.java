@@ -214,8 +214,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat40() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(1e-07, TRUE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(1e-07, TRUE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -289,8 +288,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat55() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(1e-11, FALSE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(1e-11, FALSE, NULL, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test

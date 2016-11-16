@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
-import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode.LHSError;
 import com.oracle.truffle.r.nodes.control.WhileNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -54,7 +53,6 @@ import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -62,8 +60,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -88,6 +84,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         this.constants = constants;
     }
 
+    @SuppressWarnings({"unused", "static-method"})
     private RCallNode unused() {
         return null; // we need reference to RCallNode, otherwise it won't compile, compilation bug?
     }
@@ -95,27 +92,28 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     @Override
     public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
         if (lhs instanceof RSyntaxLookup) {
-            String symbol = ((RSyntaxLookup) lhs).getIdentifier();
+            RSyntaxLookup lhsLookup = (RSyntaxLookup) lhs;
+            String symbol = lhsLookup.getIdentifier();
             if (args.size() == 0) {
                 switch (symbol) {
                     case "break":
-                        return new BreakNode(source);
+                        return new BreakNode(source, lhsLookup);
                     case "next":
-                        return new NextNode(source);
+                        return new NextNode(source, lhsLookup);
                 }
             } else if (args.size() == 1) {
                 switch (symbol) {
                     case "repeat":
-                        return RepeatNode.create(source, args.get(0).value);
+                        return new RepeatNode(source, lhsLookup, args.get(0).value);
                     case "(":
                         return args.get(0).value;
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {
                     case "while":
-                        return WhileNode.create(source, args.get(0).value, args.get(1).value);
+                        return new WhileNode(source, lhsLookup, args.get(0).value, args.get(1).value);
                     case "if":
-                        return IfNode.create(source, args.get(0).value, args.get(1).value, null);
+                        return new IfNode(source, lhsLookup, args.get(0).value, args.get(1).value, null);
                     case "=":
                     case "<-":
                     case ":=":
@@ -124,63 +122,53 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "->>":
                         boolean isSuper = "<<-".equals(symbol) || "->>".equals(symbol);
                         boolean switchArgs = "->".equals(symbol) || "->>".equals(symbol);
-                        String operator = "=".equals(symbol) ? "=" : isSuper ? "<<-" : "<-";
-                        return createReplacement(source, operator, isSuper, args.get(switchArgs ? 1 : 0).value, args.get(switchArgs ? 0 : 1).value);
+                        // fix the operators while keeping the correct source sections
+                        if ("->>".equals(symbol)) {
+                            lhsLookup = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<<-");
+                        } else if ("->".equals(symbol)) {
+                            lhsLookup = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<-");
+                        }
+                        // switch the args if needed
+                        RSyntaxNode lhsArg = args.get(switchArgs ? 1 : 0).value;
+                        RSyntaxNode rhsArg = args.get(switchArgs ? 0 : 1).value;
+                        return new ReplacementDispatchNode(source, lhsLookup, lhsArg, rhsArg, isSuper, context.getReplacementVarsStartIndex());
                 }
             } else if (args.size() == 3) {
                 switch (symbol) {
                     case "for":
                         if (args.get(0).value instanceof RSyntaxLookup) {
-                            String name = ((RSyntaxLookup) args.get(0).value).getIdentifier();
-                            WriteVariableNode cvar = WriteVariableNode.create(source, name, null, false);
-                            return ForNode.create(source, cvar, args.get(1).value, args.get(2).value);
+                            RSyntaxLookup var = (RSyntaxLookup) args.get(0).value;
+                            return new ForNode(source, lhsLookup, var, args.get(1).value.asRNode(), args.get(2).value.asRNode());
                         }
                         break;
                     case "if":
-                        return IfNode.create(source, args.get(0).value, args.get(1).value, args.get(2).value);
+                        return new IfNode(source, lhsLookup, args.get(0).value, args.get(1).value, args.get(2).value);
                 }
             }
             switch (symbol) {
                 case "{":
-                    return new BlockNode(source, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
+                    return new BlockNode(source, lhsLookup, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
                 case "missing":
-                    return new MissingNode(source, lhs, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
+                    return new MissingNode(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
             }
         }
 
-        ArgumentsSignature signature = createSignature(args);
-        RSyntaxNode[] nodes = args.stream().map(
-                        arg -> (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value).toArray(
-                                        RSyntaxNode[]::new);
-
-        return RCallSpecialNode.createCall(source, lhs.asRNode(), signature, nodes);
-    }
-
-    private RSyntaxNode createReplacement(SourceSection source, String operator, boolean isSuper, RSyntaxNode replacementLhs, RSyntaxNode replacementRhs) {
-        if (replacementLhs instanceof RSyntaxCall) {
-            return createReplacement(source, replacementLhs, replacementRhs, operator, isSuper);
-        } else {
-            String name;
-            if (replacementLhs instanceof RSyntaxLookup) {
-                name = ((RSyntaxLookup) replacementLhs).getIdentifier();
-            } else if (replacementLhs instanceof RSyntaxConstant) {
-                RSyntaxConstant c = (RSyntaxConstant) replacementLhs;
-                if (c.getValue() instanceof String) {
-                    name = (String) c.getValue();
-                } else {
-                    return new LHSError(source, operator, replacementLhs, replacementRhs);
-                }
-            } else {
-                throw RInternalError.unimplemented("unexpected lhs type: " + replacementLhs.getClass());
-            }
-            return (RSyntaxNode) WriteVariableNode.create(source, name, replacementRhs.asRNode(), isSuper);
-        }
+        return RCallSpecialNode.createCall(source, lhs.asRNode(), createSignature(args), createArguments(args));
     }
 
     private static ArgumentsSignature createSignature(List<Argument<RSyntaxNode>> args) {
         String[] argumentNames = args.stream().map(arg -> arg.name).toArray(String[]::new);
         ArgumentsSignature signature = ArgumentsSignature.get(argumentNames);
         return signature;
+    }
+
+    private static RSyntaxNode[] createArguments(List<Argument<RSyntaxNode>> args) {
+        RSyntaxNode[] nodes = new RSyntaxNode[args.size()];
+        for (int i = 0; i < nodes.length; i++) {
+            Argument<RSyntaxNode> arg = args.get(i);
+            nodes[i] = (arg.value == null && arg.name == null) ? ConstantNode.create(arg.source == null ? RSyntaxNode.SOURCE_UNAVAILABLE : arg.source, REmpty.instance) : arg.value;
+        }
+        return nodes;
     }
 
     private static String getFunctionDescription(SourceSection source, Object assignedTo) {
@@ -192,10 +180,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             String functionBody = source.getCode();
             return functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
         }
-    }
-
-    private RSyntaxNode createReplacement(SourceSection source, RSyntaxNode lhs, RSyntaxNode rhs, String operator, boolean isSuper) {
-        return new ReplacementDispatchNode(source, operator, lhs, rhs, isSuper, this.context.getReplacementVarsStartIndex());
     }
 
     public static FastPathFactory createFunctionFastPath(RSyntaxElement body, ArgumentsSignature signature) {
@@ -293,21 +277,19 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode lookup(SourceSection sourceIn, String symbol, boolean functionLookup) {
+    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
+        assert source != null;
         if (constants != null && symbol.startsWith("C")) {
             Object object = constants.get(symbol);
             if (object != null) {
-                return ConstantNode.create(sourceIn, object);
+                return ConstantNode.create(source, object);
             }
         }
-        /*
-         * TODO Ideally, sourceIn != null always, however ReplacementNodes can cause this on the
-         * rewrite nodes.
-         */
-        SourceSection source = sourceIn == null ? RSyntaxNode.INTERNAL : sourceIn;
-        if (!functionLookup && getVariadicComponentIndex(symbol) != -1) {
-            int ind = getVariadicComponentIndex(symbol);
-            return new ReadVariadicComponentNode(source, ind > 0 ? ind - 1 : ind);
+        if (!functionLookup) {
+            int index = getVariadicComponentIndex(symbol);
+            if (index != -1) {
+                return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
+            }
         }
         return functionLookup ? ReadVariableNode.createForcedFunctionLookup(source, symbol) : ReadVariableNode.create(source, symbol, false);
     }

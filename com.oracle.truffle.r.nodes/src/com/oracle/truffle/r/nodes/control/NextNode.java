@@ -26,29 +26,21 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class NextNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class NextNode extends OperatorNode {
 
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public NextNode(SourceSection src) {
-        super(src);
+    public NextNode(SourceSection src, RSyntaxLookup operator) {
+        super(src, operator);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         visibility.execute(frame, false);
         throw NextException.instance;
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "next", true);
     }
 
     @Override

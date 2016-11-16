@@ -186,7 +186,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             } else {
                 result = call.getSyntaxArguments()[index - 1];
                 if (result == null) {
-                    result = RSyntaxLookup.createDummyLookup(null, "", false);
+                    result = RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "", false);
                 }
             }
         } else if (s instanceof RSyntaxFunction) {
@@ -499,16 +499,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
         }
         return RNull.instance;
-    }
-
-    @Override
-    public RSyntaxNode[] isReplacementNode(Node node) {
-        if (node instanceof ReplacementDispatchNode) {
-            ReplacementDispatchNode rn = (ReplacementDispatchNode) node;
-            return new RSyntaxNode[]{rn.getLhs(), rn.getRhs()};
-        } else {
-            return null;
-        }
     }
 
     @Override

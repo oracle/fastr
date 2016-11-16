@@ -151,11 +151,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                     mnl = left; /* min digits to left of . */
                 }
                 if (sleft > mxsl) {
-                    mxsl = sleft; /*
-                                   * max left includingimport static
-                                   * com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
-                                   * sign(s)
-                                   */
+                    mxsl = sleft; /* max left including sign(s) */
                 }
                 if (nsig > mxns) {
                     mxns = nsig; /* max sig digits */
@@ -191,7 +187,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         e = (mxl > 100 || mnl <= -99) ? 2 : 1; /* 3 digit exponent */
         if (mxns != RRuntime.INT_MIN_VALUE) {
             d = mxns - 1;
-            w = neg + (d != 0 ? 1 : 1) + d + 4 + e; /* width for E format */
+            w = neg + (d > 0 ? 1 : 0) + d + 4 + e; /* width for E format */
             if (wF <= w + sciPen) { /* Fixpoint if it needs less space */
                 e = 0;
                 if (nsmall > rgt) {
@@ -390,50 +386,55 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }
 
+    // caching some commonly used formats
+    private static final DecimalFormat[] CACHED_FORMATS = new DecimalFormat[32];
+
     @TruffleBoundary
     static String encodeReal(double initialX, int w, int d, int e, char cdec, String naString) {
-        final String buff;
-        String fmt;
-
         /* IEEE allows signed zeros (yuck!) */
         double x = RRuntime.normalizeZero(initialX);
 
         if (!RRuntime.isFinite(x)) {
-            int numBlanks = Math.min(w, (NB - 1));
-            String naFmt = "%" + Utils.asBlankArg(numBlanks) + "s";
+            String id;
             if (RRuntime.isNA(x)) {
-                buff = snprintf(NB, naFmt, naString);
+                id = naString;
             } else if (RRuntime.isNAorNaN(x)) {
-                buff = snprintf(NB, naFmt, "NaN");
-            } else if (x > 0) {
-                buff = snprintf(NB, naFmt, "Inf");
+                id = "NaN";
             } else {
-                buff = snprintf(NB, naFmt, "-Inf");
+                id = x > 0 ? "Inf" : "-Inf";
             }
+            return prependBlanks(w, id);
         } else if (e != 0) {
-            if (d != 0) {
-                fmt = String.format("%%#%d.%de", Math.min(w, (NB - 1)), d);
-                buff = snprintf(NB, fmt, x);
-            } else {
-                fmt = String.format("%%%d.%de", Math.min(w, (NB - 1)), d);
-                buff = snprintf(NB, fmt, x);
-            }
+            String fmt = String.format((d != 0) ? "%%#%d.%de" : "%%%d.%de", Math.min(w, (NB - 1)), d);
+            return snprintf(NB, fmt, x).replace('.', cdec);
         } else { /* e = 0 */
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_EVEN);
-            df.setDecimalSeparatorAlwaysShown(false);
-            df.setMinimumFractionDigits(d);
-            df.setMaximumFractionDigits(d);
-            String ds = df.format(x);
-            int blanks = w - ds.length();
-            fmt = "%" + Utils.asBlankArg(blanks) + "s%s";
-            buff = String.format(fmt, "", ds);
+            DecimalFormat df = null;
+            if (d < CACHED_FORMATS.length) {
+                df = CACHED_FORMATS[d];
+            }
+            if (df == null) {
+                df = new DecimalFormat("#.#");
+                df.setRoundingMode(RoundingMode.HALF_EVEN);
+                df.setDecimalSeparatorAlwaysShown(false);
+                df.setMinimumFractionDigits(d);
+                df.setMaximumFractionDigits(d);
+                if (d < CACHED_FORMATS.length) {
+                    CACHED_FORMATS[d] = df;
+                }
+            }
+            return prependBlanks(w, df.format(x)).replace('.', cdec);
         }
+    }
 
-        if (cdec != '.') {
-            buff.replace('.', cdec);
+    private static String prependBlanks(int width, String id) {
+        assert id.length() <= width;
+        if (id.length() == width) {
+            return id;
         }
-
-        return buff;
+        StringBuilder str = new StringBuilder(width);
+        for (int i = 0; i < width - id.length(); i++) {
+            str.append(' ');
+        }
+        return str.append(id).toString();
     }
 }

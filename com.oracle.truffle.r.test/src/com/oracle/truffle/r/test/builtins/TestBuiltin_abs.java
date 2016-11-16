@@ -56,7 +56,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs8() {
-        assertEval(Ignored.Unknown, "argv <- list(1e+07);abs(argv[[1]]);");
+        assertEval("argv <- list(1e+07);abs(argv[[1]]);");
     }
 
     @Test
@@ -149,7 +149,7 @@ public class TestBuiltin_abs extends TestBase {
         assertEval("{ abs(c(1, -2, NA)) }");
         assertEval("{ abs(NULL) }");
 
-        assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
+        assertEval("{ abs(c(0/0,1i)) }");
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
 

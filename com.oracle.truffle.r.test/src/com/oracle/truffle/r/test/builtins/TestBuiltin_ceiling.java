@@ -49,7 +49,7 @@ public class TestBuiltin_ceiling extends TestBase {
 
     @Test
     public void testceiling7() {
-        assertEval(Ignored.Unknown, "argv <- list(1e+05);ceiling(argv[[1]]);");
+        assertEval("argv <- list(1e+05);ceiling(argv[[1]]);");
     }
 
     @Test

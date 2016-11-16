@@ -59,12 +59,18 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     @Child private ExtractListElement extractListElement = ExtractListElement.create();
 
     @Specialization(guards = {"isSimpleList(list)", "isCached(list, field)", "list.getNames() != null"})
-    public Object doList(RList list, String field, @Cached("getIndex(list.getNames(), field)") int index) {
+    public Object doList(RList list, String field,
+                    @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
             throw RSpecialFactory.throwFullCallNeeded();
         }
         updateCache(list, field);
         return extractListElement.execute(list, index);
+    }
+
+    @Specialization(contains = "doList", guards = {"isSimpleList(list)", "list.getNames() != null"})
+    public Object doListDynamic(RList list, String field) {
+        return doList(list, field, getIndex(list.getNames(), field));
     }
 
     @Fallback

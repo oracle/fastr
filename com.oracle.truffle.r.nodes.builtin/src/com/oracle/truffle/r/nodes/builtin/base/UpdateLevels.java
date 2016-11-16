@@ -15,11 +15,11 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -30,17 +30,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "levels<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateLevels extends RBuiltinNode {
 
-    @Child private CastToVectorNode castVector;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("value").allowNull().asVector(false);
+    }
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-    private RAbstractVector castVector(Object value) {
-        if (castVector == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(false));
-        }
-        return (RAbstractVector) castVector.execute(value);
-    }
 
     @Specialization
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
@@ -49,14 +44,20 @@ public abstract class UpdateLevels extends RBuiltinNode {
         return v;
     }
 
-    @Specialization(guards = "levelsNotNull(levels)")
+    @Specialization(guards = "!isRNull(levels)")
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
         RVector<?> v = (RVector<?>) vector.getNonShared();
-        v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(levels));
+        v.setAttr(RRuntime.LEVELS_ATTR_KEY, levels);
         return v;
     }
 
-    protected boolean levelsNotNull(Object levels) {
-        return levels != RNull.instance;
+    @Specialization
+    protected RNull updateLevels(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") RNull levels) {
+        return RNull.instance;
+    }
+
+    @Specialization(guards = "!isRNull(levels)")
+    protected RAbstractVector updateLevels(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") Object levels) {
+        throw RError.error(this, Message.SET_ATTRIBUTES_ON_NULL);
     }
 }

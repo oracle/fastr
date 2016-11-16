@@ -144,12 +144,6 @@ public interface RRuntimeASTAccess {
     Engine createEngine(RContext context);
 
     /**
-     * Returns {@code null} if {@code node} is not an instance of {@code ReplacementNode}, else the
-     * lhs,rhs pair.
-     */
-    RSyntaxNode[] isReplacementNode(Node node);
-
-    /**
      * Returns {@code true} iff {@code node} is an instance of {@code FunctionDefinitionNode}, which
      * is not visible from {@code runtime}, or {@code false} otherwise.
      */

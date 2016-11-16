@@ -66,10 +66,10 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     }
 
     @Specialization(guards = {"isSimpleList(list)", "!list.isShared()", "isCached(list, field)", "list.getNames() != null", "isNotRNullRList(value)"})
-    public RList doList(RList list, String field, Object value, @Cached("getIndex(list.getNames(), field)") int index) {
+    public RList doList(RList list, String field, Object value,
+                    @Cached("getIndex(list.getNames(), field)") int index) {
         if (index == -1) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            throw RSpecialFactory.throwFullCallNeeded();
+            throw RSpecialFactory.throwFullCallNeeded(value);
         }
         updateCache(list, field);
         Object sharedValue = value;
@@ -81,9 +81,15 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return list;
     }
 
+    @Specialization(contains = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
+    public RList doListDynamic(RList list, String field, Object value) {
+        return doList(list, field, value, getIndex(list.getNames(), field));
+    }
+
+    @SuppressWarnings("unused")
     @Fallback
     public void doFallback(Object container, Object field, Object value) {
-        throw RSpecialFactory.throwFullCallNeeded();
+        throw RSpecialFactory.throwFullCallNeeded(value);
     }
 
     private ShareObjectNode getShareObjectNode() {

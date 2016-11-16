@@ -172,10 +172,6 @@ public class RSubstitute {
 
     @TruffleBoundary
     public static RSyntaxNode substitute(REnvironment env, RBaseNode node) {
-        RSyntaxNode substituted = substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env);
-        // create source for entire tree, this may be done lazily in the future
-        substituted.setSourceSection(RSyntaxNode.EAGER_DEPARSE);
-        RDeparse.ensureSourceSection(substituted);
-        return substituted;
+        return substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env);
     }
 }

@@ -89,6 +89,11 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     public boolean isFunctionLookup() {
         return false;
     }
+
+    @Override
+    public SourceSection getLazySourceSection() {
+        return null;
+    }
 }
 
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
@@ -106,7 +111,13 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     @Override
+    public SourceSection getLazySourceSection() {
+        return sourceSectionR;
+    }
+
+    @Override
     public SourceSection getSourceSection() {
+        RDeparse.ensureSourceSection(this);
         return sourceSectionR;
     }
 
@@ -133,37 +144,42 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         this.signature = signature;
     }
 
-    public static RSyntaxNode createCallInReplace(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments) {
-        return createCall(sourceSection, functionNode, signature, arguments, true);
+    /**
+     * This passes {@code true} for the isReplacement parameter and ignores the specified arguments,
+     * i.e., does not modify them in any way before passing it to
+     * {@link RSpecialFactory#create(ArgumentsSignature, RNode[], boolean)}.
+     */
+    public static RSyntaxNode createCallInReplace(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, int... ignoredArguments) {
+        return createCall(sourceSection, functionNode, signature, arguments, true, ignoredArguments);
     }
 
     public static RSyntaxNode createCall(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments) {
         return createCall(sourceSection, functionNode, signature, arguments, false);
     }
 
-    private static RSyntaxNode createCall(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace) {
+    private static RSyntaxNode createCall(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace, int... ignoredArguments) {
         RCallSpecialNode special = null;
         if (useSpecials) {
-            special = tryCreate(sourceSection, functionNode, signature, arguments, inReplace);
+            special = tryCreate(sourceSection, functionNode, signature, arguments, inReplace, ignoredArguments);
         }
         if (special != null) {
-            if (sourceSection == RSyntaxNode.EAGER_DEPARSE) {
-                RDeparse.ensureSourceSection(special);
-            }
             return special;
         } else {
             return RCallNode.createCall(sourceSection, functionNode, signature, arguments);
         }
     }
 
-    private static RCallSpecialNode tryCreate(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace) {
+    private static RCallSpecialNode tryCreate(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace, int[] ignoredArguments) {
         RSyntaxNode syntaxFunction = functionNode.asRSyntaxNode();
         if (!(syntaxFunction instanceof RSyntaxLookup)) {
             // LHS is not a simple lookup -> bail out
             return null;
         }
-        for (RSyntaxNode argument : arguments) {
-            if (!(argument instanceof RSyntaxLookup || argument instanceof RSyntaxConstant || argument instanceof RCallSpecialNode)) {
+        for (int i = 0; i < arguments.length; i++) {
+            if (contains(ignoredArguments, i)) {
+                continue;
+            }
+            if (!(arguments[i] instanceof RSyntaxLookup || arguments[i] instanceof RSyntaxConstant || arguments[i] instanceof RCallSpecialNode)) {
                 // argument is not a simple lookup or constant value or another special -> bail out
                 return null;
             }
@@ -181,14 +197,18 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         RNode[] localArguments = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            if (arguments[i] instanceof RSyntaxLookup) {
-                localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
-            } else if (arguments[i] instanceof RSyntaxConstant) {
-                localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
-            } else {
-                assert arguments[i] instanceof RCallSpecialNode;
-                ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+            if (inReplace && contains(ignoredArguments, i)) {
                 localArguments[i] = arguments[i].asRNode();
+            } else {
+                if (arguments[i] instanceof RSyntaxLookup) {
+                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
+                } else if (arguments[i] instanceof RSyntaxConstant) {
+                    localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+                } else {
+                    assert arguments[i] instanceof RCallSpecialNode;
+                    ((RCallSpecialNode) arguments[i]).setArgumentIndex(i);
+                    localArguments[i] = arguments[i].asRNode();
+                }
             }
         }
         RNode special = specialCall.create(signature, localArguments, inReplace);
@@ -202,6 +222,15 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         return new RCallSpecialNode(sourceSection, functionNode, expectedFunction, arguments, signature, special);
     }
 
+    private static boolean contains(int[] ignoredArguments, int index) {
+        for (int i = 0; i < ignoredArguments.length; i++) {
+            if (ignoredArguments[i] == index) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Object execute(VirtualFrame frame, Object function) {
         try {
@@ -212,18 +241,18 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             return special.execute(frame);
         } catch (RecursiveSpecialBailout bailout) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            throwOnRecursiveSpecial();
+            throwOnRecursiveSpecial(bailout.rhsValue);
             return replace(getRCallNode(rewriteSpecialArgument(bailout))).execute(frame, function);
         } catch (RSpecialFactory.FullCallNeededException e) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            throwOnRecursiveSpecial();
+            throwOnRecursiveSpecial(e.rhsValue);
             return replace(getRCallNode()).execute(frame, function);
         }
     }
 
-    private void throwOnRecursiveSpecial() {
+    private void throwOnRecursiveSpecial(Object rhsValue) {
         if (isRecursiveSpecial()) {
-            throw new RecursiveSpecialBailout(argumentIndex);
+            throw new RecursiveSpecialBailout(argumentIndex, rhsValue);
         }
     }
 
@@ -293,9 +322,11 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @SuppressWarnings("serial")
     public static final class RecursiveSpecialBailout extends RuntimeException {
         public final int argumentIndex;
+        public final Object rhsValue;
 
-        RecursiveSpecialBailout(int argumentIndex) {
+        RecursiveSpecialBailout(int argumentIndex, Object rhsValue) {
             this.argumentIndex = argumentIndex;
+            this.rhsValue = rhsValue;
         }
 
         @Override

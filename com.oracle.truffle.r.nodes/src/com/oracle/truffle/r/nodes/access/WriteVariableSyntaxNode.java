@@ -22,66 +22,62 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.api.nodes.NodeCost.NONE;
+
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
+import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-/**
- * The "syntax" variant corresponding to {@code x <- y} in the source.
- */
-@NodeInfo(cost = NodeCost.NONE)
-public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, RSyntaxCall {
+@NodeInfo(cost = NONE)
+public final class WriteVariableSyntaxNode extends OperatorNode {
 
-    @Child private WriteLocalFrameVariableNode writeLocalFrameVariableNode;
+    @Child private WriteVariableNode write;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    protected WriteCurrentVariableNode(SourceSection src, String name, RNode rhs) {
-        super(src);
-        writeLocalFrameVariableNode = WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR);
-    }
+    private final RSyntaxElement lhs;
 
-    static WriteCurrentVariableNode create(SourceSection src, String name, RNode rhs) {
-        return new WriteCurrentVariableNode(src, name, rhs);
-    }
-
-    @Override
-    public Object getName() {
-        return writeLocalFrameVariableNode.getName();
-    }
-
-    @Override
-    public RNode getRhs() {
-        return writeLocalFrameVariableNode.getRhs();
+    public WriteVariableSyntaxNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs, RNode rhs, boolean isSuper) {
+        super(source, operator);
+        this.lhs = lhs;
+        String name;
+        if (lhs instanceof RSyntaxLookup) {
+            name = ((RSyntaxLookup) lhs).getIdentifier();
+        } else if (lhs instanceof RSyntaxConstant) {
+            RSyntaxConstant c = (RSyntaxConstant) lhs;
+            if (c.getValue() instanceof String) {
+                name = (String) c.getValue();
+            } else {
+                // "this" needs to be initialized for error reporting to work
+                this.write = WriteVariableNode.createAnonymous("dummy", rhs, Mode.REGULAR, isSuper);
+                throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
+            }
+        } else {
+            throw RInternalError.unimplemented("unexpected lhs type in replacement: " + lhs.getClass());
+        }
+        this.write = WriteVariableNode.createAnonymous(name, rhs, Mode.REGULAR, isSuper);
+        assert write != null;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        Object result = writeLocalFrameVariableNode.execute(frame);
+        Object result = write.execute(frame);
         visibility.execute(frame, false);
         return result;
     }
 
     @Override
-    public void execute(VirtualFrame frame, Object value) {
-        writeLocalFrameVariableNode.execute(frame, value);
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(null, "<-", true);
-    }
-
-    @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(getSourceSection(), (String) getName(), false), getRhs().asRSyntaxNode()};
+        return new RSyntaxElement[]{lhs, write.getRhs().asRSyntaxNode()};
     }
 
     @Override

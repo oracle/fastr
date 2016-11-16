@@ -57,8 +57,7 @@ public class TestBuiltin_tolower extends TestBase {
         assertEval("{ tolower(c(\"Hello\",\"ByE\")) }");
         assertEval("{ tolower(c()) }");
 
-        // double-to-string conversion problem
-        assertEval(Ignored.OutputFormatting, "{ tolower(1E100) }");
+        assertEval("{ tolower(1E100) }");
         assertEval("{ tolower(c(a=\"HI\", \"HELlo\")) }");
         assertEval("{ tolower(NA) }");
 

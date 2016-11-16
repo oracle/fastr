@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -82,7 +83,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
         for (int i = 0; i < argReads.length; i++) {
             Object cachedId = argReads[i].getIdentifier();
             String id = ((RSymbol) (arguments.getDataAt(i))).getName();
-            assert cachedId instanceof String && cachedId == ((String) cachedId).intern() && id == id.intern();
+            assert cachedId instanceof String && Utils.isInterned((String) cachedId) && Utils.isInterned(id);
             if (cachedId != id) {
                 throw new SlowPathException();
             }

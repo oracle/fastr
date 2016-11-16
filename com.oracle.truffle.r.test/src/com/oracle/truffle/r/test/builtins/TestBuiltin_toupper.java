@@ -48,7 +48,7 @@ public class TestBuiltin_toupper extends TestBase {
         assertEval("{ toupper(c()) }");
         assertEval("{ toupper(NA) }");
 
-        assertEval(Ignored.OutputFormatting, "{ toupper(1E100) }");
+        assertEval("{ toupper(1E100) }");
         assertEval("{ m <- matrix(\"hi\") ; toupper(m) }");
         assertEval("{ toupper(c(a=\"hi\", \"hello\")) }");
     }
