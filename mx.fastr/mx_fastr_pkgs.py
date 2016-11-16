@@ -189,8 +189,6 @@ def pkgtest(args):
     env = os.environ.copy()
     env["TMPDIR"] = fastr_install_tmp
     env['R_LIBS_USER'] = fastr_libinstall
-    if not env.has_key('FASTR_PROCESS_TIMEOUT'):
-        env['FASTR_PROCESS_TIMEOUT'] = '5'
     env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
     env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
 

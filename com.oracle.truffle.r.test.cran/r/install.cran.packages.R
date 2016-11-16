@@ -733,7 +733,10 @@ system.test <- function(pkgname) {
 		rscript = gnu_rscript()
 	}
 	args <- c(script, pkgname, file.path(testdir, pkgname), lib.install)
-	rc <- system2(rscript, args)
+	# we want to stop tests that hang, but some packages have many tests
+	# each of which spawns a sub-process (over which we have no control)
+	# so we time out the entire set after 20 minutes.
+	rc <- system2(rscript, args, env="FASTR_PROCESS_TIMEOUT=20")
 	rc
 }
 
