@@ -38,8 +38,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Simple attribute access node that specializes on the position at which the attribute was found
- * last time.
+ * Copies attributes from two source nodes into one result node.
+ *
+ * @see UnaryCopyAttributesNode
+ * @see CopyOfRegAttributesNode
  */
 public abstract class CopyAttributesNode extends RBaseNode {
 
