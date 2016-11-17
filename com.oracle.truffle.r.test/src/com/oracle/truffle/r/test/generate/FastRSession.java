@@ -207,6 +207,7 @@ public final class FastRSession implements RSession {
         try {
             if (!thread.await(longTimeout ? longTimeoutValue : timeoutValue)) {
                 consoleHandler.println("<timeout>");
+                System.out.println("timeout in " + testClass.getClass() + ": " + expression);
                 for (StackTraceElement element : thread.getStackTrace()) {
                     System.out.println(element);
                 }
