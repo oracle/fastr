@@ -30,8 +30,8 @@ public class TestBuiltin_asfunction extends TestBase {
 
     @Test
     public void testasfunction() {
-        assertEval("as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))");
-        assertEval("f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
+        assertEval(Output.IgnoreWhitespace, "as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))");
+        assertEval(Output.IgnoreWhitespace, "f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
         assertEval("foo <- function(x) x*2; as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))(c=3,b=1)");
         assertEval("foo <- function(x) x*2; f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))(c=3,b=1)");
         assertEval("{ as.function(alist(42))() }");
