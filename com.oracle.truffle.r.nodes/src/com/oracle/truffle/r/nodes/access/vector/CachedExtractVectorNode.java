@@ -68,7 +68,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     private final VectorLengthProfile vectorLengthProfile = VectorLengthProfile.create();
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
-    private final ValueProfile vectorClassProfile = ValueProfile.createClassProfile();
 
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
