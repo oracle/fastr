@@ -23,14 +23,12 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -38,18 +36,19 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
@@ -272,9 +271,9 @@ public class RChannel {
 
             private final Object env;
             private final Object value;
-            private final byte[] serializedExpr;
+            private final RSyntaxElement serializedExpr;
 
-            public SerializedPromise(Object env, Object value, byte[] serializedExpr) {
+            public SerializedPromise(Object env, Object value, RSyntaxElement serializedExpr) {
                 this.env = env;
                 this.value = value;
                 this.serializedExpr = serializedExpr;
@@ -288,7 +287,7 @@ public class RChannel {
                 return value;
             }
 
-            public byte[] getSerializedExpr() {
+            public RSyntaxElement getSerializedExpr() {
                 return serializedExpr;
             }
 
@@ -297,9 +296,9 @@ public class RChannel {
         protected static class SerializedFunction {
             private final RAttributes attributes;
             private final Object env;
-            private final byte[] serializedDef;
+            private final RFunction serializedDef;
 
-            public SerializedFunction(RAttributes attributes, Object env, byte[] serializedDef) {
+            public SerializedFunction(RAttributes attributes, Object env, RFunction serializedDef) {
                 this.attributes = attributes;
                 this.env = env;
                 this.serializedDef = serializedDef;
@@ -313,7 +312,7 @@ public class RChannel {
                 return env;
             }
 
-            public byte[] getSerializedDef() {
+            public RFunction getSerializedDef() {
                 return serializedDef;
             }
         }
@@ -417,22 +416,20 @@ public class RChannel {
 
         private SerializedPromise convertPrivatePromise(Object msg) throws IOException {
             RPromise p = (RPromise) msg;
-            byte[] serializedPromiseRep = RSerialize.serializePromiseRep(p);
             if (p.isEvaluated()) {
-                return new SerializedPromise(RNull.instance, p.getValue(), serializedPromiseRep);
+                return new SerializedPromise(RNull.instance, p.getValue(), p.getClosure().getExpr().asRSyntaxNode());
             } else {
                 REnvironment env = p.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(p.getFrame());
-                return new SerializedPromise(convertPrivate(env), RUnboundValue.instance, serializedPromiseRep);
+                return new SerializedPromise(convertPrivate(env), RUnboundValue.instance, p.getClosure().getExpr().asRSyntaxNode());
             }
 
         }
 
         private SerializedFunction convertPrivateFunction(Object msg) throws IOException {
             RFunction fn = (RFunction) msg;
-            byte[] serializedFunctionDef = RSerialize.serializeFunctionNonEnv(fn);
             Object env = convertPrivate(REnvironment.frameToEnvironment(fn.getEnclosingFrame()));
             RAttributes attributes = fn.getAttributes();
-            return new SerializedFunction(attributes == null ? null : createShareableSlow(attributes, true), env, serializedFunctionDef);
+            return new SerializedFunction(attributes == null ? null : createShareableSlow(attributes, true), env, fn);
         }
 
         private Object convertPrivateAttributable(Object msg) throws IOException {
@@ -629,27 +626,28 @@ public class RChannel {
 
         @TruffleBoundary
         private RPromise unserializePromise(SerializedPromise p) throws IOException {
-            Map<String, Object> constants = new HashMap<>();
-            String deparse = RDeparse.deparseDeserialize(constants, RSerialize.unserialize(p.getSerializedExpr(), null, null, null));
-            Source source = RSource.fromPackageTextInternal(deparse, null);
-            RExpression expr = RContext.getEngine().parse(constants, source);
-            Object env = p.getEnv();
-            if (env != RNull.instance) {
-                env = unserializeObject(env);
+            Closure closure = Closure.create(RContext.getASTBuilder().process(p.getSerializedExpr()).asRNode());
+            if (p.getValue() == RUnboundValue.instance) {
+                Object environment = p.getEnv();
+                if (environment != RNull.instance) {
+                    environment = unserializeObject(environment);
+                }
+                REnvironment env = environment == RNull.instance ? REnvironment.baseEnv() : (REnvironment) environment;
+                return RDataFactory.createPromise(PromiseState.Explicit, closure, env.getFrame());
+            } else {
+                return RDataFactory.createEvaluatedPromise(closure, p.getValue());
             }
-            return RSerialize.unserializePromise(expr, env, p.getValue());
         }
 
         @TruffleBoundary
         private RFunction unserializeFunction(SerializedFunction f) throws IOException {
-            Map<String, Object> constants = new HashMap<>();
-            RPairList l = (RPairList) RSerialize.unserialize(f.getSerializedDef(), null, null, null);
-            // seems like the best (only) way to make deparser see a correct pair list type here
-            RPairList closxpList = RDataFactory.createPairList(l.car(), l.cdr(), RNull.instance, SEXPTYPE.CLOSXP);
-            String deparse = RDeparse.deparseDeserialize(constants, closxpList);
+            RFunction fun = f.getSerializedDef();
             REnvironment env = (REnvironment) unserializeObject(f.getEnv());
             MaterializedFrame enclosingFrame = env.getFrame();
-            RFunction fn = RContext.getEngine().parseFunction(constants, null, RSource.fromTextInternal(deparse, RSource.Internal.PAIRLIST_DEPARSE), enclosingFrame);
+            HasSignature root = (HasSignature) fun.getTarget().getRootNode();
+            RootCallTarget target = root.duplicateWithNewFrameDescriptor();
+            FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
+            RFunction fn = RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
             RAttributes attributes = f.getAttributes();
             if (attributes != null) {
                 assert fn.getAttributes() == null;
@@ -685,11 +683,11 @@ public class RChannel {
                 if (newVal != val) {
                     // class attribute is a string vector which should be always shared
                     assert !a.getName().equals(RRuntime.CLASS_ATTR_KEY);
-                    // TODO: this is a bit brittle as it relies on the iterator to work
-                    // correctly in
-                    // the
-                    // face of updates (which it does under current implementation of
-                    // attributes)
+                    /*
+                     * TODO: this is a bit brittle as it relies on the iterator to work correctly in
+                     * the face of updates (which it does under current implementation of
+                     * attributes)
+                     */
                     attributable.setAttr(a.getName(), newVal);
                 }
             }

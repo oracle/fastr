@@ -37,7 +37,7 @@ public interface RSyntaxElement {
 
     /**
      * This is a special version of {@link #getSourceSection} that does not try to
-     * {@link RDeparse#ensureSourceSection(RSyntaxElement) deparse} {@link SourceSection}s that are
+     * {@link RDeparse#ensureSourceSection(RSyntaxNode) deparse} {@link SourceSection}s that are
      * {@link RSyntaxNode#INTERNAL internal}.
      */
     SourceSection getLazySourceSection();

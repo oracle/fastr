@@ -44,8 +44,10 @@ final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
     public void print(RS4Object object, PrintContext printCtx) throws IOException {
         final PrintWriter out = printCtx.output();
         out.print("<S4 Type Object>");
-        for (RAttribute attr : object.getAttributes()) {
-            printAttribute(attr, printCtx);
+        if (object.getAttributes() != null) {
+            for (RAttribute attr : object.getAttributes()) {
+                printAttribute(attr, printCtx);
+            }
         }
     }
 

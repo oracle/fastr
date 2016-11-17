@@ -467,8 +467,8 @@ public final class RDataFactory {
         return traceDataCreated(new RPairList(car, cdr, tag, type));
     }
 
-    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
-        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame));
+    public static RFunction createFunction(String name, String packageName, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
+        return traceDataCreated(new RFunction(name, packageName, target, builtin, enclosingFrame));
     }
 
     private static final AtomicInteger environmentCount = new AtomicInteger();
