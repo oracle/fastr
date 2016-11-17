@@ -101,7 +101,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "repeat":
                         return new RepeatNode(source, lhsLookup, args.get(0).value);
                     case "(":
-                        return new ParNode(source, args.get(0).value);
+                        return new ParNode(source, lhsLookup, args.get(0).value);
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {

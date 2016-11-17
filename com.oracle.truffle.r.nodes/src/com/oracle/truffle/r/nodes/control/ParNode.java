@@ -23,37 +23,38 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A {@link ParNode} represents parentheses in source code.
  */
-public final class ParNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class ParNode extends OperatorNode {
 
     @Child private RNode value;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public ParNode(SourceSection src, RSyntaxNode value) {
-        super(src);
+    public ParNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode value) {
+        super(src, operator);
         this.value = value.asRNode();
     }
 
     @Override
-    @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        return value.execute(frame);
+        try {
+            return value.execute(frame);
+        } finally {
+            visibility.execute(frame, true);
+        }
     }
 
     @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "(", true);
+    public void voidExecute(VirtualFrame frame) {
+        value.voidExecute(frame);
     }
 
     @Override
