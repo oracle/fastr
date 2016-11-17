@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -856,4 +857,36 @@ public class RRuntime {
     public static double normalizeZero(double value) {
         return value == 0.0 ? 0.0 : value;
     }
+
+    public static int nrows(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                return xa.getDimensions()[0];
+            } else {
+                return xa.getLength();
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
+    public static int ncols(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                int[] dims = xa.getDimensions();
+                if (dims.length >= 2) {
+                    return dims[1];
+                } else {
+                    return 1;
+                }
+            } else {
+                return 1;
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
 }

@@ -540,37 +540,14 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_nrows", x);
         }
-        if (x instanceof RAbstractContainer) {
-            RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                return xa.getDimensions()[0];
-            } else {
-                return xa.getLength();
-            }
-        } else {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
-        }
+        return RRuntime.nrows(x);
     }
 
     public static int Rf_ncols(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_ncols", x);
         }
-        if (x instanceof RAbstractContainer) {
-            RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                int[] dims = xa.getDimensions();
-                if (dims.length >= 2) {
-                    return dims[1];
-                } else {
-                    return 1;
-                }
-            } else {
-                return 1;
-            }
-        } else {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
-        }
+        return RRuntime.ncols(x);
     }
 
     public static int LENGTH(Object x) {
@@ -748,6 +725,8 @@ public class CallRFFIHelper {
         guarantee(x instanceof RShareable || x instanceof RExternalPtr, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
         if (x instanceof RShareable) {
             return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
+        } else if (x instanceof RIntSequence) {
+            return ((RIntSequence) x).materialize();
         } else {
             return ((RExternalPtr) x).copy();
         }
@@ -821,6 +800,18 @@ public class CallRFFIHelper {
             return ((RPairList) e).cadr();
         } else {
             return ((RLanguage) e).getDataAtAsObject(1);
+        }
+    }
+
+    public static Object CADDR(Object e) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("CADDR", e);
+        }
+        guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CADDR only works on pair lists and language objects");
+        if (e instanceof RPairList) {
+            return ((RPairList) e).caddr();
+        } else {
+            return ((RLanguage) e).getDataAtAsObject(2);
         }
     }
 
