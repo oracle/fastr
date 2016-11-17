@@ -29,9 +29,11 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grid/GridFunctions
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/MethodsListDispatch.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/Slot.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Arithmetic.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Cdist.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/CompleteCases.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Covcor.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Dbinom.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DoubleCentre.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DPQ.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/GammaFunctions.java,gnu_r_qgamma.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/MathConstants.java,gnu_r.copyright
