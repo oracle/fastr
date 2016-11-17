@@ -89,8 +89,7 @@ public class TestBuiltin_isnull extends TestBase {
 
     @Test
     public void testisnull16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(function(file = ifelse(onefile, 'Rplots.pdf', 'Rplot%03d.pdf'),     width, height, onefile, family, title, fonts, version, paper,     encoding, bg, fg, pointsize, pagecentre, colormodel, useDingbats,     useKerning, fillOddEven, compress) { invisible() });" +
-                                        "do.call('is.null', argv)");
+        assertEval("argv <- list(function(file = ifelse(onefile, 'Rplots.pdf', 'Rplot%03d.pdf'),     width, height, onefile, family, title, fonts, version, paper,     encoding, bg, fg, pointsize, pagecentre, colormodel, useDingbats,     useKerning, fillOddEven, compress) { invisible() });" +
+                        "do.call('is.null', argv)");
     }
 }
