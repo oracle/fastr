@@ -69,6 +69,18 @@ public final class RNodeWrapperFactory implements InstrumentableFactory<RNode> {
         }
 
         @Override
+        public void voidExecute(VirtualFrame frame) {
+            try {
+                probeNode.onEnter(frame);
+                delegate.voidExecute(frame);
+                probeNode.onReturnValue(frame, null);
+            } catch (Throwable t) {
+                probeNode.onReturnExceptional(frame, t);
+                throw t;
+            }
+        }
+
+        @Override
         public RSyntaxNode getRSyntaxNode() {
             return delegate.asRSyntaxNode();
         }

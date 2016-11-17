@@ -34,7 +34,7 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions4() {
-        assertEval(Ignored.Unknown, "argv <- list('ts.eps'); .Internal(options(argv[[1]]))");
+        assertEval("argv <- list('ts.eps'); .Internal(options(argv[[1]]))");
     }
 
     @Test

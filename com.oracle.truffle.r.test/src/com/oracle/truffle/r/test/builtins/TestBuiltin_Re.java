@@ -67,7 +67,7 @@ public class TestBuiltin_Re extends TestBase {
 
         assertEval("{ Re(as.raw(12)) }");
 
-        assertEval(Ignored.ImplementationError, "Re(c(NaN, 1+1i))");
+        assertEval("Re(c(NaN, 1+1i))");
         assertEval("Re(NaN)");
     }
 }

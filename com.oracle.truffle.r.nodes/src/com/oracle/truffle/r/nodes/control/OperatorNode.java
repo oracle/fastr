@@ -20,25 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.access;
+package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
-    @CompilationFinal private SourceSection sourceSectionR;
+public abstract class OperatorNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
 
-    protected WriteVariableNodeSyntaxHelper(SourceSection sourceSection) {
-        assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
-    }
+    protected final RSyntaxLookup operator;
 
-    public void setSourceSection(SourceSection sourceSection) {
-        this.sourceSectionR = sourceSection;
+    public OperatorNode(SourceSection src, RSyntaxLookup operator) {
+        super(src);
+        this.operator = operator;
     }
 
     @Override
-    public SourceSection getSourceSection() {
-        return sourceSectionR;
+    public final RSyntaxLookup getSyntaxLHS() {
+        return operator;
     }
 }

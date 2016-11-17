@@ -94,7 +94,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse15() {
-        assertEval(Ignored.Unknown, "argv <- list(1e-07, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(1e-07, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -146,7 +146,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse25() {
-        assertEval(Ignored.Unknown, "argv <- list(1e+05, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(1e+05, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -270,35 +270,24 @@ public class TestBuiltin_deparse extends TestBase {
         assertEval("argv <- list(quote(x[[i]] <- 0.9999997), 500L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
+    private static final String[] VALUES = new String[]{"TRUE", "c(T, F)", "17", "-17", "0L", "-0L", "16L", "-16L", "5i", "NA_integer_", "NA_complex_",
+                    "NA_real_", "NA_character_", "1:2", "1:6", "0", "1", "1000", "10000", "99999", "100000000", "10000000000000", "0.1", "0.123", "0.00123", "0.0000000001", "0.0000000000000001",
+                    "1.545234523452345252523452345", "Inf", "NaN", "-0", "-1", "-1000", "-10000", "-99999", "-100000000", "-10000000000000", "-0.1", "-0.123", "-0.00123", "-0.0000000001",
+                    "-0.0000000000000001", "-1.545234523452345252523452345", "-Inf", "c(1L,2L,3L)", "c(1,2,3)", "c(NA_integer_, 1L,2L,3L)", "c(1L,2L,3L, NA_integer_)", "c(3L,2L,1L)",
+                    "c(-2L,-1L,0L,1L)"};
+
     @Test
     public void testDeparse() {
-        assertEval("{ deparse(TRUE) }");
-        assertEval("{ deparse(c(T, F)) }");
-        assertEval("{ deparse(17) }");
-        assertEval("{ deparse(-17) }");
-        assertEval("{ deparse(0) }");
-        assertEval("{ deparse(0L) }");
-        assertEval("{ deparse(-0) }");
-        assertEval("{ deparse(-0L) }");
-        assertEval("{ deparse(16L) }");
-        assertEval("{ deparse(-16L) }");
-        assertEval("{ deparse(5i) }");
-        assertEval("{ deparse(-5i) }");
-        assertEval("{ deparse(199.1234-5i) }");
-        assertEval("{ deparse(-199.1234+5.77i) }");
+        assertEval(template("deparse(%0)", VALUES));
+        assertEval(template("deparse(quote(cat(%0)))", VALUES));
+        assertEval("deparse(-5i)");
+        assertEval(Ignored.OutputFormatting, "deparse(quote(cat(-5i)))");
+        assertEval("deparse(199.1234-5i)");
+        assertEval(Ignored.OutputFormatting, "deparse(quote(cat(199.1234-5i)))");
+        assertEval("deparse(-199.1234-5i)");
+        assertEval(Ignored.OutputFormatting, "deparse(quote(cat(-199.1234-5i)))");
+        assertEval(Ignored.OutputFormatting, "deparse(1.53160350210786e-322)");
         assertEval("{ deparse(new.env()) }");
-        assertEval("{ deparse(NA_integer_) }");
-        assertEval("{ deparse(NA_complex_) }");
-        assertEval("{ deparse(NA_real_) }");
-        assertEval("{ deparse(NA_character_) }");
-        assertEval("{ deparse(1:2) }");
-        assertEval("{ deparse(1:6) }");
-        assertEval("{ deparse(c(1L,2L,3L)) }");
-        assertEval("{ deparse(c(1,2,3)) }");
-        assertEval("{ deparse(c(NA_integer_, 1L,2L,3L)) }");
-        assertEval("{ deparse(c(1L,2L,3L, NA_integer_)) }");
-        assertEval("{ deparse(c(3L,2L,1L)) }");
-        assertEval("{ deparse(c(-2L,-1L,0L,1L)) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
         assertEval("{ x<-expression(1); deparse(x) }");

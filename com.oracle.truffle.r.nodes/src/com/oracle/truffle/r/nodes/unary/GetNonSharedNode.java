@@ -65,6 +65,11 @@ public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
     }
 
     @Override
+    public SourceSection getLazySourceSection() {
+        return RSyntaxNode.INTERNAL;
+    }
+
+    @Override
     public SourceSection getSourceSection() {
         return RSyntaxNode.INTERNAL;
     }

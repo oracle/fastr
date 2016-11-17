@@ -27,9 +27,19 @@
 # N.B. As this takes quite a while the building is conditional on the
 # FASTR_RELEASE environment variable
 
+FASTR_R_HOME := $(abspath $(CURDIR)/..)
+NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
+
+ifneq (,$(wildcard $(NATIVE_PROJECT_DIR)/platform.mk))
+include $(NATIVE_PROJECT_DIR)/platform.mk
+else
+ifneq ($(MAKECMDGOALS),clean)
+$(error no platform.mk available)
+endif
+endif
+
 .PHONY: all clean
 
-FASTR_R_HOME := $(abspath $(CURDIR)/..)
 NATIVE_PROJECT := $(subst native.recommended,native,$(CURDIR))
 R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
 GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
@@ -45,6 +55,14 @@ install.recommended: $(GNUR_RECOMMENDED_TARS)
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 		$(FASTR_R_HOME)/bin/R CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
+ifeq ($(OS_NAME),Darwin)
+	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
+	    if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
+			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
+			mx rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
+		fi \
+	done
+endif
 	touch install.recommended
 else
 install.recommended:

@@ -56,7 +56,7 @@ public abstract class UpdateSlotNode extends RNode {
 
     @Specialization(contains = "updateSlotS4Cached", guards = "!isData(name)")
     protected Object updateSlotS4(RAttributable object, String name, Object value) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         object.setAttr(name, prepareValue(value));
         return object;
     }
@@ -75,7 +75,7 @@ public abstract class UpdateSlotNode extends RNode {
     }
 
     protected boolean isData(String name) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         return name == RRuntime.DOT_DATA;
     }
 }

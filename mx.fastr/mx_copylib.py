@@ -25,6 +25,7 @@ import platform
 import subprocess
 import shutil
 import mx
+import mx_fastr
 
 def _darwin_extract_realpath(lib, libpath):
     '''
@@ -126,31 +127,45 @@ def copylib(args):
 
 def updatelib(args):
     '''
-    If we captured a library then, on Darwin, we patch up the references
-    in the target library passed as argument to use @rpath.
+    On Darwin, if we captured a library, then we patch up the references
+    to it to use @rpath, for all the libs in the directory passed as argument .
     args:
-      0 directory containing library
+      0 directory containing libs to patch (and may also contain the patchees)
     '''
+    # These are not captured
     ignore_list = ['R', 'Rblas', 'Rlapack', 'jniboot']
 
-    def ignorelib(name):
+    fastr_libdir = os.path.join(mx_fastr._fastr_suite.dir, 'lib')
+
+
+    def locally_built(name):
         for ignore in ignore_list:
             x = 'lib' + ignore + '.dylib'
             if x == name:
                 return True
         return False
 
+    def get_captured_libs():
+        cap_libs = []
+        for lib in os.listdir(fastr_libdir):
+            if not '.dylib' in lib:
+                # ignore non-libraries
+                continue
+            if locally_built(lib) or os.path.islink(os.path.join(fastr_libdir, lib)):
+                continue
+            cap_libs.append(lib)
+        return cap_libs
+
     libdir = args[0]
-    cap_libs = []
+    cap_libs = get_captured_libs()
     libs = []
     for lib in os.listdir(libdir):
-        if not '.dylib' in lib:
+        if not ('.dylib' in lib or '.so' in lib):
+            # ignore non-libraries
             continue
         if not os.path.islink(os.path.join(libdir, lib)):
             libs.append(lib)
-        if ignorelib(lib) or os.path.islink(os.path.join(libdir, lib)):
-            continue
-        cap_libs.append(lib)
+
     # for each of the libs, check whether they depend
     # on any of the captured libs, @rpath the dependency if so
     for lib in libs:

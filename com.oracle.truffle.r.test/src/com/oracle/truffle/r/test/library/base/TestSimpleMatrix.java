@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.library.base;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.WhiteList;
 
 public class TestSimpleMatrix extends TestBase {
 
@@ -84,8 +85,14 @@ public class TestSimpleMatrix extends TestBase {
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(TRUE, NA), ] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; x<-1:4; dim(x)<-c(2,2); x[NA, ] }", TESTED_4L_VECTORS));
         // A misalignment error similar to those in TestSimpleVector (testIgnored1-3)
-        assertEval(Ignored.ReferenceError, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }", TESTED_4L_VECTORS));
-        assertEval(Ignored.ReferenceError, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }", TESTED_4L_VECTORS));
+        WhiteList wl = WhiteList.create("matrix formatting1");
+        wl.add("{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }",
+                        "   a <NA>\n  01   00\n", "   a <NA>\n01 00\n");
+        assertEval(wl, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }", TESTED_4L_VECTORS));
+        wl = WhiteList.create("matrix formatting2");
+        wl.add("{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }",
+                        "   c <NA>\n  01   00\n", "   c <NA>\n01 00\n");
+        assertEval(wl, template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, NA), c(1,NA)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, 1), c(1,NA)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[1, 0] }", TESTED_4L_VECTORS));

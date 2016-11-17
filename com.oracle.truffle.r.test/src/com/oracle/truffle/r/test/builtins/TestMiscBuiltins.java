@@ -207,20 +207,19 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testEigen() {
         // symmetric real input
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ eigen(10, only.values=FALSE) }");
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
+        assertEval("{ eigen(10, only.values=FALSE) }");
 
         // non-symmetric real input, real output
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
         assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
 
         // non-symmetric real input, complex output
-        // FIXME: GNUR is won't print the minus sign for negative zero
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
     }
 
     @Test
@@ -273,7 +272,7 @@ public class TestMiscBuiltins extends TestBase {
 
     @Test
     public void testParen() {
-        assertEval(Ignored.Unknown, "{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }
 
     @Test

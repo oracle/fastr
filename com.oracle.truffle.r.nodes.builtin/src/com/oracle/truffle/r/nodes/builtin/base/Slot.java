@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -68,7 +69,7 @@ public abstract class Slot extends RBuiltinNode {
     protected Object getSlot(Object object, Object nameObj,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
         String name = getName(nameObjProfile.profile(nameObj));
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         return accessSlotNode.executeAccess(object, name);
     }
 }

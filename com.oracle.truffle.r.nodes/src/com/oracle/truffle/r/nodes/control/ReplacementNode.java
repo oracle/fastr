@@ -27,9 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -41,12 +39,14 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode.RecursiveSpecialBailout;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.CodeBuilderContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -54,70 +54,37 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@NodeChild(value = "target")
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
-abstract class ReplacementNode extends RNode {
+abstract class ReplacementNode extends OperatorNode {
 
-    private final int tempNamesStartIndex;
-    private final SourceSection source;
-    private final List<RSyntaxCall> calls;
-    private final String targetVarName;
-    private final String rhsVarName;
-    private final boolean isSuper;
+    protected final RSyntaxElement lhs;
 
-    ReplacementNode(SourceSection source, List<RSyntaxCall> calls, String rhsVarName, String targetVarName, boolean isSuper, int tempNamesStartIndex) {
-        this.source = source;
-        this.calls = calls;
-        this.rhsVarName = rhsVarName;
-        this.targetVarName = targetVarName;
-        this.isSuper = isSuper;
-        this.tempNamesStartIndex = tempNamesStartIndex;
+    ReplacementNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs) {
+        super(source, operator);
+        this.lhs = lhs;
     }
 
-    @Specialization
-    protected Object doRObject(VirtualFrame frame, Object target,
-                    @Cached("createTargetTmpWrite()") WriteVariableNode targetTmpWrite,
-                    @Cached("createTargetTmpRemove()") RemoveAndAnswerNode targetTmpRemove,
-                    @Cached("createTargetWrite()") WriteVariableNode targetWrite,
-                    @Cached("createReplacementNode()") ReplacementBase replacement) {
-        targetTmpWrite.execute(frame, target);
-        replacement.execute(frame);
-        targetWrite.execute(frame, targetTmpRemove.execute(frame));
-        return null;
-    }
-
-    protected final WriteVariableNode createTargetTmpWrite() {
-        return WriteVariableNode.createAnonymous(getTargetTmpName(), null, WriteVariableNode.Mode.INVISIBLE);
-    }
-
-    protected final WriteVariableNode createTargetWrite() {
-        return WriteVariableNode.createAnonymous(targetVarName, null, WriteVariableNode.Mode.INVISIBLE, isSuper);
-    }
-
-    protected final RemoveAndAnswerNode createTargetTmpRemove() {
-        return RemoveAndAnswerNode.create(getTargetTmpName());
-    }
-
-    protected final ReplacementBase createReplacementNode() {
-        return createReplacementNode(true);
-    }
-
-    private RNode createReplacementNodeWithoutSpecials() {
-        return createReplacementNode(false);
-    }
-
-    private ReplacementBase createReplacementNode(boolean useSpecials) {
+    public static ReplacementNode create(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls,
+                    String targetVarName, boolean isSuper, int tempNamesStartIndex, boolean isVoid) {
         CompilerAsserts.neverPartOfCompilation();
         // Note: if specials are turned off in FastR, onlySpecials will never be true
-        boolean createSpecial = hasOnlySpecialCalls() && useSpecials;
-        return createSpecial ? createSpecialReplacement(source, calls) : createGenericReplacement(source, calls);
+        boolean createSpecial = hasOnlySpecialCalls(calls);
+        if (createSpecial) {
+            if (isVoid) {
+                return new SpecialVoidReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            } else {
+                return new SpecialReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            }
+        } else {
+            return new GenericReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+        }
     }
 
-    private String getTargetTmpName() {
+    private static String getTargetTmpName(int tempNamesStartIndex) {
         return "*tmp*" + tempNamesStartIndex;
     }
 
-    private boolean hasOnlySpecialCalls() {
+    private static boolean hasOnlySpecialCalls(List<RSyntaxCall> calls) {
         for (int i = 0; i < calls.size(); i++) {
             if (!(calls.get(i) instanceof RCallSpecialNode)) {
                 return false;
@@ -127,71 +94,19 @@ abstract class ReplacementNode extends RNode {
     }
 
     /**
-     * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
-     */
-    private SpecialReplacementNode createSpecialReplacement(SourceSection source, List<RSyntaxCall> calls) {
-        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
-        RNode extractFunc = ReadVariableNode.create(getTargetTmpName());
-        for (int i = calls.size() - 1; i >= 1; i--) {
-            extractFunc = createSpecialFunctionQuery(extractFunc.asRSyntaxNode(), calls.get(i), codeBuilderContext);
-        }
-        RNode updateFunc = createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create(rhsVarName), calls.get(0), codeBuilderContext);
-        assert updateFunc instanceof RCallSpecialNode : "should be only specials";
-        return new SpecialReplacementNode((RCallSpecialNode) updateFunc);
-    }
-
-    /**
-     * When there are more than two function calls in LHS, then we save some function calls by
-     * saving the intermediate results into temporary variables and reusing them.
-     */
-    private GenericReplacementNode createGenericReplacement(SourceSection source, List<RSyntaxCall> calls) {
-        List<RNode> instructions = new ArrayList<>();
-        CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
-
-        /*
-         * Create the calls that extract inner components - only needed for complex replacements
-         * like "a(b(x)) <- z" (where we would extract "b(x)"). The extracted values are saved into
-         * temporary variables *tmp*{index} indexed from tempNamesIndex to (tempNamesIndex +
-         * calls.size()-1), the first such temporary variable holds the "target" of the replacement,
-         * 'x' in our example (the assignment from 'x' is not done in this loop).
-         */
-        for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
-            ReadVariableNode newLhs = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
-            RNode update = createSpecialFunctionQuery(newLhs, calls.get(i), codeBuilderContext);
-            instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
-        }
-        /*
-         * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
-         * intermediate results are stored to temporary variables *tmpr*{index}.
-         */
-        for (int i = 0; i < calls.size(); i++) {
-            int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
-            String tmprName = i == 0 ? rhsVarName : "*tmpr*" + (tempNamesStartIndex + i - 1);
-            RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
-            if (i < calls.size() - 1) {
-                instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
-            } else {
-                instructions.add(WriteVariableNode.createAnonymous(getTargetTmpName(), update, WriteVariableNode.Mode.REGULAR));
-            }
-        }
-
-        GenericReplacementNode newReplacementNode = new GenericReplacementNode(instructions);
-        return newReplacementNode;
-    }
-
-    /**
      * Creates a call that looks like {@code fun} but has the first argument replaced with
      * {@code newLhs}.
      */
-    private static RNode createSpecialFunctionQuery(RSyntaxNode newLhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
+    private static RNode createSpecialFunctionQuery(RSyntaxCall fun, RSyntaxNode newFirstArg, CodeBuilderContext codeBuilderContext) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         RSyntaxNode[] argNodes = new RSyntaxNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
+            argNodes[i] = i == 0 ? newFirstArg : builder.process(arguments[i], codeBuilderContext);
         }
 
-        return RCallSpecialNode.createCallInReplace(fun.getSourceSection(), process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes).asRNode();
+        return RCallSpecialNode.createCallInReplace(fun.getLazySourceSection(), builder.process(fun.getSyntaxLHS(), codeBuilderContext).asRNode(), fun.getSyntaxSignature(), argNodes, 0).asRNode();
     }
 
     /**
@@ -200,6 +115,7 @@ abstract class ReplacementNode extends RNode {
      * added to the arguments list.
      */
     private static RNode createFunctionUpdate(SourceSection source, RSyntaxNode newLhs, RSyntaxNode rhs, RSyntaxCall fun, CodeBuilderContext codeBuilderContext) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         RSyntaxElement[] arguments = fun.getSyntaxArguments();
 
         ArgumentsSignature signature = fun.getSyntaxSignature();
@@ -207,7 +123,7 @@ abstract class ReplacementNode extends RNode {
         String[] names = new String[argNodes.length];
         for (int i = 0; i < arguments.length; i++) {
             names[i] = signature.getName(i);
-            argNodes[i] = i == 0 ? newLhs : process(arguments[i], codeBuilderContext);
+            argNodes[i] = i == 0 ? newLhs : builder.process(arguments[i], codeBuilderContext);
         }
         argNodes[argNodes.length - 1] = rhs;
         names[argNodes.length - 1] = "value";
@@ -222,49 +138,76 @@ abstract class ReplacementNode extends RNode {
                 // to work properly
                 argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
             }
-            newSyntaxLHS = lookup(lookupLHS.getSourceSection(), symbol + "<-", true);
+            newSyntaxLHS = builder.lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
         } else {
             // data types (and lengths) are verified in isNamespaceLookupCall
             RSyntaxCall callLHS = (RSyntaxCall) syntaxLHS;
             RSyntaxElement[] oldArgs = callLHS.getSyntaxArguments();
             RSyntaxNode[] newArgs = new RSyntaxNode[2];
             newArgs[0] = (RSyntaxNode) oldArgs[0];
-            newArgs[1] = lookup(oldArgs[1].getSourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
-            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getSourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
+            newArgs[1] = builder.lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
+            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        return RCallSpecialNode.createCall(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes).asRNode();
-    }
-
-    private static RSyntaxNode process(RSyntaxElement original, CodeBuilderContext codeBuilderContext) {
-        return RContext.getASTBuilder().process(original, codeBuilderContext);
-    }
-
-    private static RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
-        return RContext.getASTBuilder().lookup(source, symbol, functionLookup);
+        return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes, 0, argNodes.length - 1).asRNode();
     }
 
     static RLanguage getLanguage(WriteVariableNode wvn) {
         Node parent = wvn.getParent();
-        if (parent instanceof ReplacementBase) {
-            Node replacementBlock = ((ReplacementBase) parent).getReplacementNodeParent().getParent();
-            assert replacementBlock instanceof ReplacementDispatchNode;
-            return RDataFactory.createLanguage((RNode) replacementBlock);
+        if (parent instanceof ReplacementNode) {
+            return RDataFactory.createLanguage((ReplacementNode) parent);
         }
         return null;
     }
 
-    /**
-     * Base class for nodes implementing the actual replacement.
-     */
-    protected abstract static class ReplacementBase extends RNode {
-        protected final ReplacementNode getReplacementNodeParent() {
-            // Note: new DSL puts another node in between ReplacementBase instance and
-            // ReplacementNode, to be flexible we traverse the parents until we reach it
-            Node current = this;
-            do {
-                current = current.getParent();
-            } while (!(current instanceof ReplacementNode));
-            return (ReplacementNode) current;
+    private abstract static class ReplacementWithRhsNode extends ReplacementNode {
+
+        @Child private WriteVariableNode storeRhs;
+        @Child private RemoveAndAnswerNode removeRhs;
+        @Child private SetVisibilityNode visibility;
+
+        protected final RNode rhs;
+
+        ReplacementWithRhsNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs, RNode rhs, int tempNamesStartIndex) {
+            super(source, operator, lhs);
+            this.rhs = rhs;
+
+            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, rhs, WriteVariableNode.Mode.INVISIBLE);
+            this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
+        }
+
+        @Override
+        public final Object execute(VirtualFrame frame) {
+            storeRhs.execute(frame);
+            executeReplacement(frame);
+            try {
+                return removeRhs.execute(frame);
+            } finally {
+                if (visibility == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    visibility = insert(SetVisibilityNode.create());
+                }
+                visibility.execute(frame, false);
+            }
+        }
+
+        @Override
+        public final void voidExecute(VirtualFrame frame) {
+            storeRhs.execute(frame);
+            executeReplacement(frame);
+            removeRhs.execute(frame);
+        }
+
+        protected final void voidExecuteWithRhs(VirtualFrame frame, Object rhsValue) {
+            storeRhs.execute(frame, rhsValue);
+            executeReplacement(frame);
+            removeRhs.execute(frame);
+        }
+
+        protected abstract void executeReplacement(VirtualFrame frame);
+
+        @Override
+        public final RSyntaxElement[] getSyntaxArguments() {
+            return new RSyntaxElement[]{lhs, rhs.asRSyntaxNode()};
         }
     }
 
@@ -272,17 +215,40 @@ abstract class ReplacementNode extends RNode {
      * Replacement that is made of only special calls, if one of the special calls falls back to
      * full version, the replacement also falls back to {@link ReplacementNode}.
      */
-    private static final class SpecialReplacementNode extends ReplacementBase {
+    private static final class SpecialReplacementNode extends ReplacementWithRhsNode {
 
         @Child private RCallSpecialNode replaceCall;
 
-        SpecialReplacementNode(RCallSpecialNode replaceCall) {
-            this.replaceCall = replaceCall;
+        private final List<RSyntaxCall> calls;
+        private final int tempNamesStartIndex;
+        private final boolean isSuper;
+        private final String targetVarName;
+        private final RNode target;
+
+        SpecialReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName,
+                        boolean isSuper, int tempNamesStartIndex) {
+            super(source, operator, lhs, rhs, tempNamesStartIndex);
+            this.target = target;
+            this.calls = calls;
+            this.targetVarName = targetVarName;
+            this.isSuper = isSuper;
+            this.tempNamesStartIndex = tempNamesStartIndex;
+
+            /*
+             * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
+             */
+            CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
+            RNode extractFunc = target;
+            for (int i = calls.size() - 1; i >= 1; i--) {
+                extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
+                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException(true);
+            }
+            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
             this.replaceCall.setPropagateFullCallNeededException(true);
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
+        protected void executeReplacement(VirtualFrame frame) {
             try {
                 // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
                 // argument is shared, it bails out. Moreover, if that call's argument is not
@@ -290,30 +256,151 @@ abstract class ReplacementNode extends RNode {
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
             } catch (FullCallNeededException | RecursiveSpecialBailout e) {
-                RNode newReplacement = getReplacementNodeParent().createReplacementNodeWithoutSpecials();
-                return replace(newReplacement).execute(frame);
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).executeReplacement(frame);
             }
-            return null;
+        }
+    }
+
+    /**
+     * Replacement that is made of only special calls, if one of the special calls falls back to
+     * full version, the replacement also falls back to {@link ReplacementNode}. Additionally, this
+     * type only works if the result of the call (the rhs) is not needed.
+     */
+    private static final class SpecialVoidReplacementNode extends ReplacementNode {
+
+        @Child private RCallSpecialNode replaceCall;
+
+        private final RNode rhs;
+        private final List<RSyntaxCall> calls;
+        private final int tempNamesStartIndex;
+        private final boolean isSuper;
+        private final String targetVarName;
+        private final RNode target;
+
+        SpecialVoidReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName,
+                        boolean isSuper, int tempNamesStartIndex) {
+            super(source, operator, lhs);
+            this.target = target;
+            this.rhs = rhs;
+            this.calls = calls;
+            this.targetVarName = targetVarName;
+            this.isSuper = isSuper;
+            this.tempNamesStartIndex = tempNamesStartIndex;
+
+            /*
+             * Creates a replacement that consists only of {@link RCallSpecialNode} calls.
+             */
+            CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + 2);
+            RNode extractFunc = target;
+            for (int i = calls.size() - 1; i >= 1; i--) {
+                extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
+                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException(true);
+            }
+            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), rhs.asRSyntaxNode(), calls.get(0), codeBuilderContext);
+            this.replaceCall.setPropagateFullCallNeededException(true);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            GenericReplacementNode replacement = new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            return replace(replacement).execute(frame);
+        }
+
+        @Override
+        public void voidExecute(VirtualFrame frame) {
+            try {
+                // Note: the very last call is the actual assignment, e.g. [[<-, if this call's
+                // argument is shared, it bails out. Moreover, if that call's argument is not
+                // shared, it could not be extracted from a shared container (list), so we should be
+                // OK with not calling any other update function and just update the value directly.
+                replaceCall.execute(frame);
+            } catch (FullCallNeededException | RecursiveSpecialBailout e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                GenericReplacementNode replacement = replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex));
+
+                Object rhsValue = e instanceof FullCallNeededException ? ((FullCallNeededException) e).rhsValue : ((RecursiveSpecialBailout) e).rhsValue;
+                if (rhsValue == null) {
+                    // we haven't queried the rhs value yet
+                    replacement.voidExecute(frame);
+                } else {
+                    // rhs was already queried, so pass it along
+                    replacement.voidExecuteWithRhs(frame, rhsValue);
+                }
+            }
+        }
+
+        @Override
+        public RSyntaxElement[] getSyntaxArguments() {
+            return new RSyntaxElement[]{lhs, rhs.asRSyntaxNode()};
         }
     }
 
     /**
      * Holds the sequence of nodes created for R's replacement assignment.
      */
-    private static final class GenericReplacementNode extends ReplacementBase {
+    private static final class GenericReplacementNode extends ReplacementWithRhsNode {
+
+        @Child private WriteVariableNode targetTmpWrite;
+        @Child private RemoveAndAnswerNode targetTmpRemove;
+
         @Children private final RNode[] updates;
 
-        GenericReplacementNode(List<RNode> updates) {
-            this.updates = updates.toArray(new RNode[updates.size()]);
+        GenericReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName, boolean isSuper,
+                        int tempNamesStartIndex) {
+            super(source, operator, lhs, rhs, tempNamesStartIndex);
+            /*
+             * When there are more than two function calls in LHS, then we save some function calls
+             * by saving the intermediate results into temporary variables and reusing them.
+             */
+            List<RNode> instructions = new ArrayList<>();
+            CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
+            /*
+             * Create the calls that extract inner components - only needed for complex replacements
+             * like "a(b(x)) <- z" (where we would extract "b(x)"). The extracted values are saved
+             * into temporary variables *tmp*{index} indexed from tempNamesIndex to (tempNamesIndex
+             * + calls.size()-1), the first such temporary variable holds the "target" of the
+             * replacement, 'x' in our example (the assignment from 'x' is not done in this loop).
+             */
+            for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
+                ReadVariableNode newFirstArg = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
+                RNode update = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
+                instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
+            }
+            /*
+             * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
+             * intermediate results are stored to temporary variables *tmpr*{index}.
+             */
+            for (int i = 0; i < calls.size(); i++) {
+                int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
+                String tmprName = i == 0 ? ("*rhs*" + tempNamesStartIndex) : ("*tmpr*" + (tempNamesStartIndex + i - 1));
+                RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
+                if (i < calls.size() - 1) {
+                    instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
+                } else {
+                    instructions.add(WriteVariableNode.createAnonymous(targetVarName, update, WriteVariableNode.Mode.REGULAR, isSuper));
+                }
+            }
+
+            this.updates = instructions.toArray(new RNode[instructions.size()]);
+            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), target, WriteVariableNode.Mode.INVISIBLE);
+            this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
         }
 
         @Override
         @ExplodeLoop
-        public Object execute(VirtualFrame frame) {
+        protected void executeReplacement(VirtualFrame frame) {
+            targetTmpWrite.execute(frame);
             for (RNode update : updates) {
                 update.execute(frame);
             }
-            return null;
+            targetTmpRemove.execute(frame);
         }
+    }
+
+    @Override
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(2);
     }
 }

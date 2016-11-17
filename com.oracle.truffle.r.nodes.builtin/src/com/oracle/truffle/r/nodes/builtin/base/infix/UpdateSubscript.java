@@ -128,7 +128,7 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
     @SuppressWarnings("unused")
     @Fallback
     protected static Object setFallback(Object vector, Object index, Object value) {
-        throw RSpecialFactory.throwFullCallNeeded();
+        throw RSpecialFactory.throwFullCallNeeded(value);
     }
 }
 

@@ -159,8 +159,7 @@ public class TestSimpleAttributes extends TestBase {
 
     @Test
     public void testBuiltinPropagationIgnore() {
-        // eigen implementation problem
-        assertEval(Ignored.Unknown, "{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
+        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
 
     @Test

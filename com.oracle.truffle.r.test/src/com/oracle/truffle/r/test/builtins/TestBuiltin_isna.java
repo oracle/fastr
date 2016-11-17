@@ -69,8 +69,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna13() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c('VAR1', 'VAR3'), class = 'data.frame', row.names = c(NA, -5L)));is.na(argv[[1]]);");
+        assertEval("argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c('VAR1', 'VAR3'), class = 'data.frame', row.names = c(NA, -5L)));is.na(argv[[1]]);");
     }
 
     @Test
@@ -251,9 +250,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval(Output.IgnoreWarningContext, "is.na(quote(x()))");
         assertEval("is.na(is.na)");
 
-        // Note: is.na.data.frame calls do.call("cbind", lapply(x, "is.na")) - there is the error
-        // Probably the same error as in testisna13
-        assertEval(Ignored.Unimplemented, "is.na(data.frame(col1=1:5, col2=c(NA, 1, NA, 2, NA)))");
+        assertEval("is.na(data.frame(col1=1:5, col2=c(NA, 1, NA, 2, NA)))");
 
         assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); is.na(v)");
 

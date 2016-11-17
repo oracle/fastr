@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,30 +26,44 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class NextNode extends OperatorNode {
+/**
+ * A {@link ParNode} represents parentheses in source code.
+ */
+public final class ParNode extends OperatorNode {
 
+    @Child private RNode value;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public NextNode(SourceSection src, RSyntaxLookup operator) {
+    public ParNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode value) {
         super(src, operator);
+        this.value = value.asRNode();
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        visibility.execute(frame, false);
-        throw NextException.instance;
+        try {
+            return value.execute(frame);
+        } finally {
+            visibility.execute(frame, true);
+        }
     }
 
     @Override
-    public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[0];
+    public void voidExecute(VirtualFrame frame) {
+        value.voidExecute(frame);
+    }
+
+    @Override
+    public RSyntaxNode[] getSyntaxArguments() {
+        return new RSyntaxNode[]{value.asRSyntaxNode()};
     }
 
     @Override
     public ArgumentsSignature getSyntaxSignature() {
-        return ArgumentsSignature.empty(0);
+        return ArgumentsSignature.empty(1);
     }
 }

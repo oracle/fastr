@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 @RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "functions", "max.names", "unique"}, behavior = PURE)
@@ -133,7 +134,7 @@ public abstract class AllNames extends RBuiltinNode {
 
         @Override
         protected Void visit(RSyntaxFunction element) {
-            accept(RSyntaxLookup.createDummyLookup(null, "function", true));
+            accept(RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, "function", true));
             accept(element.getSyntaxBody());
             // functions do not recurse into the arguments
             return null;

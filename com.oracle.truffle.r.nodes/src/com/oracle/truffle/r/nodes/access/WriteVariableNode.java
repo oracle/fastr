@@ -23,18 +23,21 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * The base of the {@code WriteVariableNode} type hierarchy. There are several variants for
  * different situations and this class provides static methods to create these.
+ *
+ * The types in this hierarchy do not implement {@link RSyntaxElement} - use
+ * {@link WriteVariableSyntaxNode} instead.
  */
 public abstract class WriteVariableNode extends RNode {
-    public enum Mode {
 
+    public enum Mode {
         REGULAR,
         COPY,
         INVISIBLE
@@ -45,19 +48,6 @@ public abstract class WriteVariableNode extends RNode {
     public abstract RNode getRhs();
 
     public abstract void execute(VirtualFrame frame, Object value);
-
-    /**
-     * Variant for a variable that appears in the R language source.
-     *
-     * @param isSuper {@code true} if the write is {@code <<-}.
-     */
-    public static WriteVariableNode create(SourceSection src, String name, RNode rhs, boolean isSuper) {
-        if (isSuper) {
-            return WriteSuperVariableNode.create(src, name, rhs);
-        } else {
-            return WriteCurrentVariableNode.create(src, name, rhs);
-        }
-    }
 
     /**
      * Variant for saving function arguments, i.e. from {@link RArguments} into the frame.

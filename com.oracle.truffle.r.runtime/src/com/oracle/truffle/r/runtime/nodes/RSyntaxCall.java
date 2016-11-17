@@ -43,6 +43,11 @@ public interface RSyntaxCall extends RSyntaxElement {
     static RSyntaxCall createDummyCall(SourceSection originalSource, RSyntaxElement lhs, ArgumentsSignature signature, RSyntaxElement[] arguments) {
         return new RSyntaxCall() {
             @Override
+            public SourceSection getLazySourceSection() {
+                return originalSource;
+            }
+
+            @Override
             public SourceSection getSourceSection() {
                 return originalSource;
             }

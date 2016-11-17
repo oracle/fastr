@@ -24,6 +24,6 @@ public class TestBuiltin_isOpen extends TestBase {
 
     @Test
     public void testisOpen3() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, 2L); .Internal(isOpen(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(FALSE, 2L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 }

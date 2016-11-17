@@ -1613,7 +1613,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators322() {
-        assertEval(Ignored.Unknown, "argv <- list(c(-1, 1), structure(c(1e-05, 1e-04, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 1e+05), .Dim = c(1L, 11L)));`%*%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(c(-1, 1), structure(c(1e-05, 1e-04, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 1e+05), .Dim = c(1L, 11L)));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test

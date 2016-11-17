@@ -25,15 +25,15 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /** Marker class for loops. */
-public abstract class AbstractLoopNode extends RSourceSectionNode {
-    protected AbstractLoopNode(SourceSection sourceSection) {
-        super(sourceSection);
+public abstract class AbstractLoopNode extends OperatorNode {
+
+    protected AbstractLoopNode(SourceSection sourceSection, RSyntaxLookup operator) {
+        super(sourceSection, operator);
     }
 
     @Override

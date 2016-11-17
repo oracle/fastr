@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -77,7 +76,7 @@ public abstract class Call extends RBuiltinNode {
 
     @TruffleBoundary
     private static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), false, args);
+        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, name), false, args);
     }
 
     private static RLanguage makeFunction(RArgsValuesAndNames args) {
@@ -95,17 +94,16 @@ public abstract class Call extends RBuiltinNode {
             RPairList pl = (RPairList) argList;
             String name = ((RSymbol) pl.getTag()).getName();
             RSyntaxNode value = RASTUtils.createNodeForValue(pl.car()).asRSyntaxNode();
-            finalArgs.add(RCodeBuilder.argument(RSyntaxNode.EAGER_DEPARSE, name, value));
+            finalArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));
             argList = pl.cdr();
         }
-        RSyntaxNode function = RContext.getASTBuilder().function(RSyntaxNode.EAGER_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
-        RDeparse.ensureSourceSection(function);
+        RSyntaxNode function = RContext.getASTBuilder().function(RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
         return RDataFactory.createLanguage(function.asRNode());
     }
 
     @TruffleBoundary
     protected static RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
-        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.EAGER_DEPARSE, name), true, args);
+        return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, name), true, args);
     }
 
     @TruffleBoundary

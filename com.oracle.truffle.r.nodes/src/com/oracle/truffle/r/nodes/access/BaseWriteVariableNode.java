@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -122,17 +121,17 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     }
 
     @SuppressWarnings("unused")
-    protected boolean isLogicalKind(VirtualFrame frame, FrameSlot frameSlot) {
+    protected boolean isLogicalKind(Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 
     @SuppressWarnings("unused")
-    protected boolean isIntegerKind(VirtualFrame frame, FrameSlot frameSlot) {
+    protected boolean isIntegerKind(Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Int);
     }
 
     @SuppressWarnings("unused")
-    protected boolean isDoubleKind(VirtualFrame frame, FrameSlot frameSlot) {
+    protected boolean isDoubleKind(Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 

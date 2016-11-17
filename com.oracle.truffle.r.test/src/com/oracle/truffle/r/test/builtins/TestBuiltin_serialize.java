@@ -44,9 +44,8 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); serialize(quote(111+11), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(a+b), connection=NULL)");
 
-        // requires correct handling of `(`
-        assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); serialize(quote((a+b)), connection=NULL)");
-        assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); serialize(quote((a %asdf% b)), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote((a+b)), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote((a %asdf% b)), connection=NULL)");
 
         assertEval("options(keep.source=FALSE); serialize(quote(foo(a,b,c)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote({ foo(a,b,c) }), connection=NULL)");
@@ -76,8 +75,7 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL)");
 
-        // requires correct handling of `(`
-        assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); serialize(quote(function(x) { `+`(`(`(\"BAR\"), x) }), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote(function(x) { `+`(`(`(\"BAR\"), x) }), connection=NULL)");
 
         assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$a <- 'foo'; serialize(val, connection=NULL)");
         assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$b <- 123; serialize(val, connection=NULL)");

@@ -69,7 +69,7 @@ public abstract class AccessSlotNode extends RNode {
     private Object getSlotS4Internal(RAttributable object, String name, Object value) {
         if (value == null) {
             noSlot.enter();
-            assert name == name.intern();
+            assert Utils.isInterned(name);
             if (name == RRuntime.DOT_S3_CLASS) {
                 if (classHierarchy == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -158,7 +158,7 @@ public abstract class AccessSlotNode extends RNode {
     }
 
     protected boolean isDotData(String name) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         return name == RRuntime.DOT_DATA;
     }
 

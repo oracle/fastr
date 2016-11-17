@@ -84,7 +84,7 @@ public class TestBuiltin_repint extends TestBase {
 
     @Test
     public void testrepint14() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test

@@ -341,7 +341,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector69() {
-        assertEval(Ignored.Unknown, "argv <- list(c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 1e+05, 2e+05, 5e+05), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 1e+05, 2e+05, 5e+05), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -421,7 +421,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
 
         assertEval("as.vector(x~z)");
-        assertEval(Ignored.Unimplemented, "as.vector(file(''))");
+        assertEval("as.vector(file(''))");
 
         assertEval(Output.IgnoreErrorContext, "{ as.vector(42, NULL) }");
         assertEval(Output.IgnoreErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");

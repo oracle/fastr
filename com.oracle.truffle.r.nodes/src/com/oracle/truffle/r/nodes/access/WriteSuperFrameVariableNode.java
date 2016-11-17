@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.find
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
-import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -37,7 +36,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNodeFactory.UnresolvedWriteLocalFrameVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
+import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNodeFactory.ResolvedWriteSuperFrameVariableNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -49,59 +48,75 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  *
  * The state starts out a "unresolved" and transforms to "resolved".
  */
-@SuppressWarnings("unused")
-@NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
-@NodeField(name = "mode", type = Mode.class)
-abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
-    private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
-    private final BranchProfile invalidateProfile = BranchProfile.create();
-    private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
-
-    protected abstract FrameSlotNode getFrameSlotNode();
-
-    public abstract Mode getMode();
+abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
 
     static WriteVariableNode create(String name, RNode rhs, Mode mode) {
         return new UnresolvedWriteSuperFrameVariableNode(name, rhs, mode);
     }
 
-    @Specialization(guards = "isLogicalKind(frame, frameSlot)")
-    protected void doLogical(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+    protected abstract void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame);
+
+    @Override
+    public final Object execute(VirtualFrame frame) {
+        Object value = getRhs().execute(frame);
+        execute(frame, value);
+        return value;
     }
 
-    @Specialization(guards = "isIntegerKind(frame, frameSlot)")
-    protected void doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+    @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
+    protected abstract static class ResolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNode {
+
+        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+        private final BranchProfile invalidateProfile = BranchProfile.create();
+        private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
+
+        private final Mode mode;
+
+        public ResolvedWriteSuperFrameVariableNode(Mode mode) {
+            this.mode = mode;
+        }
+
+        protected abstract FrameSlotNode getFrameSlotNode();
+
+        @Specialization(guards = "isLogicalKind(enclosingFrame, frameSlot)")
+        protected void doLogical(byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        }
+
+        @Specialization(guards = "isIntegerKind(enclosingFrame, frameSlot)")
+        protected void doInteger(int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        }
+
+        @Specialization(guards = "isDoubleKind(enclosingFrame, frameSlot)")
+        protected void doDouble(double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        }
+
+        @Specialization
+        protected void doObject(Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
+            Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
+        }
     }
 
-    @Specialization(guards = "isDoubleKind(frame, frameSlot)")
-    protected void doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
-    }
-
-    @Specialization
-    protected void doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-        MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
-        Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
-    }
-
-    private static class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHelper {
+    private static final class UnresolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNode {
 
         @Child private RNode rhs;
-        private final String symbol;
-        private final BaseWriteVariableNode.Mode mode;
 
-        UnresolvedWriteSuperFrameVariableNode(String symbol, RNode rhs, BaseWriteVariableNode.Mode mode) {
+        private final String name;
+        private final Mode mode;
+
+        UnresolvedWriteSuperFrameVariableNode(String name, RNode rhs, Mode mode) {
             this.rhs = rhs;
-            this.symbol = symbol;
+            this.name = name;
             this.mode = mode;
         }
 
         @Override
         public String getName() {
-            return symbol;
+            return name;
         }
 
         @Override
@@ -112,21 +127,21 @@ abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHe
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (getName().isEmpty()) {
+            if (name.isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
-            final WriteSuperFrameVariableNodeHelper writeNode;
+            final WriteSuperFrameVariableNode writeNode;
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
                 /*
                  * we've reached the global scope, do unconditional write. if this is the first node
                  * in the chain, needs the rhs and enclosingFrame nodes
                  */
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? new AccessEnclosingFrameNode() : null;
-                writeNode = WriteSuperFrameVariableNodeGen.create(getRhs(), enclosingFrameNode,
-                                FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol, FrameSlotKind.Illegal)), getName(), mode);
+                writeNode = ResolvedWriteSuperFrameVariableNodeGen.create(mode, rhs, enclosingFrameNode,
+                                FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), name, FrameSlotKind.Illegal)), name);
             } else {
-                WriteSuperFrameVariableNode actualWriteNode = WriteSuperFrameVariableNodeGen.create(null, null, FrameSlotNode.create(symbol), this.getName(), mode);
-                writeNode = new WriteSuperFrameVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperFrameVariableNode(symbol, null, mode), getRhs());
+                ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(mode, null, null, FrameSlotNode.create(name), name);
+                writeNode = new WriteSuperFrameVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperFrameVariableNode(name, null, mode), rhs);
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
         }
@@ -139,22 +154,22 @@ abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariableNodeHe
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalFrameVariableNodeGen.create(getRhs(), symbol, mode)).execute(frame, value);
+                replace(UnresolvedWriteLocalFrameVariableNodeGen.create(rhs, name, mode)).execute(frame, value);
             }
         }
     }
 
-    public static class WriteSuperFrameVariableConditionalNode extends WriteSuperFrameVariableNodeHelper {
+    private static final class WriteSuperFrameVariableConditionalNode extends WriteSuperFrameVariableNode {
 
-        @Child private WriteSuperFrameVariableNode writeNode;
-        @Child private WriteSuperFrameVariableNodeHelper nextNode;
+        @Child private ResolvedWriteSuperFrameVariableNode writeNode;
+        @Child private WriteSuperFrameVariableNode nextNode;
         @Child private RNode rhs;
 
         private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
         private final ConditionProfile hasValueProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nullSuperFrameProfile = ConditionProfile.createBinaryProfile();
 
-        WriteSuperFrameVariableConditionalNode(WriteSuperFrameVariableNode writeNode, WriteSuperFrameVariableNodeHelper nextNode, RNode rhs) {
+        WriteSuperFrameVariableConditionalNode(ResolvedWriteSuperFrameVariableNode writeNode, WriteSuperFrameVariableNode nextNode, RNode rhs) {
             this.writeNode = writeNode;
             this.nextNode = nextNode;
             this.rhs = rhs;

@@ -178,7 +178,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             width = doLab(0);
 
-            FormatMetrics fm = formatVector(0, n);
+            FormatMetrics fm = formatVector(0, nPr);
             final int w = fm.maxWidth;
 
             for (int i = 0; i < nPr; i++) {
