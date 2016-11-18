@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysFrameNodeGen;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -59,10 +60,10 @@ import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -405,6 +406,12 @@ public class FrameFunctions {
     public abstract static class SysFrame extends DeoptHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
+
+        public abstract REnvironment executeInt(VirtualFrame frame, int which);
+
+        public static SysFrame create() {
+            return SysFrameNodeGen.create();
+        }
 
         @Override
         protected final FrameAccess frameAccess() {

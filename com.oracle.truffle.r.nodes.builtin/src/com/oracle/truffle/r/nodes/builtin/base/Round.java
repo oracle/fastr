@@ -62,7 +62,8 @@ public abstract class Round extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        // TODO: this should also accept vectors:
+        // TODO: this should also accept vectors
+        // TODO: digits argument is rounded, not simply stripped off the decimal part
         casts.arg("digits").asIntegerVector().findFirst();
     }
 
