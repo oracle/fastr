@@ -14,8 +14,8 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.util.Arrays;
 
@@ -57,6 +57,10 @@ public final class RandGenerationFunctions {
         }
 
         int evaluate(double a, double b);
+    }
+
+    public interface RandFunction2_Double {
+        double evaluate(double a, double b);
     }
 
     static final class RandGenerationProfiles {
@@ -115,6 +119,48 @@ public final class RandGenerationFunctions {
             RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
         }
         return RDataFactory.createIntVector(result, complete);
+    }
+
+    private static RAbstractDoubleVector evaluate2Double(Node node, RandFunction2_Double function, int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RandGenerationProfiles profiles) {
+        int aLength = a.getLength();
+        int bLength = b.getLength();
+        if (aLength == 0 || bLength == 0) {
+            profiles.nanResult.enter();
+            RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
+            double[] nansResult = new double[length];
+            Arrays.fill(nansResult, RRuntime.DOUBLE_NA);
+            return RDataFactory.createDoubleVector(nansResult, false);
+        }
+
+        RNode.reportWork(node, length);
+        boolean complete = true;
+        boolean nans = false;
+        profiles.aCheck.enable(a);
+        profiles.bCheck.enable(b);
+        double[] result = new double[length];
+        for (int i = 0; i < length; i++) {
+            double aValue = a.getDataAt(i % aLength);
+            double bValue = b.getDataAt(i % bLength);
+            double value;
+            if (Double.isNaN(aValue) || Double.isNaN(bValue)) {
+                profiles.nan.enter();
+                value = RRuntime.INT_NA;
+                if (profiles.aCheck.check(aValue) || profiles.bCheck.check(bValue)) {
+                    complete = false;
+                }
+            } else {
+                value = function.evaluate(aValue, bValue);
+                if (Double.isNaN(value)) {
+                    profiles.nan.enter();
+                    nans = true;
+                }
+            }
+            result[i] = value;
+        }
+        if (nans) {
+            RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
+        }
+        return RDataFactory.createDoubleVector(result, complete);
     }
 
     /**
@@ -189,6 +235,28 @@ public final class RandGenerationFunctions {
         protected RAbstractIntVector evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b,
                         @Cached("create()") RandGenerationProfiles profiles) {
             return evaluate3Int(this, function, convertToLength.execute(length), a, b, DUMMY_VECTOR, profiles);
+        }
+    }
+
+    public abstract static class Function2_DoubleNode extends RExternalBuiltinNode.Arg3 {
+        private final RandFunction2_Double function;
+        @Child private ConvertToLength convertToLength = ConvertToLengthNodeGen.create();
+
+        protected Function2_DoubleNode(RandFunction2_Double function) {
+            this.function = function;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            ConvertToLength.addLengthCast(casts);
+            casts.arg(1).asDoubleVector();
+            casts.arg(2).asDoubleVector();
+        }
+
+        @Specialization
+        protected RAbstractDoubleVector evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b,
+                        @Cached("create()") RandGenerationProfiles profiles) {
+            return evaluate2Double(this, function, convertToLength.execute(length), a, b, profiles);
         }
     }
 }

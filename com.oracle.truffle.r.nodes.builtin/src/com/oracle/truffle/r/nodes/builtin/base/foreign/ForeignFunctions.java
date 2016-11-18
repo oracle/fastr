@@ -53,7 +53,7 @@ import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
 import com.oracle.truffle.r.library.stats.Rbinom;
-import com.oracle.truffle.r.library.stats.RnormNodeGen;
+import com.oracle.truffle.r.library.stats.Rnorm;
 import com.oracle.truffle.r.library.stats.RunifNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
@@ -359,7 +359,7 @@ public class ForeignFunctions {
                 case "qnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qnorm());
                 case "rnorm":
-                    return RnormNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rnorm());
                 case "runif":
                     return RunifNodeGen.create();
                 case "qgamma":
