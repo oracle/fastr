@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -148,8 +147,7 @@ public abstract class AsFunction extends RBuiltinNode {
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction", null);
-        RDeparse.ensureSourceSection(rootNode);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame());
+        return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, envir.getFrame());
     }
 }

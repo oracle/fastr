@@ -57,6 +57,7 @@ import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -711,5 +712,10 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public String encodeComplex(RComplex x, int digits) {
         return ComplexVectorPrinter.encodeComplex(x, digits);
+    }
+
+    @Override
+    public void checkDebugRequest(RFunction func) {
+        RInstrumentation.checkDebugRequested(func);
     }
 }

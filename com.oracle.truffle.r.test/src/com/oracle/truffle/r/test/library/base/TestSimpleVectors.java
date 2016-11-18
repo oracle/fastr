@@ -284,7 +284,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2); x[[c(\"a\", \"b\")]] }");
         assertEval("{ x<-1:2; x[c(TRUE, TRUE)] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:2; x[[c(TRUE, TRUE)]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:2; dim(x)<-c(1,2); x[2+2i, 2+2i] }");
+        assertEval("{ x<-1:2; dim(x)<-c(1,2); x[2+2i, 2+2i] }");
         assertEval("{ x<-1:2; dim(x)<-c(1,2); u<-2+2i; x[[u, u]] }");
         assertEval("{ x<-2; x[NULL] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-2; x[[NULL]] }");
@@ -428,16 +428,16 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(FALSE,TRUE,TRUE)]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[complex()]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i)]]<-integer(); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i)]]<-c(42); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i)]]<-c(42); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i)]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i,42+7i,3+3i)]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,42+7i)]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i)]<-integer(); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i)]<-c(42); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i)]<-c(42); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[complex()]<-c(42,43); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i)]<-c(42,43); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i,42+7i,3+3i)]<-c(42,43); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(0,42+7i)]<-c(42,43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i)]<-c(42,43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1+1i,42+7i,3+3i)]<-c(42,43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,42+7i)]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,42+71)]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(integer()))]]<-c(42,43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(42))]]<-integer(); x }");
@@ -771,14 +771,14 @@ public class TestSimpleVectors extends TestBase {
     @Test
     public void testComplexIndex() {
         assertEval(Output.IgnoreErrorMessage, "{ x<-c(1,2,3,4); x[[1+1i]]<-integer() }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[[1+1i]]<-c(1) }");
+        assertEval("{ x<-c(1,2,3,4); x[[1+1i]]<-c(1) }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-c(1,2,3,4); x[[1+1i]]<-c(1,2) }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-c(1,2,3,4); x[[1+1i]]<-c(1,2,3) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[1+1i]<-NULL }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[1+1i]<-integer() }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[1+1i]<-c(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[1+1i]<-c(1,2) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); x[1+1i]<-c(1,2,3) }");
+        assertEval("{ x<-c(1,2,3,4); x[1+1i]<-NULL }");
+        assertEval("{ x<-c(1,2,3,4); x[1+1i]<-integer() }");
+        assertEval("{ x<-c(1,2,3,4); x[1+1i]<-c(1) }");
+        assertEval("{ x<-c(1,2,3,4); x[1+1i]<-c(1,2) }");
+        assertEval("{ x<-c(1,2,3,4); x[1+1i]<-c(1,2,3) }");
 
         assertEval(Output.IgnoreErrorMessage, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-integer() }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-7 }");
@@ -787,16 +787,16 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[[1+1i]]<-NULL }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[[1+1i]]<-integer() }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[[1+1i]]<-c(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[[1+1i]]<-c(1,2) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[[1+1i]]<-c(1,2,3) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[1+1i]<-NULL }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[1+1i]<-integer() }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[1+1i]<-c(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[1+1i]<-c(1,2) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); x[1+1i]<-c(1,2,3) }");
+        assertEval("{ x<-list(1,2,3,4); x[[1+1i]]<-NULL }");
+        assertEval("{ x<-list(1,2,3,4); x[[1+1i]]<-integer() }");
+        assertEval("{ x<-list(1,2,3,4); x[[1+1i]]<-c(1) }");
+        assertEval("{ x<-list(1,2,3,4); x[[1+1i]]<-c(1,2) }");
+        assertEval("{ x<-list(1,2,3,4); x[[1+1i]]<-c(1,2,3) }");
+        assertEval("{ x<-list(1,2,3,4); x[1+1i]<-NULL }");
+        assertEval("{ x<-list(1,2,3,4); x[1+1i]<-integer() }");
+        assertEval("{ x<-list(1,2,3,4); x[1+1i]<-c(1) }");
+        assertEval("{ x<-list(1,2,3,4); x[1+1i]<-c(1,2) }");
+        assertEval("{ x<-list(1,2,3,4); x[1+1i]<-c(1,2,3) }");
 
         assertEval(Output.IgnoreErrorMessage, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
         assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-integer() }");
@@ -1352,10 +1352,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x <- c(a=1,b=2) ; x[[c(\"a\",\"a\")]] }");
         assertEval("{ x <- list(1,2) ; x[[c(\"a\",\"a\")]] }");
         assertEval("{ x <- list(a=1,b=1:3) ; x[[c(\"b\",\"a\")]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- list(a=1,b=1:3) ; x[[2+3i]] }");
+        assertEval("{ x <- list(a=1,b=1:3) ; x[[2+3i]] }");
         assertEval("{ x <- list(a=1,b=1:3) ; f <- function(i) { x[[i]] } ; f(c(2,2)) ; f(2+3i) }");
         assertEval("{ x <- 1:3; x[list(2,3)] }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- 1:3; x[function(){3}] }");
+        assertEval("{ x <- 1:3; x[function(){3}] }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- 1:2; x[[list()]] }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- 1:2; x[[list(-0,-1)]] }");
         assertEval("{ x <- 1:2; x[[list(0)]] }");
@@ -1748,7 +1748,7 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ b <- c(1,2,5) ; b[c(TRUE,FALSE,FALSE)] <- NULL ; b }");
         assertEval("{ b <- c(1,2,5) ; b[logical()] <- NULL ; b }");
-        assertEval(Output.IgnoreErrorContext, "{ b <- c(1,2,5) ; b[c(TRUE,NA,TRUE)] <- list(TRUE,1+2i) ; b }");
+        assertEval("{ b <- c(1,2,5) ; b[c(TRUE,NA,TRUE)] <- list(TRUE,1+2i) ; b }");
         assertEval("{ b <- c(1,2,5) ; b[c(TRUE,FALSE,TRUE)] <- list(TRUE,1+2i) ; b }");
         assertEval("{ b <- list(1,2,5) ; dim(b) <- c(1,3) ; b[c(TRUE,FALSE,TRUE)] <- list(TRUE,1+2i) ; b }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; x <- list(1,2,5) ; dim(x) <- c(1,3) ; f(x, c(FALSE,TRUE,TRUE), list(TRUE,1+2i)) }");
@@ -1848,7 +1848,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(\"a\",\"b\",\"c\"),c(TRUE,FALSE),c(\"A\",\"X\")) ; f(1:3,c(TRUE,FALSE),4) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(\"a\",\"b\",\"c\"),c(TRUE,FALSE),c(\"A\",\"X\")) ; f(c(\"A\",\"X\"),c(TRUE,FALSE),4) }");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[c(TRUE,FALSE,TRUE)] <- c(1+2i,3+4i) ; b }");
-        assertEval(Output.IgnoreErrorContext, "{ b <- as.raw(1:5) ; b[c(TRUE,FALSE,TRUE)] <- c(1+2i,3+4i) ; b }");
+        assertEval("{ b <- as.raw(1:5) ; b[c(TRUE,FALSE,TRUE)] <- c(1+2i,3+4i) ; b }");
 
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(\"a\",\"b\",\"c\"),c(TRUE,FALSE),c(\"A\",\"X\")) ; f(f,c(TRUE,FALSE),4) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(\"a\",\"b\",\"c\"),c(TRUE,FALSE),c(\"A\",\"X\")) ; f(c(\"A\",\"X\"),c(TRUE,FALSE),f) }");

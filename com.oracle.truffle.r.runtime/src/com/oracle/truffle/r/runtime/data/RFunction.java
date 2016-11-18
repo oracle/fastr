@@ -48,13 +48,15 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     public static final String NO_NAME = new String("");
 
-    private String name;
+    private final String name;
+    private final String packageName;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
 
     private final MaterializedFrame enclosingFrame;
 
-    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
+    RFunction(String name, String packageName, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
+        this.packageName = packageName;
         this.target = target;
         this.builtin = builtin;
         this.name = name;
@@ -80,6 +82,10 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     public String getName() {
         return name;
+    }
+
+    public String getPackageName() {
+        return packageName;
     }
 
     public RootCallTarget getTarget() {
@@ -108,7 +114,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     @Override
     public RFunction copy() {
-        RFunction newFunction = RDataFactory.createFunction(getName(), getTarget(), getRBuiltin(), getEnclosingFrame());
+        RFunction newFunction = RDataFactory.createFunction(getName(), getPackageName(), getTarget(), getRBuiltin(), getEnclosingFrame());
         if (getAttributes() != null) {
             RAttributes newAttributes = newFunction.initAttributes();
             for (RAttribute attr : getAttributes()) {
@@ -119,5 +125,4 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;
     }
-
 }

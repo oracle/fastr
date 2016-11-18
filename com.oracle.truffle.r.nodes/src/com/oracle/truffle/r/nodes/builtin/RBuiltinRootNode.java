@@ -118,11 +118,6 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
-    public String getSourceCode() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
     public String getName() {
         return "RBuiltin(" + builtin + ")";
     }

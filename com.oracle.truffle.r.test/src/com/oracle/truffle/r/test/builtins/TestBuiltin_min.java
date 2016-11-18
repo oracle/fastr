@@ -148,7 +148,7 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ is.logical(min(TRUE, FALSE)) }");
         assertEval("{ is.logical(min(TRUE)) }");
         assertEval("{ min(as.raw(42), as.raw(7)) }");
-        assertEval(Output.IgnoreErrorContext, "{ min(42+42i, 7+7i) }");
+        assertEval("{ min(42+42i, 7+7i) }");
         assertEval("{ min(\"42\", \"7\") }");
 
         assertEval("{ min(as.double(NA), na.rm=FALSE) }");

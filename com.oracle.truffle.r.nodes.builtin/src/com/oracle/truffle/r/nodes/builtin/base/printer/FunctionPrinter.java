@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
 
@@ -75,9 +78,14 @@ final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
             out.print(rBuiltin.getName());
             out.print("\")");
         } else {
-            final boolean useSource = printCtx.parameters().getUseSource();
-            String source = ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
-            if (source == null || !useSource) {
+            String source = null;
+            if (printCtx.parameters().getUseSource()) {
+                SourceSection sourceSection = ((RSyntaxFunction) operand.getRootNode()).getLazySourceSection();
+                if (sourceSection != null && sourceSection != RSyntaxNode.LAZY_DEPARSE) {
+                    source = sourceSection.getCode();
+                }
+            }
+            if (source == null) {
                 source = RDeparse.deparse(operand);
             }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());

@@ -53,6 +53,6 @@ public class TestBuiltin_digamma extends TestBase {
         assertEval("{ digamma(c(100, 2.2)) }");
         assertEval("{ digamma(FALSE) }");
         assertEval("{ digamma(as.raw(1)) }");
-        assertEval(Output.IgnoreErrorContext, "{ digamma(1+1i) }");
+        assertEval("{ digamma(1+1i) }");
     }
 }

@@ -47,6 +47,6 @@ public class TestBuiltin_args extends TestBase {
         assertEval("{ f <- function(a) {}; fa <- args(f); }");
         assertEval("{ f <- function(a, b) {}; fa <- args(f); }");
         assertEval("{ sa <- args(sum); }");
-        assertEval("{  f <- function(x=1, y) x + y; args(f); }");
+        assertEval(Output.IgnoreWhitespace, "{  f <- function(x=1, y) x + y; args(f); }");
     }
 }

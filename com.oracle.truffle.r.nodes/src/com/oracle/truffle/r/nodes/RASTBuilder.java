@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes;
 
 import java.util.List;
-import java.util.Map;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -56,6 +55,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -67,22 +67,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * This class can be used to build fragments of Truffle AST that correspond to R language
  * constructs: calls, lookups, constants and functions.
- *
- * Additionally, this class has helper functions to issue (parser) warnings and
- *
  */
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
-    private final Map<String, Object> constants;
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
-
-    public RASTBuilder() {
-        this.constants = null;
-    }
-
-    public RASTBuilder(Map<String, Object> constants) {
-        this.constants = constants;
-    }
 
     @Override
     public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
@@ -105,6 +93,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {
+                    case "$":
+                    case "@":
+                        if (args.get(1).value instanceof RSyntaxLookup) {
+                            RSyntaxLookup lookup = (RSyntaxLookup) args.get(1).value;
+                            // FastR differs from GNUR: we only use string constants to represent
+                            // field and slot lookups, while GNUR uses symbols
+                            args.set(1, RCodeBuilder.argument(args.get(1).source, args.get(1).name, constant(lookup.getLazySourceSection(), lookup.getIdentifier())));
+                        }
+                        break;
                     case "while":
                         return new WhileNode(source, lhsLookup, args.get(0).value, args.get(1).value);
                     case "if":
@@ -255,6 +252,12 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, ((String) value).intern());
         } else {
+            if (value instanceof RShareable) {
+                RShareable shareable = (RShareable) value;
+                if (!shareable.isSharedPermanent()) {
+                    return ConstantNode.create(source, shareable.makeSharedPermanent());
+                }
+            }
             return ConstantNode.create(source, value);
         }
     }
@@ -274,12 +277,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     @Override
     public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
         assert source != null;
-        if (constants != null && symbol.startsWith("C")) {
-            Object object = constants.get(symbol);
-            if (object != null) {
-                return ConstantNode.create(source, object);
-            }
-        }
         if (!functionLookup) {
             int index = getVariadicComponentIndex(symbol);
             if (index != -1) {

@@ -84,7 +84,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
             }
             initialized = true;
         }
-        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame);
+        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, matFrame);
         RInstrumentation.checkDebugRequested(func);
         return func;
     }

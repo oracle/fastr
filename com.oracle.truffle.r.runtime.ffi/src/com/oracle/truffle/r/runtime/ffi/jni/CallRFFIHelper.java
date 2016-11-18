@@ -1153,7 +1153,7 @@ public class CallRFFIHelper {
 
         try {
             Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
-            RExpression exprs = RContext.getEngine().parse(null, source);
+            RExpression exprs = RContext.getEngine().parse(source);
             return new ParseResult(ParseStatus.PARSE_OK.ordinal(), exprs);
         } catch (ParseException ex) {
             // TODO incomplete
