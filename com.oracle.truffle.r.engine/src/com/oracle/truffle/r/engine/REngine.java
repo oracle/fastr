@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -476,7 +477,7 @@ final class REngine implements Engine, Engine.Timings {
      * context of that frame. Note that passing only this one frame argument, strictly spoken,
      * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
      */
-    private final class AnonymousRootNode extends RootNode {
+    private final class AnonymousRootNode extends RootNode implements RootWithBody {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
@@ -565,6 +566,11 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public boolean isCloningAllowed() {
             return false;
+        }
+
+        @Override
+        public RNode getBody() {
+            return body;
         }
     }
 
