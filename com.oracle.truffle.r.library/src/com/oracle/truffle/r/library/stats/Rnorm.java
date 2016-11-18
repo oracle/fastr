@@ -11,13 +11,14 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_DoubleAdapter;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
-public final class Rnorm implements RandFunction2_Double {
+public final class Rnorm extends RandFunction2_DoubleAdapter {
 
     private static final double BIG = 134217728;
 
+    @Override
     public double evaluate(double mu, double sigma) {
         // TODO: GnuR invokes norm_rand to get "rand"
         double u1 = (int) (BIG * RRNG.unifRand()) + RRNG.unifRand();

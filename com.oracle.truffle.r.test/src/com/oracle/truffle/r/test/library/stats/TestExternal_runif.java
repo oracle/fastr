@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.stats;
+package com.oracle.truffle.r.test.library.stats;
 
-import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.rng.RRNG;
+import org.junit.Test;
 
-public final class Runif implements RandFunction2_Double {
-    @Override
-    public boolean isValid(double min, double max) {
-        return RRuntime.isFinite(min) && RRuntime.isFinite(max) && max >= min;
-    }
+import com.oracle.truffle.r.test.TestBase;
 
-    @Override
-    public double evaluate(double min, double max) {
-        return min + RRNG.unifRand() * (max - min);
+public class TestExternal_runif extends TestBase {
+    @Test
+    public void testRunif() {
+        assertEval("set.seed(1); runif(5);");
+        assertEval("set.seed(1); runif(5, 10, 2.5);");
     }
 }
