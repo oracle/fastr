@@ -350,9 +350,9 @@ public final class NACheck {
                 }
                 result[i] = intValue;
             }
-            if (warning) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
-            }
+        }
+        if (warning) {
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
     }
