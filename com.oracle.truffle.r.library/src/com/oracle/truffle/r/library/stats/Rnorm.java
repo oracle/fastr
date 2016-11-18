@@ -14,9 +14,6 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
-/**
- * TODO GnuR checks/updates {@code .Random.seed} across this call. TODO Honor min/max.
- */
 public final class Rnorm implements RandFunction2_Double {
 
     private static final double BIG = 134217728;

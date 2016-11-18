@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public final class RandGenerationFunctions {
     private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
@@ -95,6 +96,7 @@ public final class RandGenerationFunctions {
         profiles.bCheck.enable(b);
         profiles.cCheck.enable(c);
         int[] result = new int[length];
+        RRNG.getRNGState();
         for (int i = 0; i < length; i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -115,6 +117,7 @@ public final class RandGenerationFunctions {
             }
             result[i] = value;
         }
+        RRNG.putRNGState();
         if (nans) {
             RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
         }
@@ -138,6 +141,7 @@ public final class RandGenerationFunctions {
         profiles.aCheck.enable(a);
         profiles.bCheck.enable(b);
         double[] result = new double[length];
+        RRNG.getRNGState();
         for (int i = 0; i < length; i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -157,6 +161,7 @@ public final class RandGenerationFunctions {
             }
             result[i] = value;
         }
+        RRNG.putRNGState();
         if (nans) {
             RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
         }
