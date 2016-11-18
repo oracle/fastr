@@ -84,6 +84,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile differentTypesProfile = ConditionProfile.createBinaryProfile();
 
     // Note: the execution of the recursive cases is not done directly and not through RCallNode or
     // similar, this means that the visibility handling is left to us.
@@ -241,7 +242,7 @@ public abstract class Identical extends RBuiltinNode {
 
     @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
+        if (vecLengthProfile.profile(x.getLength() != y.getLength()) || differentTypesProfile.profile(x.getRType() != y.getRType())) {
             return RRuntime.LOGICAL_FALSE;
         } else {
             for (int i = 0; i < x.getLength(); i++) {
