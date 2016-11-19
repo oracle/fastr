@@ -250,6 +250,32 @@ public class FileConnections {
         public void close() throws IOException {
             inputStream.close();
         }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            long position = inputStream.getChannel().position();
+            switch (seekMode) {
+                case ENQUIRE:
+                    break;
+                case CURRENT:
+                    if (offset != 0) {
+                        inputStream.getChannel().position(position + offset);
+                    }
+                    break;
+                case START:
+                    inputStream.getChannel().position(offset);
+                    break;
+                case END:
+                    throw RInternalError.unimplemented();
+
+            }
+            return position;
+        }
     }
 
     private static class FileWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -366,8 +392,13 @@ public class FileConnections {
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long result = raf.getFilePointer();
-            if (seekMode != SeekMode.START) {
-                throw RError.nyi(null, "seek mode");
+            switch (seekMode) {
+                case ENQUIRE:
+                    return result;
+                case START:
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
             }
             switch (seekRWMode) {
                 case LAST:
