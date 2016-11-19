@@ -166,6 +166,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BinaryLogic.NonVectorOrBuiltin.class, () -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR));
 
         // Now load the rest of the builtins in "base"
+        add(Abbrev.class, AbbrevNodeGen::create);
         add(APerm.class, APermNodeGen::create);
         add(NumericalFunctions.Abs.class, NumericalFunctionsFactory.AbsNodeGen::create);
         add(All.class, AllNodeGen::create);
