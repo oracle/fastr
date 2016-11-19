@@ -76,13 +76,19 @@ void *R_chk_calloc(size_t nelem, size_t elsize) {
     return (p);
 }
 
-void *R_chk_realloc(void *p, size_t size) {
-    return unimplemented("R_chk_realloc");
+void *R_chk_realloc(void *ptr, size_t size) {
+    void *p;
+    /* Protect against broken realloc */
+    if(ptr) p = realloc(ptr, size); else p = malloc(size);
+    if(!p)
+	error(_("'Realloc' could not re-allocate memory (%.0f bytes)"),
+	      (double) size);
+    return(p);
 }
 
-void R_chk_free(void *p) {
-    if(p) {
-	free(p);
+void R_chk_free(void *ptr) {
+    if(ptr) {
+	    free(ptr);
     }
 }
 
