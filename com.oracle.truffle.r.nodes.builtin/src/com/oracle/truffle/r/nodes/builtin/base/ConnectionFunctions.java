@@ -178,6 +178,10 @@ public abstract class ConnectionFunctions {
         private static void swap(CastBuilder casts) {
             casts.arg("swap").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
+
+        private static void method(CastBuilder casts) {
+            casts.arg("method").asStringVector().findFirst();
+        }
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
@@ -189,7 +193,7 @@ public abstract class ConnectionFunctions {
             Casts.open(casts);
             casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
             Casts.encoding(casts);
-            casts.arg("method").asStringVector().findFirst();
+            Casts.method(casts);
             Casts.raw(casts);
         }
 
@@ -356,7 +360,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
+    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method"}, behavior = IO)
     public abstract static class URLConnection extends RBuiltinNode {
 
         @Override
@@ -365,11 +369,13 @@ public abstract class ConnectionFunctions {
             Casts.open(casts);
             Casts.blocking(casts);
             Casts.encoding(casts);
+            Casts.method(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding) {
+        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding,
+                        @SuppressWarnings("unused") String method) {
             try {
                 return new URLRConnection(url, open).asVector();
             } catch (MalformedURLException ex) {
