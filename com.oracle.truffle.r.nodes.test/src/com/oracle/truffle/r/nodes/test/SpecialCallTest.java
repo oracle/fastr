@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -197,6 +198,9 @@ public class SpecialCallTest extends TestBase {
     }
 
     private static void assertCallCounts(String str, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
+        if (!FastROptions.UseSpecials.getBooleanValue()) {
+            return;
+        }
         Source source = Source.newBuilder(str).mimeType(TruffleRLanguage.MIME).name("test").build();
 
         RExpression expression = testVMContext.getThisEngine().parse(source);
