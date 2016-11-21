@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.instrument.RPackageSource;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -77,7 +76,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();
             TempPathName.initialize();
-            RPackageSource.initialize();
 
         } catch (Throwable t) {
             t.printStackTrace();
