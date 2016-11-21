@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -157,17 +158,11 @@ public final class REnvVars implements RContext.ContextState {
             rHome = System.getenv(R_HOME);
             Path rHomePath;
             if (rHome == null) {
-                /*
-                 * The only time this can happen legitimately is when run under the graalvm shell,
-                 * which does not execute the shell script that normally sets R_HOME.
-                 */
                 rHomePath = getRHomePath();
             } else {
                 rHomePath = Paths.get(rHome);
             }
-            // Sanity check on the expected structure of an R_HOME
-            Path bin = rHomePath.resolve("bin");
-            if (!(Files.exists(bin) && Files.isDirectory(bin) && Files.exists(bin.resolve("R")))) {
+            if (!validateRHome(rHomePath)) {
                 Utils.rSuicide("R_HOME is not set correctly");
             }
             rHome = rHomePath.toString();
@@ -175,8 +170,35 @@ public final class REnvVars implements RContext.ContextState {
         return rHome;
     }
 
+    /**
+     * In the case where {@code R_HOME} is not set, which should only occur when FastR is invoked
+     * from a {@link PolyglotEngine} created by another language, we try to locate the
+     * {@code R_HOME} dynamically by using the location of this class. The logic varies depending on
+     * whether this class was stored in a {@code .jar} file or in a {@code .class} file in a
+     * directory.
+     *
+     * @return either a valid {@code R_HOME} or {@code null}
+     */
     private static Path getRHomePath() {
-        return Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+        Path path = Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+        while (path != null) {
+            if (validateRHome(path)) {
+                return path;
+            }
+            path = path.getParent();
+        }
+        return path;
+    }
+
+    /**
+     * Sanity check on the expected structure of an {@code R_HOME}.
+     */
+    private static boolean validateRHome(Path path) {
+        if (path == null) {
+            return false;
+        }
+        Path bin = path.resolve("bin");
+        return Files.exists(bin) && Files.isDirectory(bin) && Files.exists(bin.resolve("R"));
     }
 
     private void checkRHome() {
