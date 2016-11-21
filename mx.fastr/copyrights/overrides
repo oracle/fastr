@@ -47,6 +47,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rbinom.java,
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rnorm.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFunctions.java,gnu_r_splines.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctions.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandGenerationFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsUtil.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/TOMS708.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/DirChmod.java,gnu_r.copyright

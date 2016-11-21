@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,18 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
-/**
- * TODO GnuR checks/updates {@code .Random.seed} across this call.
- */
-public abstract class Runif extends RExternalBuiltinNode.Arg3 {
+public final class Runif implements RandFunction2_Double {
+    @Override
+    public boolean isValid(double min, double max) {
+        return RRuntime.isFinite(min) && RRuntime.isFinite(max) && max >= min;
+    }
 
-    @Child private RandomNumberNode random = new RandomNumberNode();
-
-    @Specialization
-    protected Object doRunif(Object n, Object min, Object max) {
-        // TODO full error checks
-        int nInt = castInt(castVector(n));
-        double minDouble = castDouble(castVector(min)).getDataAt(0);
-        double maxDouble = castDouble(castVector(max)).getDataAt(0);
-        double delta = maxDouble - minDouble;
-
-        double[] result = random.executeDouble(nInt);
-        for (int i = 0; i < nInt; i++) {
-            result[i] = minDouble + result[i] * delta;
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+    @Override
+    public double evaluate(double min, double max) {
+        return min + RRNG.unifRand() * (max - min);
     }
 }

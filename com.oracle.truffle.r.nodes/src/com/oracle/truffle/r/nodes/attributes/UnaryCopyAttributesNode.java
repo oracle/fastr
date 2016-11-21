@@ -49,6 +49,10 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         this.copyAllAttributes = copyAllAttributes;
     }
 
+    public static UnaryCopyAttributesNode create() {
+        return UnaryCopyAttributesNodeGen.create(true);
+    }
+
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
 
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
