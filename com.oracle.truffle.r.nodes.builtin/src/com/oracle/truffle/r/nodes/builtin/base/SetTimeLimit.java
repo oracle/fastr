@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "setTimeLimit", kind = INTERNAL, parameterNames = {"cpu", "elapsed", "transient"}, behavior = COMPLEX)
+@RBuiltin(name = "setTimeLimit", kind = INTERNAL, parameterNames = {"cpu", "elapsed", "transient"}, visibility = OFF, behavior = COMPLEX)
 public abstract class SetTimeLimit extends RBuiltinNode {
 
     @Override

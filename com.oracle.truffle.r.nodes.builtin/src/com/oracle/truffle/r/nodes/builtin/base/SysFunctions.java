@@ -382,7 +382,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "setFileTime", kind = INTERNAL, parameterNames = {"path", "time"}, behavior = IO)
+    @RBuiltin(name = "setFileTime", kind = INTERNAL, parameterNames = {"path", "time"}, visibility = OFF, behavior = IO)
     public abstract static class SysSetFileTime extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
