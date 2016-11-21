@@ -197,16 +197,17 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         RNode[] localArguments = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
+            RSyntaxNode arg = arguments[i];
             if (inReplace && contains(ignoredArguments, i)) {
-                localArguments[i] = arguments[i].asRNode();
+                localArguments[i] = arg.asRNode();
             } else {
-                if (arguments[i] instanceof RSyntaxLookup) {
-                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
-                } else if (arguments[i] instanceof RSyntaxConstant) {
-                    localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+                if (arg instanceof RSyntaxLookup) {
+                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arg).getIdentifier());
+                } else if (arg instanceof RSyntaxConstant) {
+                    localArguments[i] = RContext.getASTBuilder().process(arg).asRNode();
                 } else {
-                    assert arguments[i] instanceof RCallSpecialNode;
-                    localArguments[i] = arguments[i].asRNode();
+                    assert arg instanceof RCallSpecialNode;
+                    localArguments[i] = arg.asRNode();
                 }
             }
         }
