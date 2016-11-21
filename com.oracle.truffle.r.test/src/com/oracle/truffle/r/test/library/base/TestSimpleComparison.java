@@ -269,5 +269,8 @@ public class TestSimpleComparison extends TestBase {
     @Test
     public void testOther() {
         assertEval("{ stdin() == 0L }");
+        assertEval("{ quote(a) == quote(b) }");
+        assertEval("{ quote(a+b) == quote(a+b) }");
+        assertEval("{ quote(a+b) == quote(b+b) }");
     }
 }
