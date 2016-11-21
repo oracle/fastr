@@ -23,9 +23,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory.ConvertToLengthNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -87,14 +89,17 @@ public final class RandGenerationFunctions {
         final NACheck aCheck = NACheck.create();
         final NACheck bCheck = NACheck.create();
         final NACheck cCheck = NACheck.create();
+        final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
+        final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
 
         public static RandGenerationProfiles create() {
             return new RandGenerationProfiles();
         }
     }
 
-    private static RAbstractIntVector evaluate3Int(Node node, RandFunction3_Int function, int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
+    private static RAbstractIntVector evaluate3Int(Node node, RandFunction3_Int function, int lengthIn, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
                     RandGenerationProfiles profiles) {
+        int length = profiles.resultVectorLengthProfile.profile(lengthIn);
         int aLength = a.getLength();
         int bLength = b.getLength();
         int cLength = c.getLength();
@@ -114,7 +119,7 @@ public final class RandGenerationFunctions {
         profiles.cCheck.enable(c);
         int[] result = new int[length];
         RRNG.getRNGState();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
             double cValue = c.getDataAt(i % cLength);

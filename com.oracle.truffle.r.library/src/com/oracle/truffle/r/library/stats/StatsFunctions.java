@@ -19,9 +19,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -59,6 +61,8 @@ public final class StatsFunctions {
         final ConditionProfile copyAttrsFromA = ConditionProfile.createBinaryProfile();
         final ConditionProfile copyAttrsFromB = ConditionProfile.createBinaryProfile();
         final ConditionProfile copyAttrsFromC = ConditionProfile.createBinaryProfile();
+        final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
+        final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
 
         public static StatFunctionProfiles create() {
             return new StatFunctionProfiles();
@@ -73,7 +77,7 @@ public final class StatsFunctions {
         if (aLength == 0 || bLength == 0 || cLength == 0) {
             return RDataFactory.createEmptyDoubleVector();
         }
-        int length = Math.max(aLength, Math.max(bLength, cLength));
+        int length = profiles.resultVectorLengthProfile.profile(Math.max(aLength, Math.max(bLength, cLength)));
         RNode.reportWork(node, length);
         double[] result = new double[length];
 
@@ -82,7 +86,7 @@ public final class StatsFunctions {
         profiles.aCheck.enable(a);
         profiles.bCheck.enable(b);
         profiles.cCheck.enable(c);
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
             double cValue = c.getDataAt(i % cLength);
