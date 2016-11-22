@@ -197,7 +197,7 @@ public final class MissingNode extends OperatorNode {
         if (level == null && readVarArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (args.length != 1) {
-                throw RError.error(this, Message.ARGUMENTS_PASSED, args.length, "missing", 1);
+                throw RError.error(this, Message.ARGUMENTS_PASSED, args.length, "'missing'", 1);
             }
             RSyntaxElement arg = args[0];
             if (!(arg instanceof RSyntaxLookup)) {

@@ -72,9 +72,13 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
@@ -184,41 +188,49 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     private boolean needsAnyBuiltinSplitting() {
-        NodeCountFilter findAlwaysSplitInternal = node -> {
-            if (node instanceof RCallNode) {
-                RCallNode internalCall = (RCallNode) node;
+        RSyntaxVisitor<Boolean> visitor = new RSyntaxVisitor<Boolean>() {
 
-                if (internalCall.getFunctionNode() instanceof ReadVariableNode) {
-                    ReadVariableNode readInternal = (ReadVariableNode) internalCall.getFunctionNode();
-
+            @Override
+            protected Boolean visit(RSyntaxCall element) {
+                RSyntaxElement lhs = element.getSyntaxLHS();
+                RSyntaxElement[] arguments = element.getSyntaxArguments();
+                if (lhs instanceof RSyntaxLookup) {
+                    String function = ((RSyntaxLookup) lhs).getIdentifier();
                     /*
                      * TODO This is a hack to make sapply split lapply. We need to find better ways
                      * to do this. If a function uses lapply anywhere as name then it gets split.
                      * This could get exploited.
                      */
-                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(readInternal.getIdentifier());
+                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(function);
                     if (directBuiltin != null && directBuiltin.isSplitCaller()) {
                         return true;
                     }
 
-                    if (readInternal.getIdentifier().equals(".Internal")) {
-                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArguments().getArguments()[0]);
-                        if (internalFunctionArgument instanceof RCallNode) {
-                            RCallNode innerCall = (RCallNode) internalFunctionArgument;
-                            if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
-                                ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
-                                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(readInnerCall.getIdentifier());
-                                if (builtin != null && builtin.isSplitCaller()) {
-                                    return true;
-                                }
-                            }
-                        }
+                }
+                for (RSyntaxElement arg : arguments) {
+                    if (arg != null && accept(arg)) {
+                        return true;
                     }
                 }
+                return false;
             }
-            return false;
+
+            @Override
+            protected Boolean visit(RSyntaxConstant element) {
+                return false;
+            }
+
+            @Override
+            protected Boolean visit(RSyntaxLookup element) {
+                return false;
+            }
+
+            @Override
+            protected Boolean visit(RSyntaxFunction element) {
+                return false;
+            }
         };
-        return NodeUtil.countNodes(this, findAlwaysSplitInternal) > 0;
+        return visitor.accept(getSyntaxBody());
     }
 
     @Override
@@ -258,6 +270,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             throw e;
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
+            SetVisibilityNode.executeSlowPath(frame, false);
             throw e;
         } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
             /*

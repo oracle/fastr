@@ -347,7 +347,7 @@ public class FrameFunctions {
             sig = ArgumentsSignature.get(names.toArray(new String[names.size()]));
             RSyntaxNode[] newArgs = nodes.toArray(new RSyntaxNode[nodes.size()]);
 
-            RSyntaxNode modCallNode = RASTUtils.createCall(callNode.getFunctionNode(), false, sig, newArgs);
+            RSyntaxNode modCallNode = RASTUtils.createCall(callNode.getFunction(), false, sig, newArgs);
             return RDataFactory.createLanguage(modCallNode.asRNode());
         }
 

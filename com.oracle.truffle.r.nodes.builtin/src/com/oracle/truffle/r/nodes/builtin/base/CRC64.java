@@ -41,13 +41,11 @@ public abstract class CRC64 extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").conf(x -> x.mustNotBeMissing(RError.SHOW_CALLER2, Message.ARGUMENTS_PASSED_INTERNAL_0_1, getRBuiltin().name())).mustNotBeNull(RError.NO_CALLER,
-                        Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.NO_CALLER, Message.INPUT_MUST_BE_STRING);
+        casts.arg("x").mustNotBeNull(RError.NO_CALLER, Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.NO_CALLER, Message.INPUT_MUST_BE_STRING);
     }
 
     @Specialization
     protected RAbstractStringVector crc64(RAbstractStringVector x) {
         return RDataFactory.createStringVector(Crc64.crc(x));
     }
-
 }

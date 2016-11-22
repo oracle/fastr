@@ -117,7 +117,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         return sourceSection;
     }
 
-    @Child private ForcePromiseNode functionNode;
+    @Child private RNode functionNode;
     @Child private RNode special;
 
     private final RSyntaxNode[] arguments;
@@ -139,7 +139,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         this.sourceSection = sourceSection;
         this.expectedFunction = expectedFunction;
         this.special = special;
-        this.functionNode = new ForcePromiseNode(functionNode);
+        this.functionNode = functionNode;
         this.arguments = arguments;
         this.signature = signature;
     }
@@ -272,7 +272,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     private RCallNode getRCallNode(RSyntaxNode[] newArguments) {
-        return RCallNode.createCall(sourceSection, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
+        return RCallNode.createCall(sourceSection, functionNode, signature, newArguments);
     }
 
     private RCallNode getRCallNode() {
@@ -300,8 +300,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        ForcePromiseNode func = functionNode;
-        return func == null || func.getValueNode() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : func.getValueNode().asRSyntaxNode();
+        return functionNode == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : functionNode.asRSyntaxNode();
     }
 
     @Override

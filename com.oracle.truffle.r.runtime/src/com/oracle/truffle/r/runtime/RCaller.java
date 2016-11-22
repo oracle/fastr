@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
@@ -72,9 +72,9 @@ public final class RCaller {
         return parent;
     }
 
-    public RSyntaxNode getSyntaxNode() {
+    public RSyntaxElement getSyntaxNode() {
         assert payload != null && !(payload instanceof RCaller) : payload == null ? "null RCaller" : "promise RCaller";
-        return payload instanceof RSyntaxNode ? (RSyntaxNode) payload : (RSyntaxNode) ((Supplier<?>) payload).get();
+        return payload instanceof RSyntaxElement ? (RSyntaxElement) payload : (RSyntaxElement) ((Supplier<?>) payload).get();
     }
 
     public boolean isValidCaller() {
@@ -97,22 +97,22 @@ public final class RCaller {
         return new RCaller(depthFromFrame(callingFrame), parent, null);
     }
 
-    public static RCaller create(Frame callingFrame, RSyntaxNode node) {
+    public static RCaller create(Frame callingFrame, RSyntaxElement node) {
         assert node != null;
         return new RCaller(callingFrame, node);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxNode node) {
+    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxElement node) {
         assert node != null;
         return new RCaller(depthFromFrame(callingFrame), parent, node);
     }
 
-    public static RCaller create(Frame callingFrame, Supplier<RSyntaxNode> supplier) {
+    public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
         return new RCaller(callingFrame, supplier);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxNode> supplier) {
+    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
         return new RCaller(depthFromFrame(callingFrame), parent, supplier);
     }

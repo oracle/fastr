@@ -114,4 +114,12 @@ public final class SetVisibilityNode extends Node {
         CompilerAsserts.neverPartOfCompilation();
         frame.setBoolean(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean), caller.getVisibility());
     }
+
+    /**
+     * Slow-path version of {@link #execute(Frame, boolean)}.
+     */
+    public static void executeSlowPath(Frame frame, boolean visibility) {
+        CompilerAsserts.neverPartOfCompilation();
+        frame.setBoolean(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean), visibility);
+    }
 }

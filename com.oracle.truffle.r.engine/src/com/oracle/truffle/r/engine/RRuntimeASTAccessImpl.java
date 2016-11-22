@@ -365,7 +365,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
+            rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments()));
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -420,21 +420,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         while (call.isPromise()) {
             call = call.getParent();
         }
-        RSyntaxNode syntaxNode = call.getSyntaxNode();
-        return RDataFactory.createLanguage(syntaxNode.asRNode());
+        RSyntaxElement syntaxNode = call.getSyntaxNode();
+        return RDataFactory.createLanguage(((RSyntaxNode) syntaxNode).asRNode());
     }
 
     private static RBaseNode checkBuiltin(RBaseNode bn) {
         if (bn instanceof RBuiltinNode) {
-            RSyntaxNode sn = ((RBuiltinNode) bn).getOriginalCall();
-            if (sn == null) {
+            RSyntaxElement se = ((RBuiltinNode) bn).getOriginalCall();
+            if (se == null) {
                 /*
                  * TODO Ideally this never happens but do.call creates trees that make finding the
                  * original call impossible.
                  */
                 return null;
             } else {
-                return (RBaseNode) sn;
+                return (RBaseNode) se;
             }
         } else {
             return bn;

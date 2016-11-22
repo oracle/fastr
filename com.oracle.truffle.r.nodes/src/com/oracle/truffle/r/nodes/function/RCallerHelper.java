@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -54,24 +55,24 @@ public final class RCallerHelper {
      * @param arguments array with arguments and corresponding names. This method strips any
      *            {@code RMissing} arguments and unrolls all varargs within the arguments array.
      */
-    public static Supplier<RSyntaxNode> createFromArguments(RFunction function, RArgsValuesAndNames arguments) {
+    public static Supplier<RSyntaxElement> createFromArguments(RFunction function, RArgsValuesAndNames arguments) {
         return createFromArgumentsInternal(function, arguments);
     }
 
     /**
      * @see #createFromArguments(RFunction, RArgsValuesAndNames)
      */
-    public static Supplier<RSyntaxNode> createFromArguments(String function, RArgsValuesAndNames arguments) {
+    public static Supplier<RSyntaxElement> createFromArguments(String function, RArgsValuesAndNames arguments) {
         return createFromArgumentsInternal(function, arguments);
     }
 
-    public static Supplier<RSyntaxNode> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments) {
-        return new Supplier<RSyntaxNode>() {
+    public static Supplier<RSyntaxElement> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments) {
+        return new Supplier<RSyntaxElement>() {
 
-            RSyntaxNode syntaxNode = null;
+            RSyntaxElement syntaxNode = null;
 
             @Override
-            public RSyntaxNode get() {
+            public RSyntaxElement get() {
                 if (syntaxNode == null) {
                     int length = 0;
                     for (int i = 0; i < arguments.getLength(); i++) {
@@ -122,13 +123,13 @@ public final class RCallerHelper {
     /**
      * This method calculates the signature of the permuted arguments lazily.
      */
-    public static Supplier<RSyntaxNode> createFromArguments(String function, long[] preparePermutation, Object[] suppliedArguments, ArgumentsSignature suppliedSignature) {
-        return new Supplier<RSyntaxNode>() {
+    public static Supplier<RSyntaxElement> createFromArguments(String function, long[] preparePermutation, Object[] suppliedArguments, ArgumentsSignature suppliedSignature) {
+        return new Supplier<RSyntaxElement>() {
 
-            RSyntaxNode syntaxNode = null;
+            RSyntaxElement syntaxNode = null;
 
             @Override
-            public RSyntaxNode get() {
+            public RSyntaxElement get() {
                 if (syntaxNode == null) {
                     Object[] values = new Object[preparePermutation.length];
                     String[] names = new String[preparePermutation.length];
