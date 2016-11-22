@@ -30,19 +30,23 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
         for (int i = 0; i < n; i++) {
             double sum = 0;
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < n; j++) {
                 sum += a[i + j * n];
+            }
             sum /= n;
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < n; j++) {
                 a[i + j * n] -= sum;
+            }
         }
         for (int j = 0; j < n; j++) {
             double sum = 0;
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < n; i++) {
                 sum += a[i + j * n];
+            }
             sum /= n;
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < n; i++) {
                 a[i + j * n] -= sum;
+            }
         }
         return aVec;
     }

@@ -84,7 +84,6 @@ public abstract class Abbrev extends RBuiltinNode {
         StringBuilder s = new StringBuilder(inchar.trim());
         int len = s.length();
         int i;
-        int j;
         int nspace = 0;
 
         if (len >= minlen) {
@@ -97,8 +96,9 @@ public abstract class Abbrev extends RBuiltinNode {
                     if (Character.isSpaceChar(s.charAt(i))) {
                         nspace++;
                     }
-                    if (s.length() - nspace <= minlen)
+                    if (s.length() - nspace <= minlen) {
                         break donesc;
+                    }
                 }
 
                 if (usecl) {
@@ -107,18 +107,22 @@ public abstract class Abbrev extends RBuiltinNode {
                      * end
                      */
                     for (i = s.length() - 1; i > 0; i--) {
-                        if (lcVowel(s, i) && lastChar(s, i))
+                        if (lcVowel(s, i) && lastChar(s, i)) {
                             shiftDown(s, i);
-                        if (s.length() - nspace <= minlen)
+                        }
+                        if (s.length() - nspace <= minlen) {
                             break donesc;
+                        }
                     }
 
                     /* remove those not at the beginning of a word */
                     for (i = s.length() - 1; i > 0; i--) {
-                        if (lcVowel(s, i) && !firstChar(s, i))
+                        if (lcVowel(s, i) && !firstChar(s, i)) {
                             shiftDown(s, i);
-                        if (s.length() - nspace <= minlen)
+                        }
+                        if (s.length() - nspace <= minlen) {
                             break donesc;
+                        }
                     }
 
                     /* Now do the same for remaining l/case chars */
