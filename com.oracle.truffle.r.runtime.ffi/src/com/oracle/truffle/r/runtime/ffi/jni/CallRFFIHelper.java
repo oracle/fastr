@@ -79,6 +79,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -86,6 +87,13 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
  * identification, we use method names that, as far as possible, match the names in the header
  * files. These methods should never be called from normal FastR code.
+ *
+ * TODO Many of the implementations here are incomplete and/or duplicate code that exists in the
+ * Truffle side of the implementation, i.e., {@link RNode} subclasses. A complete refactoring that
+ * accesses the Truffle implementations (possibly somewhat refactored owing to the fact that the
+ * Truffle side is driven by the builtins yet these functions don't not always map 1-1 to a builtin)
+ * is desirable. In some cases it may be possible to "implement" the functions in R (which is a
+ * simple way to achieve the above).
  */
 public class CallRFFIHelper {
 
@@ -183,12 +191,15 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_asInteger", x);
         }
+        // TODO this is quite incomplete and really should be implemented with CastIntegerNode
         if (x instanceof Integer) {
             return ((Integer) x).intValue();
         } else if (x instanceof Double) {
             return RRuntime.double2int((Double) x);
         } else if (x instanceof Byte) {
             return RRuntime.logical2int((Byte) x);
+        } else if (x instanceof RLogicalVector) {
+            return RRuntime.logical2int(((RLogicalVector) x).getDataAt(0));
         } else {
             guaranteeInstanceOf(x, RIntVector.class);
             return ((RIntVector) x).getDataAt(0);
@@ -722,7 +733,8 @@ public class CallRFFIHelper {
             RFFIUtils.traceUpCall("Rf_duplicate", x, deep);
         }
         guarantee(x != null, "unexpected type: null instead of " + x.getClass().getSimpleName());
-        guarantee(x instanceof RShareable || x instanceof RExternalPtr, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
+        guarantee(x instanceof RShareable || x instanceof RIntSequence || x instanceof RExternalPtr,
+                        "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
         if (x instanceof RShareable) {
             return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
         } else if (x instanceof RIntSequence) {

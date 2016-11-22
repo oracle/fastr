@@ -45,6 +45,7 @@ import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildN
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
+import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
@@ -383,8 +384,8 @@ public class ForeignFunctions {
                     return CdistNodeGen.create();
                 case "DoubleCentre":
                     return DoubleCentreNodeGen.create();
-
                 case "cutree":
+                    return CutreeNodeGen.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":

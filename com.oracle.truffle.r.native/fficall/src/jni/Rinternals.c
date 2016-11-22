@@ -715,7 +715,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	invalidateCopiedObject(thisenv, x);
+	invalidateNativeArray(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
 	return checkRef(thisenv, result);
 }
