@@ -180,7 +180,7 @@ public class TestBuiltin_max extends TestBase {
         assertEval("{ is.logical(max(TRUE, FALSE)) }");
         assertEval("{ is.logical(max(TRUE)) }");
         assertEval("{ max(as.raw(42), as.raw(7)) }");
-        assertEval(Output.IgnoreErrorContext, "{ max(42+42i, 7+7i) }");
+        assertEval("{ max(42+42i, 7+7i) }");
         assertEval("{ max(\"42\", \"7\") }");
 
         assertEval("{ max(as.double(NA), na.rm=FALSE) }");

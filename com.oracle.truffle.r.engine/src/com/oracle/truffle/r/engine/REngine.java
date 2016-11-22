@@ -25,7 +25,6 @@ package com.oracle.truffle.r.engine;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CallTarget;
@@ -78,6 +77,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -99,7 +99,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -250,7 +249,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(null, source);
+        List<RSyntaxNode> list = parseImpl(source);
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
@@ -279,31 +278,21 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private static List<RSyntaxNode> parseImpl(Map<String, Object> constants, Source source) throws ParseException {
+    private static List<RSyntaxNode> parseImpl(Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        return parser.script(source, new RASTBuilder(constants));
+        return parser.script(source, new RASTBuilder());
     }
 
     @Override
-    public RExpression parse(Map<String, Object> constants, Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(constants, source);
+    public RExpression parse(Source source) throws ParseException {
+        List<RSyntaxNode> list = parseImpl(source);
         Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
         return RDataFactory.createExpression(data);
     }
 
     @Override
-    public RFunction parseFunction(Map<String, Object> constants, String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
-        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        RootCallTarget callTarget = parser.rootFunction(source, name, new RASTBuilder(constants));
-        FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
-        RFunction func = RDataFactory.createFunction(name, callTarget, null, enclosingFrame);
-        RInstrumentation.checkDebugRequested(func);
-        return func;
-    }
-
-    @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
-        List<RSyntaxNode> statements = parseImpl(null, source);
+        List<RSyntaxNode> statements = parseImpl(source);
         return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(statements)));
     }
 
@@ -488,7 +477,7 @@ final class REngine implements Engine, Engine.Timings {
      * context of that frame. Note that passing only this one frame argument, strictly spoken,
      * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
      */
-    private final class AnonymousRootNode extends RootNode {
+    private final class AnonymousRootNode extends RootNode implements RootWithBody {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
@@ -577,6 +566,11 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public boolean isCloningAllowed() {
             return false;
+        }
+
+        @Override
+        public RNode getBody() {
+            return body;
         }
     }
 

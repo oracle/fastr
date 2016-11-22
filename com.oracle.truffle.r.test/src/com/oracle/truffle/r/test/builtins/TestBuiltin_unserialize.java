@@ -41,7 +41,64 @@ public class TestBuiltin_unserialize extends TestBase {
     @Test
     public void testserializeAndUnserializeClosure() {
         // N.B.: FastR does not preserve code formatting like GNU R does
-        assertEval(Ignored.OutputFormatting, "unserialize(serialize(function (x) { x }, NULL))");
+        assertEval(Output.IgnoreWhitespace, "unserialize(serialize(function (x) { x }, NULL))");
         assertEval("f <- function() x; e <- new.env(); e$x <- 123; environment(f) <- e; expr <- substitute({ FUN() }, list(FUN=f)); eval(expr); expr <- unserialize(serialize(expr, NULL)); eval(expr)");
+    }
+
+    @Test
+    public void testunserialize() {
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(x), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(TRUE), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(FALSE), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote('asdf'), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(NA_character_), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(NA_complex_), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(NA_integer_), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(NA_real_), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(NA_character_ + NA_complex_ + NA_integer_ + NA_real_), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(111L), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(111+8i), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(111+11), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(a+b), connection=NULL))");
+
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote((a+b)), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote((a %asdf% b)), connection=NULL))");
+
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(foo(a,b,c)), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote({ foo(a,b,c) }), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(if (a) b else c), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(if (a) {b} else {c}), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(if ({a}) {b} else {c}), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(while (a) b), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(repeat {b; if (c) next else break}), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(\"bar\"), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote('baz'), connection=NULL))");
+        assertEval("setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); unserialize(serialize(t1, connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(f(g)$h.i), connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- list(enclos = new.env(hash=FALSE)); unserialize(serialize(val, connection=NULL))");
+        assertEval("options(keep.source=FALSE); val <- defaultPrototype(); unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function() new(\"foo\", x)), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x) { new(\"BAR\", x) }), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x, ...) { new(\"BAR\", x) }), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y) { new(\"BAR\", x) }), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y) { TRUE }), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y,...) { 1 }), connection=NULL))");
+        assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y=1,...) { NA }), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { NA }), connection=NULL))");
+        assertEval(Ignored.OutputFormatting, "options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL))");
+
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x) { `+`(`(`(\"BAR\"), x) }), connection=NULL))");
+
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$a <- 'foo'; unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$b <- 123; unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$c <- 1233L; unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$d <- TRUE; unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$e <- 5+9i; unserialize(serialize(val, connection=NULL))");
+        assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); val$f <- NA; unserialize(serialize(val, connection=NULL))");
     }
 }

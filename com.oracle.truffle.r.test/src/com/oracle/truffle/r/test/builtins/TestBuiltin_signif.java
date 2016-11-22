@@ -34,7 +34,7 @@ public class TestBuiltin_signif extends TestBase {
 
         assertEval("{ signif(42.1234, \"2\") }");
         assertEval("{ signif(42.1234, as.raw(2)) }");
-        assertEval(Output.IgnoreErrorContext, "{ signif(42.1234, 42+7i) }");
+        assertEval("{ signif(42.1234, 42+7i) }");
         assertEval(Output.IgnoreErrorMessage, "{ signif(42.1234, character()) }");
         assertEval("{ signif(\"42.1234\", 2 }");
 

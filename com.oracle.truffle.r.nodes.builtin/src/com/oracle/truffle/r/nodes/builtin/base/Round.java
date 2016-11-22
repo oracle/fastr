@@ -40,6 +40,8 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
@@ -76,6 +78,28 @@ public abstract class Round extends RBuiltinNode {
     protected double round(byte x, @SuppressWarnings("unused") int digits) {
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : x;
+    }
+
+    @Specialization
+    protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") int digits) {
+        double[] data = new double[x.getLength()];
+        check.enable(x);
+        for (int i = 0; i < data.length; i++) {
+            byte val = x.getDataAt(i);
+            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
+        }
+        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
+    }
+
+    @Specialization
+    protected RDoubleVector round(RAbstractIntVector x, @SuppressWarnings("unused") int digits) {
+        double[] data = new double[x.getLength()];
+        check.enable(x);
+        for (int i = 0; i < data.length; i++) {
+            int val = x.getDataAt(i);
+            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
+        }
+        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
     }
 
     @Specialization(guards = "digits == 0")

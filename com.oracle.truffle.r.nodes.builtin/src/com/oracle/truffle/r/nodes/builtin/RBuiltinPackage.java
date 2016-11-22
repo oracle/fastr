@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -100,13 +101,19 @@ public abstract class RBuiltinPackage {
         return name;
     }
 
+    private static final ConcurrentHashMap<String, String[]> rFilesCache = new ConcurrentHashMap<>();
+
     /**
      * Get a list of R override files for package {@code pkgName}, from the {@code pkgName/R}
      * subdirectory.
      */
     public static ArrayList<Source> getRFiles(String pkgName) {
         ArrayList<Source> componentList = new ArrayList<>();
-        String[] rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
+        String[] rFileContents = rFilesCache.get(pkgName);
+        if (rFileContents == null) {
+            rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
+            rFilesCache.put(pkgName, rFileContents);
+        }
         for (String rFileContent : rFileContents) {
             Source content = RSource.fromTextInternal(rFileContent, RSource.Internal.R_IMPL);
             componentList.add(content);

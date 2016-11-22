@@ -31,8 +31,6 @@ public class RExpression extends RListBase implements RAbstractVector {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getClazz());
 
-    public String elementNamePrefix;
-
     RExpression(Object[] data, int[] dims, RStringVector names) {
         super(data, dims, names);
     }

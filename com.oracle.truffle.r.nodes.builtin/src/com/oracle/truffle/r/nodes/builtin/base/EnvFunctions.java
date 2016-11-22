@@ -392,7 +392,7 @@ public class EnvFunctions {
             RRootNode root = (RRootNode) fun.getTarget().getRootNode();
             RootCallTarget target = root.duplicateWithNewFrameDescriptor();
             FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(fun.getName(), target, null, enclosingFrame);
+            return RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
         }
 
         @Specialization

@@ -96,8 +96,7 @@ public class TestBuiltin_asinteger extends TestBase {
 
     @Test
     public void testasinteger17() {
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext,
-                        "argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));as.integer(argv[[1]]);");
+        assertEval("argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));as.integer(argv[[1]]);");
     }
 
     @Test

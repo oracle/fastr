@@ -192,4 +192,6 @@ public interface RRuntimeASTAccess {
 
     String encodeComplex(RComplex x, int digits);
 
+    void checkDebugRequest(RFunction func);
+
 }

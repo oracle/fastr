@@ -26,6 +26,8 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.dsl.internal.DSLOptions;
+import com.oracle.truffle.api.dsl.internal.DSLOptions.DSLGenerator;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RType;
@@ -52,6 +54,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
                 MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
                 RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RSymbol.class, RPromise.class, RLanguage.class,
                 RPairList.class, RExternalPtr.class, RS4Object.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RTypedValue.class, RType.class, Object[].class})
+@DSLOptions(defaultGenerator = DSLGenerator.DEFAULT)
 public class RTypes {
 
     @TypeCheck(RNull.class)

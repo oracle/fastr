@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -69,36 +68,37 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         }
     }
 
+    @Override
     public abstract RootCallTarget duplicateWithNewFrameDescriptor();
 
-    protected void verifyEnclosingAssumptions(VirtualFrame vf) {
+    protected final void verifyEnclosingAssumptions(VirtualFrame vf) {
         RArguments.setIsIrregular(vf, irregularFrameProfile.profile(RArguments.getIsIrregular(vf)));
     }
 
     /**
      * @return The number of parameters this functions expects
      */
-    public int getParameterCount() {
+    public final int getParameterCount() {
         return formalArguments.getSignature().getLength();
     }
 
     /**
      * @return {@link #formalArguments}
      */
-    public FormalArguments getFormalArguments() {
+    public final FormalArguments getFormalArguments() {
         return formalArguments;
     }
 
     @Override
-    public ArgumentsSignature getSignature() {
+    public final ArgumentsSignature getSignature() {
         return formalArguments.getSignature();
     }
 
-    public FastPathFactory getFastPath() {
+    public final FastPathFactory getFastPath() {
         return fastPath;
     }
 
-    public void setFastPath(FastPathFactory fastPath) {
+    public final void setFastPath(FastPathFactory fastPath) {
         this.fastPath = fastPath;
     }
 
@@ -109,16 +109,6 @@ public abstract class RRootNode extends RootNode implements HasSignature {
     public abstract void setContainsDispatch(boolean containsDispatch);
 
     public abstract RBuiltinFactory getBuiltin();
-
-    @TruffleBoundary
-    public String getSourceCode() {
-        SourceSection ss = getSourceSection();
-        if (ss != null) {
-            return ss.getCode();
-        } else {
-            return null;
-        }
-    }
 
     @Override
     public boolean isCloningAllowed() {
