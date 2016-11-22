@@ -77,6 +77,7 @@ public final class RandGenerationFunctions {
     }
 
     public abstract static class RandFunction2_DoubleAdapter implements RandFunction2_Double {
+        @Override
         public boolean isValid(double a, double b) {
             return true;
         }
