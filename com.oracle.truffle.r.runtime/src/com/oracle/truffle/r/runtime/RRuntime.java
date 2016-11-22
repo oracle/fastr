@@ -347,7 +347,7 @@ public class RRuntime {
         // FIXME use R rules
         int result;
         try {
-            result = Integer.decode(s);  // decode supports hex constants
+            result = Integer.decode(Utils.trimLeadingZeros(s));  // decode supports hex constants
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;

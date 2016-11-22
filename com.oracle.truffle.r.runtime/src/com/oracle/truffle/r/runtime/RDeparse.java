@@ -97,7 +97,7 @@ public class RDeparse {
         CURLY,
         PAREN,
         SUBSET,
-        DOLLAR;
+        DOLLAR
     }
 
     // TODO for consistency make an enum
@@ -847,7 +847,10 @@ public class RDeparse {
                     if (RRuntime.isNA(i)) {
                         append((singleElement ? "NA_integer_" : "NA"));
                     } else {
-                        append(RRuntime.intToStringNoCheck(i)).append('L');
+                        append(RRuntime.intToStringNoCheck(i));
+                        if ((opts & KEEPINTEGER) != 0) {
+                            append('L');
+                        }
                     }
                     break;
                 case CPLXSXP:
@@ -959,12 +962,12 @@ public class RDeparse {
 
     @TruffleBoundary
     public static String deparseSyntaxElement(RSyntaxElement element) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1).append(element).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).append(element).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object value) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1).appendValue(value).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).appendValue(value).getContents();
     }
 
     @TruffleBoundary

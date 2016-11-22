@@ -20,12 +20,12 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_TIES_FOR_RANK;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
 import static com.oracle.truffle.r.runtime.RError.Message.RANK_LARGE_N;
 import static com.oracle.truffle.r.runtime.RError.Message.UNIMPLEMENTED_TYPE_IN_GREATER;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -116,7 +117,7 @@ public abstract class Rank extends RBuiltinNode {
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
         RAbstractVector x = xa instanceof RAbstractLogicalVector ? RClosures.createLogicalToIntVector((RAbstractLogicalVector) xa) : xa;
-        initOrderVector1().execute(indxVec, x, true, false, rho);
+        initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, false, rho);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {

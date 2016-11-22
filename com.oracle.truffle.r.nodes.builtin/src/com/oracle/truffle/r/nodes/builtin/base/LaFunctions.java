@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /*
  * Logic derived from GNU-R, src/modules/lapack/Lapack.c
@@ -360,6 +361,7 @@ public class LaFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile infoGreaterZero = ConditionProfile.createBinaryProfile();
         private final ConditionProfile doUseLog = ConditionProfile.createBinaryProfile();
+        private final NACheck naCheck = NACheck.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -397,11 +399,17 @@ public class LaFunctions {
                         sign = -sign;
                     }
                 }
+                // Note: Lapack may change NA to NaN, so we need to check the original vector
+                naCheck.enable(aIn);
                 if (doUseLog.profile(useLog)) {
                     modulus = 0.0;
                     int n1 = n + 1;
                     for (int i = 0; i < n; i++) {
                         double dii = aData[i * n1]; /* ith diagonal element */
+                        if (naCheck.check(aIn.getDataAt(i * n1))) {
+                            modulus = RRuntime.DOUBLE_NA;
+                            break;
+                        }
                         modulus += Math.log(dii < 0 ? -dii : dii);
                         if (dii < 0) {
                             sign = -sign;
@@ -412,8 +420,12 @@ public class LaFunctions {
                     int n1 = n + 1;
                     for (int i = 0; i < n; i++) {
                         modulus *= aData[i * n1];
+                        if (naCheck.check(aIn.getDataAt(i * n1))) {
+                            modulus = RRuntime.DOUBLE_NA;
+                            break;
+                        }
                     }
-                    if (modulus < 0) {
+                    if (modulus < 0 && !RRuntime.isNA(modulus)) {
                         modulus = -modulus;
                         sign = -sign;
                     }

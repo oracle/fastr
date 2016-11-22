@@ -88,4 +88,12 @@ public class TestBuiltin_cat extends TestBase {
         assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
+    @Test
+    public void testCatUnsupportedArgs() {
+        assertEval("cat(list(), expression(), sep='this-should-be-ok')");
+        assertEval("cat(list(1,2,3))");
+        assertEval("cat(parse(text='42'))");
+        assertEval("cat(quote(a))");
+        assertEval("cat(quote(3+3))");
+    }
 }

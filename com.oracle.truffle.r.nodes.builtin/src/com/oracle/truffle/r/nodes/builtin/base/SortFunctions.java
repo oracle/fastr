@@ -25,9 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -244,7 +244,7 @@ public class SortFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("na.last").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("na.last").asLogicalVector().findFirst();
             casts.arg("decreasing").mustBe(numericValue(), SHOW_CALLER, INVALID_LOGICAL, "decreasing").asLogicalVector();
             casts.arg("retgrp").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("sortstr").asLogicalVector().findFirst().map(toBoolean());
@@ -252,7 +252,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object radixSort(boolean naLast, RAbstractLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
+        protected Object radixSort(byte naLast, RAbstractLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
             // Partial implementation just to get startup to work
             if (retgrp) {
                 // sortstr only has an effect when retrgrp == true
