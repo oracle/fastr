@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,5 +32,13 @@ public final class RandomNumberNode extends RBaseNode {
 
     public double[] executeDouble(int count) {
         return generatorClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator())).genrandDouble(count);
+    }
+
+    public double executeSingleDouble() {
+        return generatorClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator())).genrandDouble(1)[0];
+    }
+
+    public static RandomNumberNode create() {
+        return new RandomNumberNode();
     }
 }
