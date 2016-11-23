@@ -119,11 +119,22 @@ public class StatsUtil {
         return giveLog ? -0.5 * Math.log(f) + x : Math.exp(x) / Math.sqrt(f);
     }
 
+    //
+    // GNUR from fmin2.c and fmax2
+    //
+
     public static double fmax2(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;
         }
         return (x < y) ? y : x;
+    }
+
+    public static double fmin2(double x, double y) {
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            return x + y;
+        }
+        return (x < y) ? x : y;
     }
 
     //
