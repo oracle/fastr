@@ -34,8 +34,8 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -435,8 +435,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
-        @Child private FixedAttributeSetter namesAttrSetter = FixedAttributeSetter.create(RRuntime.NAMES_ATTR_KEY);
-        @Child private FixedAttributeGetter namesAttrGetter = FixedAttributeGetter.create(RRuntime.NAMES_ATTR_KEY);
+        @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+        @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
 
         public abstract void execute(RVector<?> container, Object newNames);
 

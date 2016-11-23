@@ -29,7 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -61,7 +61,7 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, RAbstractIntVector dimensions,
-                    @Cached("createDim()") FixedAttributeSetter putDimensions,
+                    @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("create()") InitAttributesNode initAttributes) {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();

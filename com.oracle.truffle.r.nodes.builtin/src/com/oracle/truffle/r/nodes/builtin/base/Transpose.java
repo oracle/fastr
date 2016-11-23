@@ -25,7 +25,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -59,8 +59,8 @@ public abstract class Transpose extends RBuiltinNode {
 
     @Child private CopyOfRegAttributesNode copyRegAttributes = CopyOfRegAttributesNodeGen.create();
     @Child private InitAttributesNode initAttributes = InitAttributesNode.create();
-    @Child private FixedAttributeSetter putDimensions = FixedAttributeSetter.createDim();
-    @Child private FixedAttributeSetter putDimNames = FixedAttributeSetter.createDimNames();
+    @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
+    @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
 
     public abstract Object execute(RAbstractVector o);
 

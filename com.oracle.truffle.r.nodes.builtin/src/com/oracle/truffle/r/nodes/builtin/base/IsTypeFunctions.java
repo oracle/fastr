@@ -37,6 +37,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
@@ -481,6 +482,7 @@ public class IsTypeFunctions {
         private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrNames = ConditionProfile.createBinaryProfile();
         private final BranchProfile namesAttrProfile = BranchProfile.create();
+        @Child private GetFixedAttributeNode namesGetter = GetFixedAttributeNode.createNames();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -519,7 +521,7 @@ public class IsTypeFunctions {
             if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
                 return true;
             } else {
-                return attributes.size() == 1 && attrNames.profile(RAttributesLayout.getNames(attributes, namesAttrProfile) != null);
+                return attributes.size() == 1 && attrNames.profile(namesGetter.execute(attributes) != null);
             }
         }
     }

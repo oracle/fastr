@@ -31,7 +31,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.FixedAttributeRemover;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -116,7 +116,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
-                    @Cached("createDimNames()") FixedAttributeSetter attrSetter) {
+                    @Cached("createDimNames()") SetFixedAttributeNode attrSetter) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         setDimNames(result, convertToListOfStrings(list), attrSetter);
         return result;
@@ -128,7 +128,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
 
-    private void setDimNames(RAbstractContainer container, RList newDimNames, FixedAttributeSetter attrSetter) {
+    private void setDimNames(RAbstractContainer container, RList newDimNames, SetFixedAttributeNode attrSetter) {
         assert newDimNames != null;
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector<?> vector = (RVector<?>) container;

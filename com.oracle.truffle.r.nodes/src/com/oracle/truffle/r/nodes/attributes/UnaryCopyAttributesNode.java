@@ -82,9 +82,9 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createDim()") FixedAttributeRemover removeDim, //
                     @Cached("createDimNames()") FixedAttributeRemover removeDimNames, //
                     @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createNames()") FixedAttributeSetter putNames, //
-                    @Cached("createDim()") FixedAttributeSetter putDim, //
-                    @Cached("createDimNames()") FixedAttributeSetter putDimNames, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
+                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames, //
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {

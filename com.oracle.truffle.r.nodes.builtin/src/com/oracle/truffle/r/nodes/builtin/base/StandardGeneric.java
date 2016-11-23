@@ -30,7 +30,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
@@ -59,7 +59,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
     // TODO: for now, we always go through generic dispatch
 
-    @Child private FixedAttributeGetter genericAttrAccess;
+    @Child private GetFixedAttributeNode genericAttrAccess;
     @Child private FrameFunctions.SysFunction sysFunction;
     @Child private LocalReadVariableNode readMTableFirst = LocalReadVariableNode.create(RRuntime.DOT_ALL_MTABLE, true);
     @Child private LocalReadVariableNode readSigLength = LocalReadVariableNode.create(RRuntime.DOT_SIG_LENGTH, true);
@@ -136,7 +136,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
         if (genericAttrAccess == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            genericAttrAccess = insert(FixedAttributeGetter.create(RRuntime.GENERIC_ATTR_KEY));
+            genericAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY));
         }
         genObj = genericAttrAccess.execute(attributes);
         if (genObj == null) {

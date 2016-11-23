@@ -15,7 +15,7 @@ package com.oracle.truffle.r.nodes.objects;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -35,7 +35,7 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true, null, null);
     @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true, null, null);
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);
-    @Child private FixedAttributeGetter pckgAttrAccess = FixedAttributeGetter.create(RRuntime.PCKG_ATTR_KEY);
+    @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
 
     @Child private CastNode castStringScalar;
     @Child private CastNode castLogicalScalar;

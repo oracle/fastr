@@ -48,9 +48,9 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private FixedAttributeGetter dimAttrGetter = FixedAttributeGetter.createDim();
-    @Child private FixedAttributeGetter namesAttrGetter = FixedAttributeGetter.createNames();
-    @Child private FixedAttributeGetter classAttrGetter = FixedAttributeGetter.createClass();
+    @Child private GetFixedAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
+    @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
+    @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
 
     public abstract void execute(RAbstractVector source, RVector<?> target);
 

@@ -37,7 +37,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeSetter;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltinNodeGen;
@@ -102,8 +102,8 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private Node isBoxedNode = com.oracle.truffle.api.interop.Message.IS_BOXED.createNode();
         @Child private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
         @Child private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
-        @Child private FixedAttributeSetter namesAttrSetter = FixedAttributeSetter.createNames();
-        @Child private FixedAttributeSetter isTruffleObjAttrSetter = FixedAttributeSetter.create("is.truffle.object");
+        @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
+        @Child private SetFixedAttributeNode isTruffleObjAttrSetter = SetFixedAttributeNode.create("is.truffle.object");
 
         public Object convert(VirtualFrame frame, TruffleObject obj) {
             class RStringWrapper extends TruffleObjectWrapper implements RAbstractStringVector {

@@ -22,98 +22,120 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectFactory;
-import com.oracle.truffle.api.object.FinalLocationException;
-import com.oracle.truffle.api.object.HiddenKey;
-import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Layout;
-import com.oracle.truffle.api.object.LocationModifier;
+import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.ObjectType;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public final class RAttributesLayout {
 
-    public static class RAttributesType extends com.oracle.truffle.api.object.ObjectType {
+    public static class RAttributesType extends ObjectType {
     }
 
-    private static final RAttributesType RATTR_TYPE = new RAttributesType();
+    private static final AttrsLayout EMPTY_ATTRS_LAYOUT = new AttrsLayout();
+    private static final AttrsLayout CLASS_ATTRS_LAYOUT = new AttrsLayout(RRuntime.CLASS_ATTR_KEY);
+    private static final AttrsLayout NAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY);
+    private static final AttrsLayout DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY);
+    private static final AttrsLayout DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIMNAMES_ATTR_KEY);
+    private static final AttrsLayout NAMES_AND_DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY);
+    private static final AttrsLayout DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
 
-    private static final Layout LAYOUT = Layout.newLayout().build();
-    private static final Shape.Allocator RATTR_ALLOCATOR = LAYOUT.createAllocator();
+    public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, NAMES_AND_DIM_ATTRS_LAYOUT,
+                    DIM_AND_DIMNAMES_ATTRS_LAYOUT};
 
-    private static final HiddenKey COMMON_IDENTIFIER = new HiddenKey("commonProperties");
-    private static final Property COMMON_PROPERTIES = Property.create(COMMON_IDENTIFIER, RATTR_ALLOCATOR.locationForType(Object.class, EnumSet.of(LocationModifier.Final, LocationModifier.NonNull)),
-                    0);
+    private static final Map<String, ConstantShapesAndLocations> constantShapesAndLocationsForAttribute = new HashMap<>();
 
-    private static final DynamicObjectFactory RATTR_FACTORY = createAttrFactory();
+    static {
+        constantShapesAndLocationsForAttribute.put(RRuntime.CLASS_ATTR_KEY, new ConstantShapesAndLocations(
+                        new Shape[]{
+                                        CLASS_ATTRS_LAYOUT.shape
+                        },
+                        new Location[]{
+                                        CLASS_ATTRS_LAYOUT.properties[0].getLocation()
+                        }));
+        constantShapesAndLocationsForAttribute.put(RRuntime.NAMES_ATTR_KEY, new ConstantShapesAndLocations(
+                        new Shape[]{
+                                        NAMES_ATTRS_LAYOUT.shape,
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.shape
+                        },
+                        new Location[]{
+                                        NAMES_ATTRS_LAYOUT.properties[0].getLocation(),
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[0].getLocation()
+                        }));
+        constantShapesAndLocationsForAttribute.put(RRuntime.DIM_ATTR_KEY, new ConstantShapesAndLocations(
+                        new Shape[]{
+                                        DIM_ATTRS_LAYOUT.shape,
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.shape,
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
+                        },
+                        new Location[]{
+                                        DIM_ATTRS_LAYOUT.properties[0].getLocation(),
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[1].getLocation(),
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[0].getLocation()
+                        }));
+        constantShapesAndLocationsForAttribute.put(RRuntime.DIMNAMES_ATTR_KEY, new ConstantShapesAndLocations(
+                        new Shape[]{
+                                        DIMNAMES_ATTRS_LAYOUT.shape,
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
+                        },
+                        new Location[]{
+                                        DIMNAMES_ATTRS_LAYOUT.properties[0].getLocation(),
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[1].getLocation()
+                        }));
+
+    }
 
     private RAttributesLayout() {
     }
 
-    private static DynamicObjectFactory createAttrFactory() {
-        return LAYOUT.createShape(RATTR_TYPE).addProperty(COMMON_PROPERTIES).createFactory();
-    }
-
     public static DynamicObject createRAttributes() {
-        return RATTR_FACTORY.newInstance(new CommonLocations());
+        return EMPTY_ATTRS_LAYOUT.factory.newInstance();
     }
 
     public static DynamicObject createRAttributes(String[] names, Object[] values) {
         assert names != null && values != null && names.length == values.length;
 
-        DynamicObject attrs = createRAttributes();
-        for (int i = 0; i < names.length; i++) {
-            attrs.define(names[i], values[i]);
-        }
-        return attrs;
+        AttrsLayout attrsLayout = new AttrsLayout(names);
+        return attrsLayout.factory.newInstance(values);
     }
 
     public static DynamicObject createClass(Object cls) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.CLASS_ATTR_KEY, cls);
-        return attrs;
+        return CLASS_ATTRS_LAYOUT.factory.newInstance(cls);
     }
 
     public static DynamicObject createNames(Object names) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.NAMES_ATTR_KEY, names);
-        return attrs;
+        return NAMES_ATTRS_LAYOUT.factory.newInstance(names);
     }
 
     public static DynamicObject createDim(Object dim) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.DIM_ATTR_KEY, dim);
-        return attrs;
+        return DIM_ATTRS_LAYOUT.factory.newInstance(dim);
     }
 
     public static DynamicObject createDimNames(Object dimNames) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.DIMNAMES_ATTR_KEY, dimNames);
-        return attrs;
+        return DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dimNames);
     }
 
     public static DynamicObject createNamesAndDim(Object names, Object dim) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.NAMES_ATTR_KEY, names);
-        attrs.define(RRuntime.DIM_ATTR_KEY, dim);
-        return attrs;
+        return NAMES_AND_DIM_ATTRS_LAYOUT.factory.newInstance(names, dim);
     }
 
     public static DynamicObject createDimAndDimNames(Object dim, Object dimNames) {
-        DynamicObject attrs = createRAttributes();
-        attrs.define(RRuntime.DIM_ATTR_KEY, dim);
-        attrs.define(RRuntime.DIMNAMES_ATTR_KEY, dimNames);
-        return attrs;
+        return DIM_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dim, dimNames);
+    }
+
+    public static ConstantShapesAndLocations getConstantShapesAndLocations(String attrName) {
+        return constantShapesAndLocationsForAttribute.getOrDefault(attrName, ConstantShapesAndLocations.EMPTY);
     }
 
     public static boolean isRAttributes(Object attrs) {
@@ -145,15 +167,15 @@ public final class RAttributesLayout {
     public static List<Property> getPropertyList(DynamicObject attrs, BranchProfile listProfile) {
         assert isRAttributes(attrs);
 
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        return comLoc.getPropertyList(attrs, listProfile);
+        // todo
+        return attrs.getShape().getPropertyList();
     }
 
     public static List<Property> getPropertyList(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        return comLoc.getPropertyList(attrs);
+        // todo
+        return attrs.getShape().getPropertyList();
     }
 
     public static Iterable<RAttributesLayout.RAttribute> asIterable(DynamicObject attrs, BranchProfile listProfile) {
@@ -162,6 +184,49 @@ public final class RAttributesLayout {
 
     public static Iterable<RAttributesLayout.RAttribute> asIterable(DynamicObject attrs) {
         return new RAttributeIterableNoProfile(attrs);
+    }
+
+    public static final class AttrsLayout {
+        private final Layout layout = Layout.newLayout().build();
+        private final Shape.Allocator allocator = layout.createAllocator();
+        public final Shape shape;
+        public final Property[] properties;
+        public final DynamicObjectFactory factory;
+
+        private AttrsLayout(String... attrNames) {
+            this.properties = new Property[attrNames.length];
+            Shape s = layout.createShape(new RAttributesType());
+            for (int i = 0; i < attrNames.length; i++) {
+                Property p = Property.create(attrNames[i], allocator.locationForType(Object.class), 0);
+                this.properties[i] = p;
+                s = s.addProperty(p);
+            }
+            shape = s;
+            factory = s.createFactory();
+        }
+    }
+
+    public static final class ConstantShapesAndLocations {
+        private static final Shape[] EMPTY_SHAPES_ARRAY = new Shape[0];
+        private static final Location[] EMPTY_LOCATIONS_ARRAY = new Location[0];
+
+        public static final ConstantShapesAndLocations EMPTY = new ConstantShapesAndLocations(EMPTY_SHAPES_ARRAY, EMPTY_LOCATIONS_ARRAY);
+
+        private final Shape[] constantShapes;
+        private final Location[] constantLocations;
+
+        private ConstantShapesAndLocations(Shape[] constantShapes, Location[] constantLocations) {
+            this.constantShapes = constantShapes;
+            this.constantLocations = constantLocations;
+        }
+
+        public Shape[] getConstantShapes() {
+            return constantShapes;
+        }
+
+        public Location[] getConstantLocations() {
+            return constantLocations;
+        }
     }
 
     static final class RAttributeIterable implements Iterable<RAttributesLayout.RAttribute> {
@@ -196,127 +261,6 @@ public final class RAttributesLayout {
 
     }
 
-    public static Object getNames(DynamicObject attrs, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        return comLoc.namesLoc.get(attrs, attrProfile);
-    }
-
-    public static void setNames(DynamicObject attrs, Object value, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        comLoc.namesLoc.set(attrs, value, attrProfile);
-    }
-
-    public static Object getDim(DynamicObject attrs, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        return comLoc.dimLoc.get(attrs, attrProfile);
-    }
-
-    public static void setDim(DynamicObject attrs, Object value, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        comLoc.dimLoc.set(attrs, value, attrProfile);
-    }
-
-    public static Object getClass(DynamicObject attrs, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        return comLoc.classLoc.get(attrs, attrProfile);
-    }
-
-    public static void setClass(DynamicObject attrs, Object value, BranchProfile attrProfile) {
-        assert isRAttributes(attrs);
-
-        CommonLocations comLoc = (CommonLocations) COMMON_PROPERTIES.get(attrs, attrs.getShape());
-        comLoc.classLoc.set(attrs, value, attrProfile);
-    }
-
-    private static final class CommonLocations {
-
-        private final class CommonLocation {
-            private final String name;
-            private Shape shape;
-            private Property prop;
-
-            CommonLocation(String name) {
-                this.name = name;
-            }
-
-            public Object get(DynamicObject attrs, BranchProfile attrProfile) {
-                Shape curShape = attrs.getShape();
-                if (prop == null || curShape != shape) {
-                    attrProfile.enter();
-                    shape = curShape;
-                    prop = shape.getProperty(name);
-                    if (prop == null) {
-                        return null;
-                    }
-                }
-
-                return prop.get(attrs, shape);
-            }
-
-            public void set(DynamicObject attrs, Object value, BranchProfile attrProfile) {
-                Shape curShape = attrs.getShape();
-
-                if (prop == null || curShape != shape) {
-                    attrProfile.enter();
-                    shape = curShape;
-                    prop = shape.getProperty(name);
-                    if (prop == null) {
-                        attrs.define(name, value);
-                        shape = attrs.getShape();
-                        prop = shape.getProperty(name);
-                        return;
-                    }
-                }
-
-                try {
-                    prop.set(attrs, value, shape);
-                } catch (IncompatibleLocationException | FinalLocationException e) {
-                    throw new UnsupportedOperationException(e);
-                }
-
-            }
-
-        }
-
-        private final CommonLocation namesLoc = new CommonLocation(RRuntime.NAMES_ATTR_KEY);
-        private final CommonLocation dimLoc = new CommonLocation(RRuntime.DIM_ATTR_KEY);
-        private final CommonLocation classLoc = new CommonLocation(RRuntime.CLASS_ATTR_KEY);
-
-        private List<Property> properties;
-        private Shape shapeForProperies;
-
-        CommonLocations() {
-        }
-
-        List<Property> getPropertyList(DynamicObject attrs, BranchProfile listProfile) {
-            if (properties == null || attrs.getShape() != shapeForProperies) {
-                listProfile.enter();
-                properties = attrs.getShape().getPropertyList();
-                shapeForProperies = attrs.getShape();
-            }
-            return properties;
-        }
-
-        List<Property> getPropertyList(DynamicObject attrs) {
-            if (properties == null || attrs.getShape() != shapeForProperies) {
-                properties = attrs.getShape().getPropertyList();
-                shapeForProperies = attrs.getShape();
-            }
-            return properties;
-        }
-
-    }
-
     public interface RAttribute {
         String getName();
 
@@ -324,11 +268,11 @@ public final class RAttributesLayout {
     }
 
     @ValueType
-    static class AttrInstance implements RAttribute {
+    public static final class AttrInstance implements RAttribute {
         private final String name;
         private Object value;
 
-        AttrInstance(String name, Object value) {
+        public AttrInstance(String name, Object value) {
             this.name = name;
             this.value = value;
         }

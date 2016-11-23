@@ -26,7 +26,7 @@ import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -45,10 +45,10 @@ abstract class LoadMethod extends RBaseNode {
 
     public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
-    @Child private FixedAttributeGetter targetAttrAccess = FixedAttributeGetter.create(RRuntime.R_TARGET);
-    @Child private FixedAttributeGetter definedAttrAccess = FixedAttributeGetter.create(RRuntime.R_DEFINED);
-    @Child private FixedAttributeGetter nextMethodAttrAccess = FixedAttributeGetter.create(RRuntime.R_NEXT_METHOD);
-    @Child private FixedAttributeGetter sourceAttrAccess = FixedAttributeGetter.create(RRuntime.R_SOURCE);
+    @Child private GetFixedAttributeNode targetAttrAccess = GetFixedAttributeNode.create(RRuntime.R_TARGET);
+    @Child private GetFixedAttributeNode definedAttrAccess = GetFixedAttributeNode.create(RRuntime.R_DEFINED);
+    @Child private GetFixedAttributeNode nextMethodAttrAccess = GetFixedAttributeNode.create(RRuntime.R_NEXT_METHOD);
+    @Child private GetFixedAttributeNode sourceAttrAccess = GetFixedAttributeNode.create(RRuntime.R_SOURCE);
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);

@@ -17,7 +17,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeGetter;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.FixedAttributeRemover;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
@@ -36,11 +36,11 @@ public abstract class GetS4DataSlot extends Node {
 
     public abstract RTypedValue executeObject(RAttributable attObj);
 
-    @Child private FixedAttributeGetter s3ClassAttrAccess;
+    @Child private GetFixedAttributeNode s3ClassAttrAccess;
     @Child private FixedAttributeRemover s3ClassAttrRemove;
     @Child private CastToVectorNode castToVector;
-    @Child private FixedAttributeGetter dotDataAttrAccess;
-    @Child private FixedAttributeGetter dotXDataAttrAccess;
+    @Child private GetFixedAttributeNode dotDataAttrAccess;
+    @Child private GetFixedAttributeNode dotXDataAttrAccess;
     @Child private TypeofNode typeOf = TypeofNodeGen.create();
 
     private final BranchProfile shareable = BranchProfile.create();
@@ -61,7 +61,7 @@ public abstract class GetS4DataSlot extends Node {
             if (attributes != null) {
                 if (s3ClassAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    s3ClassAttrAccess = insert(FixedAttributeGetter.create(RRuntime.DOT_S3_CLASS));
+                    s3ClassAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_S3_CLASS));
                 }
                 s3Class = s3ClassAttrAccess.execute(attributes);
             }
@@ -95,7 +95,7 @@ public abstract class GetS4DataSlot extends Node {
             if (attributes != null) {
                 if (dotDataAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dotDataAttrAccess = insert(FixedAttributeGetter.create(RRuntime.DOT_DATA));
+                    dotDataAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_DATA));
                 }
                 value = dotDataAttrAccess.execute(attributes);
             }
@@ -105,7 +105,7 @@ public abstract class GetS4DataSlot extends Node {
             if (attributes != null) {
                 if (dotXDataAttrAccess == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dotXDataAttrAccess = insert(FixedAttributeGetter.create(RRuntime.DOT_XDATA));
+                    dotXDataAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_XDATA));
                 }
                 value = dotXDataAttrAccess.execute(attributes);
             }

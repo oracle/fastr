@@ -116,9 +116,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createDim()") FixedAttributeRemover removeDim,
                     @Cached("createDimNames()") FixedAttributeRemover removeDimNames,
                     @Cached("create()") InitAttributesNode initAttributes,
-                    @Cached("createNames()") FixedAttributeSetter putNames,
-                    @Cached("createDim()") FixedAttributeSetter putDim,
-                    @Cached("createDimNames()") FixedAttributeSetter putDimNames,
+                    @Cached("createNames()") SetFixedAttributeNode putNames,
+                    @Cached("createDim()") SetFixedAttributeNode putDim,
+                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames,
                     @Cached("create()") BranchProfile leftHasDimensions,
                     @Cached("create()") BranchProfile rightHasDimensions,
                     @Cached("create()") BranchProfile noDimensions,
@@ -204,8 +204,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") FixedAttributeSetter putNames, //
-                    @Cached("createDim()") FixedAttributeSetter putDim, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
@@ -259,8 +259,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") FixedAttributeSetter putNames, //
-                    @Cached("createDim()") FixedAttributeSetter putDim, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
