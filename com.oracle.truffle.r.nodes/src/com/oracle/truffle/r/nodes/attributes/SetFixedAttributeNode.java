@@ -27,26 +27,26 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
-import com.oracle.truffle.api.object.Location;
+import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndLocations;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndProperties;
 
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
-    protected SetFixedAttributeNode(String name, Shape[] constantShapes, Location[] constantLocations) {
-        super(name, constantShapes, constantLocations);
+    protected SetFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
+        super(name, constantShapes, constantProperties);
     }
 
-    public static SetFixedAttributeNode create(String name, Shape[] constantShapes, Location[] constantLocations) {
+    public static SetFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantLocations) {
         return SetFixedAttributeNodeGen.create(name, constantShapes, constantLocations);
     }
 
     public static SetFixedAttributeNode create(String name) {
-        ConstantShapesAndLocations csl = RAttributesLayout.getConstantShapesAndLocations(name);
-        return SetFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantLocations());
+        ConstantShapesAndProperties csl = RAttributesLayout.getConstantShapesAndProperties(name);
+        return SetFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
     }
 
     public static SetFixedAttributeNode createNames() {
@@ -69,9 +69,9 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
     protected void setFromConstantLocation(DynamicObject attrs, Object value, @Cached("findShapeIndex(attrs)") int shapeIndex) {
-        constantLocations[shapeIndex].get(attrs);
+        constantProperties[shapeIndex].getLocation().get(attrs);
         try {
-            constantLocations[shapeIndex].set(attrs, value, constantShapes[shapeIndex]);
+            constantProperties[shapeIndex].set(attrs, value, constantShapes[shapeIndex]);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
             RInternalError.reportError(ex);
         }

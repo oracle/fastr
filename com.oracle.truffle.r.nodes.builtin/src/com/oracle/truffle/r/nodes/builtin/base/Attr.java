@@ -38,7 +38,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SharedAttributeStatusUpdater;
+import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -66,7 +66,7 @@ public abstract class Attr extends RBuiltinNode {
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
-    @Child private SharedAttributeStatusUpdater sharedAttrUpdate = SharedAttributeStatusUpdater.create();
+    @Child private UpdateSharedAttributeNode sharedAttrUpdate = UpdateSharedAttributeNode.create();
     @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
     @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
 

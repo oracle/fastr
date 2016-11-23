@@ -79,8 +79,8 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source, attrSourceProfiles)"})
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
-                    @Cached("createDim()") FixedAttributeRemover removeDim, //
-                    @Cached("createDimNames()") FixedAttributeRemover removeDimNames, //
+                    @Cached("createDim()") RemoveFixedAttributeNode removeDim, //
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createNames()") SetFixedAttributeNode putNames, //
                     @Cached("createDim()") SetFixedAttributeNode putDim, //

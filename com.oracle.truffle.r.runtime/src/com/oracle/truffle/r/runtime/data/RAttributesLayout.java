@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectFactory;
 import com.oracle.truffle.api.object.Layout;
-import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.ObjectType;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
@@ -53,44 +52,44 @@ public final class RAttributesLayout {
     public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, NAMES_AND_DIM_ATTRS_LAYOUT,
                     DIM_AND_DIMNAMES_ATTRS_LAYOUT};
 
-    private static final Map<String, ConstantShapesAndLocations> constantShapesAndLocationsForAttribute = new HashMap<>();
+    private static final Map<String, ConstantShapesAndProperties> constantShapesAndLocationsForAttribute = new HashMap<>();
 
     static {
-        constantShapesAndLocationsForAttribute.put(RRuntime.CLASS_ATTR_KEY, new ConstantShapesAndLocations(
+        constantShapesAndLocationsForAttribute.put(RRuntime.CLASS_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
                                         CLASS_ATTRS_LAYOUT.shape
                         },
-                        new Location[]{
-                                        CLASS_ATTRS_LAYOUT.properties[0].getLocation()
+                        new Property[]{
+                                        CLASS_ATTRS_LAYOUT.properties[0]
                         }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.NAMES_ATTR_KEY, new ConstantShapesAndLocations(
+        constantShapesAndLocationsForAttribute.put(RRuntime.NAMES_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
                                         NAMES_ATTRS_LAYOUT.shape,
                                         NAMES_AND_DIM_ATTRS_LAYOUT.shape
                         },
-                        new Location[]{
-                                        NAMES_ATTRS_LAYOUT.properties[0].getLocation(),
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[0].getLocation()
+                        new Property[]{
+                                        NAMES_ATTRS_LAYOUT.properties[0],
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[0]
                         }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.DIM_ATTR_KEY, new ConstantShapesAndLocations(
+        constantShapesAndLocationsForAttribute.put(RRuntime.DIM_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
                                         DIM_ATTRS_LAYOUT.shape,
                                         NAMES_AND_DIM_ATTRS_LAYOUT.shape,
                                         DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
                         },
-                        new Location[]{
-                                        DIM_ATTRS_LAYOUT.properties[0].getLocation(),
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[1].getLocation(),
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[0].getLocation()
+                        new Property[]{
+                                        DIM_ATTRS_LAYOUT.properties[0],
+                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[1],
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[0]
                         }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.DIMNAMES_ATTR_KEY, new ConstantShapesAndLocations(
+        constantShapesAndLocationsForAttribute.put(RRuntime.DIMNAMES_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
                                         DIMNAMES_ATTRS_LAYOUT.shape,
                                         DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
                         },
-                        new Location[]{
-                                        DIMNAMES_ATTRS_LAYOUT.properties[0].getLocation(),
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[1].getLocation()
+                        new Property[]{
+                                        DIMNAMES_ATTRS_LAYOUT.properties[0],
+                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[1]
                         }));
 
     }
@@ -133,8 +132,8 @@ public final class RAttributesLayout {
         return DIM_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dim, dimNames);
     }
 
-    public static ConstantShapesAndLocations getConstantShapesAndLocations(String attrName) {
-        return constantShapesAndLocationsForAttribute.getOrDefault(attrName, ConstantShapesAndLocations.EMPTY);
+    public static ConstantShapesAndProperties getConstantShapesAndProperties(String attrName) {
+        return constantShapesAndLocationsForAttribute.getOrDefault(attrName, ConstantShapesAndProperties.EMPTY);
     }
 
     public static boolean isRAttributes(Object attrs) {
@@ -194,26 +193,26 @@ public final class RAttributesLayout {
         }
     }
 
-    public static final class ConstantShapesAndLocations {
+    public static final class ConstantShapesAndProperties {
         private static final Shape[] EMPTY_SHAPES_ARRAY = new Shape[0];
-        private static final Location[] EMPTY_LOCATIONS_ARRAY = new Location[0];
+        private static final Property[] EMPTY_PROPERTY_ARRAY = new Property[0];
 
-        public static final ConstantShapesAndLocations EMPTY = new ConstantShapesAndLocations(EMPTY_SHAPES_ARRAY, EMPTY_LOCATIONS_ARRAY);
+        public static final ConstantShapesAndProperties EMPTY = new ConstantShapesAndProperties(EMPTY_SHAPES_ARRAY, EMPTY_PROPERTY_ARRAY);
 
         private final Shape[] constantShapes;
-        private final Location[] constantLocations;
+        private final Property[] constantProperties;
 
-        private ConstantShapesAndLocations(Shape[] constantShapes, Location[] constantLocations) {
+        private ConstantShapesAndProperties(Shape[] constantShapes, Property[] constantProperties) {
             this.constantShapes = constantShapes;
-            this.constantLocations = constantLocations;
+            this.constantProperties = constantProperties;
         }
 
         public Shape[] getConstantShapes() {
             return constantShapes;
         }
 
-        public Location[] getConstantLocations() {
-            return constantLocations;
+        public Property[] getConstantProperties() {
+            return constantProperties;
         }
     }
 

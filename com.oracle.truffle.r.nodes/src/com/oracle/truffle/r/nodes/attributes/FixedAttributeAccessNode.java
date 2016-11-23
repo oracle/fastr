@@ -24,25 +24,25 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
+import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public class FixedAttributeAccessNode extends RBaseNode {
+public abstract class FixedAttributeAccessNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 3;
 
     protected final String name;
     protected final Shape[] constantShapes;
-    protected final Location[] constantLocations;
+    protected final Property[] constantProperties;
     private final ConditionProfile[] loopProfiles;
 
-    protected FixedAttributeAccessNode(String name, Shape[] constantShapes, Location[] constantLocations) {
-        assert constantShapes.length == constantLocations.length;
+    protected FixedAttributeAccessNode(String name, Shape[] constantShapes, Property[] constantProperties) {
+        assert constantShapes.length == constantProperties.length;
         this.name = name;
         this.constantShapes = constantShapes;
-        this.constantLocations = constantLocations;
+        this.constantProperties = constantProperties;
         this.loopProfiles = new ConditionProfile[constantShapes.length];
         for (int i = 0; i < constantShapes.length; i++) {
             loopProfiles[i] = ConditionProfile.createBinaryProfile();

@@ -29,9 +29,9 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class SharedAttributeStatusUpdater extends RBaseNode {
+public abstract class UpdateSharedAttributeNode extends RBaseNode {
 
-    protected SharedAttributeStatusUpdater() {
+    protected UpdateSharedAttributeNode() {
     }
 
     public abstract void execute(Object owner, Object attrValue);
@@ -41,8 +41,8 @@ public abstract class SharedAttributeStatusUpdater extends RBaseNode {
         return item;
     }
 
-    public static SharedAttributeStatusUpdater create() {
-        return SharedAttributeStatusUpdaterNodeGen.create();
+    public static UpdateSharedAttributeNode create() {
+        return UpdateSharedAttributeNodeGen.create();
     }
 
     @Specialization

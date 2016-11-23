@@ -31,42 +31,48 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndProperties;
 
-public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
-    protected GetFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
+    protected RemoveFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
         super(name, constantShapes, constantProperties);
     }
 
-    public static GetFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantProperties) {
-        return GetFixedAttributeNodeGen.create(name, constantShapes, constantProperties);
+    public static RemoveFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantProperties) {
+        return RemoveFixedAttributeNodeGen.create(name, constantShapes, constantProperties);
     }
 
-    public static GetFixedAttributeNode create(String name) {
+    public static RemoveFixedAttributeNode create(String name) {
         ConstantShapesAndProperties csl = RAttributesLayout.getConstantShapesAndProperties(name);
-        return GetFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
+        return RemoveFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
     }
 
-    public static GetFixedAttributeNode createNames() {
-        return GetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+    public static RemoveFixedAttributeNode createNames() {
+        return RemoveFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
     }
 
-    public static GetFixedAttributeNode createDim() {
-        return GetFixedAttributeNode.create(RRuntime.DIM_ATTR_KEY);
+    public static RemoveFixedAttributeNode createDim() {
+        return RemoveFixedAttributeNode.create(RRuntime.DIM_ATTR_KEY);
     }
 
-    public static GetFixedAttributeNode createClass() {
-        return GetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
+    public static RemoveFixedAttributeNode createDimNames() {
+        return RemoveFixedAttributeNode.create(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
-    public abstract Object execute(DynamicObject attrs);
+    public static RemoveFixedAttributeNode createClass() {
+        return RemoveFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
+    }
+
+    public abstract void execute(DynamicObject attrs);
 
     @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected Object getFromConstantLocation(DynamicObject attrs, @Cached("findShapeIndex(attrs)") int shapeIndex) {
-        return constantProperties[shapeIndex].getLocation().get(attrs);
+    protected void getFromConstantLocation(DynamicObject attrs, @Cached("findShapeIndex(attrs)") int shapeIndex) {
+        Shape oldShape = attrs.getShape();
+        Shape newShape = attrs.getShape().removeProperty(constantProperties[shapeIndex]);
+        attrs.setShapeAndResize(oldShape, newShape);
     }
 
     @Specialization(contains = "getFromConstantLocation")
-    protected Object getFromObject(DynamicObject attrs, @Cached("create()") GetAttributeNode getter) {
-        return getter.execute(attrs, name);
+    protected void getFromObject(DynamicObject attrs) {
+        attrs.delete(this.name);
     }
 }

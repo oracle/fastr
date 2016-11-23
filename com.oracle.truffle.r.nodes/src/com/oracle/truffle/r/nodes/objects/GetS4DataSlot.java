@@ -18,7 +18,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeRemover;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
@@ -37,7 +37,7 @@ public abstract class GetS4DataSlot extends Node {
     public abstract RTypedValue executeObject(RAttributable attObj);
 
     @Child private GetFixedAttributeNode s3ClassAttrAccess;
-    @Child private FixedAttributeRemover s3ClassAttrRemove;
+    @Child private RemoveFixedAttributeNode s3ClassAttrRemove;
     @Child private CastToVectorNode castToVector;
     @Child private GetFixedAttributeNode dotDataAttrAccess;
     @Child private GetFixedAttributeNode dotXDataAttrAccess;
@@ -76,7 +76,7 @@ public abstract class GetS4DataSlot extends Node {
                 if (s3ClassAttrRemove == null) {
                     assert castToVector == null;
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    s3ClassAttrRemove = insert(FixedAttributeRemover.create(RRuntime.DOT_S3_CLASS));
+                    s3ClassAttrRemove = insert(RemoveFixedAttributeNode.create(RRuntime.DOT_S3_CLASS));
                     castToVector = insert(CastToVectorNode.create());
 
                 }

@@ -22,15 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeRemover;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -94,7 +94,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
-                    @Cached("createDimNames()") FixedAttributeRemover remove) {
+                    @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector<?> vector = (RVector<?>) result;
@@ -110,7 +110,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "list.getLength() == 0")
     protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list, //
-                    @Cached("createDimNames()") FixedAttributeRemover remove) {
+                    @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
         return updateDimnamesNull(container, RNull.instance, remove);
     }
 
