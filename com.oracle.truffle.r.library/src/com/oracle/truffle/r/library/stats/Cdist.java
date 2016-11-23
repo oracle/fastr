@@ -72,8 +72,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return RRuntime.isFinite(a) && RRuntime.isFinite(b);
     }
 
-    @SuppressWarnings({"unused"})
-    private static Method getMethod(int method) {
+    public static Method getMethod(int method) {
         if (method < 1 || method > Method.values().length) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "distance(): invalid distance");
         }
@@ -100,12 +99,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    // Checkstyle: stop parameter assignment check
-
     public enum Method {
         EUCLIDEAN {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 double dev, dist;
                 int count, j;
 
@@ -133,7 +132,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MAXIMUM {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 double dev, dist;
                 int count, j;
 
@@ -160,7 +161,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MANHATTAN {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 double dev, dist;
                 int count, j;
 
@@ -188,7 +191,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         CANBERRA {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 double dev, dist, sum, diff;
                 int count, j;
 
@@ -222,7 +227,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         BINARY {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 int total, count, dist;
                 int j;
 
@@ -258,7 +265,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MINKOWSKI {
             @Override
-            public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {
+            public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
+                int i1 = i1in;
+                int i2 = i2in;
                 double dev, dist;
                 int count, j;
 
