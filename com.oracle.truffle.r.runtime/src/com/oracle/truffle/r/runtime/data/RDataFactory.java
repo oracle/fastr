@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -495,19 +496,19 @@ public final class RDataFactory {
         return traceDataCreated(new RS4Object());
     }
 
-    public static RExternalPtr createExternalPtr(long value, Object externalObject, Object tag, Object prot) {
+    public static RExternalPtr createExternalPtr(SymbolHandle value, Object externalObject, Object tag, Object prot) {
         assert tag != null : "null tag, use RNull.instance instead";
         assert prot != null : "null prot, use RNull.instance instead";
         return traceDataCreated(new RExternalPtr(value, externalObject, tag, prot));
     }
 
-    public static RExternalPtr createExternalPtr(long value, Object tag, Object prot) {
+    public static RExternalPtr createExternalPtr(SymbolHandle value, Object tag, Object prot) {
         assert tag != null : "null tag, use RNull.instance instead";
         assert prot != null : "null prot, use RNull.instance instead";
         return traceDataCreated(new RExternalPtr(value, null, tag, prot));
     }
 
-    public static RExternalPtr createExternalPtr(long value, Object tag) {
+    public static RExternalPtr createExternalPtr(SymbolHandle value, Object tag) {
         assert tag != null : "null tag, use RNull.instance instead";
         return traceDataCreated(new RExternalPtr(value, null, tag, RNull.instance));
     }

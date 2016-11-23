@@ -30,26 +30,26 @@ public class JNI_UserRng implements UserRngRFFI {
     @Override
     @TruffleBoundary
     public void init(int seed) {
-        init(Function.Init.getAddress(), seed);
+        init(Function.Init.getSymbolHandle().asAddress(), seed);
 
     }
 
     @Override
     @TruffleBoundary
     public double rand() {
-        return rand(Function.Rand.getAddress());
+        return rand(Function.Rand.getSymbolHandle().asAddress());
     }
 
     @Override
     @TruffleBoundary
     public int nSeed() {
-        return nSeed(Function.NSeed.getAddress());
+        return nSeed(Function.NSeed.getSymbolHandle().asAddress());
     }
 
     @Override
     @TruffleBoundary
     public void seeds(int[] n) {
-        seeds(Function.Seedloc.getAddress(), n);
+        seeds(Function.Seedloc.getSymbolHandle().asAddress(), n);
     }
 
     private static native void init(long address, int seed);

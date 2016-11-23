@@ -76,6 +76,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -787,7 +788,7 @@ public class RSerialize {
                     Object prot = readItem();
                     long addr = 0;
                     Object tag = readItem();
-                    result = RDataFactory.createExternalPtr(addr, tag, prot);
+                    result = RDataFactory.createExternalPtr(new DLL.SymbolHandle(addr), tag, prot);
                     addReadRef(result);
                     break;
                 }

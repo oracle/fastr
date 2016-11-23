@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -193,6 +194,16 @@ public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
             pcreRFFI = new JNI_PCRE();
         }
         return pcreRFFI;
+    }
+
+    private DLLRFFI dllRFFI;
+
+    @Override
+    public DLLRFFI getDLLRFFI() {
+        if (dllRFFI == null) {
+            dllRFFI = new JNI_DLL();
+        }
+        return dllRFFI;
     }
 
     private REmbedRFFI rEmbedRFFI;

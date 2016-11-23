@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -75,9 +76,9 @@ public abstract class DotC extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding) {
-        long address = getAddressFromSymbolInfo(frame, symbol);
+        SymbolHandle handle = getAddressFromSymbolInfo(frame, symbol);
         String name = getNameFromSymbolInfo(frame, symbol);
-        return dispatch(this, address, name, naok, dup, args);
+        return dispatch(this, handle, name, naok, dup, args);
     }
 
     @SuppressWarnings("unused")
@@ -93,8 +94,8 @@ public abstract class DotC extends RBuiltinNode {
             }
         }
         DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.C, null, null);
-        long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
-        if (func == -1) {
+        DLL.SymbolHandle func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+        if (func == DLL.SYMBOL_NOT_FOUND) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
@@ -109,7 +110,7 @@ public abstract class DotC extends RBuiltinNode {
         return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
     }
 
-    private long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+    private SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
         if (addressExtract == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -150,7 +151,7 @@ public abstract class DotC extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, RArgsValuesAndNames args) {
+    protected static RList dispatch(RBuiltinNode node, SymbolHandle handle, String name, byte naok, byte dup, RArgsValuesAndNames args) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")
@@ -193,7 +194,7 @@ public abstract class DotC extends RBuiltinNode {
         if (FastROptions.TraceNativeCalls.getBooleanValue()) {
             trace(name, nativeArgs);
         }
-        RFFIFactory.getRFFI().getCRFFI().invoke(address, nativeArgs);
+        RFFIFactory.getRFFI().getCRFFI().invoke(handle, nativeArgs);
         // we have to assume that the native method updated everything
         RStringVector listNames = validateArgNames(array.length, args.getSignature());
         Object[] results = new Object[array.length];

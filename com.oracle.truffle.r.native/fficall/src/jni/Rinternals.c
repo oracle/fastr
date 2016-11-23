@@ -115,6 +115,9 @@ static jclass handlerStacksClass;
 static jmethodID resetAndGetHandlerStacksMethodID;
 static jmethodID restoreHandlerStacksMethodID;
 
+static jclass SymbolHandleClass;
+static jmethodID symbolHandleConsMethodID;
+
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
 static jmethodID externalPtrGetAddrMethodID;
@@ -219,14 +222,16 @@ void init_internals(JNIEnv *env) {
 	restoreHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "restoreHandlerStacks", "(Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
-	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
-	externalPtrGetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "getAddr", "()J", 0);
+	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;Ljava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
+	externalPtrGetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "getAddr", "()Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;", 0);
 	externalPtrGetTagMethodID = checkGetMethodID(env, RExternalPtrClass, "getTag", "()Ljava/lang/Object;", 0);
 	externalPtrGetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "getProt", "()Ljava/lang/Object;", 0);
-	externalPtrSetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "setAddr", "(J)V", 0);
+	externalPtrSetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "setAddr", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;)V", 0);
 	externalPtrSetTagMethodID = checkGetMethodID(env, RExternalPtrClass, "setTag", "(Ljava/lang/Object;)V", 0);
 	externalPtrSetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "setProt", "(Ljava/lang/Object;)V", 0);
 
+	SymbolHandleClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle");
+	symbolHandleConsMethodID = checkGetMethodID(env, SymbolHandleClass, "<init>", "(Ljava/lang/Object;)V", 0);
 	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$CharSXPWrapper");
 	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 
@@ -1507,7 +1512,8 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, (jlong) p, tag, prot);
+	jobject handle = (*thisenv)->CallStaticObjectMethod(thisenv, SymbolHandleClass, symbolHandleConsMethodID, (jobject) p);
+	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, handle, tag, prot);
     return checkRef(thisenv, result);
 }
 

@@ -28,10 +28,11 @@ import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
  */
 public class JNI_Call implements CallRFFI {
 
-    JNI_Call() {
+    protected JNI_Call() {
         loadLibrary();
     }
 
@@ -60,7 +61,7 @@ public class JNI_Call implements CallRFFI {
      * so we have to do an additional {@code System.load} to achieve that.
      *
      * Before we do that we must load {@code libjniboot} because the implementation of
-     * {@link BaseRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
+     * {@link DLLRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
      */
     @TruffleBoundary
     private static void loadLibrary() {
@@ -90,7 +91,8 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized Object invokeCall(long address, String name, Object[] args) {
+    public synchronized Object invokeCall(SymbolHandle handleArg, String name, Object[] args) {
+        long address = handleArg.asAddress();
         Object result = null;
         if (traceEnabled()) {
             traceDownCall(name, args);
@@ -150,10 +152,11 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized void invokeVoidCall(long address, String name, Object[] args) {
+    public synchronized void invokeVoidCall(SymbolHandle handle, String name, Object[] args) {
         if (traceEnabled()) {
             traceDownCall(name, args);
         }
+        long address = handle.asAddress();
         try {
             switch (args.length) {
                 case 0:

@@ -20,25 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jni;
+package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
-public class JNI_C implements CRFFI {
+public interface DLLRFFI {
+    /**
+     * Open a DLL.
+     *
+     * @return {@code null} on error, opaque handle for following calls otherwise.
+     */
+    Object dlopen(String path, boolean local, boolean now);
 
     /**
-     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be native
-     * array types, no upcalls are possible, and no result is returned. However, the receiving
-     * function expects actual native arrays (not SEXPs), so these have to be handled on the JNI
-     * side.
+     * Search for {@code symbol} in DLL specified by {@code handle}. To accommodate differing
+     * implementations of this interface the result is {@link SymbolHandle}. For the standard OS
+     * implementation this will encapsulate a {@link Long} or {@code null} if an error occurred.
+     *
      */
-    @Override
-    @TruffleBoundary
-    public synchronized void invoke(SymbolHandle symbolHandle, Object[] args) {
-        c(symbolHandle.asAddress(), args);
-    }
+    SymbolHandle dlsym(Object handle, String symbol);
 
-    private static native void c(long address, Object[] args);
+    /**
+     * Close DLL specified by {@code handle}.
+     */
+    int dlclose(Object handle);
+
+    /**
+     * Get any error message.
+     *
+     * @return {@code null} if no error, message otherwise.
+     */
+    String dlerror();
+
 }

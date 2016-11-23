@@ -99,6 +99,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -197,7 +198,7 @@ public class ForeignFunctions {
             return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
         }
 
-        protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+        protected SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
             if (addressExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -266,7 +267,7 @@ public class ForeignFunctions {
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
-            long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(f.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
@@ -559,7 +560,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -646,7 +647,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -719,7 +720,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -777,7 +778,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -833,7 +834,7 @@ public class ForeignFunctions {
         @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
