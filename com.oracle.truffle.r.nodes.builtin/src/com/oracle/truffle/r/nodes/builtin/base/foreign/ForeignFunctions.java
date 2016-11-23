@@ -42,9 +42,12 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
+import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
+import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
 import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
@@ -384,7 +387,12 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.ApproxNodeGen.create();
                 case "ApproxTest":
                     return StatsFunctionsFactory.ApproxTestNodeGen.create();
+                case "Cdist":
+                    return CdistNodeGen.create();
+                case "DoubleCentre":
+                    return DoubleCentreNodeGen.create();
                 case "cutree":
+                    return CutreeNodeGen.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":
@@ -421,14 +429,12 @@ public class ForeignFunctions {
                 case "logit_mu_eta":
                 case "binomial_dev_resids":
                 case "rWishart":
-                case "Cdist":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
                 case "cfilter":
                 case "rfilter":
                 case "lowess":
-                case "DoubleCentre":
                 case "BinDist":
                 case "Rsm":
                 case "tukeyline":

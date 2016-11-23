@@ -241,6 +241,7 @@ public abstract class RConnection implements AutoCloseable {
     }
 
     public enum SeekMode {
+        ENQUIRE,
         START,
         CURRENT,
         END

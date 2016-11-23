@@ -228,6 +228,7 @@ public final class StatsFunctions {
             apprMeth.kind = method;
             apprMeth.ylow = yl;
             apprMeth.yhigh = yr;
+            naCheck.enable(true);
             for (int i = 0; i < nout; i++) {
                 double xouti = v.getDataAt(i);
                 yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, x.getDataWithoutCopying(), y.getDataWithoutCopying(), nx, apprMeth);

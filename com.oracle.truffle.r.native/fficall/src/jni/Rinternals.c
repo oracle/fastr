@@ -65,6 +65,7 @@ static jmethodID Rf_gsetVarMethodID;
 static jmethodID Rf_inheritsMethodID;
 static jmethodID Rf_lengthgetsMethodID;
 static jmethodID CADR_MethodID;
+static jmethodID CADDR_MethodID;
 static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
@@ -169,6 +170,7 @@ void init_internals(JNIEnv *env) {
 //	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
 //	Rf_iPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 1);
 	CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	CADDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TAG", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -713,7 +715,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	invalidateCopiedObject(thisenv, x);
+	invalidateNativeArray(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
 	return checkRef(thisenv, result);
 }
@@ -862,8 +864,10 @@ SEXP CDDDR(SEXP e) {
 }
 
 SEXP CADDR(SEXP e) {
-    unimplemented("CADDR");
-    return NULL;
+    TRACE(TARGp, e);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADDR_MethodID, e);
+    return checkRef(thisenv, result);
 }
 
 SEXP CADDDR(SEXP e) {

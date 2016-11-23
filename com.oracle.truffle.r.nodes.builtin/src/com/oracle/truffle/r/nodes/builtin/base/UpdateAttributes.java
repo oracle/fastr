@@ -200,7 +200,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 if (value == RNull.instance) {
                     res.removeAttr(attrProfiles, attrName);
                 } else {
-                    res.setAttr(attrName, value);
+                    res.setAttr(attrName.intern(), value);
                 }
             }
         }
