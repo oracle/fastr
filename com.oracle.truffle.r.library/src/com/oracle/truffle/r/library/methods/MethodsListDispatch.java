@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -418,7 +419,7 @@ public class MethodsListDispatch {
             // whose only purpose is to throw an error indicating that it shouldn't be called
             // TODO: finesse error handling in case a function stored in this pointer is actually
             // called
-            return RDataFactory.createExternalPtr(0, RNull.instance, RNull.instance);
+            return RDataFactory.createExternalPtr(new DLL.SymbolHandle(0L), RNull.instance, RNull.instance);
         }
     }
 }

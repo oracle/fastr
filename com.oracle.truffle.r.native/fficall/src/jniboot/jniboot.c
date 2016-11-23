@@ -48,7 +48,7 @@ static void create_dlerror_string(JNIEnv *env) {
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlopen(JNIEnv *env, jclass c, jstring jpath, jboolean local, jboolean now) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlopen(JNIEnv *env, jclass c, jstring jpath, jboolean local, jboolean now) {
     const char *path = (*env)->GetStringUTFChars(env, jpath, NULL);
     int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
     void *handle = dlopen(path, flags);
@@ -60,7 +60,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlopen(JNIEnv *env, 
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlsym(JNIEnv *env, jclass c, jlong handle, jstring jsymbol) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlsym(JNIEnv *env, jclass c, jlong handle, jstring jsymbol) {
     const char *symbol = (*env)->GetStringUTFChars(env, jsymbol, NULL);
     void *address = dlsym((void *)handle, symbol);
     create_dlerror_string(env);
@@ -69,13 +69,13 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlsym(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlclose(JNIEnv *env, jclass c, jlong handle) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlclose(JNIEnv *env, jclass c, jlong handle) {
     int rc = dlclose((void *)handle);
     return rc;
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1dlerror(JNIEnv *env, jclass c) {
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlerror(JNIEnv *env, jclass c) {
    	return last_dlerror;
 }
 

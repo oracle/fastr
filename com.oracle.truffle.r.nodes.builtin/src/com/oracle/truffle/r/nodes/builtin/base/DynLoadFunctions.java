@@ -164,7 +164,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected Object getSymbolInfo(String symbol, String packageName, boolean withReg) {
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
-            long f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
+            DLL.SymbolHandle f = DLL.findSymbol(RRuntime.asString(symbol), packageName, rns);
             SymbolInfo symbolInfo = null;
             if (f != DLL.SYMBOL_NOT_FOUND) {
                 symbolInfo = new SymbolInfo(rns.getDllInfo(), symbol, f);
@@ -175,14 +175,14 @@ public class DynLoadFunctions {
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, boolean withReg) {
-            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
+            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr().asAddress());
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
             }
 
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
             String symbol = symbolVec.getDataAt(0);
-            long f = DLL.dlsym(dllInfo, RRuntime.asString(symbol), rns);
+            DLL.SymbolHandle f = DLL.dlsym(dllInfo, RRuntime.asString(symbol), rns);
             SymbolInfo symbolInfo = null;
             if (f != DLL.SYMBOL_NOT_FOUND) {
                 symbolInfo = new SymbolInfo(dllInfo, symbol, f);

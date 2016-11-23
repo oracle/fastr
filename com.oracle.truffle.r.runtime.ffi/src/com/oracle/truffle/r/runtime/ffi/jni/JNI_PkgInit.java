@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * The JNI-based implementation of the package init code. This is only up-called from JNI.
@@ -55,7 +56,7 @@ final class JNI_PkgInit {
      * Upcall from native to create a {@link DotSymbol} value.
      */
     private static DotSymbol setDotSymbolValues(String name, long fun, int numArgs) {
-        return new DotSymbol(name, fun, numArgs);
+        return new DotSymbol(name, new SymbolHandle(fun), numArgs);
     }
 
     private static native DotSymbol setSymbol(int nstOrd, long routines, int index);

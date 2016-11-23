@@ -54,7 +54,7 @@ public abstract class RConnection implements AutoCloseable {
 
         RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
         // it's important to put "this" into the externalptr, so that it doesn't get collected
-        RExternalPtr connectionId = RDataFactory.createExternalPtr(0, this, RDataFactory.createSymbol("connection"), RNull.instance);
+        RExternalPtr connectionId = RDataFactory.createExternalPtr(null, this, RDataFactory.createSymbol("connection"), RNull.instance);
         result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY, "conn_id"}, new Object[]{classVector, connectionId}));
 
         return result;
