@@ -33,8 +33,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Simple attribute access node that specializes on the position at which the attribute was found
- * last time.
+ * Copies all attributes from source to target except for 'dim', 'names' and 'dimNames' attribute.
+ * Typical usage is when copying attributes to a vector created by one of
+ * {@link com.oracle.truffle.r.runtime.data.RDataFactory} factory methods, because one can specify
+ * the 'names' and 'dims' as parameters of the factory method and copy the rest of the attributes
+ * using this node.
+ *
+ * @see UnaryCopyAttributesNode
  */
 public abstract class CopyOfRegAttributesNode extends RBaseNode {
 

@@ -36,8 +36,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Simple attribute access node that specializes on the position at which the attribute was found
- * last time.
+ * Copies all attributes from source to target including 'names', 'dimNames' and 'dim' (unlike
+ * {@link CopyOfRegAttributesNode}), additionally removes the 'dim' from the result if it is not
+ * present in the source.
+ *
+ * TODO: this logic is duplicated in RVector#copyRegAttributesFrom and UnaryMapNode, but behind
+ * TruffleBoundary, does it have a reason for TruffleBoundary? Can we replace it with this node?
  */
 public abstract class UnaryCopyAttributesNode extends RBaseNode {
 

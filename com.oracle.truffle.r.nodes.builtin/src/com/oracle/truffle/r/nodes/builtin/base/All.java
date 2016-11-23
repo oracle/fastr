@@ -30,10 +30,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-/**
- * TODO: Added primitive {@code na.rm} support, but this code needs rewriting in the same manner as
- * {@link Any} and there is opportunity to share code.
- */
 @RBuiltin(name = "all", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
 public abstract class All extends Quantifier {
 

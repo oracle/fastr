@@ -21,6 +21,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
  */
 public class StatsUtil {
 
+    /**
+     * corresponds to macro {@code ML_ERR_return_NAN} in GnuR.
+     */
+    public static double mlError() {
+        return Double.NaN;
+    }
+
     public static final double DBLEPSILON = 2.2204460492503131e-16;
 
     @TruffleBoundary
@@ -112,11 +119,22 @@ public class StatsUtil {
         return giveLog ? -0.5 * Math.log(f) + x : Math.exp(x) / Math.sqrt(f);
     }
 
+    //
+    // GNUR from fmin2.c and fmax2
+    //
+
     public static double fmax2(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;
         }
         return (x < y) ? y : x;
+    }
+
+    public static double fmin2(double x, double y) {
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            return x + y;
+        }
+        return (x < y) ? x : y;
     }
 
     //
@@ -150,7 +168,7 @@ public class StatsUtil {
     // GNUR from log1p.c
     //
 
-    @CompilationFinal private static final double[] alnrcs = {+.10378693562743769800686267719098e+1, -.13364301504908918098766041553133e+0, +.19408249135520563357926199374750e-1,
+    @CompilationFinal(dimensions = 1) private static final double[] alnrcs = {+.10378693562743769800686267719098e+1, -.13364301504908918098766041553133e+0, +.19408249135520563357926199374750e-1,
                     -.30107551127535777690376537776592e-2, +.48694614797154850090456366509137e-3, -.81054881893175356066809943008622e-4, +.13778847799559524782938251496059e-4,
                     -.23802210894358970251369992914935e-5, +.41640416213865183476391859901989e-6, -.73595828378075994984266837031998e-7, +.13117611876241674949152294345011e-7,
                     -.23546709317742425136696092330175e-8, +.42522773276034997775638052962567e-9, -.77190894134840796826108107493300e-10, +.14075746481359069909215356472191e-10,

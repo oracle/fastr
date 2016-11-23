@@ -424,7 +424,7 @@ public final class RError extends RuntimeException {
         ONLY_FIRST_USED("numerical expression has %d elements: only the first used"),
         NO_SUCH_INDEX("no such index at level %d"),
         LIST_COERCION("(list) object cannot be coerced to type '%s'"),
-        CAT_ARGUMENT_LIST("argument %d (type 'list') cannot be handled by 'cat'"),
+        CAT_ARGUMENT_OF_TYPE("argument %d (type '%s') cannot be handled by 'cat'"),
         DATA_NOT_MULTIPLE_ROWS("data length [%d] is not a sub-multiple or multiple of the number of rows [%d]"),
         ARGUMENT_NOT_MATCH("supplied argument name '%s' does not match '%s'"),
         ARGUMENT_MISSING("argument \"%s\" is missing, with no default"),
