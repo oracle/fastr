@@ -65,7 +65,8 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     public abstract void execute(DynamicObject attrs);
 
     @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected void getFromConstantLocation(DynamicObject attrs, @Cached("findShapeIndex(attrs)") int shapeIndex) {
+    protected void getFromConstantLocation(DynamicObject attrs,
+                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
         Shape oldShape = attrs.getShape();
         Shape newShape = attrs.getShape().removeProperty(constantProperties[shapeIndex]);
         attrs.setShapeAndResize(oldShape, newShape);

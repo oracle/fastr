@@ -68,7 +68,8 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     public abstract void execute(DynamicObject attrs, Object value);
 
     @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected void setFromConstantLocation(DynamicObject attrs, Object value, @Cached("findShapeIndex(attrs)") int shapeIndex) {
+    protected void setFromConstantLocation(DynamicObject attrs, Object value,
+                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
         constantProperties[shapeIndex].getLocation().get(attrs);
         try {
             constantProperties[shapeIndex].set(attrs, value, constantShapes[shapeIndex]);
@@ -79,7 +80,8 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     }
 
     @Specialization(contains = "setFromConstantLocation")
-    protected void setFromObject(DynamicObject attrs, Object value, @Cached("create()") SetAttributeNode setter) {
+    protected void setFromObject(DynamicObject attrs, Object value,
+                    @Cached("create()") SetAttributeNode setter) {
         setter.execute(attrs, name, value);
     }
 

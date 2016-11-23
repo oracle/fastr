@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
 /**
  * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
@@ -52,10 +50,7 @@ public class RS4Object extends RSharingAttributeStorage {
     public RS4Object copy() {
         RS4Object resultS4 = RDataFactory.createS4Object();
         if (getAttributes() != null) {
-            DynamicObject newAttributes = resultS4.initAttributes();
-            for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(getAttributes())) {
-                newAttributes.define(attr.getName(), attr.getValue());
-            }
+            resultS4.initAttributes(RAttributesLayout.copy(getAttributes()));
         }
         resultS4.setTypedValueInfo(getTypedValueInfo());
         return resultS4;

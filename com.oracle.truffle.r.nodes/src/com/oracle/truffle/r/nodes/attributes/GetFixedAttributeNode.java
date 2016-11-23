@@ -61,12 +61,14 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     public abstract Object execute(DynamicObject attrs);
 
     @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected Object getFromConstantLocation(DynamicObject attrs, @Cached("findShapeIndex(attrs)") int shapeIndex) {
+    protected Object getFromConstantLocation(DynamicObject attrs,
+                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
         return constantProperties[shapeIndex].getLocation().get(attrs);
     }
 
     @Specialization(contains = "getFromConstantLocation")
-    protected Object getFromObject(DynamicObject attrs, @Cached("create()") GetAttributeNode getter) {
+    protected Object getFromObject(DynamicObject attrs,
+                    @Cached("create()") GetAttributeNode getter) {
         return getter.execute(attrs, name);
     }
 }

@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -61,8 +62,8 @@ public abstract class AccessSlotNode extends RNode {
         this.asOperator = asOperator;
     }
 
-    protected GetFixedAttributeNode createAttrAccess(String name) {
-        return GetFixedAttributeNode.create(name);
+    protected GetAttributeNode createAttrAccess() {
+        return GetAttributeNode.create();
     }
 
     private Object getSlotS4Internal(RAttributable object, String name, Object value) {
@@ -110,18 +111,12 @@ public abstract class AccessSlotNode extends RNode {
         throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, "NULL");
     }
 
-    @Specialization(guards = {"slotAccessAllowed(object)", "name == cachedName"})
-    protected Object getSlotS4Cached(RAttributable object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName,
-                    @Cached("createAttrAccess(cachedName)") GetFixedAttributeNode attrAccess, //
+    @Specialization(guards = {"slotAccessAllowed(object)"})
+    protected Object getSlotS4Cached(RAttributable object, String name,
+                    @Cached("createAttrAccess()") GetAttributeNode attrAccess, //
                     @Cached("create()") InitAttributesNode initAttrNode) {
-        Object value = attrAccess.execute(initAttrNode.execute(object));
-        return getSlotS4Internal(object, cachedName, value);
-    }
-
-    @Specialization(contains = "getSlotS4Cached", guards = "slotAccessAllowed(object)")
-    protected Object getSlotS4(RAttributable object, String name) {
+        Object value = attrAccess.execute(initAttrNode.execute(object), name);
         String internedName = Utils.intern(name);
-        Object value = object.getAttr(attrProfiles, internedName);
         return getSlotS4Internal(object, internedName, value);
     }
 

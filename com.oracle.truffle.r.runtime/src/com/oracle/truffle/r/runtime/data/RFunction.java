@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -116,10 +115,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     public RFunction copy() {
         RFunction newFunction = RDataFactory.createFunction(getName(), getPackageName(), getTarget(), getRBuiltin(), getEnclosingFrame());
         if (getAttributes() != null) {
-            DynamicObject newAttributes = newFunction.initAttributes();
-            for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(getAttributes())) {
-                newAttributes.define(attr.getName(), attr.getValue());
-            }
+            newFunction.initAttributes(RAttributesLayout.copy(getAttributes()));
         }
         newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;

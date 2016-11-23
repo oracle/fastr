@@ -23,13 +23,54 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public class AttributeAccessNode extends RBaseNode {
+public abstract class AttributeAccessNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = 3;
+    protected static final int CACHE_LIMIT = RAttributesLayout.LAYOUTS.length;
+
+    private final ConditionProfile[] loopProfiles;
+    private final BranchProfile nullLayoutProfile = BranchProfile.create();
+
+    protected AttributeAccessNode() {
+        this.loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];
+        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
+            loopProfiles[i] = ConditionProfile.createBinaryProfile();
+        }
+    }
+
+    @ExplodeLoop
+    protected final AttrsLayout findLayout(DynamicObject attrs) {
+        Shape attrsShape = attrs.getShape();
+        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
+            AttrsLayout attrsLayout = RAttributesLayout.LAYOUTS[i];
+            if (loopProfiles[i].profile(attrsLayout.shape == attrsShape)) {
+                return attrsLayout;
+            }
+        }
+        return null;
+    }
+
+    protected int findAttrIndexInLayout(String name, AttrsLayout attrsLayout) {
+        if (attrsLayout == null) {
+            nullLayoutProfile.enter();
+            return -1;
+        }
+
+        for (int i = 0; i < attrsLayout.properties.length; i++) {
+            if (name.equals(attrsLayout.properties[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
         return shape != null && shape.check(attrs);

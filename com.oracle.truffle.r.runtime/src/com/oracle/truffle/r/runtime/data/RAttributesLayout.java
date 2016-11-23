@@ -48,6 +48,7 @@ public final class RAttributesLayout {
     private static final AttrsLayout DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
+    private static final AttrsLayout CLASS_AND_CONNID_ATTRS_LAYOUT = new AttrsLayout(RRuntime.CLASS_ATTR_KEY, RRuntime.CONN_ID_ATTR_KEY);
 
     public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, NAMES_AND_DIM_ATTRS_LAYOUT,
                     DIM_AND_DIMNAMES_ATTRS_LAYOUT};
@@ -57,10 +58,12 @@ public final class RAttributesLayout {
     static {
         constantShapesAndLocationsForAttribute.put(RRuntime.CLASS_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
-                                        CLASS_ATTRS_LAYOUT.shape
+                                        CLASS_ATTRS_LAYOUT.shape,
+                                        CLASS_AND_CONNID_ATTRS_LAYOUT.shape
                         },
                         new Property[]{
-                                        CLASS_ATTRS_LAYOUT.properties[0]
+                                        CLASS_ATTRS_LAYOUT.properties[0],
+                                        CLASS_AND_CONNID_ATTRS_LAYOUT.properties[0]
                         }));
         constantShapesAndLocationsForAttribute.put(RRuntime.NAMES_ATTR_KEY, new ConstantShapesAndProperties(
                         new Shape[]{
@@ -90,6 +93,13 @@ public final class RAttributesLayout {
                         new Property[]{
                                         DIMNAMES_ATTRS_LAYOUT.properties[0],
                                         DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[1]
+                        }));
+        constantShapesAndLocationsForAttribute.put(RRuntime.CONN_ID_ATTR_KEY, new ConstantShapesAndProperties(
+                        new Shape[]{
+                                        CLASS_AND_CONNID_ATTRS_LAYOUT.shape
+                        },
+                        new Property[]{
+                                        CLASS_AND_CONNID_ATTRS_LAYOUT.properties[0]
                         }));
 
     }
@@ -132,6 +142,10 @@ public final class RAttributesLayout {
         return DIM_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dim, dimNames);
     }
 
+    public static DynamicObject createClassWithConnId(Object cls, Object connId) {
+        return CLASS_AND_CONNID_ATTRS_LAYOUT.factory.newInstance(cls, connId);
+    }
+
     public static ConstantShapesAndProperties getConstantShapesAndProperties(String attrName) {
         return constantShapesAndLocationsForAttribute.getOrDefault(attrName, ConstantShapesAndProperties.EMPTY);
     }
@@ -148,11 +162,11 @@ public final class RAttributesLayout {
         return objectType instanceof RAttributesType;
     }
 
-    public static Iterable<RAttribute> asIterable(DynamicObject attrs) {
+    public static RAttributeIterable asIterable(DynamicObject attrs) {
         return new RAttributeIterable(attrs, attrs.getShape().getPropertyList());
     }
 
-    public static Iterable<RAttribute> asIterable(DynamicObject attrs, AttrsLayout attrsLayout) {
+    public static RAttributeIterable asIterable(DynamicObject attrs, AttrsLayout attrsLayout) {
         assert attrsLayout.shape.check(attrs);
         return new RAttributeIterable(attrs, attrsLayout.propertyList);
     }
@@ -216,7 +230,7 @@ public final class RAttributesLayout {
         }
     }
 
-    static final class RAttributeIterable implements Iterable<RAttributesLayout.RAttribute> {
+    public static final class RAttributeIterable implements Iterable<RAttributesLayout.RAttribute> {
         private final DynamicObject attrs;
         private final List<Property> properties;
 
@@ -241,7 +255,7 @@ public final class RAttributesLayout {
     @ValueType
     public static final class AttrInstance implements RAttribute {
         private final String name;
-        private Object value;
+        private final Object value;
 
         public AttrInstance(String name, Object value) {
             this.name = name;

@@ -39,6 +39,7 @@ public abstract class FixedAttributeAccessNode extends RBaseNode {
     private final ConditionProfile[] loopProfiles;
 
     protected FixedAttributeAccessNode(String name, Shape[] constantShapes, Property[] constantProperties) {
+        assert name.intern() == name;
         assert constantShapes.length == constantProperties.length;
         this.name = name;
         this.constantShapes = constantShapes;

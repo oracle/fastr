@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -68,7 +69,7 @@ public abstract class Attr extends RBuiltinNode {
     @CompilationFinal private String cachedInternedName = "";
     @Child private UpdateSharedAttributeNode sharedAttrUpdate = UpdateSharedAttributeNode.create();
     @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
-    @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
+    @Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -108,7 +109,7 @@ public abstract class Attr extends RBuiltinNode {
     private Object searchKeyPartial(DynamicObject attributes, String name) {
         Object val = RNull.instance;
 
-        for (RAttributesLayout.RAttribute e : arrayAttrAccess.execute(attributes)) {
+        for (RAttributesLayout.RAttribute e : iterAttrAccess.execute(attributes)) {
             if (e.getName().startsWith(name)) {
                 if (val == RNull.instance) {
                     val = e.getValue();

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
-public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
+public abstract class ArrayAttributeNode extends AttributeAccessNode {
 
     public static ArrayAttributeNode create() {
         return ArrayAttributeNodeGen.create();
@@ -44,7 +44,8 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
     @ExplodeLoop
-    protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs, @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+    protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs,
+                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
         Property[] props = attrsLayout.properties;
         RAttribute[] result = new RAttribute[props.length];
         for (int i = 0; i < props.length; i++) {

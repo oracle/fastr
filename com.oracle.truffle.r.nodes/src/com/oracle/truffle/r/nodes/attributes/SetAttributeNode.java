@@ -32,7 +32,10 @@ import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 
 public abstract class SetAttributeNode extends AttributeAccessNode {
 
@@ -45,7 +48,21 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
     public abstract void execute(DynamicObject attrs, String name, Object value);
 
-    @Specialization(limit = "CACHE_LIMIT", //
+    @Specialization(limit = "CACHE_LIMIT", guards = {"cachedName.equals(name)", "attrsLayout != null", "attrsLayout.shape.check(attrs)", "cachedIndex >= 0"})
+    @SuppressWarnings("unused")
+    protected void setConstantLayout(DynamicObject attrs, String name, Object value,
+                    @Cached("name") String cachedName,
+                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout,
+                    @Cached("findAttrIndexInLayout(cachedName, attrsLayout)") int cachedIndex) {
+        try {
+            attrsLayout.properties[cachedIndex].getLocation().set(attrs, value);
+        } catch (IncompatibleLocationException | FinalLocationException ex) {
+            RInternalError.reportError(ex);
+        }
+    }
+
+    @Specialization(limit = "3", //
+                    contains = "setConstantLayout", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(shape, attrs)",
@@ -55,12 +72,13 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                     assumptions = {
                                     "shape.getValidAssumption()"
                     })
-    protected static void setExistingAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name, Object value,
-                    @SuppressWarnings("unused") @Cached("name") String cachedName,
+    @SuppressWarnings("unused")
+    protected static void setExistingAttrCached(DynamicObject attrs, String name, Object value,
+                    @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name, value)") Location location) {
         try {
-            location.set(attrs, value, shape);
+            location.set(attrs, value);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
             RInternalError.reportError(ex);
         }
@@ -77,10 +95,11 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                                     "oldShape.getValidAssumption()",
                                     "newShape.getValidAssumption()"
                     })
-    protected static void setNewAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name, Object value,
-                    @SuppressWarnings("unused") @Cached("name") String cachedName,
+    @SuppressWarnings("unused")
+    protected static void setNewAttrCached(DynamicObject attrs, String name, Object value,
+                    @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape oldShape,
-                    @SuppressWarnings("unused") @Cached("lookupLocation(oldShape, name, value)") Location oldLocation,
+                    @Cached("lookupLocation(oldShape, name, value)") Location oldLocation,
                     @Cached("defineProperty(oldShape, name, value)") Shape newShape,
                     @Cached("lookupLocation(newShape, name)") Location newLocation) {
         try {
@@ -95,7 +114,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
      * polymorphic inline cache.
      */
     @TruffleBoundary
-    @Specialization(contains = {"setExistingAttrCached", "setNewAttrCached"})
+    @Specialization(contains = {"setConstantLayout", "setExistingAttrCached", "setNewAttrCached"})
     protected static void writeUncached(DynamicObject receiver, String name, Object value) {
         receiver.define(name, value);
     }

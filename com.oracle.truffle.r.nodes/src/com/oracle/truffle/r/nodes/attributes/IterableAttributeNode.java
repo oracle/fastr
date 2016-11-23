@@ -24,28 +24,26 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
-public abstract class IterableAttributeNode extends AttributeIterativeAccessNode {
+public abstract class IterableAttributeNode extends AttributeAccessNode {
 
     public static IterableAttributeNode create() {
         return IterableAttributeNodeGen.create();
     }
 
-    public abstract Iterable<RAttribute> execute(DynamicObject attrs);
+    public abstract RAttributesLayout.RAttributeIterable execute(DynamicObject attrs);
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
-    @ExplodeLoop
-    protected Iterable<RAttribute> getArrayFromConstantLayouts(DynamicObject attrs, @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+    protected RAttributesLayout.RAttributeIterable getArrayFromConstantLayouts(DynamicObject attrs,
+                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
         return RAttributesLayout.asIterable(attrs, attrsLayout);
     }
 
     @Specialization(contains = "getArrayFromConstantLayouts")
-    protected Iterable<RAttribute> getArrayFallback(DynamicObject attrs) {
+    protected RAttributesLayout.RAttributeIterable getArrayFallback(DynamicObject attrs) {
         return RAttributesLayout.asIterable(attrs);
     }
 

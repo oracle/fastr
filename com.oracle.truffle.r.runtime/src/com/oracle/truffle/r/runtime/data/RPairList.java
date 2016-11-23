@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -276,10 +275,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
             original = origList.cdr;
         }
         if (getAttributes() != null) {
-            DynamicObject newAttributes = result.initAttributes();
-            for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(getAttributes())) {
-                newAttributes.define(attr.getName(), attr.getValue());
-            }
+            result.initAttributes(RAttributesLayout.copy(getAttributes()));
         }
         return result;
     }
