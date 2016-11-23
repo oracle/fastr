@@ -12,17 +12,18 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
 public final class Rnorm implements RandFunction2_Double {
-
-    private static final double BIG = 134217728;
-
     @Override
-    public double evaluate(double mu, double sigma, RandomNumberGenerator rand) {
-        // TODO: GnuR invokes norm_rand to get "rand"
-        double u1 = (int) (BIG * rand.genrandDouble()) + rand.genrandDouble();
-        double random = Random2.qnorm5(u1 / BIG, 0.0, 1.0, true, false);
-        return random * sigma + mu;
+    public double evaluate(double mu, double sigma, RandomNumberProvider rand) {
+        if (Double.isNaN(mu) || !Double.isFinite(sigma) || sigma < 0.) {
+            return StatsUtil.mlError();
+        }
+        if (sigma == 0. || !Double.isFinite(mu)) {
+            return mu; /* includes mu = +/- Inf with finite sigma */
+        } else {
+            return mu + sigma * rand.normRand();
+        }
     }
 }

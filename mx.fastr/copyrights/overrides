@@ -55,6 +55,9 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctio
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandGenerationFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsUtil.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/TOMS708.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SNorm.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SExp.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RGamma.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/DirChmod.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright

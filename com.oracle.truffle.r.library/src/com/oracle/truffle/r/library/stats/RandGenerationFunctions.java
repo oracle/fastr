@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+import com.oracle.truffle.r.runtime.rng.RRNG.NormKind;
 import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
 public final class RandGenerationFunctions {
@@ -48,23 +49,45 @@ public final class RandGenerationFunctions {
         // static class
     }
 
+    public static final class RandomNumberProvider {
+        private final RandomNumberGenerator generator;
+        private final NormKind normKind;
+
+        public RandomNumberProvider(RandomNumberGenerator generator, NormKind normKind) {
+            this.generator = generator;
+            this.normKind = normKind;
+        }
+
+        public double unifRand() {
+            return generator.genrandDouble();
+        }
+
+        public double normRand() {
+            return SNorm.normRand(generator, normKind);
+        }
+
+        public double expRand() {
+            return SExp.expRand(generator);
+        }
+    }
+
     // inspired by the DEFRAND{X}_REAL and DEFRAND{X}_INT macros in GnuR
 
     public interface RandFunction3_Int {
-        int evaluate(double a, double b, double c, RandomNumberGenerator rand);
+        int evaluate(double a, double b, double c, RandomNumberProvider rand);
     }
 
     public interface RandFunction2_Int extends RandFunction3_Int {
         @Override
-        default int evaluate(double a, double b, double c, RandomNumberGenerator rand) {
+        default int evaluate(double a, double b, double c, RandomNumberProvider rand) {
             return evaluate(a, b, rand);
         }
 
-        int evaluate(double a, double b, RandomNumberGenerator rand);
+        int evaluate(double a, double b, RandomNumberProvider rand);
     }
 
     public interface RandFunction2_Double {
-        double evaluate(double a, double b, RandomNumberGenerator rand);
+        double evaluate(double a, double b, RandomNumberProvider rand);
     }
 
     static final class RandGenerationProfiles {
@@ -73,15 +96,20 @@ public final class RandGenerationFunctions {
         final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
         final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
         final ValueProfile randClassProfile = ValueProfile.createClassProfile();
+        final ValueProfile normKindProfile = ValueProfile.createEqualityProfile();
 
         public static RandGenerationProfiles create() {
             return new RandGenerationProfiles();
+        }
+
+        public RandomNumberProvider createRandProvider() {
+            return new RandomNumberProvider(randClassProfile.profile(RRNG.currentGenerator()), normKindProfile.profile(RRNG.currentNormKind()));
         }
     }
 
     private static RAbstractIntVector evaluate3Int(Node node, RandFunction3_Int function, int lengthIn, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
                     RandGenerationProfiles profiles) {
-        int length = profiles.resultVectorLengthProfile.profile(lengthIn);
+        int length = lengthIn;
         int aLength = a.getLength();
         int bLength = b.getLength();
         int cLength = c.getLength();
@@ -93,11 +121,12 @@ public final class RandGenerationFunctions {
             return RDataFactory.createIntVector(nansResult, false);
         }
 
+        length = profiles.resultVectorLengthProfile.profile(length);
         RNode.reportWork(node, length);
         boolean nans = false;
         int[] result = new int[length];
         RRNG.getRNGState();
-        RandomNumberGenerator rand = profiles.randClassProfile.profile(RRNG.currentGenerator());
+        RandomNumberProvider rand = profiles.createRandProvider();
         for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -117,21 +146,22 @@ public final class RandGenerationFunctions {
     }
 
     private static RAbstractDoubleVector evaluate2Double(Node node, RandFunction2_Double function, int lengthIn, RAbstractDoubleVector a, RAbstractDoubleVector b, RandGenerationProfiles profiles) {
-        int length = profiles.resultVectorLengthProfile.profile(lengthIn);
+        int length = lengthIn;
         int aLength = a.getLength();
         int bLength = b.getLength();
         if (aLength == 0 || bLength == 0) {
             profiles.nanResult.enter();
-            RError.warning(SHOW_CALLER, RError.Message.NAN_PRODUCED);
+            RError.warning(SHOW_CALLER, RError.Message.NA_PRODUCED);
             return createVectorOf(length, RRuntime.DOUBLE_NA);
         }
 
+        length = profiles.resultVectorLengthProfile.profile(length);
         RNode.reportWork(node, length);
         boolean nans = false;
         double[] result;
         result = new double[length];
         RRNG.getRNGState();
-        RandomNumberGenerator rand = profiles.randClassProfile.profile(RRNG.currentGenerator());
+        RandomNumberProvider rand = profiles.createRandProvider();
         for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -168,7 +198,7 @@ public final class RandGenerationFunctions {
                         @Cached("createNonPreserving()") CastIntegerNode castNode,
                         @Cached("create()") BranchProfile seenNA) {
             int result = ((RAbstractIntVector) castNode.execute(vector)).getDataAt(0);
-            if (RRuntime.isNA(result)) {
+            if (RRuntime.isNA(result) || result < 0) {
                 seenNA.enter();
                 throw RError.error(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS);
             }

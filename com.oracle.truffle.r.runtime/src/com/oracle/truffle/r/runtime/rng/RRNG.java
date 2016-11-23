@@ -197,7 +197,7 @@ public class RRNG {
         return getContextState().currentGenerator;
     }
 
-    private static NormKind currentNormKind() {
+    public static NormKind currentNormKind() {
         return getContextState().currentNormKind;
     }
 

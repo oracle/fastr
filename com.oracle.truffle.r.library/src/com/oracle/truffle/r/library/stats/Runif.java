@@ -23,15 +23,18 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
 public final class Runif implements RandFunction2_Double {
     @Override
-    public double evaluate(double min, double max, RandomNumberGenerator rand) {
+    public double evaluate(double min, double max, RandomNumberProvider rand) {
         if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
             return StatsUtil.mlError();
         }
-        return min + rand.genrandDouble() * (max - min);
+        if (min == max) {
+            return min;
+        }
+        return min + rand.unifRand() * (max - min);
     }
 }
