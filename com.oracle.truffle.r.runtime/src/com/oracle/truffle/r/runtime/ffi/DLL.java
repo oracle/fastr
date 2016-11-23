@@ -258,9 +258,10 @@ public class DLL {
 
     /**
      * Abstracts the way that DLL function symbols are represented, either as a machine address (
-     * {@link Long}) or a {@link TruffleObject}.
+     * {@link Long}) or a {@link TruffleObject}. At the present time, both forms can exists within a
+     * single VM, so the class is defined as a "union" for simplicity.
      */
-    public static class SymbolHandle {
+    public static final class SymbolHandle {
         public final Object value;
 
         public SymbolHandle(Object value) {
