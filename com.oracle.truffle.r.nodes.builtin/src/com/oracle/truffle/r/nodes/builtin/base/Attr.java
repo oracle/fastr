@@ -36,6 +36,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SharedAttributeStatusUpdater;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -62,12 +63,12 @@ public abstract class Attr extends RBuiltinNode {
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final BranchProfile attrIterProfile = BranchProfile.create();
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
     @Child private SharedAttributeStatusUpdater sharedAttrUpdate = SharedAttributeStatusUpdater.create();
     @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
+    @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -107,7 +108,7 @@ public abstract class Attr extends RBuiltinNode {
     private Object searchKeyPartial(DynamicObject attributes, String name) {
         Object val = RNull.instance;
 
-        for (RAttributesLayout.RAttribute e : RAttributesLayout.asIterable(attributes, attrIterProfile)) {
+        for (RAttributesLayout.RAttribute e : arrayAttrAccess.execute(attributes)) {
             if (e.getName().startsWith(name)) {
                 if (val == RNull.instance) {
                     val = e.getValue();

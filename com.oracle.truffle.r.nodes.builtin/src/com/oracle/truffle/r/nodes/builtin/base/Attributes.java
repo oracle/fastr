@@ -34,13 +34,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class Attributes extends RBuiltinNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
-    private final BranchProfile attrIterProfile = BranchProfile.create();
+    @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
 
     @Specialization
     protected Object attributesNull(RAbstractContainer container, //
@@ -94,7 +94,7 @@ public abstract class Attributes extends RBuiltinNode {
         String[] names = new String[size];
         Object[] values = new Object[size];
         int z = 0;
-        for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(attributes, attrIterProfile)) {
+        for (RAttributesLayout.RAttribute attr : arrayAttrAccess.execute(attributes)) {
             String name = attr.getName();
             if (ignoreNames && name.equals(RRuntime.NAMES_ATTR_KEY)) {
                 continue;

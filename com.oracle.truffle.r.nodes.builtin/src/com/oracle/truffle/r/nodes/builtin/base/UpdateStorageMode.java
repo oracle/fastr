@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -50,7 +51,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
-    protected Object update(Object x, String value, @Cached("create()") BranchProfile attrIterProfile) {
+    protected Object update(Object x, String value, @Cached("create()") ArrayAttributeNode attrAttrAccess) {
         RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
@@ -75,7 +76,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                     DynamicObject attrs = rx.getAttributes();
                     if (attrs != null) {
                         RAbstractContainer rresult = (RAbstractContainer) result;
-                        for (RAttributesLayout.RAttribute attr : RAttributesLayout.asIterable(attrs, attrIterProfile)) {
+                        for (RAttributesLayout.RAttribute attr : attrAttrAccess.execute(attrs)) {
                             String attrName = attr.getName();
                             Object v = attr.getValue();
                             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {

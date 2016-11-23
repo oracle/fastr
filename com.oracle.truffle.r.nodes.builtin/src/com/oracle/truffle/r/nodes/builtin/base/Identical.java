@@ -30,12 +30,11 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -76,9 +74,8 @@ public abstract class Identical extends RBuiltinNode {
 
     @Child private Identical identicalRecursive;
     @Child private Identical identicalRecursiveAttr;
-
-    private final BranchProfile attrIterProfileX = BranchProfile.create();
-    private final BranchProfile attrIterProfileY = BranchProfile.create();
+    @Child private IterableAttributeNode attrIterNodeX = IterableAttributeNode.create();
+    @Child private IterableAttributeNode attrIterNodeY = IterableAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -151,8 +148,8 @@ public abstract class Identical extends RBuiltinNode {
         } else if (xAttributes == null || yAttributes == null) {
             return RRuntime.LOGICAL_FALSE;
         } else if (xAttributes.size() == yAttributes.size()) {
-            Iterator<RAttributesLayout.RAttribute> xIter = RAttributesLayout.asIterable(xAttributes, attrIterProfileX).iterator();
-            Iterator<RAttributesLayout.RAttribute> yIter = RAttributesLayout.asIterable(yAttributes, attrIterProfileY).iterator();
+            Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
+            Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
             while (xIter.hasNext()) {
                 RAttributesLayout.RAttribute xAttr = xIter.next();
                 RAttributesLayout.RAttribute yAttr = yIter.next();

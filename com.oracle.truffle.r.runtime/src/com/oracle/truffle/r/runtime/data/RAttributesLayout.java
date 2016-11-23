@@ -35,7 +35,6 @@ import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.ObjectType;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public final class RAttributesLayout {
@@ -150,6 +149,15 @@ public final class RAttributesLayout {
         return objectType instanceof RAttributesType;
     }
 
+    public static Iterable<RAttribute> asIterable(DynamicObject attrs) {
+        return new RAttributeIterable(attrs, attrs.getShape().getPropertyList());
+    }
+
+    public static Iterable<RAttribute> asIterable(DynamicObject attrs, AttrsLayout attrsLayout) {
+        assert attrsLayout.shape.check(attrs);
+        return new RAttributeIterable(attrs, attrsLayout.propertyList);
+    }
+
     public static DynamicObject copy(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
@@ -159,37 +167,16 @@ public final class RAttributesLayout {
     public static void clear(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
-        for (Property p : getPropertyList(attrs)) {
+        for (Property p : attrs.getShape().getProperties()) {
             attrs.delete(p.getKey());
         }
-    }
-
-    public static List<Property> getPropertyList(DynamicObject attrs, BranchProfile listProfile) {
-        assert isRAttributes(attrs);
-
-        // todo
-        return attrs.getShape().getPropertyList();
-    }
-
-    public static List<Property> getPropertyList(DynamicObject attrs) {
-        assert isRAttributes(attrs);
-
-        // todo
-        return attrs.getShape().getPropertyList();
-    }
-
-    public static Iterable<RAttributesLayout.RAttribute> asIterable(DynamicObject attrs, BranchProfile listProfile) {
-        return new RAttributeIterable(attrs, listProfile);
-    }
-
-    public static Iterable<RAttributesLayout.RAttribute> asIterable(DynamicObject attrs) {
-        return new RAttributeIterableNoProfile(attrs);
     }
 
     public static final class AttrsLayout {
         private final Layout layout = Layout.newLayout().build();
         private final Shape.Allocator allocator = layout.createAllocator();
         public final Shape shape;
+        public final List<Property> propertyList;
         public final Property[] properties;
         public final DynamicObjectFactory factory;
 
@@ -202,6 +189,7 @@ public final class RAttributesLayout {
                 s = s.addProperty(p);
             }
             shape = s;
+            propertyList = s.getPropertyList();
             factory = s.createFactory();
         }
     }
@@ -231,32 +219,16 @@ public final class RAttributesLayout {
 
     static final class RAttributeIterable implements Iterable<RAttributesLayout.RAttribute> {
         private final DynamicObject attrs;
-        private final BranchProfile listProfile;
+        private final List<Property> properties;
 
-        RAttributeIterable(DynamicObject attrs, BranchProfile listProfile) {
+        RAttributeIterable(DynamicObject attrs, List<Property> properties) {
             this.attrs = attrs;
-            this.listProfile = listProfile;
+            this.properties = properties;
         }
 
         @Override
         public Iterator<RAttributesLayout.RAttribute> iterator() {
-            List<Property> propertyList = getPropertyList(attrs, listProfile);
-            return new RAttributesLayout.Iter(attrs, propertyList.iterator());
-        }
-
-    }
-
-    static final class RAttributeIterableNoProfile implements Iterable<RAttributesLayout.RAttribute> {
-        private final DynamicObject attrs;
-
-        RAttributeIterableNoProfile(DynamicObject attrs) {
-            this.attrs = attrs;
-        }
-
-        @Override
-        public Iterator<RAttributesLayout.RAttribute> iterator() {
-            List<Property> propertyList = getPropertyList(attrs);
-            return new Iter(attrs, propertyList.iterator());
+            return new Iter(attrs, properties.iterator());
         }
 
     }

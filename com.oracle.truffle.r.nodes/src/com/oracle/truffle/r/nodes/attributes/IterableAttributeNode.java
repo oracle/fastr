@@ -22,51 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import java.util.List;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
-public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
+public abstract class IterableAttributeNode extends AttributeIterativeAccessNode {
 
-    public static ArrayAttributeNode create() {
-        return ArrayAttributeNodeGen.create();
+    public static IterableAttributeNode create() {
+        return IterableAttributeNodeGen.create();
     }
 
-    public abstract RAttribute[] execute(DynamicObject attrs);
+    public abstract Iterable<RAttribute> execute(DynamicObject attrs);
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
     @ExplodeLoop
-    protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs, @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
-        Property[] props = attrsLayout.properties;
-        RAttribute[] result = new RAttribute[props.length];
-        for (int i = 0; i < props.length; i++) {
-            result[i] = new RAttributesLayout.AttrInstance((String) props[i].getKey(), props[i].get(attrs, attrsLayout.shape));
-        }
-
-        return result;
+    protected Iterable<RAttribute> getArrayFromConstantLayouts(DynamicObject attrs, @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+        return RAttributesLayout.asIterable(attrs, attrsLayout);
     }
 
     @Specialization(contains = "getArrayFromConstantLayouts")
-    protected RAttribute[] getArrayFallback(DynamicObject attrs) {
-        Shape shape = attrs.getShape();
-        List<Property> props = shape.getPropertyList();
-        RAttribute[] result = new RAttribute[props.size()];
-        int i = 0;
-        for (Property p : props) {
-            result[i] = new RAttributesLayout.AttrInstance((String) p.getKey(), p.get(attrs, shape));
-            i++;
-        }
-
-        return result;
-
+    protected Iterable<RAttribute> getArrayFallback(DynamicObject attrs) {
+        return RAttributesLayout.asIterable(attrs);
     }
 
 }
