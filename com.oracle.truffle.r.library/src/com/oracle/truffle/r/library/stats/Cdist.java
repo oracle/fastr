@@ -105,8 +105,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                double dev, dist;
-                int count, j;
+                double dev;
+                double dist;
+                int count;
+                int j;
 
                 count = 0;
                 dist = 0;
@@ -121,10 +123,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     i1 += nr;
                     i2 += nr;
                 }
-                if (count == 0)
+                if (count == 0) {
                     return RRuntime.DOUBLE_NA;
-                if (count != nc)
+                }
+                if (count != nc) {
                     dist /= ((double) count / nc);
+                }
                 return Math.sqrt(dist);
 
             }
@@ -135,8 +139,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                double dev, dist;
-                int count, j;
+                double dev;
+                double dist;
+                int count;
+                int j;
 
                 count = 0;
                 dist = -Double.MAX_VALUE;
@@ -144,16 +150,18 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     if (bothNonNAN(x[i1], x[i2])) {
                         dev = Math.abs(x[i1] - x[i2]);
                         if (!RRuntime.isNAorNaN(dev)) {
-                            if (dev > dist)
+                            if (dev > dist) {
                                 dist = dev;
+                            }
                             count++;
                         }
                     }
                     i1 += nr;
                     i2 += nr;
                 }
-                if (count == 0)
+                if (count == 0) {
                     return RRuntime.DOUBLE_NA;
+                }
                 return dist;
 
             }
@@ -164,8 +172,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                double dev, dist;
-                int count, j;
+                double dev;
+                double dist;
+                int count;
+                int j;
 
                 count = 0;
                 dist = 0;
@@ -180,10 +190,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     i1 += nr;
                     i2 += nr;
                 }
-                if (count == 0)
+                if (count == 0) {
                     return RRuntime.DOUBLE_NA;
-                if (count != nc)
+                }
+                if (count != nc) {
                     dist /= ((double) count / nc);
+                }
                 return dist;
 
             }
@@ -194,8 +206,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                double dev, dist, sum, diff;
-                int count, j;
+                double dev;
+                double dist;
+                double sum;
+                double diff;
+                int count;
+                int j;
 
                 count = 0;
                 dist = 0;
@@ -216,10 +232,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     i1 += nr;
                     i2 += nr;
                 }
-                if (count == 0)
+                if (count == 0) {
                     return RRuntime.DOUBLE_NA;
-                if (count != nc)
+                }
+                if (count != nc) {
                     dist /= ((double) count / nc);
+                }
                 return dist;
 
             }
@@ -230,7 +248,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                int total, count, dist;
+                int total;
+                int count;
+                int dist;
                 int j;
 
                 total = 0;
@@ -244,8 +264,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                         } else {
                             if (x[i1] != 0. || x[i2] != 0.) {
                                 count++;
-                                if (!(x[i1] != 0. && x[i2] != 0.))
+                                if (!(x[i1] != 0. && x[i2] != 0.)) {
                                     dist++;
+                                }
                             }
                             total++;
                         }
@@ -254,10 +275,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     i2 += nr;
                 }
 
-                if (total == 0)
+                if (total == 0) {
                     return RRuntime.DOUBLE_NA;
-                if (count == 0)
+                }
+                if (count == 0) {
                     return 0;
+                }
                 return (double) dist / count;
 
             }
@@ -268,8 +291,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             public double dist(double[] x, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
-                double dev, dist;
-                int count, j;
+                double dev;
+                double dist;
+                int count;
+                int j;
 
                 count = 0;
                 dist = 0;
@@ -284,10 +309,12 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     i1 += nr;
                     i2 += nr;
                 }
-                if (count == 0)
+                if (count == 0) {
                     return RRuntime.DOUBLE_NA;
-                if (count != nc)
+                }
+                if (count != nc) {
                     dist /= ((double) count / nc);
+                }
                 return Math.pow(dist, 1.0 / p);
             }
 
