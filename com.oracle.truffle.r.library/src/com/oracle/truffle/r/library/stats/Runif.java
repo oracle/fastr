@@ -24,16 +24,20 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.rng.RRNG;
+import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
 
 public final class Runif implements RandFunction2_Double {
+
     @Override
-    public boolean isValid(double min, double max) {
-        return RRuntime.isFinite(min) && RRuntime.isFinite(max) && max >= min;
+    public boolean hasCustomRandomGeneration() {
+        return false;
     }
 
     @Override
-    public double evaluate(double min, double max) {
-        return min + RRNG.unifRand() * (max - min);
+    public double evaluate(int index, double min, double max, double random, RandomNumberNode randomNode) {
+        if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
+            return StatsUtil.mlError();
+        }
+        return min + random * (max - min);
     }
 }
