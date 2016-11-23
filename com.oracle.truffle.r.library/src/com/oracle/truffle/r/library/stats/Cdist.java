@@ -13,6 +13,8 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -37,14 +39,15 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         casts.arg(3).asDoubleVector().findFirst();
     }
 
-    @Specialization
-    protected RDoubleVector cdist(RAbstractDoubleVector x, int method, RList list, double p) {
+    @Specialization(guards = "method == cachedMethod")
+    protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
+                    @Cached("getMethod(method)") Method methodObj) {
         int nr = RRuntime.nrows(x);
         int nc = RRuntime.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
         RDoubleVector xm = x.materialize();
-        rdistance(xm.getDataWithoutCopying(), nr, nc, ans, false, method, p);
+        rdistance(xm.getDataWithoutCopying(), nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
         RAttributes resultAttrs = result.initAttributes();
         RStringVector names = (RStringVector) list.getAttr(RRuntime.NAMES_ATTR_KEY);
@@ -69,14 +72,18 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return RRuntime.isFinite(a) && RRuntime.isFinite(b);
     }
 
-    private static void rdistance(double[] x, int nr, int nc, double[] d, boolean diag, int method, double p) {
-        int ij; /* can exceed 2^31 - 1, but Java can't handle that */
+    @SuppressWarnings({"unused"})
+    private static Method getMethod(int method) {
         if (method < 1 || method > Method.values().length) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "distance(): invalid distance");
         }
+        return Method.values()[method - 1];
+    }
+
+    private static void rdistance(double[] x, int nr, int nc, double[] d, boolean diag, Method method, double p) {
+        int ij; /* can exceed 2^31 - 1, but Java can't handle that */
         //
-        Method m = Method.values()[method - 1];
-        if (m == Method.MINKOWSKI) {
+        if (method == Method.MINKOWSKI) {
             if (!RRuntime.isFinite(p) || p <= 0) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "distance(): invalid p");
             }
@@ -86,7 +93,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         naCheck.enable(true);
         for (int j = 0; j <= nr; j++) {
             for (int i = j + dc; i < nr; i++) {
-                double r = m.dist(x, nr, nc, i, j, p);
+                double r = method.dist(x, nr, nc, i, j, p);
                 naCheck.check(r);
                 d[ij++] = r;
             }
@@ -95,7 +102,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
 
     // Checkstyle: stop parameter assignment check
 
-    private enum Method {
+    public enum Method {
         EUCLIDEAN {
             @Override
             public double dist(double[] x, int nr, int nc, int i1, int i2, double p) {

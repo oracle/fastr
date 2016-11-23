@@ -15,6 +15,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
@@ -24,7 +25,8 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RDoubleVector doubleCentre(RDoubleVector aVec) {
+    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs) {
+        RDoubleVector aVec = aVecAbs.materialize();
         int n = RRuntime.nrows(aVec);
         double[] a = aVec.getDataWithoutCopying(); // does not copy
 

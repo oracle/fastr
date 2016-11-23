@@ -20,9 +20,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 
@@ -43,7 +43,7 @@ public abstract class Pretty extends RBuiltinNode {
     }
 
     @Specialization
-    protected RList pretty(double l, double u, int n, int minN, double shrinkSml, RDoubleVector hi, int epsCorrect) {
+    protected RList pretty(double l, double u, int n, int minN, double shrinkSml, RAbstractDoubleVector hi, int epsCorrect) {
         double hi0 = hi.getDataAt(0);
         double hi1 = hi.getDataAt(1);
 
@@ -56,7 +56,7 @@ public abstract class Pretty extends RBuiltinNode {
         double[] lo = new double[]{l};
         double[] up = new double[]{u};
         int[] ndiv = new int[]{n};
-        rPretty(lo, up, ndiv, minN, shrinkSml, hi, epsCorrect, true);
+        rPretty(lo, up, ndiv, minN, shrinkSml, hi.materialize().getDataWithoutCopying(), epsCorrect, true);
         Object[] data = new Object[3];
         data[0] = lo[0];
         data[1] = up[0];
@@ -65,7 +65,7 @@ public abstract class Pretty extends RBuiltinNode {
     }
 
     double rPretty(double[] lo, double[] up, int[] ndiv, int minN,
-                    double shrinkSml, RDoubleVector highUFact,
+                    double shrinkSml, double[] highUFact,
                     int epsCorrection, boolean returnBounds) {
         /*
          * From version 0.65 on, we had rounding_eps := 1e-5, before, r..eps = 0 1e-7 is consistent
@@ -73,8 +73,8 @@ public abstract class Pretty extends RBuiltinNode {
          */
         double roundingEps = 1e-7;
 
-        double h = highUFact.getDataAt(0);
-        double h5 = highUFact.getDataAt(1);
+        double h = highUFact[0];
+        double h5 = highUFact[1];
 
         double dx;
         double cell;

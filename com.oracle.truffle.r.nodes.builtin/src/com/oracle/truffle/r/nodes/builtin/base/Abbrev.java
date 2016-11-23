@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -80,6 +81,7 @@ public abstract class Abbrev extends RBuiltinNode {
         s.deleteCharAt(len - 1);
     }
 
+    @TruffleBoundary
     private static String stripChars(String inchar, int minlen, boolean usecl) {
         StringBuilder s = new StringBuilder(inchar.trim());
         int len = s.length();
