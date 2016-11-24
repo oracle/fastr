@@ -9,7 +9,7 @@ Graal is a dynamic compiler that is used to generate efficient machine code from
 FastR is available in two forms:
 
 1. As a [pre-built binary](http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html). N.B. This also includes (Truffle) implementations of Ruby and JavaScript. The pre-built binaries are available for Linux and Mac OS X. There is no Windows version available. The binary release is updated monthly.
-2. As a source release [GitHub](http://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. N.B. This does not contain Ruby or JavaScript. The source release is updated regularly and always contains the latest tested version.
+2. As a source release on [GitHub](http://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. N.B. This does not contain Ruby or JavaScript. The source release is updated regularly and always contains the latest tested version.
 
 ## Status and Limitations
 
@@ -54,7 +54,14 @@ it may be necessary to inform the build of these locations using the following e
     PKG_LDFLAGS_OVERRIDE
 
 For example, on Mac OS, the MacPorts installer places headers in /opt/local/include and libraries in /opt/local/lib, in which case, the above variables must be set to these
-values prior to the build. Note that if more than once location must be specified, the environment variable values must be quoted.
+values prior to the build, e.g.:
+
+    export PKG_INCLUDE_FLAGS_OVERRIDE=-I/opt/local/include
+    export PKG_LDFLAGS_OVERRIDE=-L/opt/local/lib
+
+ Note that if more than once location must be specified, the values must be quoted, e.g., as in `export PKG_LDFLAGS_OVERRIDE="\"-Lpath1 -Lpath2\""`.
+
+ The environment variable `JAVA_HOME` must be set to the location of the jvmci-enabled Java JDK.
 
 ## Building FastR
 Use the following sequence of commands to download and build an interpreted version of FastR.
@@ -85,7 +92,5 @@ Further documentation on FastR, its limitations and additional functionality is 
 We would like to grow the FastR open-source community to provide a free R implementation atop the Truffle/Graal stack.
 We encourage contributions, and invite interested developers to join in.
 Prospective contributors need to sign the [Oracle Contributor Agreement (OCA)](http://www.oracle.com/technetwork/community/oca-486395.html).
+The access point for contributions, issues and questions about FastR is the [GitHub repository ](https://github.com/graalvm/fastr)
 
-## Contact
-
-Please direct questions and comments to the [FastR mailing list](http://groups.yahoo.com/group/fastr).
