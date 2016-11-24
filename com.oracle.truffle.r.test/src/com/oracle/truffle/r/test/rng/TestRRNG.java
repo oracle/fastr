@@ -46,6 +46,6 @@ public class TestRRNG extends TestBase {
     @Test
     public void testDirectReadingSeed() {
         assertEval("invisible(runif(1)); length(.Random.seed)");
-        assertEval("set.seed(42); runif(5); .Random.seed[1:10]");
+        assertEval("set.seed(42); .Random.seed");
     }
 }

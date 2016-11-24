@@ -48,20 +48,16 @@ public final class MarsagliaMulticarry extends RNGInitAdapter {
     }
 
     @Override
-    public double[] genrandDouble(int count) {
+    public double genrandDouble() {
         int state0 = iSeed[0];
         int state1 = iSeed[1];
-        double[] result = new double[count];
-        for (int i = 0; i < count; i++) {
-            state0 = 36969 * (state0 & 0177777) + (state0 >>> 16);
-            state1 = 18000 * (state1 & 0177777) + (state1 >>> 16);
-            int x = (state0 << 16) ^ (state1 & 0177777);
-            double d = (x & 0xffffffffL) * I2_32M1;
-            result[i] = fixup(d); /* in [0,1) */
-        }
+        state0 = 36969 * (state0 & 0177777) + (state0 >>> 16);
+        state1 = 18000 * (state1 & 0177777) + (state1 >>> 16);
+        int x = (state0 << 16) ^ (state1 & 0177777);
+        double d = (x & 0xffffffffL) * I2_32M1;
         iSeed[0] = state0;
         iSeed[1] = state1;
-        return result;
+        return fixup(d); /* in [0,1) */
     }
 
     @Override

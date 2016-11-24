@@ -80,6 +80,15 @@ public final class MersenneTwister extends RNGInitAdapter {
     private static final int TEMPERING_MASK_B = 0x9d2c5680;
     private static final int TEMPERING_MASK_C = 0xefc60000;
 
+    /*
+     * This generator can efficiently generate many random numbers in one go, upon each call to
+     * genrandDouble() we take the next random value from 'buffer'. If the buffer is empty, we fill
+     * it.
+     */
+    private static final int BUFFER_SIZE = N;
+    private final double[] buffer = new double[BUFFER_SIZE];
+    private int bufferIndex = BUFFER_SIZE;
+
     /**
      * The array for the state vector. In GnuR, the state array is common to all algorithms (named
      * {@code dummy}), and the zero'th element is the number of seeds, but the algorithm uses
@@ -96,14 +105,19 @@ public final class MersenneTwister extends RNGInitAdapter {
     // to keep variable naming (somewhat) consistent with GNU R
     private int[] dummy = iSeed;
 
-    /**
-     * Following GnuR this is set to {@code N+1} to indicate unset if MT_genrand is called, although
-     * that condition never appears to happen in practice, as {@code RNG_init}, cf. {@link #init} is
-     * always called first. N.B. This value has a relationship with {@code dummy0} in that it is
-     * always loaded from {@code dummy0} in {@link #genrandDouble(int)} and the updated value is
-     * stored back in {@code dummy[0]}.
-     */
-    private int mti = N + 1;
+    @Override
+    public void setISeed(int[] seeds) {
+        boolean changed = false;
+        for (int i = 1; i <= getNSeed(); i++) {
+            changed |= iSeed[i - 1] != seeds[i];
+            iSeed[i - 1] = seeds[i];
+        }
+        fixupSeeds(false);
+        // kill the current buffer if seed changes
+        if (changed) {
+            bufferIndex = BUFFER_SIZE;
+        }
+    }
 
     /**
      * We have to recreate the effect of having the number of seeds in the array.
@@ -130,6 +144,7 @@ public final class MersenneTwister extends RNGInitAdapter {
             iSeed[i] = seed;
         }
         fixupSeeds(true);
+        bufferIndex = BUFFER_SIZE;
     }
 
     @Override
@@ -154,88 +169,61 @@ public final class MersenneTwister extends RNGInitAdapter {
 
     /**
      * The actual generating method, essentially transcribed from MT_genrand in GnuR RNG.c.
-     * Additional method have been introduced for clarity and the import
-     * {@link com.oracle.truffle.api.CompilerDirectives.TruffleBoundary} annotation on
-     * {@link #generateNewNumbers()}.
      */
     @Override
-    public double[] genrandDouble(int count) {
-        int localDummy0 = dummy[0];
-        int localMti = mti;
-        double[] result = new double[count];
+    public double genrandDouble() {
+        if (bufferIndex == BUFFER_SIZE) {
+            int localDummy0 = dummy[0];
+            int localMti = localDummy0;
+            // It appears that this never happens
+            // sgenrand(4357);
+            RInternalError.guarantee(localMti != N + 1);
 
-        localMti = localDummy0;
-        // It appears that this never happens
-        // sgenrand(4357);
-        RInternalError.guarantee(localMti != N + 1);
+            int pos = 0;
+            while (true) {
+                int loopCount = Math.min(BUFFER_SIZE - pos, N - localMti);
+                for (int i = 0; i < loopCount; i++) {
+                    int y = getMt(localMti + i);
+                    /* Tempering */
+                    y ^= (y >>> 11);
+                    y ^= (y << 7) & TEMPERING_MASK_B;
+                    y ^= (y << 15) & TEMPERING_MASK_C;
+                    y ^= (y >>> 18);
+                    buffer[pos + i] = ((y + Integer.MIN_VALUE) - (double) Integer.MIN_VALUE) * I2_32M1;
+                }
+                for (int i = 0; i < loopCount; i++) {
+                    buffer[pos + i] = fixup(buffer[pos + i]);
+                }
+                localMti += loopCount;
+                pos += loopCount;
 
-        int pos = 0;
-        while (true) {
-            int loopCount = Math.min(count - pos, N - localMti);
-            for (int i = 0; i < loopCount; i++) {
-                int y = getMt(localMti + i);
-                /* Tempering */
-                y ^= (y >>> 11);
-                y ^= (y << 7) & TEMPERING_MASK_B;
-                y ^= (y << 15) & TEMPERING_MASK_C;
-                y ^= (y >>> 18);
-                result[pos + i] = ((y + Integer.MIN_VALUE) - (double) Integer.MIN_VALUE) * I2_32M1;
-            }
-            for (int i = 0; i < loopCount; i++) {
-                result[pos + i] = fixup(result[pos + i]);
-            }
-            localMti += loopCount;
-            pos += loopCount;
+                if (pos == BUFFER_SIZE) {
+                    break;
+                }
+                /* generate N words at one time */
+                int kk;
+                for (kk = 0; kk < N - M; kk++) {
+                    int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                    setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
+                }
+                for (; kk < N - 1; kk++) {
+                    int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
+                    setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
+                }
+                int y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
+                setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
 
-            if (pos == count) {
-                break;
+                localMti = 0;
             }
-            /* generate N words at one time */
-            int kk;
-            for (kk = 0; kk < N - M; kk++) {
-                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-                setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-            }
-            for (; kk < N - 1; kk++) {
-                int y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-                setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-            }
-            int y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
-            setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-
-            localMti = 0;
+            localDummy0 = localMti;
+            dummy[0] = localDummy0;
+            bufferIndex = 0;
         }
-        localDummy0 = localMti;
-        mti = localMti;
-        dummy[0] = localDummy0;
-        return result;
+        return buffer[bufferIndex++];
     }
 
     private static int mag01(int v) {
         return (v & 1) != 0 ? MATRIXA : 0;
-    }
-
-    @TruffleBoundary
-    private void generateNewNumbers() {
-        int y2y;
-        int kk;
-
-        // It appears that this never happens
-        // sgenrand(4357);
-        RInternalError.guarantee(mti != N + 1);
-
-        for (kk = 0; kk < N - M; kk++) {
-            y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-            setMt(kk, getMt(kk + M) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-        }
-        for (; kk < N - 1; kk++) {
-            y2y = (getMt(kk) & UPPERMASK) | (getMt(kk + 1) & LOWERMASK);
-            setMt(kk, getMt(kk + (M - N)) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-        }
-        y2y = (getMt(N - 1) & UPPERMASK) | (getMt(0) & LOWERMASK);
-        setMt(N - 1, getMt(M - 1) ^ (y2y >>> 1) ^ mag01(y2y & 0x1));
-
-        mti = 0;
     }
 
     @Override

@@ -18,12 +18,10 @@ import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
 public final class Rnorm implements RandFunction2_Double {
 
     private static final double BIG = 134217728;
-    private double[] randomVals;
 
     @Override
     public void init(int length, RandomNumberNode randNode) {
         RRNG.getRNGState();
-        randomVals = randNode.executeDouble(length * 2);
     }
 
     @Override
@@ -34,7 +32,7 @@ public final class Rnorm implements RandFunction2_Double {
     @Override
     public double evaluate(int index, double mu, double sigma, double random, RandomNumberNode randomNode) {
         // TODO: GnuR invokes norm_rand to get "rand"
-        double u1 = (int) (BIG * randomVals[index * 2]) + randomVals[index * 2 + 1];
+        double u1 = (int) (BIG * randomNode.executeSingleDouble()) + randomNode.executeSingleDouble();
         double rand = Random2.qnorm5(u1 / BIG, 0.0, 1.0, true, false);
         return rand * sigma + mu;
     }

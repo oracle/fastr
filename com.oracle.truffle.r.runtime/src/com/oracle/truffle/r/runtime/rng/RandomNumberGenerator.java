@@ -23,7 +23,7 @@ public interface RandomNumberGenerator {
 
     int[] getSeeds();
 
-    double[] genrandDouble(int count);
+    double genrandDouble();
 
     Kind getKind();
 
