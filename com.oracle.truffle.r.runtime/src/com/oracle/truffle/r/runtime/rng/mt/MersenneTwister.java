@@ -179,10 +179,10 @@ public final class MersenneTwister extends RNGInitAdapter {
                 y ^= (y << 7) & TEMPERING_MASK_B;
                 y ^= (y << 15) & TEMPERING_MASK_C;
                 y ^= (y >>> 18);
-                result[pos + i] = ((y + Integer.MIN_VALUE) - (double) Integer.MIN_VALUE) * RRNG.I2_32M1;
+                result[pos + i] = ((y + Integer.MIN_VALUE) - (double) Integer.MIN_VALUE) * I2_32M1;
             }
             for (int i = 0; i < loopCount; i++) {
-                result[pos + i] = RRNG.fixup(result[pos + i]);
+                result[pos + i] = fixup(result[pos + i]);
             }
             localMti += loopCount;
             pos += loopCount;

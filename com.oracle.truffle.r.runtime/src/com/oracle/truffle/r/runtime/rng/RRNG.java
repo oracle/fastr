@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -26,7 +25,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -101,28 +99,7 @@ public class RRNG {
     private static final Kind DEFAULT_KIND = Kind.MERSENNE_TWISTER;
     private static final NormKind DEFAULT_NORM_KIND = NormKind.INVERSION;
     private static final String RANDOM_SEED = ".Random.seed";
-    public static final double I2_32M1 = 2.3283064365386963e-10;
     private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
-    @CompilationFinal private static final int[] NO_SEEDS = new int[0];
-
-    /**
-     * The (logically private) interface that a random number generator must implement.
-     */
-    public interface RandomNumberGenerator {
-        void init(int seed);
-
-        void fixupSeeds(boolean initial);
-
-        int[] getSeeds();
-
-        double[] genrandDouble(int count);
-
-        Kind getKind();
-
-        int getNSeed();
-
-        void setISeed(int[] seeds);
-    }
 
     public static final class ContextStateImpl implements RContext.ContextState {
         private RandomNumberGenerator currentGenerator;
@@ -149,10 +126,11 @@ public class RRNG {
          */
         @TruffleBoundary
         void updateCurrentGenerator(RandomNumberGenerator newRng, boolean saveState) {
-            this.currentGenerator = newRng;
             this.allGenerators[newRng.getKind().ordinal()] = newRng;
             if (saveState) {
-                getRNGState();
+                getRNGState();  // updates this.currentGenerator
+                // Check if the what will be soon previous generator is not corrupted, otherwise
+                // generate the seed again for our newRng
                 double u = unifRand();
                 if (u < 0.0 || u > 1.0) {
                     RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "someone corrupted the random-number generator: re-initializing");
@@ -160,8 +138,10 @@ public class RRNG {
                 } else {
                     initGenerator(newRng, (int) (u * UINT_MAX));
                 }
-                updateDotRandomSeed();
-
+                this.currentGenerator = newRng;
+                putRNGState();
+            } else {
+                this.currentGenerator = newRng;
             }
         }
 
@@ -184,8 +164,7 @@ public class RRNG {
         void updateCurrentNormKind(NormKind normKind, boolean saveState) {
             currentNormKind = normKind;
             if (saveState) {
-                getRNGState();
-                updateDotRandomSeed();
+                putRNGState();
             }
         }
 
@@ -239,7 +218,7 @@ public class RRNG {
     public static void doSetSeed(int seed, int kindAsInt, int normKindAsInt) {
         getRNGKind(RNull.instance);
         changeKindsAndInitGenerator(seed, kindAsInt, normKindAsInt);
-        updateDotRandomSeed();
+        putRNGState();
     }
 
     /**
@@ -279,18 +258,6 @@ public class RRNG {
         } // otherwise the current one stays
     }
 
-    public static double fixup(double x) {
-        /* transcribed from GNU R, RNG.c (fixup) */
-        /* ensure 0 and 1 are never returned */
-        if (x <= 0.0) {
-            return 0.5 * I2_32M1;
-        }
-        // removed fixup for 1.0 since x is in [0,1).
-        // TODO Since GnuR does include this is should we not for compatibility (probably).
-        // if ((1.0 - x) <= 0.0) return 1.0 - 0.5 * I2_32M1;
-        return x;
-    }
-
     private static Kind intToKind(int kindAsInt) {
         if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length || !Kind.VALUES[kindAsInt].isAvailable()) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_NOT_IMPL_KIND, kindAsInt);
@@ -321,19 +288,6 @@ public class RRNG {
         return seed;
     }
 
-    @TruffleBoundary
-    public static void updateDotRandomSeed() {
-        int[] seeds = currentGenerator().getSeeds();
-        int lenSeeds = currentGenerator().getNSeed();
-        int[] data = new int[lenSeeds + 1];
-        data[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
-        for (int i = 0; i < lenSeeds; i++) {
-            data[i + 1] = seeds[i];
-        }
-        RIntVector vector = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        REnvironment.globalEnv().safePut(RANDOM_SEED, vector);
-    }
-
     /**
      * Create a random integer.
      */
@@ -354,6 +308,10 @@ public class RRNG {
         getContextState().updateCurrentNormKind(DEFAULT_NORM_KIND, false);
     }
 
+    /**
+     * Sets the current generator according to the flag under index 0 of given vector
+     * {@code seedsObj}.
+     */
     private static void getRNGKind(Object seedsObj) {
         Object seeds = seedsObj;
         if (seeds == RNull.instance) {
@@ -371,12 +329,13 @@ public class RRNG {
         } else {
             assert seeds != RMissing.instance;
             assert seeds instanceof RTypedValue;
-            RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, "'.Random.seed' is not an integer vector but of type '%s', so ignored", ((RTypedValue) seeds).getRType().getName());
+            RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, ((RTypedValue) seeds).getRType().getName());
             handleInvalidSeed();
             return;
         }
         if (tmp == RRuntime.INT_NA || tmp < 0 || tmp > 1000) {
-            RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "'.Random.seed[1]' is not a valid integer, so ignored");
+            String type = seeds instanceof RTypedValue ? ((RTypedValue) seeds).getRType().getName() : "unknown";
+            RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, type);
             handleInvalidSeed();
             return;
         }
@@ -404,6 +363,11 @@ public class RRNG {
         getContextState().updateCurrentNormKind(newNormKind, false);
     }
 
+    /**
+     * Loads the state of RNG from global environment variable {@code .Random.seed}. This should be
+     * invoked before any random numbers generation as the user may have directly changed the
+     * {@code .Random.seed} variable and the current generator and/or its seed should be updated.
+     */
     @TruffleBoundary
     public static void getRNGState() {
         Object seedsObj = getDotRandomSeed();
@@ -418,7 +382,8 @@ public class RRNG {
                 RIntVector seedsVec = (RIntVector) seedsObj;
                 seeds = seedsVec.getDataWithoutCopying();
             } else {
-                throw RInternalError.shouldNotReachHere();
+                // seedsObj is not valid, which should have been reported and fixed in getRNGKind
+                return;
             }
 
             if (seeds.length > 1 && seeds.length < (currentGenerator().getNSeed() + 1)) {
@@ -432,22 +397,33 @@ public class RRNG {
         }
     }
 
+    /**
+     * Saves the state of RNG into global environment under {@code .Random.seed}. This should be
+     * invoked after any random numbers generation.
+     */
     @TruffleBoundary
     public static void putRNGState() {
-        int lenSeed = getContextState().currentGenerator.getNSeed();
-        int[] seeds = new int[lenSeed + 1];
-        seeds[0] = currentKindAsInt() + 100 * currentNormKindAsInt();
-        int[] currentGeneratorSeeds = currentGenerator().getSeeds();
-        for (int i = 0; i < lenSeed; i++) {
-            seeds[i + 1] = currentGeneratorSeeds[i];
+        int[] seeds = currentGenerator().getSeeds();
+        int lenSeeds = currentGenerator().getNSeed();
+
+        // we update the existing vector from global env if possible
+        int[] data;
+        Object prevState = getDotRandomSeed();
+        boolean canReusePrev = prevState instanceof RIntVector && ((RIntVector) prevState).getLength() == lenSeeds + 1 && !((RIntVector) prevState).isShared();
+        if (canReusePrev) {
+            data = ((RIntVector) prevState).getDataWithoutCopying();
+        } else {
+            data = new int[lenSeeds + 1];
         }
 
-        currentGenerator().setISeed(seeds);
-        RIntVector seedsVector = RDataFactory.createIntVector(seeds, true);
-        try {
-            REnvironment.globalEnv().put(RANDOM_SEED, seedsVector);
-        } catch (PutException e) {
-            throw RInternalError.shouldNotReachHere("Cannot set .Random.seed in global environment");
+        data[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
+        for (int i = 0; i < lenSeeds; i++) {
+            data[i + 1] = seeds[i];
+        }
+
+        if (!canReusePrev) {
+            RIntVector vector = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+            REnvironment.globalEnv().safePut(RANDOM_SEED, vector);
         }
     }
 }
