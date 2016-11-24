@@ -71,32 +71,6 @@ public interface BaseRFFI {
     int chmod(String path, int mode);
 
     /**
-     * Open a DLL.
-     *
-     * @return {@code null} on error, opaque handle for following calls otherwise.
-     */
-    Object dlopen(String path, boolean local, boolean now);
-
-    /**
-     * Search for {@code symbol} in DLL specified by {@code handle}.
-     *
-     * @return value of symbol, may be zero, check {@link #dlerror} for error case.
-     */
-    long dlsym(Object handle, String symbol);
-
-    /**
-     * Close DLL specified by {@code handle}.
-     */
-    int dlclose(Object handle);
-
-    /**
-     * Get any error message.
-     *
-     * @return {@code null} if no error, message otherwise.
-     */
-    String dlerror();
-
-    /**
      * Convert string to long.
      */
     long strtol(String s, int base) throws IllegalArgumentException;
