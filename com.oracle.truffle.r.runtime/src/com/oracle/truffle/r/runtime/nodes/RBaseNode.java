@@ -22,13 +22,36 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class should be used as the superclass for all instances of nodes in the FastR AST in
@@ -52,9 +75,11 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * <li>An instance of the subclass is never used to {@link #replace} an instance of
  * {@link RBaseNode}.</li>
  * </ul>
- *
  */
 public abstract class RBaseNode extends Node {
+
+    @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
+    @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     /**
      * Since {@link RSyntaxNode}s are sometimes used (for convenience) in non-syntax contexts, this
@@ -75,7 +100,7 @@ public abstract class RBaseNode extends Node {
     /**
      * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
      */
-    public RSyntaxNode asRSyntaxNode() {
+    public final RSyntaxNode asRSyntaxNode() {
         if (isRSyntaxNode()) {
             return (RSyntaxNode) this;
         } else {
@@ -86,7 +111,7 @@ public abstract class RBaseNode extends Node {
     /**
      * See comment on {@link #checkGetRSyntaxNode()}.
      */
-    public RSyntaxNode checkasRSyntaxNode() {
+    public final RSyntaxNode checkasRSyntaxNode() {
         if (isRSyntaxNode()) {
             return (RSyntaxNode) this;
         } else {
@@ -121,11 +146,6 @@ public abstract class RBaseNode extends Node {
         return null;
     }
 
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode syntaxNode = getRSyntaxNode();
-        syntaxNode.serializeImpl(state);
-    }
-
     @Override
     public SourceSection getSourceSection() {
         /*
@@ -154,4 +174,118 @@ public abstract class RBaseNode extends Node {
         return RContext.getRRuntimeASTAccess().isTaggedWith(this, tag);
     }
 
+    private static final long WORK_SCALE_FACTOR = 100;
+
+    /**
+     * Nodes that can do a significant amount of work in one execution (like arithmetic on vectors)
+     * can use this method to report the work to the Truffle system, similar to loop counts.
+     *
+     * @param amount an approximation of the number of operations
+     */
+    protected void reportWork(long amount) {
+        reportWork(this, amount);
+    }
+
+    public static void reportWork(Node base, long amount) {
+        if (CompilerDirectives.inInterpreter()) {
+            if (amount >= WORK_SCALE_FACTOR) {
+                int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
+                if (amount > 0) {
+                    LoopNode.reportLoopCount(base, scaledAmount);
+                }
+            }
+        }
+    }
+
+    protected static boolean isRAbstractContainer(Object value) {
+        return value instanceof RAbstractContainer;
+    }
+
+    protected static boolean isRAbstractVector(Object value) {
+        return value instanceof RAbstractVector;
+    }
+
+    protected static boolean isRAbstractDoubleVector(Object value) {
+        return value instanceof RAbstractDoubleVector;
+    }
+
+    protected static boolean isRAbstractIntVector(Object value) {
+        return value instanceof RAbstractIntVector;
+    }
+
+    protected static boolean isRAbstractComplexVector(Object value) {
+        return value instanceof RAbstractComplexVector;
+    }
+
+    protected static boolean isRAbstractLogicalVector(Object value) {
+        return value instanceof RAbstractLogicalVector;
+    }
+
+    protected static boolean isRAbstractStringVector(Object value) {
+        return value instanceof RAbstractStringVector;
+    }
+
+    /*
+     * No isXyz functions for abstract vector classes (RAbstractIntVector, etc.), because they do
+     * not honor implicit casts and can thus lead to unexpected behavior.
+     */
+
+    protected static boolean isRList(Object value) {
+        return value instanceof RList;
+    }
+
+    protected static boolean isRPromise(Object value) {
+        return value instanceof RPromise;
+    }
+
+    protected static boolean isRLanguage(Object value) {
+        return value instanceof RLanguage;
+    }
+
+    protected static boolean isRFormula(Object value) {
+        if (value instanceof RLanguage) {
+            return ((RAttributable) value).hasClass(RRuntime.FORMULA_CLASS);
+        }
+        return false;
+    }
+
+    protected static boolean isRExpression(Object value) {
+        return value instanceof RExpression;
+    }
+
+    protected static boolean isRFunction(Object value) {
+        return value instanceof RFunction;
+    }
+
+    protected static boolean isREnvironment(Object value) {
+        return value instanceof REnvironment;
+    }
+
+    protected static boolean isRConnection(Object value) {
+        return value instanceof RConnection;
+    }
+
+    protected static boolean isRPairList(Object value) {
+        return value instanceof RPairList;
+    }
+
+    protected static boolean isRSymbol(Object value) {
+        return value instanceof RSymbol;
+    }
+
+    protected static boolean isRArgsValuesAndNames(Object value) {
+        return value instanceof RArgsValuesAndNames;
+    }
+
+    protected static boolean isRMissing(Object value) {
+        return value == RMissing.instance;
+    }
+
+    protected static boolean isRNull(Object value) {
+        return value == RNull.instance;
+    }
+
+    protected static boolean isRAttributable(Object value) {
+        return value instanceof RAttributable;
+    }
 }

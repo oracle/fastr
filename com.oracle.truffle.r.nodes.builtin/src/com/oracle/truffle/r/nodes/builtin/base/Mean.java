@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -37,13 +38,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
-@RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"}, dispatch = RDispatch.INTERNAL_GENERIC)
+@RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Mean extends RBuiltinNode {
 
     private final BranchProfile emptyProfile = BranchProfile.create();
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
-    @Child private BinaryArithmetic div = BinaryArithmetic.DIV.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
+    @Child private BinaryArithmetic div = BinaryArithmetic.DIV.createOperation();
 
     @Specialization
     protected double mean(RAbstractDoubleVector x) {

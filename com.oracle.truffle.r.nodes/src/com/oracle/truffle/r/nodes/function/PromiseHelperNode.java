@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -148,8 +149,9 @@ public class PromiseHelperNode extends RBaseNode {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
-        if (isEvaluated(promise)) {
-            return promise.getValue();
+        Object value = promise.getRawValue();
+        if (isEvaluatedProfile.profile(value != null)) {
+            return value;
         }
 
         Object obj;
@@ -276,7 +278,7 @@ public class PromiseHelperNode extends RBaseNode {
                     assert state.isEager();
                     Object o = promise.getEagerValue();
                     if (promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX) {
-                        ArgumentStatePush.transitionStateSlowPath(o);
+                        return ShareObjectNode.share(o);
                     }
                     return o;
                 }

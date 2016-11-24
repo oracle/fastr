@@ -22,34 +22,49 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
+@RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"}, behavior = PURE)
 public abstract class Exists extends RBuiltinNode {
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
-    public abstract byte execute(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits);
+    /**
+     * Explicit execute declaration, because it is invoked by the fast-path version.
+     */
+    public abstract byte execute(String nameVec, REnvironment env, String mode, boolean inherits);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(stringValue(), Message.INVALID_FIRST_ARGUMENT).asStringVector().findFirst();
+        casts.arg("envir").mustBe(REnvironment.class);
+        casts.arg("mode").mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg("inherits").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+    }
 
     @Specialization
     @TruffleBoundary
-    protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
-        String name = nameVec.getDataAt(0);
+    protected byte existsStringEnv(String name, REnvironment env, String mode, boolean inherits) {
         RType modeType = typeFromMode.execute(mode);
-        if (inherits == RRuntime.LOGICAL_FALSE) {
+        if (!inherits) {
             Object obj = env.get(name);
             if (modeType != RType.Any && obj instanceof RPromise) {
                 obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);

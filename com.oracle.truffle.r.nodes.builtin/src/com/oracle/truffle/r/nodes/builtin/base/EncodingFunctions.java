@@ -22,45 +22,51 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.Fallback;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class EncodingFunctions {
 
-    @RBuiltin(name = "Encoding", kind = RBuiltinKind.INTERNAL, parameterNames = "x")
+    @RBuiltin(name = "Encoding", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Encoding extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT);
+        }
+
         @Specialization
         protected RStringVector encoding(@SuppressWarnings("unused") RAbstractStringVector x) {
             // TODO implement properly
             return RDataFactory.createStringVectorFromScalar("unknown");
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected RStringVector encoding(Object x) {
-            throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
-        }
     }
 
-    @RBuiltin(name = "setEncoding", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value"})
+    @RBuiltin(name = "setEncoding", kind = INTERNAL, parameterNames = {"x", "value"}, behavior = PURE)
     public abstract static class SetEncoding extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT).mustBe(stringValue());
+            // asStringVector is required for notEmpty() to receive a proper type in case of scalars
+            casts.arg("value").defaultError(RError.SHOW_CALLER, RError.Message.GENERIC, "a character vector 'value' expected").mustBe(stringValue()).asStringVector().mustBe(notEmpty(),
+                            RError.SHOW_CALLER, RError.Message.GENERIC, "'value' must be of positive length");
+        }
+
         @Specialization
-        protected Object setEncoding(RAbstractStringVector x) {
+        protected Object setEncoding(RAbstractStringVector x, @SuppressWarnings("unused") RAbstractStringVector value) {
             // TODO implement properly
             return x;
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected RStringVector setEncoding(Object x) {
-            throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
-        }
     }
 }

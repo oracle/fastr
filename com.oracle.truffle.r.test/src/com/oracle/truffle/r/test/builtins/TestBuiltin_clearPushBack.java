@@ -19,6 +19,6 @@ public class TestBuiltin_clearPushBack extends TestBase {
 
     @Test
     public void testclearPushBack1() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(clearPushBack(argv[[1]]))");
+        assertEval("argv <- list(FALSE); .Internal(clearPushBack(argv[[1]]))");
     }
 }

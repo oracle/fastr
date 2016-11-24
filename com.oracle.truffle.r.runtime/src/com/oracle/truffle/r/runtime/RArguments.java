@@ -89,6 +89,20 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 // @formatter:on
 public final class RArguments {
 
+    public static final String SUMMARY_GROUP_NA_RM_ARG_NAME = "na.rm";
+    /**
+     * Marker for the only group S3 dispatch argument that may have default value carried over from
+     * the R dispatch method to the dispatched to R method.
+     */
+    public static final S3DefaultArguments SUMMARY_GROUP_DEFAULT_VALUE_NA_RM = new S3DefaultArguments();
+
+    /**
+     * Placeholder, should the group S3 dispatch need more flexible default arguments. See
+     * {@code RCallNode.callGroupGeneric} for more details.
+     */
+    public static class S3DefaultArguments {
+    }
+
     @ValueType
     public abstract static class DispatchArgs {
         public final Object generic;
@@ -110,7 +124,7 @@ public final class RArguments {
         public S3Args(String generic, Object clazz, Object method, MaterializedFrame callEnv, MaterializedFrame defEnv, String group) {
             super(generic, method);
             assert generic != null && callEnv != null : generic + " " + callEnv;
-            assert generic.intern() == generic;
+            assert Utils.isInterned(generic);
             this.clazz = clazz;
             this.callEnv = callEnv;
             this.defEnv = defEnv;
@@ -155,21 +169,26 @@ public final class RArguments {
         return frame.getArguments().length - INDEX_ARGUMENTS;
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), dispatchArgs);
-    }
-
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
+    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        ArgumentsSignature formalSignature = ((HasSignature) function.getRootNode()).getSignature();
         CompilerAsserts.neverPartOfCompilation();
-        return create(functionObj, call, callerFrame, evaluatedArgs, suppliedSignature, functionObj.getEnclosingFrame(), dispatchArgs);
+        return create(function, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), function.getEnclosingFrame(), dispatchArgs);
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        return create(functionObj, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length), enclosingFrame, dispatchArgs);
-    }
-
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
+    /**
+     * Creates the arguments array that can be stored in the frame.
+     *
+     * @param evaluatedArgs arguments ordered according to the formal signature of the function (see
+     *            {@code ArgumentMatcher}).
+     * @param suppliedSignature the original call signature re-ordered the same way as the
+     *            evaluatedArgs
+     * @return the arguments array (in Truffle sense), containing the actual arguments for the R
+     *         function as well as additional information like the parent frame or supplied
+     *         signature.
+     */
+    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
         assert call != null : "RArguments.create call is null";
         // Eventually we want to have this invariant
@@ -177,7 +196,7 @@ public final class RArguments {
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
         a[INDEX_ENVIRONMENT] = null;
-        a[INDEX_FUNCTION] = functionObj;
+        a[INDEX_FUNCTION] = function;
         a[INDEX_CALL] = call;
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
@@ -232,7 +251,7 @@ public final class RArguments {
     }
 
     public static boolean getIsIrregular(Frame frame) {
-        return (boolean) frame.getArguments()[INDEX_IS_IRREGULAR];
+        return frame.getArguments()[INDEX_IS_IRREGULAR] == Boolean.TRUE;
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
@@ -243,18 +262,6 @@ public final class RArguments {
     public static Object[] getArguments(Frame frame) {
         Object[] args = frame.getArguments();
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + getArgumentsLength(frame));
-    }
-
-    /**
-     * <b>Only to be called from AccessArgumentNode!</b>
-     *
-     * @param frame
-     * @param argIndex
-     * @param newValue
-     */
-    public static void setArgument(Frame frame, int argIndex, Object newValue) {
-        assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        frame.getArguments()[INDEX_ARGUMENTS + argIndex] = newValue;
     }
 
     public static int getArgumentsLength(Frame frame) {
@@ -279,11 +286,6 @@ public final class RArguments {
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
         frame.getArguments()[INDEX_IS_IRREGULAR] = isIrregularFrame;
-    }
-
-    public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
-        assert arguments.length >= INDEX_ARGUMENTS;
-        arguments[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {

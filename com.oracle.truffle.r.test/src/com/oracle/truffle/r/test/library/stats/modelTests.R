@@ -32,27 +32,48 @@
 # IMPORTANT: some test cases from this file are used in Java unit tests in TestFormulae
 # class, please update them accordingly when updating this file.
 
-# create patched versions of R stubs for externals:
-# we replace call to .External with call to our implementation
-body <- deparse(model.frame.default)
-idx <- which(grepl(".External2", body))
-body[[idx]] <- gsub("C_modelframe,", "", gsub(".External2", "modelframe", body[[idx]]))
-modelframedefault <- eval(parse(text=body))
+gsubVec <- function(pattern, replace, text) {
+    for (i in seq_along(pattern)) {
+        text <- gsub(pattern[[i]], replace[[i]], text);
+    }
+    text
+}
 
-body <- deparse(model.matrix.default)
-idx <- which(grepl(".External2", body))
-body[[idx]] <- gsub("C_modelmatrix,", "", gsub(".External2", "modelmatrix", body[[idx]]))
-modelmatrixdefault <- eval(parse(text=body))
+saved <- list()
+saveArgs <- function(...) {
+    saved <<- list(...)
+}
+
+replaceExternalWithSaveArgs <- function(func, externalType='.External2') {
+    body <- deparse(func)
+    idx <- which(grepl(externalType, body))
+    body[[idx]] <- gsubVec(c('C_[^,]*,', externalType), c("", "saveArgs"), body[[idx]])
+    eval(parse(text=body))
+}
+
+# stubs that save original arguments to .External calls so that we can call them with these args by hand
+# note: there is no logic in terms.formula executed before the .External call
+saveArgs.model.frame.default <- replaceExternalWithSaveArgs(model.frame.default)
+saveArgs.model.matrix.default <- replaceExternalWithSaveArgs(model.matrix.default)
 
 # check function compares the results
+failedTests <- 0
+successTests <- 0
 check <- function(expected, actual, name) {
-	if (try(identical(expected, actual)) != TRUE) {
-		cat(name, ": FAIL\n")
-		print(expected)
-		cat("\n>>>>>>>>>actual:\n\n")
-		print(actual)
-	}
-	else { cat(name, ": OK\n") }
+    if (try(identical(expected, actual)) != TRUE) {
+        failedTests <<- failedTests + 1
+        cat(name, ": FAIL  expected:\n\n")
+        print(expected)
+        cat("\n>>>>>>>>>actual:\n\n")
+        print(actual)
+        cat("\n-------------\n")
+        if (failedTests > 10) {
+            stop("Too many failed tests...")
+        }
+    } else {
+        successTests <<- successTests + 1
+        cat(".")
+    }
 }
 
 # tests data: formulae
@@ -65,24 +86,28 @@ tests <- c(tests, ignoremm)
 
 run.tests <- function() {
     for (t in tests) {
-    	print(t)
-    	check(terms.formula(t), termsform(t, NULL, NULL, FALSE, FALSE), "termsform")
-    	
-    	# modelframe
-    	if (!(c(t) %in% ignoremf)) {
-    	    mf <- model.frame.default(t)
-    	    check(mf, modelframedefault(t), "model.frame.default")
-    	} else {
-    	    next
-    	}
+        print(t)
+        check(.External(stats:::C_termsform, t, NULL, NULL, FALSE, FALSE), termsform(t, NULL, NULL, FALSE, FALSE), "termsform")
 
-    	# modelmatrix
-    	if (!(c(t) %in% ignoremm)) {
-        	our <- modelmatrixdefault(mf)
-        	mode(our) <- "double" # GnuR has always double results, even when not necessary
-        	check(model.matrix.default(mf), our, "model.matrix.default")
-        	# for one off testing: modelmatrixdefault(model.frame.default(t))
-    	}
+        # modelframe
+        if (!(c(t) %in% ignoremf)) {
+            saveArgs.model.frame.default(t)
+            their <- do.call(.External2, c(list(stats:::C_modelframe), saved))
+            ours <- do.call(modelframe, saved)
+            check(their, ours, "model.frame.default")
+        } else {
+            next
+        }
+
+        # modelmatrix
+        if (!(c(t) %in% ignoremm)) {
+            mf <- model.frame.default(t)
+            saveArgs.model.matrix.default(mf)
+            their <- do.call(.External2, c(list(stats:::C_modelmatrix), saved))
+            ours <- do.call(modelmatrix, saved)
+            mode(ours) <- "double" # GnuR has always double results, even when not necessary
+            check(their, ours, "model.matrix.default")
+        }
     }
 }
 
@@ -103,20 +128,50 @@ run.tests()
 
 # check subsetting
 print(y~z)
-mf <- model.frame.default(y~z, subset=3:7)
-check(mf, modelframedefault(y~z, subset=3:7), "model.frame.default with subset")
+saveArgs.model.frame.default(y~z, subset=3:7)
+their <- do.call(.External2, c(list(stats:::C_modelframe), saved))
+ours <- do.call(modelframe, saved)
+check(their, ours, "model.frame.default with subset")
 
 # check specials
 t <- y~myfun(z)+x
 print(t)
-check(terms.formula(t, c('myfun')), termsform(t, c('myfun'), NULL, FALSE, FALSE), "termsform with specials")
+check(.External(stats:::C_termsform, t, c('myfun'), NULL, FALSE, FALSE), termsform(t, c('myfun'), NULL, FALSE, FALSE), "termsform with specials")
 
 # check expand dots
 t <- cyl~hp*mpg+.
 print(t)
-check(terms.formula(t, data=mtcars), termsform(t, NULL, mtcars, FALSE, FALSE), "termsform with expandDots")
+check(.External(stats:::C_termsform, t, NULL, mtcars, FALSE, FALSE), termsform(t, NULL, mtcars, FALSE, FALSE), "termsform with expandDots")
 
 # check specials and expand dots
 t <- cyl~mufun(mpg)+.
 print(t)
-check(terms.formula(t, specials=c('myfun'), data=mtcars), termsform(t, c('myfun'), mtcars, FALSE, FALSE), "termsform with specials and expandDots")
+check(.External(stats:::C_termsform, t, c('myfun'), mtcars, FALSE, FALSE), termsform(t, c('myfun'), mtcars, FALSE, FALSE), "termsform with specials and expandDots")
+
+
+# ------------------------------------
+# tests for update formula
+
+body <- deparse(update.formula)
+idx <- which(grepl(".Call", body))
+body[[idx]] <- gsub("C_updateform,", "", gsub(".Call", "updateform", body[[idx]]))
+updateformula <- eval(parse(text=body))
+
+test.update.formula <- function(old, new) {
+    print(old);
+    print(new);
+    check(update.formula(old, new), updateformula(old, new), "update.formula test")
+}
+
+test.update.formula(y ~ x, ~ . + x2)
+test.update.formula(y ~ x, log(.) ~ . )
+test.update.formula(. ~ u+v, res  ~ . )
+test.update.formula(~ u+v, res  ~ . )
+test.update.formula(~ u+v, ~ . )
+test.update.formula(~ u+v, . ~ . )
+test.update.formula(~ u+v, ~ x*. )
+test.update.formula(~ u+v, ~ x:. )
+
+
+cat("\n\nFinished\nsuccessful:", successTests, "\nfailed:", failedTests)
+

@@ -97,8 +97,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('1', '2', '3', '4', '5', '1', '2', '3', '4', '5'), .Dim = 10L), '.', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure(c('1', '2', '3', '4', '5', '1', '2', '3', '4', '5'), .Dim = 10L), '.', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -110,5 +109,17 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\")) }");
         assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
         assertEval("{ strsplit(\"a,h,o,j\", split=\",\") }");
+        assertEval("{ strsplit(\"abc\", \".\", fixed = TRUE, perl=FALSE) }");
+        // Warning text formats differently
+        assertEval(Output.IgnoreWarningContext, "{ strsplit(\"abc\", \".\", fixed = TRUE, perl=TRUE) }");
+        assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=FALSE) }");
+        assertEval("{ strsplit(\"abc\", \".\", fixed = FALSE, perl=TRUE) }");
+
+        assertEval("{ .Internal(strsplit(7, \"42\", F, F, F)) }");
+        assertEval("{ .Internal(strsplit(\"7\", 42, F, F, F)) }");
+
+        assertEval("strsplit('foo bar baz', '[f z]', perl=TRUE)");
+        assertEval("strsplit('oo bar baz', '[f z]', perl=TRUE)");
+        assertEval("strsplit('foo \u1010ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄbar baz ', '[f z]', perl=TRUE)");
     }
 }

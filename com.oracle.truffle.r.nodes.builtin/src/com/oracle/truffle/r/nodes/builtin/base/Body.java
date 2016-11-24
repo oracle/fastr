@@ -22,23 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"})
+@RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
 public abstract class Body extends RBuiltinNode {
 
     @Specialization
     protected Object doBody(RFunction fun) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) fun.getRootNode();
-        return RASTUtils.createLanguageElement(fdn.getBody().asRNode());
+        return RASTUtils.createLanguageElement(fdn.getBody());
     }
 
     @Specialization(guards = "!isRFunction(fun)")

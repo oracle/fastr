@@ -22,33 +22,48 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_CHAR_VECTOR;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.nio.charset.Charset;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class LocaleFunctions {
 
-    @RBuiltin(name = "Sys.getlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category"})
+    @RBuiltin(name = "Sys.getlocale", kind = INTERNAL, parameterNames = {"category"}, behavior = READS_STATE)
     public abstract static class GetLocale extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.category(casts);
+        }
 
         @Specialization
         @TruffleBoundary
-        protected Object getLocale(RAbstractIntVector categoryVec) {
+        protected Object getLocale(int category) {
             // TODO implement all: for now just return not available (NULL)
-            int category = categoryVec.getDataAt(0);
             switch (category) {
                 case 3: // "LC_CTYPE",
                     return RDataFactory.createStringVector(Charset.defaultCharset().name());
@@ -75,25 +90,24 @@ public class LocaleFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category", "locale"})
+    @RBuiltin(name = "Sys.setlocale", kind = INTERNAL, parameterNames = {"category", "locale"}, behavior = MODIFIES_STATE)
     public abstract static class SetLocale extends RBuiltinNode {
 
-        @Specialization
-        @TruffleBoundary
-        protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RAbstractStringVector locale) {
-            // TODO implement properly!!
-            return locale;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.category(casts);
+            casts.arg("locale").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RNull locale) {
+        protected Object setLocale(@SuppressWarnings("unused") int category, String locale) {
             // TODO implement properly!!
             return locale;
         }
     }
 
-    @RBuiltin(name = "Sys.localeconv", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "Sys.localeconv", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class LocaleConv extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -103,9 +117,9 @@ public class LocaleFunctions {
         }
     }
 
-    @RBuiltin(name = "l10n_info", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "l10n_info", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class L10nInfo extends RBuiltinNode {
-        private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"MBCS", "UTF-8", "LATIN-1"}, RDataFactory.COMPLETE_VECTOR);
+        private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"MBCS", "UTF-8", "Latin-1"}, RDataFactory.COMPLETE_VECTOR);
 
         @Specialization
         protected RList l10nInfo() {
@@ -118,8 +132,13 @@ public class LocaleFunctions {
         }
     }
 
-    @RBuiltin(name = "enc2native", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    @RBuiltin(name = "enc2native", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
     public abstract static class Enc2Native extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.xCharacterVector(casts);
+        }
+
         @Specialization
         protected Object enc2Native(RAbstractStringVector x) {
             // TODO implement properly
@@ -127,8 +146,13 @@ public class LocaleFunctions {
         }
     }
 
-    @RBuiltin(name = "enc2utf8", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    @RBuiltin(name = "enc2utf8", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
     public abstract static class Enc2Utf8 extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Casts.xCharacterVector(casts);
+        }
+
         @Specialization
         protected Object enc2Native(RAbstractStringVector x) {
             // TODO implement properly
@@ -136,13 +160,28 @@ public class LocaleFunctions {
         }
     }
 
-    @RBuiltin(name = "bindtextdomain", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"domain", "dirname"})
+    @RBuiltin(name = "bindtextdomain", kind = PRIMITIVE, parameterNames = {"domain", "dirname"}, behavior = READS_STATE)
     public abstract static class BindTextDomain extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("domain").mustBe(stringValue(), INVALID_VALUE, "domain");
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         protected RNull bindtextdomain(RAbstractStringVector domain, Object dirname) {
             // TODO implement properly
             return RNull.instance;
+        }
+    }
+
+    private static final class Casts {
+        private static void xCharacterVector(CastBuilder casts) {
+            casts.arg("x").mustBe(stringValue(), ARGUMENT_NOT_CHAR_VECTOR);
+        }
+
+        private static void category(CastBuilder casts) {
+            casts.arg("category").mustBe(numericValue(), NO_CALLER, INVALID_ARGUMENT, "category").asIntegerVector().findFirst();
         }
     }
 }

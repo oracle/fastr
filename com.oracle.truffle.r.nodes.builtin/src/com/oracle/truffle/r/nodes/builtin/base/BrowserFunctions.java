@@ -22,7 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.ArrayList;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -33,32 +37,19 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
 
 public class BrowserFunctions {
 
-    private static final class HelperState {
-
-        private final String text;
-        private final Object condition;
-
-        private HelperState(String text, Object condition) {
-            this.text = text;
-            this.condition = condition;
-        }
-    }
-
-    private static final ArrayList<HelperState> helperState = new ArrayList<>();
-
-    @RBuiltin(name = "browser", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
+    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
     public abstract static class BrowserNode extends RBuiltinNode {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
@@ -70,68 +61,71 @@ public class BrowserFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toInteger(3);
+            // TODO: add support for conditions conditions
+            casts.arg("condition").allowNull().mustBe(anyValue().not(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
+            casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+            casts.arg("skipCalls").asIntegerVector().findFirst(0);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
-            if (RRuntime.fromLogical(expr)) {
+        protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
+            if (expr) {
+                BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
                 try {
-                    helperState.add(new HelperState(text, condition));
+                    browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RCaller caller = RArguments.getCall(mFrame);
-                    String callerString;
-                    if (caller == null) {
-                        callerString = "top level";
-                    } else {
-                        callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
-                    }
-                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+                    doPrint(caller);
                     browserInteractNode.execute(frame);
                 } finally {
-                    helperState.remove(helperState.size() - 1);
+                    browserState.pop();
                 }
             }
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
+        }
+
+        @TruffleBoundary
+        private static void doPrint(RCaller caller) {
+            String callerString;
+            if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
+                callerString = "top level";
+            } else {
+                callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
+            }
+            RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+
         }
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("n").asIntegerVector().findFirst(0).mustBe(gt(0), Message.POSITIVE_CONTEXTS);
+        }
+
         /**
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
         protected HelperState getHelperState(int n) {
-            if (n <= 0) {
-                throw RError.error(this, Message.POSITIVE_CONTEXTS);
-            }
-            int nn = n;
-            if (nn > helperState.size()) {
-                nn = helperState.size();
-            }
-            return helperState.get(nn - 1);
+            BrowserState helperState = RContext.getInstance().stateInstrumentation.getBrowserState();
+            return helperState.get(n);
         }
     }
 
-    @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserText", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserText extends RetrieveAdapter {
 
         @Specialization
         @TruffleBoundary
-        protected String browserText(int n) {
+        protected Object browserText(int n) {
             return getHelperState(n).text;
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected String browserText(double n) {
-            return getHelperState((int) n).text;
-        }
     }
 
-    @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserCondition extends RetrieveAdapter {
 
         @Specialization
@@ -140,21 +134,15 @@ public class BrowserFunctions {
             return getHelperState(n).condition;
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object browserCondition(double n) {
-            return getHelperState((int) n).condition;
-        }
     }
 
-    @RBuiltin(name = "browserSetDebug", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
 
         @Specialization
         @TruffleBoundary
         protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
-            RContext.getInstance().setVisible(false);
             return RNull.instance;
         }
     }

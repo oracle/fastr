@@ -11,9 +11,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.DecimalFormat;
-import java.util.Locale;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -35,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -77,7 +75,7 @@ public class RRuntime {
     public static final String R_TEXT_MIME = "text/x-r";
 
     public static final String STRING_NA = new String("NA");
-    private static final String STRING_NaN = "NaN";
+    public static final String STRING_NaN = "NaN";
     private static final String STRING_TRUE = "TRUE";
     private static final String STRING_FALSE = "FALSE";
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -90,7 +88,7 @@ public class RRuntime {
     public static final double EPSILON = Math.pow(2.0, -52.0);
 
     public static final double COMPLEX_NA_REAL_PART = DOUBLE_NA;
-    public static final double COMPLEX_NA_IMAGINARY_PART = 0.0;
+    public static final double COMPLEX_NA_IMAGINARY_PART = DOUBLE_NA;
 
     public static final byte LOGICAL_TRUE = 1;
     public static final byte LOGICAL_FALSE = 0;
@@ -205,6 +203,9 @@ public class RRuntime {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }
 
+    /**
+     * Since a distinguished NaN value is used for NA, checking for {@code isNaN} suffices.
+     */
     public static boolean isNAorNaN(double d) {
         return Double.isNaN(d);
     }
@@ -329,6 +330,12 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
+    public static String rawToHexString(RRaw operand) {
+        int value = raw2int(operand);
+        char[] digits = new char[]{Character.forDigit((value & 0xF0) >> 4, 16), Character.forDigit(value & 0x0F, 16)};
+        return new String(digits);
+    }
+
     @TruffleBoundary
     public static String rawToString(RRaw operand) {
         return intToString(raw2int(operand));
@@ -339,14 +346,20 @@ public class RRuntime {
     @TruffleBoundary
     public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
+        int result;
         try {
-            return Integer.decode(s);  // decode supports hex constants
+            result = Integer.decode(Utils.trimLeadingZeros(s));  // decode supports hex constants
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;
             }
+            return INT_NA;
         }
-        return INT_NA;
+
+        if (result == INT_NA && exceptionOnFail) {
+            throw new NumberFormatException();
+        }
+        return result;
     }
 
     @TruffleBoundary
@@ -506,6 +519,14 @@ public class RRuntime {
         }
     }
 
+    public static boolean isCachedNumberString(int value) {
+        return value >= MIN_CACHED_NUMBER && value <= MAX_CACHED_NUMBER;
+    }
+
+    public static String getCachedNumberString(int value) {
+        return numberStringCache[value - MIN_CACHED_NUMBER];
+    }
+
     public static String intToString(int operand) {
         return isNA(operand) ? STRING_NA : intToStringNoCheck(operand);
     }
@@ -544,61 +565,6 @@ public class RRuntime {
         return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
-    @TruffleBoundary
-    public static String doubleToString(double operand, int digitsBehindDot) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
-    }
-
-    @TruffleBoundary
-    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
-        if (doubleIsInt(operand)) {
-            return intToStringNoCheck((int) operand);
-        }
-        if (operand == Double.POSITIVE_INFINITY) {
-            return "Inf";
-        }
-        if (operand == Double.NEGATIVE_INFINITY) {
-            return "-Inf";
-        }
-        if (Double.isNaN(operand)) {
-            return STRING_NaN;
-        }
-
-        /*
-         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
-         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
-         * format.format(operand);
-         */
-        if (operand < 1000000000000L && ((long) operand) == operand) {
-            return Long.toString((long) operand);
-        }
-        if (operand > 1000000000000L) {
-            return String.format((Locale) null, "%.6e", operand);
-        }
-        // if (true || operand < 0.0001) {
-        // // not quite correct but better than nothing for now...
-        // return String.format((Locale) null, "%.22e", new BigDecimal(operand));
-        // }
-        if (digitsBehindDot == -1) {
-            return Double.toString(operand);
-        } else {
-            StringBuilder sb = new StringBuilder("#.");
-            for (int i = 0; i < digitsBehindDot; i++) {
-                sb.append('#');
-            }
-            DecimalFormat df = new DecimalFormat(sb.toString());
-            return df.format(operand);
-        }
-    }
-
-    public static String doubleToStringNoCheck(double operand) {
-        return doubleToStringNoCheck(operand, -1);
-    }
-
-    public static String doubleToString(double operand) {
-        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
-    }
-
     public static int double2rawIntValue(double operand) {
         return isNA(operand) ? 0 : ((int) operand) & 0xFF;
     }
@@ -633,16 +599,6 @@ public class RRuntime {
         return isNA(c) ? LOGICAL_NA : complex2doubleNoCheck(c);
     }
 
-    @TruffleBoundary
-    public static String complexToStringNoCheck(RComplex operand) {
-        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
-    }
-
-    @TruffleBoundary
-    public static String complexToString(RComplex operand) {
-        return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
-    }
-
     public static int complex2rawIntValue(RComplex c) {
         return isNA(c) ? 0 : ((int) c.getRealPart() & 0xFF);
     }
@@ -670,7 +626,7 @@ public class RRuntime {
         if (object instanceof Integer) {
             return intToString((int) object);
         } else if (object instanceof Double) {
-            return doubleToString((double) object);
+            return Double.toString((double) object);
         } else if (object instanceof Byte) {
             return logicalToString((byte) object);
         }
@@ -696,7 +652,7 @@ public class RRuntime {
     }
 
     public static boolean isNA(RComplex value) {
-        return isNA(value.getRealPart());
+        return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
     }
 
     @TruffleBoundary
@@ -739,11 +695,15 @@ public class RRuntime {
                     break;
                 default:
                     if (codepoint < 32 || codepoint == 0x7f) {
-                        str.append("\\").append(codepoint / 64).append((codepoint / 8) % 8).append(codepoint % 8);
+                        str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
                     } else if (encodeNonASCII && codepoint > 0x7f && codepoint <= 0xff) {
                         str.append("\\x" + Integer.toHexString(codepoint));
-                        // } else if (codepoint > 0x7f && codepoint <= 0xff) {
-                        // str.append("\\u" + Integer.toHexString(codepoint));
+                    } else if (codepoint > 64967) { // determined by experimentation
+                        if (codepoint < 0x10000) {
+                            str.append("\\u").append(String.format("%04x", codepoint));
+                        } else {
+                            str.append("\\U").append(String.format("%08x", codepoint));
+                        }
                     } else {
                         str.appendCodePoint(codepoint);
                     }
@@ -897,4 +857,36 @@ public class RRuntime {
     public static double normalizeZero(double value) {
         return value == 0.0 ? 0.0 : value;
     }
+
+    public static int nrows(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                return xa.getDimensions()[0];
+            } else {
+                return xa.getLength();
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
+    public static int ncols(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                int[] dims = xa.getDimensions();
+                if (dims.length >= 2) {
+                    return dims[1];
+                } else {
+                    return 1;
+                }
+            } else {
+                return 1;
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
 }

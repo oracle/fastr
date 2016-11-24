@@ -24,28 +24,8 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
-public interface RAbstractListVector extends RAbstractVector {
-
-    @Override
-    Object getDataAtAsObject(int index);
-
-    @Override
-    default Object getDataAtAsObject(Object store, int i) {
-        return getDataAtAsObject(i);
-    }
-
-    Object getDataAt(int index);
-
-    @Override
-    RList materialize();
-
-    @Override
-    default boolean checkCompleteness() {
-        return true;
-    }
+public interface RAbstractListVector extends RAbstractListBaseVector {
 
     @Override
     default RType getRType() {
@@ -53,19 +33,5 @@ public interface RAbstractListVector extends RAbstractVector {
     }
 
     @Override
-    default Class<?> getElementClass() {
-        return Object.class;
-    }
-
-    @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    RStringVector getNames();
-
-    @Override
-    default void setNA(Object store, int index) {
-        setDataAt(store, index, RNull.instance);
-    }
+    RList materialize();
 }

@@ -22,26 +22,47 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections.StdConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@SuppressWarnings("unused")
-@RBuiltin(name = "isatty", kind = PRIMITIVE, parameterNames = {"con"})
+@RBuiltin(name = "isatty", kind = PRIMITIVE, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode {
 
     @Specialization
-    protected byte isATTY(RConnection con) {
-        return RRuntime.asLogical(con instanceof StdConnection);
+    @TruffleBoundary
+    protected byte isATTYNonConnection(RAbstractIntVector con) {
+        if (con.getLength() == 1) {
+            RStringVector clazz = con.getClassHierarchy();
+            for (int i = 0; i < clazz.getLength(); i++) {
+                if ("connection".equals(clazz.getDataAt(i))) {
+                    RConnection connection = RContext.getInstance().stateRConnection.getConnection(con.getDataAt(0), false);
+                    if (connection != null) {
+                        return RRuntime.asLogical(connection instanceof StdConnection);
+                    } else {
+                        return RRuntime.LOGICAL_FALSE;
+                    }
+                }
+            }
+        }
+        return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "!isRConnection(con)")
-    protected byte isATTYNonConnection(Object con) {
+    @Fallback
+    @TruffleBoundary
+    protected byte isATTYNonConnection(@SuppressWarnings("unused") Object con) {
+
         return RRuntime.LOGICAL_FALSE;
     }
 }

@@ -25,11 +25,9 @@ package com.oracle.truffle.r.nodes.function.opt;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -95,9 +93,7 @@ public class EagerEvalHelper {
                             RSyntaxElement argument = call.getSyntaxArguments()[0];
                             Integer value = RSyntaxConstant.asIntConstant(argument, true);
                             if (value != null) {
-                                RStringVector vector = RDataFactory.createStringVector(value);
-                                ArgumentStatePush.transitionStateSlowPath(vector);
-                                return vector;
+                                return ShareObjectNode.share(RDataFactory.createStringVector(value));
                             }
                         }
                         break;

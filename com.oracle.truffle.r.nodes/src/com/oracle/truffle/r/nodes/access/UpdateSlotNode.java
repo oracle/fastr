@@ -56,7 +56,7 @@ public abstract class UpdateSlotNode extends RNode {
 
     @Specialization(contains = "updateSlotS4Cached", guards = "!isData(name)")
     protected Object updateSlotS4(RAttributable object, String name, Object value) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         object.setAttr(name, prepareValue(value));
         return object;
     }
@@ -66,14 +66,16 @@ public abstract class UpdateSlotNode extends RNode {
     protected Object updateSlotS4Data(RAttributable object, @SuppressWarnings("unused") String name, Object value) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
-        Object f = methodsNamespace.findFunction("setDataPart");
-        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), object, prepareValue(value),
+        String identifier = "setDataPart";
+        Object f = methodsNamespace.findFunction(identifier);
+        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(identifier, f);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), null, object,
+                        prepareValue(value),
                         RRuntime.LOGICAL_TRUE);
     }
 
     protected boolean isData(String name) {
-        assert name == name.intern();
+        assert Utils.isInterned(name);
         return name == RRuntime.DOT_DATA;
     }
 }

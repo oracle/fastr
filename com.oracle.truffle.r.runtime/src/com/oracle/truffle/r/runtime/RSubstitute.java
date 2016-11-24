@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -72,6 +73,10 @@ public class RSubstitute {
         }
     }
 
+    private static boolean isLookup(RSyntaxElement element, String identifier) {
+        return element instanceof RSyntaxLookup && identifier.equals(((RSyntaxLookup) element).getIdentifier());
+    }
+
     /**
      * This method returns a newly created AST fragment for the given original element, with the
      * given substitutions.<br/>
@@ -87,8 +92,31 @@ public class RSubstitute {
 
             @Override
             protected T visit(RSyntaxCall element) {
-                ArrayList<Argument<T>> args = createArguments(element.getSyntaxSignature(), element.getSyntaxArguments());
-                return builder.call(RSyntaxNode.LAZY_DEPARSE, accept(element.getSyntaxLHS()), args);
+                RSyntaxElement lhs = element.getSyntaxLHS();
+                RSyntaxElement[] arguments = element.getSyntaxArguments();
+                /*
+                 * Handle the special case of replacements in a$b, a@b, a$b<- and a@b<-, where FastR
+                 * currently uses a string constant instead of a lookup.
+                 */
+                if ((arguments.length == 2 && isLookup(lhs, "$") || isLookup(lhs, "@")) || (arguments.length == 3 && isLookup(lhs, "$<-") || isLookup(lhs, "@<-"))) {
+                    if (arguments[1] instanceof RSyntaxConstant) {
+                        String field = RRuntime.asStringLengthOne(((RSyntaxConstant) arguments[1]).getValue());
+                        if (field != null) {
+                            RSyntaxElement substitute = substituteElement(env.get(field));
+                            if (field != null) {
+                                if (substitute instanceof RSyntaxLookup) {
+                                    substitute = RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, ((RSyntaxLookup) substitute).getIdentifier());
+                                }
+                                if (substitute instanceof RSyntaxConstant) {
+                                    arguments = Arrays.copyOf(arguments, arguments.length, RSyntaxElement[].class);
+                                    arguments[1] = substitute;
+                                }
+                            }
+                        }
+                    }
+                }
+                ArrayList<Argument<T>> args = createArguments(element.getSyntaxSignature(), arguments);
+                return builder.call(RSyntaxNode.LAZY_DEPARSE, accept(lhs), args);
             }
 
             private ArrayList<Argument<T>> createArguments(ArgumentsSignature signature, RSyntaxElement[] arguments) {
@@ -126,8 +154,7 @@ public class RSubstitute {
             @Override
             protected T visit(RSyntaxLookup element) {
                 // this takes care of replacing variable lookups
-                Object val = env.get(element.getIdentifier());
-                RSyntaxElement substitute = substituteElement(val);
+                RSyntaxElement substitute = substituteElement(env.get(element.getIdentifier()));
                 if (substitute != null) {
                     return builder.process(substitute);
                 } else {
@@ -145,10 +172,6 @@ public class RSubstitute {
 
     @TruffleBoundary
     public static RSyntaxNode substitute(REnvironment env, RBaseNode node) {
-        RSyntaxNode substituted = substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env);
-        // create source for entire tree, this may be done lazily in the future
-        substituted.setSourceSection(RSyntaxNode.EAGER_DEPARSE);
-        RDeparse.ensureSourceSection(substituted);
-        return substituted;
+        return substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env);
     }
 }

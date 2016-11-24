@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
@@ -45,21 +48,39 @@ public class NonNANodeGenSampler extends CastNodeSampler<NonNANodeGen> {
         return inputType;
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> Optional<T> unmap(T x) {
+        if (naReplacement == null) {
+            return CastUtils.isNaValue(x) ? Optional.empty() : Optional.of(x);
+        } else {
+            return CastUtils.isNaValue(x) ? Optional.of((T) naReplacement) : Optional.of(x);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
         Set<Object> defaultPositiveSamples;
         Set<Object> defaultNegativeSamples;
 
+        Samples<Object> mappedSamples = ((Samples<Object>) downStreamSamples).map(x -> x, x -> x, this::unmap, this::unmap);
+
+        Set<Object> naSamples = inputTypes.normalize().stream().filter(t -> t instanceof Class).map(t -> CastUtils.naValue((Class<?>) t)).filter(x -> x != null).collect(Collectors.toSet());
         if (naReplacement != null) {
             defaultNegativeSamples = Collections.emptySet();
-            defaultPositiveSamples = Collections.singleton(naReplacement);
+            defaultPositiveSamples = new HashSet<>();
+            defaultPositiveSamples.add(naReplacement);
+            defaultPositiveSamples.addAll(naSamples);
         } else {
-            defaultNegativeSamples = inputTypes.normalize().stream().filter(t -> t instanceof Class).map(t -> CastUtils.naValue((Class<?>) t)).filter(x -> x != null).collect(Collectors.toSet());
+            defaultNegativeSamples = naSamples;
             defaultPositiveSamples = Collections.emptySet();
         }
 
-        Samples<Object> defaultSamples = new Samples<>(defaultPositiveSamples, defaultNegativeSamples);
-        return defaultSamples.and(downStreamSamples);
+        Predicate<Object> posMembership = x -> naReplacement != null || !CastUtils.isNaValue(x);
+        Samples<Object> defaultSamples = new Samples<>("nonNA-" + naReplacement == null ? "noDef" : "withDef", defaultPositiveSamples, defaultNegativeSamples, posMembership);
+
+        Samples<Object> combined = defaultSamples.and(mappedSamples);
+        return combined;
     }
 
 }

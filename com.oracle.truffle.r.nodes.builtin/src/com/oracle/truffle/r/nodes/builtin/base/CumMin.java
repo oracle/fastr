@@ -10,43 +10,46 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "cummin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+@RBuiltin(name = "cummin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class CumMin extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
-
-    @Child private CastDoubleNode castDouble;
-
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(),
+                        asDoubleVector());
+    }
 
     @Specialization
     protected double cummin(double arg) {
@@ -59,17 +62,8 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected int cummin(byte arg) {
-        na.enable(arg);
-        if (na.check(arg)) {
-            return RRuntime.INT_NA;
-        }
-        return arg;
-    }
-
-    @Specialization
-    protected double cummin(String arg) {
-        return na.convertStringToDouble(arg);
+    protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
+        return RDataFactory.createEmptyDoubleVector();
     }
 
     @Specialization
@@ -127,40 +121,4 @@ public abstract class CumMin extends RBuiltinNode {
         return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
-    @Specialization
-    protected RIntVector cummin(RAbstractLogicalVector v) {
-        int[] cminV = new int[v.getLength()];
-        int min = v.getDataAt(0);
-        cminV[0] = min;
-        na.enable(v);
-        int i;
-        for (i = 1; i < v.getLength(); i++) {
-            if (v.getDataAt(i) < min) {
-                min = v.getDataAt(i);
-            }
-            if (na.check(v.getDataAt(i))) {
-                break;
-            }
-            cminV[i] = min;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
-        }
-        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
-    }
-
-    @Specialization
-    protected RDoubleVector cummin(RAbstractStringVector v) {
-        if (castDouble == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
-        }
-        return cummin((RDoubleVector) castDouble.executeDouble(v));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RComplexVector cummin(@SuppressWarnings("unused") RAbstractComplexVector v) {
-        throw RError.error(this, RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
-    }
 }

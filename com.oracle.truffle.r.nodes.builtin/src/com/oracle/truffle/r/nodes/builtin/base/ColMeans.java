@@ -10,43 +10,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 //Implements .colMeans
-@RBuiltin(name = "colMeans", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
-public abstract class ColMeans extends RBuiltinNode {
+@RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
+public abstract class ColMeans extends ColSumsBase {
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
-    private final NACheck na = NACheck.create();
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
-
-        casts.arg("m").asIntegerVector().findFirst().notNA();
-
-        casts.arg("n").asIntegerVector().findFirst().notNA();
-
-        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
-    }
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmFalse(RAbstractDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -71,7 +57,9 @@ public abstract class ColMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmTrue(RAbstractDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -96,7 +84,9 @@ public abstract class ColMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmFalse(RAbstractLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         na.enable(x);
         nextCol: for (int c = 0; c < colNum; c++) {
@@ -115,7 +105,9 @@ public abstract class ColMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmTrue(RAbstractLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -140,7 +132,9 @@ public abstract class ColMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmFalse(RAbstractIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         na.enable(x);
         nextCol: for (int c = 0; c < colNum; c++) {
@@ -159,7 +153,9 @@ public abstract class ColMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmTrue(RAbstractIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
@@ -182,5 +178,4 @@ public abstract class ColMeans extends RBuiltinNode {
         }
         return RDataFactory.createDoubleVector(result, isComplete);
     }
-
 }

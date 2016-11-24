@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
@@ -30,8 +31,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -42,19 +43,19 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * TODO Can we find a way to efficiently write the specializations as generics? The code is
  * identical except for the argument type.
  */
-@RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"})
+@RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"}, behavior = PURE)
 public abstract class Split extends RBuiltinNode {
 
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
 
-    private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
+    @SuppressWarnings("unused") private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
 
     public static class SplitTemplate {
-        private int[] collectResulSize;
-        private int nLevels;
+        @SuppressWarnings("unused") private int[] collectResultsSize;
+        @SuppressWarnings("unused") private int nLevels;
     }
 
     @Specialization

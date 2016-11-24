@@ -22,16 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -40,9 +43,10 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class AsCall extends RBuiltinNode {
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
@@ -75,13 +79,15 @@ public abstract class AsCall extends RBuiltinNode {
             RLanguage l = (RLanguage) x.getDataAt(0);
             f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getIdentifier();
         }
-        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x.getList()));
+        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x));
     }
 
-    private RArgsValuesAndNames makeNamesAndValues(RList x) {
+    private RArgsValuesAndNames makeNamesAndValues(RAbstractContainer x) {
         int length = x.getLength() - 1;
         Object[] values = new Object[length];
-        System.arraycopy(x.getDataWithoutCopying(), 1, values, 0, length);
+        for (int i = 0; i < length; i++) {
+            values[i] = x.getDataAtAsObject(i + 1);
+        }
         ArgumentsSignature signature;
         if (nullNamesProfile.profile(x.getNames(attrProfiles) == null)) {
             signature = ArgumentsSignature.empty(values.length);
@@ -99,5 +105,10 @@ public abstract class AsCall extends RBuiltinNode {
         }
 
         return new RArgsValuesAndNames(values, signature);
+    }
+
+    @Fallback
+    protected Object asCallFunction(@SuppressWarnings("unused") Object x) {
+        throw RError.error(this, RError.Message.GENERIC, "invalid argument list");
     }
 }

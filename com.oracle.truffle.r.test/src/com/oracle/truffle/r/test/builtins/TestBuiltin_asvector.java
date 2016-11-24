@@ -144,7 +144,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector26() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(V1 = c('a', 'd e', 'h'), V2 = c('b'', 'f', 'i'), V3 = c('c', 'g', 'j\\nk l m'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(V1 = c('a', 'd e', 'h'), V2 = c('b\\'', 'f', 'i'), V3 = c('c', 'g', 'j\\nk l m'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -164,7 +164,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector30() {
-        assertEval(Ignored.Unknown, "argv <- list(list('a', 'b', 'c'), 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list('a', 'b', 'c'), 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -321,8 +321,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector64() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -342,7 +341,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector69() {
-        assertEval(Ignored.Unknown, "argv <- list(c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 1e+05, 2e+05, 5e+05), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 1e+05, 2e+05, 5e+05), 'any'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -417,10 +416,16 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.vector(NULL, \"list\") }");
         assertEval("{ as.vector(NULL) }");
 
+        assertEval("as.vector(as.symbol('asdf'), 'symbol')");
+
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
 
         assertEval("as.vector(x~z)");
-        assertEval(Ignored.Unimplemented, "as.vector(file(''))");
+        assertEval("as.vector(file(''))");
+
+        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, NULL) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, character())  }");
     }
 
     @Test

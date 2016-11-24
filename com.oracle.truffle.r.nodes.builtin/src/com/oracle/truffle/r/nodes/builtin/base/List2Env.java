@@ -22,21 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"})
+@RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class List2Env extends RBuiltinNode {
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(RAbstractListVector.class, Message.FIRST_ARGUMENT_NOT_NAMED_LIST);
+        casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
+    }
 
     @Specialization
-    protected REnvironment doList2Env(RList list, REnvironment env,
+    protected REnvironment doList2Env(RAbstractListVector list, REnvironment env,
                     @Cached("new()") RList2EnvNode list2Env) {
         return list2Env.execute(list, env);
     }

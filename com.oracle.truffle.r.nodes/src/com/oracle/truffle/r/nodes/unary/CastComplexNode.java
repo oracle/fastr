@@ -24,17 +24,18 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.function.IntFunction;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -59,6 +61,25 @@ public abstract class CastComplexNode extends CastBaseNode {
     public abstract Object executeComplex(byte o);
 
     public abstract Object executeComplex(Object o);
+
+    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Child private CastComplexNode recursiveCastComplex;
+
+    private Object castComplexRecursive(Object o) {
+        if (recursiveCastComplex == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastComplex = insert(CastComplexNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+        }
+        return recursiveCastComplex.executeComplex(o);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Complex;
+    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -101,7 +122,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             return RComplex.createNA();
         }
         RComplex result = RRuntime.string2complexNoCheck(operand);
-        if (RRuntime.isNA(result)) {
+        if (RRuntime.isNA(result) && !operand.equals(RRuntime.STRING_NaN)) {
             warningBranch.enter();
             RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
@@ -121,7 +142,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -174,7 +195,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (isAttrPreservation()) {
+        if (preserveAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -190,10 +211,48 @@ public abstract class CastComplexNode extends CastBaseNode {
         return createResultVector(operand, index -> RDataFactory.createComplex(operand.getDataAt(index).getValue(), 0));
     }
 
-    @Fallback
-    @TruffleBoundary
-    protected int doOther(Object operand) {
-        throw new ConversionFailedException(operand.getClass().getName());
+    @Specialization
+    protected RComplexVector doList(RAbstractListVector list) {
+        int length = list.getLength();
+        double[] result = new double[length * 2];
+        boolean seenNA = false;
+        for (int i = 0, j = 0; i < length; i++, j += 2) {
+            Object entry = list.getDataAt(i);
+            if (entry instanceof RList) {
+                result[j] = RRuntime.DOUBLE_NA;
+                result[j + 1] = RRuntime.DOUBLE_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castComplexRecursive(entry);
+                if (castEntry instanceof RComplex) {
+                    RComplex value = (RComplex) castEntry;
+                    result[j] = value.getRealPart();
+                    result[j + 1] = value.getImaginaryPart();
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RComplexVector) {
+                    RComplexVector complexVector = (RComplexVector) castEntry;
+                    if (complexVector.getLength() == 1) {
+                        RComplex value = complexVector.getDataAt(0);
+                        result[j] = value.getRealPart();
+                        result[j + 1] = value.getImaginaryPart();
+                        seenNA = seenNA || RRuntime.isNA(value);
+                    } else if (complexVector.getLength() == 0) {
+                        result[j] = RRuntime.DOUBLE_NA;
+                        result[j + 1] = RRuntime.DOUBLE_NA;
+                        seenNA = true;
+                    } else {
+                        throw throwCannotCoerceListError("complex");
+                    }
+                } else {
+                    throw throwCannotCoerceListError("complex");
+                }
+            }
+        }
+        RComplexVector ret = RDataFactory.createComplexVector(result, !seenNA);
+        if (preserveAttributes()) {
+            ret.copyRegAttributesFrom(list);
+        }
+        return ret;
     }
 
     public static CastComplexNode create() {

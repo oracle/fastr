@@ -32,11 +32,11 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -69,7 +69,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.boxPrimitive(0).boxPrimitive(1);
+        casts.arg(0).boxPrimitive();
+        casts.arg(1).boxPrimitive();
     }
 
     private static boolean isLogicOp(BooleanOperation op) {
@@ -83,7 +84,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
-        return BinaryBooleanNodeGen.create(factory, null);
+        return BinaryBooleanNodeGen.create(factory);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
@@ -95,7 +96,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @Specialization(contains = "doNumericVectorCached", guards = "isSupported(left, right)")
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right, //
-                    @Cached("factory.create()") BooleanOperation operation, //
+                    @Cached("factory.createOperation()") BooleanOperation operation, //
                     @Cached("new(createCached(operation, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
@@ -104,7 +105,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isSupported(left, right)) {
-            return createCached(factory.create(), left, right);
+            return createCached(factory.createOperation(), left, right);
         }
         return null;
     }
@@ -124,30 +125,20 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
                         (!isLogicOp(factory) && (value instanceof RAbstractStringVector || value instanceof RAbstractRawVector));
     }
 
-    @Specialization(guards = {"isRConnection(left) || isRConnection(right)"})
-    protected Object doConnection(VirtualFrame frame, Object left, Object right, //
-                    @Cached("createRecursive()") BinaryBooleanNode recursive) {
-        Object recursiveLeft = left;
-        if (recursiveLeft instanceof RConnection) {
-            recursiveLeft = RInteger.valueOf(((RConnection) recursiveLeft).getDescriptor());
-        }
-        Object recursiveRight = right;
-        if (recursiveRight instanceof RConnection) {
-            recursiveRight = RInteger.valueOf(((RConnection) recursiveRight).getDescriptor());
-        }
-        return recursive.execute(frame, recursiveLeft, recursiveRight);
+    protected static boolean isSymbolOrLang(Object obj) {
+        return obj instanceof RSymbol || obj instanceof RLanguage;
     }
 
-    @Specialization(guards = {"isRSymbol(left) || isRSymbol(right)"})
+    @Specialization(guards = {"isSymbolOrLang(left) || isSymbolOrLang(right)"})
     protected Object doSymbol(VirtualFrame frame, Object left, Object right, //
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
-        if (recursiveLeft instanceof RSymbol) {
-            recursiveLeft = RString.valueOf(((RSymbol) recursiveLeft).getName());
+        if (isSymbolOrLang(left)) {
+            recursiveLeft = RString.valueOf(RDeparse.deparse(left));
         }
         Object recursiveRight = right;
-        if (recursiveRight instanceof RSymbol) {
-            recursiveRight = RString.valueOf(((RSymbol) recursiveRight).getName());
+        if (isSymbolOrLang(right)) {
+            recursiveRight = RString.valueOf(RDeparse.deparse(right));
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
@@ -165,7 +156,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
     protected Object doOneArg(Object left, Object right) {
-        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.create().opName(), 2);
+        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
     }
 
     protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {

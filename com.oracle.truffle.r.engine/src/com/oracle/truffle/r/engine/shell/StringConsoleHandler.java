@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;
@@ -36,9 +36,9 @@ class StringConsoleHandler implements ConsoleHandler {
     private String prompt;
     private int currentLine;
 
-    StringConsoleHandler(List<String> lines, PrintStream output, String inputDescription) {
+    StringConsoleHandler(List<String> lines, OutputStream output, String inputDescription) {
         this.lines = lines;
-        this.output = output;
+        this.output = output instanceof PrintStream ? (PrintStream) output : new PrintStream(output);
         this.inputDescription = inputDescription;
     }
 
@@ -97,11 +97,6 @@ class StringConsoleHandler implements ConsoleHandler {
     @TruffleBoundary
     public void setPrompt(String prompt) {
         this.prompt = prompt;
-    }
-
-    @Override
-    public int getWidth() {
-        return RContext.CONSOLE_WIDTH;
     }
 
     @Override

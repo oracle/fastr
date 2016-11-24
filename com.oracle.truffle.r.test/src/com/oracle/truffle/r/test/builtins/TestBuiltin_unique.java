@@ -143,9 +143,7 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique25() {
-        // FIXME character(0) instead of factor(0)
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -180,14 +178,17 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique33() {
-        // FIXME Evaluation/Location labels lost
-        assertEval(Ignored.ImplementationError,
-                        "argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c('very good',     'good', 'bad', 'very bad'), Location = c('city centre', 'suburbs')),     .Names = c('Evaluation', 'Location')))), .Names = 'x');" +
-                                        "do.call('unique', argv)");
+        assertEval("argv <- structure(list(x = structure(c(15, 37, 30, 18, 8, 20,     42.7, 29.3), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c('very good',     'good', 'bad', 'very bad'), Location = c('city centre', 'suburbs')),     .Names = c('Evaluation', 'Location')))), .Names = 'x');" +
+                        "do.call('unique', argv)");
     }
 
     @Test
     public void testUnique() {
         assertEval("{x<-factor(c(\"a\", \"b\", \"a\")); unique(x) }");
+
+        assertEval("{ x<-quote(f(7, 42)); unique(x) }");
+        assertEval("{ x<-function() 42; unique(x) }");
+        assertEval(Ignored.Unknown, "{ unique(c(1,2,1), incomparables=function() 42) }");
+
     }
 }

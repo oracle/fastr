@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class Operation extends RBaseNode {
@@ -40,5 +42,9 @@ public class Operation extends RBaseNode {
 
     public boolean isAssociative() {
         return associative;
+    }
+
+    public static RuntimeException handleException(Throwable e) {
+        throw e instanceof RError ? (RError) e : RInternalError.shouldNotReachHere(e, "only RErrors should be thrown by arithmetic ops");
     }
 }

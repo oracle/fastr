@@ -27,20 +27,18 @@ export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
-export R_VERSION = 3.2.4
+export R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
 all: 
 	$(MAKE) -C gnur
 	$(MAKE) -C include
-	$(MAKE) -C osextras
 	$(MAKE) -C fficall
 	$(MAKE) -C library
 	$(MAKE) -C run
 
 clean: 
 	$(MAKE) -C include clean
-	$(MAKE) -C osextras clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C library clean
 	$(MAKE) -C run clean

@@ -21,14 +21,14 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.31.0",
+  "mxversion" : "5.34.4",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "fbb6bb30803df787c07b1c8131789c94acfc2761",
+               "version" : "f0c06d466056ad23e05aa3d21b98405cd72f117b",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -37,6 +37,13 @@ suite = {
 
         ],
    },
+
+  "repositories" : {
+    "snapshots" : {
+        "url" : "https://FASTR_SNAPSHOT_HOST/nexus/content/repositories/snapshots",
+        "licenses" : ["GPLv2"]
+    }
+  },
 
   "licenses" : {
     "GPLv2" : {
@@ -49,12 +56,13 @@ suite = {
 
   # libraries that we depend on
   # N.B. The first four with a "path" attribute must be located
-  # relative to the suite root and not the mx cache
+  # relative to the suite root and not the mx cache because they are
+  # explicitly referenced in the Parser annotation processor.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.2.4.tar.gz",
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz"],
-        "sha1" : "632664b3caa8d39f5fe6ac2ee9611b0f89ad6ed9",
+        "path" : "libdownloads/R-3.3.2.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.3.2.tar.gz"],
+        "sha1" : "0e39e9c2d28fe6bab9c55ca23e08ba8727fd2fca",
         "resource" : "true"
     },
 
@@ -81,123 +89,6 @@ suite = {
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
-
-
-    "NETLIB" : {
-      "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
-      "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
-    },
-
-    "JNR_POSIX" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.18.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.18/jnr-posix-3.0.18.jar",
-      ],
-      "sha1" : "96ae4f7837eeda0e47a470570da1803941f1bf78",
-    },
-
-    "JNR_CONSTANTS" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.9.0.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.9.0/jnr-constants-0.9.0.jar",
-      ],
-      "sha1" : "6894684e17a84cd500836e82b5e6c674b4d4dda6",
-    },
-
-    "JNR_FFI" : {
-      "urls" : [
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7.jar",
-      ],
-      "sourcePath" : "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7-sources.jar",
-      "sha1" : "f0968c5bb5a283ebda2df3604c2c1129d45196e3",
-      "sourceSha1" : "164d820d7c38c14cd3675bfbf3eb6aeeedc9b0f4",
-    },
-
-    "JFFI" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9.jar",
-      ],
-      "sha1" : "93294973285d2977c41fb1cfcfa864d41b145498",
-    },
-
-    "JFFI_NATIVE" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9-native.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9-native.jar",
-      ],
-      "sha1" : "1b1e82f867bb47237e6db690fbc6bfc999689c63",
-    },
-
-    "JNR_INVOKE" : {
-      "urls" : ["https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
-      "sha1" : "d0f846c3d3cb98dfd5e2bbd3cca236337fb0afa1",
-    },
-
-    "JNR_UDIS86" : {
-      "urls" : ["https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
-      "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
-    },
-
-    "JNR_X86ASM" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-x86asm-1.0.2.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
-      ],
-      "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
-    },
-
-    "ASM" : {
-      "path" : "lib/asm-5.0.3.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
-      ],
-      "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
-      "sourcePath" : "lib/asm-5.0.3-sources.jar",
-      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
-      "sourceUrls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
-      ],
-    },
-
-    "ASM_ANALYSIS" : {
-      "path" : "lib/asm-analysis-4.0.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
-      ],
-      "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
-    },
-
-    "ASM_COMMONS" : {
-      "path" : "lib/asm-commons-4.0.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
-      ],
-      "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
-    },
-
-    "ASM_TREE" : {
-      "path" : "lib/asm-tree-4.0.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
-      ],
-      "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
-    },
-
-    "ASM_UTIL" : {
-      "path" : "lib/asm-util-4.0.jar",
-      "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
-      ],
-      "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
-    },
-
 
   },
 
@@ -282,6 +173,7 @@ suite = {
     "com.oracle.truffle.r.test.native" : {
       "sourceDirs" : [],
       "dependencies" : ["com.oracle.truffle.r.native"],
+      "class" : "FastRTestNativeProject",
       "native" : "true",
       "workingSets" : "FastR",
     },
@@ -317,6 +209,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DEBUG",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -331,21 +224,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "ASM",
-        "ASM_ANALYSIS",
-        "JNR_POSIX",
-        "ASM_UTIL",
-        "JFFI",
-        "JNR_FFI",
-        "NETLIB",
-        "JNR_CONSTANTS",
-        "JFFI_NATIVE",
-        "JNR_INVOKE",
-        "JNR_UDIS86",
-        "ASM",
-        "ASM_TREE",
-        "ASM_COMMONS",
-        "JNR_X86ASM",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -360,8 +238,8 @@ suite = {
         "GNU_ICONV",
       ],
       "native" : "true",
+      "class" : "FastRNativeProject",
       "output" : "com.oracle.truffle.r.native",
-      "results" : ["platform.mk"],
       "workingSets" : "FastR",
     },
 
@@ -381,10 +259,29 @@ suite = {
 
     },
 
+    "com.oracle.truffle.r.release" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : ["com.oracle.truffle.r.native.recommended"],
+      "class" : "FastRReleaseProject",
+      "output" : "com.oracle.truffle.r.release"
+    },
+
+    "com.oracle.truffle.r.native.recommended" : {
+      "dependencies" : [
+        "com.oracle.truffle.r.native",
+        "com.oracle.truffle.r.engine",
+        "com.oracle.truffle.r.runtime.ffi"
+      ],
+      "class" : "FastRNativeRecommendedProject",
+      "native" : "true",
+      "workingSets" : "FastR",
+    },
+
   },
 
   "distributions" : {
     "TRUFFLE_R_PARSER_PROCESSOR" : {
+      "description" : "internal support for generating the R parser",
       "subDir" : "truffle",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
@@ -392,28 +289,16 @@ suite = {
         "ANTLR-3.5",
         "ANTLR-C-3.5",
        ],
+       "maven" : "False",
 
     },
+
     "FASTR" : {
+      "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
         "JDK_TOOLS",
-        "NETLIB",
-        "ASM",
-        "ASM_UTIL",
-        "ASM_TREE",
-        "ASM_COMMONS",
-        "ASM_ANALYSIS",
-        "ASM",
-        "JNR_X86ASM",
-        "JFFI_NATIVE",
-        "JFFI",
-        "JNR_FFI",
-        "JNR_CONSTANTS",
-        "JNR_POSIX",
-        "JNR_INVOKE",
-        "JNR_UDIS86",
         "truffle:JLINE",
         "ANTLR-C-3.5",
         "ANTLR-3.5",
@@ -427,16 +312,92 @@ suite = {
       ],
     },
 
-    "FASTR_NATIVE": {
-        "native" : True,
-        "path" : "mxbuild/dists/fastr.native.tar",
+    "FASTR_UNIT_TESTS" : {
+      "description" : "unit tests",
+      "dependencies" : ["com.oracle.truffle.r.test"],
+      "exclude": ["mx:HAMCREST", "mx:JUNIT", "mx:JMH"],
+      "distDependencies" : [
+        "FASTR",
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DEBUG",
+        "TRUFFLE_R_PARSER_PROCESSOR",
+        "truffle:TRUFFLE_TCK",
+      ],
+
+
+    },
+
+    "FASTR_UNIT_TESTS_NATIVE" : {
+      "description" : "unit tests support (from test.native project)",
+      "dependencies" : ["com.oracle.truffle.r.test.native"],
+      "distDependencies" : ["FASTR_NATIVE_DEV"],
+      "exclude" : ["GNUR", "GNU_ICONV"],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-unit-tests-native.jar",
+           }
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
+           },
+        },
+         "solaris" : {
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
+           }
+        },
+      },
+    },
+
+    "FASTR_NATIVE_DEV": {
+        "description" : "support for overriding the native project implementation in a separate suite",
         "dependencies" : ["com.oracle.truffle.r.native"],
         "exclude" : [
         "GNUR",
         "GNU_ICONV",
-        ]
+        ],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-native-dev.jar",
+           },
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
+          },
+        },
+         "solaris" : {
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
+          },
+        },
+      },
+    },
 
-    }
+    "FASTR_RELEASE": {
+      "description" : "a binary release of FastR",
+      "dependencies" : ["com.oracle.truffle.r.release"],
+       "os_arch" : {
+         "linux" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/linux/amd64/fastr-release.jar",
+           }
+        },
+         "darwin" : {
+           "amd64" : {
+             "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
+           }
+        },
+         "solaris" : {
+           "sparcv9" : {
+             "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
+           }
+        },
+      },
+    },
   },
-
 }
+

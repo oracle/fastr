@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -37,13 +38,13 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
-@RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2)
+@RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2, behavior = COMPLEX)
 public abstract class ForceAndCall extends RBuiltinNode {
 
     private final Object argsIdentifier = new Object();
@@ -55,7 +56,9 @@ public abstract class ForceAndCall extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        casts.arg("n").asIntegerVector().findFirst();
+        // TODO other types are possible for FUN that we don't yet handle
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     @Specialization(guards = "cachedN == n")
@@ -104,9 +107,4 @@ public abstract class ForceAndCall extends RBuiltinNode {
         throw RError.nyi(this, "generic case of forceAndCall");
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object forceAndCall(Object n, Object fun, RArgsValuesAndNames args) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
 }

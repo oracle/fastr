@@ -74,6 +74,10 @@ public final class TypeExpr {
         return new TypeExpr(newDisjNormForm);
     }
 
+    public boolean contains(Type tp) {
+        return disjNormForm.stream().flatMap(conjSet -> conjSet.stream().filter(t -> t.equals(tp))).findFirst().isPresent();
+    }
+
     public TypeExpr or(TypeExpr te) {
         Set<Set<? extends Type>> newDisjNormForm = new HashSet<>(this.disjNormForm);
         newDisjNormForm.addAll(te.disjNormForm);
@@ -119,6 +123,10 @@ public final class TypeExpr {
 
     public Set<Type> normalize() {
         return disjNormForm.stream().map(conj -> normalize(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
+    }
+
+    public Set<Class<?>> toClasses() {
+        return normalize().stream().filter(t -> t instanceof Class).map(t -> (Class<?>) t).collect(Collectors.toSet());
     }
 
     private static Type normalize(Set<? extends Type> conj) {
@@ -182,7 +190,7 @@ public final class TypeExpr {
         }).findAny().isPresent();
     }
 
-    public Cast.Coverage coverageFrom(Type from, boolean includeImplicits) {
+    public Cast.Coverage isConvertibleFrom(Type from, boolean includeImplicits) {
         return normalize().stream().map(t -> CastUtils.Casts.isConvertible(from, t, includeImplicits)).reduce((res, cvg) -> res.or(cvg)).orElse(Cast.Coverage.none);
     }
 

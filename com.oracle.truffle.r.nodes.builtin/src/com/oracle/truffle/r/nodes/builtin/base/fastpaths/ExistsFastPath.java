@@ -33,20 +33,23 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
+/**
+ * Avoids execution of the condition in default argument value of 'envir'.
+ */
 public abstract class ExistsFastPath extends RFastPathNode {
 
-    @Child private Exists exists = ExistsNodeGen.create(null);
+    @Child private Exists exists = ExistsNodeGen.create();
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object fallback(RAbstractStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, byte inherits) {
-        return exists.execute(x, envir, RType.Any.getName(), inherits);
+        return exists.execute(x.getDataAt(0), envir, RType.Any.getName(), RRuntime.fromLogical(inherits));
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object fallback(RAbstractStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, RMissing inherits) {
-        return exists.execute(x, envir, RType.Any.getName(), RRuntime.LOGICAL_TRUE);
+        return exists.execute(x.getDataAt(0), envir, RType.Any.getName(), true);
     }
 
     @Fallback

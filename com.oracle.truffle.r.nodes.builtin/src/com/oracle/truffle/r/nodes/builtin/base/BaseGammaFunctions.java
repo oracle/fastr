@@ -19,26 +19,28 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MIN_EXP;
 import static com.oracle.truffle.r.library.stats.StatsUtil.M_LOG10_2;
 import static com.oracle.truffle.r.library.stats.StatsUtil.M_PI;
 import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.stats.GammaFunctions;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -47,7 +49,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
 
-    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Gamma extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -56,7 +58,7 @@ public class BaseGammaFunctions {
         }
     }
 
-    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class TriGamma extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
@@ -65,10 +67,15 @@ public class BaseGammaFunctions {
         }
     }
 
-    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Lgamma extends RBuiltinNode {
 
         private final NACheck naValCheck = NACheck.create();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
+        }
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractDoubleVector x) {
@@ -92,20 +99,9 @@ public class BaseGammaFunctions {
             return lgamma(RClosures.createLogicalToDoubleVector(x));
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object lgamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
-            return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
-        }
-
-        @Fallback
-        @TruffleBoundary
-        protected Object lgamma(@SuppressWarnings("unused") Object x) {
-            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
-        }
     }
 
-    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class DiGamma extends RBuiltinNode {
 
         @Child private DpsiFnCalc dpsiFnCalc;
@@ -118,6 +114,11 @@ public class BaseGammaFunctions {
                 dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
             }
             return dpsiFnCalc.executeDouble(x, n, kode, ans);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
         }
 
         @Specialization
@@ -155,17 +156,6 @@ public class BaseGammaFunctions {
             return digamma(RClosures.createLogicalToDoubleVector(x));
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object digamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
-            return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
-        }
-
-        @Fallback
-        @TruffleBoundary
-        protected Object digamma(@SuppressWarnings("unused") Object x) {
-            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
-        }
     }
 
     @NodeChildren({@NodeChild(value = "x"), @NodeChild(value = "n"), @NodeChild(value = "kode"), @NodeChild(value = "ans")})

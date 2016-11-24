@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+
 /**
  * Support for the {.Call} and {.External} calls.
  */
@@ -31,20 +33,27 @@ public interface CallRFFI {
      * {@code args}. The values in {@code args} can be any of the types used to represent {@code R}
      * values in the implementation.
      *
-     * @param address the address of the native function
+     * @param handle the address of the native function
      * @param name the name of the native function
      * @param args arguments
      */
-    Object invokeCall(long address, String name, Object[] args);
+    Object invokeCall(SymbolHandle handle, String name, Object[] args);
 
     /**
      * Variant that does not return a result (primarily for library "init" methods).
      */
-    void invokeVoidCall(long address, String name, Object[] args);
+    void invokeVoidCall(SymbolHandle handle, String name, Object[] args);
 
     /**
-     * This interface is initialized very early, before the {@code tempDir} is established. This
-     * call sets the value.
+     * This interface is instantiated very early and sets the FFI global variables as part of that
+     * process. However, at that stage {@code tempDir} is not established so this call exists to set
+     * the value later.
      */
     void setTempDir(String tempDir);
+
+    /**
+     * Sets the {@code R_Interactive} FFI variable. Similar rationale to {#link setTmpDir}.
+     */
+    void setInteractive(boolean interactive);
+
 }

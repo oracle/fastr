@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
+public final class RDoubleVector extends RVector<double[]> implements RAbstractDoubleVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Double.getClazz());
 
@@ -109,7 +109,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.doubleToString(getDataAt(i)));
+        return toString(i -> Double.toString(getDataAt(i)));
     }
 
     @Override
@@ -129,49 +129,23 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return data[i];
     }
 
+    @Override
     public double[] getDataCopy() {
-        double[] copy = new double[data.length];
-        System.arraycopy(data, 0, copy, 0, data.length);
-        return copy;
+        return Arrays.copyOf(data, data.length);
     }
 
     /**
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
      */
+    @Override
     public double[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
-     *
-     * @return vector data
-     */
-    public double[] getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
-
-    }
-
-    /**
-     * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
-     *
-     * @return vector data
-     */
-    public double[] getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
     }
 
     @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
-    }
-
-    @Override
-    protected String getDataAtAsString(int index) {
-        return RRuntime.doubleToString(data[index]);
     }
 
     public RDoubleVector updateDataAt(int i, double right, NACheck valueNACheck) {
@@ -211,7 +185,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    public RDoubleVector copyResized(int size, boolean fillNA) {
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }

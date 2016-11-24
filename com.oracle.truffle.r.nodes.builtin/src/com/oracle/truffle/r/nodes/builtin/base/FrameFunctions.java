@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysFrameNodeGen;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.CallArgumentsNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -53,17 +55,16 @@ import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.UnmatchedArguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -75,7 +76,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -154,12 +154,12 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
+    @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysCall extends FrameHelper {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "which");
+            casts.arg("which").asIntegerVector().findFirst();
         }
 
         @Override
@@ -176,8 +176,7 @@ public class FrameFunctions {
             if (RArguments.getFunction(cframe) == null) {
                 return RNull.instance;
             }
-            RLanguage createCall = createCall(RArguments.getCall(cframe));
-            return createCall;
+            return createCall(RArguments.getCall(cframe));
         }
 
         @TruffleBoundary
@@ -201,12 +200,20 @@ public class FrameFunctions {
      * In summary, although the simple cases are indeed simple, there are many possible variants
      * using "..." that make the code a lot more complex that it seems it ought to be.
      */
-    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"})
+    @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
     public abstract static class MatchCall extends FrameHelper {
 
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("definition").mustBe(RFunction.class);
+            casts.arg("call").mustBe(RLanguage.class);
+            casts.arg("expand.dots").asLogicalVector().findFirst();
+            casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
         }
 
         @Specialization
@@ -234,8 +241,7 @@ public class FrameFunctions {
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
-            UnmatchedArguments executeFlatten = callArgs.unrollArguments(inputVarArgSignature);
-            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), executeFlatten, null, true).getArguments();
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RNode> nodes = new ArrayList<>();
@@ -282,20 +288,7 @@ public class FrameFunctions {
                         RPairList prev = null;
                         for (int i2 = 0; i2 < varArgNodes.length; i2++) {
                             RNode n = varArgNodes[i2];
-                            Object listValue;
-                            if (n instanceof ConstantNode) {
-                                listValue = ((ConstantNode) n).getValue();
-                            } else if (n instanceof ReadVariableNode) {
-                                String id = ((ReadVariableNode) n).getIdentifier();
-                                assert id == id.intern();
-                                listValue = RDataFactory.createSymbol(id);
-                            } else if (n instanceof VarArgNode) {
-                                listValue = createVarArgSymbol((VarArgNode) n);
-                            } else if (n instanceof RCallNode) {
-                                listValue = RDataFactory.createLanguage(n);
-                            } else {
-                                throw RInternalError.shouldNotReachHere("node: " + n + " at " + i2);
-                            }
+                            Object listValue = RASTUtils.createLanguageElement(n.asRSyntaxNode());
                             pl.setCar(listValue);
                             if (varArgSignature.getName(i2) != null) {
                                 pl.setTag(RDataFactory.createSymbolInterned(varArgSignature.getName(i2)));
@@ -353,12 +346,6 @@ public class FrameFunctions {
             return false;
         }
 
-        private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
-            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
-            String varArgSymbol = createVarArgName(varArgNode);
-            return RDataFactory.createSymbolInterned(varArgSymbol);
-        }
-
         private static String createVarArgName(VarArgNode varArgNode) {
             CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
             int vn = varArgNode.getIndex() + 1;
@@ -388,7 +375,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysNFrame extends RBuiltinNode {
 
         private final BranchProfile isPromiseCurrentProfile = BranchProfile.create();
@@ -415,14 +402,25 @@ public class FrameFunctions {
 
     }
 
-    @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"})
+    @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysFrame extends DeoptHelper {
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
 
+        public abstract REnvironment executeInt(VirtualFrame frame, int which);
+
+        public static SysFrame create() {
+            return SysFrameNodeGen.create();
+        }
+
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.MATERIALIZE;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -440,14 +438,9 @@ public class FrameFunctions {
 
             return result;
         }
-
-        @Specialization
-        protected REnvironment sysFrame(VirtualFrame frame, double which) {
-            return sysFrame(frame, (int) which);
-        }
     }
 
-    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysFrames extends DeoptHelper {
         @Override
         protected final FrameAccess frameAccess() {
@@ -479,7 +472,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysCalls extends FrameHelper {
 
         @Override
@@ -520,7 +513,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
+    @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class SysParent extends RBuiltinNode {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
@@ -529,7 +522,7 @@ public class FrameFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_ARGUMENT, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -551,7 +544,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true)
+    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true, behavior = COMPLEX)
     public abstract static class SysFunction extends FrameHelper {
 
         public abstract Object executeObject(VirtualFrame frame, int which);
@@ -559,6 +552,11 @@ public class FrameFunctions {
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("which").asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -573,14 +571,9 @@ public class FrameFunctions {
                 return func;
             }
         }
-
-        @Specialization
-        protected Object sysFunction(VirtualFrame frame, double which) {
-            return sysFunction(frame, (int) which);
-        }
     }
 
-    @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
+    @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysParents extends FrameHelper {
 
         @Override
@@ -624,18 +617,18 @@ public class FrameFunctions {
     /**
      * The environment of the caller of the function that called parent.frame.
      */
-    @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"})
+    @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class ParentFrame extends FrameHelper {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
         private final BranchProfile promiseProfile = BranchProfile.create();
         private final BranchProfile nonNullCallerProfile = BranchProfile.create();
 
-        public abstract Object execute(VirtualFrame frame, int n);
+        public abstract REnvironment execute(VirtualFrame frame, int n);
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.firstIntegerWithError(0, Message.INVALID_VALUE, "n");
+            casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Override
@@ -686,11 +679,6 @@ public class FrameFunctions {
             // parentDepth--;
             // }
             return REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
-        }
-
-        @Specialization
-        protected REnvironment parentFrame(VirtualFrame frame, double n) {
-            return parentFrame(frame, (int) n);
         }
     }
 }

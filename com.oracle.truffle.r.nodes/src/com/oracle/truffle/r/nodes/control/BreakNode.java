@@ -24,35 +24,23 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class BreakNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class BreakNode extends OperatorNode {
 
-    public BreakNode(SourceSection src) {
-        super(src);
-    }
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin("break");
+    public BreakNode(SourceSection src, RSyntaxLookup operator) {
+        super(src, operator);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         throw BreakException.instance;
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "break", true);
     }
 
     @Override

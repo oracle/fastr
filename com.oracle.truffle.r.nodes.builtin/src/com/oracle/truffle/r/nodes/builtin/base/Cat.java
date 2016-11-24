@@ -24,15 +24,17 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.defaultValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.scalarLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,26 +46,26 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNode;
 import com.oracle.truffle.r.nodes.unary.ToStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * The {@code cat .Internal}.
  */
-@RBuiltin(name = "cat", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"})
+@RBuiltin(name = "cat", visibility = OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"}, behavior = IO)
 public abstract class Cat extends RBuiltinNode {
 
     @Child private ToStringNode toString;
@@ -79,10 +81,13 @@ public abstract class Cat extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("sep").mustBe(stringValue(), RError.Message.INVALID_SEP);
 
-        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mustBe(nullValue().not()).shouldBe(instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
-                        Message.NON_POSITIVE_FILL).mapIf(scalarLogicalValue(), asBoolean(), asInteger());
+        casts.arg("file").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
 
-        casts.arg("labels").map(defaultValue(RDataFactory.createStringVector(0))).mustBe(stringValue()).asStringVector();
+        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
+                        instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
+                        Message.NON_POSITIVE_FILL).mapIf(atomicLogicalValue(), asBoolean(), asInteger());
+
+        casts.arg("labels").mapNull(emptyStringVector()).mustBe(stringValue()).asStringVector();
 
         // append is interpreted in the calling closure, but GnuR still checks for NA
         casts.arg("append").asLogicalVector().findFirst().map(toBoolean());
@@ -90,26 +95,27 @@ public abstract class Cat extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, boolean fill, RAbstractStringVector labels, boolean append) {
+    protected RNull cat(RList args, int file, RAbstractStringVector sepVec, boolean fill, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
         if (fill) {
             fillWidth = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
         }
-        return output(args, conn, sepVec, fillWidth, labels, append);
+        return output(args, file, sepVec, fillWidth, labels, append);
     }
 
     @TruffleBoundary
     @Specialization
-    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, int givenFillWidth, RAbstractStringVector labels, boolean append) {
+    protected RNull cat(RList args, int file, RAbstractStringVector sepVec, int givenFillWidth, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
         if (givenFillWidth >= 1) {
             fillWidth = givenFillWidth;
         }
-        return output(args, conn, sepVec, fillWidth, labels, append);
+        return output(args, file, sepVec, fillWidth, labels, append);
     }
 
     @TruffleBoundary
-    private RNull output(RList args, RConnection conn, RAbstractStringVector sepVec, int fillWidth, RAbstractStringVector labels, @SuppressWarnings("unused") boolean append) {
+    private RNull output(RList args, int file, RAbstractStringVector sepVec, int fillWidth, RAbstractStringVector labels, @SuppressWarnings("unused") boolean append) {
+        RConnection conn = RConnection.fromIndex(file);
         boolean filling = fillWidth > 0;
         ensureToString();
         /*
@@ -136,6 +142,7 @@ public abstract class Cat extends RBuiltinNode {
                 if (objVec.getLength() == 0) {
                     stringVecs.add("");
                 } else {
+                    validateType(i + 1, obj);
                     for (int j = 0; j < objVec.getLength(); j++) {
                         stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), false, ""));
                     }
@@ -191,6 +198,13 @@ public abstract class Cat extends RBuiltinNode {
         }
 
         return RNull.instance;
+    }
+
+    private void validateType(int argIndex, Object obj) {
+        if (obj instanceof RList || obj instanceof RLanguage || obj instanceof RExpression) {
+            RTypedValue rType = (RTypedValue) obj;
+            throw RError.error(this, Message.CAT_ARGUMENT_OF_TYPE, argIndex, rType.getRType().getName());
+        }
     }
 
     @TruffleBoundary

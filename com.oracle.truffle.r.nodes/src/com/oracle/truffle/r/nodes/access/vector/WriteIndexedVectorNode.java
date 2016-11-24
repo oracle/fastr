@@ -32,6 +32,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractListElement.UpdateStateOfListElement;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -48,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -87,19 +89,19 @@ abstract class WriteIndexedVectorNode extends Node {
     @Child private WriteIndexedVectorNode innerVectorNode;
 
     @SuppressWarnings("unchecked")
-    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject) {
-        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, RTypedValue>) createIndexedAction(vectorType, setListElementAsObject);
+    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
+        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, RTypedValue>) createIndexedAction(vectorType, setListElementAsObject, isReplace);
         this.dimensionIndex = dimensionIndex;
         this.totalDimensions = totalDimensions;
         this.positionsApplyToRight = positionAppliesToRight;
         this.skipNA = skipNA;
         if (dimensionIndex > 0) {
-            innerVectorNode = WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, setListElementAsObject);
+            innerVectorNode = WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, setListElementAsObject, isReplace);
         }
     }
 
-    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean setListElementAsObject) {
-        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, setListElementAsObject);
+    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
+        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, setListElementAsObject, isReplace);
     }
 
     public NACheck getValueNACheck() {
@@ -375,7 +377,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends RTypedValue> createIndexedAction(RType type, boolean setListElementAsObject) {
+    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends RTypedValue> createIndexedAction(RType type, boolean setListElementAsObject, boolean isReplace) {
         switch (type) {
             case Logical:
                 return new WriteLogicalAction();
@@ -393,7 +395,7 @@ abstract class WriteIndexedVectorNode extends Node {
             case Expression:
             case PairList:
             case List:
-                return new WriteListAction(setListElementAsObject);
+                return new WriteListAction(setListElementAsObject, isReplace);
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -467,16 +469,25 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListVector, RTypedValue> {
+    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListBaseVector, RTypedValue> {
 
         private final boolean setListElementAsObject;
+        private final boolean isReplace;
+        @Child private UpdateStateOfListElement updateStateOfListElement;
+        @Child private ShareObjectNode shareObjectNode;
 
-        WriteListAction(boolean setListElementAsObject) {
+        WriteListAction(boolean setListElementAsObject, boolean isReplace) {
             this.setListElementAsObject = setListElementAsObject;
+            this.isReplace = isReplace;
+            if (!isReplace) {
+                updateStateOfListElement = UpdateStateOfListElement.create();
+            } else {
+                shareObjectNode = ShareObjectNode.create();
+            }
         }
 
         @Override
-        void apply(RAbstractListVector leftAccess, Object leftStore, int leftIndex, RTypedValue rightAccess, Object rightStore, int rightIndex) {
+        void apply(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex, RTypedValue rightAccess, Object rightStore, int rightIndex) {
             Object rightValue;
             if (setListElementAsObject) {
                 rightValue = rightAccess;
@@ -486,6 +497,16 @@ abstract class WriteIndexedVectorNode extends Node {
                 }
             } else {
                 rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
+            }
+
+            if (isReplace) {
+                // we are replacing within the same list
+                if (leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
+                    shareObjectNode.execute(rightValue);
+                }
+            } else {
+                // we are writing into a list data that are being read from possibly another list
+                updateStateOfListElement.execute(rightAccess, rightValue);
             }
 
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);

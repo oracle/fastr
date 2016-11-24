@@ -23,13 +23,16 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ConditionalMapNode extends CastNode {
 
-    private final ArgumentFilter argFilter;
+    private final ArgumentFilter<?, ?> argFilter;
+    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
@@ -39,7 +42,12 @@ public abstract class ConditionalMapNode extends CastNode {
         this.falseBranch = falseBranch;
     }
 
-    public ArgumentFilter getFilter() {
+    public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch,
+                    CastNode falseBranch) {
+        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch);
+    }
+
+    public ArgumentFilter<?, ?> getFilter() {
         return argFilter;
     }
 
@@ -51,17 +59,23 @@ public abstract class ConditionalMapNode extends CastNode {
         return falseBranch;
     }
 
-    protected boolean doMap(Object x) {
-        return argFilter.test(x);
+    @Specialization
+    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
+        return RNull.instance;
     }
 
-    @Specialization(guards = "doMap(x)")
-    protected Object map(Object x) {
-        return trueBranch.execute(x);
+    @Specialization
+    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
+        return RMissing.instance;
     }
 
-    @Specialization(guards = "!doMap(x)")
-    protected Object noMap(Object x) {
-        return x;
+    @SuppressWarnings("unchecked")
+    @Specialization
+    protected Object executeRest(Object x) {
+        if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
+            return trueBranch == null ? x : trueBranch.execute(x);
+        } else {
+            return falseBranch == null ? x : falseBranch.execute(x);
+        }
     }
 }

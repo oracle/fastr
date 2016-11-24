@@ -29,6 +29,9 @@ import com.oracle.truffle.api.source.SourceSection;
  */
 public interface RSyntaxLookup extends RSyntaxElement {
 
+    /**
+     * @return The identifier that this lookup represents - this needs to be an interned string.
+     */
     String getIdentifier();
 
     boolean isFunctionLookup();
@@ -38,9 +41,13 @@ public interface RSyntaxLookup extends RSyntaxElement {
      * characters of the original source section (if non-null) will be used as the new source
      * section.
      */
-    static RSyntaxLookup createDummyLookup(SourceSection originalSource, String identifier, boolean isFunctionLookup) {
-        SourceSection source = originalSource == null || originalSource.getSource() == null ? null : originalSource.getSource().createSection(null, originalSource.getCharIndex(), 1);
+    static RSyntaxLookup createDummyLookup(SourceSection source, String identifier, boolean isFunctionLookup) {
         return new RSyntaxLookup() {
+            @Override
+            public SourceSection getLazySourceSection() {
+                return source;
+            }
+
             @Override
             public SourceSection getSourceSection() {
                 return source;
@@ -59,6 +66,11 @@ public interface RSyntaxLookup extends RSyntaxElement {
             @Override
             public void setSourceSection(SourceSection src) {
                 // ignored
+            }
+
+            @Override
+            public String toString() {
+                return "`" + identifier + "`";
             }
         };
     }

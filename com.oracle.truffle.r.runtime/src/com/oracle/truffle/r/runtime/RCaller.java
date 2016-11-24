@@ -33,9 +33,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class RCaller {
 
+    public static final RCaller topLevel = RCaller.createInvalid(null);
+
     private static final Object PROMISE_MARKER = new Object();
 
     private final int depth;
+    private boolean visibility;
     private final RCaller parent;
     /**
      * payload can be an RSyntaxNode, a {@link Supplier}, or an PROMISE_MARKER.
@@ -96,6 +99,11 @@ public final class RCaller {
         return new RCaller(callingFrame, node);
     }
 
+    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxNode node) {
+        assert node != null;
+        return new RCaller(depthFromFrame(callingFrame), parent, node);
+    }
+
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxNode> supplier) {
         assert supplier != null;
         return new RCaller(callingFrame, supplier);
@@ -108,5 +116,13 @@ public final class RCaller {
 
     public static RCaller createForPromise(RCaller original, int newDepth) {
         return new RCaller(newDepth, original, PROMISE_MARKER);
+    }
+
+    public boolean getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(boolean visibility) {
+        this.visibility = visibility;
     }
 }

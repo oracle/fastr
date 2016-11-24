@@ -22,55 +22,128 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
+import com.oracle.truffle.api.ExactMath;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-@RBuiltin(name = "strtoi", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "base"})
+@RBuiltin(name = "strtoi", kind = INTERNAL, parameterNames = {"x", "base"}, behavior = PURE)
 public abstract class Strtoi extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(stringValue()).asStringVector();
+        // base == 0 || (base >= 2 && base <= 36)
+        casts.arg("base").mustBe(integerValue()).asIntegerVector().findFirst().mustBe(eq(0).or(gte(2).and(lte(36))));
+    }
+
     @Specialization
-    @TruffleBoundary
-    protected RIntVector doStrtoi(RAbstractStringVector vec, int baseArg) {
-        int base = baseArg;
+    protected RIntVector doStrtoi(RAbstractStringVector vec, int baseArg,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile baseZeroProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile negateProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile incompleteProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile baseProfile) {
         int[] data = new int[vec.getLength()];
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        boolean complete = true;
         for (int i = 0; i < data.length; i++) {
-            int dataValue = RRuntime.INT_NA;
-            try {
-                String s = vec.getDataAt(i);
-                if (s.length() == 0) {
-                    complete = RDataFactory.INCOMPLETE_VECTOR;
-                } else {
-                    if (base == 0) {
-                        char ch0 = s.charAt(0);
-                        if (ch0 == '0') {
-                            if (s.length() > 1 && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
-                                base = 16;
-                            } else {
-                                base = 8;
-                            }
-                        } else {
-                            base = 10;
+            int dataValue;
+            String s = vec.getDataAt(i);
+            if (emptyProfile.profile(s.length() == 0)) {
+                dataValue = RRuntime.INT_NA;
+            } else {
+                boolean negate = false;
+                int pos = 0;
+                if (s.charAt(pos) == '+') {
+                    // skip "+"
+                    pos++;
+                } else if (s.charAt(pos) == '-') {
+                    negate = true;
+                    pos++;
+                }
+                int base = baseArg;
+                if (pos < s.length() && s.charAt(pos) == '0') {
+                    // skip "0"
+                    pos++;
+                    if (pos < s.length() && (s.charAt(pos) == 'x' || s.charAt(pos) == 'X')) {
+                        if (baseZeroProfile.profile(base == 0)) {
+                            base = 16;
                         }
-                    }
-                    long value = RFFIFactory.getRFFI().getBaseRFFI().strtol(s, base);
-                    if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) {
-                        complete = RDataFactory.INCOMPLETE_VECTOR;
+                        // skip "x" or "X"
+                        pos++;
                     } else {
-                        dataValue = (int) value;
+                        if (baseZeroProfile.profile(base == 0)) {
+                            base = 8;
+                        }
+                        // go back (to parse the "0")
+                        pos--;
+                    }
+                } else {
+                    if (baseZeroProfile.profile(base == 0)) {
+                        base = 10;
                     }
                 }
-            } catch (IllegalArgumentException ex) {
-                complete = RDataFactory.INCOMPLETE_VECTOR;
+                base = baseProfile.profile(base);
+                if (pos == s.length()) {
+                    // produce NA is no data is available
+                    dataValue = RRuntime.INT_NA;
+                } else {
+                    dataValue = 0;
+                    while (pos < s.length()) {
+                        char c = s.charAt(pos++);
+                        int digit;
+                        if (base > 10) {
+                            if (c >= '0' && c <= '9') {
+                                digit = c - '0';
+                            } else if (c >= 'a' && c < ('a' + base - 10)) {
+                                digit = c - 'a' + 10;
+                            } else if (c >= 'A' && c < ('A' + base - 10)) {
+                                digit = c - 'A' + 10;
+                            } else {
+                                dataValue = RRuntime.INT_NA;
+                                break;
+                            }
+                        } else {
+                            if (c >= '0' && c < ('0' + base)) {
+                                digit = c - '0';
+                            } else {
+                                dataValue = RRuntime.INT_NA;
+                                break;
+                            }
+                        }
+                        try {
+                            dataValue = ExactMath.addExact(ExactMath.multiplyExact(dataValue, base), digit);
+                        } catch (ArithmeticException e) {
+                            dataValue = RRuntime.INT_NA;
+                            break;
+                        }
+                    }
+                }
+                if (negateProfile.profile(negate)) {
+                    // relies on -INT_NA == INT_NA
+                    dataValue = -dataValue;
+                }
+                if (incompleteProfile.profile(dataValue == RRuntime.INT_NA)) {
+                    complete = false;
+                }
+                data[i] = dataValue;
             }
-            data[i] = dataValue;
         }
         return RDataFactory.createIntVector(data, complete);
     }

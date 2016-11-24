@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,16 +34,15 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
-@RBuiltin(name = "range", kind = PRIMITIVE, parameterNames = {"...", "na.rm", "finite"}, dispatch = RDispatch.SUMMARY_GROUP_GENERIC)
+@RBuiltin(name = "range", kind = PRIMITIVE, parameterNames = {"...", "na.rm", "finite"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
 public abstract class Range extends RBuiltinNode {
 
     private static final ReduceSemantics minSemantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
@@ -53,7 +55,8 @@ public abstract class Range extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1).firstBoolean(2);
+        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("finite").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Override
@@ -62,13 +65,13 @@ public abstract class Range extends RBuiltinNode {
     }
 
     @Specialization(guards = "args.getLength() == 1")
-    protected RVector rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
+    protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
         Object min = minReduce.executeReduce(args.getArgument(0), naRm, finite);
         Object max = maxReduce.executeReduce(args.getArgument(0), naRm, finite);
         return createResult(min, max);
     }
 
-    private static RVector createResult(Object min, Object max) {
+    private static RVector<?> createResult(Object min, Object max) {
         if (min instanceof Integer) {
             return RDataFactory.createIntVector(new int[]{(Integer) min, (Integer) max}, false);
         } else {
@@ -77,9 +80,9 @@ public abstract class Range extends RBuiltinNode {
     }
 
     @Specialization(contains = "rangeLengthOne")
-    protected RVector range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
+    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
                     @Cached("create()") Combine combine) {
-        Object combined = combine.executeCombine(args);
+        Object combined = combine.executeCombine(args, false);
         Object min = minReduce.executeReduce(combined, naRm, finite);
         Object max = maxReduce.executeReduce(combined, naRm, finite);
         return createResult(min, max);

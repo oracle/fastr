@@ -11,20 +11,18 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -43,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -58,20 +57,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * Deparsing R objects.
- *
- * There are two distinct clients of this class:
- * <ul>
- * <li>{@code RSerialize} when it needs to convert an unserialized GnuR {@code pairlist} instance
- * that denotes a closure into an {@link RFunction} which is, currently, done by deparsing and
- * reparsing the value.</li>
- * <li>The {@code deparse} builtin.</li>
- * </ul>
- *
- * Much of the code here is related to case 1, which would be unnecessary if unserialize created
- * ASTs for language elements directly rather than via deparse/parse. The deparsing of ASTs is
- * handled in {@code RASTDeparse} via the {@link RRuntimeASTAccess} interface.
  */
 public class RDeparse {
+
+    private static final RAttributeProfiles DUMMY_ATTR_PROFILES = RAttributeProfiles.create();
+
     public static final int KEEPINTEGER = 1;
     public static final int QUOTEEXPRESSIONS = 2;
     public static final int SHOWATTRIBUTES = 4;
@@ -107,7 +97,7 @@ public class RDeparse {
         CURLY,
         PAREN,
         SUBSET,
-        DOLLAR;
+        DOLLAR
     }
 
     // TODO for consistency make an enum
@@ -158,7 +148,7 @@ public class RDeparse {
         }
     }
 
-    @CompilationFinal private static final Func[] FUNCTAB = new Func[]{
+    private static final Func[] FUNCTAB = new Func[]{
                     new Func("+", null, new PPInfo(PP.BINARY, PREC_SUM, false)),
                     new Func("-", null, new PPInfo(PP.BINARY, PREC_SUM, false)),
                     new Func("*", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
@@ -220,16 +210,6 @@ public class RDeparse {
         return len > 0 && op.charAt(0) == '%' && op.charAt(len - 1) == '%';
     }
 
-    /**
-     * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
-     */
-    public static void ensureSourceSection(RSyntaxElement node) {
-        SourceSection ss = node.getSourceSection();
-        if (ss == RSyntaxNode.EAGER_DEPARSE) {
-            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0, null).append(node).fixupSources();
-        }
-    }
-
     private static Func isInfixOperatorNode(RSyntaxElement element) {
         if (element instanceof RSyntaxCall) {
             RSyntaxElement lhs = ((RSyntaxCall) element).getSyntaxLHS();
@@ -275,21 +255,18 @@ public class RDeparse {
         private final int cutoff;
         private final boolean backtick;
         private int opts;
-        private final int nlines;
+        @SuppressWarnings("unused") private final int nlines;
 
         private int inCurly = 0;
         private int inList = 0;
         private int indent = 0;
         private int lastLineStart = 0;
 
-        private final Map<String, Object> constants;
-
-        DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines, Map<String, Object> constants) {
+        DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines) {
             this.cutoff = cutoff;
             this.backtick = backtick;
             this.opts = opts;
             this.nlines = nlines;
-            this.constants = constants;
             this.sources = storeSource ? new ArrayList<>() : null;
         }
 
@@ -322,7 +299,6 @@ public class RDeparse {
         }
 
         private DeparseVisitor append(String str) {
-            assert !str.contains("\n");
             sb.append(str);
             return this;
         }
@@ -342,10 +318,9 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            @SuppressWarnings("deprecation")
-            Source source = Source.fromText(sb, "deparse");
+            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
             for (SourceSectionElement s : sources) {
-                s.element.setSourceSection(source.createSection(null, s.start, s.length));
+                s.element.setSourceSection(source.createSection(s.start, s.length));
             }
         }
 
@@ -520,20 +495,15 @@ public class RDeparse {
                         }
                         switch (info.kind) {
                             case CURLY:
-                                boolean braces = args.length != 1 || hasBraces(call);
-                                if (braces) {
-                                    append("{", lhs);
-                                    try (C i = indent(); C c = inCurly()) {
-                                        for (RSyntaxElement statement : args) {
-                                            printline();
-                                            append(statement);
-                                        }
+                                append("{", lhs);
+                                try (C i = indent(); C c = inCurly()) {
+                                    for (RSyntaxElement statement : args) {
+                                        printline();
+                                        append(statement);
                                     }
-                                    printline();
-                                    append('}');
-                                } else {
-                                    append(args[0]);
                                 }
+                                printline();
+                                append('}');
                                 return null;
                             case SUBSET:
                                 if (args.length > 0) {
@@ -550,7 +520,12 @@ public class RDeparse {
                         } else if (args.length == 1) {
                             append(args[0]).append(symbol).append("NULL");
                         } else {
-                            append(args[0]).append(symbol).append(args[1]);
+                            // FIXME use call syntax until parser fixed to accept literals
+                            if (args[1] instanceof RSyntaxConstant) {
+                                append('`').append(symbol).append('`').append('(').append(args[0]).append(", ").append(args[1]).append(')');
+                            } else {
+                                append(args[0]).append(symbol).append(args[1]);
+                            }
                         }
                         return null;
                     }
@@ -562,77 +537,10 @@ public class RDeparse {
                 return null;
             }
 
-            public boolean hasBraces(RSyntaxElement node) {
-                SourceSection ss = node.getSourceSection();
-                if (ss == null || ss == RSyntaxNode.SOURCE_UNAVAILABLE) {
-                    // this is statistical guess
-                    return true;
-                } else {
-                    return ss.getCode().startsWith("{");
-                }
-            }
-
             @Override
-            @SuppressWarnings("try")
             protected Void visit(RSyntaxConstant constant) {
                 // coerce scalar values to vectors and unwrap data frames and factors:
-                Object value = RRuntime.asAbstractVector(constant.getValue());
-
-                if (constants != null && !(value instanceof RAbstractVector)) {
-                    String name = "C.." + constants.size();
-                    constants.put(name, value);
-                    append(name);
-                    return null;
-                }
-
-                if (value instanceof RExpression) {
-                    append("expression(").appendListContents(((RExpression) value).getList()).append(')');
-                } else if (value instanceof RAbstractListVector) {
-                    RAbstractListVector obj = (RAbstractListVector) value;
-                    try (C c = withAttributes(obj)) {
-                        append("list(").appendListContents(obj).append(')');
-                    }
-                } else if (value instanceof RAbstractVector) {
-                    appendVector((RAbstractVector) value);
-                } else if (value instanceof RNull) {
-                    append("NULL");
-                } else if (value instanceof RFunction) {
-                    RFunction f = (RFunction) value;
-                    if (f.isBuiltin()) {
-                        append(".Primitive(\"").append(f.getName()).append("\")");
-                    } else {
-                        append(RContext.getRRuntimeASTAccess().getSyntaxFunction(f));
-                    }
-                } else if (value instanceof RPairList) {
-                    RPairList pl = (RPairList) value;
-                    assert pl.getType() == SEXPTYPE.LISTSXP;
-                    append("pairlist(");
-                    Arguments<RSyntaxElement> arguments = wrapArguments(pl);
-                    appendArgs(arguments.getSignature(), arguments.getArguments(), 0, false);
-                    append(')');
-                } else if (value instanceof RS4Object) {
-                    RS4Object s4Obj = (RS4Object) value;
-                    Object clazz = s4Obj.getAttr("class");
-                    String className = clazz == null ? "S4" : RRuntime.toString(RRuntime.asStringLengthOne(clazz));
-                    append("new(\"").append(className).append('\"');
-                    try (C c = indent()) {
-                        printline();
-                        if (s4Obj.getAttributes() != null) {
-                            for (RAttribute att : s4Obj.getAttributes()) {
-                                if (!"class".equals(att.getName())) {
-                                    append(", ").append(att.getName()).append(" = ").process(att.getValue()).printline();
-                                }
-                            }
-                        }
-                    }
-                    append(')');
-                } else if (value instanceof RExternalPtr) {
-                    append("<pointer: 0x").append(Long.toHexString(((RExternalPtr) value).getAddr())).append('>');
-                } else if (value instanceof REnvironment) {
-                    append("<environment>");
-                } else {
-                    throw RInternalError.shouldNotReachHere("unexpected: " + value);
-                }
+                appendConstant(constant.getValue());
                 return null;
             }
 
@@ -648,24 +556,10 @@ public class RDeparse {
 
             @Override
             protected Void visit(RSyntaxFunction function) {
-                append("function (");
+                append("function(");
                 appendArgs(function.getSyntaxSignature(), function.getSyntaxArgumentDefaults(), 0, true);
                 append(") ");
-                RSyntaxElement body = function.getSyntaxBody();
-                boolean newline = true;
-                if (body instanceof RSyntaxCall) {
-                    RSyntaxCall c = (RSyntaxCall) body;
-                    if (c.getSyntaxLHS() instanceof RSyntaxLookup) {
-                        RSyntaxLookup l = (RSyntaxLookup) c.getSyntaxLHS();
-                        if ("{".equals(l.getIdentifier())) {
-                            newline = c.getSyntaxArguments().length == 1 && !hasBraces(c);
-                        }
-                    }
-                }
-                if (newline) {
-                    printline();
-                }
-                append(body);
+                appendFunctionBody(function.getSyntaxBody());
                 return null;
             }
         }
@@ -673,7 +567,10 @@ public class RDeparse {
         private void appendWithParens(RSyntaxElement arg, PPInfo mainOp, boolean isLeft) {
             Func func = isInfixOperatorNode(arg);
             boolean needsParens = false;
-            if (func != null) {
+            if (func == null) {
+                // put parens around complex values
+                needsParens = !isLeft && arg instanceof RSyntaxConstant && ((RSyntaxConstant) arg).getValue() instanceof RAbstractComplexVector;
+            } else {
                 PPInfo arginfo = func.info;
                 switch (arginfo.kind) {
                     case ASSIGN:
@@ -717,22 +614,112 @@ public class RDeparse {
             }
         }
 
+        @SuppressWarnings("try")
+        private DeparseVisitor appendConstant(Object originalValue) {
+            Object value = RRuntime.asAbstractVector(originalValue);
+            if (value instanceof RExpression) {
+                append("expression(").appendListContents((RExpression) value).append(')');
+            } else if (value instanceof RAbstractListVector) {
+                RAbstractListVector obj = (RAbstractListVector) value;
+                try (C c = withAttributes(obj)) {
+                    append("list(").appendListContents(obj).append(')');
+                }
+            } else if (value instanceof RAbstractVector) {
+                RAbstractVector obj = (RAbstractVector) value;
+                try (C c = withAttributes(obj)) {
+                    appendVector((RAbstractVector) value);
+                }
+            } else if (value instanceof RNull) {
+                append("NULL");
+            } else if (value instanceof RFunction) {
+                RFunction f = (RFunction) value;
+                if (f.isBuiltin()) {
+                    append(".Primitive(\"").append(f.getName()).append("\")");
+                } else {
+                    RSyntaxFunction function = (RSyntaxFunction) f.getRootNode();
+                    append("function (");
+                    appendArgs(function.getSyntaxSignature(), function.getSyntaxArgumentDefaults(), 0, true);
+                    append(") ");
+                    appendFunctionBody(function.getSyntaxBody());
+                }
+            } else if (value instanceof RPairList) {
+                RPairList arglist = (RPairList) value;
+                assert arglist.getType() == SEXPTYPE.LISTSXP;
+                append("pairlist(");
+                int i = 0;
+                boolean lbreak = false;
+                while (arglist != null) {
+                    if (i++ > 0) {
+                        append(", ");
+                    }
+                    lbreak = linebreak(lbreak);
+                    if (arglist.getTag() != RNull.instance) {
+                        String argName = ((RSymbol) arglist.getTag()).getName();
+                        if (!argName.isEmpty()) {
+                            append(argName).append(" = ");
+                        }
+                    }
+                    appendValue(arglist.car());
+
+                    arglist = next(arglist);
+                }
+                append(')');
+            } else if (value instanceof RS4Object) {
+                RS4Object s4Obj = (RS4Object) value;
+                Object clazz = s4Obj.getAttr("class");
+                String className = clazz == null ? "S4" : RRuntime.toString(RRuntime.asStringLengthOne(clazz));
+                append("new(\"").append(className).append('\"');
+                try (C c = indent()) {
+                    printline();
+                    if (s4Obj.getAttributes() != null) {
+                        for (RAttribute att : s4Obj.getAttributes()) {
+                            if (!"class".equals(att.getName())) {
+                                append(", ").append(att.getName()).append(" = ").appendValue(att.getValue()).printline();
+                            }
+                        }
+                    }
+                }
+                append(')');
+            } else if (value instanceof RExternalPtr) {
+                append("<pointer: 0x").append(Long.toHexString(((RExternalPtr) value).getAddr().asAddress())).append('>');
+            } else if (value instanceof REnvironment) {
+                append("<environment>");
+            } else if (value instanceof TruffleObject) {
+                append("<truffle object>");
+            } else {
+                throw RInternalError.shouldNotReachHere("unexpected: " + value);
+            }
+            return this;
+        }
+
+        private DeparseVisitor appendFunctionBody(RSyntaxElement body) {
+            boolean newline = true;
+            if (body instanceof RSyntaxCall) {
+                RSyntaxCall c = (RSyntaxCall) body;
+                if (c.getSyntaxLHS() instanceof RSyntaxLookup) {
+                    RSyntaxLookup l = (RSyntaxLookup) c.getSyntaxLHS();
+                    if ("{".equals(l.getIdentifier())) {
+                        newline = false;
+                    }
+                }
+            }
+            if (newline) {
+                printline();
+            }
+            return append(body);
+        }
+
         private DeparseVisitor appendArgs(ArgumentsSignature signature, RSyntaxElement[] args, int start, boolean formals) {
             boolean lbreak = false;
             for (int i = start; i < args.length; i++) {
+                if (i > start) {
+                    append(", ");
+                }
                 lbreak = linebreak(lbreak);
                 RSyntaxElement argument = args[i];
-                if (argument instanceof RSyntaxLookup && ((RSyntaxLookup) argument).getIdentifier().isEmpty()) {
-                    argument = null;
-                }
-                if (argument instanceof RSyntaxConstant && ((RSyntaxConstant) argument).getValue() instanceof REmpty) {
-                    argument = null;
-                }
                 String name = signature.getName(i);
-                if (name != null && name.isEmpty()) {
-                    name = null;
-                }
-                if (name != null) {
+
+                if (name != null && !name.isEmpty()) {
                     if (isValidName(name)) {
                         append(name);
                     } else {
@@ -743,10 +730,13 @@ public class RDeparse {
                     }
                 }
                 if (argument != null) {
+                    if (argument instanceof RSyntaxLookup && ((RSyntaxLookup) argument).getIdentifier().isEmpty()) {
+                        continue;
+                    }
+                    if (argument instanceof RSyntaxConstant && ((RSyntaxConstant) argument).getValue() instanceof REmpty) {
+                        continue;
+                    }
                     append(argument);
-                }
-                if (i != args.length - 1) {
-                    append(", ");
                 }
             }
             if (lbreak) {
@@ -755,12 +745,23 @@ public class RDeparse {
             return this;
         }
 
-        private DeparseVisitor process(Object v) {
+        private DeparseVisitor appendValue(Object v) {
             assert v != null;
-            assert RRuntime.asAbstractVector(v) instanceof RTypedValue : v.getClass();
             assert !(v instanceof RSyntaxElement) : v.getClass();
 
-            RSyntaxElement element = wrap(v, false);
+            Object value = RRuntime.asAbstractVector(v);
+            assert value instanceof RTypedValue : v.getClass();
+
+            RSyntaxElement element;
+            if (value instanceof RSymbol) {
+                element = RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, ((RSymbol) value).getName(), false);
+            } else if (value instanceof RLanguage) {
+                element = ((RLanguage) value).getRep().asRSyntaxNode();
+            } else if (value instanceof RMissing) {
+                element = RSyntaxLookup.createDummyLookup(null, "", false);
+            } else {
+                return appendConstant(value);
+            }
             if (!quoteExpressions() || element instanceof RSyntaxConstant) {
                 append(element);
             } else {
@@ -769,87 +770,6 @@ public class RDeparse {
                 append(')');
             }
             return this;
-        }
-
-        private static RSyntaxElement wrap(Object v, boolean isCallLHS) {
-            Object value = RRuntime.asAbstractVector(v);
-            if (value instanceof RSymbol) {
-                return RSyntaxLookup.createDummyLookup(null, ((RSymbol) value).getName(), isCallLHS);
-            } else if (value instanceof RLanguage) {
-                return ((RLanguage) value).getRep().asRSyntaxNode();
-            } else if (value instanceof RPairList) {
-                RPairList pl = (RPairList) value;
-                switch (pl.getType()) {
-                    case LANGSXP:
-                        return wrapCall(pl);
-                    case CLOSXP:
-                        return wrapFunctionExpression(pl);
-                    default:
-                        throw RInternalError.shouldNotReachHere("sexptype: " + pl.getType());
-                }
-            } else if (value instanceof RMissing) {
-                return RSyntaxLookup.createDummyLookup(null, "", false);
-            } else {
-                return RSyntaxConstant.createDummyConstant(null, value);
-            }
-        }
-
-        private static RSyntaxElement wrapCall(RPairList pl) {
-            Object car = pl.car();
-            if (car instanceof RSymbol && ((RSymbol) car).getName().equals("function")) {
-                RPairList fun = (RPairList) pl.cdr();
-                return wrapFunctionExpression(fun);
-            }
-            RSyntaxElement lhs = wrap(car, true);
-
-            Arguments<RSyntaxElement> args = wrapArguments(pl.cdr());
-            return RSyntaxCall.createDummyCall(null, lhs, args.getSignature(), args.getArguments());
-        }
-
-        private static RSyntaxElement wrapFunctionExpression(RPairList fun) {
-            // assert fun.getTag() == RNull.instance : "function expression with non-null
-            // environment";
-            Arguments<RSyntaxElement> args = wrapArguments(fun.car());
-            RSyntaxElement body;
-            Object cdr = fun.cdr();
-            if (cdr instanceof RPairList) {
-                RPairList pl = (RPairList) cdr;
-                if (pl.getType() == SEXPTYPE.BCODESXP) {
-                    RAbstractListVector list = (RAbstractListVector) fun.cddr();
-                    body = wrap(list.getDataAtAsObject(0), false);
-                } else if (pl.getType() == SEXPTYPE.LISTSXP) {
-                    assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance && pl.cddr() == RNull.instance);
-                    body = wrap(pl.car(), false);
-                } else {
-                    assert pl.getType() == SEXPTYPE.LANGSXP;
-                    body = wrap(pl, false);
-                }
-            } else {
-                body = wrap(cdr, false);
-            }
-
-            return RSyntaxFunction.createDummyFunction(null, args.getSignature(), args.getArguments(), body, null);
-        }
-
-        private static Arguments<RSyntaxElement> wrapArguments(Object args) {
-            RPairList arglist = args instanceof RNull ? null : (RPairList) args;
-            ArrayList<RSyntaxElement> argElements = new ArrayList<>();
-            ArrayList<String> argNames = new ArrayList<>();
-            while (arglist != null) {
-                Object argTag = arglist.getTag();
-                if (argTag != null && argTag != RNull.instance) {
-                    String rs = ((RSymbol) arglist.getTag()).getName();
-                    argNames.add(rs);
-                } else {
-                    argNames.add(null);
-                }
-                argElements.add(wrap(arglist.car(), false));
-                arglist = next(arglist);
-            }
-            RSyntaxElement[] arguments = argElements.toArray(new RSyntaxElement[argElements.size()]);
-            ArgumentsSignature signature = ArgumentsSignature.get(argNames.toArray(new String[argNames.size()]));
-            Arguments<RSyntaxElement> arg = new Arguments<>(arguments, signature);
-            return arg;
         }
 
         private static RPairList next(RPairList pairlist) {
@@ -920,14 +840,17 @@ public class RDeparse {
                     break;
                 case REALSXP:
                     double d = (double) element;
-                    append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : encodeReal(d));
+                    append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : RContext.getRRuntimeASTAccess().encodeDouble(d));
                     break;
                 case INTSXP:
                     int i = (int) element;
                     if (RRuntime.isNA(i)) {
                         append((singleElement ? "NA_integer_" : "NA"));
                     } else {
-                        append(RRuntime.intToStringNoCheck(i)).append('L');
+                        append(RRuntime.intToStringNoCheck(i));
+                        if ((opts & KEEPINTEGER) != 0) {
+                            append('L');
+                        }
                     }
                     break;
                 case CPLXSXP:
@@ -935,11 +858,7 @@ public class RDeparse {
                     if (RRuntime.isNA(c)) {
                         append((singleElement ? "NA_complex_" : "NA"));
                     } else {
-                        append(encodeReal(c.getRealPart()));
-                        if (c.getImaginaryPart() >= 0) {
-                            append('+');
-                        }
-                        append(encodeReal(c.getImaginaryPart())).append('i');
+                        append(RContext.getRRuntimeASTAccess().encodeComplex(c));
                     }
                     break;
                 default:
@@ -951,22 +870,21 @@ public class RDeparse {
         /**
          * Handles {@link RList}, (@link RExpression}. Method name same as GnuR.
          */
-        private DeparseVisitor appendListContents(RAbstractListVector v) {
+        private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames();
+            Object names = v.getNames(DUMMY_ATTR_PROFILES);
             RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
             for (int i = 0; i < n; i++) {
                 if (i > 0) {
                     append(", ");
                 }
                 lbreak = linebreak(lbreak);
-                String sname = snames == null ? null : snames.getDataAt(i);
-                if (snames != null && ((sname = snames.getDataAt(i)) != null)) {
-                    append(sname);
+                if (snames != null) {
+                    append(snames.getDataAt(i));
                     append(" = ");
                 }
-                append(wrap(v.getDataAtAsObject(i), false));
+                appendValue(v.getDataAtAsObject(i));
             }
             if (lbreak) {
                 indent--;
@@ -1030,7 +948,7 @@ public class RDeparse {
                                 append(dotName);
                             }
                             append(" = ");
-                            process(attr.getValue());
+                            appendValue(attr.getValue());
                             append(')');
                         }
                     }
@@ -1042,69 +960,30 @@ public class RDeparse {
         }
     }
 
-    /**
-     * Version for use by {@code RSerialize} to convert a CLOSXP/LANGSXP/PROMSXP into a parseable
-     * string.
-     */
-    @TruffleBoundary
-    public static String deparseDeserialize(Map<String, Object> constants, Object obj) {
-        Object root = obj;
-        if (root instanceof RPairList) {
-            RPairList pl = (RPairList) root;
-            if (pl.getType() == SEXPTYPE.BCODESXP) {
-                RAbstractListVector list = (RAbstractListVector) pl.cdr();
-                root = list.getDataAtAsObject(0);
-            }
-        }
-        return new DeparseVisitor(false, 80, true, 0, -1, constants).process(root).getContents();
-    }
-
     @TruffleBoundary
     public static String deparseSyntaxElement(RSyntaxElement element) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1, null).append(element).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).append(element).getContents();
     }
 
     @TruffleBoundary
-    public static String deparse(Object expr) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, 0, -1, null).process(expr).getContents();
+    public static String deparse(Object value) {
+        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).appendValue(value).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
-        return new DeparseVisitor(false, cutoff, backtick, opts, nlines, null).process(expr).getContents();
+        return new DeparseVisitor(false, cutoff, backtick, opts, nlines).appendValue(expr).getContents();
     }
 
-    // TODO: this should use the DoubleVectorPrinter
-
-    private static final DecimalFormatSymbols decimalFormatSymbols;
-    private static final DecimalFormat decimalFormat;
-    private static final DecimalFormat simpleDecimalFormat;
-
-    static {
-        decimalFormatSymbols = new DecimalFormatSymbols();
-        decimalFormatSymbols.setExponentSeparator("e");
-        decimalFormatSymbols.setNaN("NaN");
-        decimalFormatSymbols.setInfinity("Inf");
-        decimalFormat = new DecimalFormat("#.##################E0", decimalFormatSymbols);
-        simpleDecimalFormat = new DecimalFormat("#.##################", decimalFormatSymbols);
-    }
-
-    private static String encodeReal(double x) {
-        double d = RRuntime.normalizeZero(x);
-        if (d == 0 || withinSimpleRealRange(d)) {
-            return simpleDecimalFormat.format(d);
-        } else {
-            String str = decimalFormat.format(d);
-            if (!str.contains("e-") && str.contains("e")) {
-                return str.replace("e", "e+");
-            } else {
-                return str;
-            }
+    /**
+     * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
+     */
+    public static void ensureSourceSection(RSyntaxNode node) {
+        SourceSection ss = node.getLazySourceSection();
+        if (ss == RSyntaxNode.LAZY_DEPARSE) {
+            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            assert node.getLazySourceSection() != RSyntaxNode.LAZY_DEPARSE;
         }
-    }
-
-    private static boolean withinSimpleRealRange(double d) {
-        return (d > 0.0001 || d < -0.0001) && d < 100000 && d > -100000;
     }
 
     private static String quotify(String name, char qc) {
@@ -1115,7 +994,7 @@ public class RDeparse {
             sb.append(qc);
             for (int i = 0; i < name.length(); i++) {
                 char ch = name.charAt(i);
-                if (ch == '\\') {
+                if (ch == '\\' || ch == '`') {
                     sb.append(ch);
                 }
                 sb.append(ch);
@@ -1128,10 +1007,6 @@ public class RDeparse {
     private static final HashSet<String> keywords = new HashSet<>(Arrays.asList("NULL", "NA", "TRUE", "FALSE", "Inf", "NaN", "NA_integer_", "NA_real_", "NA_character_", "NA_complex_", "function",
                     "while", "repeat", "for", "if", "in", "else", "next", "break", "..."));
 
-    private static boolean isKeyword(String name) {
-        return keywords.contains(name);
-    }
-
     public static boolean isValidName(String name) {
         char ch = safeCharAt(name, 0);
         if (ch != '.' && !Character.isLetter(ch)) {
@@ -1142,7 +1017,7 @@ public class RDeparse {
         }
         int i = 1;
         ch = safeCharAt(name, i);
-        while (Character.isAlphabetic(ch) || Character.isDigit(ch) || ch == '.' | ch == '_') {
+        while ((ch != '?' && Character.isAlphabetic(ch)) || Character.isDigit(ch) || ch == '.' | ch == '_') {
             i++;
             ch = safeCharAt(name, i);
         }
@@ -1152,7 +1027,7 @@ public class RDeparse {
         if (name.equals("...")) {
             return true;
         }
-        if (isKeyword(name)) {
+        if (keywords.contains(name)) {
             return false;
         }
         return true;

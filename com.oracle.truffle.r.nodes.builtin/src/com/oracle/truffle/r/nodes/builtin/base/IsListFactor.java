@@ -10,6 +10,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -19,14 +23,13 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.IsListFactorNodeGen.IsListFactorInternalNodeGen;
 import com.oracle.truffle.r.nodes.unary.IsFactorNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 // from apply.c
 
-@RBuiltin(name = "islistfactor", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "recursive"})
+@RBuiltin(name = "islistfactor", kind = INTERNAL, parameterNames = {"x", "recursive"}, behavior = PURE)
 public abstract class IsListFactor extends RBuiltinNode {
 
     protected abstract static class IsListFactorInternal extends Node {
@@ -69,7 +72,7 @@ public abstract class IsListFactor extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1);
+        casts.arg("recursive").asLogicalVector().findFirst().map(toBoolean());
     }
 
     protected static IsListFactorInternal createNode(boolean recursive) {

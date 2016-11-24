@@ -95,5 +95,8 @@ public class TestBuiltin_isunsorted extends TestBase {
     public void testIsUnsorted() {
         assertEval("{ is.unsorted(c(1,2,3,4)) }");
         assertEval("{ is.unsorted(c(1,2,6,4)) }");
+        assertEval("{ is.unsorted(c(1,2,2,3), strictly=TRUE) }");
+        assertEval("{ is.unsorted(c(1+1i,2+1i,2+1i), strictly=FALSE) }");
+        assertEval("{ is.unsorted(c(1+1i,2+1i,2+1i), strictly=TRUE) }");
     }
 }

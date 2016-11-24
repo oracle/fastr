@@ -291,9 +291,10 @@ public final class CountFields extends RExternalBuiltinNode {
 
     // Transcribed from GnuR, library/utils/src/io.c
     @Override
+    @TruffleBoundary
     public Object call(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();
-        RConnection conn = (RConnection) argValues[0];
+        int conn = castInt(castVector(argValues[0]));
         Object sepArg = argValues[1];
         char sepChar;
         Object quoteArg = argValues[2];
@@ -339,7 +340,7 @@ public final class CountFields extends RExternalBuiltinNode {
                 quoteSet = s;
             }
         }
-        try (RConnection openConn = conn.forceOpen("r")) {
+        try (RConnection openConn = RConnection.fromIndex(conn).forceOpen("r")) {
             return countFields(openConn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
         } catch (IllegalStateException | IOException ex) {
             errorProfile.enter();

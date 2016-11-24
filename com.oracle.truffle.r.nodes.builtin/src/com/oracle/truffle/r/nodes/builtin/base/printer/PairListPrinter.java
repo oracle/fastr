@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -44,6 +45,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
     private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
+    @TruffleBoundary
     protected void printValue(RPairList s, PrintContext printCtx) throws IOException {
         final RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
                         s.getAttr(dummyAttrProfiles, RRuntime.DIM_ATTR_KEY));

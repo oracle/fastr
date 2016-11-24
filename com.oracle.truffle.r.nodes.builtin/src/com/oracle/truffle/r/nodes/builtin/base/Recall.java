@@ -22,49 +22,56 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
  * The {@code Recall} {@code .Internal}.
  */
-@RBuiltin(name = "Recall", visibility = RVisibility.CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0})
+@RBuiltin(name = "Recall", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0}, behavior = COMPLEX)
 public abstract class Recall extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private LocalReadVariableNode readArgs = LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false);
-    @Child private CallMatcherNode call = CallMatcherNode.create(false, false);
+
+    @Child private GetCallerFrameNode callerFrame = new GetCallerFrameNode();
+
+    private final Object argsIdentifier = new Object();
+    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
+    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
 
     @Specialization
     protected Object recall(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+        Frame cframe = callerFrame.execute(frame);
+        RFunction function = RArguments.getFunction(cframe);
+        if (function == null) {
+            errorProfile.enter();
+            throw RError.error(RError.SHOW_CALLER, RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+        }
         /*
          * The args passed to the Recall internal are ignored, they are always "...". Instead, this
          * builtin looks at the arguments passed to the surrounding function.
          */
-        Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-        RFunction function = RArguments.getFunction(cframe);
-        if (function == null) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-        }
         RArgsValuesAndNames actualArgs = (RArgsValuesAndNames) readArgs.execute(frame);
-        return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, null, null);
+        frame.setObject(slot.executeFrameSlot(frame), actualArgs);
+        return call.execute(frame, function);
     }
 }

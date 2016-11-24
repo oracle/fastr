@@ -11,8 +11,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -22,10 +27,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -38,15 +43,15 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "unlist", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "recursive", "use.names"})
+@RBuiltin(name = "unlist", kind = INTERNAL, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
 public abstract class Unlist extends RBuiltinNode {
 
     // portions of the algorithm were transcribed from GNU R
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1);
-        casts.firstBoolean(2);
+        casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean());
+        casts.arg("use.names").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean());
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
@@ -119,7 +124,7 @@ public abstract class Unlist extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(null));
+            lengthNode = insert(LengthNodeGen.create());
         }
     }
 
@@ -142,20 +147,8 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isVectorList(vector)")
-    protected RAbstractVector unlistVector(RAbstractVector vector, boolean recursive, boolean useNames) {
-        return vector;
-    }
-
-    @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty(list)")
-    protected RNull unlistEmptyList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
-        return RNull.instance;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isOneNull(list)")
-    protected RNull unlistOneNullList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
+    protected RNull unlistEmptyList(RList list, boolean recursive, boolean useNames) {
         return RNull.instance;
     }
 
@@ -180,6 +173,12 @@ public abstract class Unlist extends RBuiltinNode {
         } else {
             return unlistHelper(list, recursive, useNames, precedence, totalSize);
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object unlist(Object o, Object recursive, Object useNames) {
+        return o;
     }
 
     @TruffleBoundary
@@ -648,7 +647,15 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     private static String unlistValueString(Object cur) {
-        return RRuntime.toString(cur);
+        if (cur instanceof Double) {
+            Double d = (Double) cur;
+            return RRuntime.isNAorNaN(d) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeDouble(d);
+        } else if (cur instanceof RComplex) {
+            RComplex c = (RComplex) cur;
+            return c.isNA() ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeComplex(c);
+        } else {
+            return RRuntime.toString(cur);
+        }
     }
 
     private static RComplex unlistValueComplex(Object dataAtAsObject) {

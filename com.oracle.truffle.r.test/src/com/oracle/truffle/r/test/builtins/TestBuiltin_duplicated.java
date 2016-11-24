@@ -130,5 +130,10 @@ public class TestBuiltin_duplicated extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ duplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
 
         assertEval("{ duplicated(NULL, 0); }");
+
+        assertEval("{ x<-quote(f(7, 42)); duplicated(x) }");
+        assertEval("{ x<-function() 42; duplicated(x) }");
+        assertEval(Output.IgnoreErrorContext, "{ duplicated(c(1,2,1), incomparables=function() 42) }");
+
     }
 }

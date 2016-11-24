@@ -34,7 +34,7 @@ public abstract class ResourceHandlerFactory {
     public interface Handler {
         /**
          * See {@link java.lang.Class#getResource(String)}.
-         * 
+         *
          * @return The path component of the {@link java.net URL} returned by
          *         {@link java.lang.Class#getResource(String)}
          */
@@ -44,6 +44,12 @@ public abstract class ResourceHandlerFactory {
          * See {@link java.lang.Class#getResourceAsStream(String)}.
          */
         InputStream getResourceAsStream(Class<?> accessor, String name);
+
+        /**
+         * Return the contents of all "R" files (ending with ".r" or ".R") relative to
+         * {@code accessor} and {@code pkgname/R}. I.e. essentially a directory search.
+         */
+        String[] getRFiles(Class<?> accessor, String pkgName);
     }
 
     static {
@@ -58,7 +64,7 @@ public abstract class ResourceHandlerFactory {
 
     private static ResourceHandlerFactory theInstance;
 
-    private static ResourceHandlerFactory getInstance() {
+    public static ResourceHandlerFactory getInstance() {
         return theInstance;
     }
 

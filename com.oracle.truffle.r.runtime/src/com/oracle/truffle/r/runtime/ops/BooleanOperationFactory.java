@@ -26,5 +26,5 @@ package com.oracle.truffle.r.runtime.ops;
 public interface BooleanOperationFactory extends OperationFactory {
 
     @Override
-    BooleanOperation create();
+    BooleanOperation createOperation();
 }

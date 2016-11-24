@@ -144,18 +144,13 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ m <- { matrix( as.raw(11:16), nrow=2 ) } ; diag(m) <- c(as.raw(1),as.raw(2)) ; m }");
     }
 
-    //@formatter:off
     private static final String[] BASIC_TYPES = new String[]{
-        "call", "character", "complex", "double", "expression", "function", "integer", "list",
-        "logical", "name", "symbol", "null", "pairlist", "raw",
+                    "call", "character", "complex", "double", "expression", "function", "integer", "list", "logical", "name", "symbol", "null", "pairlist", "raw",
     };
 
     private static final String[] BASIC_TYPE_VALUES = new String[]{
-        "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }",
-        "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
+                    "call(\"foo\")", "\"1\"", "1i", "1", "expression(x + 1)", "function() { }", "1L", "list()", "TRUE", "quote(x)", "NULL", "pairlist()", "raw()"
     };
-
-    //@formatter:on
 
     @Test
     public void testBasicTypes() {
@@ -212,20 +207,19 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testEigen() {
         // symmetric real input
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ eigen(10, only.values=FALSE) }");
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
+        assertEval("{ eigen(10, only.values=FALSE) }");
 
         // non-symmetric real input, real output
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
         assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
 
         // non-symmetric real input, complex output
-        // FIXME: GNUR is won't print the minus sign for negative zero
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
     }
 
     @Test
@@ -247,8 +241,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testWorkingDirectory() {
         assertEval("{ cur <- getwd(); cur1 <- setwd(getwd()) ; cur2 <- getwd() ; cur == cur1 && cur == cur2 }");
-        assertEval(Output.IgnoreErrorContext, "{ setwd(1) }");
-        assertEval(Output.IgnoreErrorContext, "{ setwd(character()) }");
+        assertEval("{ setwd(1) }");
+        assertEval("{ setwd(character()) }");
         assertEval("{ cur <- getwd(); cur1 <- setwd(c(cur, \"dummy\")) ; cur2 <- getwd() ; cur == cur1  }");
     }
 
@@ -269,7 +263,8 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testSimpleRm() {
         assertEval("{ x <- 200 ; rm(\"x\") ; x }");
-        assertEval(Output.IgnoreWarningContext, "{ rm(\"ieps\") }");
+        assertEval("{ rm(\"ieps\") }");
+        assertEval("{ rm(\"sum\", envir=getNamespace(\"stats\")) }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); x }");
         assertEval("{ x<-200; y<-100; rm(\"x\", \"y\"); y }");
@@ -277,7 +272,7 @@ public class TestMiscBuiltins extends TestBase {
 
     @Test
     public void testParen() {
-        assertEval(Ignored.Unknown, "{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }
 
     @Test

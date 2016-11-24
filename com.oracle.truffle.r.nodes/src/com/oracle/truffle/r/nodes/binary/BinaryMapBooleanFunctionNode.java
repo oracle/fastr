@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -30,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
+import com.oracle.truffle.r.runtime.ops.Operation;
 
 public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode {
 
@@ -75,7 +77,12 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
             }
             return RRuntime.LOGICAL_NA;
         }
-        return RRuntime.asLogical(operation.opLogical(left, right));
+        try {
+            return RRuntime.asLogical(operation.opLogical(left, right));
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -96,7 +103,12 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
             }
             return RRuntime.LOGICAL_NA;
         }
-        return RRuntime.asLogical(operation.op(left, right));
+        try {
+            return RRuntime.asLogical(operation.op(left, right));
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -117,7 +129,12 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
             }
             return RRuntime.LOGICAL_NA;
         }
-        return RRuntime.asLogical(operation.op(left, right));
+        try {
+            return RRuntime.asLogical(operation.op(left, right));
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -138,7 +155,12 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
             }
             return RRuntime.LOGICAL_NA;
         }
-        return RRuntime.asLogical(operation.op(left, right));
+        try {
+            return RRuntime.asLogical(operation.op(left, right));
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
@@ -149,12 +171,22 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
         if (rightNACheck.check(right)) {
             return RRuntime.LOGICAL_NA;
         }
-        return RRuntime.asLogical(operation.op(left, right));
+        try {
+            return RRuntime.asLogical(operation.op(left, right));
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     @Override
     public byte applyRaw(byte left, byte right) {
-        return operation.opRaw(left, right);
+        try {
+            return operation.opRaw(left, right);
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            throw Operation.handleException(e);
+        }
     }
 
     boolean requiresRightOperand(byte left) {

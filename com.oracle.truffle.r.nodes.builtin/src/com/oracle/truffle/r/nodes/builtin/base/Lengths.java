@@ -22,21 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
+import static com.oracle.truffle.r.runtime.RError.Message.X_LIST_ATOMIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctions.IsAtomic;
-import com.oracle.truffle.r.nodes.builtin.base.IsTypeFunctionsFactory.IsAtomicNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -44,64 +47,52 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "lengths", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "use.names"})
+@RBuiltin(name = "lengths", kind = INTERNAL, parameterNames = {"x", "use.names"}, behavior = PURE)
 public abstract class Lengths extends RBuiltinNode {
 
-    @Child private IsAtomic isAtomicNode;
-    @Child private Length lengthNode;
+    @Child private RLengthNode lengthNode;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(1);
+        casts.arg("x").defaultError(RError.SHOW_CALLER, X_LIST_ATOMIC).allowNull().mustBe(abstractVectorValue());
+        casts.arg("use.names").mustBe(numericValue(), RError.SHOW_CALLER, INVALID_VALUE, "use.names").asLogicalVector().findFirst().map(toBoolean());
     }
 
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create(null));
+            lengthNode = insert(RLengthNode.create());
         }
     }
 
     @Specialization
-    protected RIntVector doList(VirtualFrame frame, RList list, byte useNames) {
+    protected RIntVector doList(VirtualFrame frame, RList list, boolean useNames) {
         initLengthNode();
         int[] data = new int[list.getLength()];
         for (int i = 0; i < data.length; i++) {
             Object elem = list.getDataAt(i);
-            data[i] = lengthNode.executeInt(frame, elem);
+            data[i] = lengthNode.executeInteger(frame, elem);
         }
         return createResult(list, data, useNames);
     }
 
     @Specialization
-    protected RIntVector doNull(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") byte useNames) {
-        return RDataFactory.createIntVectorFromScalar(1);
+    protected RIntVector doNull(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") boolean useNames) {
+        return RDataFactory.createEmptyIntVector();
     }
 
-    @Fallback
-    protected RIntVector doObject(VirtualFrame frame, Object x, Object useNames) {
-        if (isAtomicNode == null) {
-            isAtomicNode = insert(IsAtomicNodeGen.create(null));
-        }
-        byte isAtomic = (byte) isAtomicNode.execute(frame, x);
-        if (!RRuntime.fromLogical(isAtomic)) {
-            throw RError.error(this, RError.Message.X_LIST_ATOMIC);
-        }
-        if (x instanceof RAbstractVector) {
-            RAbstractVector xa = (RAbstractVector) x;
-            int[] data = new int[xa.getLength()];
-            Arrays.fill(data, 1);
-            return createResult(xa, data, (byte) useNames);
-        } else {
-            throw RInternalError.unimplemented();
-        }
+    @Specialization
+    protected RIntVector doObject(RAbstractVector xa, boolean useNames) {
+        int[] data = new int[xa.getLength()];
+        Arrays.fill(data, 1);
+        return createResult(xa, data, useNames);
     }
 
-    private RIntVector createResult(RAbstractVector x, int[] data, byte useNames) {
+    private RIntVector createResult(RAbstractVector x, int[] data, boolean useNames) {
         RIntVector result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        if (RRuntime.fromLogical(useNames)) {
+        if (useNames) {
             result.copyNamesFrom(attrProfiles, x);
         }
         return result;

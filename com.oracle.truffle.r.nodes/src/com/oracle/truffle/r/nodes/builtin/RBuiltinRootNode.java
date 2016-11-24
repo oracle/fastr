@@ -27,22 +27,31 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.RCallNode.BuiltinCallNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class RBuiltinRootNode extends RRootNode {
 
-    @Child private RBuiltinNode builtin;
+    @Child private BuiltinCallNode call;
+    @Children private final AccessArgumentNode[] args;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
+    private final RBuiltinNode builtin;
     private final RBuiltinFactory factory;
 
     RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
         super(null, formalArguments, frameDescriptor, fastPath);
         this.factory = factory;
         this.builtin = builtin;
+        this.args = new AccessArgumentNode[factory.getSignature().getLength()];
     }
 
     @Override
@@ -58,18 +67,30 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
+    @ExplodeLoop
     public Object execute(VirtualFrame frame) {
         verifyEnclosingAssumptions(frame);
-        Object result = null;
         try {
-            result = builtin.execute(frame);
+            if (call == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                this.call = insert(new BuiltinCallNode(builtin, factory, getFormalArguments(), null, true));
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = insert(AccessArgumentNode.create(i));
+                    args[i].setFormals(getFormalArguments());
+                }
+            }
+            Object[] arguments = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                arguments[i] = args[i].execute(frame);
+            }
+            return call.execute(frame, null, new RArgsValuesAndNames(arguments, factory.getSignature()), null);
         } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
             CompilerDirectives.transferToInterpreter();
             throw new RInternalError(e, "internal error");
+        } finally {
+            visibility.execute(frame, factory.getVisibility());
+            visibility.executeEndOfFunction(frame);
         }
-
-        RContext.getInstance().setVisible(factory.getVisibility());
-        return result;
     }
 
     public RBuiltinNode getBuiltinNode() {
@@ -97,12 +118,12 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
-    public String getSourceCode() {
-        throw RInternalError.shouldNotReachHere();
+    public String getName() {
+        return "RBuiltin(" + builtin + ")";
     }
 
     @Override
     public String toString() {
-        return "RBuiltin(" + builtin + ")";
+        return getName();
     }
 }

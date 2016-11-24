@@ -22,14 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import java.io.IOException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
@@ -39,17 +37,16 @@ public class TestBase {
     static RContext testVMContext;
 
     @BeforeClass
-    public static void setupClass() throws IOException {
-        testVM = FastRSession.create().createTestContext(null);
+    public static void setupClass() {
+        testVM = FastRSession.create().checkContext(null).createVM();
         testVMContext = testVM.eval(FastRSession.GET_CONTEXT).as(RContext.class);
     }
 
     // clear out warnings (which are stored in shared base env)
-    @SuppressWarnings("deprecation") private static final Source CLEAR_WARNINGS = Source.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>").withMimeType(
-                    TruffleRLanguage.MIME);
+    private static final Source CLEAR_WARNINGS = RSource.fromTextInternal("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS);
 
     @AfterClass
-    public static void finishClass() throws IOException {
+    public static void finishClass() {
         testVM.eval(CLEAR_WARNINGS);
         testVM.dispose();
     }

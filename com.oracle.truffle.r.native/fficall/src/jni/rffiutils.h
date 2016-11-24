@@ -46,10 +46,14 @@ void *unimplemented(char *msg);
 void fatalError(char *msg);
 // makes a call to the VM with x as an argument (for debugger validation)
 void validate(SEXP x);
-// checks x against the list of canonical (named) refs, returning the canonical version if a match
+// checks x against the list of global JNI refs, returning the global version if x matches (IsSameObject)
 SEXP checkRef(JNIEnv *env, SEXP x);
-// creates a JNI global ref from x for slot index of the named refs table
-SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP x);
+// creates a global JNI global ref from x. If permanent is non-zero, calls to
+// releaseGlobalRef are ignored and the global ref persists for the entire execution
+// (used for the R global variables such as R_NilValue).
+SEXP createGlobalRef(JNIEnv *env, SEXP x, int permanent);
+// release a previously created JNI global ref
+void releaseGlobalRef(JNIEnv *env, SEXP x);
 // validate a JNI reference
 void validateRef(JNIEnv *env, SEXP x, const char *msg);
 
@@ -60,13 +64,18 @@ void callExit(JNIEnv *env);
 // called by callExit to deallocate transient memory
 void allocExit();
 
+// returns the jmp_buf at the current call depth
 jmp_buf *getErrorJmpBuf();
 
-// find an object for which we have cached the internal rep
-void *findCopiedObject(JNIEnv *env, SEXP x);
-// add a new object to the internal rep cache
-void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data);
-void invalidateCopiedObject(JNIEnv *env, SEXP oldObj);
+// Given the x denotes an R vector type, return a pointer to
+// the data as a C array
+void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
+// Rare case where an operation changes the internal
+// data and thus the old C array should be invalidated
+void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
+void updateNativeArrays(JNIEnv *env);
+
+SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
@@ -74,25 +83,50 @@ void init_dynload(JNIEnv *env);
 void init_internals(JNIEnv *env);
 void init_random(JNIEnv *env);
 void init_utils(JNIEnv *env);
+void init_parse(JNIEnv *env);
+void init_pcre(JNIEnv *env);
+void init_c(JNIEnv *env);
+
+void setEmbedded(void);
 
 void setTempDir(JNIEnv *, jstring tempDir);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
 extern jclass RRuntimeClass;
+extern FILE *traceFile;
 
-#define TRACE_UPCALLS 0
+// tracing/debugging support, set to 1 and recompile to enable
+#define TRACE_UPCALLS 0    // trace upcalls
+#define TRACE_REF_CACHE 0  // trace JNI reference cache
+#define TRACE_NATIVE_ARRAYS 0     // trace generation of internal arrays
+#define TRACE_ENABLED TRACE_UPCALLS || TRACE_REF_CACHE || TRACE_NATIVE_ARRAYS
 
-#define TARG1 "%s(%p)\n"
-#define TARG2 "%s(%p, %p)\n"
-#define TARG2d "%s(%p, %d)\n"
+#define TARGp "%s(%p)\n"
+#define TARGpp "%s(%p, %p)\n"
+#define TARGppp "%s(%p, %p, %p)\n"
+#define TARGpd "%s(%p, %d)\n"
+#define TARGppd "%s(%p, %p, %d)\n"
+#define TARGs "%s(\"%s\")\n"
+#define TARGps "%s(%p, \"%s\")\n"
+#define TARGsdd "%s(\"%s\", %d, %d)\n"
 
 #if TRACE_UPCALLS
-#define TRACE(format, ...) printf(format, __FUNCTION__, __VA_ARGS__)
+#define TRACE(format, ...) fprintf(traceFile, format, __FUNCTION__, __VA_ARGS__)
 #else
 #define TRACE(format, ...)
 #endif
 
 #define _(Source) (Source)
+
+// convert a string into a char*
+const char *stringToChars(JNIEnv *jniEnv, jstring string);
+
+extern jmethodID INTEGER_MethodID;
+extern jmethodID LOGICAL_MethodID;
+extern jmethodID REAL_MethodID;
+extern jmethodID RAW_MethodID;
+
+extern int callDepth;
 
 #endif /* RFFIUTILS_H */

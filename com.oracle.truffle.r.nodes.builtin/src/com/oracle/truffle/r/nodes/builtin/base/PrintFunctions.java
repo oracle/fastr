@@ -22,9 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -33,10 +40,9 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -47,44 +53,52 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
 
-    @RBuiltin(name = "print.default", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
+    @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"}, behavior = IO)
     public abstract static class PrintDefault extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+        @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            super.createCasts(casts);
-            casts.firstBoolean(2);
-            casts.firstBoolean(5);
-            casts.firstBoolean(7);
-            casts.firstBoolean(8);
+            casts.arg("digits").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
+
+            casts.arg("quote").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
+
+            casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+
+            casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("max").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+
+            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().notNA().map(toBoolean());
+
+            casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        @TruffleBoundary
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-            valuePrinter.executeString(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            valuePrinter.execute(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             return o;
         }
 
         protected static RFunction createShowFunction(VirtualFrame frame) {
-            return ReadVariableNode.lookupFunction("show", frame, false);
+            return ReadVariableNode.lookupFunction("show", frame);
         }
 
-        @SuppressWarnings("unused")
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt, //
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
             if (noOpt) {
                 // S4 should only be called in case noOpt is true
-                RContext.getEngine().evalFunction(showFunction, null, null, o);
+                RContext.getEngine().evalFunction(showFunction, null, null, null, o);
             } else {
-                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+                printDefault(frame, showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             }
-            return null;
+            return o;
         }
 
         protected boolean isS4(Object o) {
@@ -92,15 +106,22 @@ public class PrintFunctions {
         }
     }
 
-    @RBuiltin(name = "print.function", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."})
+    @RBuiltin(name = "print.function", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."}, behavior = IO)
     public abstract static class PrintFunction extends RBuiltinNode {
 
-        @Child private ValuePrinterNode valuePrinter = ValuePrinterNodeGen.create();
+        @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").mustBe(instanceOf(RFunction.class));
+
+            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RFunction printFunction(RFunction x, byte useSource, RArgsValuesAndNames extra) {
-            valuePrinter.executeString(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), true, false);
+        protected RFunction printFunction(VirtualFrame frame, RFunction x, boolean useSource, RArgsValuesAndNames extra) {
+            valuePrinter.execute(frame, x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
             return x;
         }
     }

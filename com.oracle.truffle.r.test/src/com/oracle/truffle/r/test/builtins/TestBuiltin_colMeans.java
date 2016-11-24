@@ -105,6 +105,6 @@ public class TestBuiltin_colMeans extends TestBase {
         assertEval("{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
         assertEval("{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}");
 
-        assertEval(Ignored.Unknown, "{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
 }

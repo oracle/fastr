@@ -30,17 +30,21 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public final class ArgumentsSignature implements Iterable<String> {
 
     private static final ConcurrentHashMap<ArgumentsSignature, ArgumentsSignature> signatures = new ConcurrentHashMap<>();
 
+    /**
+     * Designates an element in a signature that was not found during argument matching. The
+     * signature returned from argument matching must have a slot for each formal argument, formal
+     * argument can be provided with a name or without a name, or it may have default value, but
+     * without any actual value provided by the caller. This is the case for {@code UNMATCHED}. Use
+     * {@link #isUnmatched(int)} for checking if argument is unmatched.
+     */
+    public static final String UNMATCHED = new String();
     public static final String VARARG_NAME = "...";
     public static final int NO_VARARG = -1;
-
-    private static final String VARARG_GETTER_PREFIX = "..";
 
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
     public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
@@ -72,17 +76,16 @@ public final class ArgumentsSignature implements Iterable<String> {
     @CompilationFinal private final String[] names;
     @CompilationFinal private final int[] varArgIndexes;
     @CompilationFinal private final boolean[] isVarArg;
-    @CompilationFinal private final boolean[] isVarArgGetter;
+    private final int varArgIndex;
     private final int nonNullCount;
 
     private ArgumentsSignature(String[] names) {
-        this.names = Arrays.stream(names).map(s -> s == null ? null : s.intern()).toArray(String[]::new);
+        this.names = Arrays.stream(names).map(s -> s == null || s == UNMATCHED ? s : s.intern()).toArray(String[]::new);
         this.nonNullCount = (int) Arrays.stream(names).filter(s -> s != null).count();
 
         int index = NO_VARARG;
         int count = 0;
         this.isVarArg = new boolean[names.length];
-        this.isVarArgGetter = new boolean[names.length];
         for (int i = 0; i < names.length; i++) {
             String name = names[i];
             if (name != null) {
@@ -92,8 +95,6 @@ public final class ArgumentsSignature implements Iterable<String> {
                     if (index != NO_VARARG) {
                         index = i;
                     }
-                } else if (name.startsWith(VARARG_GETTER_PREFIX)) {
-                    this.isVarArgGetter[i] = true;
                 }
             }
         }
@@ -104,6 +105,7 @@ public final class ArgumentsSignature implements Iterable<String> {
                 varArgIndexes[pos++] = i;
             }
         }
+        this.varArgIndex = varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
     }
 
     public boolean isEmpty() {
@@ -120,15 +122,44 @@ public final class ArgumentsSignature implements Iterable<String> {
 
     public int getVarArgIndex() {
         assert varArgIndexes.length <= 1 : "cannot ask for _the_ vararg index if there are multiple varargs";
-        return varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
+        return varArgIndex;
     }
 
     public int getVarArgCount() {
         return varArgIndexes.length;
     }
 
+    public String[] getNames() {
+        return names;
+    }
+
     public String getName(int index) {
-        return names[index];
+        return names[index] == UNMATCHED ? null : names[index];
+    }
+
+    /**
+     * Returns {@code true} if the given index represents an unmatched argument. This only makes
+     * sense for signatures created by argument matching process, such signatures must contain a
+     * slot for each formal parameter, even for formal parameters with default value that were not
+     * supplied by the caller. Use this method in order to distinguish these from other parameters
+     * that were not matched by name and therefore have {@code null} as their name.
+     * {@link #getName(int)} returns {@code null} in either case.
+     */
+    public boolean isUnmatched(int index) {
+        return names[index] == UNMATCHED;
+    }
+
+    /**
+     * Returns the index of given name, {@code -1} if it is not present. The search key must be
+     * interned string.
+     */
+    public int indexOfName(String find) {
+        for (int i = 0; i < names.length; i++) {
+            if (names[i] == find) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -157,57 +188,8 @@ public final class ArgumentsSignature implements Iterable<String> {
         return Arrays.asList(names).iterator();
     }
 
-    public RStringVector createVector() {
-        String[] newNames = new String[names.length];
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            if (name == null) {
-                newNames[i] = "";
-            } else {
-                newNames[i] = name;
-            }
-        }
-        return RDataFactory.createStringVector(newNames, true);
-    }
-
     @Override
     public String toString() {
         return "Signature " + Arrays.toString(names);
-    }
-
-    /*
-     * Utility functions
-     */
-
-    public static long[] flattenIndexes(ArgumentsSignature[] varArgSignatures, int argListSize) {
-        long[] preparePermutation = new long[argListSize];
-        int index = 0;
-        for (int i = 0; i < varArgSignatures.length; i++) {
-            ArgumentsSignature varArgSignature = varArgSignatures[i];
-            if (varArgSignature != null) {
-                for (int j = 0; j < varArgSignature.getLength(); j++) {
-                    preparePermutation[index++] = -((((long) i) << 32) + j) - 1;
-                }
-            } else {
-                preparePermutation[index++] = i;
-            }
-        }
-        return preparePermutation;
-    }
-
-    public static ArgumentsSignature flattenNames(ArgumentsSignature signature, ArgumentsSignature[] varArgSignatures, int argListSize) {
-        String[] argNames = new String[argListSize];
-        int index = 0;
-        for (int i = 0; i < varArgSignatures.length; i++) {
-            ArgumentsSignature varArgSignature = varArgSignatures[i];
-            if (varArgSignature != null) {
-                for (int j = 0; j < varArgSignature.getLength(); j++) {
-                    argNames[index++] = varArgSignature.getName(j);
-                }
-            } else {
-                argNames[index++] = signature.getName(i);
-            }
-        }
-        return ArgumentsSignature.get(argNames);
     }
 }

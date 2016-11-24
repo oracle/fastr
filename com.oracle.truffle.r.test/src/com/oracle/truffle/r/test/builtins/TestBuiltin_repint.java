@@ -84,7 +84,7 @@ public class TestBuiltin_repint extends TestBase {
 
     @Test
     public void testrepint14() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -165,5 +165,13 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(seq_len(2), rep.int(8, 2)) }");
 
         assertEval(Output.IgnoreErrorContext, "{ rep.int(c(1,2,3),c(2,8)) }");
+
+        assertEval(Output.IgnoreErrorContext, "{ rep.int(function() 42, 7) }");
+        assertEval("{ rep.int(7, character()) }");
+        assertEval("{ rep.int(7, NULL) }");
+        assertEval("{ rep.int(7, \"7\") }");
+        assertEval(Output.IgnoreErrorContext, "{ rep.int(7, c(7, 42)) }");
+        assertEval("{ rep_int(7, function() 42) }");
+        assertEval(Output.IgnoreErrorContext, "{ rep.int(7, NA)  }");
     }
 }

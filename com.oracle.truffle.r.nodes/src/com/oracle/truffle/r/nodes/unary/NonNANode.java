@@ -22,28 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
-
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class NonNANode extends CastNode {
 
+    private final RBaseNode callObj;
     private final RError.Message message;
     private final Object[] messageArgs;
-    private final PrintWriter out;
     private final Object naReplacement;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected NonNANode(RError.Message message, Object[] messageArgs, PrintWriter out, Object naReplacement) {
+    protected NonNANode(RBaseNode callObj, RError.Message message, Object[] messageArgs, Object naReplacement) {
+        this.callObj = callObj == null ? this : callObj;
         this.message = message;
         this.messageArgs = messageArgs;
-        this.out = out;
         this.naReplacement = naReplacement;
     }
 
@@ -59,11 +65,11 @@ public abstract class NonNANode extends CastNode {
         if (naReplacement != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(arg, this, message, messageArgs, out);
+                handleArgumentWarning(arg, callObj, message, messageArgs);
             }
             return naReplacement;
         } else {
-            handleArgumentError(arg, this, message, messageArgs);
+            handleArgumentError(arg, callObj, message, messageArgs);
             return null;
         }
     }
@@ -145,6 +151,75 @@ public abstract class NonNANode extends CastNode {
 
     @Specialization
     protected Object onNull(RNull x) {
+        return x;
+    }
+
+    protected boolean isComplete(RAbstractContainer x) {
+        return x.isComplete();
+    }
+
+    @Specialization(guards = "isComplete(x)")
+    protected Object onCompleteContainer(RAbstractContainer x) {
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractIntVector x) {
+        int len = x.getLength();
+        for (int i = 0; i < len; i++) {
+            if (RRuntime.isNA(x.getDataAt(i))) {
+                return handleNA(x);
+            }
+        }
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractLogicalVector x) {
+        int len = x.getLength();
+        for (int i = 0; i < len; i++) {
+            if (RRuntime.isNA(x.getDataAt(i))) {
+                return handleNA(x);
+            }
+        }
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractDoubleVector x) {
+        int len = x.getLength();
+        for (int i = 0; i < len; i++) {
+            if (RRuntime.isNA(x.getDataAt(i))) {
+                return handleNA(x);
+            }
+        }
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractComplexVector x) {
+        int len = x.getLength();
+        for (int i = 0; i < len; i++) {
+            if (RRuntime.isNA(x.getDataAt(i))) {
+                return handleNA(x);
+            }
+        }
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractStringVector x) {
+        int len = x.getLength();
+        for (int i = 0; i < len; i++) {
+            if (RRuntime.isNA(x.getDataAt(i))) {
+                return handleNA(x);
+            }
+        }
+        return x;
+    }
+
+    @Specialization(guards = "!isComplete(x)")
+    protected Object onPossiblyIncompleteContainer(RAbstractRawVector x) {
         return x;
     }
 

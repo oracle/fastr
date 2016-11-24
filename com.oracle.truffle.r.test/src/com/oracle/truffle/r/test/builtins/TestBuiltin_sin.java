@@ -57,6 +57,6 @@ public class TestBuiltin_sin extends TestBase {
         assertEval("{ sin(1.2) }");
         assertEval("{ sin(c(0.3,0.6,0.9)) }");
         assertEval("{ sin() }");
-        assertEval(Ignored.OutputFormatting, "{ sin(1+1i) }");
+        assertEval("{ sin(1+1i) }");
     }
 }

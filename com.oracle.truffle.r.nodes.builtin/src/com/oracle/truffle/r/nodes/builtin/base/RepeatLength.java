@@ -11,16 +11,21 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -34,12 +39,14 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"})
+@RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"}, behavior = PURE)
 public abstract class RepeatLength extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.ATTEMPT_TO_REPLICATE_NO_VECTOR);
+        // with default error message, SHOW_CALLER does not work
+        casts.arg("length.out").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "length.out").mustNotBeNull().asIntegerVector().mustBe(size(1)).findFirst().mustBe(notIntNA());
     }
 
     @Specialization
@@ -146,6 +153,15 @@ public abstract class RepeatLength extends RBuiltinNode {
             array[i + 1] = value.getDataAt(j).getImaginaryPart();
         }
         return RDataFactory.createComplexVector(array, value.isComplete());
+    }
+
+    @Specialization
+    protected RLogicalVector repLen(RLogicalVector value, int length) {
+        byte[] array = new byte[length];
+        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
+            array[i] = value.getDataAt(j);
+        }
+        return RDataFactory.createLogicalVector(array, value.isComplete());
     }
 
     @Specialization

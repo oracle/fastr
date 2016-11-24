@@ -22,7 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RError.Message.NOT_CHARACTER_VECTOR;
+import static com.oracle.truffle.r.runtime.RError.Message.WRONG_WINSLASH;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -32,20 +38,30 @@ import java.nio.file.NoSuchFileException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"})
+@RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"}, behavior = IO)
 public abstract class NormalizePath extends RBuiltinNode {
 
     private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("path").mustBe(stringValue(), NOT_CHARACTER_VECTOR, "path");
+        casts.arg("winslash").defaultError(NOT_CHARACTER_VECTOR, "winslash").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(eq("/").or(eq("\\\\")).or(eq("\\")),
+                        WRONG_WINSLASH);
+        // Note: NA is acceptable value for mustwork with special meaning
+        casts.arg("mustwork").asLogicalVector().findFirst();
+    }
 
     @Specialization
     @TruffleBoundary
@@ -84,9 +100,4 @@ public abstract class NormalizePath extends RBuiltinNode {
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doNormalizePath(Object path, Object winslash, Object mustWork) {
-        throw RError.error(this, RError.Message.WRONG_TYPE);
-    }
 }

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.RSource;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
@@ -52,12 +52,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@link #SOURCE_UNAVAILABLE}, that can be used instead of {@code null} and identify the situation.
  * One particular case is {@link #LAZY_DEPARSE} which indicates that a valid {@link SourceSection}
  * can be produced for the associated node, but it is computed lazily, when requested.
- *
- * Every implementor of this interface must provide an implementation of the {@link #serializeImpl}
- * method. These are invoked by the corresponding method on {@link RBaseNode} after the correct
- * {@link RSyntaxNode} is located.
  */
-public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
+public interface RSyntaxNode extends RSyntaxElement {
 
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
@@ -87,71 +83,18 @@ public interface RSyntaxNode extends RSyntaxNodeSPI, RSyntaxElement {
      * Indicates the case where a node that should have a valid {@link SourceSection} but for reason
      * does not have. Ideally never required.
      */
-    SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
+    SourceSection SOURCE_UNAVAILABLE = RSource.createUnknown("unavailable");
 
     /**
      * Indicates a node that was created as part of an AST transformation related to the internal
      * execution process. This should never be used for a node that could manifest to the R
      * programmer.
      */
-    SourceSection INTERNAL = SourceSection.createUnavailable("R", "internal");
+    SourceSection INTERNAL = RSource.createUnknown("internal");
 
     /**
      * Indicates that this {@link SourceSection} can be created on demand if required.
      */
-    SourceSection LAZY_DEPARSE = SourceSection.createUnavailable("R", "lazy deparse");
+    SourceSection LAZY_DEPARSE = RSource.createUnknown("lazy deparse");
 
-    /**
-     * Indicates that, after creating the node, which requires a non-null {@link SourceSection} it
-     * should be created and updated by deparsing. This is generally used in specific situations,
-     * e.g., the {@code substitute} builtin.
-     */
-    SourceSection EAGER_DEPARSE = SourceSection.createUnavailable("R", "eager deparse");
-
-    /*
-     * Every implementor of this interface must either inherit or directly implement the following
-     * methods.
-     */
-
-    @Override
-    SourceSection getSourceSection();
-
-    @Override
-    void setSourceSection(SourceSection sourceSection);
-
-    /**
-     * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
-     * {@code true} to {@code instanceof RSyntaxNode} and {@link #isSyntax()}. Similar therefore to
-     * {@code Node#accept}. Note that AST transformations can change the shape of the tree in
-     * drastic ways; in particular one cannot truncate the walk on encountering a non-syntax node,
-     * as the related {@link RSyntaxNode} may be have been transformed into a child of a non-syntax
-     * node.
-     *
-     * N.B. A {@code ReplacementNode} is a very special case as we don't want to visit the
-     * transformation denoted by the child nodes (which include syntax nodes), so we use the special
-     * lhs/rhs accessors and visit those. In some cases we don't want to visit the children at all,
-     * which is controlled by {@code visitReplacement}.
-     */
-    static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor, boolean visitReplacement) {
-        boolean visitChildren = true;
-        int incDepth = 0;
-        if (RBaseNode.isRSyntaxNode(node)) {
-            RSyntaxNode syntaxNode = (RSyntaxNode) node;
-            visitChildren = nodeVisitor.visit(syntaxNode, depth);
-            incDepth = 1;
-        }
-        if (visitChildren) {
-            RSyntaxNode[] rnChildren = RContext.getRRuntimeASTAccess().isReplacementNode(node);
-            if (rnChildren == null) {
-                for (Node child : node.getChildren()) {
-                    if (child != null) {
-                        accept(child, depth + incDepth, nodeVisitor, visitReplacement);
-                    }
-                }
-            } else if (visitReplacement) {
-                accept(rnChildren[0].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-                accept(rnChildren[1].asNode(), depth + incDepth, nodeVisitor, visitReplacement);
-            }
-        }
-    }
 }

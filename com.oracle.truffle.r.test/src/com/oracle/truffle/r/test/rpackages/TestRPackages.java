@@ -22,19 +22,16 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.r.runtime.FastROptions;
+import org.junit.Assert;
+
 import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.RVersionNumber;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -60,69 +57,18 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public abstract class TestRPackages extends TestBase {
 
-    /**
-     * Create {@link Path}s to needed folders.
-     *
-     */
-    protected static final class PackagePaths {
+    private static final String SYSTEM2_COMMAND = "system2('%s', c('CMD', 'INSTALL', '%s'), env='R_LIBS=%s', stdout=T, stderr=T)";
+
+    private static final class PackagePath {
         /**
          * The path containing the package distributions as tar files.
          */
-        private final Path packagePath;
+        private final Path path;
 
-        private PackagePaths(Path rpackagesDists) {
-            this.packagePath = rpackagesDists;
+        private PackagePath(Path path) {
+            this.path = path;
         }
 
-        protected boolean installPackage() {
-            String[] cmds = new String[4];
-            if (generatingExpected()) {
-                // use GnuR
-                cmds[0] = "R";
-            } else {
-                // use FastR
-                cmds[0] = FileSystems.getDefault().getPath(REnvVars.rHome(), "bin", "R").toString();
-            }
-            cmds[1] = "CMD";
-            cmds[2] = "INSTALL";
-            cmds[cmds.length - 1] = packagePath.toString();
-            ProcessBuilder pb = new ProcessBuilder(cmds);
-            Map<String, String> env = pb.environment();
-            env.put("R_LIBS", installDir().toString());
-            if (!generatingExpected()) {
-                env.put("R_INSTALL_TAR", RContext.getInstance().stateREnvVars.get("TAR"));
-            }
-            try {
-                if (FastROptions.debugMatches("TestRPackages")) {
-                    pb.inheritIO();
-                }
-                pb.redirectErrorStream(true);
-                Process install = pb.start();
-                BufferedReader out = new BufferedReader(new InputStreamReader(install.getInputStream(), StandardCharsets.UTF_8));
-                StringBuilder str = new StringBuilder();
-                try {
-                    String line;
-                    while ((line = out.readLine()) != null) {
-                        str.append(line).append('\n');
-                        if (str.length() > 10 * (1 << 20)) { // if larger than 10M (just in case)
-                            System.out.println(str);
-                            str.setLength(0); // Reset buffer
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                int rc = install.waitFor();
-                if (rc == 0) {
-                    return true; // Ignore output of process on success
-                } else {
-                    System.out.println(str); // Print if error happened
-                    return false;
-                }
-            } catch (Exception ex) {
-                return false;
-            }
-        }
     }
 
     /**
@@ -133,11 +79,11 @@ public abstract class TestRPackages extends TestBase {
     /**
      * Map from package name to info on its location.
      */
-    private static final Map<String, PackagePaths> packageMap = new HashMap<>();
+    private static final Map<String, PackagePath> packageMap = new HashMap<>();
 
     private static Path installDir() {
         if (installDir == null) {
-            installDir = TestBase.relativize(Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages", "testrlibs_user"));
+            installDir = TestBase.createTestDir("com.oracle.truffle.r.test.rpackages");
         }
         return installDir;
     }
@@ -150,8 +96,7 @@ public abstract class TestRPackages extends TestBase {
         Path packageDir = installDir().resolve(packageName);
         try {
             deleteDir(packageDir);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
             return false;
         }
         return true;
@@ -167,13 +112,14 @@ public abstract class TestRPackages extends TestBase {
     }
 
     private static Path testNativePath() {
-        return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
+        Path p = TestBase.getNativeProjectFile(Paths.get("packages"));
+        return p;
     }
 
-    private static PackagePaths getPackagePaths(String pkg, Path path) {
-        PackagePaths result = packageMap.get(pkg);
+    private static PackagePath getPackagePaths(String pkg, Path path) {
+        PackagePath result = packageMap.get(pkg);
         if (result == null) {
-            result = new PackagePaths(path);
+            result = new PackagePath(path);
             packageMap.put(pkg, result);
         }
         return result;
@@ -181,6 +127,42 @@ public abstract class TestRPackages extends TestBase {
 
     protected static void setupInstallTestPackages(String[] testPackages) {
         setupInstallTestPackages(testPackages, new Resolver());
+    }
+
+    private static boolean installPackage(PackagePath packagePath) {
+        String cmd;
+        Path binBase;
+        if (generatingExpected()) {
+            // use GnuR (internal)
+            binBase = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.native", "gnur", RVersionNumber.R_HYPHEN_FULL);
+        } else {
+            // use FastR
+            binBase = Paths.get(REnvVars.rHome());
+        }
+        cmd = binBase.resolve("bin").resolve("R").toString();
+        try {
+            Object result = evalInstallPackage(String.format(SYSTEM2_COMMAND, cmd, packagePath.path.toString(), installDir().toString()));
+            boolean success;
+            if (generatingExpected()) {
+                String stringResult = (String) result;
+                success = stringResult.contains("* DONE (");
+                if (!success) {
+                    System.out.println(stringResult);
+                }
+            } else {
+                RStringVector vecResult = (RStringVector) result;
+                success = vecResult.getAttr("status") == null;
+                if (!success) {
+                    String[] output = vecResult.getDataWithoutCopying();
+                    for (String line : output) {
+                        System.out.println(line);
+                    }
+                }
+            }
+            return success;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     protected static void setupInstallTestPackages(String[] testPackages, Resolver resolver) {
@@ -191,9 +173,9 @@ public abstract class TestRPackages extends TestBase {
             for (String p : testPackages) {
                 // Takes time, provide user feedback
                 System.out.printf(".pkg: %s.", p);
-                PackagePaths packagePaths = getPackagePaths(p, resolver.getPath(p));
-                if (!packagePaths.installPackage()) {
-                    throw new AssertionError();
+                PackagePath packagePath = getPackagePaths(p, resolver.getPath(p));
+                if (!installPackage(packagePath)) {
+                    Assert.fail(String.format("package %s failed to install", p));
                 }
             }
             System.out.printf(".end install.");
@@ -204,7 +186,7 @@ public abstract class TestRPackages extends TestBase {
         if (!checkOnly()) {
             for (String p : testPackages) {
                 if (!uninstallPackage(p)) {
-                    throw new AssertionError();
+                    System.err.println("WARNING: error deleting package: " + p);
                 }
             }
         }

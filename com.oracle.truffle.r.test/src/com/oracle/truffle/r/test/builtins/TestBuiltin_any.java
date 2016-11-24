@@ -39,7 +39,7 @@ public class TestBuiltin_any extends TestBase {
 
     @Test
     public void testany5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(14, 2, 0, 2, -7, 0), .Dim = c(3L, 2L)));any(argv[[1]]);");
+        assertEval("argv <- list(structure(c(14, 2, 0, 2, -7, 0), .Dim = c(3L, 2L)));any(argv[[1]]);");
     }
 
     @Test
@@ -94,7 +94,7 @@ public class TestBuiltin_any extends TestBase {
 
     @Test
     public void testany17() {
-        assertEval(Ignored.Unknown, "argv <- list('NA');do.call('any', argv)");
+        assertEval(Output.IgnoreWarningContext, "argv <- list('NA');do.call('any', argv)");
     }
 
     @Test
@@ -118,10 +118,8 @@ public class TestBuiltin_any extends TestBase {
 
         assertEval("{ any(NULL); }");
 
-        // FIXME coercion warning missing
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ any(1) }");
-        // FIXME coercion warning missing
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ any(0) }");
+        assertEval("{ any(1) }");
+        assertEval("{ any(0) }");
 
         assertEval("{ d<-data.frame(c(1L,2L), c(10L, 20L)); any(d) }");
     }

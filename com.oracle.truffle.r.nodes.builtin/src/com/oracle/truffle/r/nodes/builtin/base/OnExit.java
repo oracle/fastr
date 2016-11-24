@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.ArrayList;
 
@@ -34,13 +36,13 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -52,7 +54,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
-@RBuiltin(name = "on.exit", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
+@RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class OnExit extends RBuiltinNode {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
@@ -63,6 +65,11 @@ public abstract class OnExit extends RBuiltinNode {
     private final NAProfile na = NAProfile.create();
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("add").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {

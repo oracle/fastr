@@ -22,29 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -64,24 +71,16 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @SuppressWarnings("unused")
 public class IsTypeFunctions {
 
-    protected abstract static class ErrorAdapter extends RBuiltinNode {
-        protected final BranchProfile errorProfile = BranchProfile.create();
+    protected abstract static class MissingAdapter extends RBuiltinNode {
 
-        protected RError missingError() throws RError {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.ARGUMENT_MISSING, "x");
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
         }
+
     }
 
-    protected abstract static class MissingAdapter extends ErrorAdapter {
-
-        @Specialization
-        protected byte isType(RMissing value) throws RError {
-            throw missingError();
-        }
-    }
-
-    @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsArray extends MissingAdapter {
 
         public abstract byte execute(Object value);
@@ -97,7 +96,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsRecursive extends MissingAdapter {
 
         @Specialization
@@ -105,18 +104,18 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(guards = "!isListVector(arg)")
+        @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
         protected byte isRecursive(RAbstractVector arg) {
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        protected byte isRecursive(RList arg) {
+        protected byte isRecursive(RListBase arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         protected boolean isListVector(RAbstractVector arg) {
-            return arg instanceof RList;
+            return arg instanceof RListBase;
         }
 
         @Fallback
@@ -125,7 +124,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsAtomic extends MissingAdapter {
 
         @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
@@ -135,14 +134,14 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isRList(arg)")
+        @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
         protected byte isAtomic(RAbstractVector arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         protected static boolean isNonListVector(Object value) {
             return value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RRaw ||
-                            (value instanceof RAbstractVector && !(value instanceof RList));
+                            (value instanceof RAbstractVector && !(value instanceof RListBase));
         }
 
         protected boolean isFactor(Object value) {
@@ -155,7 +154,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.call", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsCall extends MissingAdapter {
 
         @Specialization
@@ -169,7 +168,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.character", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.character", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsCharacter extends MissingAdapter {
 
         @Specialization
@@ -187,7 +186,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.complex", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.complex", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsComplex extends MissingAdapter {
 
         @Specialization
@@ -205,7 +204,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsDouble extends MissingAdapter {
 
         @Specialization
@@ -223,7 +222,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.expression", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.expression", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsExpression extends MissingAdapter {
 
         @Specialization
@@ -237,7 +236,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsFunction extends MissingAdapter {
 
         @Specialization
@@ -251,7 +250,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.integer", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.integer", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsInteger extends MissingAdapter {
 
         @Specialization
@@ -269,7 +268,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.language", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.language", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsLanguage extends MissingAdapter {
         @Specialization
         protected byte isType(RSymbol value) {
@@ -292,7 +291,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsList extends MissingAdapter {
 
         private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
@@ -315,7 +314,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.logical", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.logical", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsLogical extends MissingAdapter {
 
         @Specialization
@@ -333,7 +332,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsMatrix extends MissingAdapter {
 
         private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
@@ -349,7 +348,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.name", aliases = {"is.symbol"}, kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.name", aliases = {"is.symbol"}, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsName extends MissingAdapter {
 
         @Specialization
@@ -363,7 +362,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNumeric extends MissingAdapter {
 
         @Specialization(guards = "!isFactor(value)")
@@ -397,7 +396,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNull extends MissingAdapter {
 
         @Specialization
@@ -418,7 +417,7 @@ public class IsTypeFunctions {
      * been added explicitly to the object. If the attribute is removed, it should return
      * {@code FALSE}.
      */
-    @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsObject extends MissingAdapter {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -426,8 +425,9 @@ public class IsTypeFunctions {
         public abstract byte execute(Object value);
 
         @Specialization
-        protected byte isObject(RAttributable arg) {
-            return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        protected byte isObject(RAttributable arg, //
+                        @Cached("createClassProfile()") ValueProfile profile) {
+            return RRuntime.asLogical(profile.profile(arg).isObject(attrProfiles));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
@@ -436,7 +436,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsPairList extends MissingAdapter {
         @Specialization
         protected byte isType(RNull value) {
@@ -454,7 +454,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.raw", kind = PRIMITIVE, parameterNames = {"x"})
+    @RBuiltin(name = "is.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsRaw extends MissingAdapter {
 
         @Specialization
@@ -472,29 +472,38 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
-    public abstract static class IsVector extends ErrorAdapter {
+    @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = PURE)
+    public abstract static class IsVector extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final ConditionProfile attrNull = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile attrNames = ConditionProfile.createBinaryProfile();
 
         @Override
-        public Object[] getDefaultParameterValues() {
-            // INTERNAL does not need default parameters
-            return RNode.EMPTY_OBJECT_ARRAY;
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
+            casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
 
-        @Specialization
-        protected byte isVector(RMissing value, String mode) {
-            throw missingError();
+        @TruffleBoundary
+        protected static RType typeFromMode(String mode) {
+            return RType.fromMode(mode);
         }
 
-        @Specialization
-        protected byte isVector(RAbstractVector x, String mode) {
-            if (!namesOnlyOrNoAttr(x) || !modeIsAnyOrMatches(x, mode)) {
-                return RRuntime.LOGICAL_FALSE;
-            } else {
+        @Specialization(limit = "5", guards = "cachedMode == mode")
+        protected byte isVectorCached(RAbstractVector x, String mode,
+                        @Cached("mode") String cachedMode,
+                        @Cached("typeFromMode(mode)") RType type) {
+            if (namesOnlyOrNoAttr(x) && (type == RType.Any || x.getRType() == type)) {
                 return RRuntime.LOGICAL_TRUE;
+            } else {
+                return RRuntime.LOGICAL_FALSE;
             }
+        }
+
+        @Specialization(contains = "isVectorCached")
+        protected byte isVector(RAbstractVector x, String mode) {
+            return isVectorCached(x, mode, mode, typeFromMode(mode));
         }
 
         @Fallback
@@ -503,19 +512,12 @@ public class IsTypeFunctions {
         }
 
         private boolean namesOnlyOrNoAttr(RAbstractVector x) {
-            // there should be no attributes other than names
-            if (x.getNames(attrProfiles) == null) {
-                assert x.getAttributes() == null || x.getAttributes().size() > 0;
-                return x.getAttributes() == null ? true : false;
+            RAttributes attributes = x.getAttributes();
+            if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
+                return true;
             } else {
-                assert x.getAttributes() != null;
-                return x.getAttributes().size() == 1 ? true : false;
+                return attributes.size() == 1 && attrNames.profile(attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY);
             }
-        }
-
-        private static boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-            return RType.Any.getName().equals(mode) || (x instanceof RList && mode.equals("list")) || (x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode)) ||
-                            RRuntime.classToString(x.getElementClass()).equals(mode);
         }
     }
 }

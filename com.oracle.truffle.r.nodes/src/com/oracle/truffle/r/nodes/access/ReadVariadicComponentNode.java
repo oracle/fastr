@@ -22,19 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -46,21 +45,23 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public class ReadVariadicComponentNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
-    @Child private PromiseHelperNode promiseHelper;
+    @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     private final int index;
+    private final String name;
 
     private final BranchProfile errorBranch = BranchProfile.create();
-    private final BranchProfile promiseBranch = BranchProfile.create();
 
     public ReadVariadicComponentNode(SourceSection src, int index) {
         super(src);
         this.index = index;
+        this.name = Utils.intern(".." + Integer.toString(index + 1));
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(true);
+        visibility.execute(frame, true);
 
         Object args = lookup.execute(frame);
         if (args == null) {
@@ -72,37 +73,21 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
             errorBranch.enter();
             throw RError.error(this, RError.Message.NO_LIST_FOR_CDR);
         }
-
         if (argsValuesAndNames.getLength() <= index) {
             errorBranch.enter();
             throw RError.error(this, RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getArgument(index);
-        if (ret instanceof RPromise) {
-            promiseBranch.enter();
-            // This might be the case, as lookup only checks for "..." to be a promise and forces it
-            // eventually, NOT (all) of its content
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            ret = promiseHelper.evaluate(frame, (RPromise) ret);
-        }
-        return ret == null ? RMissing.instance : ret;
+        return ret == null ? RMissing.instance : promiseHelper.checkEvaluate(frame, ret);
     }
 
     public String getPrintForm() {
-        return ".." + Integer.toString(index + 1);
-    }
-
-    @Override
-    public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
-        state.setCarAsSymbol(getPrintForm());
+        return name;
     }
 
     @Override
     public String getIdentifier() {
-        return getPrintForm();
+        return name;
     }
 
     @Override

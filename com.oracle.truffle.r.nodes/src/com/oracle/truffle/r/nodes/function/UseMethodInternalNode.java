@@ -17,7 +17,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -25,7 +24,7 @@ public final class UseMethodInternalNode extends RNode {
 
     @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);
-    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
+    @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false);
     @Child private PreProcessArgumentsNode argPreProcess;
 
     private final String generic;
@@ -39,7 +38,6 @@ public final class UseMethodInternalNode extends RNode {
     }
 
     public Object execute(VirtualFrame frame, RStringVector type, Object[] arguments) {
-        RContext.getInstance().setVisible(true);
         Result lookupResult = lookup.execute(frame, generic, type, null, frame.materialize(), null);
         if (wrap) {
             assert arguments != null;

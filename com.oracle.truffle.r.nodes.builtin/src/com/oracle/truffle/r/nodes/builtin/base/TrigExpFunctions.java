@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AcosNodeGen;
@@ -42,138 +44,23 @@ import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.CosNodeGe
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.SinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.TanNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
 
-    public abstract static class TrigExpFunctionNode extends RBuiltinNode {
-
-        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-        @Child private CHypot chypot;
-
-        @Specialization
-        protected Object calculateUnboxed(Object value) {
-            return calculate(boxPrimitive.execute(value));
-        }
-
-        protected Object calculate(@SuppressWarnings("unused") Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        private void ensureChypot() {
-            if (chypot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                chypot = insert(new CHypot());
-            }
-        }
-
-        protected double hypot(double re, double im) {
-            ensureChypot();
-            return chypot.chypot(re, im);
-        }
-    }
-
-    public abstract static class AdapterCall1 extends RBuiltinNode {
-
-        @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-
-        private final BranchProfile notCompleteIntValueMet = BranchProfile.create();
-        private final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
-        private final NACheck na = NACheck.create();
-
-        @Child private UnaryCopyAttributesNode copyAttributes = UnaryCopyAttributesNodeGen.create(true);
-
-        @Specialization
-        protected byte isType(@SuppressWarnings("unused") RMissing value) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
-        }
-
-        protected double op(@SuppressWarnings("unused") double x) {
-            // not abstract because this would confuse the DSL annotation
-            // processor
-            throw RInternalError.shouldNotReachHere("this method needs to be implemented in subclasses");
-        }
-
-        private double doFunInt(int value) {
-            if (na.check(value)) {
-                notCompleteIntValueMet.enter();
-                return RRuntime.DOUBLE_NA;
-            }
-            return op(value);
-        }
-
-        private double doFunDouble(double value) {
-            if (na.check(value)) {
-                notCompleteDoubleValueMet.enter();
-                return value;
-            }
-            return op(value);
-        }
-
-        @Specialization
-        protected double trigOp(int x) {
-            na.enable(x);
-            return doFunInt(x);
-        }
-
-        @Specialization
-        protected double trigOp(double x) {
-            na.enable(x);
-            return doFunDouble(x);
-        }
-
-        @Specialization
-        protected RAbstractVector trigOp(RIntVector vector, //
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            int length = vector.getLength();
-            double[] resultVector = new double[length];
-            reportWork(length);
-            profile.profileCounted(length);
-            na.enable(vector);
-            for (int i = 0; profile.inject(i < length); i++) {
-                resultVector[i] = doFunInt(vector.getDataAt(i));
-            }
-            return createDoubleVectorBasedOnOrigin(resultVector, vector);
-        }
-
-        @Specialization
-        protected RAbstractVector trigOp(RDoubleVector vector, //
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
-            int length = vector.getLength();
-            double[] resultVector = new double[length];
-            reportWork(length);
-            profile.profileCounted(length);
-            na.enable(vector);
-            for (int i = 0; profile.inject(i < length); i++) {
-                resultVector[i] = doFunDouble(vector.getDataAt(i));
-            }
-            return createDoubleVectorBasedOnOrigin(resultVector, vector);
-        }
-
-        private RAbstractVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
-            RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
-            return copyAttributes.execute(result, originVector);
-        }
-    }
-
-    @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "exp", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Exp extends UnaryArithmeticBuiltinNode {
 
         public Exp() {
@@ -191,13 +78,13 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             if (calculatePowNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                calculatePowNode = insert(BinaryArithmetic.POW.create());
+                calculatePowNode = insert(BinaryArithmetic.POW.createOperation());
             }
             return calculatePowNode.op(Math.E, 0, re, im);
         }
     }
 
-    @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "expm1", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class ExpM1 extends UnaryArithmeticBuiltinNode {
 
         public ExpM1() {
@@ -215,14 +102,14 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             if (calculatePowNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                calculatePowNode = insert(BinaryArithmetic.POW.create());
+                calculatePowNode = insert(BinaryArithmetic.POW.createOperation());
             }
             RComplex x = calculatePowNode.op(Math.E, 0, re, im);
             return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
         }
     }
 
-    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sin extends UnaryArithmeticBuiltinNode {
 
         public Sin() {
@@ -242,7 +129,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "sinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sinh extends UnaryArithmeticBuiltinNode {
 
         public Sinh() {
@@ -262,7 +149,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "sinpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "sinpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Sinpi extends UnaryArithmeticBuiltinNode {
 
         public Sinpi() {
@@ -286,7 +173,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cos extends UnaryArithmeticBuiltinNode {
 
         public Cos() {
@@ -306,7 +193,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cosh extends UnaryArithmeticBuiltinNode {
 
         public Cosh() {
@@ -326,7 +213,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cospi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "cospi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Cospi extends UnaryArithmeticBuiltinNode {
 
         public Cospi() {
@@ -354,15 +241,15 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tan extends UnaryArithmeticBuiltinNode {
 
         public Tan() {
             super(RType.Double);
         }
 
-        @Child private Sin sinNode = SinNodeGen.create(null);
-        @Child private Cos cosNode = CosNodeGen.create(null);
+        @Child private Sin sinNode = SinNodeGen.create();
+        @Child private Cos cosNode = CosNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -380,14 +267,14 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tanh extends UnaryArithmeticBuiltinNode {
 
         public Tanh() {
             super(RType.Double);
         }
 
-        @Child private Tan tanNode = TanNodeGen.create(null);
+        @Child private Tan tanNode = TanNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -401,7 +288,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tanpi", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "tanpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Tanpi extends UnaryArithmeticBuiltinNode {
 
         public Tanpi() {
@@ -422,11 +309,11 @@ public class TrigExpFunctions {
 
         @Override
         public RComplex op(double re, double im) {
-            throw new UnsupportedOperationException();
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
     }
 
-    @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "asin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Asin extends UnaryArithmeticBuiltinNode {
 
         @Child private CHypot chypot;
@@ -485,10 +372,10 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "asinh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "asinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
 
-        @Child private Asin asinNode = AsinNodeGen.create(null);
+        @Child private Asin asinNode = AsinNodeGen.create();
 
         public Asinh() {
             super(RType.Double);
@@ -506,14 +393,14 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "acos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Acos extends UnaryArithmeticBuiltinNode {
 
         public Acos() {
             super(RType.Double);
         }
 
-        @Child private Asin asinNode = AsinNodeGen.create(null);
+        @Child private Asin asinNode = AsinNodeGen.create();
 
         @Override
         public double op(double op) {
@@ -527,14 +414,14 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "acosh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "acosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Acosh extends UnaryArithmeticBuiltinNode {
 
         public Acosh() {
             super(RType.Double);
         }
 
-        @Child private Acos acosNode = AcosNodeGen.create(null);
+        @Child private Acos acosNode = AcosNodeGen.create();
 
         @Override
         public double op(double x) {
@@ -548,7 +435,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "atan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Atan extends UnaryArithmeticBuiltinNode {
 
         public Atan() {
@@ -578,14 +465,14 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "atanh", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "atanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Atanh extends UnaryArithmeticBuiltinNode {
 
         public Atanh() {
             super(RType.Double);
         }
 
-        @Child private Atan atanNode = AtanNodeGen.create(null);
+        @Child private Atan atanNode = AtanNodeGen.create();
 
         @Override
         public double op(double x) {
@@ -603,7 +490,7 @@ public class TrigExpFunctions {
      * {@code atan2} takes two args. To avoid combinatorial explosion in specializations we coerce
      * the {@code int} forms to {@code double}.
      */
-    @RBuiltin(name = "atan2", kind = RBuiltinKind.INTERNAL, parameterNames = {"y", "x"})
+    @RBuiltin(name = "atan2", kind = INTERNAL, parameterNames = {"y", "x"}, behavior = PURE)
     public abstract static class Atan2 extends RBuiltinNode {
 
         private final NACheck yNACheck = NACheck.create();
@@ -611,7 +498,8 @@ public class TrigExpFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.toDouble(0).toDouble(1);
+            casts.arg(0).mapIf(numericValue(), asDoubleVector());
+            casts.arg(1).mapIf(numericValue(), asDoubleVector());
         }
 
         private double doFunDouble(double y, double x) {
@@ -682,12 +570,10 @@ public class TrigExpFunctions {
         @Fallback
         @TruffleBoundary
         protected Object atan2(Object x, Object y) {
-            if (x instanceof RMissing) {
-                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
-            } else if (y instanceof RMissing) {
-                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
+            if (x instanceof RAbstractComplexVector || y instanceof RAbstractComplexVector) {
+                throw RInternalError.unimplemented("atan2 for complex values");
             }
-            throw RInternalError.unimplemented();
+            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
     }
 }

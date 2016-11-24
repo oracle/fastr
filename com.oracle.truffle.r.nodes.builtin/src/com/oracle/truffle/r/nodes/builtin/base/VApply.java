@@ -22,14 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
@@ -43,10 +46,10 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -59,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * The {@code vapply} builtin. The closure definition for {@code vapply} is
@@ -71,14 +75,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  *
  * TODO Set dimnames on result if necessary.
  */
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true)
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true, behavior = COMPLEX)
 public abstract class VApply extends RBuiltinNode {
 
-    private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final NACheck naCheck = NACheck.create();
 
     @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create();
 
@@ -87,6 +90,17 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastLogicalNode castLogical;
     @Child private CastStringNode castString;
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("X").asVector();
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
+        // casts.arg("FUN.VALUE").mapIf(anyValue(),
+        // chain(asVector(true)).with(mustBe(abstractVectorValue(), RError.SHOW_CALLER, true,
+        // RError.Message.MUST_BE_VECTOR, "FUN.VALUE")).end());
+        casts.arg("FUN.VALUE").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR, "FUN.VALUE").asVector(true).mustBe(abstractVectorValue());
+        casts.arg("USE.NAMES").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "USE.NAMES").mustBe(stringValue().not()).asLogicalVector().findFirst();
+    }
 
     private Object castComplex(Object operand, boolean preserveAllAttr) {
         if (castComplex == null) {
@@ -123,55 +137,50 @@ public abstract class VApply extends RBuiltinNode {
     private Object castString(Object operand, boolean preserveAllAttr) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, true, preserveAllAttr, preserveAllAttr));
+            castString = insert(CastStringNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
         return castString.execute(operand);
     }
 
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
-        RVector result = delegateToLapply(frame, vec, fun, funValue, useNames);
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValue, byte useNames) {
+        RVector<?> result = delegateToLapply(frame, vec, fun, funValue, useNames);
         // set here else it gets overridden by the iterator evaluation
         return result;
     }
 
-    private RVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValueArg, byte useNames) {
+    private RVector<?> delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, byte useNames) {
         /*
          * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
          * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
          * both funValueArg and the result of the doApply. At a slight performance cost this code
          * works exclusively in terms of concrete vectors.
          */
-        Object funValueObj = RRuntime.asAbstractVector(funValueArg);
-        if (!(funValueObj instanceof RAbstractVector)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.MUST_BE_VECTOR, "FUN.VALUE");
-        }
-        RAbstractVector funValueVec = funValueProfile.profile((RAbstractVector) funValueObj);
         int funValueVecLen = funValueVec.getLength();
 
-        RVector vecMat = vec.materialize();
+        RVector<?> vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
-        RVector result = null;
+        RVector<?> result = null;
         boolean applyResultZeroLength = applyResult.length == 0;
 
+        naCheck.enable(true);
         // TODO check funValueLen against length of result
         if (funValueVec instanceof RAbstractIntVector) {
             int[] data = applyResultZeroLength ? new int[0] : convertIntVector(applyResult, funValueVecLen);
-            result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+            result = RDataFactory.createIntVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractDoubleVector) {
             double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(applyResult, funValueVecLen);
-            result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
+            result = RDataFactory.createDoubleVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractLogicalVector) {
             byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(applyResult, funValueVecLen);
-            result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+            result = RDataFactory.createLogicalVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractStringVector) {
             String[] data = applyResultZeroLength ? new String[0] : convertStringVector(applyResult, funValueVecLen);
-            result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            result = RDataFactory.createStringVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractComplexVector) {
             double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(applyResult, funValueVecLen);
-            result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
+            result = RDataFactory.createComplexVector(data, naCheck.neverSeenNA());
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -202,7 +211,9 @@ public abstract class VApply extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             RAbstractDoubleVector v = (RAbstractDoubleVector) RRuntime.asAbstractVector(castDouble(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
-                newArray[ind++] = v.getDataAt(j);
+                double val = v.getDataAt(j);
+                naCheck.check(val);
+                newArray[ind++] = val;
             }
         }
         return newArray;
@@ -214,7 +225,9 @@ public abstract class VApply extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             RAbstractIntVector v = (RAbstractIntVector) RRuntime.asAbstractVector(castInteger(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
-                newArray[ind++] = v.getDataAt(j);
+                int val = v.getDataAt(j);
+                naCheck.check(val);
+                newArray[ind++] = val;
             }
         }
         return newArray;
@@ -226,7 +239,9 @@ public abstract class VApply extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             RAbstractLogicalVector v = (RAbstractLogicalVector) RRuntime.asAbstractVector(castLogical(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
-                newArray[ind++] = v.getDataAt(j);
+                byte val = v.getDataAt(j);
+                naCheck.check(val);
+                newArray[ind++] = val;
             }
         }
         return newArray;
@@ -238,7 +253,9 @@ public abstract class VApply extends RBuiltinNode {
         for (int i = 0; i < values.length; i++) {
             RAbstractStringVector v = (RAbstractStringVector) RRuntime.asAbstractVector(castString(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
-                newArray[ind++] = v.getDataAt(j);
+                String val = v.getDataAt(j);
+                naCheck.check(val);
+                newArray[ind++] = val;
             }
         }
         return newArray;
@@ -251,6 +268,7 @@ public abstract class VApply extends RBuiltinNode {
             RAbstractComplexVector v = (RAbstractComplexVector) RRuntime.asAbstractVector(castComplex(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);
+                naCheck.check(val);
                 newArray[ind++] = val.getRealPart();
                 newArray[ind++] = val.getImaginaryPart();
             }

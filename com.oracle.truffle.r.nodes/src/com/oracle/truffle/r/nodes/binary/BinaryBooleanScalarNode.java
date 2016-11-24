@@ -64,7 +64,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
     private final BooleanOperation booleanLogic;
 
     BinaryBooleanScalarNode(BooleanOperationFactory factory) {
-        this.booleanLogic = factory.create();
+        this.booleanLogic = factory.createOperation();
     }
 
     @Specialization

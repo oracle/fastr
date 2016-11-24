@@ -48,6 +48,26 @@ public interface RCodeBuilder<T> {
         }
     }
 
+    final class CodeBuilderContext {
+        public static CodeBuilderContext DEFAULT = new CodeBuilderContext(0);
+
+        private final int replacementVarsStartIndex;
+
+        public CodeBuilderContext(int replacementVarsStartIndex) {
+            this.replacementVarsStartIndex = replacementVarsStartIndex;
+        }
+
+        /**
+         * Used to initialize {@code ReplacementBlockNode}. When we are processing a replacement AST
+         * that is within another replacement, example {@code x[x[1]<-2]<-3}, we set this value so
+         * that newly created replacements within the original replacement have different temporary
+         * variable names.
+         */
+        public int getReplacementVarsStartIndex() {
+            return replacementVarsStartIndex;
+        }
+    }
+
     /**
      * Creates a function call argument.
      */
@@ -98,6 +118,10 @@ public interface RCodeBuilder<T> {
      */
     RootCallTarget rootFunction(SourceSection source, List<Argument<T>> arguments, T body, String name);
 
+    void setContext(CodeBuilderContext context);
+
+    CodeBuilderContext getContext();
+
     /**
      * This method returns a newly created AST fragment for the given original element. This
      * functionality can be used to quickly create new AST snippets for existing code.
@@ -108,33 +132,42 @@ public interface RCodeBuilder<T> {
             @Override
             protected T visit(RSyntaxCall element) {
                 ArrayList<Argument<T>> args = createArguments(element.getSyntaxSignature(), element.getSyntaxArguments());
-                return call(element.getSourceSection(), accept(element.getSyntaxLHS()), args);
+                return call(element.getLazySourceSection(), accept(element.getSyntaxLHS()), args);
             }
 
             private ArrayList<Argument<T>> createArguments(ArgumentsSignature signature, RSyntaxElement[] arguments) {
                 ArrayList<Argument<T>> args = new ArrayList<>(arguments.length);
                 for (int i = 0; i < arguments.length; i++) {
-                    args.add(RCodeBuilder.argument(arguments[i] == null ? null : arguments[i].getSourceSection(), signature.getName(i), arguments[i] == null ? null : accept(arguments[i])));
+                    args.add(RCodeBuilder.argument(arguments[i] == null ? null : arguments[i].getLazySourceSection(), signature.getName(i), arguments[i] == null ? null : accept(arguments[i])));
                 }
                 return args;
             }
 
             @Override
             protected T visit(RSyntaxConstant element) {
-                return constant(element.getSourceSection(), element.getValue());
+                return constant(element.getLazySourceSection(), element.getValue());
             }
 
             @Override
             protected T visit(RSyntaxLookup element) {
-                return lookup(element.getSourceSection(), element.getIdentifier(), element.isFunctionLookup());
+                return lookup(element.getLazySourceSection(), element.getIdentifier(), element.isFunctionLookup());
             }
 
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(element.getSourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                return function(element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
             }
         }.accept(original);
+    }
+
+    /** @see #process(RSyntaxElement) */
+    default T process(RSyntaxElement original, CodeBuilderContext context) {
+        CodeBuilderContext saved = getContext();
+        setContext(context);
+        T result = process(original);
+        setContext(saved);
+        return result;
     }
 
     /**

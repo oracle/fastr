@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
@@ -82,6 +83,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             foreignAccess = RNullMRForeign.createAccess();
         } else if (RList.class.isAssignableFrom(clazz)) {
             foreignAccess = RListMRForeign.createAccess();
+        } else if (REnvironment.class.isAssignableFrom(clazz)) {
+            foreignAccess = REnvironmentMRForeign.createAccess();
         } else if (RPairList.class.isAssignableFrom(clazz)) {
             foreignAccess = RPairListMRForeign.createAccess();
         } else if (RFunction.class.isAssignableFrom(clazz)) {

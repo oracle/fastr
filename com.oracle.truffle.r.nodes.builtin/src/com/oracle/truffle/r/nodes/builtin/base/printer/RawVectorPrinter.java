@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
@@ -56,6 +57,7 @@ final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
         }
 
         @Override
+        @TruffleBoundary
         protected void printElement(int i, FormatMetrics fm) throws IOException {
             String rs = vector.getDataAt(i).toString();
             int gap = fm.maxWidth - 2;
@@ -70,6 +72,7 @@ final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
         }
 
         @Override
+        @TruffleBoundary
         protected void printEmptyVector() throws IOException {
             printCtx.output().print("raw(0)");
         }

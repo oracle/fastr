@@ -60,7 +60,8 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
             case Double:
                 return this;
             case Complex:
-                return isNAProfile.profile(Double.isNaN(value)) ? RComplex.createNA() : RComplex.valueOf(value, 0.0);
+                // From 3.3.0 on, only "true" NA values are converted to complex NA
+                return isNAProfile.profile(RRuntime.isNA(value)) ? RComplex.createNA() : RComplex.valueOf(value, 0.0);
             case Character:
                 return RClosures.createDoubleToStringVector(this);
             case List:
@@ -89,7 +90,9 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
 
     @Override
     public RDoubleVector materialize() {
-        return RDataFactory.createDoubleVectorFromScalar(getValue());
+        RDoubleVector result = RDataFactory.createDoubleVectorFromScalar(getValue());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override

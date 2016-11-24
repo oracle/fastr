@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -48,8 +50,22 @@ public final class RCallerHelper {
      * This function can be used to construct a proper RCaller instance whenever a name of the
      * function called by the CallMatcherNode is available (e.g. when CallMatcherNode is used by
      * S3/S4 dispatch), and that can then be used to retrieve correct syntax nodes.
+     *
+     * @param arguments array with arguments and corresponding names. This method strips any
+     *            {@code RMissing} arguments and unrolls all varargs within the arguments array.
      */
-    public static Supplier<RSyntaxNode> createFromArguments(final Object function, final RArgsValuesAndNames arguments) {
+    public static Supplier<RSyntaxNode> createFromArguments(RFunction function, RArgsValuesAndNames arguments) {
+        return createFromArgumentsInternal(function, arguments);
+    }
+
+    /**
+     * @see #createFromArguments(RFunction, RArgsValuesAndNames)
+     */
+    public static Supplier<RSyntaxNode> createFromArguments(String function, RArgsValuesAndNames arguments) {
+        return createFromArgumentsInternal(function, arguments);
+    }
+
+    public static Supplier<RSyntaxNode> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments) {
         return new Supplier<RSyntaxNode>() {
 
             RSyntaxNode syntaxNode = null;
@@ -57,53 +73,80 @@ public final class RCallerHelper {
             @Override
             public RSyntaxNode get() {
                 if (syntaxNode == null) {
-                    RSyntaxNode[] syntaxArguments = new RSyntaxNode[arguments.getLength()];
-                    int index = 0;
-                    // arguments are already ordered - once one is missing, all the remaining ones
-                    // must
-                    // be
-                    // missing
-                    boolean missing = false;
+                    int length = 0;
                     for (int i = 0; i < arguments.getLength(); i++) {
                         Object arg = arguments.getArgument(i);
-                        if (arg instanceof RPromise) {
-                            assert !missing;
-                            RPromise p = (RPromise) arg;
-                            syntaxArguments[index] = p.getRep().asRSyntaxNode();
-                            index++;
-                        } else if (arg instanceof RArgsValuesAndNames) {
-                            RArgsValuesAndNames vararg = (RArgsValuesAndNames) arg;
-                            if (vararg.getLength() == 0) {
-                                // no var arg arguments
-                                syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
+                        if (arg instanceof RArgsValuesAndNames) {
+                            length += ((RArgsValuesAndNames) arg).getLength();
+                        } else if (arguments.getArgument(i) != RMissing.instance) {
+                            length++;
+                        }
+                    }
 
-                            } else {
-                                assert !missing;
-                                Object[] additionalArgs = vararg.getArguments();
-                                syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length + additionalArgs.length - 1);
-                                for (int j = 0; j < additionalArgs.length; j++) {
-                                    if (additionalArgs[j] instanceof RPromise) {
-                                        RPromise p = (RPromise) additionalArgs[j];
-                                        syntaxArguments[index] = p.getRep().asRSyntaxNode();
-                                    } else {
-                                        assert additionalArgs[j] != RMissing.instance;
-                                        syntaxArguments[index] = ConstantNode.create(additionalArgs[j]);
-                                    }
-                                    index++;
-                                }
-                            }
-                        } else {
-                            if (arg instanceof RMissing) {
-                                syntaxArguments = Arrays.copyOf(syntaxArguments, syntaxArguments.length - 1);
-                            } else {
-                                assert !missing;
-                                syntaxArguments[index] = ConstantNode.create(arg);
+                    RSyntaxNode[] syntaxArguments = new RSyntaxNode[length];
+                    String[] signature = new String[length];
+                    int index = 0;
+                    for (int i = 0; i < arguments.getLength(); i++) {
+                        Object arg = arguments.getArgument(i);
+                        if (arg instanceof RArgsValuesAndNames) {
+                            RArgsValuesAndNames varargs = (RArgsValuesAndNames) arg;
+                            for (int j = 0; j < varargs.getLength(); j++) {
+                                syntaxArguments[index] = getArgumentNode(varargs.getArgument(j));
+                                signature[index] = varargs.getSignature().getName(j);
                                 index++;
                             }
+                        } else if (arg != RMissing.instance) {
+                            syntaxArguments[index] = getArgumentNode(arg);
+                            signature[index] = arguments.getSignature().getName(i);
+                            index++;
                         }
-
                     }
-                    syntaxNode = RASTUtils.createCall(function, true, ArgumentsSignature.empty(syntaxArguments.length), syntaxArguments);
+                    Object replacedFunction = function instanceof String ? ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, (String) function) : function;
+                    syntaxNode = RASTUtils.createCall(replacedFunction, true, ArgumentsSignature.get(signature), syntaxArguments);
+                }
+                return syntaxNode;
+            }
+        };
+    }
+
+    private static RSyntaxNode getArgumentNode(Object arg) {
+        if (arg instanceof RPromise) {
+            RPromise p = (RPromise) arg;
+            return p.getRep().asRSyntaxNode();
+        } else if (!(arg instanceof RMissing)) {
+            return ConstantNode.create(arg);
+        }
+        return null;
+    }
+
+    /**
+     * This method calculates the signature of the permuted arguments lazily.
+     */
+    public static Supplier<RSyntaxNode> createFromArguments(String function, long[] preparePermutation, Object[] suppliedArguments, ArgumentsSignature suppliedSignature) {
+        return new Supplier<RSyntaxNode>() {
+
+            RSyntaxNode syntaxNode = null;
+
+            @Override
+            public RSyntaxNode get() {
+                if (syntaxNode == null) {
+                    Object[] values = new Object[preparePermutation.length];
+                    String[] names = new String[preparePermutation.length];
+                    for (int i = 0; i < values.length; i++) {
+                        long source = preparePermutation[i];
+                        if (!VarArgsHelper.isVarArgsIndex(source)) {
+                            values[i] = suppliedArguments[(int) source];
+                            names[i] = suppliedSignature.getName((int) source);
+                        } else {
+                            int varArgsIdx = VarArgsHelper.extractVarArgsIndex(source);
+                            int argsIdx = VarArgsHelper.extractVarArgsArgumentIndex(source);
+                            RArgsValuesAndNames varargs = (RArgsValuesAndNames) suppliedArguments[varArgsIdx];
+                            values[i] = varargs.getArguments()[argsIdx];
+                            names[i] = varargs.getSignature().getName(argsIdx);
+                        }
+                    }
+                    RArgsValuesAndNames arguments = new RArgsValuesAndNames(values, ArgumentsSignature.get(names));
+                    syntaxNode = createFromArguments(function, arguments).get();
                 }
                 return syntaxNode;
             }

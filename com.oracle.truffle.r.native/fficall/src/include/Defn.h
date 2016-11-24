@@ -61,7 +61,7 @@ extern Rboolean mbcslocale;
 extern Rboolean latin1locale;
 
 #define INI_as(v)
-extern char OutDec	INI_as('.');
+extern char* OutDec	INI_as(".");
 extern Rboolean known_to_be_latin1 INI_as(FALSE);
 extern Rboolean known_to_be_utf8 INI_as(FALSE);
 
@@ -71,6 +71,10 @@ extern unsigned int max_contour_segments;
 typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
 
 CCODE (PRIMFUN)(SEXP x);
+
+/* main/sort.c */
+void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
+		  Rboolean decreasing, SEXP rho);
 
 #define Unix
 #ifdef Unix

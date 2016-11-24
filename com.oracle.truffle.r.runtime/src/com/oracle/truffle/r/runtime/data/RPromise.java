@@ -169,10 +169,18 @@ public class RPromise implements RTypedValue {
     }
 
     /**
-     * @return The raw {@link #value}.
+     * @return The {@link #value} of the promise - this must only be called for evaluated promises.
      */
     public final Object getValue() {
         assert isEvaluated();
+        return value;
+    }
+
+    /**
+     * @return The raw {@link #value}, which may be {@code null} if the promise was not evaluated
+     *         yet.
+     */
+    public final Object getRawValue() {
         return value;
     }
 

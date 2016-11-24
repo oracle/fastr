@@ -27,7 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
@@ -37,19 +39,18 @@ import com.oracle.truffle.r.test.TestBase;
  * A non-interactive one-shot invocation of GnuR that is robust, if slow, in the face of
  * multiple-line output.
  *
- * Ideally we would use the version of GnuR internal to FastR to ensure consistency, but there are
- * currently some differences in behavior (TBD). Which R is used is controlled by the environment
- * variable {@code FASTR_TESTGEN_GNUR}. If unset, we take the default, which is currently the system
- * installed version (more precisely whatever "R" resolves to on the PATH). If
- * {@code FASTR_TESTGEN_GNUR} is set to {@code internal} or the empty string, we use the internally
- * built GnuR. Any other value is treated as a path to a directory assumed to contain an R HOME, i.e
- * the executable used is {@code $FASTR_TESTGEN_GNUR/bin/R}.
+ * By default, we use the version of GnuR internal to FastR to ensure version consistency. Which R
+ * is used is controlled by the environment variable {@code FASTR_TESTGEN_GNUR}. If unset, or set to
+ * 'internal', we take the default, otherwise the value is treated as a path to a directory assumed
+ * to be an R HOME, i.e the executable used is {@code $FASTR_TESTGEN_GNUR/bin/R}.
  */
 public class GnuROneShotRSession implements RSession {
 
-    private static final String[] GNUR_COMMANDLINE = new String[]{"R", "--vanilla", "--slave", "--silent"};
+    private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent"};
     private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
     private static final String NATIVE_PROJECT = "com.oracle.truffle.r.native";
+    private static final int DEFAULT_TIMEOUT_MINS = 5;
+    private static int timeoutMins = DEFAULT_TIMEOUT_MINS;
 
     //@formatter:off
     protected static final String GNUR_OPTIONS =
@@ -65,19 +66,25 @@ public class GnuROneShotRSession implements RSession {
     protected static byte[] QUIT = "q()\n".getBytes();
 
     protected Process createGnuR() throws IOException {
-        String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
-        if (testGenGnuR != null) {
-            if (testGenGnuR.length() == 0 || testGenGnuR.equals("internal")) {
-                Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", RVersionNumber.R_HYPHEN_FULL, "bin", "R");
-                GNUR_COMMANDLINE[0] = gnuRPath.toString();
-            } else {
-                GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(testGenGnuR, "bin", "R").toString();
+        String timeout = System.getenv("FASTR_TESTGEN_TIMEOUT");
+        if (timeout != null) {
+            try {
+                timeoutMins = Integer.parseInt(timeout);
+            } catch (NumberFormatException ex) {
+                System.err.println("ignoring invalid value for FASTR_TESTGEN_TIMEOUT");
             }
-
         }
+        String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
+        if (testGenGnuR == null || testGenGnuR.equals("internal")) {
+            Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", RVersionNumber.R_HYPHEN_FULL, "bin", "R");
+            GNUR_COMMANDLINE[0] = gnuRPath.toString();
+        } else {
+            GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(testGenGnuR, "bin", "R").toString();
+        }
+
         ProcessBuilder pb = new ProcessBuilder(GNUR_COMMANDLINE);
-        // fix time zone to "CET" (to create consistent expected output)
-        pb.environment().put("TZ", "CET");
+        // fix time zone to "GMT" (to create consistent expected output)
+        pb.environment().put("TZ", "GMT");
         pb.environment().remove("R_HOME"); // don't confuse GnuR with FastR!
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -85,32 +92,27 @@ public class GnuROneShotRSession implements RSession {
         return p;
     }
 
-    protected String readAvailable(InputStream gnuRoutput) throws IOException {
-        int n = gnuRoutput.available();
-        byte[] data = new byte[n];
-        gnuRoutput.read(data);
-        return new String(data);
-    }
-
     @Override
-    public String eval(String expression, ContextInfo contextInfo, boolean longTimeout) {
+    public String eval(TestBase testBase, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
-            System.out.println("LIBRARY LOADING WHILE CREATING EXPECTED OUTPUT");
+            System.out.println("LIBRARY LOADING WHEN NOT GENERATING EXPECTED OUTPUT");
             System.out.println("creating expected output for these tests only works during test output");
             System.out.println("generation (mx rtestgen), and will otherwise create corrupted output.");
         }
-        try {
-            Process p = createGnuR();
-            InputStream gnuRoutput = p.getInputStream();
-            OutputStream gnuRinput = p.getOutputStream();
-            send(gnuRinput, expression.getBytes(), NL, QUIT);
-            p.waitFor();
-            return readAvailable(gnuRoutput);
-        } catch (IOException | InterruptedException ex) {
-            System.err.print("exception: " + ex);
-            return null;
+        Process p = createGnuR();
+        InputStream gnuRoutput = p.getInputStream();
+        OutputStream gnuRinput = p.getOutputStream();
+        ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable("gnur eval", gnuRoutput);
+        readThread.start();
+        send(gnuRinput, expression.getBytes(), NL, QUIT);
+        int thisTimeout = longTimeout ? timeoutMins * 2 : timeoutMins;
+        if (!p.waitFor(thisTimeout, TimeUnit.MINUTES)) {
+            throw new RuntimeException(String.format("GNU R process timed out on: '%s'\n", expression));
         }
+        readThread.join();
+        return new String(readThread.getData(), 0, readThread.getTotalRead());
+
     }
 
     protected void send(OutputStream gnuRinput, byte[]... data) throws IOException {
@@ -125,8 +127,4 @@ public class GnuROneShotRSession implements RSession {
         return "GnuR one-shot";
     }
 
-    public static void main(String[] args) {
-        String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
-        System.out.printf("%s='%s'%n", FASTR_TESTGEN_GNUR, testGenGnuR);
-    }
 }

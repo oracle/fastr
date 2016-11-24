@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -41,13 +38,20 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 public final class RProfile implements RContext.ContextState {
 
-    private RProfile(RContext context, REnvVars envVars) {
+    private final REnvVars envVars;
+
+    private RProfile(REnvVars envVars) {
+        this.envVars = envVars;
+    }
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
         Source newSiteProfile = null;
         Source newUserProfile = null;
 
-        if (!context.getOptions().getBoolean(NO_SITE_FILE)) {
+        if (context.getStartParams().getLoadSiteFile()) {
             String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
                 siteProfilePath = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
@@ -60,7 +64,7 @@ public final class RProfile implements RContext.ContextState {
             }
         }
 
-        if (!context.getOptions().getBoolean(NO_INIT_FILE)) {
+        if (context.getStartParams().getLoadInitFile()) {
             String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";
@@ -80,16 +84,17 @@ public final class RProfile implements RContext.ContextState {
         }
         siteProfile = newSiteProfile;
         userProfile = newUserProfile;
+        return this;
     }
 
-    private final Source siteProfile;
-    private final Source userProfile;
+    private Source siteProfile;
+    private Source userProfile;
 
     public static Source systemProfile() {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
         Source source = getProfile(path.toString());
         if (source == null) {
-            Utils.fail("can't find system profile");
+            Utils.rSuicide("can't find system profile");
         }
         return source;
     }
@@ -102,17 +107,16 @@ public final class RProfile implements RContext.ContextState {
         return userProfile;
     }
 
-    @SuppressWarnings("deprecation")
     private static Source getProfile(String path) {
         try {
-            return Source.fromFileName(path);
+            return RSource.fromFileName(path);
         } catch (IOException ex) {
             // GnuR does not report an error, just ignores
             return null;
         }
     }
 
-    public static RProfile newContext(RContext context, REnvVars envVars) {
-        return new RProfile(context, envVars);
+    public static RProfile newContextState(REnvVars envVars) {
+        return new RProfile(envVars);
     }
 }

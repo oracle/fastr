@@ -31,4 +31,10 @@ public class TestBuiltin_enc2native extends TestBase {
     public void testenc2native4() {
         assertEval("argv <- list('José Pinheiro [aut] (S version)');enc2native(argv[[1]]);");
     }
+
+    @Test
+    public void testInvalidArguments() {
+        // Note: GnuR has typo in the message
+        assertEval(Output.IgnoreErrorMessage, "enc2native(42);");
+    }
 }

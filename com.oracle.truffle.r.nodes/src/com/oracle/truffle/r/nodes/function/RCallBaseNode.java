@@ -22,16 +22,51 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+
+final class ForcePromiseNode extends RNode {
+
+    @Child private RNode valueNode;
+    @Child private PromiseHelperNode promiseHelper;
+    private final BranchProfile nonPromiseProfile = BranchProfile.create();
+
+    ForcePromiseNode(RNode valueNode) {
+        this.valueNode = valueNode;
+    }
+
+    public RNode getValueNode() {
+
+        return valueNode;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        Object value = valueNode.execute(frame);
+        if (value instanceof RPromise) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, (RPromise) value);
+        } else {
+            nonPromiseProfile.enter();
+            return value;
+        }
+    }
+}
 
 @TypeSystemReference(RTypes.class)
 @Instrumentable(factory = com.oracle.truffle.r.nodes.function.RCallBaseNodeWrapperFactory.class)
 public abstract class RCallBaseNode extends RNode implements RInstrumentableNode {
 
     public abstract Object execute(VirtualFrame frame, Object function);
+
 }

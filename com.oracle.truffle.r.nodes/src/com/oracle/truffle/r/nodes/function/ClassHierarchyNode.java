@@ -27,9 +27,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
@@ -58,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ClassHierarchyNode extends UnaryNode {
 
     private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
@@ -115,17 +118,19 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHrAttributable(RAttributable arg, //
-                    @Cached("createBinaryProfile()") ConditionProfile attrStoraeProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
         RAttributes attributes;
-        RAttributable profiledArg;
-        if (attrStoraeProfile.profile(arg instanceof RAttributeStorage)) {
+        if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
+            // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
+            // Note2: the attrStorageProfile and cast is better at helping compiler to inline
+            // 'getAttributes' than just the ValueProfile in else branch, which degrades when it
+            // sees two different classes
             attributes = ((RAttributeStorage) arg).getAttributes();
-            profiledArg = arg;
         } else {
-            profiledArg = argProfile.profile(arg);
-            attributes = profiledArg.getAttributes();
+            arg = argProfile.profile(arg);
+            attributes = arg.getAttributes();
         }
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
@@ -144,7 +149,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 return classHierarchy;
             }
         }
-        return withImplicitTypes ? arg.getImplicitClass() : null;
+        return withImplicitTypes ? argProfile.profile(arg).getImplicitClass() : null;
     }
 
     protected static boolean isRTypedValue(Object obj) {
@@ -181,11 +186,12 @@ abstract class S4Class extends RBaseNode {
         RStringVector s4Extends = RContext.getInstance().getS4Extends(classAttr);
         if (s4Extends == null) {
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
-            RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame(), false);
+            RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector
             s4Extends = (RStringVector) castToVector.execute(
-                            RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), classAttr));
+                            RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), null,
+                                            classAttr));
             RContext.getInstance().putS4Extends(classAttr, s4Extends);
         }
         return s4Extends;
@@ -193,7 +199,9 @@ abstract class S4Class extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "classAttr == cachedClassAttr")
-    protected RStringVector getS4ClassCachedEqOp(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqOp(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
@@ -203,7 +211,9 @@ abstract class S4Class extends RBaseNode {
      */
     @SuppressWarnings("unused")
     @Specialization(contains = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
-    protected RStringVector getS4ClassCachedEqMethod(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+    protected RStringVector getS4ClassCachedEqMethod(String classAttr,
+                    @Cached("classAttr") String cachedClassAttr,
+                    @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 

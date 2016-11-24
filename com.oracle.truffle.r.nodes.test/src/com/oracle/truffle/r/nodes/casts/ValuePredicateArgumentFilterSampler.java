@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.casts;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -34,53 +33,55 @@ import com.oracle.truffle.r.nodes.casts.ArgumentFilterSampler.ArgumentValueFilte
 
 public class ValuePredicateArgumentFilterSampler<T> extends ValuePredicateArgumentFilter<T> implements ArgumentValueFilterSampler<T> {
 
-    private final Set<? extends T> positiveSamples;
-    private final Set<?> negativeSamples;
-    private final TypeExpr allowedTypes;
+    private final TypeExpr trueBranchTypes;
+    private final Samples<T> samples;
+    private final String desc;
 
-    public ValuePredicateArgumentFilterSampler(Predicate<? super T> valuePredicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet,
-                    boolean isNullable) {
-        super(valuePredicate, isNullable);
+    @SuppressWarnings("unchecked")
+    public ValuePredicateArgumentFilterSampler(String desc, Predicate<? super T> valuePredicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples, Set<Class<?>> allowedTypeSet) {
+        super(valuePredicate);
 
-        this.allowedTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
-        this.positiveSamples = positiveSamples;
-        this.negativeSamples = negativeSamples;
+        this.trueBranchTypes = allowedTypeSet.isEmpty() ? TypeExpr.ANYTHING : TypeExpr.union(allowedTypeSet);
+        Predicate<Object> posMembership = x -> trueBranchTypes.isInstance(x) && test((T) x);
+        this.samples = new Samples<>(desc, positiveSamples, negativeSamples, posMembership);
 
         assert positiveSamples.stream().allMatch(x -> valuePredicate.test(x));
+
+        this.desc = desc;
     }
 
     @Override
-    public TypeExpr allowedTypes() {
-        return allowedTypes;
+    public TypeExpr trueBranchType() {
+        return trueBranchTypes;
     }
 
     @Override
-    public Samples<T> collectSamples(Samples<? extends T> downStreamSamples) {
-        Set<T> allowedPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> test(x)).collect(Collectors.toSet());
-        Set<T> forbiddenPositiveValues = downStreamSamples.positiveSamples().stream().filter(x -> !test(x)).collect(Collectors.toSet());
+    public String toString() {
+        return desc;
+    }
 
-        Set<Object> negativeAndForbiddenSamples = new HashSet<>(forbiddenPositiveValues);
-        negativeAndForbiddenSamples.addAll(downStreamSamples.negativeSamples());
-
-        return new Samples<>(allowedPositiveValues, negativeAndForbiddenSamples).and(new Samples<>(positiveSamples, negativeSamples));
+    @Override
+    public Samples<T> collectSamples(TypeExpr inputType) {
+        return samples;
     }
 
     public static <T> ValuePredicateArgumentFilterSampler<T> fromLambdaWithSamples(Predicate<? super T> predicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples,
                     Class<?> resultClass) {
-        return new ValuePredicateArgumentFilterSampler<>(predicate, positiveSamples, negativeSamples, Collections.singleton(resultClass), false);
+        return new ValuePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Collections.singleton(resultClass));
     }
 
-    public static <T> ValuePredicateArgumentFilterSampler<T> omLambdaWithResTypes(Predicate<T> predicate, Class<?>... resultClass) {
-        return new ValuePredicateArgumentFilterSampler<>(predicate, Collections.emptySet(), Collections.emptySet(), Arrays.asList(resultClass).stream().collect(Collectors.toSet()), false);
+    public static <T> ValuePredicateArgumentFilterSampler<T> fromLambdaWithResTypes(Predicate<T> predicate, Class<?>... resultClass) {
+        return new ValuePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, Collections.emptySet(), Collections.emptySet(),
+                        Arrays.asList(resultClass).stream().collect(Collectors.toSet()));
     }
 
     public static <T> ValuePredicateArgumentFilterSampler<T> fromLambdaWithSamples(Predicate<T> predicate, Set<? extends T> positiveSamples, Set<? extends T> negativeSamples) {
-        return new ValuePredicateArgumentFilterSampler<>(predicate, positiveSamples, negativeSamples, Collections.emptySet(), false);
+        return new ValuePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, positiveSamples, negativeSamples, Collections.emptySet());
     }
 
     public static <T> ValuePredicateArgumentFilterSampler<T> fromLambdaWithSamples(Predicate<T> predicate, Set<T> negativeSamples,
                     @SuppressWarnings("unused") Class<T> commonAncestorClass, Set<Class<?>> resultClasses) {
-        return new ValuePredicateArgumentFilterSampler<>(predicate, Collections.emptySet(), negativeSamples, resultClasses, false);
+        return new ValuePredicateArgumentFilterSampler<>(CastUtils.getPredefStepDesc(), predicate, Collections.emptySet(), negativeSamples, resultClasses);
     }
 
 }

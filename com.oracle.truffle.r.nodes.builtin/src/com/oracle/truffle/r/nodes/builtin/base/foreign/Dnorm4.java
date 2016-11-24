@@ -23,7 +23,8 @@ public final class Dnorm4 implements Function3_1 {
     private static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;
 
     @Override
-    public double evaluate(double x, double mu, double sigma, boolean giveLog) {
+    public double evaluate(double xa, double mu, double sigma, boolean giveLog) {
+        double x = xa;
         if (Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return x + mu + sigma;
         }

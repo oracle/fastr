@@ -25,24 +25,20 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -55,9 +51,13 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
     @Child private WriteVariableNode writeIndexNode;
     @Child private WriteVariableNode writeRangeNode;
     @Child private LoopNode loopNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private ForNode(SourceSection src, WriteVariableNode cvar, RNode range, RNode body) {
-        super(src);
+    private final RSyntaxLookup var;
+
+    public ForNode(SourceSection src, RSyntaxLookup operator, RSyntaxLookup var, RNode range, RNode body) {
+        super(src, operator);
+        this.var = var;
         String indexName = AnonymousFrameVariable.create("FOR_INDEX");
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
@@ -65,12 +65,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
         this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
         this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName)), Mode.REGULAR);
-        this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, cvar, body, indexName, lengthName, rangeName));
-    }
-
-    public static ForNode create(SourceSection src, WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
-        ForNode result = new ForNode(src, cvar, range.asRNode(), body.asRNode());
-        return result;
+        this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, var.getIdentifier(), body, indexName, lengthName, rangeName));
     }
 
     @Override
@@ -79,43 +74,11 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         writeRangeNode.execute(frame);
         writeLengthNode.execute(frame);
         loopNode.executeLoop(frame);
-        RContext.getInstance().setVisible(false);
+        visibility.execute(frame, false);
         return RNull.instance;
     }
 
-    public WriteVariableNode getCvar() {
-        return getForRepeatingNode().writeElementNode;
-    }
-
-    public RNode getRange() {
-        return writeRangeNode.getRhs();
-    }
-
-    public RNode getBody() {
-        return getForRepeatingNode().body;
-    }
-
-    @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsBuiltin("for");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        // variable
-        state.serializeNodeSetCar(getCvar());
-        // range
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getRange());
-        // body
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getBody());
-        state.linkPairList(3);
-        state.setCdr(state.closePairList());
-    }
-
-    private ForRepeatingNode getForRepeatingNode() {
-        return (ForRepeatingNode) loopNode.getRepeatingNode();
-    }
-
-    private static final class ForRepeatingNode extends RBaseNode implements RepeatingNode {
+    private static final class ForRepeatingNode extends Node implements RepeatingNode {
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
@@ -127,20 +90,17 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         @Child private ReadVariableNode readIndexNode;
         @Child private ReadVariableNode readLengthNode;
         @Child private WriteVariableNode writeIndexNode;
-        @Child private RNode loadElement;
 
-        // used as RSyntaxNode
         private final ForNode forNode;
 
-        ForRepeatingNode(ForNode forNode, WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
+        ForRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String lengthName, String rangeName) {
             this.forNode = forNode;
-            this.writeElementNode = cvar;
+            this.writeElementNode = WriteVariableNode.createAnonymous(var, createIndexedLoad(indexName, rangeName), Mode.REGULAR, false);
             this.body = body;
 
             this.readIndexNode = ReadVariableNode.create(indexName);
             this.readLengthNode = ReadVariableNode.create(lengthName);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
-            this.loadElement = createIndexedLoad(indexName, rangeName);
             // pre-initialize the profile so that loop exits to not deoptimize
             conditionProfile.profile(false);
         }
@@ -165,7 +125,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
             }
             try {
                 if (conditionProfile.profile(index <= length)) {
-                    writeElementNode.execute(frame, loadElement.execute(frame));
+                    writeElementNode.execute(frame);
                     body.execute(frame);
                     return true;
                 } else {
@@ -183,36 +143,15 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         }
 
         @Override
-        protected RSyntaxNode getRSyntaxNode() {
-            return forNode;
-        }
-
-        @Override
         public String toString() {
-            RootNode rootNode = getRootNode();
-            String function = "?";
-            if (rootNode instanceof RRootNode) {
-                function = rootNode.toString();
-            }
-            SourceSection sourceSection = getRSyntaxNode().getSourceSection();
-            int startLine = -1;
-            if (sourceSection != null) {
-                startLine = sourceSection.getStartLine();
-            }
-            return String.format("for-<%s:%d>", function, startLine);
+            return forNode.toString();
         }
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "for", true);
     }
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         ForRepeatingNode repeatingNode = (ForRepeatingNode) loopNode.getRepeatingNode();
-        return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(null, (String) repeatingNode.writeElementNode.getName(), false), writeRangeNode.getRhs().asRSyntaxNode(),
-                        repeatingNode.body.asRSyntaxNode()};
+        return new RSyntaxElement[]{var, writeRangeNode.getRhs().asRSyntaxNode(), repeatingNode.body.asRSyntaxNode()};
     }
 
     @Override

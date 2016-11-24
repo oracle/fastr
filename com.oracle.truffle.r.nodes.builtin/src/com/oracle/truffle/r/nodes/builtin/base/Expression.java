@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -30,13 +31,12 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
-@RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = 0)
+@RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = 0, behavior = PURE)
 public abstract class Expression extends RBuiltinNode {
     /*
      * Owing to the nonEvalArgs, all arguments are RPromise, but an expression may contain
@@ -54,30 +54,27 @@ public abstract class Expression extends RBuiltinNode {
         for (int i = 0; i < argValues.length; i++) {
             data[i] = convert((RPromise) argValues[i]);
         }
-        RList list;
         if (hasNonNull) {
             String[] names = new String[signature.getLength()];
             for (int i = 0; i < names.length; i++) {
                 names[i] = signature.getName(i);
             }
-            list = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+            return RDataFactory.createExpression(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } else {
-            list = RDataFactory.createList(data);
+            return RDataFactory.createExpression(data);
         }
-        return RDataFactory.createExpression(list);
     }
 
     @Specialization
     protected Object doExpression(RPromise language) {
-        RList list = RDataFactory.createList(new Object[]{convert(language)});
-        return RDataFactory.createExpression(list);
+        return RDataFactory.createExpression(new Object[]{convert(language)});
     }
 
     private Object convert(RPromise promise) {
         if (isEvaluatedProfile.profile(promise.isEvaluated())) {
             return promise.getValue();
         } else {
-            return RASTUtils.createLanguageElement(RASTUtils.unwrap(promise.getRep()));
+            return RASTUtils.createLanguageElement(promise.getRep().asRSyntaxNode());
         }
     }
 }

@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Iterator;
 
@@ -33,18 +35,17 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -53,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -66,7 +66,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * needs to be fast! The five defaulted logical arguments are supposed to be cast to logical and
  * checked for NA (regardless of whether they are used).
  */
-@RBuiltin(name = "identical", kind = INTERNAL, parameterNames = {"x", "y", "num.eq", "single.NA", "attrib.as.set", "ignore.bytecode", "ignore.environment"})
+@RBuiltin(name = "identical", kind = INTERNAL, parameterNames = {"x", "y", "num.eq", "single.NA", "attrib.as.set", "ignore.bytecode", "ignore.environment"}, behavior = PURE)
 public abstract class Identical extends RBuiltinNode {
 
     protected abstract byte executeByte(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment);
@@ -76,10 +76,15 @@ public abstract class Identical extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(2, "num.eq").firstBoolean(3, "single.NA").firstBoolean(4, "attrib.as.set").firstBoolean(5, "ignore.bytecode").firstBoolean(6, "ignore.environment");
+        casts.arg("num.eq").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("single.NA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("attrib.as.set").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.bytecode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("ignore.environment").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile differentTypesProfile = ConditionProfile.createBinaryProfile();
 
     // Note: the execution of the recursive cases is not done directly and not through RCallNode or
     // similar, this means that the visibility handling is left to us.
@@ -87,7 +92,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursive(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursive = insert(IdenticalNodeGen.create(null));
+            identicalRecursive = insert(IdenticalNodeGen.create());
         }
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -95,7 +100,7 @@ public abstract class Identical extends RBuiltinNode {
     private byte identicalRecursiveAttr(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (identicalRecursiveAttr == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            identicalRecursiveAttr = insert(IdenticalNodeGen.create(null));
+            identicalRecursiveAttr = insert(IdenticalNodeGen.create());
         }
         return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
@@ -180,7 +185,7 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        assert x.getName() == x.getName().intern() && y.getName() == y.getName().intern();
+        assert Utils.isInterned(x.getName()) && Utils.isInterned(y.getName());
         return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
@@ -237,7 +242,7 @@ public abstract class Identical extends RBuiltinNode {
 
     @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
+        if (vecLengthProfile.profile(x.getLength() != y.getLength()) || differentTypesProfile.profile(x.getRType() != y.getRType())) {
             return RRuntime.LOGICAL_FALSE;
         } else {
             for (int i = 0; i < x.getLength(); i++) {
@@ -250,7 +255,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdenticalGeneric(RList x, RList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+    protected byte doInternalIdenticalGeneric(RListBase x, RListBase y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (x.getLength() != y.getLength()) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -341,19 +346,8 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "argConnections(x, y)")
-    protected byte doInternalIdenticalConnections(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
-        return RRuntime.asLogical(((RConnection) x).getDescriptor() == ((RConnection) y).getDescriptor());
-    }
-
-    @Specialization
-    protected byte doInternalIdenticalGeneric(RExpression x, RExpression y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return doInternalIdenticalGeneric(x.getList(), y.getList(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
-    }
-
-    @SuppressWarnings("unused")
     @Fallback
-    protected byte doInternalIdenticalWrongTypes(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+    protected byte doInternalIdenticalWrongTypes(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         if (x.getClass() != y.getClass()) {
             return RRuntime.LOGICAL_FALSE;
         } else {
@@ -362,14 +356,10 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
-        return x instanceof RList && y instanceof RList;
+        return x instanceof RListBase && y instanceof RListBase;
     }
 
-    protected boolean argConnections(Object x, Object y) {
-        return x instanceof RConnection && y instanceof RConnection;
-    }
-
-    public static Identical create(RNode[] arguments) {
-        return IdenticalNodeGen.create(arguments);
+    public static Identical create() {
+        return IdenticalNodeGen.create();
     }
 }

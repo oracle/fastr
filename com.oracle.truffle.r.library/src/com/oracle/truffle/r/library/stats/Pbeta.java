@@ -54,10 +54,15 @@ public abstract class Pbeta extends RExternalBuiltinNode.Arg5 {
         // ====
         /* ierr = 8 is about inaccuracy in extreme cases */
         if (bratio.ierr != 0 && (bratio.ierr != 8 || logProb)) {
-            RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("pbeta_raw(%g, a=%g, b=%g, ..) -> bratio() gave error code %d", x, a, b, bratio.ierr));
+            doWarning(x, a, b, bratio.ierr);
         }
         return lowerTail ? bratio.w : bratio.w1;
     }/* pbeta_raw() */
+
+    @TruffleBoundary
+    private static void doWarning(double x, double a, double b, int ierr) {
+        RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("pbeta_raw(%g, a=%g, b=%g, ..) -> bratio() gave error code %d", x, a, b, ierr));
+    }
 
     static double pbeta(double x, double a, double b, boolean lowerTail, boolean logP, BranchProfile nanProfile) {
         if (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b)) {

@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
@@ -47,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  *
  */
 @ValueType
-public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer, RAttributable, RShareable {
+public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer {
 
     /*
      * Used for RLanguage construction from separate AST components.
@@ -59,27 +58,59 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     private RBaseNode rep;
+    private RPairList list;
+    private String callLHSName;
 
     /**
      * Lazily computed value.
      */
     private int length = -1;
 
-    RLanguage(RNode rep) {
+    RLanguage(RBaseNode rep) {
         this.rep = rep;
     }
 
-    private RLanguage(RNode rep, int length) {
+    private RLanguage(RBaseNode rep, int length) {
         this.rep = rep;
         this.length = length;
     }
 
+    public static Object fromList(Object o, RLanguage.RepType type) {
+        RList l;
+        if (o instanceof RPairList) {
+            l = ((RPairList) o).toRList();
+        } else {
+            l = (RList) o;
+        }
+        return RContext.getRRuntimeASTAccess().fromList(l, type);
+    }
+
     public RBaseNode getRep() {
+        if (list != null) {
+            // we could rest rep but we keep it around to remember type of the language object
+            assert rep != null;
+            // list must be reset before rep type is obtained
+            RPairList oldList = this.list;
+            this.list = null;
+            RLanguage newLang = (RLanguage) fromList(oldList, RContext.getRRuntimeASTAccess().getRepType(this));
+            this.rep = newLang.rep;
+            this.length = newLang.length;
+            this.attributes = newLang.attributes;
+        }
         return rep;
     }
 
     public void setRep(RBaseNode rep) {
         this.rep = rep;
+        this.list = null;
+    }
+
+    public String getCallLHSName() {
+        return callLHSName;
+    }
+
+    public void setCallLHSName(String callLHSName) {
+        this.callLHSName = callLHSName;
     }
 
     @Override
@@ -94,10 +125,15 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
 
     @Override
     public int getLength() {
-        if (length < 0) {
-            length = RContext.getRRuntimeASTAccess().getLength(this);
+        // if list representation is present, it takes priority as it might have been updated
+        if (list == null) {
+            if (length < 0) {
+                length = RContext.getRRuntimeASTAccess().getLength(this);
+            }
+            return length;
+        } else {
+            return list.getLength();
         }
-        return length;
     }
 
     @Override
@@ -135,46 +171,62 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
 
     @Override
     public Object getDataAtAsObject(int index) {
-        return RContext.getRRuntimeASTAccess().getDataAtAsObject(this, index);
+        if (list == null) {
+            return RContext.getRRuntimeASTAccess().getDataAtAsObject(this, index);
+        } else {
+            return list.getDataAtAsObject(index);
+        }
     }
 
     @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        /*
-         * "names" for a language object is a special case, that is applicable to calls and returns
-         * the names of the actual arguments, if any. E.g. f(x=1, 3) would return c("", "x", "").
-         * GnuR defines it as returning the "tag" values on the pairlist that represents the call.
-         * Well, we don't have a pairlist, (we could get one by serializing the expression), so we
-         * do it by AST walking.
-         */
-        RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
-        return names;
+        if (list == null) {
+            /*
+             * "names" for a language object is a special case, that is applicable to calls and
+             * returns the names of the actual arguments, if any. E.g. f(x=1, 3) would return c("",
+             * "x", ""). GnuR defines it as returning the "tag" values on the pairlist that
+             * represents the call. Well, we don't have a pairlist, (we could get one by serializing
+             * the expression), so we do it by AST walking.
+             */
+            RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
+            return names;
+        } else {
+            return list.getNames(attrProfiles);
+        }
     }
 
     @Override
     public void setNames(RStringVector newNames) {
-        /* See getNames */
-        RContext.getRRuntimeASTAccess().setNames(this, newNames);
+        if (list == null) {
+            /* See getNames */
+            RContext.getRRuntimeASTAccess().setNames(this, newNames);
+        } else {
+            list.setNames(newNames);
+        }
     }
 
     @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
-        return (RList) getAttr(attrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
+        RAttributable attr = list == null ? this : list;
+        return (RList) attr.getAttr(attrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override
     public void setDimNames(RList newDimNames) {
-        setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+        RAttributable attr = list == null ? this : list;
+        attr.setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
     }
 
     @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+        RAttributable attr = list == null ? this : list;
+        return attr.getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     @Override
     public void setRowNames(RAbstractVector rowNames) {
-        setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+        RAttributable attr = list == null ? this : list;
+        attr.setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
     }
 
     @Override
@@ -183,13 +235,8 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
-        return false;
-    }
-
-    @Override
     public RLanguage copy() {
-        RLanguage l = new RLanguage((RNode) getRep(), this.length);
+        RLanguage l = new RLanguage(getRep(), this.length);
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }
@@ -200,5 +247,22 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     @Override
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
+    }
+
+    public RPairList getPairList() {
+        if (list == null) {
+            Object obj = RNull.instance;
+            for (int i = getLength() - 1; i >= 0; i--) {
+                Object element = RContext.getRRuntimeASTAccess().getDataAtAsObject(this, i);
+                obj = RDataFactory.createPairList(element, obj);
+            }
+            // names have to be taken before list is assigned
+            RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
+            list = (RPairList) obj;
+            if (names != null) {
+                list.setNames(names);
+            }
+        }
+        return list;
     }
 }

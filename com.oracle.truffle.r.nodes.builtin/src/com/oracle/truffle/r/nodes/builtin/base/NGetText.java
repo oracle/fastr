@@ -22,31 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RString;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @SuppressWarnings("unused")
-@RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"})
+@RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"}, behavior = COMPLEX)
 public abstract class NGetText extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("n").asIntegerVector().findFirst().mustBe(gte0());
 
-        casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
-        casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(nullValue().not().and(stringValue())).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
     }
 

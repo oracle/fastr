@@ -61,15 +61,14 @@ final class PositionCharacterLookupNode extends Node {
                 emptyProfile.enter();
                 names = RDataFactory.createEmptyStringVector();
             }
-            result = searchNode.apply(names, position, notFoundStartIndex);
-            result.setNames(position.materialize());
+            result = searchNode.apply(names, position, notFoundStartIndex, position.materialize());
         } else {
             RList dimNames = target.getDimNames(attributeProfiles);
             if (dimNames != null) {
                 Object dataAt = dimNames.getDataAt(dimensionIndex);
                 if (dataAt != RNull.instance) {
                     RStringVector dimName = (RStringVector) dataAt;
-                    result = searchNode.apply(dimName, position, notFoundStartIndex);
+                    result = searchNode.apply(dimName, position, notFoundStartIndex, null);
                 } else {
                     emptyProfile.enter();
                     throw RError.error(this, Message.SUBSCRIPT_BOUNDS);

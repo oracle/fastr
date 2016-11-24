@@ -22,18 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 /**
  * R.home builtin.
  */
-@RBuiltin(name = "R.home", kind = INTERNAL, parameterNames = {})
+@RBuiltin(name = "R.home", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization

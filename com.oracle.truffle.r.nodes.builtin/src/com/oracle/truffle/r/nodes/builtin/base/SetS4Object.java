@@ -22,52 +22,44 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.AsS4;
 import com.oracle.truffle.r.nodes.objects.AsS4NodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"})
+@RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"}, behavior = PURE)
 public abstract class SetS4Object extends RBuiltinNode {
 
     @Child private AsS4 asS4 = AsS4NodeGen.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toAttributable(0, true, true, true);
-        casts.toLogical(1);
-        casts.toInteger(2);
-    }
-
-    private boolean checkArgs(RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
-        if (flagVec.getLength() == 0 || (flagVec.getLength() == 1 && flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) || flagVec.getLength() > 1) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "flag");
-        }
-        if (completeVec.getLength() == 0 || flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "complete");
-        }
-        return RRuntime.fromLogical(flagVec.getDataAt(0));
+        casts.arg("object").allowNull().asAttributable(true, true, true);
+        casts.arg("flag").asLogicalVector().mustBe(singleElement(), RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "flag").findFirst().map(toBoolean());
+        // "complete" can be a vector, unlike "flag"
+        casts.arg("complete").asIntegerVector().findFirst(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "complete");
     }
 
     @Specialization
-    protected RNull asS4(RNull object, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
-        boolean flag = checkArgs(flagVec, completeVec);
+    @TruffleBoundary
+    protected RNull asS4(RNull object, boolean flag, @SuppressWarnings("unused") int complete) {
         if (flag) {
-            object.setS4();
+            RContext.getInstance().setNullS4Object(true);
         } else {
-            boolean wasS4 = object.isS4();
-            object.unsetS4();
+            boolean wasS4 = RContext.getInstance().isNullS4Object();
+            RContext.getInstance().setNullS4Object(false);
             if (wasS4) {
                 throw RError.error(this, RError.Message.GENERIC, "object of class \"NULL\" does not correspond to a valid S3 object");
             }
@@ -76,14 +68,13 @@ public abstract class SetS4Object extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isSequence(object)")
-    protected Object asS4(RAttributable object, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
-        boolean flag = checkArgs(flagVec, completeVec);
-        return asS4.executeObject(object, flag, completeVec.getDataAt(0));
+    protected Object asS4(RAttributable object, boolean flag, int complete) {
+        return asS4.executeObject(object, flag, complete);
     }
 
     @Specialization
-    protected Object asS4(RSequence seq, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
-        return asS4(seq.materialize(), flagVec, completeVec);
+    protected Object asS4(RSequence seq, boolean flag, int complete) {
+        return asS4(seq.materialize(), flag, complete);
     }
 
     protected boolean isSequence(Object o) {

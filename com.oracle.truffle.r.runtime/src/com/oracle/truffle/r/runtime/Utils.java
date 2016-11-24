@@ -26,7 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -50,7 +49,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -61,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -71,6 +70,25 @@ public final class Utils {
 
     public static boolean isRomanLetter(char c) {
         return (/* lower case */c >= '\u00DF' && c <= '\u00FF') || (/* upper case */c >= '\u00C0' && c <= '\u00DE');
+    }
+
+    /**
+     * For methods converting strings to numbers. Removes leading zeroes up to first non zero
+     * character, but if the string is only string of zeroes e.g. '000', returns '0'. Strings
+     * starting with '0x' are returned as is.
+     */
+    public static String trimLeadingZeros(String value) {
+        if (value.length() <= 1 || value.charAt(0) != '0' || value.charAt(1) == 'x') {
+            return value;
+        }
+
+        int i;
+        for (i = 1; i < value.length() - 1; i++) {
+            if (value.charAt(i) != '0') {
+                break;
+            }
+        }
+        return value.substring(i);
     }
 
     public static int incMod(int value, int mod) {
@@ -91,16 +109,22 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * Locates a resource that is used within the implementation, e.g. a file of R code, and returns
+     * a {@link Source} instance that represents it. Since the location may vary between
+     * implementations and, in particular may not be a persistently accessible URL, we read the
+     * content and store it as an "internal" instance.
+     */
     public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
         try {
-            URL url = ResourceHandlerFactory.getHandler().getResource(clazz, resourceName);
-            if (url == null) {
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+            if (is == null) {
                 throw new IOException();
             }
-            return Source.fromFileName(url.getPath());
+            String content = getResourceAsString(is);
+            return RSource.fromTextInternal(content, RSource.Internal.R_IMPL);
         } catch (IOException ex) {
-            throw Utils.fail("resource " + resourceName + " not found");
+            throw RInternalError.shouldNotReachHere("resource " + resourceName + " not found, context: " + clazz);
         }
     }
 
@@ -116,7 +140,7 @@ public final class Utils {
             } catch (IOException ex) {
             }
         }
-        throw Utils.fail("resource " + resourceName + " not found");
+        throw Utils.rSuicide("resource " + resourceName + " not found");
     }
 
     private static String getResourceAsString(InputStream is) throws IOException {
@@ -148,42 +172,35 @@ public final class Utils {
     }
 
     /**
-     * All terminations that happen within a PolyglotEngine context should go through this method.
+     * Called when the system encounters a fatal internal error and must commit suicide (i.e.
+     * terminate). It allows an embedded client to override the default (although they typically
+     * invoke the default eventually).
      */
-    public static RuntimeException exit(int status) {
-        /*
-         * TODO: Ultimately, destroying the context should be triggered from the "outside" of a
-         * PolyglotEngine. This ultimately depends on what the expected semantics of "quit()" in a
-         * polyglot context are.
-         */
-        RPerfStats.report();
-        if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
-            throw new DebugExitException();
-        } else {
-            try {
-                /*
-                 * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter
-                 * since we're going to System.exit anyway.
-                 */
-                RContext.getInstance().destroy();
-            } catch (Throwable t) {
-                // ignore
-            }
-            System.exit(status);
-            return null;
+    public static RuntimeException rSuicide(String msg) {
+        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
+            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
         }
+        throw rSuicideDefault(msg);
     }
 
-    public static RuntimeException fail(String msg) {
-        // CheckStyle: stop system..print check
-        System.err.println("FastR internal error: " + msg);
-        // CheckStyle: resume system..print check
-        throw Utils.exit(2);
+    /**
+     * The default, non-overrideable, suicide call. It prints the message and throws
+     * {@link ExitException}.
+     *
+     * @param msg
+     */
+    public static RuntimeException rSuicideDefault(String msg) {
+        System.err.println("FastR unexpected failure: " + msg);
+        throw new ExitException(2);
     }
 
-    public static RuntimeException fatalError(String msg) {
-        System.err.println("Fatal error: " + msg);
-        throw Utils.exit(2);
+    /**
+     * This the real, final, non-overrideable, exit of the entire R system. TODO well, modulo how
+     * quit() is interpreted when R is started implicitly from a Polyglot shell that is running
+     * other languages.
+     */
+    public static void systemExit(int status) {
+        System.exit(status);
     }
 
     private static String userHome;
@@ -251,6 +268,19 @@ public final class Utils {
     }
 
     /**
+     * Returns a {@link Path} for a log file with base name {@code fileName}, taking into account
+     * whether the system is running in embedded mode. In the latter case, we can't assume that the
+     * cwd is writable. Plus some embedded apps, e.g. RStudio, spawn multiple R sub-processes
+     * concurrently so we tag the file with the pid.
+     */
+    public static Path getLogPath(String fileName) {
+        String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
+        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
+        return FileSystems.getDefault().getPath(root, baseName);
+    }
+
+    /**
      * Performs "~" expansion and also checks whether we need to take special case over relative
      * paths due to the curwd having moved from the initial setting. In the latter case, if the path
      * was relative it is adjusted for the new curwd setting. If {@code keepRelative == true} the
@@ -297,6 +327,14 @@ public final class Utils {
      */
     public static String tildeExpand(String path) {
         return tildeExpand(path, false);
+    }
+
+    public static String unShQuote(String s) {
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
     }
 
     /**
@@ -447,10 +485,7 @@ public final class Utils {
                     SourceSection ss = sn != null ? sn.getSourceSection() : null;
                     // fabricate a srcref attribute from ss
                     Source source = ss != null ? ss.getSource() : null;
-                    String path = source != null ? source.getPath() : null;
-                    if (path != null && RInternalSourceDescriptions.isInternal(path)) {
-                        path = null;
-                    }
+                    String path = RSource.getPath(source);
                     RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
                     if (path != null) {
                         callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
@@ -532,11 +567,6 @@ public final class Utils {
             }
             RCaller call = RArguments.getCall(unwrapped);
             if (call != null) {
-                /*
-                 * Log the frame depths as a triple: d,e,p, where 'd' is the actual depth, 'e' is
-                 * the effective depth and 'p' is the promise frame depth, or -1 if no promise
-                 * evaluation in progress.
-                 */
                 String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
                 int depth = RArguments.getDepth(unwrapped);
                 str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
@@ -880,4 +910,24 @@ public final class Utils {
         }
         return r;
     }
+
+    @TruffleBoundary
+    public static String intern(String s) {
+        return s.intern();
+    }
+
+    public static boolean isInterned(String s) {
+        return s == s.intern();
+    }
+
+    @TruffleBoundary
+    public static String toString(Object obj) {
+        return obj.toString();
+    }
+
+    @TruffleBoundary
+    public static String stringFormat(String format, Object... objects) {
+        return String.format(format, objects);
+    }
+
 }

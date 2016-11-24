@@ -69,5 +69,12 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
 
         assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }");
+
+        assertEval("{ x<-data.frame(c(1,2),c(3,4)); dimnames(x) <- list(c(\"A\", \"B\"), c(\"C\", \"D\")); rbind(x) }");
+
+        assertEval("rbind(character(0))");
+        assertEval("rbind(character(0), 'f')");
+        assertEval("rbind(55, character(0))");
+        assertEval("rbind(a=55, character(0))");
     }
 }

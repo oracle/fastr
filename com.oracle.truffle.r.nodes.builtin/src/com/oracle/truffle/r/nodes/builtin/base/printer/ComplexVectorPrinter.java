@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.base.Round;
 import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
@@ -25,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
+public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
     static final ComplexVectorPrinter INSTANCE = new ComplexVectorPrinter();
 
@@ -72,7 +73,13 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         }
     }
 
+    @TruffleBoundary
     static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
+        return formatComplexVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
+    }
+
+    @TruffleBoundary
+    static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
 
         int wr;
         int dr;
@@ -128,7 +135,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
             } else {
                 /* real part */
 
-                tmp = zprecr(xi, pp.getDigits());
+                tmp = zprecr(xi, digits);
 
                 if (!RRuntime.isFinite(tmp.getRealPart())) {
                     if (RRuntime.isNAorNaN(tmp.getRealPart())) {
@@ -142,7 +149,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
                     if (xi.getRealPart() != 0) {
                         allReZero = false;
                     }
-                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getRealPart(), pp);
+                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getRealPart(), digits);
 
                     left = sd.kpower + 1;
                     if (sd.roundingwidens) {
@@ -186,7 +193,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
                     if (xi.getImaginaryPart() != 0) {
                         allImZero = false;
                     }
-                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getImaginaryPart(), pp);
+                    ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getImaginaryPart(), digits);
 
                     left = sd.kpower + 1;
                     if (sd.roundingwidens) {
@@ -220,7 +227,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
         /* overall format for real part */
 
-        if (pp.getDigits() == 0) {
+        if (digits == 0) {
             rt = 0;
         }
         if (mxl != RRuntime.INT_MIN_VALUE) {
@@ -244,7 +251,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
         /* overall format for imaginary part */
 
-        if (pp.getDigits() == 0) {
+        if (digits == 0) {
             irt = 0;
         }
         if (imxl != RRuntime.INT_MIN_VALUE) {
@@ -270,7 +277,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         if (allReZero) {
             er = dr = 0;
             wr = wF;
-            if (iwF <= wi + pp.getScipen()) {
+            if (iwF <= wi + sciPen) {
                 ei = 0;
                 if (nsmall > irt) {
                     irt = nsmall;
@@ -280,7 +287,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
                 wi = iwF;
             }
         } else if (allImZero) {
-            if (wF <= wr + pp.getScipen()) {
+            if (wF <= wr + sciPen) {
                 er = 0;
                 if (nsmall > rt) {
                     rt = nsmall;
@@ -291,7 +298,7 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
             }
             ei = di = 0;
             wi = iwF;
-        } else if (wF + iwF < wr + wi + 2 * pp.getScipen()) {
+        } else if (wF + iwF < wr + wi + 2 * sciPen) {
             er = 0;
             if (nsmall > rt) {
                 rt = nsmall;
@@ -334,8 +341,8 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
         /* finally, ensure that there is space for NA */
 
-        if (naflag && wr + wi + 2 < pp.getNaWidth()) {
-            wr += (pp.getNaWidth() - (wr + wi + 2));
+        if (naflag && wr + wi + 2 < naWidth) {
+            wr += (naWidth - (wr + wi + 2));
         }
 
         return new ComplexVectorMetrics(wr, dr, er, wi, di, ei);
@@ -343,15 +350,72 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
 
     private static RoundArithmetic round = new Round.RoundArithmetic();
 
+    private static final int MAX_DIGITS = 22;
+
     private static RComplex zprecr(RComplex x, int digits) {
-        return round.opd(x.getRealPart(), x.getImaginaryPart(), digits);
+        double m1 = Math.abs(x.getRealPart());
+        double m2 = Math.abs(x.getImaginaryPart());
+        double m = 0;
+        if (Double.isFinite(m1)) {
+            m = m1;
+        }
+        if (Double.isFinite(m2) && m2 > m) {
+            m = m2;
+        }
+        if (m == 0.0) {
+            return x;
+        }
+        if (!Double.isFinite(digits)) {
+            if (digits > 0) {
+                return x;
+            } else {
+                return RComplex.valueOf(0, 0);
+            }
+        }
+        int dig = (int) Math.floor(digits + 0.5);
+        if (dig > MAX_DIGITS) {
+            return x;
+        } else if (dig < 1) {
+            dig = 1;
+        }
+        int mag = (int) Math.floor(Math.log10(m));
+        dig = dig - mag - 1;
+        if (dig > 306) {
+            double pow10 = 1.0e4;
+            RComplex tmp = round.opd(pow10 * x.getRealPart(), pow10 * x.getImaginaryPart(), dig - 4);
+            return RComplex.valueOf(tmp.getRealPart() / pow10, tmp.getImaginaryPart() / pow10);
+        } else {
+            return round.opd(x.getRealPart(), x.getImaginaryPart(), dig);
+        }
     }
 
+    @TruffleBoundary
+    public static String encodeComplex(RComplex x) {
+        return encodeComplex(x, 15, 0, RRuntime.STRING_NA);
+    }
+
+    @TruffleBoundary
+    public static String encodeComplex(RComplex x, int digits) {
+        return encodeComplex(x, digits, 0, RRuntime.STRING_NA);
+    }
+
+    @TruffleBoundary
+    public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
+        ComplexVectorMetrics cvm = formatComplexVector(x, 0, 1, 0, digits, sciPen, naString.length());
+        return encodeComplex(x, cvm, digits, naString);
+    }
+
+    @TruffleBoundary
     static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
-        if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
-            return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', pp);
+        return encodeComplex(x, cvm, pp.getDigits(), pp.getNaString());
+    }
+
+    @TruffleBoundary
+    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, int digits, String naString) {
+        if (x.isNA()) {
+            return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', naString);
         } else {
-            String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, '.', pp);
+            String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, '.', digits, naString);
             int g = cvm.maxWidth - cvm.wr - cvm.wi - 2;
             if (g > 0) {
                 // fill the remaining space by blanks to fit the maxWidth
@@ -362,7 +426,8 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
         }
     }
 
-    private static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei, char cdec, PrintParameters pp) {
+    @TruffleBoundary
+    private static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei, char cdec, int digits, String naString) {
         String buff;
         String im;
         String re;
@@ -385,27 +450,27 @@ final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
             String fmt = "%" + Utils.asBlankArg(g) + "s";
             buff = Utils.snprintf(NB,
                             fmt, /* was "%*s%*s", R_print.gap, "", */
-                            pp.getNaString());
+                            naString);
         } else {
             /*
              * formatComplex rounded, but this does not, and we need to keep it that way so we don't
              * get strange trailing zeros. But we do want to avoid printing small exponentials that
              * are probably garbage.
              */
-            y = zprecr(x, pp.getDigits());
+            y = zprecr(x, digits);
             if (y.getRealPart() == 0.) {
-                re = DoubleVectorPrinter.encodeReal(y.getRealPart(), wr, dr, er, cdec, pp);
+                re = DoubleVectorPrinter.encodeReal(y.getRealPart(), wr, dr, er, cdec, naString);
             } else {
-                re = DoubleVectorPrinter.encodeReal(xr, wr, dr, er, cdec, pp);
+                re = DoubleVectorPrinter.encodeReal(xr, wr, dr, er, cdec, naString);
             }
             flagNegIm = xi < 0;
             if (flagNegIm) {
                 xi = -xi;
             }
             if (y.getImaginaryPart() == 0.) {
-                im = DoubleVectorPrinter.encodeReal(y.getImaginaryPart(), wi, di, ei, cdec, pp);
+                im = DoubleVectorPrinter.encodeReal(y.getImaginaryPart(), wi, di, ei, cdec, naString);
             } else {
-                im = DoubleVectorPrinter.encodeReal(xi, wi, di, ei, cdec, pp);
+                im = DoubleVectorPrinter.encodeReal(xi, wi, di, ei, cdec, naString);
             }
             buff = snprintf(NB, "%s%s%si", re, flagNegIm ? "-" : "+", im);
         }

@@ -26,6 +26,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 final class PrintContext {
@@ -97,23 +98,18 @@ final class PrintContext {
         return cloned;
     }
 
+    @TruffleBoundary
     static PrintContext enter(ValuePrinterNode printerNode, PrintParameters parameters, WriterFactory wf) {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
+        PrintContext ctx = new PrintContext(printerNode, parameters, new PrettyPrintWriter(wf.createWriter()));
         if (ctxStack == null) {
-            ctxStack = new ArrayDeque<>();
-            printCtxTL.set(ctxStack);
-            PrintContext ctx = new PrintContext(printerNode, parameters, new PrettyPrintWriter(wf.createWriter()));
-            ctxStack.push(ctx);
-            return ctx;
-        } else {
-            PrintContext parentCtx = ctxStack.peek();
-            PrintContext ctx = new PrintContext(printerNode, parameters, parentCtx.output());
-            ctx.attrs.putAll(parentCtx.attrs);
-            ctxStack.push(ctx);
-            return ctx;
+            printCtxTL.set(ctxStack = new ArrayDeque<>());
         }
+        ctxStack.push(ctx);
+        return ctx;
     }
 
+    @TruffleBoundary
     static PrintContext leave() {
         ArrayDeque<PrintContext> ctxStack = printCtxTL.get();
 

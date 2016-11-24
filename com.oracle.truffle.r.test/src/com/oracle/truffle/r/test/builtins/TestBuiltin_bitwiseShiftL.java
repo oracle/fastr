@@ -27,14 +27,14 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
         assertEval("{ bitwShiftL(c(10,11,12,13,14,15), c(1,1,1,1,1,1)) }");
         assertEval("{ bitwShiftL(c(100,200,300), 1) }");
         assertEval("{ bitwShiftL(c(25,57,66), c(10,20,30,40,50,60)) }");
+        assertEval("{ bitwShiftL(c(8,4,2), NULL) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
+        assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
 
-        // Error message mismatch
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ bitwShiftL(c(3+3i), c(3,2,4)) }");
+        assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
         // Warning message mismatch
-        assertEval(Ignored.Unknown, "{ bitwShiftL(c(3,2,4), c(3+3i)) }");
+        assertEval(Output.IgnoreWarningContext, "{ bitwShiftL(c(3,2,4), c(3+3i)) }");
         // No warning message printed for NAs produced by coercion
-        assertEval(Ignored.Unknown, "{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
+        assertEval("{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
     }
 }

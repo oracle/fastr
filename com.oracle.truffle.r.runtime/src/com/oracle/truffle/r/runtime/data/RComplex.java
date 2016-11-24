@@ -67,7 +67,9 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     @Override
     public RComplexVector materialize() {
-        return RDataFactory.createComplexVectorFromScalar(this);
+        RComplexVector result = RDataFactory.createComplexVectorFromScalar(this);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
@@ -93,7 +95,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
     @TruffleBoundary
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return toString(RRuntime.doubleToString(realPart), RRuntime.doubleToString(imaginaryPart));
+        return toString(Double.toString(realPart), Double.toString(imaginaryPart));
     }
 
     public String toString(String realPartString, String imaginaryPartString) {
@@ -103,7 +105,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     @Override
     public boolean isNA() {
-        return RRuntime.isNA(realPart);
+        return RRuntime.isNA(this);
     }
 
     public boolean isZero() {

@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -41,10 +42,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchFunNodeGen.MatchFunInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -56,10 +57,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0)
+@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class MatchFun extends RBuiltinNode {
-
-    @CompilationFinal private String lastFun;
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -68,7 +67,7 @@ public abstract class MatchFun extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(1, "descend");
+        casts.arg("descend").asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization
@@ -152,7 +151,7 @@ public abstract class MatchFun extends RBuiltinNode {
 
         @TruffleBoundary
         private static Object slowPathLookup(String name, MaterializedFrame frame, boolean descend) {
-            Object result = descend ? ReadVariableNode.lookupFunction(name, frame, false) : ReadVariableNode.lookupAny(name, frame, false);
+            Object result = descend ? ReadVariableNode.lookupFunction(name, frame) : ReadVariableNode.lookupAny(name, frame, false);
             if (result == null) {
                 throw RError.error(RError.SHOW_CALLER, descend ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
             }

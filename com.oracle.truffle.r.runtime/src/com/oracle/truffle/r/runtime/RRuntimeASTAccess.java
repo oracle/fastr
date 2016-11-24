@@ -26,6 +26,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -84,17 +85,6 @@ public interface RRuntimeASTAccess {
     RSyntaxFunction getSyntaxFunction(RFunction f);
 
     /**
-     * Serialize a runtime value that requires non-standard treatment.
-     */
-    Object serialize(RSerialize.State state, Object f);
-
-    /**
-     * Helper function for {@code serialize} working around cyclic dependency. {@code node} is an
-     * {@RNode}.
-     */
-    void serializeNode(RSerialize.State state, Object node);
-
-    /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
      * associated with the node stored with {@code rl}.
      */
@@ -134,7 +124,7 @@ public interface RRuntimeASTAccess {
     /**
      * Force a promise by slow-path evaluation.
      */
-    Object forcePromise(Object val);
+    Object forcePromise(String identifier, Object val);
 
     /**
      * Returns the {@link ArgumentsSignature} for {@code f}.
@@ -154,12 +144,6 @@ public interface RRuntimeASTAccess {
     Engine createEngine(RContext context);
 
     /**
-     * Returns {@code null} if {@code node} is not an instance of {@code ReplacementNode}, else the
-     * lhs,rhs pair.
-     */
-    RSyntaxNode[] isReplacementNode(Node node);
-
-    /**
      * Returns {@code true} iff {@code node} is an instance of {@code FunctionDefinitionNode}, which
      * is not visible from {@code runtime}, or {@code false} otherwise.
      */
@@ -169,11 +153,6 @@ public interface RRuntimeASTAccess {
      * Project circularity workaround.
      */
     void traceAllFunctions();
-
-    /**
-     * Project circularity workaround.
-     */
-    void enableDebug(RFunction func);
 
     /**
      * Project circularity workaround. Equivalent to
@@ -186,8 +165,33 @@ public interface RRuntimeASTAccess {
      */
     boolean isTaggedWith(Node node, Class<?> tag);
 
-    RBaseNode createReadVariableNode(String name);
+    boolean enableDebug(RFunction func, boolean once);
 
-    RBaseNode createConstantNode(Object o);
+    boolean disableDebug(RFunction func);
+
+    boolean isDebugged(RFunction func);
+
+    /*
+     * Support for R/RScript sessions ("processes") in an isolated RContext, see
+     * .fastr.context.r/rscript. The args are everything you might legally enter into a
+     * shell,including I/O redirection. The result is an integer status code if "intern==false",
+     * otherwise it is a character vector of the output, with a 'status' attribute containing the
+     * status code. The env arguments are an optional settings of environment variables of the form
+     * X=Y.
+     */
+
+    Object rcommandMain(String[] args, String[] env, boolean intern);
+
+    Object rscriptMain(String[] args, String[] env, boolean intern);
+
+    String encodeDouble(double x);
+
+    String encodeDouble(double x, int digits);
+
+    String encodeComplex(RComplex x);
+
+    String encodeComplex(RComplex x, int digits);
+
+    void checkDebugRequest(RFunction func);
 
 }

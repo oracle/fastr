@@ -23,27 +23,34 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * The rarely seen {@code externalptr} type.
  */
-public class RExternalPtr extends RAttributeStorage {
-    private long addr;
+public class RExternalPtr extends RAttributeStorage implements RTypedValue {
+    private SymbolHandle handle;
     private Object tag;
     private Object prot;
+    private Object externalObject;
 
-    RExternalPtr(long addr, Object tag, Object prot) {
-        this.addr = addr;
+    RExternalPtr(SymbolHandle handle, Object externalObject, Object tag, Object prot) {
+        this.handle = handle;
+        this.externalObject = externalObject;
         this.tag = tag;
         this.prot = prot;
     }
 
     public RExternalPtr copy() {
-        return RDataFactory.createExternalPtr(addr, tag, prot);
+        return RDataFactory.createExternalPtr(handle, externalObject, tag, prot);
     }
 
-    public long getAddr() {
-        return addr;
+    public SymbolHandle getAddr() {
+        return handle;
+    }
+
+    public Object getExternalObject() {
+        return externalObject;
     }
 
     public Object getTag() {
@@ -54,8 +61,12 @@ public class RExternalPtr extends RAttributeStorage {
         return prot;
     }
 
-    public void setAddr(long value) {
-        this.addr = value;
+    public void setAddr(SymbolHandle value) {
+        this.handle = value;
+    }
+
+    public void setExternalObject(Object externalObject) {
+        this.externalObject = externalObject;
     }
 
     public void setTag(Object tag) {

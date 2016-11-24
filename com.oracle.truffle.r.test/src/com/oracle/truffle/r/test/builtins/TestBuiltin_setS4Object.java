@@ -43,8 +43,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -99,4 +98,15 @@ public class TestBuiltin_setS4Object extends TestBase {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(function (x, y, ...) UseMethod('plot'), target = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), defined = structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), generic = character(0), class = structure('derivedDefaultMethod', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
+
+    @Test
+    public void testSetS4Object() {
+        assertEval("{ x<-42; asS4(x, \"TRUE\") }");
+        assertEval("{ x<-42; asS4(x, logical()) }");
+        assertEval("{ x<-42; asS4(x, c(TRUE, FALSE)) }");
+        assertEval("{ x<-42; asS4(x, TRUE, \"1\") }");
+        assertEval("{ x<-42; asS4(x, TRUE, logical()) }");
+        assertEval("{ x<-42; asS4(x, TRUE, c(1,2)) }");
+    }
+
 }

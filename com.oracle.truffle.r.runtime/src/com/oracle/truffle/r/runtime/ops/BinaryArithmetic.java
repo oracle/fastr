@@ -12,9 +12,12 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
+import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 import static com.oracle.truffle.r.runtime.RRuntime.isFinite;
 import static com.oracle.truffle.r.runtime.RRuntime.isNAorNaN;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -24,12 +27,10 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
@@ -43,31 +44,31 @@ public abstract class BinaryArithmetic extends Operation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "+", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class AddBuiltin {
     }
 
-    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "-", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class SubtractBuiltin {
     }
 
-    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "/", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class DivBuiltin {
     }
 
-    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "%/%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class IntegerDivBuiltin {
     }
 
-    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "%%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class ModBuiltin {
     }
 
-    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "*", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class MultiplyBuiltin {
     }
 
-    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = RDispatch.OPS_GROUP_GENERIC)
+    @RBuiltin(name = "^", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
     public static class PowBuiltin {
     }
 
@@ -124,7 +125,7 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static double convertInf(double d) {
-        // This code is transcribed from FastR.
+        // This code is transcribed from Purdue FastR.
         return Math.copySign(Double.isInfinite(d) ? 1 : 0, d);
     }
 
@@ -278,7 +279,7 @@ public abstract class BinaryArithmetic extends Operation {
             return left * right;
         }
 
-        // The code for complex multiplication is transcribed from FastR:
+        // The code for complex multiplication is transcribed from Purdue FastR:
         // LICENSE: this code is derived from the multiplication code, which is transcribed code
         // from GCC, which is licensed under GPL
 
@@ -349,7 +350,7 @@ public abstract class BinaryArithmetic extends Operation {
             return left / right;
         }
 
-        // The code for complex division is transcribed from FastR:
+        // The code for complex division is transcribed from Purdue FastR:
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // libgcc2
 
@@ -604,7 +605,7 @@ public abstract class BinaryArithmetic extends Operation {
             return result;
         }
 
-        // The code for complex pow is transcribed from FastR:
+        // The code for complex pow is transcribed from Purdue FastR:
         // LICENSE: transcribed code from GNU R, which is licensed under GPL
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // LICENSE: transcribed code from GCC, which is licensed under GPL
@@ -699,7 +700,7 @@ public abstract class BinaryArithmetic extends Operation {
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
 
-        // The code for chypot was transcribed from FastR:
+        // The code for chypot was transcribed from Purdue FastR:
         // after libgcc2's x86 hypot - note the sign of NaN below (what GNU-R uses)
         // note that Math.hypot in Java is _very_ slow as it tries to be more precise
 

@@ -44,6 +44,6 @@ public class TestBuiltin_acosh extends TestBase {
 
     @Test
     public void testacosh6() {
-        assertEval(Ignored.OutputFormatting, "argv <- list(c(0.34345+233i,-0.34345+0.3334i));acosh(argv[[1]]);");
+        assertEval("argv <- list(c(0.34345+233i,-0.34345+0.3334i));acosh(argv[[1]]);");
     }
 }

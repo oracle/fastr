@@ -69,11 +69,12 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.boxPrimitive(0).boxPrimitive(1);
+        casts.arg(0).boxPrimitive();
+        casts.arg(1).boxPrimitive();
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
-        return BinaryArithmeticNodeGen.create(binary, unary, null);
+        return BinaryArithmeticNodeGen.create(binary, unary);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
@@ -85,7 +86,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right, //
-                    @Cached("binary.create()") BinaryArithmetic arithmetic, //
+                    @Cached("binary.createOperation()") BinaryArithmetic arithmetic, //
                     @Cached("new(createCached(arithmetic, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
@@ -94,7 +95,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isNumericVector(left) && isNumericVector(right)) {
-            return createCached(binary.create(), left, right);
+            return createCached(binary.createOperation(), left, right);
         }
         return null;
     }

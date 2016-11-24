@@ -22,30 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "readRenviron", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = "path")
+@RBuiltin(name = "readRenviron", visibility = OFF, kind = INTERNAL, parameterNames = "x", behavior = COMPLEX)
 public abstract class ReadREnviron extends RBuiltinNode {
 
-    @Specialization(guards = "lengthOneCVector(vec)")
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_STRING, "x").asStringVector().findFirst();
+    }
+
     @TruffleBoundary
-    protected Object doReadEnviron(RAbstractStringVector vec) {
-        String path = Utils.tildeExpand(vec.getDataAt(0));
+    @Specialization
+    protected Object doReadEnviron(String path) {
         byte result = RRuntime.LOGICAL_TRUE;
         try {
             RContext.getInstance().stateREnvVars.readEnvironFile(path);
@@ -58,12 +62,4 @@ public abstract class ReadREnviron extends RBuiltinNode {
         return result;
     }
 
-    @Fallback
-    protected Object doReadEnviron(@SuppressWarnings("unused") Object vec) {
-        throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "x");
-    }
-
-    protected static boolean lengthOneCVector(RAbstractStringVector vec) {
-        return vec.getLength() == 1;
-    }
 }

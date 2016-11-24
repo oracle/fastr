@@ -406,7 +406,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         @TruffleBoundary
         private Result executeInternal(String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             LookupOperation op = (lookupFrame, name, inMethodsTable) -> {
-                return ReadVariableNode.lookupFunction(name, lookupFrame, inMethodsTable);
+                return ReadVariableNode.lookupFunction(name, lookupFrame, inMethodsTable, true);
             };
 
             GetMethodsTable getTable = () -> {

@@ -66,5 +66,8 @@ public class TestBuiltin_Re extends TestBase {
         assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
 
         assertEval("{ Re(as.raw(12)) }");
+
+        assertEval("Re(c(NaN, 1+1i))");
+        assertEval("Re(NaN)");
     }
 }

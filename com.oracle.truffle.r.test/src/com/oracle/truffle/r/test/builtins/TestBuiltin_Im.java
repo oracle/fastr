@@ -62,5 +62,8 @@ public class TestBuiltin_Im extends TestBase {
         assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
 
         assertEval("{ Im(as.raw(12)) }");
+
+        assertEval("Im(c(NaN, 1+1i))");
+        assertEval("Im(NaN)");
     }
 }

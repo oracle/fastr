@@ -391,9 +391,11 @@ public final class FrameSlotChangeMonitor {
             }
         }
         target.lookupResults.clear();
-        target.previousLookups.clear();
-        for (FrameDescriptor sub : target.subDescriptors) {
-            invalidateAllNames(getMetaData(sub));
+        if (!target.previousLookups.isEmpty()) {
+            target.previousLookups.clear();
+            for (FrameDescriptor sub : target.subDescriptors) {
+                invalidateAllNames(getMetaData(sub));
+            }
         }
     }
 

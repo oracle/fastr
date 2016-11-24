@@ -31,4 +31,9 @@ public class TestBuiltin_row extends TestBase {
     public void testrow3() {
         assertEval("argv <- list(0:1); .Internal(row(argv[[1]]))");
     }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval(".Internal(row('str'))");
+    }
 }

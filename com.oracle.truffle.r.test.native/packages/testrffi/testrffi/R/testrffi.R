@@ -30,8 +30,8 @@ rffi.TYPEOF <- function(x) {
 	.Call("invoke_TYPEOF", x, PACKAGE = "testrffi")
 }
 
-rffi.error <- function() {
-	.Call("invoke_error", PACKAGE = "testrffi")
+rffi.error <- function(msg = "invoke_error in testrffi") {
+	.Call("invoke_error", msg, PACKAGE = "testrffi")
 }
 
 rffi.dotExternalAccessArgs <- function(...) {
@@ -44,6 +44,31 @@ rffi.isRString <- function(s) {
 
 rffi.invoke12 <- function() {
 	.Call("invoke12", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, PACKAGE = "testrffi")
+}
+
+rffi.interactive <- function() {
+	.Call("interactive", PACKAGE = "testrffi");
+}
+
+rffi.tryEval <- function(expr, env) {
+	.Call("tryEval", expr, env, PACKAGE = "testrffi")
+}
+
+rffi.rhome_dir <- function() {
+	.Call("rHomeDir", PACKAGE = "testrffi")
+}
+
+rffi.upcalled <- function(v) {
+	gc()
+	.Call("nestedCall2", PACKAGE = "testrffi", v)
+}
+
+rffi.nested.call1 <- function() {
+	upcall <- quote(rffi.upcalled(v))
+	v <- c(10L, 20L, 30L)
+	env <- new.env()
+	assign("v", v, env)
+	.Call("nestedCall1", PACKAGE = "testrffi", upcall, env)
 }
 
 rffi.r_home <- function() {
@@ -68,5 +93,20 @@ rffi.iterate_iarray <- function(x) {
 
 rffi.iterate_iptr <- function(x) {
 	.Call("iterate_iptr", x, PACKAGE = "testrffi")
+}
+
+rffi.preserve_object <- function() {
+	.Call("preserve_object", PACKAGE = "testrffi")
+}
+
+rffi.release_object <- function(x) {
+	invisible(.Call("release_object", x, PACKAGE = "testrffi"))
+}
+
+rffi.findvar <- function(x, env) {
+	if (is.character(x)) {
+		x = as.symbol(x)
+	}
+	.Call("findvar", x, env, PACKAGE = "testrffi")
 }
 

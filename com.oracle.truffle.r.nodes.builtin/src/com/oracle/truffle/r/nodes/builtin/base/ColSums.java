@@ -22,56 +22,44 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "colSums", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
-public abstract class ColSums extends RBuiltinNode {
+@RBuiltin(name = "colSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
+public abstract class ColSums extends ColSumsBase {
 
-    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
-
-    private final NACheck na = NACheck.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
-
-        casts.arg("m").asIntegerVector().findFirst().notNA();
-
-        casts.arg("n").asIntegerVector().findFirst().notNA();
-
-        casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
-    }
+    private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();
 
     @Specialization
-    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
+    protected RDoubleVector colSums(RAbstractDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
         final boolean rna = removeNA.profile(rnaParam);
-        double[] data = x.getDataWithoutCopying();
+        final RAbstractDoubleVector profiledX = concreteVectorProfile.profile(x);
+
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                double el = data[pos++];
+                final double el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el) && !Double.isNaN(el)) {
                         sum = add.op(sum, el);
@@ -97,16 +85,18 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean rna) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        byte[] data = x.getDataWithoutCopying();
+        final RAbstractLogicalVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                byte el = data[pos++];
+                final byte el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);
@@ -127,16 +117,18 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RAbstractIntVector x, int rowNum, int colNum, boolean rna) {
+        checkVectorLength(x, rowNum, colNum);
+
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        int[] data = x.getDataWithoutCopying();
+        final RAbstractIntVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                int el = data[pos++];
+                final int el = profiledX.getDataAt(pos++);
                 if (rna) {
                     if (!na.check(el)) {
                         sum = add.op(sum, el);
@@ -155,5 +147,4 @@ public abstract class ColSums extends RBuiltinNode {
         }
         return RDataFactory.createDoubleVector(result, isComplete);
     }
-
 }

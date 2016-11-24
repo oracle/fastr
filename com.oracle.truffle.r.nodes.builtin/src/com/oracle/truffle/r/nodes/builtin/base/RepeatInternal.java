@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,8 +34,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -40,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -47,15 +51,22 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"})
+@RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
 public abstract class RepeatInternal extends RBuiltinNode {
 
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER2, RError.Message.ATTEMPT_TO_REPLICATE, argType);
+        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
+                        RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "times");
     }
 
     @FunctionalInterface
@@ -75,6 +86,10 @@ public abstract class RepeatInternal extends RBuiltinNode {
         int valueLength = value.getLength();
         if (timesOneProfile.profile(timesLength == 1)) {
             int timesValue = times.getDataAt(0);
+            if (timesValue < 0) {
+                errorProfile.enter();
+                RError.error(this, RError.Message.INVALID_VALUE, "times");
+            }
             int count = timesValue * valueLength;
             result = arrayConstructor.apply(count);
             int pos = 0;

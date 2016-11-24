@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,9 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.</li>
  * <li>{@link PCRERFFI}: interface to PCRE library (Perl regexp).</li>
  * <li>{@link ZipRFFI}: interface to zip compression</li>
+ * <li>{@link DLLRFFI}: interface to dll functions, e.g., {@code dlopen}</li>
+ * <li>{@link REmbedRFFI}: interface to embedded support</li>
+ * <li>{@link MiscRFFI}: interface to miscellaneous native functions</li>
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
@@ -66,5 +69,11 @@ public interface RFFI {
     PCRERFFI getPCRERFFI();
 
     ZipRFFI getZipRFFI();
+
+    DLLRFFI getDLLRFFI();
+
+    REmbedRFFI getREmbedRFFI();
+
+    MiscRFFI getMiscRFFI();
 
 }

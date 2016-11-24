@@ -17,12 +17,14 @@ import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 //Transcribed from GnuR, src/main/format.c
 
-final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
+public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
 
     static final DoubleVectorPrinter INSTANCE = new DoubleVectorPrinter();
 
@@ -69,7 +71,13 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         }
     }
 
+    @TruffleBoundary
     static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
+        return formatDoubleVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
+    }
+
+    @TruffleBoundary
+    static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
         int left;
         int right;
         int sleft;
@@ -115,7 +123,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
                     neginf = true;
                 }
             } else {
-                ScientificDouble sd = scientific(xi, pp);
+                ScientificDouble sd = scientific(xi, digits);
                 sgn = sd.sgn;
                 nsig = sd.nsig;
                 kpower = sd.kpower;
@@ -143,11 +151,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
                     mnl = left; /* min digits to left of . */
                 }
                 if (sleft > mxsl) {
-                    mxsl = sleft; /*
-                                   * max left includingimport static
-                                   * com.oracle.truffle.r.nodes.builtin.base.printer.Utils.*;
-                                   * sign(s)
-                                   */
+                    mxsl = sleft; /* max left including sign(s) */
                 }
                 if (nsig > mxns) {
                     mxns = nsig; /* max sig digits */
@@ -157,16 +161,16 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         /*
          * F Format: use "F" format WHENEVER we use not more space than 'E' and still satisfy
          * 'R_print.digits' {but as if nsmall==0 !}
-         * 
+         *
          * E Format has the form [S]X[.XXX]E+XX[X]
-         * 
+         *
          * This is indicated by setting *e to non-zero (usually 1) If the additional exponent digit
          * is required *e is set to 2
          */
 
         /*-- These 'mxsl' & 'rgt' are used in F Format
          * AND in the ____ if(.) "F" else "E" ___ below: */
-        if (pp.getDigits() == 0) {
+        if (digits == 0) {
             rgt = 0;
         }
         if (mxl < 0) {
@@ -183,8 +187,8 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         e = (mxl > 100 || mnl <= -99) ? 2 : 1; /* 3 digit exponent */
         if (mxns != RRuntime.INT_MIN_VALUE) {
             d = mxns - 1;
-            w = neg + (d != 0 ? 1 : 1) + d + 4 + e; /* width for E format */
-            if (wF <= w + pp.getScipen()) { /* Fixpoint if it needs less space */
+            w = neg + (d > 0 ? 1 : 0) + d + 4 + e; /* width for E format */
+            if (wF <= w + sciPen) { /* Fixpoint if it needs less space */
                 e = 0;
                 if (nsmall > rgt) {
                     rgt = nsmall;
@@ -198,8 +202,8 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
             d = 0;
             e = 0;
         }
-        if (naflag && w < pp.getNaWidth()) {
-            w = pp.getNaWidth();
+        if (naflag && w < naWidth) {
+            w = naWidth;
         }
         if (nanflag && w < 3) {
             w = 3;
@@ -242,12 +246,18 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         }
     }
 
+    @TruffleBoundary
     public static ScientificDouble scientific(double x, PrintParameters pp) {
+        return scientific(x, pp.getDigits());
+    }
+
+    @TruffleBoundary
+    public static ScientificDouble scientific(double x, int digits) {
         /*
          * for a number x , determine sgn = 1_{x < 0} {0/1} kpower = Exponent of 10; nsig =
          * min(R_print.digits, #{significant digits of alpha}) roundingwidens = 1 if rounding causes
          * x to increase in width, 0 otherwise
-         * 
+         *
          * where |x| = alpha * 10^kpower and 1 <= alpha < 10
          */
         double alpha;
@@ -276,7 +286,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
                 r = x;
             }
 
-            if (pp.getDigits() >= DBL_DIG + 1) {
+            if (digits >= DBL_DIG + 1) {
                 // TODO:
                 // format_via_sprintf(r, pp.getDigits(), kpower, nsig);
                 roundingwidens = false;
@@ -284,8 +294,8 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
                 throw new UnsupportedOperationException();
             }
 
-            kp = (int) Math.floor(Math.log10(r)) - pp.getDigits() + 1; // r = |x|;
-                                                                       // 10^(kp + digits - 1) <= r
+            kp = (int) Math.floor(Math.log10(r)) - digits + 1; // r = |x|;
+                                                               // 10^(kp + digits - 1) <= r
 
             double rPrec = r;
             /* use exact scaling factor in double precision, if possible */
@@ -306,7 +316,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
             } else {
                 rPrec /= Math.pow(10, kp);
             }
-            if (rPrec < tbl[pp.getDigits()]) {
+            if (rPrec < tbl[digits]) {
                 rPrec *= 10.0;
                 kp--;
             }
@@ -316,8 +326,8 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
              */
             alpha = Math.round(rPrec);
 
-            nsig = pp.getDigits();
-            for (j = 1; j <= pp.getDigits(); j++) {
+            nsig = digits;
+            for (j = 1; j <= digits; j++) {
                 alpha /= 10.0;
                 if (alpha == Math.floor(alpha)) {
                     nsig--;
@@ -325,11 +335,11 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
                     break;
                 }
             }
-            if (nsig == 0 && pp.getDigits() > 0) {
+            if (nsig == 0 && digits > 0) {
                 nsig = 1;
                 kp += 1;
             }
-            kpower = kp + pp.getDigits() - 1;
+            kpower = kp + digits - 1;
 
             /*
              * Scientific format may do more rounding than fixed format, e.g. 9996 with 3 digits is
@@ -338,7 +348,7 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
              * decimal place that will be cut off by rounding
              */
 
-            int rgt = pp.getDigits() - kpower;
+            int rgt = digits - kpower;
             /* bound rgt by 0 and KP_MAX */
             rgt = rgt < 0 ? 0 : rgt > KP_MAX ? KP_MAX : rgt;
             double fuzz = 0.5 / tbl[1 + rgt];
@@ -350,54 +360,81 @@ final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
     }
 
+    @TruffleBoundary
+    public static String encodeReal(double x) {
+        return encodeReal(x, 15, '.', 0, RRuntime.STRING_NA);
+    }
+
+    @TruffleBoundary
+    public static String encodeReal(double x, int digits) {
+        return encodeReal(x, digits, '.', 0, RRuntime.STRING_NA);
+    }
+
+    @TruffleBoundary
+    public static String encodeReal(double x, int digits, char cdec, int sciPen, String naString) {
+        DoubleVectorMetrics dm = formatDoubleVector(RDataFactory.createDoubleVectorFromScalar(x), 0, 1, 0, digits, sciPen, naString.length());
+        return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
+    }
+
+    @TruffleBoundary
+    static String encodeReal(double initialX, int w, int d, int e, char cdec, PrintParameters pp) {
+        return encodeReal(initialX, w, d, e, cdec, pp.getNaString());
+    }
+
+    @TruffleBoundary
     static String encodeReal(double x, DoubleVectorMetrics dm, PrintParameters pp) {
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }
 
-    static String encodeReal(double initialX, int w, int d, int e, char cdec, PrintParameters pp) {
-        final String buff;
-        String fmt;
+    // caching some commonly used formats
+    private static final DecimalFormat[] CACHED_FORMATS = new DecimalFormat[32];
 
+    @TruffleBoundary
+    static String encodeReal(double initialX, int w, int d, int e, char cdec, String naString) {
         /* IEEE allows signed zeros (yuck!) */
         double x = RRuntime.normalizeZero(initialX);
 
         if (!RRuntime.isFinite(x)) {
-            int numBlanks = Math.min(w, (NB - 1));
-            String naFmt = "%" + Utils.asBlankArg(numBlanks) + "s";
+            String id;
             if (RRuntime.isNA(x)) {
-                buff = snprintf(NB, naFmt, pp.getNaString());
+                id = naString;
             } else if (RRuntime.isNAorNaN(x)) {
-                buff = snprintf(NB, naFmt, "NaN");
-            } else if (x > 0) {
-                buff = snprintf(NB, naFmt, "Inf");
+                id = "NaN";
             } else {
-                buff = snprintf(NB, naFmt, "-Inf");
+                id = x > 0 ? "Inf" : "-Inf";
             }
+            return prependBlanks(w, id);
         } else if (e != 0) {
-            if (d != 0) {
-                fmt = String.format("%%#%d.%de", Math.min(w, (NB - 1)), d);
-                buff = snprintf(NB, fmt, x);
-            } else {
-                fmt = String.format("%%%d.%de", Math.min(w, (NB - 1)), d);
-                buff = snprintf(NB, fmt, x);
-            }
+            String fmt = String.format((d != 0) ? "%%#%d.%de" : "%%%d.%de", Math.min(w, (NB - 1)), d);
+            return snprintf(NB, fmt, x).replace('.', cdec);
         } else { /* e = 0 */
-            StringBuilder sb = new StringBuilder("#.#");
-            DecimalFormat df = new DecimalFormat(sb.toString());
-            df.setRoundingMode(RoundingMode.HALF_EVEN);
-            df.setDecimalSeparatorAlwaysShown(false);
-            df.setMinimumFractionDigits(d);
-            df.setMaximumFractionDigits(d);
-            String ds = df.format(x);
-            int blanks = w - ds.length();
-            fmt = "%" + Utils.asBlankArg(blanks) + "s%s";
-            buff = String.format(fmt, "", ds);
+            DecimalFormat df = null;
+            if (d < CACHED_FORMATS.length) {
+                df = CACHED_FORMATS[d];
+            }
+            if (df == null) {
+                df = new DecimalFormat("#.#");
+                df.setRoundingMode(RoundingMode.HALF_EVEN);
+                df.setDecimalSeparatorAlwaysShown(false);
+                df.setMinimumFractionDigits(d);
+                df.setMaximumFractionDigits(d);
+                if (d < CACHED_FORMATS.length) {
+                    CACHED_FORMATS[d] = df;
+                }
+            }
+            return prependBlanks(w, df.format(x)).replace('.', cdec);
         }
+    }
 
-        if (cdec != '.') {
-            buff.replace('.', cdec);
+    private static String prependBlanks(int width, String id) {
+        assert id.length() <= width;
+        if (id.length() == width) {
+            return id;
         }
-
-        return buff;
+        StringBuilder str = new StringBuilder(width);
+        for (int i = 0; i < width - id.length(); i++) {
+            str.append(' ');
+        }
+        return str.append(id).toString();
     }
 }

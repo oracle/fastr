@@ -22,24 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = ".fastr.throw", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
+@RBuiltin(name = ".fastr.throw", kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
 public abstract class FastRThrowIt extends RBuiltinNode {
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("name").asStringVector().findFirst();
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RNull throwit(RAbstractStringVector x) {
-        String name = x.getDataAt(0);
+    protected RNull throwit(String name) {
         switch (name) {
             case "AIX":
                 throw new ArrayIndexOutOfBoundsException();
@@ -55,7 +61,7 @@ public abstract class FastRThrowIt extends RBuiltinNode {
                 throw new Utils.DebugExitException();
             case "Q":
             case "BRQ":
-                throw new BrowserQuitException();
+                throw new JumpToTopLevelException();
             default:
                 throw RError.error(this, RError.Message.GENERIC, "unknown case: " + name);
         }

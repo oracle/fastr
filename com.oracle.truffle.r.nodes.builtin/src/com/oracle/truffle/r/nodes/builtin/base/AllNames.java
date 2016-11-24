@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,8 +34,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -45,16 +46,17 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
-@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "function", "max.names", "unique"})
+@RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "functions", "max.names", "unique"}, behavior = PURE)
 public abstract class AllNames extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(1);
-        casts.toInteger(2);
-        casts.toLogical(3);
+        casts.arg("functions").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE);
+        casts.arg("max.names").asIntegerVector().findFirst(0).notNA(0);
+        casts.arg("unique").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization
@@ -132,7 +134,7 @@ public abstract class AllNames extends RBuiltinNode {
 
         @Override
         protected Void visit(RSyntaxFunction element) {
-            accept(RSyntaxLookup.createDummyLookup(null, "function", true));
+            accept(RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, "function", true));
             accept(element.getSyntaxBody());
             // functions do not recurse into the arguments
             return null;
@@ -143,7 +145,7 @@ public abstract class AllNames extends RBuiltinNode {
     @TruffleBoundary
     protected Object doAllNames(RSymbol symbol, @SuppressWarnings("unused") byte functions, int maxNames, @SuppressWarnings("unused") byte unique) {
         if (maxNames > 0 || maxNames == -1) {
-            return RDataFactory.createStringVector(0);
+            return RDataFactory.createEmptyStringVector();
         } else {
             return RDataFactory.createStringVectorFromScalar(symbol.getName());
         }
@@ -152,6 +154,6 @@ public abstract class AllNames extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doAllNames(Object expr, Object functions, Object maxNames, Object unique) {
-        return RDataFactory.createStringVector(0);
+        return RDataFactory.createEmptyStringVector();
     }
 }

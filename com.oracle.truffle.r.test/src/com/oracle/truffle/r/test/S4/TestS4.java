@@ -77,7 +77,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; isS4(x) }");
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
-        assertEval("{ asS4(NULL); isS4(NULL }");
+        assertEval("{ asS4(NULL); isS4(NULL) }");
         assertEval("{  asS4(7:42) }");
     }
 
@@ -110,6 +110,15 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
+    }
+
+    @Test
+    public void testStdGeneric() {
+        assertEval("{ standardGeneric(42) }");
+        assertEval("{ standardGeneric(character()) }");
+        assertEval("{ standardGeneric(\"\") }");
+        assertEval("{ standardGeneric(\"foo\", 42) }");
+        assertEval("{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
     }
 
     @Override

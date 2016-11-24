@@ -47,37 +47,33 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
-import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.BrowserQuitException;
-import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S4Args;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
-import com.oracle.truffle.r.runtime.WithFunctionUID;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
-import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, WithFunctionUID, RSyntaxFunction {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     /**
@@ -88,12 +84,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * {@code f <- function}.
      * <li>The first several characters of the function definition for anonymous functions.
      * </ul>
-     * It can be updated later by calling {@link #setDescription}, which is useful for functions
-     * lazily loaded from packages, where at the point of definition any assignee variable is
-     * unknown.
+     * It can be updated later by calling {@link #setName}, which is useful for functions lazily
+     * loaded from packages, where at the point of definition any assignee variable is unknown.
      */
-    private String description;
-    private FunctionUID uuid;
+    private String name;
     private boolean instrumented = false;
     private SourceSection sourceSectionR;
     private final SourceSection[] argSourceSections;
@@ -121,6 +115,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode dotTargetSlot;
     @Child private FrameSlotNode dotMethodsSlot;
 
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
     @Child private PostProcessArgumentsNode argPostProcess;
 
     private final boolean needsSplitting;
@@ -133,12 +129,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
     public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
-                    FormalArguments formals, String description, PostProcessArgumentsNode argPostProcess) {
-        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, description, argPostProcess, FunctionUIDFactory.get().createUID());
+                    FormalArguments formals, String name, PostProcessArgumentsNode argPostProcess) {
+        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, name, argPostProcess);
     }
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
-                    String description, PostProcessArgumentsNode argPostProcess, FunctionUID uuid) {
+                    String name, PostProcessArgumentsNode argPostProcess) {
         super(null, formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
@@ -146,13 +142,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.sourceSectionR = src;
         this.saveArguments = saveArguments;
         this.body = body.asRNode();
-        this.description = description;
+        this.name = name;
         this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
-        this.uuid = uuid;
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
-        RInstrumentation.registerFunctionDefinition(this);
     }
 
     @Override
@@ -165,8 +159,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             SourceSection source = argSourceSections == null ? getSourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(getSourceSection(), args, builder.process(getBody()), description);
-        ((FunctionDefinitionNode) callTarget.getRootNode()).uuid = uuid;
+        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(getSourceSection(), args, builder.process(getBody()), name);
         return callTarget;
     }
 
@@ -236,11 +229,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return needsSplitting;
     }
 
-    @Override
-    public FunctionUID getUID() {
-        return uuid;
-    }
-
     public RSyntaxNode getBody() {
         return body.asRSyntaxNode();
     }
@@ -280,10 +268,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
             /*
-             * These relate to the debugging support. exitHandlers must be suppressed and the
-             * exceptions must pass through unchanged; they are not errors
+             * These relate to debugging support and various other reasons for returning to the top
+             * level. exitHandlers must be suppressed and the exceptions must pass through
+             * unchanged; they are not errors
              */
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
@@ -299,6 +288,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
+            visibility.executeEndOfFunction(frame);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
@@ -311,18 +301,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                     }
                     ArrayList<Object> current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
-                    // Preserve the visibility state as may be changed by the on.exit
-                    boolean isVisible = RContext.getInstance().isVisible();
-                    try {
-                        for (Object expr : current) {
-                            if (!(expr instanceof RNode)) {
-                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
-                            }
-                            RNode node = (RNode) expr;
-                            onExitExpressionCache.execute(frame, node);
+                    /*
+                     * We do not need to preserve visibility, since visibility.executeEndOfFunction
+                     * was already called.
+                     */
+                    for (Object expr : current) {
+                        if (!(expr instanceof RNode)) {
+                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
                         }
-                    } finally {
-                        RContext.getInstance().setVisible(isVisible);
+                        RNode node = (RNode) expr;
+                        onExitExpressionCache.execute(frame, node);
                     }
                 }
             }
@@ -391,66 +379,17 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
-    public String toString() {
-        return description == null ? "<no source>" : description;
+    public String getName() {
+        return name == null ? "<no source>" : name;
     }
 
-    /**
-     * Serialize a function. On entry {@code state} has an active pairlist, whose {@code tag} is the
-     * enclosing {@link REnvironment}. The {@code car} must be set to the pairlist representing the
-     * formal arguments (or {@link RNull} if none) and the {@code cdr} to the pairlist representing
-     * the body. Each formal argument is represented as a pairlist:
-     * <ul>
-     * <li>{@code tag}: RSymbol(name)</li>
-     * <li>{@code car}: Missing or default value</li>
-     * <li>{@code cdr}: if last formal then RNull else pairlist for next argument.
-     * </ul>
-     * N.B. The body is never empty as the syntax "{}" has a value, however if the body is a simple
-     * expression, e.g. {@code function(x) x}, the body is not represented as a pairlist, just a
-     * SYMSXP, which is handled transparently in {@code RSerialize.State.closePairList()}.
-     *
-     */
     @Override
-    public void serializeImpl(RSerialize.State state) {
-        serializeFormals(state);
-        serializeBody(state);
+    public String toString() {
+        return getName();
     }
 
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public void serializeBody(RSerialize.State state) {
-        state.openPairList();
-        body.serialize(state);
-        state.setCdr(state.closePairList());
-    }
-
-    /**
-     * Also called by {@link FunctionExpressionNode}.
-     */
-    public void serializeFormals(RSerialize.State state) {
-        FormalArguments formals = getFormalArguments();
-        int formalsLength = formals.getSignature().getLength();
-        if (formalsLength > 0) {
-            for (int i = 0; i < formalsLength; i++) {
-                RNode defaultArg = formals.getDefaultArgument(i);
-                state.openPairList();
-                state.setTagAsSymbol(formals.getSignature().getName(i));
-                if (defaultArg != null) {
-                    state.serializeNodeSetCar(defaultArg);
-                } else {
-                    state.setCarMissing();
-                }
-            }
-            state.linkPairList(formalsLength);
-            state.setCar(state.closePairList());
-        } else {
-            state.setCar(RNull.instance);
-        }
-    }
-
-    public void setDescription(String name) {
-        this.description = name;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean getInstrumented() {
@@ -469,7 +408,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
+    public SourceSection getLazySourceSection() {
+        return sourceSectionR;
+    }
+
+    @Override
     public SourceSection getSourceSection() {
+        RDeparse.ensureSourceSection(this);
         return sourceSectionR;
     }
 
@@ -490,6 +435,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public String getSyntaxDebugName() {
-        return description;
+        return name;
     }
 }

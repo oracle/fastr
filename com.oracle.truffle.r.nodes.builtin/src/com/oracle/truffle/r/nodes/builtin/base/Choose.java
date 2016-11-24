@@ -22,32 +22,45 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import java.util.function.IntToDoubleFunction;
 import java.util.function.IntUnaryOperator;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Binomial coefficients (n, k) for real n and integral k (rounded with warning).
  */
-@RBuiltin(name = "choose", kind = RBuiltinKind.INTERNAL, parameterNames = {"n", "k"})
+@RBuiltin(name = "choose", kind = INTERNAL, parameterNames = {"n", "k"}, behavior = PURE)
 public abstract class Choose extends RBuiltinNode {
 
-    // TODO: cast of logicals to integers
+    private final NACheck na = NACheck.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("n").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("k").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+    }
 
     @Specialization
     protected RAbstractDoubleVector doInts(RAbstractIntVector n, RAbstractIntVector k) {
-        // TODO: check overflow, return int vector if possible, otherwise specialize
+        // Note: we may check overflow, return int vector if possible, otherwise specialize
         // Note: may be useful to specialize on small n and k and do only integer arithmetic
         return choose(n.getLength(), idx -> (double) n.getDataAt(idx), k.getLength(), idx -> k.getDataAt(idx));
     }
@@ -87,18 +100,19 @@ public abstract class Choose extends RBuiltinNode {
 
     private RAbstractDoubleVector choose(int nLength, IntToDoubleFunction getN, int kLength, IntUnaryOperator getK) {
         int resultLen = Math.max(nLength, kLength);
-        boolean complete = true;
         double[] result = new double[resultLen];
+        na.enable(true);
         for (int i = 0, nIdx = 0, kIdx = 0; i < resultLen; i++) {
             result[i] = choose(getN.applyAsDouble(nIdx), getK.applyAsInt(kIdx));
-            complete &= result[i] != RRuntime.DOUBLE_NA;
+            na.check(result[i]);
             nIdx = Utils.incMod(nIdx, nLength);
             kIdx = Utils.incMod(kIdx, kLength);
         }
-        return RDataFactory.createDoubleVector(result, complete);
+        return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    private double choose(double n, int k) {
+    private static double choose(double n, int ka) {
+        int k = ka;
         if (n == RRuntime.DOUBLE_NA || k == RRuntime.INT_NA) {
             return RRuntime.DOUBLE_NA;
         }

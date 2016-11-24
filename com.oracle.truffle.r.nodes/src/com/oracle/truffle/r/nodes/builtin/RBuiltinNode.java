@@ -25,56 +25,38 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.GeneratedBy;
-import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.unary.ApplyCastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RNode {
+@TypeSystemReference(RTypes.class)
+public abstract class RBuiltinNode extends RBaseNode {
 
-    public abstract Object execute(VirtualFrame frame, Object... args);
+    public abstract Object executeBuiltin(VirtualFrame frame, Object... args);
 
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
         // nothing to do
     }
 
     public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder(this);
+        CastBuilder builder = new CastBuilder(getRBuiltin());
         createCasts(builder);
         return builder.getCasts();
-    }
-
-    @CreateCast("arguments")
-    protected RNode[] castArguments(RNode[] arguments) {
-        CastNode[] casts = getCasts();
-        if (casts.length == 0) {
-            return arguments;
-        }
-        RNode[] castArguments = arguments.clone();
-        for (int i = 0; i < casts.length; i++) {
-            if (casts[i] != null) {
-                castArguments[i] = new ApplyCastNode(casts[i], castArguments[i]);
-            }
-        }
-        return castArguments;
     }
 
     /**
@@ -87,38 +69,22 @@ public abstract class RBuiltinNode extends RNode {
         return EMPTY_OBJECT_ARRAY;
     }
 
-    private static RNode[] createAccessArgumentsNodes(RBuiltinDescriptor builtin) {
-        int total = builtin.getSignature().getLength();
-        RNode[] args = new RNode[total];
-        for (int i = 0; i < total; i++) {
-            args[i] = AccessArgumentNode.create(i);
-        }
-        return args;
-    }
-
     static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
         CompilerAsserts.neverPartOfCompilation();
 
-        // Create function initialization
-        RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
-        RBuiltinNode node = builtin.getConstructor().apply(argAccessNodes.clone());
-
-        assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+        RBuiltinNode node = builtin.getConstructor().get();
         FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
-        for (RNode access : argAccessNodes) {
-            ((AccessArgumentNode) access).setFormals(formals);
-        }
+        assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
 
-        // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public static final RBuiltinNode inline(RBuiltinDescriptor factory, RNode[] args) {
+    public static final RBuiltinNode inline(RBuiltinDescriptor factory) {
         // static number of arguments
-        return ((RBuiltinFactory) factory).getConstructor().apply(args);
+        return ((RBuiltinFactory) factory).getConstructor().get();
     }
 
     protected final RBuiltin getRBuiltin() {

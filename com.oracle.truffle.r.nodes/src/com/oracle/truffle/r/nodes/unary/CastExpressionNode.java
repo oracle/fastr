@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -38,6 +39,15 @@ public abstract class CastExpressionNode extends CastBaseNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeExpression(Object o);
+
+    protected CastExpressionNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    @Override
+    protected final RType getTargetType() {
+        return RType.Expression;
+    }
 
     @Specialization
     protected RExpression doNull(@SuppressWarnings("unused") RNull value) {
@@ -84,18 +94,14 @@ public abstract class CastExpressionNode extends CastBaseNode {
         if (obj instanceof RList) {
             RList list = (RList) obj;
             // TODO other attributes
-            return RDataFactory.createExpression(RDataFactory.createList(data, list.getNames(attrProfiles)));
+            return RDataFactory.createExpression(data, list.getNames(attrProfiles));
         } else {
-            return create(data);
+            return RDataFactory.createExpression(data);
         }
     }
 
     private static RExpression create(Object obj) {
-        return create(new Object[]{obj});
-    }
-
-    private static RExpression create(Object[] objArray) {
-        return RDataFactory.createExpression(RDataFactory.createList(objArray));
+        return RDataFactory.createExpression(new Object[]{obj});
     }
 
     public static CastExpressionNode createNonPreserving() {

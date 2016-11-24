@@ -11,15 +11,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -33,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * FastR specific internal used in R code of Cdqrls, which is in GunR implemented in C and invokes
  * directly this Fortran routine.
  */
-@RBuiltin(name = ".fastr.dqrls", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"})
+@RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
 public abstract class FastrDqrls extends RBuiltinNode {
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
@@ -42,6 +45,18 @@ public abstract class FastrDqrls extends RBuiltinNode {
     private final RAttributeProfiles coeffAttributeProfiles = RAttributeProfiles.create();
     private final RAttributeProfiles xAttributeProfiles = RAttributeProfiles.create();
     private final RAttributeProfiles residualsAttributesProfiles = RAttributeProfiles.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").asDoubleVector(true, true, true);
+        casts.arg("n").asIntegerVector().findFirst();
+        casts.arg("p").asIntegerVector().findFirst();
+        casts.arg("y").asDoubleVector(true, true, true);
+        casts.arg("ny").asIntegerVector().findFirst();
+        casts.arg("tol").asDoubleVector().findFirst();
+        casts.arg("coeff").asDoubleVector(true, true, true);
+
+    }
 
     @Specialization
     public RList doDouble(RAbstractDoubleVector xVec, int n, int p, RAbstractDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {

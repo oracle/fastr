@@ -22,15 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -39,12 +40,14 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+@RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class Round extends RBuiltinNode {
 
     public static final UnaryArithmeticFactory ROUND = RoundArithmetic::new;
@@ -61,7 +64,9 @@ public abstract class Round extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
+        // TODO: this should also accept vectors
+        // TODO: digits argument is rounded, not simply stripped off the decimal part
+        casts.arg("digits").asIntegerVector().findFirst();
     }
 
     @Specialization
@@ -74,6 +79,28 @@ public abstract class Round extends RBuiltinNode {
     protected double round(byte x, @SuppressWarnings("unused") int digits) {
         check.enable(x);
         return check.check(x) ? RRuntime.DOUBLE_NA : x;
+    }
+
+    @Specialization
+    protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") int digits) {
+        double[] data = new double[x.getLength()];
+        check.enable(x);
+        for (int i = 0; i < data.length; i++) {
+            byte val = x.getDataAt(i);
+            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
+        }
+        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
+    }
+
+    @Specialization
+    protected RDoubleVector round(RAbstractIntVector x, @SuppressWarnings("unused") int digits) {
+        double[] data = new double[x.getLength()];
+        check.enable(x);
+        for (int i = 0; i < data.length; i++) {
+            int val = x.getDataAt(i);
+            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
+        }
+        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
     }
 
     @Specialization(guards = "digits == 0")
@@ -296,7 +323,7 @@ public abstract class Round extends RBuiltinNode {
             if (RRuntime.isFinite(x) && RRuntime.isFinite(y)) {
                 if (pow == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    pow = insert(BinaryArithmetic.POW.create());
+                    pow = insert(BinaryArithmetic.POW.createOperation());
                 }
                 return pow.op(x, y);
             }

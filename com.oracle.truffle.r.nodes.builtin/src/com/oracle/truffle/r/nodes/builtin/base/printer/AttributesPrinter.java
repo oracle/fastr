@@ -15,9 +15,11 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
@@ -27,6 +29,8 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
 
     static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
 
+    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
+
     private final boolean useSlots;
 
     private AttributesPrinter(boolean useSlots) {
@@ -34,6 +38,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
     }
 
     @Override
+    @TruffleBoundary
     public void print(RAttributable value, PrintContext printCtx) throws IOException {
         RAttributes attrs = value.getAttributes();
         if (attrs == null) {
@@ -52,7 +57,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                     continue;
                 }
             }
-            if (utils.inherits(value, "factor", RRuntime.LOGICAL_FALSE)) {
+            if (utils.inherits(value, RRuntime.CLASS_FACTOR)) {
                 if (RRuntime.LEVELS_ATTR_KEY.equals(a.getName())) {
                     continue;
                 }
@@ -95,7 +100,11 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
                 // throw new UnsupportedOperationException("TODO");
             } else {
-                ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject(dummyAttrProfiles)) {
+                    RContext.getEngine().printResult(a.getValue());
+                } else {
+                    ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                }
             }
 
             // restore tag buffer to its original value

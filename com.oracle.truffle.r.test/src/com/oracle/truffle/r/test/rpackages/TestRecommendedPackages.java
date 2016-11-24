@@ -29,41 +29,62 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Test the installation of the "recommended" packages that come with GnuR. N.B. There are no
  * specific tests beyond install/load as that is handled separately in the package testing
  * framework. We are primarily concerned with detecting installation regressions.
+ *
+ * N.B. The package 'tgz' files have been copied to the com.oracle.truffle.r.test project output
+ * directory by the com.oracle.truffle.r.test.native Makefile. to allow them to be packaged into a
+ * distribution and avoid any dependency on source paths.
+ *
  */
 public class TestRecommendedPackages extends TestRPackages {
-    private static final String[] OK_PACKAGES = new String[]{"MASS", "boot", "class", "cluster", "codetools", "lattice", "nnet", "spatial", "survival", "KernSmooth", "Matrix", "foreign", "nlme",
+    // order matters due to dependencies
+    private static final String[] DEFAULT_PACKAGES = new String[]{"codetools", "MASS", "boot", "class", "cluster",
+                    "lattice", "nnet", "spatial", "Matrix", "survival", "KernSmooth", "foreign", "nlme",
                     "rpart"};
-    @SuppressWarnings("unused") private static final String[] PROBLEM_PACKAGES = new String[]{};
+    private static String[] packages = DEFAULT_PACKAGES;
 
-    private static Path getRecommendedPath() {
-        return Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.native", "gnur", RVersionNumber.R_HYPHEN_FULL, "src", "library", "Recommended");
+    /**
+     * Allows an external agent to ignore certain packages that are known to fail.
+     */
+    public static void ignorePackages(String[] ignoredPackages) {
+        String[] testPackages = new String[DEFAULT_PACKAGES.length - ignoredPackages.length];
+        int k = 0;
+        outer: for (int i = 0; i < DEFAULT_PACKAGES.length; i++) {
+            for (int j = 0; j < ignoredPackages.length; j++) {
+                if (DEFAULT_PACKAGES[i].equals(ignoredPackages[j])) {
+                    continue outer;
+                }
+            }
+            testPackages[k] = DEFAULT_PACKAGES[i];
+            k++;
+        }
+        packages = testPackages;
     }
 
     @BeforeClass
     public static void setupInstallMyTestPackages() {
-        setupInstallTestPackages(OK_PACKAGES, new Resolver() {
+        setupInstallTestPackages(packages, new Resolver() {
             @Override
             Path getPath(String p) {
-                return getRecommendedPath().resolve(p + ".tgz");
+                return TestBase.getNativeProjectFile(Paths.get("packages")).resolve("recommended").resolve(p + ".tgz");
             }
         });
     }
 
     @AfterClass
     public static void tearDownUninstallMyTestPackages() {
-        tearDownUninstallTestPackages(OK_PACKAGES);
+        tearDownUninstallTestPackages(packages);
     }
 
     @Test
     public void testLoad() {
-        assertEval(Context.NonShared, Context.LongTimeout, TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }", new String[]{TestRPackages.libLoc()}, OK_PACKAGES));
+        // This is perhaps redundant as package installation tests whether the package will load.
+        assertEval(Ignored.OutputFormatting, Context.NonShared, Context.LongTimeout,
+                        TestBase.template("{ library(%1, lib.loc = \"%0\"); detach(\"package:%1\"); }", new String[]{TestRPackages.libLoc()}, packages));
     }
 }

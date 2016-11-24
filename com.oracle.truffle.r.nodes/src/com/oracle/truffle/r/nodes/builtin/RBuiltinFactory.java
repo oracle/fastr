@@ -23,34 +23,33 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Arrays;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 
 public final class RBuiltinFactory extends RBuiltinDescriptor {
 
-    private final Function<RNode[], RBuiltinNode> constructor;
+    private final Supplier<RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit,
-                    RDispatch dispatch,
-                    Function<RNode[], RBuiltinNode> constructor) {
-        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch);
+                    boolean alwaysSplit, RDispatch dispatch, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
+        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior, specialCall);
         this.constructor = constructor;
     }
 
-    public Function<RNode[], RBuiltinNode> getConstructor() {
+    public Supplier<RBuiltinNode> getConstructor() {
         return constructor;
     }
 
     @Override
     public String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
-                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + "]";
+                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
     }
 }

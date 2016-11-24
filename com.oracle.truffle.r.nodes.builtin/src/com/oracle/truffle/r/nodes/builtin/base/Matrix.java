@@ -22,148 +22,105 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "isTrue(byrow)", "dimnames", "missingNrow", "missingNcol"})
+@RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNr", "missingNc"}, behavior = PURE)
 public abstract class Matrix extends RBuiltinNode {
 
     @Child private Transpose transpose;
     @Child private UpdateDimNames updateDimNames;
 
+    private final ConditionProfile byrowProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nrowMissingNcolGiven = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nrowGivenNcolMissing = ConditionProfile.createBinaryProfile();
     private final ConditionProfile bothNrowNcolMissing = ConditionProfile.createBinaryProfile();
     private final ConditionProfile empty = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isList = ConditionProfile.createBinaryProfile();
 
-    public abstract RAbstractVector execute(RAbstractVector data, int nrow, int ncol, byte byrow, Object dimnames, byte missingNr, byte missingNc);
+    public abstract RAbstractVector execute(RAbstractVector data, int nrow, int ncol, boolean byrow, Object dimnames, boolean missingNr, boolean missingNc);
 
     private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(null));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create());
         }
         return (RAbstractVector) updateDimNames.executeRAbstractContainer(vector, o);
     }
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstIntegerWithError(1, RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // nrow
-        casts.firstIntegerWithError(2, RError.Message.NON_NUMERIC_MATRIX_EXTENT, null); // ncol
-        casts.toLogical(3); // byrow
+        casts.arg("data").asVector().mustBe(instanceOf(RAbstractVector.class));
+        casts.arg("nrow").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
+        casts.arg("ncol").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
+        casts.arg("byrow").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("dimnames").allowNull().mustBe(instanceOf(RAbstractListVector.class));
+        casts.arg("missingNr").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("missingNc").asLogicalVector().findFirst().map(toBoolean());
     }
 
-    @Specialization(guards = "!isTrue(byrow)")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
-        if (empty.profile(data.getLength() == 0)) {
-            if (isList.profile(data instanceof RList)) {
-                // matrix of NULL-s
-                return data.copyResizedWithDimensions(dim, true);
-            } else {
-                RVector res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-                res.setDimensions(dim);
-                return res;
-            }
+    @Specialization
+    protected RAbstractVector matrix(RAbstractVector data, int nrow, int ncol, boolean byrow, Object dimnames, boolean missingNr, boolean missingNc) {
+        int[] dim;
+        if (byrowProfile.profile(byrow)) {
+            dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         } else {
-            return data.copyResizedWithDimensions(dim, false);
+            dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         }
-    }
-
-    @Specialization(guards = "!isTrue(byrow)")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
-        int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
-            if (isList.profile(data instanceof RList)) {
+            if (isList.profile(data instanceof RAbstractListVector)) {
                 // matrix of NULL-s
                 res = data.copyResizedWithDimensions(dim, true);
-                res = updateDimNames(res, dimnames);
+                if (byrowProfile.profile(byrow)) {
+                    if (transpose == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        transpose = insert(TransposeNodeGen.create());
+                    }
+                    res = (RVector<?>) transpose.execute(res);
+                }
+                if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
+                    res = updateDimNames(res, dimnames);
+                }
             } else {
                 res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
                 res.setDimensions(dim);
             }
         } else {
             res = data.copyResizedWithDimensions(dim, false);
-            res = updateDimNames(res, dimnames);
-        }
-        return res;
-    }
-
-    @Specialization(guards = "isTrue(byrow)")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrixbr(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
-        int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
-        if (transpose == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(null));
-        }
-        RAbstractVector res;
-        if (empty.profile(data.getLength() == 0)) {
-            if (isList.profile(data instanceof RList)) {
-                // matrix of NULL-s
-                res = data.copyResizedWithDimensions(dim, true);
-            } else {
-                res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-                res.setDimensions(dim);
+            if (byrowProfile.profile(byrow)) {
+                if (transpose == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    transpose = insert(TransposeNodeGen.create());
+                }
+                res = (RVector<?>) transpose.execute(res);
             }
-        } else {
-            res = data.copyResizedWithDimensions(dim, false);
-        }
-        return (RAbstractVector) transpose.execute(res);
-    }
-
-    @Specialization(guards = "isTrue(byrow)")
-    @SuppressWarnings("unused")
-    protected RAbstractVector matrixbr(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
-        int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
-        if (transpose == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(null));
-        }
-        RAbstractVector res;
-        if (empty.profile(data.getLength() == 0)) {
-            if (isList.profile(data instanceof RList)) {
-                // matrix of NULL-s
-                res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim, true));
+            if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
                 res = updateDimNames(res, dimnames);
-            } else {
-                res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-                res.setDimensions(dim);
             }
-        } else {
-            res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim, false));
-            res = updateDimNames(res, dimnames);
         }
         return res;
     }
 
-    //
-    // Auxiliary methods.
-    //
-
-    private int[] computeDimByCol(int size, int nrow, int ncol, byte missingNr, byte missingNc) {
-        final boolean mnr = missingNr == RRuntime.LOGICAL_TRUE;
-        final boolean mnc = missingNc == RRuntime.LOGICAL_TRUE;
-        if (bothNrowNcolMissing.profile(mnr && mnc)) {
+    private int[] computeDimByCol(int size, int nrow, int ncol, boolean missingNr, boolean missingNc) {
+        if (bothNrowNcolMissing.profile(missingNr && missingNc)) {
             return new int[]{size, 1};
-        } else if (nrowGivenNcolMissing.profile(!mnr && mnc)) {
+        } else if (nrowGivenNcolMissing.profile(!missingNr && missingNc)) {
             if (nrow == 0 && size > 0) {
                 throw RError.error(this, RError.Message.NROW_ZERO);
             }
@@ -172,7 +129,7 @@ public abstract class Matrix extends RBuiltinNode {
             } else {
                 return new int[]{nrow, 1 + ((size - 1) / nrow)};
             }
-        } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
+        } else if (nrowMissingNcolGiven.profile(missingNr && !missingNc)) {
             if (ncol == 0 && size > 0) {
                 throw RError.error(this, RError.Message.NCOL_ZERO);
             }
@@ -187,12 +144,10 @@ public abstract class Matrix extends RBuiltinNode {
         }
     }
 
-    private int[] computeDimByRow(int size, int nrow, int ncol, byte missingNr, byte missingNc) {
-        final boolean mnr = missingNr == RRuntime.LOGICAL_TRUE;
-        final boolean mnc = missingNc == RRuntime.LOGICAL_TRUE;
-        if (bothNrowNcolMissing.profile(mnr && mnc)) {
+    private int[] computeDimByRow(int size, int nrow, int ncol, boolean missingNr, boolean missingNc) {
+        if (bothNrowNcolMissing.profile(missingNr && missingNc)) {
             return new int[]{1, size};
-        } else if (nrowGivenNcolMissing.profile(!mnr && mnc)) {
+        } else if (nrowGivenNcolMissing.profile(!missingNr && missingNc)) {
             if (nrow == 0 && size > 0) {
                 throw RError.error(this, RError.Message.NROW_ZERO);
             }
@@ -202,7 +157,7 @@ public abstract class Matrix extends RBuiltinNode {
 
                 return new int[]{1 + ((size - 1) / nrow), nrow};
             }
-        } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
+        } else if (nrowMissingNcolGiven.profile(missingNr && !missingNc)) {
             if (ncol == 0 && size > 0) {
                 throw RError.error(this, RError.Message.NCOL_ZERO);
             }
@@ -215,13 +170,5 @@ public abstract class Matrix extends RBuiltinNode {
             // only missing case: both nrow and ncol were given
             return new int[]{ncol, nrow};
         }
-    }
-
-    //
-    // Guards.
-    //
-
-    protected static boolean isTrue(byte byrow) {
-        return RRuntime.fromLogical(byrow);
     }
 }

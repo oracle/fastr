@@ -22,37 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"})
+@RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"}, behavior = PURE)
 public abstract class SeqLen extends RBuiltinNode {
-
-    private final BranchProfile lengthProblem = BranchProfile.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(0);
+        // this is slightly different than what GNU R does as it will report coercion warning for:
+        // seq_len(c("7", "b"))
+        // GNU R (presumably) gets the first element before doing a coercion but I don't think we
+        // can do it with our API
+        casts.arg("length.out").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
+                        RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(gte(0), RError.Message.MUST_BE_COERCIBLE_INTEGER);
     }
 
     @Specialization
-    protected RIntSequence seqLen(RAbstractIntVector length) {
-        if (length.getLength() != 1) {
-            lengthProblem.enter();
-            RError.warning(this, RError.Message.FIRST_ELEMENT_USED, "length.out");
-            if (length.getLength() == 0) {
-                throw RError.error(this, RError.Message.MUST_BE_COERCIBLE_INTEGER);
-            }
-        }
-        return RDataFactory.createIntSequence(1, 1, length.getDataAt(0));
+    protected RIntSequence seqLen(int length) {
+        return RDataFactory.createIntSequence(1, 1, length);
     }
 }

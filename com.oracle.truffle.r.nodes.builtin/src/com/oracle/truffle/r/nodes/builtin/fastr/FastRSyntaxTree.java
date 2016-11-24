@@ -22,27 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -50,7 +53,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
@@ -60,13 +62,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * Only nodes that return {@code true} to {@link RSyntaxNode#isSyntax()} are processed. N.B. This
  * will reach nodes that implement {@link RSyntaxNode} but are used in {@link RSyntaxNode#INTERNAL}
  * mode</li>
- * <li><b>rsyntaxnode</b>: Use the {@link RSyntaxNodeVisitor}. The main difference from mode
- * {@code node} is that the children of non-syntax nodes are not visited at all.</li>
  * <li><b<syntaxelement</b>: Use the {@link RSyntaxVisitor} to visit the "logical" syntax tree.</li>
  * </ol>
  *
  */
-@RBuiltin(name = ".fastr.syntaxtree", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"})
+@RBuiltin(name = ".fastr.syntaxtree", visibility = OFF, kind = PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"}, behavior = IO)
 public abstract class FastRSyntaxTree extends RBuiltinNode {
 
     @Override
@@ -74,13 +74,19 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
         return new Object[]{RMissing.instance, "rsyntaxnode", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
     }
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("func").mustBe(instanceOf(RFunction.class));
+        casts.arg("visitMode").asStringVector().findFirst();
+        casts.arg("printSource").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("printTags").asLogicalVector().findFirst().map(toBoolean());
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RNull printTree(RFunction function, RAbstractStringVector visitMode, byte printSourceLogical, byte printTagsLogical) {
-        boolean printSource = RRuntime.fromLogical(printSourceLogical);
-        boolean printTags = RRuntime.fromLogical(printTagsLogical);
+    protected RNull printTree(RFunction function, String visitMode, boolean printSource, boolean printTags) {
         FunctionDefinitionNode root = (FunctionDefinitionNode) function.getTarget().getRootNode();
-        switch (visitMode.getDataAt(0)) {
+        switch (visitMode) {
             case "node":
                 root.accept(new NodeVisitor() {
 
@@ -95,20 +101,6 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
                     }
 
                 });
-                break;
-
-            case "rsyntaxnode":
-                RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
-
-                    @Override
-                    public boolean visit(RSyntaxNode node, int depth) {
-                        printIndent(depth);
-                        writeString(node.getClass().getSimpleName(), false);
-                        processRSyntaxNode(node, printSource, printTags);
-                        printnl();
-                        return true;
-                    }
-                }, true);
                 break;
 
             case "syntaxelement":
@@ -180,12 +172,6 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
             parent = parent.getParent();
         }
         return result;
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    protected Object fallback(Object a1, Object a2, Object a3, Object a4) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     private static void printIndent(int depth) {

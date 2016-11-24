@@ -143,6 +143,7 @@ public enum RType {
                 return Builtin;
             case "special":
                 return Special;
+            case "name":
             case "symbol":
                 return Symbol;
             case "environment":
@@ -182,7 +183,7 @@ public enum RType {
         }
     }
 
-    public RVector getEmpty() {
+    public RVector<?> getEmpty() {
         switch (this) {
             case Double:
                 return RDataFactory.createEmptyDoubleVector();
@@ -203,7 +204,7 @@ public enum RType {
         }
     }
 
-    public RVector create(int length, boolean fillNA) {
+    public RVector<?> create(int length, boolean fillNA) {
         switch (this) {
             case Logical:
                 return RDataFactory.createLogicalVector(length, fillNA);
@@ -215,10 +216,16 @@ public enum RType {
                 return RDataFactory.createComplexVector(length, fillNA);
             case Character:
                 return RDataFactory.createStringVector(length, fillNA);
-            case List:
+            case Expression: {
+                Object[] data = new Object[length];
+                Arrays.fill(data, RNull.instance);
+                return RDataFactory.createExpression(data);
+            }
+            case List: {
                 Object[] data = new Object[length];
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
+            }
             case Raw:
                 return RDataFactory.createRawVector(length);
             default:

@@ -22,19 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "path.expand", kind = INTERNAL, parameterNames = "path")
+@RBuiltin(name = "path.expand", kind = INTERNAL, parameterNames = "path", behavior = IO)
 public abstract class PathExpand extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("path").mustBe(stringValue());
+    }
 
     @Specialization
     @TruffleBoundary
@@ -45,11 +52,5 @@ public abstract class PathExpand extends RBuiltinNode {
             results[i] = path;
         }
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");
     }
 }

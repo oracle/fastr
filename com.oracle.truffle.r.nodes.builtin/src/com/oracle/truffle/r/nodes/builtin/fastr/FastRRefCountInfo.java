@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RShareable;
 
 /**
@@ -35,8 +36,9 @@ import com.oracle.truffle.r.runtime.data.RShareable;
  * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and SHARED_PERMANENT_VAL
  * for permanent shared
  */
-@RBuiltin(aliases = "fastr.refcountinfo", name = ".fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""})
+@RBuiltin(name = ".fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""}, behavior = COMPLEX)
 public abstract class FastRRefCountInfo extends RBuiltinNode {
+
     @Specialization
     protected int refcount(Object x) {
         if (x instanceof RShareable) {
@@ -54,5 +56,4 @@ public abstract class FastRRefCountInfo extends RBuiltinNode {
             return -1;
         }
     }
-
 }

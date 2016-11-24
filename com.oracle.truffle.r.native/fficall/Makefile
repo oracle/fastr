@@ -31,31 +31,57 @@ $(error no platform.mk available)
 endif
 endif
 
-.PHONY: all clean objs
+.PHONY: all clean
 
-C_LIBNAME := libR$(DYLIB_EXT)
-C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+R_LIBNAME := libR$(DYLIB_EXT)
+R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
+JNIBOOT_LIBNAME := libjniboot$(DYLIB_EXT)
+JNIBOOT_LIB := $(FASTR_LIB_DIR)/$(JNIBOOT_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
 endif
 
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
+LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
-all: $(C_LIB)
+all: $(R_LIB) $(JNIBOOT_LIB)
 
-$(C_LIB): objs 
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(wildcard lib/*.o) -L $(GNUR_HOME)/lib -lRblas $(VERSION_FLAGS)
+# use sentinels to avoid (usually unnecessary) rebuilds.
+# N.B. if things change in the subdirs, a clean must be invoked
+# to remove the sentinels
+
+$(R_LIB): jni.done 
 ifeq ($(OS_NAME),Darwin)
-	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(C_LIB)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
+	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
+	install_name_tool -id @rpath/libR.dylib $(R_LIB)
+# check if we captured libpcre/libz, rpath those in libR
+	mx rupdatelib $(FASTR_LIB_DIR)
+else
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
 
-objs:
+jni.done:
 	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
+	touch jni.done
+
+$(JNIBOOT_LIB): jniboot.done
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(JNIBOOT_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -id @rpath/libjniboot.dylib $(JNIBOOT_LIB)
+endif
+
+jniboot.done:
+	$(MAKE) -C src/jniboot all
+	touch jniboot.done
 
 clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
-	rm -rf $(C_LIB)
+	rm -rf $(R_LIB)
+	rm -rf $(JNIBOOT_LIB)
+	rm -rf jni.done jniboot.done
 	

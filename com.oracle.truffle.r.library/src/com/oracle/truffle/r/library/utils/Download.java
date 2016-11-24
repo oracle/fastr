@@ -22,53 +22,53 @@
  */
 package com.oracle.truffle.r.library.utils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.RError.Message;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
  * "cacheOK".
  */
-public final class Download extends RExternalBuiltinNode {
-
-    @SuppressWarnings("unused")
-    private static void download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK) throws IOException {
-        URL url = new URL(urlString);
-        byte[] buffer = new byte[8192];
-        try (BufferedInputStream in = new BufferedInputStream(url.openStream()); BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destFile))) {
-            int nread;
-            while ((nread = in.read(buffer)) > 0) {
-                out.write(buffer, 0, nread);
-            }
-        }
-    }
+public abstract class Download extends RExternalBuiltinNode.Arg5 {
 
     @Override
-    public Integer call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        String url = isString(argValues[0]);
-        String destFile = isString(argValues[1]);
-        byte quiet = castLogical(castVector(argValues[2]));
-        String mode = isString(argValues[3]);
-        byte cacheOK = castLogical(castVector(argValues[4]));
-        if (url == null || destFile == null || mode == null) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
-        }
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(1).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(2).mustNotBeNull().mustBe(Predef.logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+        casts.arg(3).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(4).mustNotBeNull().mustBe(Predef.logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected int download(String urlString, String destFile, @SuppressWarnings("unused") boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK) {
         try {
-            Download.download(url, destFile, RRuntime.fromLogical(quiet), mode, RRuntime.fromLogical(cacheOK));
+            try (InputStream in = new URL(urlString).openStream()) {
+                Files.copy(in, Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING);
+            }
             return 0;
-        } catch (IOException ex) {
+        } catch (IOException e) {
             errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, e.getMessage());
         }
     }
 }

@@ -11,10 +11,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -132,8 +133,13 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static RError interopError(RBaseNode node, InteropException e, TruffleObject o) {
+    public static RError interopError(RBaseNode node, Throwable e, TruffleObject o) {
         throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()) + " on object " + o);
+    }
+
+    @TruffleBoundary
+    public static RError ioError(RBaseNode node, IOException ex) {
+        throw error0(node, Message.GENERIC, ex.getMessage());
     }
 
     public static RBaseNode findParentRBase(Node node) {
@@ -192,7 +198,7 @@ public final class RError extends RuntimeException {
 
     /**
      * A temporary error that indicates an unimplemented feature where terminating the VM using
-     * {@link Utils#fatalError(String)} would be inappropriate.
+     * {@link Utils#rSuicide(String)} would be inappropriate.
      */
     @TruffleBoundary
     public static RError nyi(RBaseNode node, String msg) {
@@ -229,6 +235,8 @@ public final class RError extends RuntimeException {
          * available.
          */
         GENERIC("%s"),
+        TOO_SHORT("'%s' is too short"),
+        VECTOR_SIZE_TOO_LARGE("vector size specified is too large"),
         ARG_RECYCYLED("an argument will be fractionally recycled"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
         LENGTH_ZERO("argument is of length zero"),
@@ -248,6 +256,8 @@ public final class RError extends RuntimeException {
         INVALID_ARG_TYPE("invalid argument type"),
         INVALID_ARG_TYPE_UNARY("invalid argument to unary operator"),
         VECTOR_SIZE_NEGATIVE("vector size cannot be negative"),
+        VECTOR_SIZE_NA("vector size cannot be NA"),
+        VECTOR_SIZE_NA_NAN("vector size cannot be NA/NaN"),
         NO_LOOP_FOR_BREAK_NEXT("no loop for break/next, jumping to top level"),
         INVALID_FOR_SEQUENCE("invalid for() loop sequence"),
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
@@ -260,19 +270,23 @@ public final class RError extends RuntimeException {
         MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%' (%d x %d)"),
         INVALID_TFB("invalid (to - from)/by in seq(.)"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
-        WRONG_TYPE("wrong type of argument"),
         BY_TOO_SMALL("'by' argument is much too small"),
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
+        INVALID_NA_PRINT_SPEC("invalid 'na.print' specification"),
         EMPTY_WHAT("empty 'what' specified"),
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
+        TRACEMEM_NOT_NULL("cannot trace NULL"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
+        NOT_A_FUNCTION("'%s' is not a function"),
         NON_CHARACTER("non-character argument"),
+        NON_CHARACTER_OBJECTS("non-character object(s)"),
+        NON_CHARACTER_NAMES("non-character names"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
         NAN_PRODUCED("NaNs produced"),
         NUMERIC_COMPLEX_MATRIX_VECTOR("requires numeric/complex matrix/vector arguments"),
@@ -288,15 +302,16 @@ public final class RError extends RuntimeException {
         NA_INTRODUCED_COERCION_INT("NAs introduced by coercion to integer range"),
         ARGUMENT_WHICH_NOT_LOGICAL("argument to 'which' is not logical"),
         X_NUMERIC("'x' must be numeric"),
-        X_LIST_ATOMIC("'x' must be list or atomic vector"),
+        X_LIST_ATOMIC("'x' must be a list or atomic vector"),
         X_ARRAY_TWO("'x' must be an array of at least two dimensions"),
         ACCURACY_MODULUS("probable complete loss of accuracy in modulus"),
         INVALID_SEPARATOR("invalid separator"),
         INCORRECT_DIMENSIONS("incorrect number of dimensions"),
         LOGICAL_SUBSCRIPT_LONG("(subscript) logical subscript too long"),
-        DECREASING_TRUE_FALSE("'decreasing' must be TRUE or FALSE"),
         ARGUMENT_LENGTHS_DIFFER("argument lengths differ"),
         ZERO_LENGTH_PATTERN("zero-length pattern"),
+        UNSUPPORTED_MODE("unsupported mode"),
+        MODE_LENGTH_ONE("'mode' must be of length at least one"),
         ALL_CONNECTIONS_IN_USE("all connections are in use"),
         CANNOT_READ_CONNECTION("cannot read from this connection"),
         CONNECTION_NOT_OPEN_READ("connection not open for reading"),
@@ -308,6 +323,7 @@ public final class RError extends RuntimeException {
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
+        MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),
         MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),
@@ -317,11 +333,14 @@ public final class RError extends RuntimeException {
         COMPARISON_COMPLEX("invalid comparison with complex values"),
         NON_NUMERIC_BINARY("non-numeric argument to binary operator"),
         RAW_SORT("raw vectors cannot be sorted"),
+        ONLY_ATOMIC_CAN_BE_SORTED("only atomic vectors can be sorted"),
         INVALID_UNNAMED_ARGUMENT("invalid argument"),
         INVALID_UNNAMED_VALUE("invalid value"),
         NAMES_NONVECTOR("names() applied to a non-vector"),
         NAMES_LONGER("'names' attribute [%d] must be the same length as the vector [%d]"),
         ONLY_FIRST_VARIABLE_NAME("only the first element is used as variable name"),
+        INVALID_FIRST_FILENAME("invalid first filename"),
+        INVALID_SECOND_FILENAME("invalid second filename"),
         INVALID_FIRST_ARGUMENT("invalid first argument"),
         NO_ENCLOSING_ENVIRONMENT("no enclosing environment"),
         ASSIGN_EMPTY("cannot assign values in the empty environment"),
@@ -329,10 +348,20 @@ public final class RError extends RuntimeException {
         AS_ENV_NULL_DEFUNCT("using 'as.environment(NULL)' is defunct"),
         REPLACEMENT_NOT_ENVIRONMENT("replacement object is not an environment"),
         ARGUMENT_NOT_MATRIX("argument is not a matrix"),
+        OBJECT_NOT_MATRIX("object is not a matrix"),
+        ARGUMENT_NOT_ENVIRONMENT("argument is not an environment"),
+        ARGUMENT_NAME_NOT_ENVIRONMENT("'%s' is not an environment"),
         DOLLAR_ATOMIC_VECTORS("$ operator is invalid for atomic vectors"),
         COERCING_LHS_TO_LIST("Coercing LHS to a list"),
+        INVALID_NULL_LHS("invalid (NULL) left side of assignment"),
+        INVALID_LHS("invalid (%s) left-hand side to assignment"),
         ARGUMENT_NOT_LIST("argument not a list"),
         FIRST_ARGUMENT_NOT_NAMED_LIST("first argument must be a named list"),
+        FIRST_ARGUMENT_NOT_CHARVEC("first argument must be a character vector"),
+        FIRST_ARGUMENT_NOT_FILENAME("first argument must be a filename"),
+        ARG_MUST_BE_FUNCTION("argument must be a function"),
+        ASCII_NOT_LOGICAL("'ascii' must be logical"),
+        MUST_BE_LOGICAL("argument '%s' must be logical"),
         LIST_NAMES_SAME_LENGTH("names(x) must be a character vector of the same length as x"),
         DIMS_CONTAIN_NEGATIVE_VALUES("the dims contain negative values"),
         NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED("negative length vectors are not allowed"),
@@ -341,6 +370,7 @@ public final class RError extends RuntimeException {
         DIMS_CONTAIN_NA("the dims contain missing values"),
         LENGTH_ZERO_DIM_INVALID("length-0 dimension vector is invalid"),
         ATTRIBUTES_LIST_OR_NULL("attributes must be a list or NULL"),
+        SET_ATTRIBUTES_ON_NULL("attempt to set an attribute on NULL"),
         RECALL_CALLED_OUTSIDE_CLOSURE("'Recall' called from outside a closure"),
         MATCH_CALL_CALLED_OUTSIDE_FUNCTION("match.call() was called from outside a function"),
         NOT_NUMERIC_VECTOR("argument is not a numeric vector"),
@@ -365,7 +395,7 @@ public final class RError extends RuntimeException {
         // below: not exactly GNU-R message
         PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
-        INVALID_ENVIRONMENT("invalid environment specified"),
+        INVALID_ENVIRONMENT("invalid environment"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),
         FMT_NOT_CHARACTER("'fmt' is not a character vector"),
         UNSUPPORTED_TYPE("unsupported type"),
@@ -394,7 +424,7 @@ public final class RError extends RuntimeException {
         ONLY_FIRST_USED("numerical expression has %d elements: only the first used"),
         NO_SUCH_INDEX("no such index at level %d"),
         LIST_COERCION("(list) object cannot be coerced to type '%s'"),
-        CAT_ARGUMENT_LIST("argument %d (type 'list') cannot be handled by 'cat'"),
+        CAT_ARGUMENT_OF_TYPE("argument %d (type '%s') cannot be handled by 'cat'"),
         DATA_NOT_MULTIPLE_ROWS("data length [%d] is not a sub-multiple or multiple of the number of rows [%d]"),
         ARGUMENT_NOT_MATCH("supplied argument name '%s' does not match '%s'"),
         ARGUMENT_MISSING("argument \"%s\" is missing, with no default"),
@@ -403,14 +433,17 @@ public final class RError extends RuntimeException {
         UNKNOWN_FUNCTION_USE_METHOD("no applicable method for '%s' applied to an object of class '%s'"),
         UNKNOWN_OBJECT("object '%s' not found"),
         INVALID_ARGUMENT("invalid '%s' argument"),
-        INVALID_POS_ARGUMENT("invalid 'pos' argument"),
+        INVALID_ARGUMENT_OF_TYPE("invalid '%s' argument of type '%s'"),
         INVALID_VALUE("invalid '%s' value"),
         INVALID_ARGUMENTS_NO_QUOTE("invalid %s arguments"),
+        INVALID_SUBSCRIPT("invalid subscript"),
         INVALID_SUBSCRIPT_TYPE("invalid subscript type '%s'"),
         ARGUMENT_NOT_VECTOR("argument %d is not a vector"),
         CANNOT_COERCE("cannot coerce type '%s' to vector of type '%s'"),
         ARGUMENT_ONLY_FIRST("argument '%s' has length > 1 and only the first element will be used"),
         ARGUMENT_ONLY_FIRST_1("only the first element of '%s' argument used"),
+        ARGUMENT_WRONG_LENGTH("wrong length for argument"),
+        ARGUMENT_WRONG_TYPE("wrong type for argument"),
         CANNOT_OPEN_FILE("cannot open file '%s': %s"),
         NOT_CONNECTION("'%s' is not a connection"),
         UNUSED_TEXTCONN("closing unused text connection %d (%s)"),
@@ -420,6 +453,7 @@ public final class RError extends RuntimeException {
         ATTRIBUTE_VECTOR_SAME_LENGTH("'%s' attribute [%d] must be the same length as the vector [%d]"),
         SCAN_UNEXPECTED("scan() expected '%s', got '%s'"),
         MUST_BE_ENVIRON("'%s' must be an environment"),
+        MUST_BE_INTEGER("'%s' must be an integer"),
         UNUSED_ARGUMENT("unused argument (%s)"),
         UNUSED_ARGUMENTS("unused arguments (%s)"),
         INFINITE_MISSING_VALUES("infinite or missing values in '%s'"),
@@ -445,6 +479,7 @@ public final class RError extends RuntimeException {
         ROWS_NOT_MULTIPLE("number of rows of result is not a multiple of vector length (arg %d)"),
         ARG_ONE_OF("'%s' should be one of %s"),
         MUST_BE_SQUARE_MATRIX("'%s' must be a square matrix"),
+        MUST_BE_SQUARE_MATRIX_SPEC("'%s' (%d x %d) must be square"),
         NON_MATRIX("non-matrix argument to '%s'"),
         NON_NUMERIC_ARGUMENT_TO("non-numeric argument to '%s'"),
         DIMS_GT_ZERO("'%s' must have dims > 0"),
@@ -457,6 +492,7 @@ public final class RError extends RuntimeException {
         EXACT_SINGULARITY("exact singularity in '%s'"),
         SINGULAR_SOLVE("singular matrix '%s' in solve"),
         SEED_TYPE(".Random.seed is not an integer vector but of type '%s'"),
+        INVALID_NORMAL_TYPE_IN_RGNKIND("invalid Normal type in 'RNGkind'"),
         INVALID_USE("invalid use of '%s'"),
         FORMAL_MATCHED_MULTIPLE("formal argument \"%s\" matched by multiple actual arguments"),
         ARGUMENT_MATCHES_MULTIPLE("argument %d matches multiple formal arguments"),
@@ -473,10 +509,10 @@ public final class RError extends RuntimeException {
         GEN_FUNCTION_NOT_SPECIFIED("generic function not specified"),
         DUPLICATE_SWITCH_DEFAULT("duplicate 'switch' defaults: '%s' and '%s'"),
         NO_ALTERNATIVE_IN_SWITCH("empty alternative in numeric switch"),
+        NO_ALTERNATIVES_IN_SWITCH("'switch' with no alternatives"),
         EXPR_NOT_LENGTH_ONE("EXPR must be a length 1 vector"),
         EXPR_MISSING("'EXPR' is missing"),
         INVALID_STORAGE_MODE_UPDATE("invalid to change the storage mode of a factor"),
-        NULL_VALUE("'value' must be non-null character string"),
         USE_DEFUNCT("use of '%s' is defunct: use %s instead"),
         NCOL_ZERO("nc(0 for non-null data"),
         NROW_ZERO("nr(0 for non-null data"),
@@ -485,11 +521,15 @@ public final class RError extends RuntimeException {
         ERROR_IN_SAMPLE("Error in sample.int(x, size, replace, prob) :  "),
         INCORRECT_NUM_PROB("incorrect number of probabilities"),
         NA_IN_PROB_VECTOR("NA in probability vector"),
-        NEGATIVE_PROBABILITY("non-positive probability"),
+        NEGATIVE_PROBABILITY("negative probability"),
         NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
         INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
+        INVALID_TIES_FOR_RANK("invalid ties.method for rank() [should never happen]"),
+        UNIMPLEMENTED_TYPE_IN_GREATER("unimplemented type '%s' in greater"),
+        RANK_LARGE_N("parameter 'n' is greater than length(x), GnuR output is non-deterministic, FastR will use n=length(x)"),
+        ALGORITHM_FOR_SIZE_N_DIV_2("This algorithm is for size <= n/2"),
         // below: not exactly GNU-R message
         TOO_FEW_POSITIVE_PROBABILITY("too few positive probabilities"),
         DOTS_BOUNDS("The ... list does not contain %s elements"),
@@ -523,6 +563,7 @@ public final class RError extends RuntimeException {
         ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
+        WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),
         CANNOT_MAKE_VECTOR_OF_MODE("vector: cannot make a vector of mode '%s'"),
         SET_ROWNAMES_NO_DIMS("attempt to set 'rownames' on an object with no dimensions"),
         COLUMNS_NOT_MULTIPLE("number of columns of result is not a multiple of vector length (arg %d)"),
@@ -556,7 +597,6 @@ public final class RError extends RuntimeException {
         PARSE_ERROR("parse error"),
         SEED_NOT_VALID_INT("supplied seed is not a valid integer"),
         POSITIVE_CONTEXTS("number of contexts must be positive"),
-        INVALID_TIMES_ARG("invalid 'times' value"),
         NORMALIZE_PATH_NOSUCH("path[%d]=\"%s\": No such file or directory"),
         ARGS_MUST_BE_NAMED("all arguments must be named"),
         INVALID_INTERNAL("invalid .Internal() argument"),
@@ -605,6 +645,7 @@ public final class RError extends RuntimeException {
         FILE_OPEN_TMP("file(\"\") only supports open = \"w+\" and open = \"w+b\": using the former"),
         FILE_APPEND_WRITE("write error during file append"),
         REQUIRES_CHAR_VECTOR("'%s' requires a character vector"),
+        ARGUMENT_NOT_CHAR_VECTOR("argument is not a character vector"),
         NOT_VALID_NAMES("not a valid named list"),
         CHAR_ARGUMENT("character argument expected"),
         CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
@@ -639,7 +680,7 @@ public final class RError extends RuntimeException {
         REG_FINALIZER_FIRST("first argument must be environment or external pointer"),
         REG_FINALIZER_SECOND("second argument must be a function"),
         REG_FINALIZER_THIRD("third argument must be 'TRUE' or 'FALSE'"),
-        LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt"),
+        LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt or unreadable"),
         MAGIC_EMPTY("restore file may be empty -- no data loaded"),
         MAGIC_TOONEW("restore file may be from a newer version of R -- no data loaded"),
         MAGIC_CORRUPT("bad restore file magic number (file may be corrupted) -- no data loaded"),
@@ -666,6 +707,7 @@ public final class RError extends RuntimeException {
         INVALID_PRIM_METHOD_CODE("invalid primitive methods code (\"%s\"): should be \"clear\", \"reset\", \"set\", or \"suppress\""),
         PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
         NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
+        NON_INTEGER_N("non-integer %s = %f"),
         INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
         INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point"),
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
@@ -675,8 +717,46 @@ public final class RError extends RuntimeException {
         BROWSER_QUIT("cannot quit from browser"),
         QUIT_ASK("one of \"yes\", \"no\", \"ask\" or \"default\" expected."),
         QUIT_SAVE("unrecognized value of 'save'"),
+        QUIT_ASK_INTERACTIVE("save=\"ask\" in non-interactive use: command-line default will be used"),
+        QUIT_INVALID_STATUS("invalid 'status', 0 assumed"),
+        QUIT_INVALID_RUNLAST("invalid 'runLast', FALSE assumed"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
-        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'");
+        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
+        ROWSUM_NAMES_NOT_CHAR("row names are not character"),
+        ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
+        ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),
+        ARG_IS_NOT_OF_MODE("argument is not of mode %s"),
+        ARGUMENT_LENGTH_0("argument of length 0"),
+        MUST_BE_VECTOR_BUT_WAS("'%s' must be of a vector type, was '%s'"),
+        SYSTEM_CHAR_ARG("non-empty character argument expected"),
+        SYSTEM_INTERN_NOT_NA("'intern' must be logical and not NA"),
+        NO_SUCH_FILE("cannot open file '%s': No such file or directory"),
+        NON_STRING_ARG_TO_INTERNAL_PASTE("non-string argument to Internal paste"),
+        INVALID_STRING_IN_STOP(" [invalid string in stop(.)]"),
+        INVALID_STRING_IN_WARNING(" [invalid string in warning(.)]"),
+        ERR_MSG_MUST_BE_STRING("error message must be a character string"),
+        ERR_MSG_BAD("bad error message"),
+        BAD_ENVIRONMENT("bad %s environment argument"),
+        CANNOT_BE_LENGTH("'%s' cannot be of length %d"),
+        SECOND_ARGUMENT_LIST("second argument must be a list"),
+        DOES_NOT_HAVE_DIMNAMES("'%s' does not have named dimnames"),
+        ATTEMPT_TO_REPLICATE("attempt to replicate an object of type '%s'"),
+        ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
+        INCORRECT_ARG_TYPE("incorrect type for %s argument"),
+        INVALID_ARG_OF_LENGTH("invalid %s argument of length %d"),
+        INVALID_FILENAME_PATTERN("invalid filename pattern"),
+        INVALID_FILE_EXT("invalid file extension"),
+        NO("no '%s'"),
+        APPLIES_TO_VECTORS("%s applies only to vectors"),
+        NOT_A_VECTOR("argument %d is not a vector"),
+        RADIX_SORT_DEC_MATCH("length(decreasing) must match the number of order arguments"),
+        RADIX_SORT_DEC_NOT_LOGICAL("'decreasing' elements must be TRUE or FALSE"),
+        COERCE_NON_FACTOR("attempting to coerce non-factor"),
+        MALFORMED_FACTOR("malformed factor"),
+        GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer"),
+        WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' "),
+        BAD_FUNCTION_EXPR("badly formed function expression"),
+        FIRST_ELEMENT_ONLY("only first element of '%s' argument used");
 
         public final String message;
         final boolean hasArgs;

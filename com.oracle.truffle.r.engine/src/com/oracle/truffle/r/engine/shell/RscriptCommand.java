@@ -29,12 +29,14 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERSION;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVersionNumber;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
 
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper
@@ -97,17 +99,23 @@ public class RscriptCommand {
     }
 
     public static void main(String[] args) {
-        // Since many of the options are shared parse them from an RSCRIPT perspective.
-        // Handle --help and --version specially, as they exit.
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
-        preprocessRScriptOptions(options);
-        ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
+        doMain(args, null, true, System.in, System.out);
         // never returns
-        RCommand.readEvalPrint(info);
         throw RInternalError.shouldNotReachHere();
     }
 
+    public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
+        // Since many of the options are shared parse them from an RSCRIPT perspective.
+        // Handle --help and --version specially, as they exit.
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
+        preprocessRScriptOptions(options);
+        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream, env);
+        return RCommand.readEvalPrint(vm);
+
+    }
+
     private static void printVersionAndExit() {
+        // TODO Not ok in nested context
         System.out.print("R scripting front-end version ");
         System.out.println(RVersionNumber.FULL);
         System.exit(0);

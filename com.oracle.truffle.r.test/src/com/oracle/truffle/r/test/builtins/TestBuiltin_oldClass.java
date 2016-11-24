@@ -126,5 +126,6 @@ public class TestBuiltin_oldClass extends TestBase {
     public void testGetClass() {
         assertEval("{ x<-1; oldClass(x) }");
         assertEval("{ oldClass(NULL) }");
+        assertEval("{ f <- quote(foo(42)); class(f)<-'myclass'; oldClass(f); }");
     }
 }

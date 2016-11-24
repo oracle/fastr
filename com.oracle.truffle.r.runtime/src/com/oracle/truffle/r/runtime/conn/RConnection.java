@@ -29,39 +29,44 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
  *
  * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection extends RAttributeStorage implements AutoCloseable, RAbstractContainer {
+public abstract class RConnection implements AutoCloseable {
 
-    @Override
-    public RStringVector getImplicitClass() {
-        throw RInternalError.shouldNotReachHere("no implicit class for connections");
+    public final RAbstractIntVector asVector() {
+        String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass().getPrintName(), "connection"};
+
+        RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
+
+        RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+        // it's important to put "this" into the externalptr, so that it doesn't get collected
+        RExternalPtr connectionId = RDataFactory.createExternalPtr(null, this, RDataFactory.createSymbol("connection"), RNull.instance);
+        result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY, "conn_id"}, new Object[]{classVector, connectionId}));
+
+        return result;
+    }
+
+    public static BaseRConnection fromIndex(int con) {
+        return RContext.getInstance().stateRConnection.getConnection(con, true);
     }
 
     private LinkedList<String> pushBack;
 
     public abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
-
-    @Override
-    public RType getRType() {
-        return RType.Integer;
-    }
 
     private String readOneLineWithPushBack(String[] res, int ind, @SuppressWarnings("unused") boolean warn, @SuppressWarnings("unused") boolean skipNul) {
         String s = pushBack.pollLast();
@@ -206,7 +211,7 @@ public abstract class RConnection extends RAttributeStorage implements AutoClose
      * Pushes lines back to the connection.
      */
     @TruffleBoundary
-    public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+    public final void pushBack(RAbstractStringVector lines, boolean addNewLine) {
         if (pushBack == null) {
             pushBack = new LinkedList<>();
         }
@@ -223,7 +228,7 @@ public abstract class RConnection extends RAttributeStorage implements AutoClose
      * Return the length of the push back.
      */
     @TruffleBoundary
-    public int pushBackLength() {
+    public final int pushBackLength() {
         return pushBack == null ? 0 : pushBack.size();
     }
 
@@ -231,11 +236,12 @@ public abstract class RConnection extends RAttributeStorage implements AutoClose
      * Clears the pushback.
      */
     @TruffleBoundary
-    public void pushBackClear() {
+    public final void pushBackClear() {
         pushBack = null;
     }
 
     public enum SeekMode {
+        ENQUIRE,
         START,
         CURRENT,
         END
@@ -330,89 +336,4 @@ public abstract class RConnection extends RAttributeStorage implements AutoClose
      */
     public abstract boolean isOpen();
 
-    /*
-     * Methods from the RAbstractContainer interface, which is implemented to allow an RVector to
-     * transform to an RConnection via a class update.
-     */
-
-    @Override
-    public boolean isComplete() {
-        return true;
-    }
-
-    @Override
-    public int getLength() {
-        return 1;
-    }
-
-    @Override
-    public RAbstractContainer resize(int size) {
-        return this;
-    }
-
-    @Override
-    public boolean hasDimensions() {
-        return false;
-    }
-
-    @Override
-    public int[] getDimensions() {
-        return null;
-    }
-
-    @Override
-    public void setDimensions(int[] newDimensions) {
-    }
-
-    @Override
-    public Class<?> getElementClass() {
-        return RInteger.class;
-    }
-
-    @Override
-    public RTypedValue getNonShared() {
-        return this;
-    }
-
-    @Override
-    public RShareable materializeToShareable() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDescriptor();
-    }
-
-    @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        return null;
-    }
-
-    @Override
-    public void setNames(RStringVector newNames) {
-    }
-
-    @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
-        return null;
-    }
-
-    @Override
-    public void setDimNames(RList newDimNames) {
-    }
-
-    @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return null;
-    }
-
-    @Override
-    public void setRowNames(RAbstractVector rowNames) {
-    }
-
-    @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
-        return true;
-    }
 }

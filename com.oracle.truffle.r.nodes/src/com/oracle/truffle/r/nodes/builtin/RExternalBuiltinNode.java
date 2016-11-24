@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -105,14 +103,6 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
             castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
         return (RAbstractDoubleVector) castDouble.execute(operand);
-    }
-
-    protected RComplexVector castComplexVector(Object operand) {
-        if (castComplex == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(true, true, false));
-        }
-        return (RComplexVector) castComplex.execute(operand);
     }
 
     protected RAbstractVector castVector(Object value) {
@@ -248,6 +238,30 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         public final Object call(RArgsValuesAndNames args) {
             checkLength(args, 9);
             return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7), castArg(args, 8));
+        }
+    }
+
+    public abstract static class Arg10 extends RExternalBuiltinNode {
+
+        public abstract Object execute(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9, Object arg10);
+
+        @Override
+        public final Object call(RArgsValuesAndNames args) {
+            checkLength(args, 10);
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7), castArg(args, 8),
+                            castArg(args, 9));
+        }
+    }
+
+    public abstract static class Arg11 extends RExternalBuiltinNode {
+
+        public abstract Object execute(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9, Object arg10, Object arg11);
+
+        @Override
+        public final Object call(RArgsValuesAndNames args) {
+            checkLength(args, 11);
+            return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4), castArg(args, 5), castArg(args, 6), castArg(args, 7), castArg(args, 8),
+                            castArg(args, 9), castArg(args, 10));
         }
     }
 }

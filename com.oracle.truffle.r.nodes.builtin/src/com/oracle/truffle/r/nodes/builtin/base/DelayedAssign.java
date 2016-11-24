@@ -22,32 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
-@RBuiltin(name = "delayedAssign", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"})
+@RBuiltin(name = "delayedAssign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"}, behavior = COMPLEX)
 public abstract class DelayedAssign extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_FIRST_ARGUMENT).findFirst();
+        casts.arg("eval.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        casts.arg("assign.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+    }
+
     @Specialization
     @TruffleBoundary
-    protected Object doDelayedAssign(RAbstractStringVector nameVec, Object value, REnvironment evalEnv, REnvironment assignEnv) {
-        String name = nameVec.getDataAt(0);
+    protected Object doDelayedAssign(String name, Object value, REnvironment evalEnv, REnvironment assignEnv) {
         try {
             assignEnv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(RASTUtils.createNodeForValue(value)), evalEnv.getFrame()));
             return RNull.instance;

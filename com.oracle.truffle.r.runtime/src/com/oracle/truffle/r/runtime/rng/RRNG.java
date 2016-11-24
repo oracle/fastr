@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -128,11 +129,19 @@ public class RRNG {
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
 
-        private ContextStateImpl(RandomNumberGenerator rng, NormKind currentNormKind) {
-            this.currentGenerator = rng;
-            this.currentNormKind = currentNormKind;
+        private ContextStateImpl() {
+            this.currentNormKind = DEFAULT_NORM_KIND;
             this.allGenerators = new RandomNumberGenerator[Kind.VALUES.length];
+        }
+
+        @Override
+        public RContext.ContextState initialize(RContext context) {
+            int seed = timeToSeed();
+            RandomNumberGenerator rng = DEFAULT_KIND.create();
+            initGenerator(rng, seed);
+            this.currentGenerator = rng;
             this.allGenerators[rng.getKind().ordinal()] = rng;
+            return this;
         }
 
         /*
@@ -180,11 +189,8 @@ public class RRNG {
             }
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
-            int seed = timeToSeed();
-            RandomNumberGenerator rng = DEFAULT_KIND.create();
-            initGenerator(rng, seed);
-            return new ContextStateImpl(rng, DEFAULT_NORM_KIND);
+        public static ContextStateImpl newContextState() {
+            return new ContextStateImpl();
         }
 
     }
@@ -286,7 +292,7 @@ public class RRNG {
     }
 
     private static Kind intToKind(int kindAsInt) {
-        if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
+        if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length || !Kind.VALUES[kindAsInt].isAvailable()) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_NOT_IMPL_KIND, kindAsInt);
         }
         return Kind.VALUES[kindAsInt];
@@ -310,7 +316,7 @@ public class RRNG {
     private static Object getDotRandomSeed() {
         Object seed = REnvironment.globalEnv().get(RANDOM_SEED);
         if (seed instanceof RPromise) {
-            seed = RContext.getRRuntimeASTAccess().forcePromise(seed);
+            seed = RContext.getRRuntimeASTAccess().forcePromise(RANDOM_SEED, seed);
         }
         return seed;
     }
@@ -426,4 +432,22 @@ public class RRNG {
         }
     }
 
+    @TruffleBoundary
+    public static void putRNGState() {
+        int lenSeed = getContextState().currentGenerator.getNSeed();
+        int[] seeds = new int[lenSeed + 1];
+        seeds[0] = currentKindAsInt() + 100 * currentNormKindAsInt();
+        int[] currentGeneratorSeeds = currentGenerator().getSeeds();
+        for (int i = 0; i < lenSeed; i++) {
+            seeds[i + 1] = currentGeneratorSeeds[i];
+        }
+
+        currentGenerator().setISeed(seeds);
+        RIntVector seedsVector = RDataFactory.createIntVector(seeds, true);
+        try {
+            REnvironment.globalEnv().put(RANDOM_SEED, seedsVector);
+        } catch (PutException e) {
+            throw RInternalError.shouldNotReachHere("Cannot set .Random.seed in global environment");
+        }
+    }
 }

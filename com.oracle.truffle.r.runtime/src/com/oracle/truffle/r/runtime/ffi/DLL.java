@@ -15,11 +15,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -54,8 +55,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
  */
 public class DLL {
 
-    public static final long SYMBOL_NOT_FOUND = -1;
-
     /**
      * The list of loaded DLLs.
      */
@@ -65,6 +64,14 @@ public class DLL {
      * Uniquely identifies the DLL (for use in an {@code externalptr}).
      */
     private static final AtomicInteger ID = new AtomicInteger();
+
+    public static Deque<DLLInfo> getList() {
+        return list;
+    }
+
+    public static void addDLL(DLLInfo dllInfo) {
+        list.add(dllInfo);
+    }
 
     public enum NativeSymbolType {
         C,
@@ -79,16 +86,17 @@ public class DLL {
      * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is TBD
      * for FastR.
      */
-    public static class DotSymbol {
+    public static class DotSymbol implements RTruffleObject {
         public final String name;
-        public final long fun;
+        public final SymbolHandle fun;
         public final int numArgs;
 
-        public DotSymbol(String name, long fun, int numArgs) {
+        public DotSymbol(String name, SymbolHandle fun, int numArgs) {
             this.name = name;
             this.fun = fun;
             this.numArgs = numArgs;
         }
+
     }
 
     public static class RegisteredNativeSymbol {
@@ -112,7 +120,7 @@ public class DLL {
 
     }
 
-    public static class DLLInfo {
+    public static final class DLLInfo implements RTruffleObject {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);
@@ -127,12 +135,18 @@ public class DLL {
         private boolean forceSymbols;
         private DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
 
-        DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
+        private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
             this.name = name;
             this.path = path;
             this.dynamicLookup = dynamicLookup;
             this.handle = handle;
+        }
+
+        private static synchronized DLLInfo create(String name, String path, boolean dynamicLookup, Object handle) {
+            DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle);
+            list.add(result);
+            return result;
         }
 
         public void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
@@ -174,13 +188,13 @@ public class DLL {
             data[0] = name;
             data[1] = path;
             data[2] = RRuntime.asLogical(dynamicLookup);
-            data[3] = createExternalPtr(System.identityHashCode(handle), HANDLE_CLASS);
+            data[3] = createExternalPtr(new SymbolHandle(new Long(System.identityHashCode(handle))), HANDLE_CLASS);
             /*
              * GnuR sets the info member to an externalptr whose value is the DllInfo structure
              * itself. We can't do that, but we need a way to get back to it from R code that uses
              * the value, e.g. getRegisteredRoutines. So we use the id value.
              */
-            data[4] = createExternalPtr(id, INFO_REFERENCE_CLASS);
+            data[4] = createExternalPtr(new SymbolHandle(new Long(id)), INFO_REFERENCE_CLASS);
             RList dllInfo = RDataFactory.createList(data, DLLInfo.NAMES);
             dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS));
             return dllInfo;
@@ -190,14 +204,15 @@ public class DLL {
         public String toString() {
             return String.format("name: %s, path: %s, dynamicLookup: %b, forceSymbols %b", name, path, dynamicLookup, forceSymbols);
         }
+
     }
 
     public static class SymbolInfo {
         public final DLLInfo libInfo;
         public final String symbol;
-        public final long address;
+        public final SymbolHandle address;
 
-        public SymbolInfo(DLLInfo libInfo, String symbol, long address) {
+        public SymbolInfo(DLLInfo libInfo, String symbol, SymbolHandle address) {
             this.libInfo = libInfo;
             this.symbol = symbol;
             this.address = address;
@@ -241,7 +256,39 @@ public class DLL {
         }
     }
 
-    public static DLLInfo getDLLInfoForId(int id) {
+    /**
+     * Abstracts the way that DLL function symbols are represented, either as a machine address (
+     * {@link Long}) or a {@link TruffleObject}. At the present time, both forms can exists within a
+     * single VM, so the class is defined as a "union" for simplicity.
+     */
+    public static final class SymbolHandle {
+        public final Object value;
+
+        public SymbolHandle(Object value) {
+            assert value instanceof Long || value instanceof TruffleObject;
+            this.value = value;
+        }
+
+        public long asAddress() {
+            if (value instanceof Long) {
+                return (Long) value;
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        public TruffleObject asTruffleObject() {
+            if (value instanceof TruffleObject) {
+                return (TruffleObject) value;
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+    }
+
+    public static final SymbolHandle SYMBOL_NOT_FOUND = null;
+
+    public static synchronized DLLInfo getDLLInfoForId(int id) {
         for (DLLInfo dllInfo : list) {
             if (dllInfo.id == id) {
                 return dllInfo;
@@ -255,7 +302,7 @@ public class DLL {
         return tag.getName().equals(DLLInfo.DLL_INFO_REFERENCE);
     }
 
-    public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
+    public static RExternalPtr createExternalPtr(SymbolHandle value, RStringVector rClass) {
         CompilerAsserts.neverPartOfCompilation(); // for interning
         RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbolInterned(rClass.getDataAt(0)));
         result.setClassAttr(rClass);
@@ -265,12 +312,10 @@ public class DLL {
     public static class DLLException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
-        DLLException(RError.Message msg, Object... args) {
+        public DLLException(RError.Message msg, Object... args) {
             super(msg, args);
         }
     }
-
-    private static final Semaphore listCritical = new Semaphore(1, false);
 
     /*
      * There is no sense in throwing an RError if we fail to load/init a (default) package during
@@ -281,53 +326,42 @@ public class DLL {
      */
 
     @TruffleBoundary
-    public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
+    public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         String absPath = Utils.tildeExpand(path);
-        try {
-            listCritical.acquire();
-            for (DLLInfo dllInfo : list) {
-                if (dllInfo.path.equals(absPath)) {
-                    // already loaded
-                    return dllInfo;
-                }
+        for (DLLInfo dllInfo : list) {
+            if (dllInfo.path.equals(absPath)) {
+                // already loaded
+                return dllInfo;
             }
-            File file = new File(absPath);
-            Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
-            if (handle == null) {
-                String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
-                if (RContext.isInitialContextInitialized()) {
-                    throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
-                } else {
-                    throw Utils.fatalError("error loading default package: " + path + "\n" + dlError);
-                }
-            }
-            String name = file.getName();
-            int dx = name.lastIndexOf('.');
-            if (dx > 0) {
-                name = name.substring(0, dx);
-            }
-            DLLInfo result = new DLLInfo(name, absPath, true, handle);
-            list.add(result);
-            return result;
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
-        } finally {
-            listCritical.release();
         }
+        File file = new File(absPath);
+        Object handle = RFFIFactory.getRFFI().getDLLRFFI().dlopen(path, local, now);
+        if (handle == null) {
+            String dlError = RFFIFactory.getRFFI().getDLLRFFI().dlerror();
+            if (RContext.isInitialContextInitialized()) {
+                throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+            } else {
+                throw Utils.rSuicide("error loading default package: " + path + "\n" + dlError);
+            }
+        }
+        String name = file.getName();
+        int dx = name.lastIndexOf('.');
+        if (dx > 0) {
+            name = name.substring(0, dx);
+        }
+        return DLLInfo.create(name, absPath, true, handle);
     }
 
     private static final String R_INIT_PREFIX = "R_init_";
-    private static final Semaphore initCritical = new Semaphore(1, false);
 
     @TruffleBoundary
     public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
         DLLInfo dllInfo = load(path, local, now);
         // Search for init method
         String pkgInit = R_INIT_PREFIX + dllInfo.name;
-        long initFunc = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, pkgInit);
-        if (initFunc != 0) {
-            try {
-                initCritical.acquire();
+        SymbolHandle initFunc = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, pkgInit);
+        if (initFunc != SYMBOL_NOT_FOUND) {
+            synchronized (DLL.class) {
                 try {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(initFunc, pkgInit, new Object[]{dllInfo});
                 } catch (ReturnException ex) {
@@ -338,41 +372,30 @@ public class DLL {
                     if (RContext.isInitialContextInitialized()) {
                         throw new DLLException(RError.Message.DLL_RINIT_ERROR);
                     } else {
-                        throw Utils.fatalError(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                        throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
-            } catch (InterruptedException ex) {
-                throw RInternalError.shouldNotReachHere();
-            } finally {
-                initCritical.release();
             }
         }
         return dllInfo;
     }
 
     @TruffleBoundary
-    public static void unload(String path) throws DLLException {
+    public static synchronized void unload(String path) throws DLLException {
         String absPath = Utils.tildeExpand(path);
-        try {
-            listCritical.acquire();
-            for (DLLInfo info : list) {
-                if (info.path.equals(absPath)) {
-                    int rc = RFFIFactory.getRFFI().getBaseRFFI().dlclose(info.handle);
-                    if (rc != 0) {
-                        throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
-                    }
-                    return;
+        for (DLLInfo info : list) {
+            if (info.path.equals(absPath)) {
+                int rc = RFFIFactory.getRFFI().getDLLRFFI().dlclose(info.handle);
+                if (rc != 0) {
+                    throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                 }
+                return;
             }
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
-        } finally {
-            listCritical.release();
         }
         throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
     }
 
-    public static ArrayList<DLLInfo> getLoadedDLLs() {
+    public static synchronized ArrayList<DLLInfo> getLoadedDLLs() {
         ArrayList<DLLInfo> result = new ArrayList<>();
         for (DLLInfo dllInfo : list) {
             result.add(dllInfo);
@@ -389,7 +412,7 @@ public class DLL {
      * @param rns if not {@code null} may limit the search to a specific {@link NativeSymbolType}
      * @return the address of the (function) symbol or {@code 0} if not found.
      */
-    public static long getDLLRegisteredSymbol(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
+    public static SymbolHandle getDLLRegisteredSymbol(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
         NativeSymbolType rnsNst = rns == null ? NativeSymbolType.Any : rns.nst;
         for (NativeSymbolType nst : NativeSymbolType.values()) {
             if (rnsNst == NativeSymbolType.Any || rnsNst == nst) {
@@ -418,9 +441,9 @@ public class DLL {
      * disabled, looks up the symbol using the {@code dlopen} machinery.
      */
     @TruffleBoundary
-    public static long dlsym(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
-        long f = getDLLRegisteredSymbol(dllInfo, name, rns);
-        if (f != -1) {
+    public static SymbolHandle dlsym(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
+        SymbolHandle f = getDLLRegisteredSymbol(dllInfo, name, rns);
+        if (f != SYMBOL_NOT_FOUND) {
             return f;
         }
 
@@ -433,16 +456,11 @@ public class DLL {
         if (rns != null && rns.nst == NativeSymbolType.Fortran) {
             mName = name + "_";
         }
-        f = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, mName);
-        if (f != 0) {
-            return f;
+        SymbolHandle symValue = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, mName);
+        if (symValue != null) {
+            return symValue;
         } else {
-            // symbol might actually be zero
-            if (RFFIFactory.getRFFI().getBaseRFFI().dlerror() == null) {
-                return f;
-            } else {
-                return SYMBOL_NOT_FOUND;
-            }
+            return SYMBOL_NOT_FOUND;
         }
     }
 
@@ -455,55 +473,41 @@ public class DLL {
      *            {@code null})
      */
     @TruffleBoundary
-    public static long findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
+    public static synchronized SymbolHandle findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
         boolean all = libName == null || libName.length() == 0;
-        try {
-            listCritical.acquire();
-            for (DLLInfo dllInfo : list) {
-                if (dllInfo.forceSymbols) {
-                    continue;
-                }
-                if (all || dllInfo.name.equals(libName)) {
-                    long func = dlsym(dllInfo, name, rns);
-                    if (func != SYMBOL_NOT_FOUND) {
-                        if (rns != null) {
-                            rns.dllInfo = dllInfo;
-                        }
-                        return func;
+        for (DLLInfo dllInfo : list) {
+            if (dllInfo.forceSymbols) {
+                continue;
+            }
+            if (all || dllInfo.name.equals(libName)) {
+                SymbolHandle func = dlsym(dllInfo, name, rns);
+                if (func != SYMBOL_NOT_FOUND) {
+                    if (rns != null) {
+                        rns.dllInfo = dllInfo;
                     }
-                }
-                if (!all && dllInfo.name.equals(libName)) {
-                    return SYMBOL_NOT_FOUND;
+                    return func;
                 }
             }
-            return SYMBOL_NOT_FOUND;
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
-        } finally {
-            listCritical.release();
+            if (!all && dllInfo.name.equals(libName)) {
+                return SYMBOL_NOT_FOUND;
+            }
         }
+        return SYMBOL_NOT_FOUND;
     }
 
-    public static DLLInfo findLibrary(String name) {
-        try {
-            listCritical.acquire();
-            for (DLLInfo dllInfo : list) {
-                if (dllInfo.name.equals(name)) {
-                    return dllInfo;
-                }
+    public static synchronized DLLInfo findLibrary(String name) {
+        for (DLLInfo dllInfo : list) {
+            if (dllInfo.name.equals(name)) {
+                return dllInfo;
             }
-            return null;
-        } catch (InterruptedException ex) {
-            throw RInternalError.shouldNotReachHere();
-        } finally {
-            listCritical.release();
         }
+        return null;
     }
 
     @TruffleBoundary
     public static DLLInfo findLibraryContainingSymbol(String symbol) {
         RegisteredNativeSymbol rns = RegisteredNativeSymbol.any();
-        long func = findSymbol(symbol, null, rns);
+        SymbolHandle func = findSymbol(symbol, null, rns);
         if (func == SYMBOL_NOT_FOUND) {
             return null;
         } else {
@@ -526,5 +530,15 @@ public class DLL {
         int old = dllInfo.forceSymbols ? 1 : 0;
         dllInfo.forceSymbols = value == 0 ? false : true;
         return old;
+    }
+
+    private static final String EMBEDDING = "(embedding)";
+
+    public static DLLInfo getEmbeddingDLLInfo() {
+        DLLInfo result = findLibrary(EMBEDDING);
+        if (result == null) {
+            result = DLLInfo.create(EMBEDDING, EMBEDDING, false, null);
+        }
+        return result;
     }
 }

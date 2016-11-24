@@ -24,21 +24,22 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant {
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     private ConstantNode(SourceSection sourceSection) {
         super(sourceSection);
@@ -59,15 +60,14 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     @Override
     public abstract Object getValue();
 
-    @Override
-    public final Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(true);
-        return getValue();
+    protected final void handleVisibility(VirtualFrame frame) {
+        visibility.execute(frame, true);
     }
 
     @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setCar(getValue());
+    public final Object execute(VirtualFrame frame) {
+        handleVisibility(frame);
+        return getValue();
     }
 
     public static ConstantNode create(Object value) {
@@ -90,7 +90,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
             // this can be created during argument matching and "call"
             return new ConstantObjectNode(sourceSection, value);
         } else {
-            assert value instanceof RTypedValue && !(value instanceof RPromise) : value;
+            assert value instanceof TruffleObject && !(value instanceof RPromise) : value;
             return new ConstantObjectNode(sourceSection, value);
         }
     }
@@ -113,7 +113,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public double executeDouble(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return doubleValue;
         }
     }
@@ -136,7 +136,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public byte executeByte(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return logicalValue;
         }
     }
@@ -159,7 +159,7 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public int executeInteger(VirtualFrame frame) {
-            RContext.getInstance().setVisible(true);
+            handleVisibility(frame);
             return intValue;
         }
     }
@@ -176,15 +176,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
         @Override
         public Object getValue() {
             return value;
-        }
-
-        @Override
-        public void serializeImpl(RSerialize.State state) {
-            if (value == RMissing.instance) {
-                state.setCar(RMissing.instance);
-            } else {
-                super.serializeImpl(state);
-            }
         }
     }
 }

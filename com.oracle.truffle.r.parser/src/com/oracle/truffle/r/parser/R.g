@@ -90,7 +90,7 @@ package com.oracle.truffle.r.parser;
     private SourceSection src(Token t) {
         CommonToken token = (CommonToken) t;
         int startIndex = token.getStartIndex();
-        return source.createSection(null, token.getLine(), token.getCharPositionInLine() + 1, startIndex, token.getStopIndex() - startIndex + 1);
+        return source.createSection(startIndex, token.getStopIndex() - startIndex + 1);
     }
     
     /**
@@ -102,7 +102,7 @@ package com.oracle.truffle.r.parser;
         int startIndex = cstart.getStartIndex();
         int stopIndex = cstop.getStopIndex();
         int length = stopIndex - startIndex + (cstop.getType() == Token.EOF ? 0 : 1);
-        return source.createSection(null, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
+        return source.createSection(startIndex, length);
     }
 
 	// without this override, the parser will not throw exceptions if it can recover    
@@ -122,6 +122,10 @@ package com.oracle.truffle.r.parser;
     private static String hexChar(String... chars) {
         int value = 0;
         for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == null) {
+            	// not all digits must be present, eg. "0048" vs. "48"
+            	break;
+            }
             value = value * 16 + Integer.parseInt(chars[i], 16);
         }
         return new String(new int[]{value}, 0, 1);
@@ -333,7 +337,7 @@ colon_expr returns [T v]
     ;
 
 unary_expression returns [T v]
-    : op=(PLUS | MINUS | NOT) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : op=(PLUS | MINUS | NOT | QM) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
@@ -528,6 +532,7 @@ RBRAKET : ']' { incompleteNesting--; } ;
 CARET : '^' | '**' ;
 TILDE : '~' ;
 NOT   : '!' ;
+QM    : '?' ;
 PLUS  : '+' ;
 MULT  : '*' ;
 MOD   : '%%' ;
@@ -644,8 +649,8 @@ fragment ESCAPE [StringBuilder buf]
       | a = OCT_DIGIT b = OCT_DIGIT { buf.append(octChar($a.text, $b.text)); }
       | a = OCT_DIGIT { buf.append(octChar($a.text)); }
       | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(hexChar($a.text, $b.text)); }
-      | 'u' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
-      | 'U' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT e = HEX_DIGIT f = HEX_DIGIT g = HEX_DIGIT h = HEX_DIGIT { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
+      | 'u' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
+      | 'U' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? e = HEX_DIGIT? f = HEX_DIGIT? g = HEX_DIGIT? h = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
       )
     ;
 

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -127,26 +128,32 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        return vector.copy();
+        RAbstractVector result = vector.copy();
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
-    public final RVector copyResized(int size, boolean fillNA) {
-        return vector.copyResized(size, fillNA);
+    public final RVector<?> copyResized(int size, boolean fillNA) {
+        RVector<?> result = vector.copyResized(size, fillNA);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
-    public final RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+    public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RVector result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
+        RVector<?> result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
         result.setDimensions(newDimensions);
         return result;
     }
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        return vector.copyDropAttributes();
+        RAbstractVector result = vector.copyDropAttributes();
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override

@@ -10,10 +10,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
-
-import java.util.Arrays;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -40,19 +40,20 @@ import com.oracle.truffle.r.nodes.function.signature.CombineSignaturesNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class S3DispatchFunctions extends RBuiltinNode {
 
@@ -64,7 +65,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
     protected S3DispatchFunctions(boolean nextMethod) {
         methodLookup = S3FunctionLookupNode.create(true, nextMethod);
-        callMatcher = CallMatcherNode.create(nextMethod, false);
+        callMatcher = CallMatcherNode.create(false);
     }
 
     protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
@@ -86,7 +87,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         return result;
     }
 
-    @RBuiltin(name = "UseMethod", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"})
+    @RBuiltin(name = "UseMethod", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"}, behavior = COMPLEX)
     public abstract static class UseMethod extends S3DispatchFunctions {
 
         /*
@@ -98,6 +99,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private PromiseCheckHelperNode promiseCheckHelper;
 
         private final BranchProfile errorProfile = BranchProfile.create();
+        private final BranchProfile firstArgMissing = BranchProfile.create();
         private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
@@ -107,7 +109,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Specialization
         protected Object execute(VirtualFrame frame, String generic, Object arg) {
-
             Object dispatchedObject;
             if (argMissingProfile.profile(arg == RMissing.instance)) {
                 // For S3Dispatch, we have to evaluate the the first argument
@@ -116,7 +117,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 dispatchedObject = arg;
             }
 
-            RStringVector type = classHierarchyNode.execute(dispatchedObject);
+            RStringVector type = dispatchedObject == null ? RDataFactory.createEmptyStringVector() : classHierarchyNode.execute(dispatchedObject);
             MaterializedFrame callerFrame = getCallerFrame(frame);
             MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
 
@@ -128,7 +129,8 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         /**
          * Get the first (logical) argument in the frame, and handle {@link RPromise}s and
-         * {@link RArgsValuesAndNames}.
+         * {@link RArgsValuesAndNames}. If there is no actual argument, returns null. If there are
+         * no formal arguments, throws the appropriate error.
          */
         private Object getEnclosingArg(VirtualFrame frame, String generic) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
@@ -137,23 +139,40 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
             if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
-                // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
-                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
-                if (varArgs.isEmpty()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
+                enclosingArg = getFirstVarArg((RArgsValuesAndNames) enclosingArg);
+            } else if (enclosingArg == RMissing.instance) {
+                firstArgMissing.enter();
+                enclosingArg = getFirstNonMissingArg(frame, 1);
+                if (enclosingArg == null) {
+                    return null;
                 }
-                enclosingArg = varArgs.getArgument(0);
             }
+
             if (promiseCheckHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseCheckHelper = insert(new PromiseCheckHelperNode());
             }
             return promiseCheckHelper.checkEvaluate(frame, enclosingArg);
         }
+
+        private static Object getFirstNonMissingArg(VirtualFrame frame, int startIdx) {
+            for (int i = startIdx; i < RArguments.getArgumentsLength(frame); i++) {
+                Object arg = RArguments.getArgument(frame, i);
+                if (arg instanceof RArgsValuesAndNames) {
+                    return getFirstVarArg((RArgsValuesAndNames) arg);
+                } else if (arg != RMissing.instance) {
+                    return arg;
+                }
+            }
+            return null;
+        }
+
+        private static Object getFirstVarArg(RArgsValuesAndNames varArgs) {
+            return varArgs.isEmpty() ? null : varArgs.getArgument(0);
+        }
     }
 
-    @RBuiltin(name = "NextMethod", visibility = RVisibility.CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
+    @RBuiltin(name = "NextMethod", visibility = CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."}, behavior = COMPLEX)
     public abstract static class NextMethod extends S3DispatchFunctions {
 
         @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.R_DOT_GROUP, false);
@@ -175,6 +194,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         private final ConditionProfile alternateClassHeaderProfile = ConditionProfile.createBinaryProfile();
 
         private final ValueProfile parameterSignatureProfile = ValueProfile.createIdentityProfile();
+        private final ValueProfile suppliedParameterSignatureProfile = ValueProfile.createIdentityProfile();
 
         protected NextMethod() {
             super(true);
@@ -185,14 +205,25 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             return new Object[]{RNull.instance, RNull.instance, RArgsValuesAndNames.EMPTY};
         }
 
-        @Specialization
-        protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull nullGeneric, Object obj, RArgsValuesAndNames args) {
+        /**
+         * When {@code NextMethod} is invoked with first argument which is not a string, the
+         * argument is swallowed and ignored.
+         */
+        @Specialization(guards = "isNotString(ignoredGeneric)")
+        protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") Object ignoredGeneric, Object obj, RArgsValuesAndNames args) {
             String generic = (String) rvnGeneric.execute(frame);
             if (generic == null || generic.isEmpty()) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
             }
             return nextMethod(frame, generic, obj, args);
+        }
+
+        protected static boolean isNotString(Object obj) {
+            // Note: if RAbstractStringVector becomes expected, then it must have length == 1, GnuR
+            // ignores character vectors longer than 1 as the "generic" argument of NextMethod
+            assert !(obj instanceof RAbstractStringVector) || ((RAbstractStringVector) obj).getLength() != 1 : "unexpected RAbstractStringVector with length != 1";
+            return !(obj instanceof String);
         }
 
         @SuppressWarnings("unused")
@@ -202,22 +233,24 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             MaterializedFrame genericDefFrame = getDefFrame(frame);
             String group = (String) rvnGroup.execute(frame);
 
-            ArgumentsSignature suppliedSignature;
-            ArgumentsSignature parameterSignature = parameterSignatureProfile.profile(RArguments.getSignature(frame));
-            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignature);
+            // The signature that will be used for the target of NextMethod is concatenation of the
+            // actual signature used when invoking the S3 dispatch function combined with any named
+            // arguments passed to NextMethod, the later override the former on a name clash
+            ArgumentsSignature finalSignature;
+            ArgumentsSignature suppliedSignature = suppliedParameterSignatureProfile.profile(RArguments.getSuppliedSignature(frame));
+            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignatureProfile.profile(RArguments.getSignature(frame)));
             if (emptyArgsProfile.profile(args == RArgsValuesAndNames.EMPTY)) {
-                suppliedSignature = parameterSignature;
+                finalSignature = suppliedSignature;
             } else {
                 if (combineSignatures == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     combineSignatures = insert(CombineSignaturesNodeGen.create());
                 }
-                suppliedSignature = combineSignatures.execute(parameterSignature, args.getSignature());
-
-                suppliedArguments = Arrays.copyOf(suppliedArguments, suppliedSignature.getLength());
-                System.arraycopy(args.getArguments(), 0, suppliedArguments, parameterSignature.getLength(), suppliedSignature.getLength() - parameterSignature.getLength());
+                RArgsValuesAndNames combinedResult = combineSignatures.execute(suppliedSignature, suppliedArguments, args.getSignature(), args.getArguments());
+                suppliedArguments = combinedResult.getArguments();
+                finalSignature = combinedResult.getSignature();
             }
-            return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, suppliedSignature, suppliedArguments);
+            return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
         }
 
         private MaterializedFrame getDefFrame(VirtualFrame frame) {

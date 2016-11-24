@@ -156,7 +156,7 @@ public final class DPQ {
     // for discrete d<distr>(x, ...) :
     public static boolean dNonintCheck(double x) {
         if (nonint(x)) {
-            RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("non-integer x = %f", x));
+            RError.warning(RError.SHOW_CALLER, Message.NON_INTEGER_N, "x", x);
             return true;
         }
         return false;

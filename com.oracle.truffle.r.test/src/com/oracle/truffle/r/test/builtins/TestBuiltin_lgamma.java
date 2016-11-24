@@ -68,6 +68,6 @@ public class TestBuiltin_lgamma extends TestBase {
         assertEval("{ lgamma(c(100, 2.2)) }");
         assertEval("{ lgamma(FALSE) }");
         assertEval("{ lgamma(as.raw(1)) }");
-        assertEval(Output.IgnoreErrorContext, "{ lgamma(1+1i) }");
+        assertEval("{ lgamma(1+1i) }");
     }
 }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -36,6 +37,7 @@ final class NullPrinter extends AbstractValuePrinter<RNull> {
     }
 
     @Override
+    @TruffleBoundary
     protected void printValue(RNull value, PrintContext printCtx) throws IOException {
         printCtx.output().print(RRuntime.NULL);
     }

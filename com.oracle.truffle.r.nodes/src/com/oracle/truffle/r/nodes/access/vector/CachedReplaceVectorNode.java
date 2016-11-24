@@ -22,16 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import static com.oracle.truffle.api.nodes.NodeCost.NONE;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNodeFactory.ValueProfileNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -44,7 +50,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -74,7 +79,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final BranchProfile warningBranch = BranchProfile.create();
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
     private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
-    private final ConditionProfile rightIsShared = ConditionProfile.createBinaryProfile();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
@@ -83,6 +87,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
+
+    private final ValueProfile vectorTypeProfile = ValueProfile.createClassProfile();
 
     private final RType valueType;
     private final RType castType;
@@ -114,7 +120,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
         if (castType != null && !castType.isNull()) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements());
+            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements(), true);
         }
     }
 
@@ -194,9 +200,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                     vector.initAttributes(attrs.copy());
                 }
                 break;
-            case Expression:
-                vector = ((RExpression) castVector).getList();
-                break;
             default:
                 vector = (RAbstractVector) castVector;
                 break;
@@ -221,18 +224,18 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         int replacementLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
         if (emptyReplacementProfile.profile(replacementLength == 0)) {
             /* Nothing to modify */
-            return vector;
+            if (vectorType == RType.Language || vectorType == RType.Expression) {
+                return originalVector;
+            } else {
+                return vector.materialize();
+            }
         }
 
         if (valueLengthOneProfile.profile(valueLength != 1)) {
             verifyValueLength(positionProfiles, valueLength);
         }
 
-        if (isList()) {
-            if (mode.isSubscript()) {
-                value = copyValueOnAssignment(value);
-            }
-        } else if (value instanceof RAbstractVector) {
+        if (!isList() && value instanceof RAbstractVector) {
             value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
         }
 
@@ -245,17 +248,23 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 return wrapResult(vector, repType);
             }
             vector = resizeVector(vector, maxOutOfBounds);
-        }
-        vector = vector.materialize();
-
-        if (originalVector != vector && vector instanceof RShareable) {
-            RShareable shareable = (RShareable) vector;
-            // we created a new object, and this needs to be non-temporary
-            if (shareable.isTemporary()) {
-                shareable.incRefCount();
-            }
+        } else {
+            vector = vector.materialize();
         }
 
+        // Note: the refCount of elements inside lists can stay the same. If we are replacing in a
+        // what was originally shared list, we made a shallow copy of it, but all its elements must
+        // be in shared state already anyway. If we are replacing in non-shared list and we just
+        // threw it away to replace it with larger one, the elements are in non-shared or temporary
+        // state, which is again OK.
+        //
+        // The refcount of the list/vector itself: if the write node in "v <- `$<-`(...)" sees that
+        // we are assigning the same object that 'v' already contains, it is going to skip the
+        // assignment and skip the refCount increment. If we created a new object by
+        // resizing/materializing 'vector', it will be marked as 'temporary' and its refCount
+        // incremented during the assignment step.
+
+        vector = vectorTypeProfile.profile(vector);
         vectorLength = targetLengthProfile.profile(vector.getLength());
 
         if (mode.isSubset()) {
@@ -465,10 +474,26 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             throw RError.error(this, ex);
         }
         return env;
-
     }
 
-    private final ConditionProfile sharedConditionProfile = ConditionProfile.createBinaryProfile();
+    @NodeInfo(cost = NONE)
+    public abstract static class ValueProfileNode extends Node {
+
+        public abstract boolean execute(boolean value);
+
+        @Specialization(limit = "1", guards = "cachedValue == value")
+        protected static boolean profile(@SuppressWarnings("unused") boolean value,
+                        @Cached("value") boolean cachedValue) {
+            return cachedValue;
+        }
+
+        @Specialization(contains = "profile")
+        protected static boolean generic(boolean value) {
+            return value;
+        }
+    }
+
+    @Child private ValueProfileNode sharedConditionProfile = ValueProfileNodeGen.create();
 
     private final ValueProfile sharedClassProfile = ValueProfile.createClassProfile();
 
@@ -483,12 +508,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (returnVector instanceof RShareable) {
             RShareable shareable = (RShareable) returnVector;
             // TODO find out if we need to copy always in the recursive case
-            if (sharedConditionProfile.profile(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
+            if (sharedConditionProfile.execute(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
                 sharedProfile.enter();
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
                 assert shareable.isTemporary();
-                shareable.incRefCount();
             }
         }
         returnVector = sharedClassProfile.profile(returnVector);
@@ -496,19 +520,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         CompilerAsserts.partialEvaluationConstant(returnVector.getClass());
 
         return returnVector;
-    }
-
-    private RTypedValue copyValueOnAssignment(RTypedValue value) {
-        if (value instanceof RShareable && value instanceof RAbstractVector) {
-            RShareable val = (RShareable) value;
-            if (rightIsShared.profile(val.isShared())) {
-                val = val.copy();
-            } else {
-                val.incRefCount();
-            }
-            return val;
-        }
-        return value;
     }
 
     // TODO (chumer) this is way to compilicated at the moment
@@ -521,9 +532,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // TODO (chumer) this is way to complicated at the moment
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
-    private RVector resizeVector(RAbstractVector vector, int size) {
+    private RVector<?> resizeVector(RAbstractVector vector, int size) {
         RStringVector oldNames = vector.getNames(vectorNamesProfile);
-        RVector res = vector.copyResized(size, true).materialize();
+        RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
             res.copyAttributesFrom(positionNamesProfile, vector);
         }
@@ -536,8 +547,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return res;
     }
 
+    private final ConditionProfile updateNamesProfile = ConditionProfile.createBinaryProfile();
+
     private void updatePositionNames(RAbstractVector resultVector, RAbstractStringVector positionNames, Object[] positions) {
-        RTypedValue names = resultVector.getNames(positionNamesProfile);
+        RTypedValue originalNames = resultVector.getNames(positionNamesProfile);
+        RTypedValue names = originalNames;
         if (names == null) {
             String[] emptyVector = new String[resultVector.getLength()];
             Arrays.fill(emptyVector, "");
@@ -549,7 +563,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         assert copyPositionNames.isSupported(names, positions, positionNames);
         RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);
-        resultVector.setNames(newNames.materialize());
+        if (updateNamesProfile.profile(newNames != originalNames)) {
+            resultVector.setNames(newNames.materialize());
+        }
     }
 
     private static final class DeleteElementsNode extends Node {

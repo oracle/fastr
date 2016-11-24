@@ -22,76 +22,178 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import java.io.IOException;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class FastRInterop {
-    @RBuiltin(name = ".fastr.interop.eval", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"mimeType", "source"})
+
+    @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode {
 
-        @SuppressWarnings("deprecation")
-        @Specialization
-        @TruffleBoundary
-        protected Object interopEval(Object mimeType, Object source) {
-            Source sourceObject = Source.fromText(RRuntime.asString(source), Engine.EVAL_FUNCTION_NAME).withMimeType(RRuntime.asString(mimeType));
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("mimeType").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("source").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
 
-            CallTarget callTarget;
+        protected CallTarget parse(String mimeType, String source) {
+            CompilerAsserts.neverPartOfCompilation();
 
+            Source sourceObject = RSource.fromTextInternal(source, RSource.Internal.EVAL_WRAPPER, mimeType);
             try {
-                callTarget = RContext.getInstance().getEnv().parse(sourceObject);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                return RContext.getInstance().getEnv().parse(sourceObject);
+            } catch (Throwable t) {
+                throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
+        }
 
-            return callTarget.call();
+        protected DirectCallNode createCall(String mimeType, String source) {
+            return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
+        protected Object evalCached(VirtualFrame frame, String mimeType, String source,
+                        @Cached("mimeType") String cachedMimeType,
+                        @Cached("source") String cachedSource,
+                        @Cached("createCall(mimeType, source)") DirectCallNode call) {
+            return call.call(frame, EMPTY_OBJECT_ARRAY);
+        }
+
+        @Specialization(contains = "evalCached")
+        @TruffleBoundary
+        protected Object eval(String mimeType, String source) {
+            return parse(mimeType, source).call();
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.export", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name", "value"})
+    @RBuiltin(name = ".fastr.interop.export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
     public abstract static class Export extends RBuiltinNode {
 
-        @Specialization
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("value").boxPrimitive();
+        }
+
+        @Specialization(guards = "!isRMissing(value)")
         @TruffleBoundary
-        protected Object exportSymbol(Object name, RTypedValue value) {
-            String stringName = RRuntime.asString(name);
-            if (stringName == null) {
+        protected Object exportSymbol(String name, RTypedValue value) {
+            if (name == null) {
                 throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
             }
-            RContext.getInstance().getExportedSymbols().put(stringName, value);
+            RContext.getInstance().getExportedSymbols().put(name, value);
             return RNull.instance;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object exportSymbol(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") RMissing value) {
+            throw RError.error(this, Message.ARGUMENT_MISSING, "value");
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object exportSymbol(@SuppressWarnings("unused") Object name, @SuppressWarnings("unused") Object value) {
+            throw RError.error(this, Message.GENERIC, "only R language objects can be exported");
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.import", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"name"})
+    @RBuiltin(name = ".fastr.interop.import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
     public abstract static class Import extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
 
         @Specialization
         @TruffleBoundary
-        protected Object importSymbol(Object name) {
-            String stringName = RRuntime.asString(name);
-            if (stringName == null) {
-                throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
-            }
-            Object object = RContext.getInstance().getEnv().importSymbol(stringName);
+        protected Object importSymbol(String name) {
+            Object object = RContext.getInstance().getEnv().importSymbol(name);
             if (object == null) {
-                throw RError.error(this, RError.Message.NO_IMPORT_OBJECT, stringName);
+                throw RError.error(this, RError.Message.NO_IMPORT_OBJECT, name);
             }
             return object;
         }
     }
 
+    @RBuiltin(name = ".fastr.interop.hasSize", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class HasSize extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendHasSize(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.isNull", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class IsNull extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsNull(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.isExecutable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class IsExecutable extends RBuiltinNode {
+
+        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_EXECUTABLE.createNode();
+
+        @Specialization
+        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, frame, obj));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.toBoolean", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    public abstract static class ToBoolean extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("value").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(notLogicalNA()).map(Predef.toBoolean());
+        }
+
+        @Specialization
+        public boolean toBoolean(boolean value) {
+            return value;
+        }
+    }
 }

@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -32,13 +34,14 @@ import java.util.Map;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.DCF;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -46,18 +49,23 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"})
+@RBuiltin(name = "readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"}, behavior = IO)
 public abstract class ReadDCF extends RBuiltinNode {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("conn").defaultError(Message.INVALID_CONNECTION).asIntegerVector().findFirst();
+        casts.arg("fields").mapNull(emptyStringVector()).asStringVector();
+        casts.arg("keepwhite").mapNull(emptyStringVector()).asStringVector();
+    }
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doReadDCF(RConnection conn, Object fieldsObj, Object keepWhiteObj) {
-        RAbstractStringVector fields = fieldsObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(fieldsObj);
-        RAbstractStringVector keepWhite = keepWhiteObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(keepWhiteObj);
+    protected RStringVector doReadDCF(int conn, RAbstractStringVector fields, RAbstractStringVector keepWhite) {
         DCF dcf = null;
-        try (RConnection openConn = conn.forceOpen("r")) {
+        try (RConnection openConn = RConnection.fromIndex(conn).forceOpen("r")) {
             Set<String> keepWhiteSet = null;
-            if (keepWhite != null) {
+            if (keepWhite.getLength() > 0) {
                 keepWhiteSet = new HashSet<>(keepWhite.getLength());
                 for (int i = 0; i < keepWhite.getLength(); i++) {
                     keepWhiteSet.add(keepWhite.getDataAt(i));
@@ -115,7 +123,7 @@ public abstract class ReadDCF extends RBuiltinNode {
     }
 
     private static boolean needField(String fieldName, RAbstractStringVector fields) {
-        if (fields == null) {
+        if (fields.getLength() == 0) {
             return true;
         }
         for (int i = 0; i < fields.getLength(); i++) {
@@ -126,9 +134,4 @@ public abstract class ReadDCF extends RBuiltinNode {
         return false;
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected RStringVector doReadDCF(Object conn, Object fields, Object keepWhite) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
 }

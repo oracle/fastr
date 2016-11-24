@@ -79,11 +79,13 @@ public abstract class RSequence implements RAbstractVector {
         throw RInternalError.shouldNotReachHere();
     }
 
-    public final RVector createVector() {
-        return internalCreateVector();
+    public final RVector<?> createVector() {
+        RVector<?> result = internalCreateVector();
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
-    protected abstract RVector internalCreateVector();
+    protected abstract RVector<?> internalCreateVector();
 
     @Override
     public final RAbstractVector copy() {
@@ -179,10 +181,10 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+    public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RVector result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
+        RVector<?> result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
         result.setDimensions(newDimensions);
         return result;
     }

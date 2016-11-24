@@ -22,33 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
+@RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."}, behavior = PURE)
 public abstract class Sprintf extends RBuiltinNode {
 
-    public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
+    public abstract Object executeObject(String fmt, Object args);
 
     @Child private Sprintf sprintfRecursive;
+
+    @Specialization
+    protected RStringVector sprintf(RAbstractStringVector fmt, @SuppressWarnings("unused") RNull x) {
+        return RDataFactory.createEmptyStringVector();
+    }
 
     @Specialization
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
@@ -192,7 +198,12 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintfArgs;
     }
 
-    @Specialization(guards = "!oneElement(args)")
+    @Specialization(guards = {"!oneElement(args)", "hasNull(args)"})
+    protected RStringVector sprintf(@SuppressWarnings("unused") Object fmt, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+        return RDataFactory.createEmptyStringVector();
+    }
+
+    @Specialization(guards = {"!oneElement(args)", "!hasNull(args)"})
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RArgsValuesAndNames args) {
         Object[] values = args.getArguments();
@@ -215,15 +226,15 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "oneElement(args)")
-    protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
+    protected Object sprintfOneElement(String fmt, RArgsValuesAndNames args) {
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sprintfRecursive = insert(SprintfNodeGen.create(null));
+            sprintfRecursive = insert(SprintfNodeGen.create());
         }
-        return sprintfRecursive.executeObject(frame, fmt, args.getArgument(0));
+        return sprintfRecursive.executeObject(fmt, args.getArgument(0));
     }
 
-    @Specialization(guards = {"!oneElement(args)"})
+    @Specialization(guards = {"!oneElement(args)", "!hasNull(args)"})
     @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
@@ -240,18 +251,18 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = {"oneElement(args)", "fmtLengthOne(fmt)"})
-    protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
-        return sprintfOneElement(frame, fmt.getDataAt(0), args);
+    protected Object sprintfOneElement(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+        return sprintfOneElement(fmt.getDataAt(0), args);
     }
 
     @Specialization(guards = {"oneElement(args)", "!fmtLengthOne(fmt)"})
-    protected Object sprintf(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected Object sprintf2(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
             String[] data = new String[fmt.getLength()];
             for (int i = 0; i < data.length; i++) {
-                Object formattedObj = sprintfOneElement(frame, fmt.getDataAt(i), args);
+                Object formattedObj = sprintfOneElement(fmt.getDataAt(i), args);
                 if (formattedObj instanceof String) {
                     data[i] = (String) formattedObj;
                 } else {
@@ -571,6 +582,16 @@ public abstract class Sprintf extends RBuiltinNode {
 
     protected boolean oneElement(RArgsValuesAndNames args) {
         return args.getLength() == 1;
+    }
+
+    protected boolean hasNull(RArgsValuesAndNames args) {
+        for (int i = 0; i < args.getLength(); i++) {
+            if (args.getArgument(i) == RNull.instance) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @TruffleBoundary

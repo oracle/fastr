@@ -1,6 +1,10 @@
 /USE_RINTERNALS section/
 i
 #ifdef FASTR
+// packages defining USE_INTERNALS expect certain defs (e.g. isNull) to be there
+#ifdef USE_RINTERNALS
+#define USE_RINTERNALS_DEFS
+#endif
 #undef USE_RINTERNALS
 #else
 .
@@ -12,6 +16,8 @@ a
 i
 #ifdef FASTR
 typedef void *SEXP;
+#define DATAPTR(x)		R_DATAPTR(x)
+void *(R_DATAPTR)(SEXP x);
 #else
 .
 +1
@@ -61,5 +67,26 @@ LibExtern SEXP FASTR_NamespaceRegistry();
 +1
 a
 #endif
+.
+/R_PreserveObject/
+i
+#ifdef FASTR
+SEXP R_PreserveObject(SEXP);
+#else
+.
++1
+a
+#endif
+.
+/#ifdef USE_RINTERNALS/
+d
+i
+#if defined (USE_RINTERNALS_DEFS) && (defined (USE_RINTERNALS) || defined (FASTR))
+.
+/macro version of R_CheckStack/
+i
+#endif
+#ifdef USE_RINTERNALS
+
 .
 w Rinternals.h

@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -33,13 +35,14 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The {@code assign} builtin. There are two special cases worth optimizing:
@@ -51,11 +54,24 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  * </ul>
  *
  */
-@RBuiltin(name = "assign", visibility = RVisibility.OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"})
+@RBuiltin(name = "assign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"}, behavior = COMPLEX)
 public abstract class Assign extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile warningProfile = BranchProfile.create();
+    private final boolean direct;
+
+    protected Assign() {
+        this(false);
+    }
+
+    protected Assign(boolean direct) {
+        this.direct = direct;
+    }
+
+    private RBaseNode errorContext() {
+        return direct ? this : RError.SHOW_CALLER;
+    }
 
     /**
      * TODO: This method becomes obsolete when Assign and AssignFastPaths are modified to have the
@@ -67,10 +83,10 @@ public abstract class Assign extends RBuiltinNode {
             return xVec.getDataAt(0);
         } else if (len == 0) {
             errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
+            throw RError.error(errorContext(), RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
             warningProfile.enter();
-            RError.warning(this, RError.Message.ONLY_FIRST_VARIABLE_NAME);
+            RError.warning(errorContext(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
             return xVec.getDataAt(0);
         }
     }
@@ -79,7 +95,7 @@ public abstract class Assign extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").asStringVector().shouldBe(singleElement(), RError.Message.ONLY_FIRST_VARIABLE_NAME).findFirst(RError.Message.INVALID_FIRST_ARGUMENT);
 
-        casts.arg("envir").mustBe(nullValue().not(), RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
+        casts.arg("envir").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, RError.Message.INVALID_ARGUMENT, "envir");
 
         // this argument could be made Boolean unless there were AssignFastPath relying upon the
         // byte argument
@@ -90,8 +106,9 @@ public abstract class Assign extends RBuiltinNode {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
-                    @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
+    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
+                    @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
+                    @Cached("create()") ShareObjectNode share) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
         if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
@@ -110,14 +127,14 @@ public abstract class Assign extends RBuiltinNode {
             }
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+                throw RError.error(errorContext(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
         }
         try {
-            env.put(x, value);
+            env.put(x, share.execute(value));
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(this, ex);
+            throw RError.error(errorContext(), ex);
         }
         return value;
     }

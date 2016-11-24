@@ -22,23 +22,33 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -64,7 +74,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * </ul>
  * </ol>
  */
-@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"}, dispatch = RDispatch.INTERNAL_GENERIC)
+@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Repeat extends RBuiltinNode {
 
     protected abstract Object execute(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
@@ -80,11 +90,19 @@ public abstract class Repeat extends RBuiltinNode {
         return new Object[]{RMissing.instance, 1, RRuntime.INT_NA, 1};
     }
 
+    private String argType(Object arg) {
+        return ((RTypedValue) arg).getRType().getName();
+    }
+
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toInteger(1);
-        casts.firstIntegerWithWarning(2, RRuntime.INT_NA, "length.out");
-        casts.toInteger(3);
+        Function<Object, Object> argType = this::argType;
+        casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, argType);
+        casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustNotBeNull().asIntegerVector();
+        casts.arg("length.out").mustNotBeNull().asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
+                        RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(intNA().or(gte(0)));
+        casts.arg("each").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED, "each").notNA(
+                        1).mustBe(gte(0));
     }
 
     protected boolean hasNames(RAbstractVector x) {
@@ -97,7 +115,12 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
     protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
-        int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : times.getDataAt(0);
+        int t = times.getDataAt(0);
+        if (t < 0) {
+            errorBranch.enter();
+            throw invalidTimes();
+        }
+        int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
         double[] data = new double[length];
         Arrays.fill(data, x.getDataAt(0));
         return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x.getDataAt(0)));
@@ -127,46 +150,51 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Specialization(guards = {"each > 1", "hasNames(x)"})
-    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
+    protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") PutAttributeNode putNames) {
         if (times.getLength() > 1) {
             errorBranch.enter();
             throw invalidTimes();
         }
         RAbstractVector input = handleEach(x, each);
         RStringVector names = (RStringVector) handleEach(x.getNames(attrProfiles), each);
+        RVector<?> r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
             names = (RStringVector) handleLengthOut(names, lengthOut, false);
-            RVector r = handleLengthOut(input, lengthOut, false);
-            r.setNames(names);
-            return r;
+            r = handleLengthOut(input, lengthOut, false);
         } else {
             names = (RStringVector) handleTimes(names, times, false);
-            RVector r = handleTimes(input, times, false);
-            r.setNames(names);
-            return r;
+            r = handleTimes(input, times, false);
         }
+        putNames.execute(initAttributes.execute(r), names);
+        r.setInternalNames(names);
+        return r;
     }
 
     @Specialization(guards = {"each <= 1", "hasNames(x)"})
-    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+    protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") PutAttributeNode putNames) {
+        RStringVector names;
+        RVector<?> r;
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-            RStringVector names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
-            RVector r = handleLengthOut(x, lengthOut, true);
-            r.setNames(names);
-            return r;
+            names = (RStringVector) handleLengthOut(x.getNames(attrProfiles), lengthOut, true);
+            r = handleLengthOut(x, lengthOut, true);
         } else {
-            RStringVector names = (RStringVector) handleTimes(x.getNames(attrProfiles), times, true);
-            RVector r = handleTimes(x, times, true);
-            r.setNames(names);
-            return r;
+            names = (RStringVector) handleTimes(x.getNames(attrProfiles), times, true);
+            r = handleTimes(x, times, true);
         }
+        putNames.execute(initAttributes.execute(r), names);
+        r.setInternalNames(names);
+        return r;
     }
 
     /**
      * Prepare the input vector by replicating its elements.
      */
-    private static RVector handleEach(RAbstractVector x, int each) {
-        RVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
+    private static RVector<?> handleEach(RAbstractVector x, int each) {
+        RVector<?> r = x.createEmptySameType(x.getLength() * each, x.isComplete());
         for (int i = 0; i < x.getLength(); i++) {
             for (int j = i * each; j < (i + 1) * each; j++) {
                 r.transferElementSameType(j, x, i);
@@ -178,9 +206,9 @@ public abstract class Repeat extends RBuiltinNode {
     /**
      * Extend or truncate the vector to a specified length.
      */
-    private static RVector handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
+    private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
         if (x.getLength() == lengthOut) {
-            return (RVector) (copyIfSameSize ? x.copy() : x);
+            return (RVector<?>) (copyIfSameSize ? x.copy() : x);
         }
         return x.copyResized(lengthOut, false);
     }
@@ -188,12 +216,16 @@ public abstract class Repeat extends RBuiltinNode {
     /**
      * Replicate the vector a given number of times.
      */
-    private RVector handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
+    private RVector<?> handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
         if (oneTimeGiven.profile(times.getLength() == 1)) {
             // only one times value is given
             final int howManyTimes = times.getDataAt(0);
+            if (howManyTimes < 0) {
+                errorBranch.enter();
+                throw invalidTimes();
+            }
             if (replicateOnce.profile(howManyTimes == 1)) {
-                return (RVector) (copyIfSameSize ? x.copy() : x);
+                return (RVector<?>) (copyIfSameSize ? x.copy() : x);
             } else {
                 return x.copyResized(x.getLength() * howManyTimes, false);
             }
@@ -206,10 +238,15 @@ public abstract class Repeat extends RBuiltinNode {
             // iterate once over the times vector to determine result vector size
             int resultLength = 0;
             for (int i = 0; i < times.getLength(); i++) {
-                resultLength += times.getDataAt(i);
+                int t = times.getDataAt(i);
+                if (t < 0) {
+                    errorBranch.enter();
+                    throw invalidTimes();
+                }
+                resultLength += t;
             }
             // create and populate result vector
-            RVector r = x.createEmptySameType(resultLength, x.isComplete());
+            RVector<?> r = x.createEmptySameType(resultLength, x.isComplete());
             int wp = 0; // write pointer
             for (int i = 0; i < x.getLength(); i++) {
                 for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {

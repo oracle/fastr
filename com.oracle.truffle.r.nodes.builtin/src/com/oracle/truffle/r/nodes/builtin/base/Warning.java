@@ -22,55 +22,38 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "warning", visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
+@RBuiltin(name = "warning", visibility = OFF, kind = INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"}, behavior = COMPLEX)
 public abstract class Warning extends RBuiltinNode {
-
-    @Child private CastStringNode castString;
-
-    private Object castString(Object operand) {
-        if (castString == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, true, false, false));
-        }
-        return castString.execute(operand);
-    }
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(0);
-        casts.toLogical(1);
-        casts.toLogical(2);
+        casts.arg("call").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("immediate").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("nobreaks").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("message").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_STRING_IN_WARNING).findFirst();
+
     }
 
     @Specialization
     @TruffleBoundary
-    protected String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
-        String message = RRuntime.asString(castString(messageObj));
-        boolean call = RRuntime.fromLogical(callL);
-        boolean immediate = RRuntime.fromLogical(immediateL);
-        boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
+    protected String warning(boolean call, boolean immediate, boolean noBreakWarning, String message) {
+        CompilerDirectives.transferToInterpreter();
         RErrorHandling.warningcallInternal(call, message, immediate, noBreakWarning);
         return message;
     }
 
-    @SuppressWarnings("unused")
-    @Fallback
-    protected String warning(Object callL, Object immediateL, Object noBreakWarningL, Object message) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-    }
 }

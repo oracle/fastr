@@ -12,26 +12,36 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RPrecedenceBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.IsAtomicNANodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.SortFunctions.RadixSort;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -47,23 +57,78 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."})
+@RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."}, behavior = PURE)
 public abstract class Order extends RPrecedenceBuiltinNode {
-
-    public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
 
     @Child private OrderVector1Node orderVector1Node;
     @Child private CastToVectorNode castVector;
     @Child private CastToVectorNode castVector2;
     @Child private CmpNode cmpNode;
+    @Child private IsAtomicNA isNANode;
 
     private final BranchProfile error = BranchProfile.create();
+    private final ConditionProfile notRemoveNAs = ConditionProfile.createBinaryProfile();
+
+    /**
+     * For use by {@link RadixSort}.
+     */
+    public abstract Object execute(byte naLast, boolean decreasing, RArgsValuesAndNames args);
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 
-    private OrderVector1Node initOrderVector1() {
-        if (orderVector1Node == null) {
-            orderVector1Node = insert(OrderVector1NodeGen.create());
+    private RIntVector executeOrderVector1(RAbstractVector v, byte naLast, boolean dec) {
+        return executeOrderVector1(v, naLast, dec, false);
+    }
+
+    private RIntVector executeOrderVector1(RAbstractVector v, byte naLast, boolean dec, boolean needsStringCollation) {
+        int n = v.getLength();
+        reportWork(n);
+
+        RIntVector indxVec = RDataFactory.createIntVector(createIndexes(v, n, naLast), RDataFactory.COMPLETE_VECTOR);
+        initOrderVector1(needsStringCollation).execute(indxVec, v, naLast, dec, null);
+        int[] indx = indxVec.getDataWithoutCopying();
+        for (int i = 0; i < indx.length; i++) {
+            indx[i] = indx[i] + 1;
+        }
+
+        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    private int[] createIndexes(RAbstractVector v, int len, byte naLast) {
+        if (notRemoveNAs.profile(!RRuntime.isNA(naLast) || v.isComplete())) {
+            int[] result = new int[v.getLength()];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = i;
+            }
+            return result;
+        }
+
+        // if naLast is NA, we should remove indexes of NA values
+        if (isNANode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isNANode = insert(IsAtomicNA.create());
+        }
+
+        int naCount = 0;
+        for (int i = 0; i < len; i++) {
+            if (isNANode.execute(v, i)) {
+                naCount++;
+            }
+        }
+
+        int[] result = new int[len - naCount];
+        for (int i = 0, resultIdx = 0; i < len; i++) {
+            if (!isNANode.execute(v, i)) {
+                result[resultIdx++] = i;
+            }
+        }
+        return result;
+    }
+
+    private OrderVector1Node initOrderVector1(boolean needsStringCollation) {
+        if (orderVector1Node == null || needsStringCollation && !orderVector1Node.needsStringCollation) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            orderVector1Node = insert(OrderVector1NodeGen.create(needsStringCollation));
         }
         return orderVector1Node;
     }
@@ -86,7 +151,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.firstBoolean(0, "na.last").firstBoolean(1, "decreasing");
+        casts.arg("na.last").mustBe(numericValue(), INVALID_LOGICAL, "na.last").asLogicalVector().findFirst();
+        casts.arg("decreasing").mustBe(numericValue(), INVALID_LOGICAL, "decreasing").asLogicalVector().findFirst().map(toBoolean());
     }
 
     private int cmp(Object v, int i, int j, boolean naLast) {
@@ -99,96 +165,63 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noVec(args)")
-    Object orderEmpty(boolean naLastVec, boolean decVec, RArgsValuesAndNames args) {
+    Object orderEmpty(byte naLastVec, boolean decVec, RArgsValuesAndNames args) {
         return RNull.instance;
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
-    Object orderInt(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
         RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]);
-        int n = v.getLength();
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, v, naLast, decreasing, null);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
-    Object orderDouble(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderDouble(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
         RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(vectors[0]);
-        int n = v.getLength();
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, v, naLast, decreasing, null);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
-    Object orderLogical(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(vectors[0]));
-        return orderInt(naLast, decreasing, args);
+        RAbstractIntVector v = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(vectors[0]));
+        return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
-    Object orderString(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderString(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @Cached("create()") BranchProfile collationProfile) {
         Object[] vectors = args.getArguments();
         RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
         int n = v.getLength();
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
+        boolean needsCollation = false;
+        outer: for (int i = 0; i < n; i++) {
+            String str = v.getDataAt(i);
+            for (int i2 = 0; i2 < str.length(); i2++) {
+                char c = str.charAt(i2);
+                if (c > 127) {
+                    collationProfile.enter();
+                    needsCollation = true;
+                    break outer;
+                }
+            }
         }
-        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, v, naLast, decreasing, null);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
 
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        return executeOrderVector1(v, naLast, decreasing, needsCollation);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence( args)"})
-    Object orderComplex(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderComplex(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
         RAbstractComplexVector v = (RAbstractComplexVector) castVector(vectors[0]);
-        int n = v.getLength();
-
-        int[] indx = new int[n];
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = i;
-        }
-        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1().execute(indxVec, v, naLast, decreasing, null);
-        for (int i = 0; i < indx.length; i++) {
-            indx[i] = indx[i] + 1;
-        }
-
-        return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
+        return executeOrderVector1(v, naLast, decreasing);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"oneVec(args)", "isFirstListPrecedence( args)"})
-    Object orderList(boolean naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderList(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         /*
          * Lists are not actually supported by GnuR but there is a corner case of a length < 2 list
          * that produces a result in GnuR and there is a unit test for that (when called via
@@ -209,6 +242,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         Object[] vectors = args.getArguments();
         RAbstractVector v = castVector(vectors[0]);
         int n = v.getLength();
+        reportWork(n);
         vectors[0] = v;
         int length = lengthProfile.profile(vectors.length);
         for (int i = 1; i < length; i++) {
@@ -223,7 +257,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
-    Object orderMulti(boolean naLast, boolean decreasing, RArgsValuesAndNames args, //
+    Object orderMulti(byte naLast, boolean decreasing, RArgsValuesAndNames args, //
                     @Cached("createEqualityProfile()") ValueProfile lengthProfile) {
         int n = preprocessVectors(args, lengthProfile);
 
@@ -231,7 +265,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector(indx, args.getArguments(), naLast, decreasing);
+        orderVector(indx, args.getArguments(), RRuntime.fromLogical(naLast), decreasing);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -284,10 +318,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     abstract static class OrderVector1Node extends RBaseNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
-        public abstract Object execute(Object v, Object dv, boolean naLast, boolean dec, Object rho);
+        private final boolean needsStringCollation;
+
+        protected OrderVector1Node(boolean needsStringCollation) {
+            this.needsStringCollation = needsStringCollation;
+        }
+
+        public abstract Object execute(Object v, Object dv, byte naLast, boolean dec, Object rho);
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractIntVector dv, boolean naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(RIntVector indxVec, RAbstractIntVector dv, byte naLast, boolean decreasing, Object rho) {
             if (indxVec.getLength() < 2) {
                 return indxVec;
             }
@@ -296,7 +336,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (rho == null) {
                 int numNa = 0;
-                if (!dv.isComplete()) {
+                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
                         if (RRuntime.isNA(dv.getDataAt(i))) {
@@ -306,13 +346,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     }
 
                     if (numNa > 0) {
-                        if (!naLast) {
+                        if (!RRuntime.fromLogical(naLast)) {
                             for (int i = 0; i < isNa.length; i++) {
                                 isNa[i] = !isNa[i];
                             }
                         }
                         sortNA(indx, isNa, lo, hi);
-                        if (naLast) {
+                        if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
                             lo += numNa;
@@ -326,14 +366,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractDoubleVector dv, boolean naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(RIntVector indxVec, RAbstractDoubleVector dv, byte naLast, boolean decreasing, Object rho) {
             if (indxVec.getLength() < 2) {
                 return indxVec;
             }
             int[] indx = indxVec.getDataWithoutCopying();
             int lo = 0;
             int hi = indx.length - 1;
-            if (rho == null) {
+            if (rho == null && !RRuntime.isNA(naLast)) {
                 int numNa = 0;
                 boolean[] isNa = new boolean[indx.length];
                 for (int i = 0; i < isNa.length; i++) {
@@ -344,13 +384,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
 
                 if (numNa > 0) {
-                    if (!naLast) {
+                    if (!RRuntime.fromLogical(naLast)) {
                         for (int i = 0; i < isNa.length; i++) {
                             isNa[i] = !isNa[i];
                         }
                     }
                     sortNA(indx, isNa, lo, hi);
-                    if (naLast) {
+                    if (RRuntime.fromLogical(naLast)) {
                         hi -= numNa;
                     } else {
                         lo += numNa;
@@ -363,7 +403,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractStringVector dv, boolean naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(RIntVector indxVec, RAbstractStringVector dv, byte naLast, boolean decreasing, Object rho) {
             if (indxVec.getLength() < 2) {
                 return indxVec;
             }
@@ -372,7 +412,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (rho == null) {
                 int numNa = 0;
-                if (!dv.isComplete()) {
+                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
                         if (RRuntime.isNA(dv.getDataAt(i))) {
@@ -382,13 +422,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     }
 
                     if (numNa > 0) {
-                        if (!naLast) {
+                        if (!RRuntime.fromLogical(naLast)) {
                             for (int i = 0; i < isNa.length; i++) {
                                 isNa[i] = !isNa[i];
                             }
                         }
                         sortNA(indx, isNa, lo, hi);
-                        if (naLast) {
+                        if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
                             lo += numNa;
@@ -402,7 +442,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractComplexVector dv, boolean naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(RIntVector indxVec, RAbstractComplexVector dv, byte naLast, boolean decreasing, Object rho) {
             if (indxVec.getLength() < 2) {
                 return indxVec;
             }
@@ -411,7 +451,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (rho == null) {
                 int numNa = 0;
-                if (!dv.isComplete()) {
+                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
                         if (RRuntime.isNA(dv.getDataAt(i))) {
@@ -421,13 +461,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     }
 
                     if (numNa > 0) {
-                        if (!naLast) {
+                        if (!RRuntime.fromLogical(naLast)) {
                             for (int i = 0; i < isNa.length; i++) {
                                 isNa[i] = !isNa[i];
                             }
                         }
                         sortNA(indx, isNa, lo, hi);
-                        if (naLast) {
+                        if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
                             lo += numNa;
@@ -442,7 +482,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RList dv, boolean naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(RIntVector indxVec, RList dv, byte naLast, boolean decreasing, Object rho) {
             /* Only needed to satisfy .Internal(rank) in unit test */
             return indxVec;
         }
@@ -517,7 +557,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     while (j >= lo + h) {
                         int a = indx[j - h];
                         int b = itmp;
-                        int c = compare(collator, dv.getDataAt(a), dv.getDataAt(b));
+                        int c = compareString(collator, dv.getDataAt(a), dv.getDataAt(b));
                         if (decProfile.profile(dec)) {
                             if (!(c < 0 || (c == 0 && a > b))) {
                                 break;
@@ -535,14 +575,32 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
+        private int compareString(Collator collator, String dataAt, String dataAt2) {
+            if (needsStringCollation) {
+                return compare(collator, dataAt, dataAt2);
+            } else {
+                return dataAt.compareToIgnoreCase(dataAt2);
+            }
+        }
+
         @TruffleBoundary
         private static int compare(Collator collator, String dataAt, String dataAt2) {
             return collator.compare(dataAt, dataAt2);
         }
 
         @TruffleBoundary
-        private static Collator createCollator() {
-            return Collator.getInstance();
+        private Collator createCollator() {
+            if (!needsStringCollation) {
+                return null;
+            }
+            // add rule for space before '_'
+            Collator collator = Collator.getInstance();
+            String rules = ((RuleBasedCollator) collator).getRules();
+            try {
+                return new RuleBasedCollator(rules.replaceAll("<'\u005f'", "<' '<'\u005f'"));
+            } catch (ParseException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
         }
 
         private static boolean lt(RComplex a, RComplex b) {
@@ -647,6 +705,34 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     protected boolean oneVec(RArgsValuesAndNames args) {
         return args.getLength() == 1;
+    }
+
+    abstract static class IsAtomicNA extends Node {
+        public abstract boolean execute(RAbstractVector vec, int idx);
+
+        public static IsAtomicNA create() {
+            return IsAtomicNANodeGen.create();
+        }
+
+        @Specialization
+        protected boolean doInt(RAbstractIntVector v, int idx) {
+            return RRuntime.isNA(v.getDataAt(idx));
+        }
+
+        @Specialization
+        protected boolean doDouble(RAbstractDoubleVector v, int idx) {
+            return RRuntime.isNA(v.getDataAt(idx));
+        }
+
+        @Specialization
+        protected boolean doString(RAbstractStringVector v, int idx) {
+            return RRuntime.isNA(v.getDataAt(idx));
+        }
+
+        @Specialization
+        protected boolean doComplex(RAbstractComplexVector v, int idx) {
+            return RRuntime.isNA(v.getDataAt(idx));
+        }
     }
 
     /**

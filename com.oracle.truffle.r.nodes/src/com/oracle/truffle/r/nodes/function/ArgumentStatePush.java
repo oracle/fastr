@@ -65,49 +65,51 @@ public abstract class ArgumentStatePush extends Node {
     public void transitionState(VirtualFrame frame, RShareable shareable) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
-        }
-        if (!FastROptions.RefCountIncrementOnly.getBooleanValue()) {
-            if (mask == 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                if (shareable instanceof RAbstractContainer) {
-                    if (shareable instanceof RLanguage || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
-                        // don't decrement ref count for small objects or language objects- this is
-                        // pretty conservative and can be further finessed
+            if (!FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+                if (mask == 0) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    if (shareable instanceof RAbstractContainer) {
+                        if (shareable instanceof RLanguage || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
+                            // don't decrement ref count for small objects or language objects- this
+                            // is
+                            // pretty conservative and can be further finessed
+                            mask = -1;
+                            return;
+                        }
+                    }
+                    RFunction fun = RArguments.getFunction(frame);
+                    if (fun == null) {
                         mask = -1;
                         return;
                     }
+                    Object root = fun.getRootNode();
+                    if (!(root instanceof FunctionDefinitionNode)) {
+                        // root is RBuiltinRootNode
+                        mask = -1;
+                        return;
+                    }
+                    FunctionDefinitionNode fdn = (FunctionDefinitionNode) root;
+                    PostProcessArgumentsNode postProcessNode = fdn.getArgPostProcess();
+                    if (postProcessNode == null) {
+                        // arguments to this function are not to be reference counted
+                        mask = -1;
+                        return;
+                    }
+                    // this is needed for when FunctionDefinitionNode is split by the Truffle
+                    // runtime
+                    postProcessNode = postProcessNode.getActualNode();
+                    if (index >= Math.min(postProcessNode.getLength(), MAX_COUNTED_ARGS)) {
+                        mask = -1;
+                        return;
+                    }
+                    mask = 1 << index;
+                    int transArgsBitSet = postProcessNode.transArgsBitSet;
+                    postProcessNode.transArgsBitSet = transArgsBitSet | mask;
+                    writeArgNode = insert(WriteLocalFrameVariableNode.createForRefCount(Integer.valueOf(mask)));
                 }
-                RFunction fun = RArguments.getFunction(frame);
-                if (fun == null) {
-                    mask = -1;
-                    return;
+                if (mask != -1) {
+                    writeArgNode.execute(frame, shareable);
                 }
-                Object root = fun.getRootNode();
-                if (!(root instanceof FunctionDefinitionNode)) {
-                    // root is RBuiltinRootNode
-                    mask = -1;
-                    return;
-                }
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) root;
-                PostProcessArgumentsNode postProcessNode = fdn.getArgPostProcess();
-                if (postProcessNode == null) {
-                    // arguments to this function are not to be reference counted
-                    mask = -1;
-                    return;
-                }
-                // this is needed for when FunctionDefinitionNode is split by the Truffle runtime
-                postProcessNode = postProcessNode.getActualNode();
-                if (index >= Math.min(postProcessNode.getLength(), MAX_COUNTED_ARGS)) {
-                    mask = -1;
-                    return;
-                }
-                mask = 1 << index;
-                int transArgsBitSet = postProcessNode.transArgsBitSet;
-                postProcessNode.transArgsBitSet = transArgsBitSet | mask;
-                writeArgNode = insert(WriteLocalFrameVariableNode.createForRefCount(Integer.valueOf(mask)));
-            }
-            if (mask != -1) {
-                writeArgNode.execute(frame, shareable);
             }
         }
     }
@@ -129,16 +131,5 @@ public abstract class ArgumentStatePush extends Node {
 
     protected boolean isShareable(Object o) {
         return o instanceof RShareable;
-    }
-
-    public static void transitionStateSlowPath(Object o) {
-        // this is expected to be used in rare cases where no RNode is easily available
-        if (o instanceof RShareable) {
-            RShareable shareable = (RShareable) o;
-            // it's never decremented so no point in incrementing past shared state
-            if (!shareable.isShared()) {
-                shareable.incRefCount();
-            }
-        }
     }
 }

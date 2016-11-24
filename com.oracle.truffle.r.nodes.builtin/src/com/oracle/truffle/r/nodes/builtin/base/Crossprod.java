@@ -22,46 +22,47 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"})
+@RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"}, behavior = PURE)
 public abstract class Crossprod extends RBuiltinNode {
 
-    @Child private MatMult matMult;
+    @Child private MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false);
     @Child private Transpose transpose;
 
-    private void ensureMatMult() {
-        if (matMult == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultNodeGen.create(/* promoteDimNames: */ false, null));
-        }
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustBe(numericValue().or(complexValue()), RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        casts.arg("y").defaultError(RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR).allowNull().mustBe(numericValue().or(complexValue()));
     }
 
     private Object matMult(Object op1, Object op2) {
-        ensureMatMult();
         return matMult.executeObject(op1, op2);
     }
 
-    private Object transpose(Object value) {
+    private Object transpose(RAbstractVector value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(null));
+            transpose = insert(TransposeNodeGen.create());
         }
         return transpose.execute(value);
     }
 
-    @Specialization(guards = {"isMatrix(x)", "isMatrix(y)"})
+    @Specialization(guards = {"x.isMatrix()", "y.isMatrix()"})
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
-        ensureMatMult();
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
         int yRows = y.getDimensions()[0];
@@ -94,9 +95,8 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult(transpose(x), y);
     }
 
-    @Specialization(guards = "isMatrix(x)")
-    protected Object crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-        ensureMatMult();
+    @Specialization(guards = "x.isMatrix()")
+    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
         int xRows = x.getDimensions()[0];
         int xCols = x.getDimensions()[1];
         return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true));
@@ -105,9 +105,5 @@ public abstract class Crossprod extends RBuiltinNode {
     @Specialization
     protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y) {
         return matMult(transpose(x), x);
-    }
-
-    protected static boolean isMatrix(RAbstractVector v) {
-        return v.isMatrix();
     }
 }

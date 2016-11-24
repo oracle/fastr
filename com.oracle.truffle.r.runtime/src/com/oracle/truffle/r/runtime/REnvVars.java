@@ -28,11 +28,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -40,22 +42,30 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * Repository for environment variables, including those set by FastR itself, e.g.
  * {@code R_LIBS_USER}.
  *
- * N.B. We assert that the R_HOME environment variable is set (correctly) buy the launch script(s).
+ * N.B. We assert that the {@code R_HOME} environment variable is set by the launch script(s) with
+ * one exception, when run under the GraalVM shell, in which case it is set explicitly in
+ * {@link #rHome()}.
  */
 public final class REnvVars implements RContext.ContextState {
 
     private final Map<String, String> envVars = new HashMap<>(System.getenv());
 
-    private REnvVars(RContext context) {
+    private REnvVars() {
+    }
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
+        // explicit environment settings in nested contexts must be installed first
+        checkExplciitEnvSettings(context);
         // set the standard vars defined by R
-        String rHome = System.getenv("R_HOME");
+        checkRHome();
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
         safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
-        String rLibsUserProperty = System.getenv("R_LIBS_USER");
+        String rLibsUserProperty = envVars.get("R_LIBS_USER");
         if (rLibsUserProperty == null) {
             String os = System.getProperty("os.name");
             if (os.contains("Mac OS")) {
@@ -67,7 +77,7 @@ public final class REnvVars implements RContext.ContextState {
             // This gets expanded by R code in the system profile
         }
 
-        if (!context.getOptions().getBoolean(RCmdOption.NO_ENVIRON)) {
+        if (!context.getStartParams().getNoRenviron()) {
             String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
                 siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();
@@ -102,10 +112,26 @@ public final class REnvVars implements RContext.ContextState {
                 System.setProperty("http.proxyPort", port);
             }
         }
+        return this;
     }
 
-    public static REnvVars newContext(RContext context) {
-        return new REnvVars(context);
+    public static REnvVars newContextState() {
+        return new REnvVars();
+    }
+
+    private void checkExplciitEnvSettings(RContext context) {
+        String[] envs = context.getEnvSettings();
+        if (envs == null || envs.length == 0) {
+            return;
+        }
+        for (String envdef : envs) {
+            String[] parts = envdef.split("=");
+            if (parts.length == 2) {
+                envVars.put(parts[0], parts[1]);
+            } else {
+                // for now just ignore
+            }
+        }
     }
 
     private String getEitherCase(String var) {
@@ -113,9 +139,52 @@ public final class REnvVars implements RContext.ContextState {
         return val != null ? val : envVars.get(var.toUpperCase());
     }
 
+    private static final String R_HOME = "R_HOME";
+
+    /**
+     * Cached value of {@code R_HOME}.
+     */
+    private static String rHome;
+
+    /**
+     * Returns the value of the {@code R_HOME} environment variable (setting it in the unusual case
+     * where it it is not set by the initiating shell scripts. This is called very early in the
+     * startup as it is required to access the native libraries, before the initial context is
+     * initialized and, therefore, before {@link #envVars} is available.
+     */
     public static String rHome() {
-        String rHome = System.getenv("R_HOME");
+        if (rHome == null) {
+            rHome = System.getenv(R_HOME);
+            Path rHomePath;
+            if (rHome == null) {
+                /*
+                 * The only time this can happen legitimately is when run under the graalvm shell,
+                 * which does not execute the shell script that normally sets R_HOME.
+                 */
+                rHomePath = getRHomePath();
+            } else {
+                rHomePath = Paths.get(rHome);
+            }
+            // Sanity check on the expected structure of an R_HOME
+            Path bin = rHomePath.resolve("bin");
+            if (!(Files.exists(bin) && Files.isDirectory(bin) && Files.exists(bin.resolve("R")))) {
+                Utils.rSuicide("R_HOME is not set correctly");
+            }
+            rHome = rHomePath.toString();
+        }
         return rHome;
+    }
+
+    private static Path getRHomePath() {
+        return Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+    }
+
+    private void checkRHome() {
+        String envRHome = envVars.get(R_HOME);
+        if (envRHome == null) {
+            assert rHome != null;
+            envVars.put(R_HOME, rHome);
+        }
     }
 
     public String put(String key, String value) {
@@ -151,7 +220,6 @@ public final class REnvVars implements RContext.ContextState {
                 }
                 String var = line.substring(0, ix);
                 String value = expandParameters(line.substring(ix + 1)).trim();
-                // GnuR does not seem to remove quotes, although the spec says it should
                 envVars.put(var, value);
             }
         }
@@ -174,7 +242,7 @@ public final class REnvVars implements RContext.ContextState {
             }
             String paramValue = envVars.get(paramName);
             if (paramValue == null || paramValue.length() == 0) {
-                paramValue = paramDefault;
+                paramValue = stripQuotes(paramDefault);
             }
             result.append(paramValue);
             x = paramEnd + 1;
@@ -182,6 +250,17 @@ public final class REnvVars implements RContext.ContextState {
         }
         result.append(value.substring(x));
         return result.toString();
+    }
+
+    private static String stripQuotes(String s) {
+        if (s.length() == 0) {
+            return s;
+        }
+        if (s.charAt(0) == '\'') {
+            return s.substring(1, s.length() - 1);
+        } else {
+            return s;
+        }
     }
 
     @TruffleBoundary

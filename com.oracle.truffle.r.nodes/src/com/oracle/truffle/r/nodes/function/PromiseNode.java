@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -314,13 +313,13 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public void serializeImpl(State state) {
-            throw RInternalError.unimplemented();
+        public void setSourceSection(SourceSection sourceSection) {
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        public void setSourceSection(SourceSection sourceSection) {
-            throw RInternalError.shouldNotReachHere();
+        public SourceSection getLazySourceSection() {
+            return RSyntaxNode.INTERNAL;
         }
 
         @Override
@@ -333,6 +332,7 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
+        @TruffleBoundary
         public String getIdentifier() {
             int num = index + 1;
             return (num < 10 ? ".." : ".") + num;
@@ -368,7 +368,7 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                if (ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(nodes[i]))) {
+                if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];
                 } else {
                     this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);

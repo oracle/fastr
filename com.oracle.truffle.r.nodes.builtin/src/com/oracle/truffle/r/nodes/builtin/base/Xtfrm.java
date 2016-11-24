@@ -22,26 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "xtfrm", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC)
+@RBuiltin(name = "xtfrm", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
 public abstract class Xtfrm extends RBuiltinNode {
+
     @Child private GetFunctions.Get getNode;
 
     @Specialization
-    protected Object xtfrm(VirtualFrame frame, Object x) {
+    protected Object xtfrm(VirtualFrame frame, Object x,
+                    @Cached("createBinaryProfile()") ConditionProfile createProfile) {
         /*
          * Although this is a PRIMITIVE, there is an xtfrm.default that we must call if "x" is not
          * of a class that already has an xtfrm.class function defined. We only get here in the
@@ -49,9 +55,14 @@ public abstract class Xtfrm extends RBuiltinNode {
          */
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(null));
+            getNode = insert(GetNodeGen.create());
         }
-        RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", RArguments.getEnvironment(frame), RType.Function.getName(), true);
-        return RContext.getEngine().evalFunction(func, null, null, x);
+
+        REnvironment env = RArguments.getEnvironment(frame);
+        if (createProfile.profile(env == null)) {
+            env = REnvironment.createEnclosingEnvironments(frame.materialize());
+        }
+        RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", env, RType.Function.getName(), true);
+        return RContext.getEngine().evalFunction(func, null, null, null, x);
     }
 }

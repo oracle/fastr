@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -29,7 +29,9 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Central location for all R options, that is for the {@code options(...)} and {@code getOption}
@@ -49,11 +51,15 @@ public class ROptions {
          * The current values for a given context.
          */
         private final HashMap<String, Object> map;
+        private final REnvVars envVars;
 
-        private ContextStateImpl(HashMap<String, Object> map) {
+        private ContextStateImpl(HashMap<String, Object> map, REnvVars envVars) {
             this.map = map;
+            this.envVars = envVars;
+            // cannot call updateDotOptions here
         }
 
+        @TruffleBoundary
         public Set<Entry<String, Object>> getValues() {
             Set<Map.Entry<String, Object>> result = new HashSet<>();
             for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -64,6 +70,7 @@ public class ROptions {
             return result;
         }
 
+        @TruffleBoundary
         public Object getValue(String name) {
             Object value = map.get(name);
             if (value == null) {
@@ -72,6 +79,7 @@ public class ROptions {
             return value;
         }
 
+        @TruffleBoundary
         public Object setValue(String name, Object value) throws OptionsException {
             Object coercedValue = value;
             if (CHECKED_OPTIONS_SET.contains(name)) {
@@ -84,17 +92,43 @@ public class ROptions {
             } else {
                 map.put(name, coercedValue);
             }
+            updateDotOptions();
             return previous;
         }
 
-        public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
+        @TruffleBoundary
+        public static ContextStateImpl newContextState(REnvVars envVars) {
             HashMap<String, Object> map = new HashMap<>();
+            return new ContextStateImpl(map, envVars);
+        }
+
+        @Override
+        public RContext.ContextState initialize(RContext context) {
             if (context.getKind() == ContextKind.SHARE_NOTHING) {
-                applyDefaults(map, context.getOptions(), envVars);
+                applyDefaults(map, context.getStartParams(), envVars);
             } else {
                 map.putAll(context.getParent().stateROptions.map);
             }
-            return new ContextStateImpl(map);
+            return this;
+        }
+
+        /**
+         * Creates/updates the {@code .Options} variable in {@code baseenv}.
+         */
+        public void updateDotOptions() {
+            // TODO make incremental?
+            RPairList ppl = null;
+            RPairList head = null;
+            for (Map.Entry<String, Object> entry : getValues()) {
+                RPairList pl = RDataFactory.createPairList(entry.getValue(), RNull.instance, RDataFactory.createSymbol(entry.getKey()));
+                if (ppl != null) {
+                    ppl.setCdr(pl);
+                } else {
+                    head = pl;
+                }
+                ppl = pl;
+            }
+            REnvironment.baseEnv().safePut(DOT_OPTIONS, head);
         }
     }
 
@@ -109,18 +143,23 @@ public class ROptions {
         }
     }
 
+    /**
+     * S compatibility - pair list of the options.
+     */
+    private static final String DOT_OPTIONS = ".Options";
+
     private static final Set<String> CHECKED_OPTIONS_SET = new HashSet<>(Arrays.asList("width", "deparse.cutoff", "digits", "expressions", "keep.source", "editor", "continue", "prompt", "contrasts",
                     "check.bounds", "warn", "warning.length", "warning.expression", "max.print", "nwarnings", "error", "show.error.messages", "echo", "OutDec", "max.contour.segments",
                     "rl_word_breaks", "warnPartialMatchDollar", "warnPartialMatchArgs", "warnPartialMatchAttr", "showWarnCalls", "showErrorCalls", "showNCalls", "par.ask.default",
                     "browserNLdisabled", "CBoundsCheck"));
 
-    private static void applyDefaults(HashMap<String, Object> map, RCmdOptions options, REnvVars envVars) {
+    private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
         map.put("add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
         map.put("check.bounds", RDataFactory.createSharedLogicalVectorFromScalar(false));
         map.put("continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
         map.put("deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
         map.put("digits", RDataFactory.createSharedIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(options.getBoolean(RCmdOption.SLAVE) ? false : true));
+        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(startParams.getSlave() ? false : true));
         map.put("encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
         map.put("expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);

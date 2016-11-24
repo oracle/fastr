@@ -22,27 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public class LogFunctions {
-    @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log extends RBuiltinNode {
+
+        private final NAProfile naProfile = NAProfile.create();
+        private final BranchProfile nanProfile = BranchProfile.create();
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -51,15 +63,8 @@ public class LogFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            // // base argument is at index 1, and double
-            // arguments[1] = CastDoubleNodeGen.create(arguments[1], true, false, false);
-            casts.toDouble(1);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected RNull log(RNull x, RNull base) {
-            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
+            casts.arg("base").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue()).asDoubleVector().findFirst();
         }
 
         @Specialization
@@ -73,21 +78,25 @@ public class LogFunctions {
         }
 
         @Specialization
-        protected RDoubleVector log(RIntVector vector, double base) {
+        protected RDoubleVector log(RAbstractIntVector vector, double base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") RAttributeProfiles attrProfiles) {
             double[] resultVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 int inputValue = vector.getDataAt(i);
                 double result = RRuntime.DOUBLE_NA;
-                if (!RRuntime.isNA(inputValue)) {
+                if (!naProfile.isNA(inputValue)) {
                     result = logb(inputValue, base);
                 }
                 resultVector[i] = result;
             }
-            return RDataFactory.createDoubleVector(resultVector, vector.isComplete());
+            return createResult(vector, resultVector, base, copyAttrsNode, attrProfiles);
         }
 
         @Specialization
-        protected RDoubleVector log(RDoubleVector vector, double base) {
+        protected RDoubleVector log(RAbstractDoubleVector vector, double base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") RAttributeProfiles attrProfiles) {
             double[] doubleVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 double value = vector.getDataAt(i);
@@ -96,15 +105,30 @@ public class LogFunctions {
                 }
                 doubleVector[i] = value;
             }
-            return RDataFactory.createDoubleVector(doubleVector, vector.isComplete());
+            return createResult(vector, doubleVector, base, copyAttrsNode, attrProfiles);
         }
 
-        private static double logb(double x, double base) {
+        private double logb(double x, double base) {
+            if (naProfile.isNA(base)) {
+                return RRuntime.DOUBLE_NA;
+            }
+
+            if (Double.isNaN(base)) {
+                nanProfile.enter();
+                return base;
+            }
+
             return Math.log(x) / Math.log(base);
+        }
+
+        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, double base, CopyOfRegAttributesNode copyAttrsNode, RAttributeProfiles attrProfiles) {
+            RDoubleVector result = RDataFactory.createDoubleVector(resultData, source.isComplete() && !RRuntime.isNA(base), source.getDimensions(), source.getNames(attrProfiles));
+            copyAttrsNode.execute(source, result);
+            return result;
         }
     }
 
-    @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log10 extends UnaryArithmeticBuiltinNode {
 
         public Log10() {
@@ -112,6 +136,11 @@ public class LogFunctions {
         }
 
         private static final double LOG_10 = Math.log(10);
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
+        }
 
         @Override
         public double op(double op) {
@@ -126,7 +155,7 @@ public class LogFunctions {
         }
     }
 
-    @RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log2 extends UnaryArithmeticBuiltinNode {
 
         public Log2() {
@@ -134,6 +163,11 @@ public class LogFunctions {
         }
 
         private static final double LOG_2 = Math.log(2);
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
+        }
 
         @Override
         public double op(double op) {
@@ -148,11 +182,16 @@ public class LogFunctions {
         }
     }
 
-    @RBuiltin(name = "log1p", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
+    @RBuiltin(name = "log1p", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log1p extends UnaryArithmeticBuiltinNode {
 
         public Log1p() {
             super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
         }
 
         @Override

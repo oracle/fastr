@@ -57,6 +57,7 @@ public class TestSimpleParsing extends TestBase {
         assertEval(" \"\\011\\013\\036\" ");
         assertEval(" \"\\111\\413\\36f \7 \" ");
         assertEval(" '\\a\\b\\f \\v \\t \\r \\n\\' \\\"\\`\\011\\013\\036' ");
+        assertEval("{ \"\\U00A0\" }");
     }
 
     @Test
@@ -96,6 +97,24 @@ public class TestSimpleParsing extends TestBase {
         assertEval("{ ..7foo <- 42 }");
         assertEval("{ ...7foo <- 42 }");
         assertEval("{ ..77foo <- 42 }");
+    }
+
+    @Test
+    public void testReplacement() {
+        assertEval("a <- 123");
+        assertEval("'a' <- 123");
+        assertEval("`a` <- 123");
+        assertEval("\"a\" <- 123");
+        assertEval("123 <- 123");
+        assertEval("if (FALSE) 123 <- 123");
+        assertEval("NULL <- 123");
+        assertEval("if (FALSE) NULL <- 123");
+        assertEval("'' <- 123");
+        assertEval("if (FALSE) '' <- 123");
+        assertEval("if (FALSE) foo() <- 123");
+        assertEval("if (FALSE) foo(x) <- 123");
+        assertEval("if (FALSE) foo(NULL) <- 123");
+        assertEval("if (FALSE) foo(123) <- 123");
     }
 
 }

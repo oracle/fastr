@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -47,22 +48,22 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -103,8 +104,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
-        return rvn;
+        return new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
     }
 
     public static ReadVariableNode createSilent(String name, RType mode) {
@@ -112,22 +112,21 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
-        return rvn;
+        return new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
     }
 
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
-        return result;
+        return new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
     }
 
     public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
-        ReadVariableNode result = new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
-        return result;
+        return new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
     }
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
@@ -164,11 +163,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setCarAsSymbol(identifierAsString);
-    }
-
-    @Override
     public boolean isSyntax() {
         return identifier instanceof String;
     }
@@ -185,7 +179,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         if (kind != ReadKind.Silent) {
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
         }
 
         Object result;
@@ -305,6 +299,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
         private Match(FrameSlot slot) {
             this.slot = slot;
@@ -312,7 +307,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot);
+            Object value = valueProfile.profile(profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot));
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
@@ -540,7 +535,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         if (lookup != null) {
             try {
                 if (lookup.getValue() instanceof RPromise) {
-                    evalPromiseSlowPathWithName(frame, (RPromise) lookup.getValue());
+                    evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) lookup.getValue());
                 }
                 if (lookup != null) {
                     if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
@@ -639,8 +634,12 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return lastLevel;
     }
 
+    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+        return lookupFunction(identifier, variableFrame, false, true);
+    }
+
     @TruffleBoundary
-    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly) {
+    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly, boolean forcePromises) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -657,8 +656,12 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                         if (promise.isEvaluated()) {
                             value = promise.getValue();
                         } else {
-                            value = PromiseHelperNode.evaluateSlowPath(null, promise);
-                            return (RFunction) value;
+                            if (forcePromises) {
+                                value = evalPromiseSlowPathWithName(identifier, null, promise);
+                                return (RFunction) value;
+                            } else {
+                                return null;
+                            }
                         }
                     }
                     if (RRuntime.checkType(value, RType.Function)) {
@@ -840,7 +843,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    obj = evalPromiseSlowPathWithName(frame, promise);
+                    obj = evalPromiseSlowPathWithName(identifierAsString, frame, promise);
                 }
             } else {
                 obj = promise.getValue();
@@ -849,9 +852,9 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return RRuntime.checkType(obj, mode);
     }
 
-    private Object evalPromiseSlowPathWithName(VirtualFrame frame, RPromise promise) {
+    public static Object evalPromiseSlowPathWithName(String identifier, VirtualFrame frame, RPromise promise) {
         Object obj;
-        slowPathEvaluationName.set(identifierAsString);
+        slowPathEvaluationName.set(identifier);
         try {
             obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
         } finally {
@@ -877,6 +880,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 /*
  * This is RRuntime.checkType in the node form.
  */
+@TypeSystemReference(RTypes.class)
 abstract class CheckTypeNode extends RBaseNode {
 
     public abstract boolean executeBoolean(Object o);
@@ -918,12 +922,17 @@ abstract class CheckTypeNode extends RBaseNode {
         return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
     }
 
+    @Specialization(guards = "isExternalObject(o)")
+    boolean checkType(@SuppressWarnings("unused") TruffleObject o) {
+        return type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special;
+    }
+
+    protected static boolean isExternalObject(TruffleObject o) {
+        return !(o instanceof RTypedValue);
+    }
+
     @Fallback
-    boolean checkType(Object o) {
-        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
-            return o instanceof TruffleObject && !(o instanceof RTypedValue);
-        } else {
-            return false;
-        }
+    boolean checkType(@SuppressWarnings("unused") Object o) {
+        return false;
     }
 }

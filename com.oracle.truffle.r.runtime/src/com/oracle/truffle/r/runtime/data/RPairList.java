@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -75,14 +76,21 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     /**
      * Creates a new pair list of given size > 0. Note: pair list of size 0 is NULL.
      */
+    public static RPairList create(int size) {
+        return create(size, null);
+    }
+
     @TruffleBoundary
-    public static Object create(int size) {
+    public static RPairList create(int size, SEXPTYPE type) {
         assert size > 0 : "a pair list of size = 0 does not exist, it should be NULL";
         RPairList result = new RPairList();
         for (int i = 1; i < size; i++) {
             RPairList tmp = result;
             result = new RPairList();
             result.cdr = tmp;
+        }
+        if (type != null) {
+            result.type = type;
         }
         return result;
     }
@@ -125,13 +133,13 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
         for (int i = 0; i < len; i++) {
             data[i] = plt.car();
             if (named) {
-                Object tag = plt.tag;
-                if (isNull(tag)) {
+                Object ptag = plt.tag;
+                if (isNull(ptag)) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                } else if (tag instanceof RSymbol) {
-                    names[i] = ((RSymbol) tag).getName();
+                } else if (ptag instanceof RSymbol) {
+                    names[i] = ((RSymbol) ptag).getName();
                 } else {
-                    names[i] = RRuntime.asString(tag);
+                    names[i] = RRuntime.asString(ptag);
                     assert names[i] != null : "unexpected type of tag in RPairList";
                 }
             }
@@ -266,6 +274,12 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
             result = (RPairList) result.cdr;
             original = origList.cdr;
         }
+        if (getAttributes() != null) {
+            RAttributes newAttributes = result.initAttributes();
+            for (RAttribute attr : getAttributes()) {
+                newAttributes.put(attr.getName(), attr.getValue());
+            }
+        }
         return result;
     }
 
@@ -304,7 +318,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         int i = 0;
         while (true) {
-            data[i] = pl.tag.toString();
+            data[i] = Utils.toString(pl.tag);
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
             }

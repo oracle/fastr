@@ -34,11 +34,18 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions4() {
-        assertEval(Ignored.Unknown, "argv <- list('ts.eps'); .Internal(options(argv[[1]]))");
+        assertEval("argv <- list('ts.eps'); .Internal(options(argv[[1]]))");
     }
 
     @Test
     public void testoptions5() {
         assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(options(argv[[1]]))");
+    }
+
+    @Test
+    public void testOptions() {
+        assertEval("{ getOption(NULL) }");
+        assertEval("{ getOption(character()) }");
+        assertEval("{ options(\"timeout\", \"width\") }");
     }
 }

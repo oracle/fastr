@@ -79,22 +79,23 @@ public abstract class SubstituteVirtualFrame implements VirtualFrame, Materializ
     }
 
     public static VirtualFrame create(MaterializedFrame frame) {
+        MaterializedFrame unwrappedFrame = frame instanceof SubstituteVirtualFrame ? ((SubstituteVirtualFrame) frame).getOriginalFrame() : frame;
         @SuppressWarnings("unchecked")
-        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) frame.getClass();
+        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) unwrappedFrame.getClass();
         if (Substitute1.frameClass == clazz) {
-            return new Substitute1(frame);
+            return new Substitute1(unwrappedFrame);
         } else if (Substitute1.frameClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute1.frameClass = clazz;
-            return new Substitute1(frame);
+            return new Substitute1(unwrappedFrame);
         } else if (Substitute2.frameClass == clazz) {
-            return new Substitute2(frame);
+            return new Substitute2(unwrappedFrame);
         } else if (Substitute2.frameClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute2.frameClass = clazz;
-            return new Substitute2(frame);
+            return new Substitute2(unwrappedFrame);
         } else {
-            return new SubstituteGeneric(frame);
+            return new SubstituteGeneric(unwrappedFrame);
         }
     }
 

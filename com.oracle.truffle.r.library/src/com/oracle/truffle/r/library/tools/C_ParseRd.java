@@ -24,11 +24,14 @@ package com.oracle.truffle.r.library.tools;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -37,25 +40,29 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
+    }
+
     @Specialization
-    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
-                    byte macrosL, byte warndupsL) {
+    protected Object parseRd(int con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL, byte macrosL, byte warndupsL) {
         return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, RDataFactory.createLogicalVectorFromScalar(macrosL), warndupsL);
     }
 
     @Specialization
-    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
-                    REnvironment macros, byte warndupsL) {
+    protected Object parseRd(int con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL, REnvironment macros, byte warndupsL) {
         return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, macros, warndupsL);
     }
 
-    private Object doParseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
+    @TruffleBoundary
+    private Object doParseRd(int con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
                     Object macros, byte warndupsL) {
         if (RRuntime.isNA(warningCallsL)) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "warningCalls");
         }
 
-        try (RConnection openConn = con.forceOpen("r")) {
+        try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {
             // @formatter:off
             return RFFIFactory.getRFFI().getToolsRFFI().parseRd(openConn, srcfile,
                             RDataFactory.createLogicalVectorFromScalar(verboseL),

@@ -41,17 +41,10 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.rqp01check;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Java implementation of the qgamma function. The logic was derived from GNU R (see inline
@@ -62,39 +55,10 @@ public abstract class GammaFunctions {
 
     // This is derived from distn.c.
 
-    public abstract static class Qgamma extends RExternalBuiltinNode.Arg5 {
-
-        private final NACheck naCheck = NACheck.create();
-
-        @TruffleBoundary
-        private RDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
-            int pLen = p.getLength();
-            int shapeLen = shape.getLength();
-            int scaleLen = scale.getLength();
-            double[] result = new double[Math.max(pLen, Math.max(shapeLen, scaleLen))];
-            RAbstractDoubleVector attrSource = null;
-            if (result.length > 1) {
-                attrSource = pLen == result.length ? p : (shapeLen == result.length ? shape : scale);
-            }
-            naCheck.enable(true);
-            for (int i = 0, l = 0, j = 0, k = 0; i < result.length; ++i, l = Utils.incMod(l, pLen), j = Utils.incMod(j, shapeLen), k = Utils.incMod(k, scaleLen)) {
-                double pv = p.getDataAt(l);
-                result[i] = GammaFunctions.qgamma(pv, shape.getDataAt(j), scale.getDataAt(k), lowerTail == RRuntime.LOGICAL_TRUE, logP == RRuntime.LOGICAL_TRUE);
-                naCheck.check(result[i]);
-            }
-            RDoubleVector res = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
-            if (attrSource != null) {
-                res.copyAttributesFrom(attrProfiles, attrSource);
-            }
-            return res;
-        }
-
-        @Specialization
-        public RAbstractDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, RAbstractLogicalVector lowerTail, RAbstractLogicalVector logP) {
-            if (shape.getLength() == 0 || scale.getLength() == 0) {
-                return RDataFactory.createEmptyDoubleVector();
-            }
-            return qgamma(p, shape, scale, castLogical(lowerTail), castLogical(logP));
+    public static final class QgammaFunc implements Function3_2 {
+        @Override
+        public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
+            return GammaFunctions.qgamma(p, shape, scale, lowerTail, logP);
         }
     }
 
@@ -689,9 +653,9 @@ public abstract class GammaFunctions {
         /*
          * PR# 2214 : From: Morten Welinder <terra@diku.dk>, Fri, 25 Oct 2002 16:50 -------- To:
          * R-bugs@biostat.ku.dk Subject: qgamma precision
-         * 
+         *
          * With a final Newton step, double accuracy, e.g. for (p= 7e-4; nu= 0.9)
-         * 
+         *
          * Improved (MM): - only if rel.Err > EPS_N (= 1e-15); - also for lower_tail = FALSE or
          * log_p = TRUE - optionally *iterate* Newton
          */
@@ -753,7 +717,7 @@ public abstract class GammaFunctions {
     /*
      * Continued fraction for calculation of 1/i + x/(i+d) + x^2/(i+2*d) + x^3/(i+3*d) + ... =
      * sum_{k=0}^Inf x^k/(i+k*d)
-     * 
+     *
      * auxilary in log1pmx() and lgamma1p()
      */
     private static double logcf(double x, double i, double d, double eps /* ~ relative tolerance */) {
@@ -850,7 +814,7 @@ public abstract class GammaFunctions {
          * Abramowitz & Stegun 6.1.33 : for |x| < 2, <==> log(gamma(1+x)) = -(log(1+x) - x) -
          * gamma*x + x^2 * \sum_{n=0}^\infty c_n (-x)^n where c_n := (Zeta(n+2) - 1)/(n+2) =
          * coeffs[n]
-         * 
+         *
          * Here, another convergence acceleration trick is used to compute lgam(x) := sum_{n=0..Inf}
          * c_n (-x)^n
          */
@@ -1076,17 +1040,17 @@ public abstract class GammaFunctions {
 
     /*
      * Compute the following ratio with higher accuracy that would be had from doing it directly.
-     * 
+     *
      * dnorm (x, 0, 1, FALSE) ---------------------------------- pnorm (x, 0, 1, lower_tail, FALSE)
-     * 
+     *
      * Abramowitz & Stegun 26.2.12
      */
     private static double dpnorm(double x, boolean lowerTail, double lp) {
         /*
          * So as not to repeat a pnorm call, we expect
-         * 
+         *
          * lp == pnorm (x, 0, 1, lower_tail, TRUE)
-         * 
+         *
          * but use it only in the non-critical case where either x is small or p==exp(lp) is close
          * to 1.
          */
@@ -1254,7 +1218,7 @@ public abstract class GammaFunctions {
         }
     }
 
-    private static double pgamma(double x, double alph, double scale, boolean lowerTail, boolean logp) {
+    public static double pgamma(double x, double alph, double scale, boolean lowerTail, boolean logp) {
         double localX = x;
         if (Double.isNaN(localX) || Double.isNaN(alph) || Double.isNaN(scale)) {
             return localX + alph + scale;
@@ -1555,24 +1519,24 @@ public abstract class GammaFunctions {
             /*
              * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
              * lower=T, log=F Particularly *not* for log_p !
-             * 
+             *
              * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-             * 
+             *
              * Note that we do want symmetry(0), lower/upper -> hence use y
              */
         } else if ((logp && y < 1e170) /* avoid underflow below */
         /*
          * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make use of Abramowitz
          * & Stegun, 26.2.13, something like
-         * 
+         *
          * xsq = x*x;
-         * 
+         *
          * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) / (xsq+2.); else
          * del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) + log1p(-del);ccum = log1p(-exp(*cum));
          * /.* ~ log(1) = 0 *./
-         * 
+         *
          * swap_tail;
-         * 
+         *
          * [Yes, but xsq might be infinite.]
          */
                         || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {

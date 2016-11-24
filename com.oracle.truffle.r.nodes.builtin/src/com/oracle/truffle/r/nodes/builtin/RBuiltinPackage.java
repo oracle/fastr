@@ -22,26 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Denotes an R package that is (partially) built-in to the implementation. Historically, several of
@@ -93,7 +90,6 @@ public abstract class RBuiltinPackage {
 
     protected RBuiltinPackage(String name) {
         this.name = name;
-
         // Check for overriding R code
         ArrayList<Source> componentList = getRFiles(getName());
         if (componentList.size() > 0) {
@@ -105,28 +101,22 @@ public abstract class RBuiltinPackage {
         return name;
     }
 
+    private static final ConcurrentHashMap<String, String[]> rFilesCache = new ConcurrentHashMap<>();
+
     /**
      * Get a list of R override files for package {@code pkgName}, from the {@code pkgName/R}
      * subdirectory.
      */
     public static ArrayList<Source> getRFiles(String pkgName) {
         ArrayList<Source> componentList = new ArrayList<>();
-        try {
-            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(RBuiltinPackage.class, pkgName + "/R");
-            if (is != null) {
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
-                    String line;
-                    while ((line = r.readLine()) != null) {
-                        if (line.endsWith(".r") || line.endsWith(".R")) {
-                            final String rResource = pkgName + "/R/" + line.trim();
-                            Source content = Utils.getResourceAsSource(RBuiltinPackage.class, rResource);
-                            componentList.add(content);
-                        }
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            Utils.fail("error loading R code from " + pkgName + " : " + ex);
+        String[] rFileContents = rFilesCache.get(pkgName);
+        if (rFileContents == null) {
+            rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
+            rFilesCache.put(pkgName, rFileContents);
+        }
+        for (String rFileContent : rFileContents) {
+            Source content = RSource.fromTextInternal(rFileContent, RSource.Internal.R_IMPL);
+            componentList.add(content);
         }
         return componentList;
     }
@@ -155,13 +145,17 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    protected void add(Class<?> builtinClass, Function<RNode[], RBuiltinNode> constructor) {
+    protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor) {
+        add(builtinClass, constructor, null);
+    }
+
+    protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
         RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
         putBuiltin(new RBuiltinFactory(annotation.name(), builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
-                        annotation.alwaysSplit(), annotation.dispatch(), constructor));
+                        annotation.alwaysSplit(), annotation.dispatch(), constructor, annotation.behavior(), specialCall));
     }
 }

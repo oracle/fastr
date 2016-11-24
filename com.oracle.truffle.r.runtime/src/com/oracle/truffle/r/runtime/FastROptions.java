@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 /**
@@ -39,21 +41,18 @@ public enum FastROptions {
     PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
     CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
-    Instrument("Enable (Old) Instrumentation", false),
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
-    PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
-    PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, true),
     Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
     PerformanceWarnings("Print FastR performance warning", false),
     LoadBase("Load base package", true),
     PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
-    IgnoreVisibility("Ignore setting of the visibility flag", false),
-    LoadPkgSourcesIndex("Load R package sources index", true),
+    FullPrecisionSum("Use 128 bit arithmetic in sum builtin", false),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
     UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
+    UseSpecials("Whether the fast-path special call nodes should be created for simple enough arguments.", true),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
@@ -84,6 +83,7 @@ public enum FastROptions {
         if (value instanceof Boolean) {
             return (Boolean) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("boolean option value expected with " + name() + " - forgot +/- ?");
             System.exit(2);
             return false;
@@ -96,6 +96,7 @@ public enum FastROptions {
         if (value == null || value instanceof String) {
             return (String) value;
         } else {
+            CompilerDirectives.transferToInterpreter();
             System.out.println("string option value expected with " + name());
             System.exit(2);
             return "";
@@ -104,10 +105,15 @@ public enum FastROptions {
 
     public int getNonNegativeIntValue() {
         assert !isBoolean;
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (value instanceof String) {
             try {
                 int res = Integer.decode((String) value);
                 if (res >= 0) {
+                    value = res;
                     return res;
                 } // else fall through to error message
             } catch (NumberFormatException x) {
@@ -162,6 +168,20 @@ public enum FastROptions {
                         System.exit(2);
                     }
                     FastROptions.setValue(name, entry.getValue());
+                }
+            }
+        }
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            String name = entry.getKey();
+            if (name.startsWith("FASTR_OPTION_")) {
+                name = name.replace("FASTR_OPTION_", "");
+                String value = entry.getValue();
+                if (value == null || value.equals("true") || value.equals("")) {
+                    FastROptions.setValue(name, true);
+                } else if (value.equals("false")) {
+                    FastROptions.setValue(name, false);
+                } else {
+                    FastROptions.setValue(name, value);
                 }
             }
         }

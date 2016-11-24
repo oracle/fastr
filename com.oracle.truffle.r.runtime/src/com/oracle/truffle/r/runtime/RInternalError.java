@@ -29,13 +29,15 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.
@@ -55,6 +57,15 @@ public final class RInternalError extends Error {
 
     public RInternalError(Throwable cause, String message, Object... args) {
         super(String.format(message, args), cause);
+        verboseStackTrace = createVerboseStackTrace();
+    }
+
+    /**
+     * Constructor that does not use {@code String.format} so that the message may contain
+     * formatting instructions.
+     */
+    public RInternalError(Throwable cause, String message) {
+        super(message, cause);
         verboseStackTrace = createVerboseStackTrace();
     }
 
@@ -128,9 +139,19 @@ public final class RInternalError extends Error {
     }
 
     @TruffleBoundary
+    public static void reportErrorAndConsoleLog(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
+        reportError(throwable, consoleHandler, contextId);
+    }
+
+    @TruffleBoundary
     public static void reportError(Throwable throwable) {
+        reportError(throwable, null, 0);
+    }
+
+    private static void reportError(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
         Throwable t = throwable;
         if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(out));
             String verboseStackTrace;
@@ -149,13 +170,22 @@ public final class RInternalError extends Error {
                 System.err.println(verboseStackTrace);
             }
             if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                try (BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(REnvVars.rHome(), "fastr_errors.log"), StandardCharsets.UTF_8, StandardOpenOption.APPEND,
+                String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
+                Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
+                try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
                                 StandardOpenOption.CREATE)) {
                     writer.append(new Date().toString()).append('\n');
                     writer.append(out.toString()).append('\n');
                     writer.append(verboseStackTrace).append("\n\n");
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                if (RContext.isEmbedded()) {
+                    Utils.rSuicide("FastR internal error");
+                }
+                if (consoleHandler != null) {
+                    String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+                    consoleHandler.println(message + " (see fastr_errors.log" + suffix + ")");
                 }
             }
         }

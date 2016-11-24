@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
@@ -35,29 +35,54 @@ import com.oracle.truffle.r.runtime.context.RContext;
  */
 public abstract class CastNode extends UnaryNode {
 
+    private static boolean isTesting = false;
+    private static String lastWarning;
+
+    public static void testingMode() {
+        isTesting = true;
+    }
+
+    /**
+     * For testing purposes only, returns the last warning message (only when {@link #testingMode()}
+     * was invoked before).
+     */
+    public static String getLastWarning() {
+        return lastWarning;
+    }
+
     @TruffleBoundary
-    public static void handleArgumentError(Object arg, CastNode node, RError.Message message, Object[] messageArgs) {
-        if (RContext.getRRuntimeASTAccess() == null) {
-            throw new IllegalArgumentException(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs)));
+    protected static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
+        if (isTesting) {
+            throw new IllegalArgumentException(String.format(message.message, substituteArgPlaceholder(arg, messageArgs)));
         } else {
-            throw RError.error(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            throw RError.error(callObj, message, substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
     @TruffleBoundary
-    public static void handleArgumentWarning(Object arg, CastNode node, RError.Message message, Object[] messageArgs, PrintWriter out) {
+    protected static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
         if (message == null) {
             return;
         }
 
-        if (out != null) {
-            out.printf(message.message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
-        } else if (RContext.getRRuntimeASTAccess() == null) {
-            System.err.println(String.format(message.message, CastBuilder.substituteArgPlaceholder(arg,
-                            messageArgs)));
+        if (isTesting) {
+            lastWarning = String.format(message.message, substituteArgPlaceholder(arg, messageArgs));
         } else {
-            RError.warning(node, message, CastBuilder.substituteArgPlaceholder(arg, messageArgs));
+            RError.warning(callObj, message, substituteArgPlaceholder(arg, messageArgs));
         }
     }
 
+    @SuppressWarnings({"unchecked"})
+    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
+        Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
+
+        for (int i = 0; i < messageArgs.length; i++) {
+            final Object msgArg = messageArgs[i];
+            if (msgArg instanceof Function) {
+                newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
+            }
+        }
+
+        return newMsgArgs;
+    }
 }

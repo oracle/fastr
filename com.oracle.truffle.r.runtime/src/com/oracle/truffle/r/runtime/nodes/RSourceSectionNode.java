@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RDeparse;
 
 /**
  * A subclass of {@link RNode} that carries {@link SourceSection}. Wherever possible, a node that
@@ -35,21 +36,27 @@ public abstract class RSourceSectionNode extends RNode implements RSyntaxNode {
     /**
      * temp disambiguate for debugging until sourceSection removed from Node.
      */
-    @CompilationFinal private SourceSection sourceSectionR;
+    @CompilationFinal private SourceSection sourceSection;
 
     protected RSourceSectionNode(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
     }
 
     @Override
     public final void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
+    }
+
+    @Override
+    public final SourceSection getLazySourceSection() {
+        return sourceSection;
     }
 
     @Override
     public final SourceSection getSourceSection() {
-        return sourceSectionR;
+        RDeparse.ensureSourceSection(this);
+        return sourceSection;
     }
 }

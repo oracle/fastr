@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
@@ -51,8 +52,10 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
         Samples<Object> defaultSamples = defaultSamples();
 
         // convert scalar samples to vector ones
-        Samples<Object> vectorizedSamples = downStreamSamples.map(x -> CastUtils.singletonVector(x), x -> CastUtils.singletonVector(x));
-        return defaultSamples.and(vectorizedSamples);
+        Samples<Object> vectorizedSamples = downStreamSamples.map(x -> CastUtils.singletonVector(x), x -> CastUtils.singletonVector(x),
+                        x -> CastUtils.firstElement(x, defaultValue), x -> CastUtils.firstElement(x, defaultValue));
+        Samples<Object> combined = defaultSamples.and(vectorizedSamples);
+        return combined;
     }
 
     private Samples<Object> defaultSamples() {
@@ -65,26 +68,66 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
             if (emptyVec != null) {
                 defaultNegativeSamples.add(emptyVec);
             }
-            defaultNegativeSamples.add(RNull.instance);
+
+            Predicate<Object> posMembership = this::testVectorForNoDefaultValCase;
+
+            return new Samples<>("findFirst-noDef", defaultPositiveSamples, defaultNegativeSamples, posMembership);
         } else {
             defaultPositiveSamples.add(CastUtils.singletonVector(defaultValue));
+            defaultPositiveSamples.add(RNull.instance);
+            Object emptyVec = CastUtils.emptyVector(elementClass);
+            if (emptyVec != null) {
+                defaultPositiveSamples.add(emptyVec);
+            }
+
+            Predicate<Object> posMembership = this::testVectorForDefaultValCase;
+
+            return new Samples<>("findFirst-withDef", defaultPositiveSamples, defaultNegativeSamples, posMembership);
         }
 
-        return new Samples<>(defaultPositiveSamples, defaultNegativeSamples);
+    }
+
+    private boolean testVectorForNoDefaultValCase(Object x) {
+        if (x == RMissing.instance || x == RNull.instance || x == null) {
+            return false;
+        }
+
+        if (x instanceof RAbstractVector) {
+            Class<?> elemCls = CastUtils.vectorElementType(x).orElse(null);
+            return elemCls != null && elementClass.isAssignableFrom(elemCls) && ((RAbstractVector) x).getLength() > 0;
+        } else {
+            return elementClass.isInstance(x);
+        }
+    }
+
+    private boolean testVectorForDefaultValCase(Object x) {
+        if (x == RMissing.instance || x == RNull.instance || x == null) {
+            return true;
+        }
+
+        if (x instanceof RAbstractVector) {
+            Class<?> elemCls = CastUtils.vectorElementType(x).orElse(null);
+            return elemCls != null && elementClass.isAssignableFrom(elemCls);
+        } else {
+            return elementClass.isInstance(x);
+        }
     }
 
     @Override
     public TypeExpr resultTypes(TypeExpr inputType) {
+        TypeExpr rt;
         if (elementClass == null || elementClass == Object.class) {
             if (inputType.isAnything()) {
-                return TypeExpr.atom(RAbstractVector.class).not();
+                rt = TypeExpr.atom(RAbstractVector.class).not();
             } else {
                 Set<Type> resTypes = inputType.classify().stream().map(c -> CastUtils.elementType(c)).collect(Collectors.toSet());
-                return TypeExpr.union(resTypes);
+                rt = TypeExpr.union(resTypes);
             }
         } else {
-            return TypeExpr.atom(elementClass).or(TypeExpr.atom(RNull.class)).or(TypeExpr.atom(RMissing.class));
+            rt = TypeExpr.atom(elementClass);
         }
+
+        return rt;
     }
 
 }

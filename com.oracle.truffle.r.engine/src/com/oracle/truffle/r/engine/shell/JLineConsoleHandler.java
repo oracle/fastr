@@ -24,13 +24,15 @@ package com.oracle.truffle.r.engine.shell;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
@@ -42,10 +44,17 @@ class JLineConsoleHandler implements ConsoleHandler {
     private final boolean isInteractive;
     private final PrintWriter printWriter;
 
-    JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
-        this.console = console;
+    JLineConsoleHandler(RStartParams startParams, InputStream inStream, OutputStream outStream) {
+        try {
+            console = new ConsoleReader(inStream, outStream);
+            console.setHandleUserInterrupt(true);
+            console.setExpandEvents(false);
+        } catch (IOException ex) {
+            throw Utils.rSuicide("unexpected error opening console reader");
+        }
+        // long start = System.currentTimeMillis();
         printWriter = new PrintWriter(console.getOutput());
-        this.isInteractive = isInteractive;
+        this.isInteractive = startParams.getInteractive();
     }
 
     @Override
@@ -75,7 +84,7 @@ class JLineConsoleHandler implements ConsoleHandler {
         } catch (UserInterruptException e) {
             throw e;
         } catch (Exception ex) {
-            throw Utils.fail("unexpected error reading console input: " + ex);
+            throw Utils.rSuicide("unexpected error reading console input: " + ex);
         }
     }
 
@@ -109,13 +118,8 @@ class JLineConsoleHandler implements ConsoleHandler {
     }
 
     @Override
-    public int getWidth() {
-        return RContext.CONSOLE_WIDTH;
-    }
-
-    @Override
     public String getInputDescription() {
-        return RInternalSourceDescriptions.SHELL_INPUT;
+        return RSource.Internal.SHELL_INPUT.string;
     }
 
     @Override

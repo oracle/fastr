@@ -25,21 +25,19 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@NodeField(name = "nonVectorPreserved", type = boolean.class)
+@NodeField(name = "preserveNonVector", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
-    public abstract boolean isNonVectorPreserved();
+    public abstract boolean isPreserveNonVector();
 
     @Specialization
     protected Object castNull(@SuppressWarnings("unused") RNull rnull) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return RNull.instance;
         } else {
             return RDataFactory.createList();
@@ -48,7 +46,7 @@ public abstract class CastToVectorNode extends CastNode {
 
     @Specialization
     protected Object castMissing(@SuppressWarnings("unused") RMissing missing) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return RMissing.instance;
         } else {
             return RDataFactory.createList();
@@ -57,7 +55,7 @@ public abstract class CastToVectorNode extends CastNode {
 
     @Specialization
     protected Object castFunction(RFunction f) {
-        if (isNonVectorPreserved()) {
+        if (isPreserveNonVector()) {
             return f;
         } else {
             return RDataFactory.createList();
@@ -67,11 +65,6 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
-    }
-
-    @Specialization
-    protected RList cast(RExpression expression) {
-        return expression.getList();
     }
 
     public static CastToVectorNode create() {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RDeparse;
 
 /**
  * This is the base interface for all nodes in the tree of elements that make up an R closure.
@@ -33,6 +34,13 @@ import com.oracle.truffle.api.source.SourceSection;
 public interface RSyntaxElement {
 
     SourceSection getSourceSection();
+
+    /**
+     * This is a special version of {@link #getSourceSection} that does not try to
+     * {@link RDeparse#ensureSourceSection(RSyntaxNode) deparse} {@link SourceSection}s that are
+     * {@link RSyntaxNode#INTERNAL internal}.
+     */
+    SourceSection getLazySourceSection();
 
     void setSourceSection(SourceSection source);
 

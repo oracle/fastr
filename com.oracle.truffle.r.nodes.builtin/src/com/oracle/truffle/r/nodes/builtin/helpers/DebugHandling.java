@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
@@ -44,20 +45,22 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
-import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalSourceDescriptions;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * The implementation of the R debug functions.
@@ -103,24 +106,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNodeVisitor;
 public class DebugHandling {
 
     /**
-     * Records all functions that have debug listeners installed.
-     */
-    private static final WeakHashMap<FunctionUID, FunctionStatementsEventListener> listenerMap = new WeakHashMap<>();
-
-    /**
-     * This flag is used to (temporarily) disable all debugging across calls that are used
-     * internally in the implementation.
-     */
-    private static boolean globalDisable;
-
-    /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
+     *
+     * @param implicit TODO
      */
-    public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        FunctionStatementsEventListener fbr = listenerMap.get(fdn.getUID());
+    public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
+        FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
         if (fbr == null) {
-            attachDebugHandler(func, text, condition, once);
+            attachDebugHandler(func, text, condition, once, implicit);
         } else {
             fbr.enable();
         }
@@ -128,7 +121,7 @@ public class DebugHandling {
     }
 
     public static boolean undebug(RFunction func) {
-        FunctionStatementsEventListener fbr = listenerMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
         if (fbr == null) {
             return false;
         } else {
@@ -138,29 +131,25 @@ public class DebugHandling {
     }
 
     public static boolean isDebugged(RFunction func) {
-        FunctionStatementsEventListener fser = listenerMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
+        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(func);
         return fser != null && !fser.disabled();
     }
 
-    /**
-     * Disables/enables debugging globally. Intended to be used for short period, typically while
-     * executing functions used internally by the implementation.
-     *
-     * @param disable {@code true} to disable, {@code false} to enable.
-     * @return the current value (default {@code false}.
-     */
-    public static boolean globalDisable(boolean disable) {
-        boolean current = globalDisable;
-        globalDisable = disable;
-        return current;
+    private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
     }
 
-    private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once) {
-        attachDebugHandler(RInstrumentation.getFunctionDefinitionNode(func), text, condition, once);
+    private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.getSourceSection());
     }
 
-    private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once) {
-        FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once);
+    private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
+        attachDebugHandler(RInstrumentation.getFunctionDefinitionNode(func), text, condition, once, implicit);
+    }
+
+    @TruffleBoundary
+    private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once, boolean implicit) {
+        FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once, implicit);
         // First attach the main listener on the START_FUNCTION
         Instrumenter instrumenter = RInstrumentation.getInstrumenter();
         SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(fdn, StandardTags.RootTag.class);
@@ -171,25 +160,43 @@ public class DebugHandling {
         instrumenter.attachListener(statementBuilder.build(), fser.getStatementListener());
         // Finally attach loop listeners to all loop nodes
         SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LoopTag.class);
-        RSyntaxNode.accept(fdn, 0, new RSyntaxNodeVisitor() {
+        new RSyntaxVisitor<Void>() {
 
             @Override
-            public boolean visit(RSyntaxNode node, int depth) {
-                if (node instanceof AbstractLoopNode) {
-                    instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver(node));
+            protected Void visit(RSyntaxCall element) {
+                if (element instanceof AbstractLoopNode) {
+                    instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver((AbstractLoopNode) element));
                 }
-                return true;
+                accept(element.getSyntaxLHS());
+                for (RSyntaxElement arg : element.getSyntaxArguments()) {
+                    accept(arg);
+                }
+                return null;
             }
 
-        }, false);
+            @Override
+            protected Void visit(RSyntaxConstant element) {
+                return null;
+            }
+
+            @Override
+            protected Void visit(RSyntaxLookup element) {
+                return null;
+            }
+
+            @Override
+            protected Void visit(RSyntaxFunction element) {
+                return null;
+            }
+        }.accept(fdn);
         return fser;
     }
 
     private static void ensureSingleStep(FunctionDefinitionNode fdn) {
-        FunctionStatementsEventListener fser = listenerMap.get(fdn.getUID());
+        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true);
+            fser = attachDebugHandler(fdn, null, null, true, false);
         } else {
             if (fser.disabled()) {
                 fser.enable();
@@ -221,7 +228,7 @@ public class DebugHandling {
         }
 
         boolean disabled() {
-            return disabled || globalDisable;
+            return disabled || RContext.getInstance().stateInstrumentation.debugGloballyDisabled();
         }
 
         void disable() {
@@ -239,6 +246,7 @@ public class DebugHandling {
             }
         }
 
+        @TruffleBoundary
         protected static void print(String msg, boolean nl) {
             try {
                 StdConnections.getStdout().writeString(msg, nl);
@@ -261,8 +269,7 @@ public class DebugHandling {
                          * so hopefully only the one function will actually get instrumented - but
                          * will everything get invalidated?
                          */
-                        stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
-                                        new StepIntoInstrumentListener(listenerMap.get(functionDefinitionNode.getUID())));
+                        attachStepInto();
                     }
                     break;
                 case BrowserInteractNode.CONTINUE:
@@ -275,7 +282,7 @@ public class DebugHandling {
                     AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {
                         // Have to disable just the body of the loop
-                        FunctionStatementsEventListener fser = listenerMap.get(functionDefinitionNode.getUID());
+                        FunctionStatementsEventListener fser = getFunctionStatementsEventListener(functionDefinitionNode);
                         fser.setFinishing(loopNode);
                     } else {
                         doContinue();
@@ -284,11 +291,19 @@ public class DebugHandling {
             }
         }
 
+        @TruffleBoundary
+        private void attachStepInto() {
+            stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+                            new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
+
+        }
+
         private void doContinue() {
-            FunctionStatementsEventListener fser = listenerMap.get(functionDefinitionNode.getUID());
+            FunctionStatementsEventListener fser = getFunctionStatementsEventListener(functionDefinitionNode);
             fser.setContinuing();
         }
 
+        @TruffleBoundary
         protected void clearStepInstrument() {
             if (stepIntoInstrument != null) {
                 stepIntoInstrument.dispose();
@@ -315,17 +330,23 @@ public class DebugHandling {
          */
         private final boolean once;
         /**
+         * Denotes that this was installed by an explicit call to {@code browser()} on an otherwise
+         * undebugged function. {@code assert once == true}.
+         */
+        private final boolean implicit;
+        /**
          * Records whether a permanent handler was (temporarily) enabled for a step-into.
          *
          */
         private boolean enabledForStepInto;
         private boolean continuing;
 
-        FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
+        FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once, boolean implicit) {
             super(functionDefinitionNode, text, condition);
-            listenerMap.put(functionDefinitionNode.getUID(), this);
+            RContext.getInstance().stateInstrumentation.putDebugListener(functionDefinitionNode.getSourceSection(), this);
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
+            this.implicit = implicit;
         }
 
         StatementEventListener getStatementListener() {
@@ -387,6 +408,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 print("debugging in: ", false);
                 printCall(frame);
                 /*
@@ -403,6 +425,7 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup(frame);
             }
         }
@@ -410,13 +433,16 @@ public class DebugHandling {
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup(frame);
             }
         }
 
         private void returnCleanup(VirtualFrame frame) {
-            print("exiting from: ", false);
-            printCall(frame);
+            if (!implicit) {
+                print("exiting from: ", false);
+                printCall(frame);
+            }
             if (once || enabledForStepInto) {
                 disable();
             } else if (continuing) {
@@ -434,6 +460,7 @@ public class DebugHandling {
         }
     }
 
+    @TruffleBoundary
     private static void printNode(Node node, boolean startFunction) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         /*
@@ -447,8 +474,8 @@ public class DebugHandling {
             consoleHandler.print("debug: ");
         } else {
             SourceSection source = ((RBaseNode) node).asRSyntaxNode().getSourceSection();
-            String path = source.getSource().getPath();
-            if (path == null || RInternalSourceDescriptions.isInternal(path)) {
+            String path = RSource.getPath(source.getSource());
+            if (path == null) {
                 path = "";
             }
             consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");
@@ -466,6 +493,7 @@ public class DebugHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 // in case we did a step into that never called a function
                 clearStepInstrument();
                 RBaseNode node = (RBaseNode) context.getInstrumentedNode();
@@ -517,6 +545,7 @@ public class DebugHandling {
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
         }
@@ -524,6 +553,7 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
         }
@@ -559,7 +589,8 @@ public class DebugHandling {
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!globalDisable) {
+            if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
+                CompilerDirectives.transferToInterpreter();
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
                 ensureSingleStep(fdn);
                 functionStatementsEventListener.clearStepInstrument();

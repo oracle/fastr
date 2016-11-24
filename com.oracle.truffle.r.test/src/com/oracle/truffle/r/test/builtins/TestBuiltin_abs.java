@@ -12,6 +12,7 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.ArithmeticWhiteList;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -55,7 +56,7 @@ public class TestBuiltin_abs extends TestBase {
 
     @Test
     public void testabs8() {
-        assertEval(Ignored.Unknown, "argv <- list(1e+07);abs(argv[[1]]);");
+        assertEval("argv <- list(1e+07);abs(argv[[1]]);");
     }
 
     @Test
@@ -141,17 +142,17 @@ public class TestBuiltin_abs extends TestBase {
         assertEval("{ abs(c(1, -2, 3)) }");
         assertEval("{ abs(c(1L, -2L, 3L)) }");
         assertEval("{ abs(c(1L, -2L, NA)) }");
-        assertEval("{ abs((-1-0i)/(0+0i)) }");
-        assertEval("{ abs((-0-1i)/(0+0i)) }");
+        assertEval(ArithmeticWhiteList.WHITELIST, "{ abs((-1-0i)/(0+0i)) }");
+        assertEval(ArithmeticWhiteList.WHITELIST, "{ abs((-0-1i)/(0+0i)) }");
         assertEval("{ abs(NA+0.1) }");
         assertEval("{ abs((0+0i)/0) }");
         assertEval("{ abs(c(1, -2, NA)) }");
         assertEval("{ abs(NULL) }");
 
-        assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
+        assertEval("{ abs(c(0/0,1i)) }");
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
 
-        assertEval("{ is.integer(abs(FALSE) }");
+        assertEval("{ is.integer(abs(FALSE)) }");
     }
 }

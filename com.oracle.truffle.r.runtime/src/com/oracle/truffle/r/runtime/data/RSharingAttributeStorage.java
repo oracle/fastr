@@ -41,28 +41,30 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
 
     @Override
     public final void incRefCount() {
+        assert refCount != SHARED_PERMANENT_VAL : "cannot incRefCount of shared permanent value";
         refCount++;
     }
 
     @Override
     public final void decRefCount() {
-        assert refCount > 0;
+        assert refCount != SHARED_PERMANENT_VAL : "cannot decRefCount of shared permanent value";
+        assert refCount > 0 : "cannot decRefCount when refCount <= 0";
         refCount--;
     }
 
     @Override
-    public boolean isSharedPermanent() {
+    public final boolean isSharedPermanent() {
         return refCount == SHARED_PERMANENT_VAL;
     }
 
     @Override
-    public RSharingAttributeStorage makeSharedPermanent() {
+    public final RSharingAttributeStorage makeSharedPermanent() {
         refCount = SHARED_PERMANENT_VAL;
         return this;
     }
 
     @Override
-    public RTypedValue getNonShared() {
+    public final RTypedValue getNonShared() {
         if (isShared()) {
             RShareable res = copy();
             assert res.isTemporary();

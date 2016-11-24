@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -71,8 +73,17 @@ final class ValuePrinters implements ValuePrinter<Object> {
         if (v == RNull.instance) {
             NullPrinter.INSTANCE.print(null, printCtx);
         } else {
-            // Try to box a scalar primitive value to the respective vector
-            Object x = printCtx.printerNode().boxPrimitive(v);
+            // handle types that can appear via Truffle interop
+            Object x = v;
+            if (x instanceof Boolean) {
+                x = RRuntime.asLogical((Boolean) x);
+            } else if (x instanceof Long || x instanceof Short || x instanceof Float) {
+                x = ((Number) x).doubleValue();
+            } else if (x instanceof Character) {
+                x = ((Character) x).toString();
+            }
+            // try to box a scalar primitive value to the respective vector
+            x = printCtx.printerNode().boxPrimitive(x);
             ValuePrinter printer = printers.get(x.getClass());
             if (printer == null) {
                 if (x instanceof RAbstractIntVector && ((RAttributable) x).hasClass(RRuntime.CLASS_FACTOR)) {
@@ -93,11 +104,23 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = ListPrinter.INSTANCE;
                 } else if (x instanceof REnvironment) {
                     printer = EnvironmentPrinter.INSTANCE;
+                } else if (x instanceof TruffleObject) {
+                    assert !(x instanceof RTypedValue);
+                    printer = TruffleObjectPrinter.INSTANCE;
                 } else {
                     RInternalError.shouldNotReachHere("unexpected type: " + (x == null ? "null" : x.getClass()));
                 }
             }
             printer.print(x, printCtx);
+        }
+    }
+
+    public static void printNewLine(PrintContext printCtx) {
+        if (!Boolean.TRUE.equals(printCtx.getAttribute(DONT_PRINT_NL_ATTR))) {
+            printCtx.output().println();
+        } else {
+            // Clear the instruction attribute
+            printCtx.setAttribute(DONT_PRINT_NL_ATTR, false);
         }
     }
 }

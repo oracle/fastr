@@ -22,19 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@NodeFields({@NodeField(name = "preserveNames", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "attrPreservation", type = boolean.class)})
 public abstract class CastBaseNode extends CastNode {
 
     private final BranchProfile listCoercionErrorBranch = BranchProfile.create();
@@ -43,11 +48,29 @@ public abstract class CastBaseNode extends CastNode {
     private final NullProfile hasNamesProfile = NullProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    protected abstract boolean isPreserveNames();
+    private final boolean preserveNames;
+    private final boolean preserveDimensions;
+    private final boolean preserveAttributes;
 
-    protected abstract boolean isDimensionsPreservation();
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        this.preserveNames = preserveNames;
+        this.preserveDimensions = preserveDimensions;
+        this.preserveAttributes = preserveAttributes;
+    }
 
-    protected abstract boolean isAttrPreservation();
+    public boolean preserveNames() {
+        return preserveNames;
+    }
+
+    public boolean preserveDimensions() {
+        return preserveDimensions;
+    }
+
+    public boolean preserveAttributes() {
+        return preserveAttributes;
+    }
+
+    protected abstract RType getTargetType();
 
     protected RError throwCannotCoerceListError(String type) {
         listCoercionErrorBranch.enter();
@@ -55,7 +78,7 @@ public abstract class CastBaseNode extends CastNode {
     }
 
     protected int[] getPreservedDimensions(RAbstractContainer operand) {
-        if (isDimensionsPreservation()) {
+        if (preserveDimensions()) {
             return hasDimensionsProfile.profile(operand.getDimensions());
         } else {
             return null;
@@ -63,19 +86,34 @@ public abstract class CastBaseNode extends CastNode {
     }
 
     protected RStringVector getPreservedNames(RAbstractContainer operand) {
-        if (isPreserveNames()) {
+        if (preserveNames()) {
             return hasNamesProfile.profile(operand.getNames(attrProfiles));
         } else {
             return null;
         }
     }
 
-    protected void preserveDimensionNames(RAbstractContainer operand, RVector ret) {
-        if (isDimensionsPreservation()) {
+    protected void preserveDimensionNames(RAbstractContainer operand, RVector<?> ret) {
+        if (preserveDimensions()) {
             RList dimNames = operand.getDimNames(attrProfiles);
             if (hasDimNamesProfile.profile(dimNames != null)) {
                 ret.setDimNames((RList) dimNames.copy());
             }
+        }
+    }
+
+    @Fallback
+    @TruffleBoundary
+    protected Object doOther(Object value) {
+        Object mappedValue = RRuntime.asAbstractVector(value);
+        if (mappedValue instanceof REnvironment) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ENVIRONMENTS_COERCE);
+        } else if (mappedValue instanceof RTypedValue) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
+        } else if (mappedValue instanceof TruffleObject) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
+        } else {
+            throw RInternalError.shouldNotReachHere("unexpected value of type " + (mappedValue == null ? "null" : mappedValue.getClass()));
         }
     }
 }

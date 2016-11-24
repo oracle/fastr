@@ -33,22 +33,18 @@ import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.oracle.truffle.r.runtime.REnvVars;
-
-/*
- *  Base class for all Java test suites (in the sense of JUnit Java files)
- *  that want to run R tests stored in the file system as R sources.
- *  It is expected that R test source files will be stored in the R sub-directory
- *  of a directory stored in com.oracle.truffle.r.test/src/com/oracle/truffle/r/test
+/**
+ * Base class for all Java test suites (in the sense of JUnit Java files) that want to run R tests
+ * stored in the file system as R sources. It is expected that R test source files will be stored in
+ * the R sub-directory of the {@code com.oracle.truffle.r.test} project.
  *
- *  The first line of the file may contain some configuration information (as an R comment).
- *  At this point, two keywords are recognized - ContainsError and ContansWarning. Including
- *  any of them on in the first line will cause appropriate execution method to be chosen
- *  (if both are present then ContainsError has precedence).
+ * The first line of the file may contain some configuration information (as an R comment). At this
+ * point, two keywords are recognized - ContainsError and ContansWarning. Including any of them on
+ * in the first line will cause appropriate execution method to be chosen (if both are present then
+ * ContainsError has precedence).
  *
- *  The R files are sourced, so any test results have to be explicitly printed.
+ * The R files are sourced, so any test results have to be explicitly printed.
  */
-
 public class TestRBase extends TestBase {
 
     /*
@@ -64,7 +60,7 @@ public class TestRBase extends TestBase {
         if (testDirName == null) {
             return;
         }
-        Path testDirPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "src", "com", "oracle", "truffle", "r", "test", testDirName, "R");
+        Path testDirPath = TestBase.getProjectFile(Paths.get(testDirName, "R"));
         if (!Files.exists(testDirPath) || !Files.isDirectory(testDirPath)) {
             return;
         }
@@ -87,11 +83,13 @@ public class TestRBase extends TestBase {
                             testTrait = Output.IgnoreErrorContext;
                         } else if (l.contains("IgnoreWarningContext")) {
                             testTrait = Output.IgnoreWarningContext;
+                        } else if (l.contains("Ignored")) {
+                            testTrait = Ignored.Unknown;
                         }
                     }
                 }
                 bf.close();
-                String testFilePath = TestBase.relativize(testDirPath.resolve(files[i].getName())).toString();
+                String testFilePath = testDirPath.resolve(files[i].getName()).toString();
                 if (testTrait == null) {
                     assertEval(TestBase.template("{ source(\"%0\") }", new String[]{testFilePath}));
                 } else {

@@ -31,6 +31,7 @@ public class TestBuiltin_parse extends TestBase {
     @Test
     public void testParseVector() {
         assertEval("parse(text=deparse(c(1, 2, 3)))");
+        assertEval("{ parse(text=c(\"for (i in 1:10) {\", \"    x[i] <- i\", \"}\")) }");
     }
 
     @Test
@@ -50,5 +51,10 @@ public class TestBuiltin_parse extends TestBase {
         assertEval(Ignored.ImplementationError, "attributes(parse(text='is.null'))");
         assertEval("parse(text='somethingthatdoesnotexist')");
         assertEval(Ignored.ImplementationError, "attributes(parse(text='somethingthatdoesnotexist'))");
+    }
+
+    @Test
+    public void testArgumentsCasts() {
+        assertEval(".Internal(parse(stdin(), c(1,2), c('expr1', 'expr2'), '?', '<weird-text', 'unknown'))");
     }
 }

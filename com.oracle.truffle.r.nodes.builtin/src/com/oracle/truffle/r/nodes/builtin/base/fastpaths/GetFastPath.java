@@ -29,23 +29,22 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class GetFastPath extends RFastPathNode {
 
-    @Child private Get get = GetNodeGen.create(null);
+    @Child private Get get = GetNodeGen.create();
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, RMissing pos, REnvironment envir, RMissing mode, byte inherits) {
+    protected Object getNonInherit(VirtualFrame frame, String x, RMissing pos, REnvironment envir, RMissing mode, byte inherits) {
         return get.execute(frame, x, envir, "any", RRuntime.fromLogical(inherits));
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, RMissing pos, REnvironment envir, RMissing mode, RMissing inherits) {
+    protected Object getNonInherit(VirtualFrame frame, String x, RMissing pos, REnvironment envir, RMissing mode, RMissing inherits) {
         return get.execute(frame, x, envir, "any", true);
     }
 

@@ -11,7 +11,9 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -21,14 +23,13 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -43,10 +44,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * {@link PromiseCheckHelperNode}.
  *
  */
-@RBuiltin(name = "switch", visibility = RVisibility.CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
+@RBuiltin(name = "switch", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Switch extends RBuiltinNode {
+
     @Child private CastIntegerNode castIntNode;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     private final BranchProfile suppliedArgNameIsEmpty = BranchProfile.create();
     private final BranchProfile suppliedArgNameIsNull = BranchProfile.create();
@@ -54,16 +57,21 @@ public abstract class Switch extends RBuiltinNode {
     private final ConditionProfile currentDefaultProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile notIntType = BranchProfile.create();
+    private final ConditionProfile noAlternativesProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         if (x.getLength() != 1) {
             throw RError.error(this, RError.Message.EXPR_NOT_LENGTH_ONE);
         }
-        return prepareResult(doSwitchString(frame, x, optionalArgs));
+        return prepareResult(frame, doSwitchString(frame, x, optionalArgs));
     }
 
     private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+        if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
+            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            return null;
+        }
         Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
         ArgumentsSignature signature = optionalArgs.getSignature();
@@ -129,7 +137,7 @@ public abstract class Switch extends RBuiltinNode {
 
     @Specialization
     protected Object doSwitch(VirtualFrame frame, int x, RArgsValuesAndNames optionalArgs) {
-        return prepareResult(doSwitchInt(frame, x, optionalArgs));
+        return prepareResult(frame, doSwitchInt(frame, x, optionalArgs));
     }
 
     @Specialization
@@ -143,7 +151,7 @@ public abstract class Switch extends RBuiltinNode {
             notIntType.enter();
             return null;
         }
-        return prepareResult(doSwitchInt(frame, (int) objIndex, optionalArgs));
+        return prepareResult(frame, doSwitchInt(frame, (int) objIndex, optionalArgs));
     }
 
     @SuppressWarnings("unused")
@@ -154,6 +162,10 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
+        if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
+            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            return null;
+        }
         Object[] optionalArgValues = optionalArgs.getArguments();
         if (index >= 1 && index <= optionalArgValues.length) {
             Object value = promiseHelper.checkEvaluate(frame, optionalArgValues[index - 1]);
@@ -165,12 +177,12 @@ public abstract class Switch extends RBuiltinNode {
         return null;
     }
 
-    private Object prepareResult(Object value) {
+    private Object prepareResult(VirtualFrame frame, Object value) {
         if (returnValueProfile.profile(value != null)) {
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
             return value;
         } else {
-            RContext.getInstance().setVisible(false);
+            visibility.execute(frame, false);
             return RNull.instance;
         }
     }

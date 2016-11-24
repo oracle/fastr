@@ -22,38 +22,64 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RDispatch;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-@RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.MATH_GROUP_GENERIC)
-public abstract class Ceiling extends RBuiltinNode {
+@RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
 
-    public static final UnaryArithmeticFactory CEILING = CeilingArithmetic::new;
+    public static final UnaryArithmeticFactory CEILING = FloorNodeGen.create();
 
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(CEILING, RError.Message.NON_NUMERIC_MATH, RType.Double);
+    public Ceiling() {
+        super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
+    }
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("x").mustNotBeNull(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).asDoubleVector();
+    }
+
+    @Override
+    public int op(byte op) {
+        return op;
+    }
+
+    @Override
+    public int op(int op) {
+        return op;
+    }
+
+    @Override
+    public double op(double op) {
+        return Math.ceil(op);
+    }
+
+    @Override
+    protected double opd(double re, double im) {
+        return op(re);
+    }
+
+    @Override
+    public RComplex op(double re, double im) {
+        return RDataFactory.createComplex(op(re), op(im));
+    }
 
     @Specialization
-    protected Object ceiling(Object value) {
-        return ceiling.execute(boxPrimitive.execute(value));
+    @Override
+    public Object calculateUnboxed(Object op) {
+        return super.calculateUnboxed(op);
     }
 
-    private static final class CeilingArithmetic extends Round.RoundArithmetic {
-
-        @Override
-        public double op(double op) {
-            return Math.ceil(op);
-        }
-    }
 }

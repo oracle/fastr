@@ -30,8 +30,8 @@ public class TestBuiltin_asfunction extends TestBase {
 
     @Test
     public void testasfunction() {
-        assertEval("as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))");
-        assertEval("f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
+        assertEval(Output.IgnoreWhitespace, "as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))");
+        assertEval(Output.IgnoreWhitespace, "f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))");
         assertEval("foo <- function(x) x*2; as.function(c(alist(a=1+14, b=foo(x),c=), quote(a+foo(c)*b)))(c=3,b=1)");
         assertEval("foo <- function(x) x*2; f <- function() a+foo(c)*b; as.function(c(alist(a=1+14, b=foo(x),c=), body(f)))(c=3,b=1)");
         assertEval("{ as.function(alist(42))() }");
@@ -40,5 +40,7 @@ public class TestBuiltin_asfunction extends TestBase {
         assertEval("{ as.function(alist(\"foo\"))() }");
         assertEval("{ as.function(alist(7+42i))() }");
         assertEval("{ as.function(alist(as.raw(7)))() }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(alist(a+b), \"foo\")) }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(function() 42, parent.frame())) }");
     }
 }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
 final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
@@ -35,6 +36,7 @@ final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
     }
 
     @Override
+    @TruffleBoundary
     protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
         printCtx.output().print("");
     }

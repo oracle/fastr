@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -38,16 +43,14 @@ import com.oracle.truffle.r.nodes.builtin.base.TraceFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TraceFunctionsFactory.PrimUnTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -71,18 +74,18 @@ public class FastRTrace {
         protected Object getWhere(VirtualFrame frame) {
             if (topEnv == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                topEnv = insert(TopEnvNodeGen.create(null));
-                parentFrame = insert(ParentFrameNodeGen.create(null));
+                topEnv = insert(TopEnvNodeGen.create());
+                parentFrame = insert(ParentFrameNodeGen.create());
             }
-            return topEnv.execute(frame, parentFrame.execute(frame, 1), RNull.instance);
+            return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);
         }
 
         protected Object getFunction(VirtualFrame frame, Object what, Object where) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(null));
+                getNode = insert(GetNodeGen.create());
             }
-            return getNode.execute(frame, what, where, RType.Function.getName(), true);
+            return getNode.executeBuiltin(frame, what, where, RType.Function.getName(), true);
         }
 
         protected void checkWhat(Object what) {
@@ -106,11 +109,12 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.trace", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"})
+    @RBuiltin(name = ".fastr.trace", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"}, behavior = COMPLEX)
     public abstract static class Trace extends Helper {
 
         @Child private TraceFunctions.PrimTrace primTrace;
         @Child private CastLogicalNode castLogical;
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Specialization
         protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
@@ -130,11 +134,11 @@ public class FastRTrace {
                 // simple case, nargs() == 1, corresponds to .primTrace that has invisible output
                 if (primTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    primTrace = insert(PrimTraceNodeGen.create(null));
+                    primTrace = insert(PrimTraceNodeGen.create());
                 }
 
-                Object result = primTrace.execute(frame, func);
-                RContext.getInstance().setVisible(false);
+                Object result = primTrace.executeBuiltin(frame, func);
+                visibility.execute(frame, false);
                 return result;
             }
 
@@ -150,7 +154,7 @@ public class FastRTrace {
                 print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
             }
             complexCase(func, tracer, exit, at, print, signature);
-            RContext.getInstance().setVisible(true);
+            visibility.execute(frame, true);
             return func.toString();
         }
 
@@ -171,14 +175,13 @@ public class FastRTrace {
 
     }
 
-    @RBuiltin(name = ".fastr.untrace", visibility = RVisibility.OFF, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"what", "signature", "where"})
+    @RBuiltin(name = ".fastr.untrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"what", "signature", "where"}, behavior = COMPLEX)
     public abstract static class Untrace extends Helper {
 
         @Child private TraceFunctions.PrimUnTrace primUnTrace;
 
         @Specialization
         protected Object untrace(VirtualFrame frame, Object whatObj, Object signature, Object whereObj) {
-            RContext.getInstance().setVisible(false);
             Object what = whatObj;
             checkWhat(what);
             Object where = whereObj;
@@ -193,9 +196,9 @@ public class FastRTrace {
             if (signature == RMissing.instance) {
                 if (primUnTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    primUnTrace = insert(PrimUnTraceNodeGen.create(null));
+                    primUnTrace = insert(PrimUnTraceNodeGen.create());
                 }
-                primUnTrace.execute(frame, func);
+                primUnTrace.executeBuiltin(frame, func);
             } else {
                 throw RError.nyi(this, "method tracing");
             }

@@ -23,7 +23,14 @@ public class TestBuiltin_environmentassign extends TestBase {
         assertEval("{ e1 <- new.env(); e2 <- new.env(); environment(e1) <- e2 }");
         assertEval("{ e1 <- new.env(); environment(e1) <- 3 }");
 
+        assertEval("{ e1 <- 1; environment(e1) <- NULL }");
+        assertEval("{ e1 <- 1; e2 <- new.env(); environment(e1) <- e2 }");
+        assertEval("{ e1 <- 1; environment(e1) <- 3 }");
+
         assertEval("{ f <- function() {}; e1 <- new.env(); environment(f) <- e1 }");
+        assertEval("{ f <- function() {}; environment(f) <- NULL }");
         assertEval("{ f <- function() x; f2 <- f; e <- new.env(); assign('x', 2, envir=e); x <- 1; environment(f) <- e; c(f(), f2())}");
+
+        assertEval("{ f <- NULL; environment(f) <- new.env() }");
     }
 }

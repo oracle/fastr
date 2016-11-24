@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -35,10 +38,8 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
-import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -53,7 +54,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * here.
  *
  */
-@RBuiltin(name = "args", kind = RBuiltinKind.INTERNAL, parameterNames = {"name"})
+@RBuiltin(name = "args", kind = INTERNAL, parameterNames = {"name"}, behavior = COMPLEX)
 public abstract class Args extends RBuiltinNode {
 
     @Child private GetFunctions.Get getNode;
@@ -66,11 +67,10 @@ public abstract class Args extends RBuiltinNode {
         }
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(null));
-            parentFrameNode = insert(ParentFrameNodeGen.create(null));
-
+            getNode = insert(GetNodeGen.create());
+            parentFrameNode = insert(ParentFrameNodeGen.create());
         }
-        return args((RFunction) getNode.execute(frame, funName, parentFrameNode.execute(frame, 1), RType.Function.getName(), true));
+        return args((RFunction) getNode.execute(frame, funName.getDataAt(0), parentFrameNode.execute(frame, 1), RType.Function.getName(), true));
     }
 
     @Specialization
@@ -82,10 +82,9 @@ public abstract class Args extends RBuiltinNode {
         RRootNode rootNode = (RRootNode) fun.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         String newDesc = "args(" + rootNode.getDescription() + ")";
-        FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.EAGER_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
-                        ConstantNode.create(RSyntaxNode.EAGER_DEPARSE, RNull.instance), formals, newDesc, null);
-        RDeparse.ensureSourceSection(newNode);
-        return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame());
+        FunctionDefinitionNode newNode = FunctionDefinitionNode.create(RSyntaxNode.LAZY_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
+                        ConstantNode.create(RSyntaxNode.LAZY_DEPARSE, RNull.instance), formals, newDesc, null);
+        return RDataFactory.createFunction(newDesc, RFunction.NO_NAME, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame());
     }
 
     @Specialization(guards = {"!isRFunction(fun)", "!isRAbstractStringVector(fun)"})

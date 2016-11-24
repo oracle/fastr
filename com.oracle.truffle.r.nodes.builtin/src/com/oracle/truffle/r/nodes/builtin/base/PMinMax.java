@@ -22,12 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.PMinMaxNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -42,11 +50,11 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
-import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -79,10 +87,15 @@ public abstract class PMinMax extends RBuiltinNode {
     protected PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.semantics = semantics;
         this.factory = factory;
-        this.op = factory.create();
+        this.op = factory.createOperation();
     }
 
-    private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+    }
+
+    private byte handleString(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object data) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
@@ -117,7 +130,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getStringCastNode() {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(true, true, true, false));
+            castString = insert(CastStringNodeGen.create(true, true, true));
         }
         return castString;
     }
@@ -140,22 +153,22 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() == 0"})
-    protected Object pMinMaxNoneVecInt(@SuppressWarnings("unused") byte naRm, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+    protected Object pMinMaxNoneVecInt(@SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") RArgsValuesAndNames args) {
         return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() == 1"})
-    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") boolean naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() > 1"})
-    protected RIntVector pMinMaxInt(byte naRm, RArgsValuesAndNames args) {
+    protected RIntVector pMinMaxInt(boolean naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyIntVector();
         } else {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            boolean profiledNaRm = naRmProfile.profile(naRm);
             int[] data = new int[maxLength];
             Object[] argValues = args.getArguments();
             boolean warningAdded = false;
@@ -187,29 +200,29 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() == 1"})
-    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") boolean naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() != 1"})
-    protected RIntVector pMinMaxLogical(byte naRm, RArgsValuesAndNames args) {
+    protected RIntVector pMinMaxLogical(boolean naRm, RArgsValuesAndNames args) {
         return pMinMaxInt(naRm, args);
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() == 0"})
     @SuppressWarnings("unused")
-    protected Object pMinMaxNoneVecDouble(byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxNoneVecDouble(boolean naRm, RArgsValuesAndNames args) {
         return RDataFactory.createEmptyDoubleVector();
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() == 1"})
     @SuppressWarnings("unused")
-    protected Object pMinMaxOneVecDouble(byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecDouble(boolean naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() ==2"})
-    protected RDoubleVector pMinMaxTwoDouble(byte naRm, RArgsValuesAndNames args, //
+    protected RDoubleVector pMinMaxTwoDouble(boolean naRm, RArgsValuesAndNames args, //
                     @Cached("create()") NACheck naCheckX, //
                     @Cached("create()") NACheck naCheckY, //
                     @Cached("create()") CastDoubleNode castX, //
@@ -230,7 +243,7 @@ public abstract class PMinMax extends RBuiltinNode {
             if ((xLength > 1 && xLength < maxLength) || (yLength > 1 && yLength < maxLength)) {
                 RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
             }
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            boolean profiledNaRm = naRmProfile.profile(naRm);
             double[] data = new double[maxLength];
             int xOffset = 0;
             int yOffset = 0;
@@ -258,7 +271,7 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() > 2"})
-    protected RDoubleVector pMinMaxDouble(byte naRm, RArgsValuesAndNames args) {
+    protected RDoubleVector pMinMaxDouble(boolean naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getDoubleCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
@@ -273,7 +286,7 @@ public abstract class PMinMax extends RBuiltinNode {
                     warningAdded = true;
                 }
             }
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            boolean profiledNaRm = naRmProfile.profile(naRm);
             double[] data = new double[maxLength];
             for (int i = 0; i < maxLength; i++) {
                 double result = semantics.getDoubleStart();
@@ -299,17 +312,17 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @Specialization(guards = {"isStringPrecedence(args)", "args.getLength() == 1"})
     @SuppressWarnings("unused")
-    protected Object pMinMaxOneVecString(byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecString(boolean naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isStringPrecedence(args)", "args.getLength() != 1"})
-    protected RStringVector pMinMaxString(byte naRm, RArgsValuesAndNames args) {
+    protected RStringVector pMinMaxString(boolean naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getStringCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyStringVector();
         } else {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            boolean profiledNaRm = naRmProfile.profile(naRm);
             String[] data = new String[maxLength];
             Object[] argValues = args.getArguments();
             byte warningAdded = RRuntime.LOGICAL_FALSE;
@@ -321,18 +334,12 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isComplexPrecedence(args)")
-    protected RComplexVector pMinMaxComplex(byte naRm, RArgsValuesAndNames args) {
-        throw RError.error(this, RError.Message.INVALID_INPUT_TYPE);
+    @Fallback
+    protected RRawVector pMinMaxRaw(Object naRm, Object args) {
+        throw RError.error(NO_CALLER, RError.Message.INVALID_INPUT_TYPE);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isRawPrecedence(args)")
-    protected RRawVector pMinMaxRaw(byte naRm, RArgsValuesAndNames args) {
-        throw RError.error(this, RError.Message.INVALID_INPUT_TYPE);
-    }
-
-    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMax extends PMinMax {
 
         public PMax() {
@@ -341,7 +348,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."})
+    @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
     public abstract static class PMin extends PMinMax {
 
         public PMin() {
@@ -366,14 +373,6 @@ public abstract class PMinMax extends RBuiltinNode {
         return precedence(args) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
-    protected boolean isComplexPrecedence(RArgsValuesAndNames args) {
-        return precedence(args) == PrecedenceNode.COMPLEX_PRECEDENCE;
-    }
-
-    protected boolean isRawPrecedence(RArgsValuesAndNames args) {
-        return precedence(args) == PrecedenceNode.RAW_PRECEDENCE;
-    }
-
     private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
         Object[] array = args.getArguments();
@@ -385,7 +384,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     protected abstract static class MultiElemStringHandler extends RBaseNode {
 
-        public abstract byte executeByte(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data);
+        public abstract byte executeByte(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object data);
 
         @Child private MultiElemStringHandler recursiveStringHandler;
         private final ReduceSemantics semantics;
@@ -397,11 +396,11 @@ public abstract class PMinMax extends RBuiltinNode {
         protected MultiElemStringHandler(ReduceSemantics semantics, BinaryArithmeticFactory factory, NACheck na) {
             this.semantics = semantics;
             this.factory = factory;
-            this.op = factory.create();
+            this.op = factory.createOperation();
             this.na = na;
         }
 
-        private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
+        private byte handleString(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object data) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
@@ -410,7 +409,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
 
         @Specialization
-        protected byte doStringVectorMultiElem(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object d) {
+        protected byte doStringVectorMultiElem(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object d) {
             String[] data = (String[]) d;
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
@@ -420,7 +419,7 @@ public abstract class PMinMax extends RBuiltinNode {
             }
             String result = vec.getDataAt(ind % vec.getLength());
             na.enable(result);
-            if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
+            if (naRmProfile.profile(naRm)) {
                 if (na.check(result)) {
                     // the following is meant to eliminate leading NA-s
                     if (offset == argValues.length - 1) {
@@ -449,7 +448,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 String current = vec.getDataAt(ind % vec.getLength());
                 na.enable(current);
                 if (na.check(current)) {
-                    if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
+                    if (naRmProfile.profile(naRm)) {
                         // skip NA-s
                         continue;
                     } else {

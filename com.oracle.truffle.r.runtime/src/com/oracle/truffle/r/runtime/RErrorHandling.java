@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private static ArrayList<Warning> list = new ArrayList<>();
+        private ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -138,13 +138,14 @@ public class RErrorHandling {
         private RFunction getDotSignalSimpleWarning() {
             if (dotSignalSimpleWarning == null) {
                 CompilerDirectives.transferToInterpreter();
-                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
-                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+                String name = ".signalSimpleWarning";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
         }
 
-        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+        public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
     }
@@ -163,10 +164,26 @@ public class RErrorHandling {
         }
     }
 
+    public static final class HandlerStacks {
+        public final Object handlerStack;
+        public final Object restartStack;
+
+        private HandlerStacks(Object handlerStack, Object restartStack) {
+            this.handlerStack = handlerStack;
+            this.restartStack = restartStack;
+        }
+    }
+
     private static final Object RESTART_TOKEN = new Object();
 
     private static ContextStateImpl getRErrorHandlingState() {
         return RContext.getInstance().stateRErrorHandling;
+    }
+
+    public static HandlerStacks resetAndGetHandlerStacks() {
+        HandlerStacks result = new HandlerStacks(getRErrorHandlingState().handlerStack, getRErrorHandlingState().restartStack);
+        resetStacks();
+        return result;
     }
 
     public static Object getHandlerStack() {
@@ -175,6 +192,21 @@ public class RErrorHandling {
 
     public static Object getRestartStack() {
         return getRErrorHandlingState().restartStack;
+    }
+
+    /**
+     * Resets the handler stacks for a "top-level" evaluation ({@code Rf_tryEval} in the R FFI. This
+     * must be preceded by calls to {@link #getHandlerStack} and {@link #getRestartStack()} and
+     * followed by {@link #restoreStacks} after the evaluation completes.
+     */
+    public static void resetStacks() {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = RNull.instance;
+        errorHandlingState.restartStack = RNull.instance;
+    }
+
+    public static void restoreHandlerStacks(HandlerStacks handlerStacks) {
+        restoreStacks(handlerStacks.handlerStack, handlerStacks.restartStack);
     }
 
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
@@ -309,7 +341,7 @@ public class RErrorHandling {
                     errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, null, null, cond);
+                    RContext.getEngine().evalFunction(hf, null, null, null, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -472,7 +504,7 @@ public class RErrorHandling {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, null, null, evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, null, null, null, evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
@@ -541,17 +573,13 @@ public class RErrorHandling {
     private static void warningCallInvoke(Object call, RStringVector warningMessage) {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
-         * destroy any visibility setting made by the calling builtin prior to this call. So we save
-         * and restore it across the call.
+         * destroy any visibility setting made by the calling builtin prior to this call.
+         *
+         * TODO: it's not clear whether this is still the case with the optimized visibility scheme
          */
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
-        boolean visibility = RContext.getInstance().isVisible();
-        try {
-            RFunction f = errorHandlingState.getDotSignalSimpleWarning();
-            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
-        } finally {
-            RContext.getInstance().setVisible(visibility);
-        }
+        RFunction f = errorHandlingState.getDotSignalSimpleWarning();
+        RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
     }
 
     private static void warningcallDfltWithCall(Object call, Message msg, Object... args) {

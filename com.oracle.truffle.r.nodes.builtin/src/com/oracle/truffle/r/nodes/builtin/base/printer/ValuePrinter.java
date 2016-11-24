@@ -35,14 +35,4 @@ interface ValuePrinter<T> {
 
     void print(T value, PrintContext printCtx) throws IOException;
 
-    default void println(T value, PrintContext printCtx) throws IOException {
-        print(value, printCtx);
-        //
-        if (!Boolean.TRUE.equals(printCtx.getAttribute(DONT_PRINT_NL_ATTR))) {
-            printCtx.output().println();
-        } else {
-            // Clear the instruction attribute
-            printCtx.setAttribute(DONT_PRINT_NL_ATTR, false);
-        }
-    }
 }

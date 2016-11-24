@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -192,9 +193,7 @@ public final class NACheck {
     }
 
     public RComplex convertDoubleToComplex(double value) {
-        if (checkNAorNaN(value)) {
-            // Special case here NaN does not enable the NA check.
-            this.enable(true);
+        if (check(value)) {
             return RRuntime.createComplexNA();
         }
         return RDataFactory.createComplex(value, 0);
@@ -271,14 +270,14 @@ public final class NACheck {
         if (check(value)) {
             return RRuntime.STRING_NA;
         }
-        return RRuntime.doubleToStringNoCheck(value);
+        return RContext.getRRuntimeASTAccess().encodeDouble(value);
     }
 
     public String convertComplexToString(RComplex value) {
         if (check(value)) {
             return RRuntime.STRING_NA;
         }
-        return RRuntime.complexToStringNoCheck(value);
+        return RContext.getRRuntimeASTAccess().encodeComplex(value);
     }
 
     public double convertComplexToDouble(RComplex value, boolean warning) {
@@ -351,9 +350,9 @@ public final class NACheck {
                 }
                 result[i] = intValue;
             }
-            if (warning) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
-            }
+        }
+        if (warning) {
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
     }

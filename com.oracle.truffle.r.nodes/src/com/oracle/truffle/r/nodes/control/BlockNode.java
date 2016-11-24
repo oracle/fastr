@@ -26,29 +26,25 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A {@link BlockNode} represents a sequence of statements created by "{ ... }" in source code.
  */
-public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxCall {
+public final class BlockNode extends OperatorNode {
 
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     @Children protected final RNode[] sequence;
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    public BlockNode(SourceSection src, RNode[] sequence) {
-        super(src);
+    public BlockNode(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
+        super(src, operator);
         this.sequence = sequence;
     }
 
@@ -59,29 +55,22 @@ public final class BlockNode extends RSourceSectionNode implements RSyntaxNode, 
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        RContext.getInstance().setVisible(true);
-        Object lastResult = RNull.instance;
-        for (int i = 0; i < sequence.length; i++) {
-            lastResult = sequence[i].execute(frame);
+        visibility.execute(frame, true);
+        if (sequence.length == 0) {
+            return RNull.instance;
         }
-        return lastResult;
+        for (int i = 0; i < sequence.length - 1; i++) {
+            sequence[i].voidExecute(frame);
+        }
+        return sequence[sequence.length - 1].execute(frame);
     }
 
     @Override
-    public void serializeImpl(RSerialize.State state) {
-        state.setAsLangType();
-        state.setCarAsSymbol("{");
-
+    @ExplodeLoop
+    public void voidExecute(VirtualFrame frame) {
         for (int i = 0; i < sequence.length; i++) {
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.serializeNodeSetCar(sequence[i]);
+            sequence[i].voidExecute(frame);
         }
-        state.linkPairList(sequence.length + 1);
-    }
-
-    @Override
-    public RSyntaxElement getSyntaxLHS() {
-        return RSyntaxLookup.createDummyLookup(getSourceSection(), "{", true);
     }
 
     @Override

@@ -32,7 +32,7 @@ public class Load_RFFIFactory {
     private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
     private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.runtime.ffi.";
     private static final String SUFFIX = "_RFFIFactory";
-    private static final String DEFAULT_FACTORY = "jnr";
+    private static final String DEFAULT_FACTORY = "jni";
     private static final String DEFAULT_FACTORY_CLASS = mapSimpleName(DEFAULT_FACTORY);
 
     private static String mapSimpleName(String simpleName) {
@@ -60,7 +60,7 @@ public class Load_RFFIFactory {
                 instance = (RFFIFactory) Class.forName(prop).newInstance();
                 RFFIFactory.setRFFIFactory(instance);
             } catch (Exception ex) {
-                throw Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
+                throw Utils.rSuicide("Failed to instantiate class: " + prop + ": " + ex);
             }
         }
         instance.initialize(runtime);

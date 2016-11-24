@@ -33,6 +33,11 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
+/**
+ * Node that can route external calls like .External to an R function. The reference count of the
+ * arguments does not get incremented for this call, like for other built-in calls, however, this
+ * means that the R code should not update its arguments unless it makes a copy!
+ */
 public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
 
     private final RContext context;
@@ -40,7 +45,7 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
     private final Source code;
     private final String functionName;
 
-    @Child private CallMatcherNode call = CallMatcherNode.create(false, true);
+    @Child private CallMatcherNode call = CallMatcherNode.create(true);
     @CompilationFinal private RFunction function;
 
     public RInternalCodeBuiltinNode(RContext context, String basePackage, Source code, String functionName) {
@@ -61,9 +66,11 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             RInternalCode internalCode = RInternalCode.lookup(context, basePackage, code);
             this.function = internalCode.lookupFunction(functionName);
+            if (this.function == null) {
+                throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
+            }
         }
 
         return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, functionName, null);
     }
-
 }

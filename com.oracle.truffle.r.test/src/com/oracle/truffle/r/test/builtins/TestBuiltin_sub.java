@@ -141,5 +141,12 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ sub('^([[:space:]]*).*$', '\\\\1', '   a45j%$  ') }");
         assertEval("{ sub('^([[:upper:]]*).*$', '\\\\1', 'AASDFAa45j%$  ') }");
         assertEval("{ sub('^([[:xdigit:]]*).*$', '\\\\1', '1234abABhxa45j%$  ') }");
+
+        assertEval("{ .Internal(sub(7, \"42\", \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(sub(character(), \"42\", \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(sub(\"7\", 42, \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(sub(\"7\", character(), \"7\", F, F, F, F)) }");
+        assertEval("{ .Internal(sub(\"7\", \"42\", 7, F, F, F, F)) }");
+
     }
 }

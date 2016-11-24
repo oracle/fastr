@@ -11,6 +11,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -23,6 +28,7 @@ import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
+import com.oracle.truffle.r.library.grid.GridFunctionsFactory.ValidUnitsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
@@ -36,17 +42,24 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
-import com.oracle.truffle.r.library.stats.Covcor;
+import com.oracle.truffle.r.library.stats.CovcorNodeGen;
+import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
-import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
+import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
 import com.oracle.truffle.r.library.stats.Pbinom;
+import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
-import com.oracle.truffle.r.library.stats.RbinomNodeGen;
-import com.oracle.truffle.r.library.stats.RnormNodeGen;
-import com.oracle.truffle.r.library.stats.RunifNodeGen;
+import com.oracle.truffle.r.library.stats.RBeta;
+import com.oracle.truffle.r.library.stats.RCauchy;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
+import com.oracle.truffle.r.library.stats.Rbinom;
+import com.oracle.truffle.r.library.stats.Rnorm;
+import com.oracle.truffle.r.library.stats.Runif;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
@@ -58,10 +71,12 @@ import com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGe
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
 import com.oracle.truffle.r.library.utils.CountFields;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
-import com.oracle.truffle.r.library.utils.Download;
+import com.oracle.truffle.r.library.utils.DownloadNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
+import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
+import com.oracle.truffle.r.library.utils.RprofNodeGen;
+import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
-import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -70,13 +85,11 @@ import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -86,6 +99,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -142,7 +156,8 @@ public class ForeignFunctions {
 
         private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-        protected String lookupName(RList f) {
+        protected static String lookupName(RList f) {
+            CompilerAsserts.neverPartOfCompilation();
             if (f.getNames() != null) {
                 RAbstractStringVector names = f.getNames();
                 for (int i = 0; i < names.getLength(); i++) {
@@ -155,6 +170,7 @@ public class ForeignFunctions {
             return UNKNOWN_EXTERNAL_BUILTIN;
         }
 
+        @TruffleBoundary
         protected RuntimeException fallback(Object fobj) {
             String name = null;
             if (fobj instanceof RList) {
@@ -182,7 +198,7 @@ public class ForeignFunctions {
             return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
         }
 
-        protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+        protected SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
             if (addressExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -211,7 +227,7 @@ public class ForeignFunctions {
      * Interface to .Fortran native functions. Some functions have explicit implementations in
      * FastR, otherwise the .Fortran interface uses the machinery that implements the .C interface.
      */
-    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
+    @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
     public abstract static class Fortran extends LookupAdapter {
 
         @Override
@@ -220,6 +236,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 case "dqrdc2":
@@ -250,7 +267,7 @@ public class ForeignFunctions {
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
-            long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(f.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
@@ -269,7 +286,7 @@ public class ForeignFunctions {
      * Handles the generic case, but also many special case functions that are called from the
      * default packages.
      */
-    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -280,6 +297,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             switch (name) {
@@ -333,11 +351,11 @@ public class ForeignFunctions {
                 // stats
 
                 case "fft":
-                    return new Fft();
+                    return FftNodeGen.create();
                 case "cov":
-                    return new Covcor(false);
+                    return CovcorNodeGen.create(false);
                 case "cor":
-                    return new Covcor(true);
+                    return CovcorNodeGen.create(true);
                 case "SplineCoef":
                     return SplineCoefNodeGen.create();
                 case "SplineEval":
@@ -347,20 +365,35 @@ public class ForeignFunctions {
                 case "qnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qnorm());
                 case "rnorm":
-                    return RnormNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rnorm());
                 case "runif":
-                    return RunifNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Runif());
+                case "rbeta":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RBeta());
+                case "rcauchy":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RCauchy());
                 case "qgamma":
-                    return QgammaNodeGen.create();
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qbinom());
                 case "rbinom":
-                    return RbinomNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new Rbinom());
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
+                case "pf":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "Approx":
+                    return StatsFunctionsFactory.ApproxNodeGen.create();
+                case "ApproxTest":
+                    return StatsFunctionsFactory.ApproxTestNodeGen.create();
+                case "Cdist":
+                    return CdistNodeGen.create();
+                case "DoubleCentre":
+                    return DoubleCentreNodeGen.create();
                 case "cutree":
+                    return CutreeNodeGen.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":
@@ -397,15 +430,12 @@ public class ForeignFunctions {
                 case "logit_mu_eta":
                 case "binomial_dev_resids":
                 case "rWishart":
-                case "Cdist":
-                case "updateform":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
                 case "cfilter":
                 case "rfilter":
                 case "lowess":
-                case "DoubleCentre":
                 case "BinDist":
                 case "Rsm":
                 case "tukeyline":
@@ -415,8 +445,6 @@ public class ForeignFunctions {
                 case "pKolmogorov2x":
                 case "pKS2":
                 case "ksmooth":
-                case "Approx":
-                case "ApproxTest":
                 case "LogLin":
                 case "pAnsari":
                 case "qAnsari":
@@ -440,8 +468,12 @@ public class ForeignFunctions {
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
 
+                case "updateform":
+                    return getExternalModelBuiltinNode("updateform");
+
                 case "Cdqrls":
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+
                 case "dnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
 
@@ -474,7 +506,9 @@ public class ForeignFunctions {
                 case "menu":
                     return MenuNodeGen.create();
                 case "nsl":
+                    return new UnimplementedExternal(name);
                 case "objectSize":
+                    return ObjectSizeNodeGen.create();
                 case "processevents":
                 case "octsize":
                 case "sockconnect":
@@ -494,6 +528,8 @@ public class ForeignFunctions {
                 // grid
                 case "L_initGrid":
                     return InitGridNodeGen.create();
+                case "L_validUnits":
+                    return ValidUnitsNodeGen.create();
 
                 // parallel
                 case "mc_is_child":
@@ -524,7 +560,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -538,12 +574,13 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
@@ -563,14 +600,16 @@ public class ForeignFunctions {
                 case "countfields":
                     return new CountFields();
                 case "readtablehead":
-                    return new ReadTableHead();
+                    return ReadTableHeadNodeGen.create();
                 case "download":
-                    return new Download();
+                    return DownloadNodeGen.create();
                 case "termsform":
                     return getExternalModelBuiltinNode("termsform");
-                case "unzip":
                 case "Rprof":
+                    return RprofNodeGen.create();
                 case "Rprofmem":
+                    return RprofmemNodeGen.create();
+                case "unzip":
                 case "addhistory":
                 case "loadhistory":
                 case "savehistory":
@@ -608,7 +647,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -623,7 +662,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External2", visibility = RVisibility.CUSTOM, kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal2 extends LookupAdapter {
         private static final Object CALL = "call";
         private static final Object OP = "op";
@@ -632,6 +671,7 @@ public class ForeignFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -643,7 +683,7 @@ public class ForeignFunctions {
             switch (name) {
                 // tools
                 case "writetable":
-                    return new WriteTable();
+                    return WriteTableNodeGen.create();
                 case "typeconvert":
                     return TypeConvertNodeGen.create();
                 case "C_parseRd":
@@ -680,7 +720,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -696,12 +736,13 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".External.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternalGraphics extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
@@ -737,7 +778,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -752,7 +793,7 @@ public class ForeignFunctions {
         }
     }
 
-    @RBuiltin(name = ".Call.graphics", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
+    @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCallGraphics extends LookupAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -763,6 +804,7 @@ public class ForeignFunctions {
         }
 
         @Override
+        @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 default:
@@ -789,9 +831,10 @@ public class ForeignFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);

@@ -54,8 +54,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop8() {
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0'))); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0'))); .Internal(drop(argv[[1]]))");
     }
 
     @Test

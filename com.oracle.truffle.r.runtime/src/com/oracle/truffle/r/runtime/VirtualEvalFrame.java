@@ -26,9 +26,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -36,145 +33,26 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 /**
  * A "fake" {@link VirtualFrame}, to be used by {@code REngine}.eval only!
  */
-public abstract class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
+public abstract class VirtualEvalFrame extends SubstituteVirtualFrame implements VirtualFrame, MaterializedFrame {
 
-    protected final MaterializedFrame originalFrame;
     @CompilationFinal protected final Object[] arguments;
 
     private VirtualEvalFrame(MaterializedFrame originalFrame, Object[] arguments) {
-        this.originalFrame = originalFrame;
+        super(originalFrame);
         this.arguments = arguments;
     }
 
     @Override
-    public FrameDescriptor getFrameDescriptor() {
-        return getOriginalFrame().getFrameDescriptor();
-    }
+    public abstract MaterializedFrame getOriginalFrame();
 
     @Override
     public Object[] getArguments() {
         return arguments;
     }
 
-    public abstract MaterializedFrame getOriginalFrame();
-
     @Override
     public MaterializedFrame materialize() {
         return this;
-    }
-
-    /*
-     * Delegates to #originalFrame
-     */
-
-    @Override
-    public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getObject(slot);
-    }
-
-    @Override
-    public void setObject(FrameSlot slot, Object value) {
-        getOriginalFrame().setObject(slot, value);
-    }
-
-    @Override
-    public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getByte(slot);
-    }
-
-    @Override
-    public void setByte(FrameSlot slot, byte value) {
-        getOriginalFrame().setByte(slot, value);
-    }
-
-    @Override
-    public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getBoolean(slot);
-    }
-
-    @Override
-    public void setBoolean(FrameSlot slot, boolean value) {
-        getOriginalFrame().setBoolean(slot, value);
-    }
-
-    @Override
-    public int getInt(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getInt(slot);
-    }
-
-    @Override
-    public void setInt(FrameSlot slot, int value) {
-        getOriginalFrame().setInt(slot, value);
-    }
-
-    @Override
-    public long getLong(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getLong(slot);
-    }
-
-    @Override
-    public void setLong(FrameSlot slot, long value) {
-        getOriginalFrame().setLong(slot, value);
-    }
-
-    @Override
-    public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getFloat(slot);
-    }
-
-    @Override
-    public void setFloat(FrameSlot slot, float value) {
-        getOriginalFrame().setFloat(slot, value);
-    }
-
-    @Override
-    public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
-        return getOriginalFrame().getDouble(slot);
-    }
-
-    @Override
-    public void setDouble(FrameSlot slot, double value) {
-        getOriginalFrame().setDouble(slot, value);
-    }
-
-    @Override
-    public Object getValue(FrameSlot slot) {
-        return getOriginalFrame().getValue(slot);
-    }
-
-    @Override
-    public boolean isObject(FrameSlot slot) {
-        return getOriginalFrame().isObject(slot);
-    }
-
-    @Override
-    public boolean isByte(FrameSlot slot) {
-        return getOriginalFrame().isByte(slot);
-    }
-
-    @Override
-    public boolean isBoolean(FrameSlot slot) {
-        return getOriginalFrame().isBoolean(slot);
-    }
-
-    @Override
-    public boolean isInt(FrameSlot slot) {
-        return getOriginalFrame().isInt(slot);
-    }
-
-    @Override
-    public boolean isLong(FrameSlot slot) {
-        return getOriginalFrame().isLong(slot);
-    }
-
-    @Override
-    public boolean isFloat(FrameSlot slot) {
-        return getOriginalFrame().isFloat(slot);
-    }
-
-    @Override
-    public boolean isDouble(FrameSlot slot) {
-        return getOriginalFrame().isDouble(slot);
     }
 
     private static final class Substitute1 extends VirtualEvalFrame {
@@ -222,22 +100,23 @@ public abstract class VirtualEvalFrame implements VirtualFrame, MaterializedFram
         arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         arguments[RArguments.INDEX_FUNCTION] = function;
         arguments[RArguments.INDEX_CALL] = call;
+        MaterializedFrame unwrappedFrame = originalFrame instanceof SubstituteVirtualFrame ? ((SubstituteVirtualFrame) originalFrame).getOriginalFrame() : originalFrame;
         @SuppressWarnings("unchecked")
-        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) originalFrame.getClass();
+        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) unwrappedFrame.getClass();
         if (Substitute1.frameClass == clazz) {
-            return new Substitute1(originalFrame, arguments);
+            return new Substitute1(unwrappedFrame, arguments);
         } else if (Substitute1.frameClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute1.frameClass = clazz;
-            return new Substitute1(originalFrame, arguments);
+            return new Substitute1(unwrappedFrame, arguments);
         } else if (Substitute2.frameClass == clazz) {
-            return new Substitute2(originalFrame, arguments);
+            return new Substitute2(unwrappedFrame, arguments);
         } else if (Substitute2.frameClass == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Substitute2.frameClass = clazz;
-            return new Substitute2(originalFrame, arguments);
+            return new Substitute2(unwrappedFrame, arguments);
         } else {
-            return new SubstituteGeneric(originalFrame, arguments);
+            return new SubstituteGeneric(unwrappedFrame, arguments);
         }
     }
 }

@@ -148,7 +148,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(a){1} ; x(1,) }");
+        assertEval("{ x<-function(a){1} ; x(1,) }");
 
         // note exactly GNU-R message
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a,a) {1} }");
@@ -230,6 +230,8 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
         assertEval("{ f <- function(a) { a } ; f(1,2) }");
 
+        assertEval("{ f <- function(xy, x) xy + x; f(xy=1,x=2) }");
+
         // with ... partial-match only if formal parameter are before ...
         assertEval("{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }");
         assertEval("{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }");
@@ -263,7 +265,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; get(\"..1\") } ; f(1,2,3,4) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
+        assertEval("{ f <- function(...) { get(\"..1\") } ; f(1,2,3,4) }");
 
         assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }");
@@ -326,12 +328,12 @@ public class TestFunctions extends TestBase {
 
         assertEval("{ `-.foo` <- function(...) 123; v <- 1; class(v) <- 'foo'; sapply(1,`-`,v); sapply(v,`-`,1); sapply(v,`-`,v) }");
 
-        assertEval(Ignored.Unknown, "{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ lapply(1:3, \"dummy\") }");
 
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
+        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
     }

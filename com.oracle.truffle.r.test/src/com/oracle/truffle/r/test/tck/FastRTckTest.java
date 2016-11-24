@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
@@ -40,38 +40,30 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
-    @SuppressWarnings("deprecation")
-    private static final Source INITIALIZATION = Source.fromText(
+    private static final Source INITIALIZATION = RSource.fromTextInternal(
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
-        ".fastr.interop.export('fourtyTwo', fourtyTwo)\n" +
         "plus <- function(a, b) {\n" +
         "  a + b\n" +
         "}\n" +
-        ".fastr.interop.export('plus', plus)\n" +
         "identity <- function(a) {\n" +
         "  a\n" +
         "}\n" +
-        ".fastr.interop.export('identity', identity)\n" +
         "apply <- function(f) {\n" +
         "  f(18L, 32L) + 10L\n" +
         "}\n" +
-        ".fastr.interop.export('apply', apply)\n" +
         "null <- function() {\n" +
         "  NULL\n" +
         "}\n" +
-        ".fastr.interop.export('null', null)\n" +
         "counter <- 0L\n" +
         "count <- function() {\n" +
         "  counter <<- counter + 1L\n" +
         "}\n" +
-        ".fastr.interop.export('count', count)\n" +
         "complexAdd <- function(a, b) {\n" +
         " a$imaginary <- a$imaginary + b$imaginary\n" +
         " a$real <- a$real + b$real\n" +
         "}\n" +
-        ".fastr.interop.export('complexAdd', complexAdd)\n" +
         "countUpWhile <- function(fn) {\n" +
         " counter <- 0\n" +
         " while (T) {\n" +
@@ -81,28 +73,70 @@ public class FastRTckTest extends TruffleTCK {
         "  counter <- counter + 1\n" +
         " }\n" +
         "}\n" +
-        ".fastr.interop.export('countUpWhile', countUpWhile)\n" +
         "complexSumReal <- function(a) {\n" +
         " sum <- 0\n" +
-        " for (i in 0:(length(a)-1)) {\n" +
+        " for (i in 1:length(a)) {\n" +
         "   sum <- sum + a[i]$real\n" +
         " }\n" +
         " return(sum)\n" +
         "}\n" +
-        ".fastr.interop.export('complexSumReal', complexSumReal)\n" +
         "complexCopy <- function(a, b) {\n" +
         " for (i in 0:(length(b)-1)) {\n" +
         "   a[i]$real <- b[i]$real\n" +
         "   a[i]$imaginary <- b[i]$imaginary\n" +
         " }\n" +
         "}\n" +
-        ".fastr.interop.export('complexCopy', complexCopy)\n" +
         "valuesObject <- function() {\n" +
         "  list('byteValue'=0L, 'shortValue'=0L, 'intValue'=0L, 'longValue'=0L, 'floatValue'=0, 'doubleValue'=0, 'charValue'=48L, 'stringValue'='', 'booleanValue'=FALSE)\n" +
         "}\n" +
-        ".fastr.interop.export('valuesObject', valuesObject)\n",
-        "<initialization>"
-    ).withMimeType(TruffleRLanguage.MIME);
+        "addNumbersFunction <- function() {\n" +
+        "  function(a, b) a + b\n" +
+        "}\n" +
+        "objectWithValueProperty <- function() {\n" +
+        "  list(value = 42L)\n" +
+        "}\n" +
+        "callFunction <- function(f) {\n" +
+        "  f(41L, 42L)\n" +
+        "}\n" +
+        "objectWithElement <- function(f) {\n" +
+        "  c(0L, 0L, 42L, 0L)\n" +
+        "}\n" +
+        "objectWithValueAndAddProperty <- function(f) {\n" +
+        "  e <- new.env()\n" +
+        "  e$value <- 0L\n" +
+        "  e$add <- function(inc) { e$value <- e$value + inc; e$value }\n" +
+        "  e\n" +
+        "}\n" +
+        "callMethod <- function(f) {\n" +
+        "  f(41L, 42L)\n" +
+        "}\n" +
+        "readElementFromForeign <- function(f) {\n" +
+        "  f[[3L]]\n" +
+        "}\n" +
+        "writeElementToForeign <- function(f) {\n" +
+        "  f[[3L]] <- 42L\n" +
+        "}\n" +
+        "readValueFromForeign <- function(o) {\n" +
+        "  o$value\n" +
+        "}\n" +
+        "writeValueToForeign <- function(o) {\n" +
+        "  o$value <- 42L\n" +
+        "}\n" +
+        "getSizeOfForeign <- function(o) {\n" +
+        "  length(o)\n" +
+        "}\n" +
+        "isNullOfForeign <- function(o) {\n" +
+        "  .fastr.interop.toBoolean(.fastr.interop.isNull(o))\n" +
+        "}\n" +
+        "hasSizeOfForeign <- function(o) {\n" +
+        "  .fastr.interop.toBoolean(.fastr.interop.hasSize(o))\n" +
+        "}\n" +
+        "isExecutableOfForeign <- function(o) {\n" +
+        "  .fastr.interop.toBoolean(.fastr.interop.isExecutable(o))\n" +
+        "}\n" +
+        "for (name in ls()) .fastr.interop.export(name, get(name))\n",
+        RSource.Internal.TCK_INIT
+    );
     // @formatter:on
 
     @Override
@@ -187,12 +221,77 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
-    public void readWriteBooleanValue() throws Exception {
-        // TODO not yet supported
+    protected String getSizeOfForeign() {
+        return "getSizeOfForeign";
     }
 
     @Override
-    public void readWriteDoubleValue() throws Exception {
+    protected String isNullForeign() {
+        return "isNullOfForeign";
+    }
+
+    @Override
+    protected String hasSizeOfForeign() {
+        return "hasSizeOfForeign";
+    }
+
+    @Override
+    protected String isExecutableOfForeign() {
+        return "isExecutableOfForeign";
+    }
+
+    @Override
+    protected String readValueFromForeign() {
+        return "readValueFromForeign";
+    }
+
+    @Override
+    protected String writeValueToForeign() {
+        return "writeValueToForeign";
+    }
+
+    @Override
+    protected String callFunction() {
+        return "callFunction";
+    }
+
+    @Override
+    protected String objectWithElement() {
+        return "objectWithElement";
+    }
+
+    @Override
+    protected String objectWithValueAndAddProperty() {
+        return "objectWithValueAndAddProperty";
+    }
+
+    @Override
+    protected String callMethod() {
+        return "callMethod";
+    }
+
+    @Override
+    protected String readElementFromForeign() {
+        return "readElementFromForeign";
+    }
+
+    @Override
+    protected String writeElementToForeign() {
+        return "writeElementToForeign";
+    }
+
+    @Override
+    protected String objectWithValueProperty() {
+        return "objectWithValueProperty";
+    }
+
+    @Override
+    protected String functionAddNumbers() {
+        return "addNumbersFunction";
+    }
+
+    @Override
+    public void readWriteBooleanValue() throws Exception {
         // TODO not yet supported
     }
 
@@ -208,11 +307,6 @@ public class FastRTckTest extends TruffleTCK {
 
     @Override
     public void readWriteByteValue() throws Exception {
-        // TODO not yet supported
-    }
-
-    @Override
-    public void readWriteIntValue() throws Exception {
         // TODO not yet supported
     }
 
@@ -358,18 +452,23 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    public void testWriteToObjectWithElement() throws Exception {
+        // TODO mismatch between mutable and immutable data types
+    }
+
+    @Override
+    public void testObjectWithValueAndAddProperty() throws Exception {
+        // TODO mismatch between mutable and immutable data types
+    }
+
+    @Override
+    public void testCallMethod() throws Exception {
+        // R does not have method calls
+    }
+
+    @Override
     public String multiplyCode(String firstName, String secondName) {
         return firstName + '*' + secondName;
-    }
-
-    @Override
-    public void timeOutTest() throws Exception {
-        // TODO We cannot execute this owing to Tck uing Boolean for truth values
-    }
-
-    @Override
-    public void testRootNodeName() throws Exception {
-        // TODO We cannot implement this due to halting in the runtime startup
     }
 
 }

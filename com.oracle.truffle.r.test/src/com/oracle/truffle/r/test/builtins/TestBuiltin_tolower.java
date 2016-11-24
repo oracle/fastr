@@ -39,7 +39,7 @@ public class TestBuiltin_tolower extends TestBase {
 
     @Test
     public void testtolower5() {
-        assertEval(Ignored.Unimplemented, "argv <- list(structure('base', .Names = 'Priority')); .Internal(tolower(argv[[1]]))");
+        assertEval("argv <- list(structure('base', .Names = 'Priority')); .Internal(tolower(argv[[1]]))");
     }
 
     @Test
@@ -57,8 +57,8 @@ public class TestBuiltin_tolower extends TestBase {
         assertEval("{ tolower(c(\"Hello\",\"ByE\")) }");
         assertEval("{ tolower(c()) }");
 
-        assertEval(Ignored.OutputFormatting, "{ tolower(1E100) }");
-        assertEval(Ignored.Unimplemented, "{ tolower(c(a=\"HI\", \"HELlo\")) }");
+        assertEval("{ tolower(1E100) }");
+        assertEval("{ tolower(c(a=\"HI\", \"HELlo\")) }");
         assertEval("{ tolower(NA) }");
 
         assertEval("tolower(c('NA', 'na'))");
