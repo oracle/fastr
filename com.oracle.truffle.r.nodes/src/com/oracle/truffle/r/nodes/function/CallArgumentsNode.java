@@ -109,7 +109,8 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             if (arg == null) {
                 wrappedArgs[i] = null;
             } else {
-                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i);
+                boolean needsWrapping = i == 0 || modeChangeForAll ? modeChange : true;
+                wrappedArgs[i] = needsWrapping ? WrapArgumentNode.create(arg, i) : arg;
             }
         }
         return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);

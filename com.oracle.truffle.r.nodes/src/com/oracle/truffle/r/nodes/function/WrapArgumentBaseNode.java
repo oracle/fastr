@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -39,59 +36,33 @@ public abstract class WrapArgumentBaseNode extends RNode {
 
     @Child protected RNode operand;
 
-    private final ValueProfile argumentValueProfile;
-    private final BranchProfile everSeenVector;
-    private final BranchProfile everSeenLanguage;
-    private final BranchProfile everSeenFunction;
-    private final BranchProfile everSeenS4Object;
+    private final ConditionProfile isShareable = ConditionProfile.createBinaryProfile();
 
-    protected final BranchProfile shareable;
-    private final BranchProfile nonShareable;
-
-    protected WrapArgumentBaseNode(RNode operand, boolean initProfiles) {
+    protected WrapArgumentBaseNode(RNode operand) {
         this.operand = operand;
-        if (initProfiles) {
-            argumentValueProfile = ValueProfile.createClassProfile();
-            everSeenVector = BranchProfile.create();
-            everSeenLanguage = BranchProfile.create();
-            everSeenFunction = BranchProfile.create();
-            everSeenS4Object = BranchProfile.create();
-            shareable = BranchProfile.create();
-            nonShareable = BranchProfile.create();
-        } else {
-            argumentValueProfile = null;
-            everSeenVector = null;
-            everSeenLanguage = null;
-            everSeenFunction = null;
-            everSeenS4Object = null;
-            shareable = null;
-            nonShareable = null;
-        }
-    }
-
-    protected RShareable getShareable(Object initialResult) {
-        Object result = argumentValueProfile.profile(initialResult);
-        if (result instanceof RVector) {
-            everSeenVector.enter();
-            return (RVector<?>) result;
-        } else if (result instanceof RLanguage) {
-            everSeenLanguage.enter();
-            return (RLanguage) result;
-        } else if (result instanceof RFunction) {
-            everSeenFunction.enter();
-            return (RFunction) result;
-        } else if (result instanceof RS4Object) {
-            everSeenS4Object.enter();
-            return (RS4Object) result;
-        } else {
-            nonShareable.enter();
-            return null;
-        }
     }
 
     public RNode getOperand() {
         return operand;
     }
+
+    @Override
+    public final Object execute(VirtualFrame frame) {
+        assert operand != null;
+        Object result = operand.execute(frame);
+        return execute(frame, result);
+    }
+
+    public Object execute(VirtualFrame frame, Object result) {
+        if (isShareable.profile(result instanceof RSharingAttributeStorage)) {
+            return handleShareable(frame, (RSharingAttributeStorage) result);
+        } else {
+            assert !(result instanceof RShareable) : "unexpected RShareable that is not a subclass of RSharingAttributeStorage";
+            return result;
+        }
+    }
+
+    protected abstract Object handleShareable(VirtualFrame frame, RSharingAttributeStorage shareable);
 
     @Override
     public RSyntaxNode getRSyntaxNode() {

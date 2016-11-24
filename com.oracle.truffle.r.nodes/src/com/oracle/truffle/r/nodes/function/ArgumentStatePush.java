@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,8 +53,6 @@ public abstract class ArgumentStatePush extends Node {
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final int index;
-
-    @Child private WriteLocalFrameVariableNode writeArgNode;
 
     public static final int MAX_COUNTED_ARGS = 8;
     public static final int INVALID_INDEX = -1;
