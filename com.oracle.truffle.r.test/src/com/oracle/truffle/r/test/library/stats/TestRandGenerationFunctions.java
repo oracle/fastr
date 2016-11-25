@@ -31,7 +31,7 @@ import com.oracle.truffle.r.test.TestBase;
  * tests for its specific corner cases if those are not covered here.
  */
 public class TestRandGenerationFunctions extends TestBase {
-    private static final String[] FUNCTION2_NAMES = {"rnorm", "runif", "rgamma", "rbeta", "rcauchy"};
+    private static final String[] FUNCTION2_NAMES = {"rnorm", "runif", "rgamma", "rbeta", "rcauchy", "rf"};
     private static final String[] FUNCTION2_PARAMS = {
                     "10, 10, 10",
                     "20, c(-1, 0, 0.2, 2:5), c(-1, 0, 0.1, 0.9, 3)",
