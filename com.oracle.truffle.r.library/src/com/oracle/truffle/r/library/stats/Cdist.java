@@ -16,11 +16,13 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -41,7 +43,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
 
     @Specialization(guards = "method == cachedMethod")
     protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
-                    @Cached("getMethod(method)") Method methodObj) {
+                    @Cached("getMethod(method)") Method methodObj,
+                    @Cached("create()") SetAttributeNode setAttrNode) {
         int nr = RRuntime.nrows(x);
         int nc = RRuntime.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
@@ -49,7 +52,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         RDoubleVector xm = x.materialize();
         rdistance(xm.getDataWithoutCopying(), nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
-        RAttributes resultAttrs = result.initAttributes();
+        DynamicObject resultAttrs = result.initAttributes();
         RStringVector names = (RStringVector) list.getAttr(RRuntime.NAMES_ATTR_KEY);
         for (int i = 0; i < names.getLength(); i++) {
             String name = names.getDataAt(i);
@@ -57,7 +60,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
                 result.setClassAttr(listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
             } else {
-                resultAttrs.put(name, listValue);
+                setAttrNode.execute(resultAttrs, name, listValue);
             }
         }
 
