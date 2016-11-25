@@ -46,10 +46,11 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
     @ExplodeLoop
     protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs,
                     @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
-        Property[] props = attrsLayout.properties;
+        final Property[] props = attrsLayout.properties;
         RAttribute[] result = new RAttribute[props.length];
         for (int i = 0; i < props.length; i++) {
-            result[i] = new RAttributesLayout.AttrInstance((String) props[i].getKey(), props[i].get(attrs, attrsLayout.shape));
+            Object value = readProperty(attrs, attrsLayout.shape, props[i]);
+            result[i] = new RAttributesLayout.AttrInstance((String) props[i].getKey(), value);
         }
 
         return result;
@@ -62,7 +63,8 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
         RAttribute[] result = new RAttribute[props.size()];
         int i = 0;
         for (Property p : props) {
-            result[i] = new RAttributesLayout.AttrInstance((String) p.getKey(), p.get(attrs, shape));
+            Object value = readProperty(attrs, shape, p);
+            result[i] = new RAttributesLayout.AttrInstance((String) p.getKey(), value);
             i++;
         }
 

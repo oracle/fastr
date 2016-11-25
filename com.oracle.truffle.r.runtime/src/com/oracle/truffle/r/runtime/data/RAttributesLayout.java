@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectFactory;
@@ -182,12 +184,14 @@ public final class RAttributesLayout {
         return new RAttributeIterable(attrs, attrsLayout.propertyList);
     }
 
+    @TruffleBoundary
     public static DynamicObject copy(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
         return attrs.copy(attrs.getShape());
     }
 
+    @TruffleBoundary
     public static void clear(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
@@ -306,6 +310,7 @@ public final class RAttributesLayout {
         }
 
         @Override
+        @TruffleBoundary
         public RAttribute next() {
             Property p = iter.next();
             Object value = p.get(attrs, shape);

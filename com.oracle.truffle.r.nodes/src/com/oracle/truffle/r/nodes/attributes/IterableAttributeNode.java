@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -43,6 +44,7 @@ public abstract class IterableAttributeNode extends AttributeIterativeAccessNode
     }
 
     @Specialization(contains = "getArrayFromConstantLayouts")
+    @TruffleBoundary
     protected RAttributesLayout.RAttributeIterable getArrayFallback(DynamicObject attrs) {
         return RAttributesLayout.asIterable(attrs);
     }

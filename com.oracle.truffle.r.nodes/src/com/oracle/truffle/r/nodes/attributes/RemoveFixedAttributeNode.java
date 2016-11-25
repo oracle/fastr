@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -68,6 +69,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @Specialization(contains = "removeAttrCached")
+    @TruffleBoundary
     protected void removeAttrFallback(DynamicObject attrs) {
         attrs.delete(this.name);
     }
