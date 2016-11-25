@@ -58,6 +58,7 @@ import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RCauchy;
 import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RLogis;
+import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RWeibull;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
@@ -387,6 +388,8 @@ public class ForeignFunctions {
                     return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RWeibull());
                 case "rnchisq":
                     return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RNchisq());
+                case "rnbinom_mu":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RNbinomMu());
                 case "qgamma":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":

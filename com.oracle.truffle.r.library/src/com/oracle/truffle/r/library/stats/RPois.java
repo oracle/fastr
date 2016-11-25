@@ -35,30 +35,29 @@ public final class RPois {
                     1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.
     };
 
+    /* These are static --- persistent between calls for same mu : */
+    // TODO: state variables
+    static int l = 0;
+    static int m = 0;
+    static double b1;
+    static double b2;
+    static double c = 0;
+    static double c0 = 0;
+    static double c1 = 0;
+    static double c2 = 0;
+    static double c3 = 0;
+    static double[] pp = new double[36];
+    static double p0 = 0;
+    static double p = 0;
+    static double q = 0;
+    static double s = 0;
+    static double d = 0;
+    static double omega = 0;
+    static double bigL = 0; /* integer "w/o overflow" */
+    static double muprev = 0.;
+    static double muprev2 = 0.; /* , muold = 0. */
+
     public static double rpois(double mu, RandomNumberProvider rand) {
-
-        /* These are static --- persistent between calls for same mu : */
-        // TODO: state variables
-        int l = 0;
-        int m = 0;
-        double b1;
-        double b2;
-        double c = 0;
-        double c0 = 0;
-        double c1 = 0;
-        double c2 = 0;
-        double c3 = 0;
-        double[] pp = new double[36];
-        double p0 = 0;
-        double p = 0;
-        double q = 0;
-        double s = 0;
-        double d = 0;
-        double omega = 0;
-        double bigL = 0; /* integer "w/o overflow" */
-        double muprev = 0.;
-        double muprev2 = 0.; /* , muold = 0. */
-
         /* Local Vars [initialize some for -Wall]: */
         double del;
         double difmuk = 0.;
