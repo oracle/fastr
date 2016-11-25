@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -50,7 +50,7 @@ public final class RFactorNodes {
      * Encapsulates the operation of deciding whether a factor is ordered.
      */
     public static final class GetOrdered extends Node {
-        @Child private AttributeAccess isOrderedAccess = AttributeAccess.create(RRuntime.ORDERED_ATTR_KEY);
+        @Child private GetFixedAttributeNode isOrderedAccess = GetFixedAttributeNode.create(RRuntime.ORDERED_ATTR_KEY);
 
         public boolean execute(RAbstractIntVector factor) {
             Object value = isOrderedAccess.execute(factor.getAttributes());
@@ -68,7 +68,7 @@ public final class RFactorNodes {
      */
     public static final class GetLevels extends Node {
         @Child private CastStringNode castString;
-        @Child private AttributeAccess attrAccess = AttributeAccess.create(RRuntime.LEVELS_ATTR_KEY);
+        @Child private GetFixedAttributeNode attrAccess = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();

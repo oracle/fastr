@@ -29,10 +29,11 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -55,8 +56,8 @@ public abstract class RConnection implements AutoCloseable {
         RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
         // it's important to put "this" into the externalptr, so that it doesn't get collected
         RExternalPtr connectionId = RDataFactory.createExternalPtr(null, this, RDataFactory.createSymbol("connection"), RNull.instance);
-        result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY, "conn_id"}, new Object[]{classVector, connectionId}));
-
+        DynamicObject attrs = RAttributesLayout.createClassWithConnId(classVector, connectionId);
+        result.initAttributes(attrs);
         return result;
     }
 

@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -45,6 +48,10 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
+    @Child private GetFixedAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
+    @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
+    @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
+
     public abstract void execute(RAbstractVector source, RVector<?> target);
 
     public static CopyOfRegAttributesNode create() {
@@ -58,7 +65,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     protected static final boolean emptyAttributes(RAbstractVector source) {
-        RAttributes attributes = source.getAttributes();
+        DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }
 
@@ -69,8 +76,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     protected final boolean onlyDimAttribute(RAbstractVector source) {
-        RAttributes attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.DIM_ATTR_KEY;
+        DynamicObject attributes = source.getAttributes();
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(attributes) != null;
     }
 
     @SuppressWarnings("unused")
@@ -80,8 +87,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     protected final boolean onlyNamesAttribute(RAbstractVector source) {
-        RAttributes attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY;
+        DynamicObject attributes = source.getAttributes();
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(attributes) != null;
     }
 
     @SuppressWarnings("unused")
@@ -91,25 +98,28 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     protected final boolean onlyClassAttribute(RAbstractVector source) {
-        RAttributes attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && attributes.getNameAtIndex(0) == RRuntime.CLASS_ATTR_KEY;
+        DynamicObject attributes = source.getAttributes();
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(attributes) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
     protected void copyClassOnly(RAbstractVector source, RVector<?> target) {
-        target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValueAtIndex(0)}));
+        Object classAttr = classAttrGetter.execute(source.getAttributes());
+        target.initAttributes(RAttributesLayout.createClass(classAttr));
     }
 
     @Specialization
     protected void copyGeneric(RAbstractVector source, RVector<?> target) {
-        RAttributes orgAttributes = source.getAttributes();
+        DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Object newRowNames = null;
-            for (RAttribute e : orgAttributes) {
-                String name = e.getName();
+
+            Shape shape = orgAttributes.getShape();
+            for (Property p : shape.getProperties()) {
+                String name = (String) p.getKey();
                 if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
-                    Object val = e.getValue();
-                    target.initAttributes().put(name, val);
+                    Object val = p.get(orgAttributes, shape);
+                    target.initAttributes().define(name, val);
                     if (name == RRuntime.ROWNAMES_ATTR_KEY) {
                         newRowNames = val;
                     }

@@ -28,6 +28,7 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -345,7 +346,7 @@ public class CallRFFIHelper {
         Object result = RNull.instance;
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
-            RAttributes attrs = attrObj.getAttributes();
+            DynamicObject attrs = attrObj.getAttributes();
             if (attrs != null) {
                 String nameAsString = ((RSymbol) name).getName().intern();
                 Object attr = attrs.get(nameAsString);
@@ -374,7 +375,7 @@ public class CallRFFIHelper {
             if (val == RNull.instance) {
                 attrObj.removeAttr(nameAsString);
             } else if ("class" == nameAsString) {
-                attrObj.initAttributes().put(nameAsString, val);
+                attrObj.initAttributes().define(nameAsString, val);
             } else {
                 attrObj.setAttr(nameAsString, val);
             }
@@ -999,8 +1000,8 @@ public class CallRFFIHelper {
         }
         if (from instanceof RAttributable) {
             guaranteeInstanceOf(to, RAttributable.class);
-            RAttributes attributes = ((RAttributable) from).getAttributes();
-            ((RAttributable) to).initAttributes(attributes == null ? null : attributes.copy());
+            DynamicObject attributes = ((RAttributable) from).getAttributes();
+            ((RAttributable) to).initAttributes(attributes == null ? null : RAttributesLayout.copy(attributes));
         }
         // TODO: copy OBJECT? and S4 attributes
     }

@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Iterator;
+
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -29,7 +32,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Denotes an R type that can have associated attributes, e.g. {@link RVector}, {@link REnvironment}
  *
  * An attribute is a {@code String, Object} pair. The set of attributes associated with an
- * {@link RAttributable} is implemented by the {@link RAttributes} class.
+ * {@link RAttributable} is implemented by the {@link DynamicObject} class.
  */
 public interface RAttributable extends RTypedValue {
 
@@ -38,15 +41,15 @@ public interface RAttributable extends RTypedValue {
      *
      * @return the pre-existing or new value
      */
-    RAttributes initAttributes();
+    DynamicObject initAttributes();
 
-    void initAttributes(RAttributes newAttributes);
+    void initAttributes(DynamicObject newAttributes);
 
     /**
      * Access all the attributes. Use {@code for (RAttribute a : getAttributes) ... }. Returns
      * {@code null} if not initialized.
      */
-    RAttributes getAttributes();
+    DynamicObject getAttributes();
 
     /**
      * Returns the value of the {@code class} attribute or empty {@link RStringVector} if class
@@ -78,7 +81,7 @@ public interface RAttributable extends RTypedValue {
      * Get the value of an attribute. Returns {@code null} if not set.
      */
     default Object getAttr(RAttributeProfiles profiles, String name) {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (profiles.attrNullProfile(attributes == null)) {
             return null;
         } else {
@@ -90,7 +93,7 @@ public interface RAttributable extends RTypedValue {
      * Get the value of an attribute. Returns {@code null} if not set.
      */
     default Object getAttr(String name) {
-        RAttributes attr = getAttributes();
+        DynamicObject attr = getAttributes();
         return attr == null ? null : attr.get(name);
     }
 
@@ -99,11 +102,11 @@ public interface RAttributable extends RTypedValue {
      * generic; a class may need to override this to handle certain attributes specially.
      */
     default void setAttr(String name, Object value) {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (attributes == null) {
             attributes = initAttributes();
         }
-        attributes.put(name, value);
+        attributes.define(name, value);
     }
 
     /**
@@ -111,25 +114,25 @@ public interface RAttributable extends RTypedValue {
      * generic; a class may need to override this to handle certain attributes specially.
      */
     default void removeAttr(RAttributeProfiles profiles, String name) {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (profiles.attrNullProfile(attributes == null)) {
             return;
         } else {
-            attributes.remove(name);
+            attributes.delete(name);
         }
     }
 
     default void removeAttr(String name) {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (attributes != null) {
-            attributes.remove(name);
+            attributes.delete(name);
         }
     }
 
     default void removeAllAttributes() {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (attributes != null) {
-            attributes.clear();
+            RAttributesLayout.clear(attributes);
         }
     }
 
@@ -142,15 +145,15 @@ public interface RAttributable extends RTypedValue {
      *            set to {@code true}. Nullifying is not guaranteed for al implementations.
      */
     default void resetAllAttributes(boolean nullify) {
-        RAttributes attributes = getAttributes();
+        DynamicObject attributes = getAttributes();
         if (attributes != null) {
-            attributes.clear();
+            RAttributesLayout.clear(attributes);
         }
     }
 
     default RAttributable setClassAttr(RStringVector classAttr) {
         if (classAttr == null && getAttributes() != null) {
-            getAttributes().remove(RRuntime.CLASS_ATTR_KEY);
+            getAttributes().delete(RRuntime.CLASS_ATTR_KEY);
         } else {
             setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
         }
@@ -167,5 +170,16 @@ public interface RAttributable extends RTypedValue {
      */
     default boolean isObject(RAttributeProfiles profiles) {
         return getClassAttr(profiles) != null ? true : false;
+    }
+
+    static void copyAttributes(RAttributable obj, DynamicObject attrs) {
+        if (attrs == null) {
+            return;
+        }
+        Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
+        while (iter.hasNext()) {
+            RAttributesLayout.RAttribute attr = iter.next();
+            obj.setAttr(attr.getName(), attr.getValue());
+        }
     }
 }

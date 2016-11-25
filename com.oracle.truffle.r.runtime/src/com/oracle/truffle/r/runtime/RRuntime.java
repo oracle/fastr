@@ -130,6 +130,8 @@ public class RRuntime {
     public static final String CLASS_FACTOR = "factor";
     public static final String ORDERED_ATTR_KEY = "ordered";
 
+    public static final String CONN_ID_ATTR_KEY = "conn_id";
+
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
     public static final String R_DOT_GENERIC = ".Generic";

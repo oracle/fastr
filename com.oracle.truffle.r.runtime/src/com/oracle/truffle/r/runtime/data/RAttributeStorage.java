@@ -22,29 +22,31 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.object.DynamicObject;
+
 /**
  * An adaptor class for the several R types that are attributable. Only useful for classes that
  * don't already inherit from another class, otherwise just cut and paste this code.
  */
 public abstract class RAttributeStorage extends RBaseObject implements RAttributable {
 
-    protected RAttributes attributes;
+    protected DynamicObject attributes;
 
     @Override
-    public final RAttributes getAttributes() {
+    public final DynamicObject getAttributes() {
         return attributes;
     }
 
     @Override
-    public final RAttributes initAttributes() {
+    public final DynamicObject initAttributes() {
         if (attributes == null) {
-            attributes = RAttributes.create();
+            attributes = RAttributesLayout.createRAttributes();
         }
         return attributes;
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public final void initAttributes(DynamicObject newAttributes) {
         this.attributes = newAttributes;
     }
 

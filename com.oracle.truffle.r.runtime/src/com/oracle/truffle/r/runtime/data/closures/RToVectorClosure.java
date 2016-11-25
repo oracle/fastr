@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -112,17 +112,17 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final RAttributes initAttributes() {
+    public final DynamicObject initAttributes() {
         return vector.initAttributes();
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public final void initAttributes(DynamicObject newAttributes) {
         vector.initAttributes(newAttributes);
     }
 
     @Override
-    public final RAttributes getAttributes() {
+    public final DynamicObject getAttributes() {
         return vector.getAttributes();
     }
 

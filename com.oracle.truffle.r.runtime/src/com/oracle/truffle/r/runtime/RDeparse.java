@@ -18,13 +18,14 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -672,7 +673,7 @@ public class RDeparse {
                 try (C c = indent()) {
                     printline();
                     if (s4Obj.getAttributes() != null) {
-                        for (RAttribute att : s4Obj.getAttributes()) {
+                        for (RAttribute att : RAttributesLayout.asIterable(s4Obj.getAttributes())) {
                             if (!"class".equals(att.getName())) {
                                 append(", ").append(att.getName()).append(" = ").appendValue(att.getValue()).printline();
                             }
@@ -895,7 +896,7 @@ public class RDeparse {
         private static boolean hasAttributes(Object obj) {
             // TODO check (and ignore) function source attribute
             if (obj instanceof RAttributable) {
-                RAttributes attrs = ((RAttributable) obj).getAttributes();
+                DynamicObject attrs = ((RAttributable) obj).getAttributes();
                 return attrs != null && !attrs.isEmpty();
             } else {
                 return false;
@@ -906,11 +907,11 @@ public class RDeparse {
             if (showAttributes() && hasAttributes(obj)) {
                 append("structure(");
                 return () -> {
-                    RAttributes attrs = ((RAttributable) obj).getAttributes();
+                    DynamicObject attrs = ((RAttributable) obj).getAttributes();
                     if (attrs != null) {
-                        Iterator<RAttribute> iter = attrs.iterator();
+                        Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
                         while (iter.hasNext()) {
-                            RAttribute attr = iter.next();
+                            RAttributesLayout.RAttribute attr = iter.next();
                             // TODO ignore function source attribute
                             String attrName = attr.getName();
                             append(", ");

@@ -38,6 +38,7 @@ import java.util.TreeMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -47,13 +48,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.AttributeTracer;
+import com.oracle.truffle.r.runtime.data.AttributeTracer.Change;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.RAttributes.AttributeTracer.Change;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 import com.oracle.truffle.tools.Profiler;
 import com.oracle.truffle.tools.Profiler.Counter.TimeKind;
@@ -71,7 +72,7 @@ public class FastRStats {
     }
 
     @RBuiltin(name = ".fastr.prof.attr", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append"}, behavior = COMPLEX)
-    public abstract static class FastRProfAttr extends RBuiltinNode implements RAttributes.AttributeTracer.Listener {
+    public abstract static class FastRProfAttr extends RBuiltinNode implements AttributeTracer.Listener {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"Rprofattr.out", RRuntime.LOGICAL_FALSE};
@@ -103,8 +104,8 @@ public class FastRStats {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(filenameVec.getDataAt(0), append));
                     state.setOut(out);
-                    RAttributes.AttributeTracer.addListener(this);
-                    RAttributes.AttributeTracer.setTracingState(true);
+                    AttributeTracer.addListener(this);
+                    AttributeTracer.setTracingState(true);
                 } catch (IOException ex) {
                     throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
@@ -121,7 +122,7 @@ public class FastRStats {
         }
 
         @Override
-        public void reportAttributeChange(Change change, RAttributes attrs, Object value) {
+        public void reportAttributeChange(Change change, DynamicObject attrs, Object value) {
             State rprofattrState = State.get();
             rprofattrState.out().printf("%s,%d,", change.name(), System.identityHashCode(attrs));
             switch (change) {
@@ -150,7 +151,7 @@ public class FastRStats {
 
             @Override
             public void cleanup(int status) {
-                RAttributes.AttributeTracer.setTracingState(false);
+                AttributeTracer.setTracingState(false);
                 closeAndResetOut();
             }
 

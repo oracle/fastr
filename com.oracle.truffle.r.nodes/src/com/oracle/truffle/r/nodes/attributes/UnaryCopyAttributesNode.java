@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -79,11 +79,12 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source, attrSourceProfiles)"})
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
-                    @Cached("createDim()") RemoveAttributeNode removeDim, //
-                    @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //
+                    @Cached("createDim()") RemoveFixedAttributeNode removeDim, //
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames, //
                     @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createNames()") PutAttributeNode putNames, //
-                    @Cached("createDim()") PutAttributeNode putDim, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
+                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames, //
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
@@ -95,7 +96,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
         int[] newDimensions = source.getDimensions();
         if (noDimensions.profile(newDimensions == null)) {
-            RAttributes attributes = result.getAttributes();
+            DynamicObject attributes = result.getAttributes();
             if (attributes != null) {
                 removeDim.execute(attributes);
                 removeDimNames.execute(attributes);
@@ -117,7 +118,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
         RList newDimNames = source.getDimNames(attrSourceProfiles);
         if (hasDimNames.profile(newDimNames != null)) {
-            result.getAttributes().put(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+            putDimNames.execute(result.getAttributes(), newDimNames);
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
             result.setInternalDimNames(newDimNames);
             return result;

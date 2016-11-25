@@ -64,6 +64,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.junit.After;
@@ -74,6 +75,7 @@ import org.junit.Test;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
@@ -586,6 +588,20 @@ public class CastBuilderTest {
                         Message.NON_POSITIVE_FILL).mapIf(atomicLogicalValue(), asBoolean(), asInteger());
         // TODO: asserts
         testPipeline();
+    }
+
+    @Test
+    public void testSample22() {
+        arg.conf(c -> c.mapMissing(emptyStringVector()).mapNull(emptyStringVector())).mustBe(stringValue());
+        arg.mapNull(emptyStringVector()).mustBe(stringValue());
+        Object res = cast(RNull.instance);
+        assertTrue(res instanceof RAbstractStringVector);
+        assertEquals(0, ((RAbstractStringVector) res).getLength());
+        res = cast(RMissing.instance);
+        assertTrue(res instanceof RAbstractStringVector);
+        assertEquals(0, ((RAbstractStringVector) res).getLength());
+        res = cast("abc");
+        assertEquals("abc", res);
     }
 
     @Test

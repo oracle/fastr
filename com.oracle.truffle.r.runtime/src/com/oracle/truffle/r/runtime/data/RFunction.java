@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -116,11 +115,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     public RFunction copy() {
         RFunction newFunction = RDataFactory.createFunction(getName(), getPackageName(), getTarget(), getRBuiltin(), getEnclosingFrame());
         if (getAttributes() != null) {
-            RAttributes newAttributes = newFunction.initAttributes();
-            for (RAttribute attr : getAttributes()) {
-                newAttributes.put(attr.getName(), attr.getValue());
-            }
-            newFunction.initAttributes(newAttributes);
+            newFunction.initAttributes(RAttributesLayout.copy(getAttributes()));
         }
         newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;

@@ -18,9 +18,9 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -36,28 +36,20 @@ public abstract class UpdateSlotNode extends RNode {
 
     public abstract Object executeUpdate(Object object, String name, Object value);
 
-    protected PutAttributeNode createAttrUpdate(String name) {
-        return PutAttributeNodeGen.create(name);
+    protected SetAttributeNode createAttrUpdate() {
+        return SetAttributeNode.create();
     }
 
     private static Object prepareValue(Object value) {
         return value == RNull.instance ? RRuntime.PSEUDO_NULL : value;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isData(name)", "name == cachedName"})
+    @Specialization(guards = {"!isData(name)"})
     protected Object updateSlotS4Cached(RAttributable object, String name, Object value, //
-                    @Cached("name") String cachedName, //
-                    @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate, //
+                    @Cached("createAttrUpdate()") SetAttributeNode attributeUpdate, //
                     @Cached("create()") InitAttributesNode initAttributes) {
-        attributeUpdate.execute(initAttributes.execute(object), prepareValue(value));
-        return object;
-    }
-
-    @Specialization(contains = "updateSlotS4Cached", guards = "!isData(name)")
-    protected Object updateSlotS4(RAttributable object, String name, Object value) {
         assert Utils.isInterned(name);
-        object.setAttr(name, prepareValue(value));
+        attributeUpdate.execute(initAttributes.execute(object), name, prepareValue(value));
         return object;
     }
 
