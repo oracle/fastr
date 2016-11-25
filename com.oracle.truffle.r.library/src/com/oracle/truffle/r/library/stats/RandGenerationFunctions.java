@@ -166,7 +166,7 @@ public final class RandGenerationFunctions {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
             double value = function.evaluate(aValue, bValue, rand);
-            if (Double.isNaN(value)) {
+            if (Double.isNaN(value) || Double.isNaN(value)) {
                 profiles.nan.enter();
                 nans = true;
             }
