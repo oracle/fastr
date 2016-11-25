@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.attributes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Location;
+import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -32,53 +34,40 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * The base class for the nodes that get/set/remove attributes. It encapsulates the common methods
+ * used in guards and for caching.
+ */
 public abstract class AttributeAccessNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = RAttributesLayout.LAYOUTS.length;
-
-    private final ConditionProfile[] loopProfiles;
-    private final BranchProfile nullLayoutProfile = BranchProfile.create();
-
     protected AttributeAccessNode() {
-        this.loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];
-        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
-            loopProfiles[i] = ConditionProfile.createBinaryProfile();
-        }
-    }
-
-    @ExplodeLoop
-    protected final AttrsLayout findLayout(DynamicObject attrs) {
-        Shape attrsShape = attrs.getShape();
-        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
-            AttrsLayout attrsLayout = RAttributesLayout.LAYOUTS[i];
-            if (loopProfiles[i].profile(attrsLayout.shape == attrsShape)) {
-                return attrsLayout;
-            }
-        }
-        return null;
-    }
-
-    protected int findAttrIndexInLayout(String name, AttrsLayout attrsLayout) {
-        if (attrsLayout == null) {
-            nullLayoutProfile.enter();
-            return -1;
-        }
-
-        for (int i = 0; i < attrsLayout.properties.length; i++) {
-            if (name.equals(attrsLayout.properties[i])) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
-        return shape != null && shape.check(attrs);
     }
 
     protected static Shape lookupShape(DynamicObject attrs) {
         CompilerAsserts.neverPartOfCompilation();
         return attrs.getShape();
+    }
+
+    protected static Property lookupProperty(Shape shape, Object name) {
+        /* Initialization of cached values always happens in a slow path. */
+        CompilerAsserts.neverPartOfCompilation();
+
+        Property property = shape.getProperty(name);
+        if (property == null) {
+            /* Property does not exist. */
+            return null;
+        }
+
+        return property;
+    }
+
+    protected static Location lookupLocation(Shape shape, Object name) {
+        Property p = lookupProperty(shape, name);
+        return p == null ? null : p.getLocation();
+    }
+
+    protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
+        return shape != null && shape.check(attrs);
     }
 
 }

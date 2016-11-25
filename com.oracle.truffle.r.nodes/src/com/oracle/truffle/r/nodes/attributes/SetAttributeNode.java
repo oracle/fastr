@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,12 +29,8 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 
 public abstract class SetAttributeNode extends AttributeAccessNode {
 
@@ -48,21 +43,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
     public abstract void execute(DynamicObject attrs, String name, Object value);
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cachedName.equals(name)", "attrsLayout != null", "attrsLayout.shape.check(attrs)", "cachedIndex >= 0"})
-    @SuppressWarnings("unused")
-    protected void setConstantLayout(DynamicObject attrs, String name, Object value,
-                    @Cached("name") String cachedName,
-                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout,
-                    @Cached("findAttrIndexInLayout(cachedName, attrsLayout)") int cachedIndex) {
-        try {
-            attrsLayout.properties[cachedIndex].getLocation().set(attrs, value);
-        } catch (IncompatibleLocationException | FinalLocationException ex) {
-            RInternalError.reportError(ex);
-        }
-    }
-
     @Specialization(limit = "3", //
-                    contains = "setConstantLayout", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(shape, attrs)",
@@ -84,7 +65,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         }
     }
 
-    @Specialization(limit = "CACHE_LIMIT", //
+    @Specialization(limit = "3", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(oldShape, attrs)",
@@ -114,22 +95,9 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
      * polymorphic inline cache.
      */
     @TruffleBoundary
-    @Specialization(contains = {"setConstantLayout", "setExistingAttrCached", "setNewAttrCached"})
-    protected static void writeUncached(DynamicObject receiver, String name, Object value) {
+    @Specialization(contains = {"setExistingAttrCached", "setNewAttrCached"})
+    protected static void setAttrFallback(DynamicObject receiver, String name, Object value) {
         receiver.define(name, value);
-    }
-
-    /** Try to find the given property in the shape. */
-    protected static Location lookupLocation(Shape shape, Object name) {
-        CompilerAsserts.neverPartOfCompilation();
-
-        Property property = shape.getProperty(name);
-        if (property == null) {
-            /* Property does not exist yet, so a shape change is necessary. */
-            return null;
-        }
-
-        return property.getLocation();
     }
 
     /**

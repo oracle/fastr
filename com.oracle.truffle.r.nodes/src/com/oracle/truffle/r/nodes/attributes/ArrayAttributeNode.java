@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
-public abstract class ArrayAttributeNode extends AttributeAccessNode {
+public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
 
     public static ArrayAttributeNode create() {
         return ArrayAttributeNodeGen.create();

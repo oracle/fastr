@@ -27,26 +27,19 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
-import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndProperties;
 
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
-    protected SetFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
-        super(name, constantShapes, constantProperties);
-    }
-
-    public static SetFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantLocations) {
-        return SetFixedAttributeNodeGen.create(name, constantShapes, constantLocations);
+    protected SetFixedAttributeNode(String name) {
+        super(name);
     }
 
     public static SetFixedAttributeNode create(String name) {
-        ConstantShapesAndProperties csl = RAttributesLayout.getConstantShapesAndProperties(name);
-        return SetFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
+        return SetFixedAttributeNodeGen.create(name);
     }
 
     public static SetFixedAttributeNode createNames() {
@@ -67,22 +60,22 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     public abstract void execute(DynamicObject attrs, Object value);
 
-    @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected void setFromConstantLocation(DynamicObject attrs, Object value,
-                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
-        constantProperties[shapeIndex].getLocation().get(attrs);
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(shape, attrs)", "location != null"}, //
+                    assumptions = {"shape.getValidAssumption()"})
+    protected void setAttrCached(DynamicObject attrs, Object value,
+                    @Cached("lookupShape(attrs)") Shape shape,
+                    @Cached("lookupLocation(shape, name)") Location location) {
         try {
-            constantProperties[shapeIndex].set(attrs, value, constantShapes[shapeIndex]);
+            location.set(attrs, value, shape);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
             RInternalError.reportError(ex);
         }
-
     }
 
-    @Specialization(contains = "setFromConstantLocation")
-    protected void setFromObject(DynamicObject attrs, Object value,
-                    @Cached("create()") SetAttributeNode setter) {
-        setter.execute(attrs, name, value);
+    @Specialization(contains = "setAttrCached")
+    protected void setFallback(DynamicObject attrs, Object value) {
+        attrs.define(name, value);
     }
 
 }

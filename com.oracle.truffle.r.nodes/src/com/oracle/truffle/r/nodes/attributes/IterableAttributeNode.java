@@ -28,7 +28,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 
-public abstract class IterableAttributeNode extends AttributeAccessNode {
+public abstract class IterableAttributeNode extends AttributeIterativeAccessNode {
 
     public static IterableAttributeNode create() {
         return IterableAttributeNodeGen.create();
@@ -36,7 +36,7 @@ public abstract class IterableAttributeNode extends AttributeAccessNode {
 
     public abstract RAttributesLayout.RAttributeIterable execute(DynamicObject attrs);
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
+    @Specialization(limit = "CACHE_LIMIT", guards = {"attrsLayout != null", "shapeCheck(attrsLayout.shape, attrs)"})
     protected RAttributesLayout.RAttributeIterable getArrayFromConstantLayouts(DynamicObject attrs,
                     @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
         return RAttributesLayout.asIterable(attrs, attrsLayout);

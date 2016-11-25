@@ -28,22 +28,15 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndProperties;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
-    protected RemoveFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
-        super(name, constantShapes, constantProperties);
-    }
-
-    public static RemoveFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantProperties) {
-        return RemoveFixedAttributeNodeGen.create(name, constantShapes, constantProperties);
+    protected RemoveFixedAttributeNode(String name) {
+        super(name);
     }
 
     public static RemoveFixedAttributeNode create(String name) {
-        ConstantShapesAndProperties csl = RAttributesLayout.getConstantShapesAndProperties(name);
-        return RemoveFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
+        return RemoveFixedAttributeNodeGen.create(name);
     }
 
     public static RemoveFixedAttributeNode createNames() {
@@ -64,16 +57,18 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
 
     public abstract void execute(DynamicObject attrs);
 
-    @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected void getFromConstantLocation(DynamicObject attrs,
-                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
-        Shape oldShape = attrs.getShape();
-        Shape newShape = attrs.getShape().removeProperty(constantProperties[shapeIndex]);
-        attrs.setShapeAndResize(oldShape, newShape);
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(shape, attrs)", "property != null"}, //
+                    assumptions = {"shape.getValidAssumption()"})
+    protected void removeAttrCached(DynamicObject attrs,
+                    @Cached("lookupShape(attrs)") Shape shape,
+                    @Cached("lookupProperty(shape, name)") Property property) {
+        Shape newShape = attrs.getShape().removeProperty(property);
+        attrs.setShapeAndResize(shape, newShape);
     }
 
-    @Specialization(contains = "getFromConstantLocation")
-    protected void getFromObject(DynamicObject attrs) {
+    @Specialization(contains = "removeAttrCached")
+    protected void removeAttrFallback(DynamicObject attrs) {
         attrs.delete(this.name);
     }
 }

@@ -22,18 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
 public abstract class GetAttributeNode extends AttributeAccessNode {
 
@@ -46,25 +40,11 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
 
     public abstract Object execute(DynamicObject attrs, String name);
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cachedName.equals(name)", "attrsLayout != null", "attrsLayout.shape.check(attrs)"})
-    @SuppressWarnings("unused")
-    protected Object handleConstantLayout(DynamicObject attrs, String name,
-                    @Cached("name") String cachedName,
-                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout,
-                    @Cached("findAttrIndexInLayout(cachedName, attrsLayout)") int cachedIndex,
-                    @Cached("create()") BranchProfile missingAttrProfile) {
-        if (cachedIndex < 0) {
-            missingAttrProfile.enter();
-            return null;
-        }
-        return attrsLayout.properties[cachedIndex].getLocation().get(attrs);
-    }
-
     @Specialization(limit = "3", //
-                    contains = "handleConstantLayout", guards = {"location != null", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
+                    guards = {"location != null", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     @SuppressWarnings("unused")
-    protected Object handleCached(DynamicObject attrs, String name,
+    protected Object getAttrCached(DynamicObject attrs, String name,
                     @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
@@ -72,22 +52,9 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     }
 
     @TruffleBoundary
-    @Specialization(contains = {"handleConstantLayout", "handleCached"})
-    protected Object handleNonCached(DynamicObject attrs, String name) {
+    @Specialization(contains = {"getAttrCached"})
+    protected Object getAttrFallback(DynamicObject attrs, String name) {
         return attrs.get(name);
-    }
-
-    protected static Location lookupLocation(Shape shape, Object name) {
-        /* Initialization of cached values always happens in a slow path. */
-        CompilerAsserts.neverPartOfCompilation();
-
-        Property property = shape.getProperty(name);
-        if (property == null) {
-            /* Property does not exist. */
-            return null;
-        }
-
-        return property.getLocation();
     }
 
 }

@@ -22,47 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-
-public abstract class FixedAttributeAccessNode extends RBaseNode {
+/**
+ * The base class for the nodes that get/set/remove a fixed attribute.
+ */
+public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
 
     protected static final int CACHE_LIMIT = 3;
 
     protected final String name;
-    protected final Shape[] constantShapes;
-    protected final Property[] constantProperties;
-    private final ConditionProfile[] loopProfiles;
 
-    protected FixedAttributeAccessNode(String name, Shape[] constantShapes, Property[] constantProperties) {
+    protected FixedAttributeAccessNode(String name) {
         assert name.intern() == name;
-        assert constantShapes.length == constantProperties.length;
         this.name = name;
-        this.constantShapes = constantShapes;
-        this.constantProperties = constantProperties;
-        this.loopProfiles = new ConditionProfile[constantShapes.length];
-        for (int i = 0; i < constantShapes.length; i++) {
-            loopProfiles[i] = ConditionProfile.createBinaryProfile();
-        }
-    }
-
-    @ExplodeLoop
-    protected final int findShapeIndex(DynamicObject attrs) {
-        Shape shape = attrs.getShape();
-        for (int i = 0; i < constantShapes.length; i++) {
-            if (loopProfiles[i].profile(constantShapes[i] == shape)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    protected boolean shapeCheck(DynamicObject attrs, int shapeIndex) {
-        return constantShapes[shapeIndex].check(attrs);
     }
 
 }

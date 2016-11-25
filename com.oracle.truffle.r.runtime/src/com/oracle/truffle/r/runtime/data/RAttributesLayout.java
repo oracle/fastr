@@ -36,6 +36,17 @@ import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RRuntime;
 
+/**
+ * The facade to facilitate manipulation with attributes in FastR. The attributes in FastR are
+ * implemented on top of the Truffle object model, in particular, on top of class
+ * {@link DynamicObject}. This class contains methods for creating new instances of attributes,
+ * copying, clearing and iterating attributes.
+ * <p>
+ * This class serves also as a register of known sets of attributes used in FastR. Each set is
+ * represented by an instance of {@link RAttributesLayout.AttrsLayout} that encapsulates, among
+ * other things, the pre-loaded list of properties of the given attribute set. This plays role when
+ * optimizing the iteration over attributes of an object (by means of special nodes).
+ */
 public final class RAttributesLayout {
 
     public static class RAttributesType extends ObjectType {

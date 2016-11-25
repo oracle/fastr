@@ -25,25 +25,18 @@ package com.oracle.truffle.r.nodes.attributes;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.ConstantShapesAndProperties;
 
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
-    protected GetFixedAttributeNode(String name, Shape[] constantShapes, Property[] constantProperties) {
-        super(name, constantShapes, constantProperties);
-    }
-
-    public static GetFixedAttributeNode create(String name, Shape[] constantShapes, Property[] constantProperties) {
-        return GetFixedAttributeNodeGen.create(name, constantShapes, constantProperties);
+    protected GetFixedAttributeNode(String name) {
+        super(name);
     }
 
     public static GetFixedAttributeNode create(String name) {
-        ConstantShapesAndProperties csl = RAttributesLayout.getConstantShapesAndProperties(name);
-        return GetFixedAttributeNodeGen.create(name, csl.getConstantShapes(), csl.getConstantProperties());
+        return GetFixedAttributeNodeGen.create(name);
     }
 
     public static GetFixedAttributeNode createNames() {
@@ -60,15 +53,18 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
     public abstract Object execute(DynamicObject attrs);
 
-    @Specialization(limit = "constantShapes.length", guards = {"shapeIndex >= 0", "shapeCheck(attrs, shapeIndex)"})
-    protected Object getFromConstantLocation(DynamicObject attrs,
-                    @Cached("findShapeIndex(attrs)") int shapeIndex) {
-        return constantProperties[shapeIndex].getLocation().get(attrs);
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(shape, attrs)", "location != null"}, //
+                    assumptions = {"shape.getValidAssumption()"})
+    @SuppressWarnings("unused")
+    protected Object getAttrCached(DynamicObject attrs,
+                    @Cached("lookupShape(attrs)") Shape shape,
+                    @Cached("lookupLocation(shape, name)") Location location) {
+        return location.get(attrs);
     }
 
-    @Specialization(contains = "getFromConstantLocation")
-    protected Object getFromObject(DynamicObject attrs,
-                    @Cached("create()") GetAttributeNode getter) {
-        return getter.execute(attrs, name);
+    @Specialization(contains = "getAttrCached")
+    protected Object getAttrFallback(DynamicObject attrs) {
+        return attrs.get(name);
     }
 }
