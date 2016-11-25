@@ -111,32 +111,50 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "isRNull(x) || isRNull(y)")
     protected byte doInternalIdenticalNull(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x == y);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isRMissing(x) || isRMissing(y)")
     protected byte doInternalIdenticalMissing(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x == y);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(byte x, byte y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x == y);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(String x, String y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return x.equals(y) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x.equals(y));
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(double x, double y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        boolean truth = numEq ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
-        return truth ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        if (singleNA) {
+            if (RRuntime.isNA(x)) {
+                return RRuntime.asLogical(RRuntime.isNA(y));
+            } else if (RRuntime.isNA(y)) {
+                return RRuntime.LOGICAL_FALSE;
+            } else if (Double.isNaN(x)) {
+                return RRuntime.asLogical(Double.isNaN(y));
+            } else if (Double.isNaN(y)) {
+                return RRuntime.LOGICAL_FALSE;
+            }
+        }
+        if (numEq) {
+            if (!singleNA) {
+                if (Double.isNaN(x) || Double.isNaN(y)) {
+                    return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
+                }
+            }
+            return RRuntime.asLogical(x == y);
+        }
+        return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
     }
 
     private byte identicalAttr(RAttributable x, RAttributable y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
@@ -182,14 +200,14 @@ public abstract class Identical extends RBuiltinNode {
     @Specialization
     protected byte doInternalIdentical(REnvironment x, REnvironment y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         // reference equality for environments
-        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x == y);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         assert Utils.isInterned(x.getName()) && Utils.isInterned(y.getName());
-        return x.getName() == y.getName() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(x.getName() == y.getName());
     }
 
     @Specialization
