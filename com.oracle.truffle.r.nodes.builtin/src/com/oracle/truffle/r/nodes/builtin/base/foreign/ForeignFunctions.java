@@ -57,6 +57,7 @@ import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RCauchy;
 import com.oracle.truffle.r.library.stats.RGamma;
+import com.oracle.truffle.r.library.stats.RLogis;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
 import com.oracle.truffle.r.library.stats.Rbinom;
 import com.oracle.truffle.r.library.stats.Rf;
@@ -378,6 +379,8 @@ public class ForeignFunctions {
                     return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RCauchy());
                 case "rf":
                     return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rf());
+                case "rlogis":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RLogis());
                 case "qgamma":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
