@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.GetMissingValueNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.signature.MissingNodeFactory.MissingCheckCacheNodeGen;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -175,6 +176,13 @@ public final class MissingNode extends OperatorNode {
     @Child private MissingCheckLevel level;
     @Child private LocalReadVariableNode readVarArgs;
 
+    /**
+     * We need to set the visibility ourselves, because this node is created directly in RASTBuilder
+     * without being wrapped by BuiltinCallNode. This node must set the visibility value, because it
+     * can be the only statement of a function.
+     */
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
     private final ArgumentsSignature signature;
     private final RSyntaxElement[] args;
 
@@ -203,7 +211,7 @@ public final class MissingNode extends OperatorNode {
             }
         }
         if (level != null) {
-            return RRuntime.asLogical(level.execute(frame));
+            return createResult(frame, level.execute(frame));
         }
         if (readVarArgs != null) {
             RArgsValuesAndNames varArgs = (RArgsValuesAndNames) readVarArgs.execute(frame);
@@ -211,7 +219,7 @@ public final class MissingNode extends OperatorNode {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.MISSING_ARGUMENTS);
             }
-            return RRuntime.asLogical(varArgs.getLength() == 0);
+            return createResult(frame, varArgs.getLength() == 0);
         }
         throw RInternalError.shouldNotReachHere();
     }
@@ -224,5 +232,10 @@ public final class MissingNode extends OperatorNode {
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return args;
+    }
+
+    private Byte createResult(Frame frame, boolean result) {
+        visibility.execute(frame, true);
+        return RRuntime.asLogical(result);
     }
 }

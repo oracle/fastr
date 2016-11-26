@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -39,7 +40,7 @@ public class Generic_Tools implements ToolsRFFI {
     private static final class ToolsProvider {
         private static final String C_PARSE_RD = "C_parseRd";
         private static ToolsProvider tools;
-        private static long parseRd;
+        private static DLL.SymbolHandle parseRd;
 
         @TruffleBoundary
         private ToolsProvider() {
@@ -57,7 +58,7 @@ public class Generic_Tools implements ToolsRFFI {
 
         @SuppressWarnings("static-method")
         long getParseRd() {
-            return parseRd;
+            return parseRd.asAddress();
         }
     }
 
@@ -70,7 +71,8 @@ public class Generic_Tools implements ToolsRFFI {
         try {
             parseRdCritical.acquire();
             long parseRd = ToolsProvider.toolsProvider().getParseRd();
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(parseRd, ToolsProvider.C_PARSE_RD, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(parseRd), ToolsProvider.C_PARSE_RD,
+                            new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
         } catch (Throwable ex) {
             throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
         } finally {

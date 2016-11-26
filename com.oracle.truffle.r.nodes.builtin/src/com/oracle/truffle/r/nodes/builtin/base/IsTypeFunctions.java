@@ -33,8 +33,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
@@ -44,7 +47,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -478,6 +481,8 @@ public class IsTypeFunctions {
         private final ConditionProfile attrNull = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrNames = ConditionProfile.createBinaryProfile();
+        private final BranchProfile namesAttrProfile = BranchProfile.create();
+        @Child private GetFixedAttributeNode namesGetter = GetFixedAttributeNode.createNames();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -512,11 +517,11 @@ public class IsTypeFunctions {
         }
 
         private boolean namesOnlyOrNoAttr(RAbstractVector x) {
-            RAttributes attributes = x.getAttributes();
+            DynamicObject attributes = x.getAttributes();
             if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
                 return true;
             } else {
-                return attributes.size() == 1 && attrNames.profile(attributes.getNameAtIndex(0) == RRuntime.NAMES_ATTR_KEY);
+                return attributes.size() == 1 && attrNames.profile(namesGetter.execute(attributes) != null);
             }
         }
     }

@@ -16,12 +16,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 
 //Transcribed from GnuR, src/main/print.c
 
@@ -40,14 +40,14 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
     @Override
     @TruffleBoundary
     public void print(RAttributable value, PrintContext printCtx) throws IOException {
-        RAttributes attrs = value.getAttributes();
+        DynamicObject attrs = value.getAttributes();
         if (attrs == null) {
             return;
         }
 
         final StringBuilder savedBuffer = printCtx.getTagBuffer();
         printCtx.resetTagBuffer();
-        for (RAttribute a : attrs) {
+        for (RAttributesLayout.RAttribute a : RAttributesLayout.asIterable(attrs)) {
             if (useSlots && RRuntime.CLASS_SYMBOL.equals(a.getName())) {
                 continue;
             }

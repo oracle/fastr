@@ -113,33 +113,6 @@ public class JNI_Base implements BaseRFFI {
     }
 
     @Override
-    public Object dlopen(String path, boolean local, boolean now) {
-        long handle = native_dlopen(path, local, now);
-        if (handle == 0) {
-            return null;
-        } else {
-            return new Long(handle);
-        }
-    }
-
-    @Override
-    public long dlsym(Object handle, String symbol) {
-        long nativeHandle = (Long) handle;
-        return native_dlsym(nativeHandle, symbol);
-    }
-
-    @Override
-    public int dlclose(Object handle) {
-        long nativeHandle = (Long) handle;
-        return native_dlclose(nativeHandle);
-    }
-
-    @Override
-    public String dlerror() {
-        return native_dlerror();
-    }
-
-    @Override
     public UtsName uname() {
         return JNI_UtsName.get();
     }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -126,17 +127,17 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RAttributes initAttributes() {
+    public DynamicObject initAttributes() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public final void initAttributes(DynamicObject newAttributes) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public RAttributes getAttributes() {
+    public DynamicObject getAttributes() {
         return null;
     }
 

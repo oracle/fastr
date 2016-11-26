@@ -37,6 +37,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.engine.shell.RCommand;
 import com.oracle.truffle.r.engine.shell.RscriptCommand;
 import com.oracle.truffle.r.nodes.RASTBuilder;
@@ -72,7 +73,7 @@ import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -272,9 +273,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     private static Object addAttributes(RAttributable result, RList list) {
-        RAttributes attrs = list.getAttributes();
+        DynamicObject attrs = list.getAttributes();
         if (attrs != null && !attrs.isEmpty()) {
-            result.initAttributes(attrs.copy());
+            result.initAttributes(RAttributesLayout.copy(attrs));
         }
         return result;
     }
@@ -445,7 +446,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         // This checks for the specific structure of replacements
         RLanguage replacement = ReplacementDispatchNode.getRLanguage(rl);
         RLanguage elem = replacement == null ? rl : replacement;
-        String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, 0, -1);
+        String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, RDeparse.KEEPINTEGER, -1);
         return string.split("\n")[0];
     }
 

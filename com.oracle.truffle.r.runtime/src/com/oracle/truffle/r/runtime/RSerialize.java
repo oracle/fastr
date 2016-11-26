@@ -34,13 +34,14 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -76,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -787,7 +789,7 @@ public class RSerialize {
                     Object prot = readItem();
                     long addr = 0;
                     Object tag = readItem();
-                    result = RDataFactory.createExternalPtr(addr, tag, prot);
+                    result = RDataFactory.createExternalPtr(new DLL.SymbolHandle(addr), tag, prot);
                     addReadRef(result);
                     break;
                 }
@@ -1421,7 +1423,7 @@ public class RSerialize {
                         }
                         terminatePairList();
                         writeItem(RNull.instance); // hashtab
-                        RAttributes attributes = env.getAttributes();
+                        DynamicObject attributes = env.getAttributes();
                         if (attributes != null) {
                             writeAttributes(attributes);
                         } else {
@@ -1430,7 +1432,7 @@ public class RSerialize {
                     }
                 } else {
                     // flags
-                    RAttributes attributes = null;
+                    DynamicObject attributes = null;
                     if (obj instanceof RAttributable) {
                         RAttributable rattr = (RAttributable) obj;
                         attributes = rattr.getAttributes();
@@ -1747,11 +1749,11 @@ public class RSerialize {
             }
         }
 
-        private void writeAttributes(RAttributes attributes) throws IOException {
+        private void writeAttributes(DynamicObject attributes) throws IOException {
             // have to convert to GnuR pairlist
-            Iterator<RAttribute> iter = attributes.iterator();
+            Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attributes).iterator();
             while (iter.hasNext()) {
-                RAttribute attr = iter.next();
+                RAttributesLayout.RAttribute attr = iter.next();
                 // name is the tag of the virtual pairlist
                 // value is the car
                 // next is the cdr

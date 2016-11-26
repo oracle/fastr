@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -38,11 +38,10 @@ public final class InitAttributesNode extends RBaseNode {
         return new InitAttributesNode();
     }
 
-    public RAttributes execute(RAttributable attributable) {
-        RAttributes attributes = attributable.getAttributes();
+    public DynamicObject execute(RAttributable attributable) {
+        DynamicObject attributes = attributable.getAttributes();
         if (hasAttributes.profile(attributes == null)) {
-            attributes = RAttributes.create();
-            attributable.initAttributes(attributes);
+            attributes = attributable.initAttributes();
         }
         return attributes;
     }

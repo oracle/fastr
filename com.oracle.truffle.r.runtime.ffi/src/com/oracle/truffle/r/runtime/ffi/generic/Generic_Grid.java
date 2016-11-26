@@ -28,12 +28,13 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public class Generic_Grid implements GridRFFI {
     private static final class GridProvider {
         private static GridProvider grid;
-        private static long initGrid;
-        private static long killGrid;
+        private static DLL.SymbolHandle initGrid;
+        private static DLL.SymbolHandle killGrid;
 
         @TruffleBoundary
         private GridProvider() {
@@ -52,24 +53,24 @@ public class Generic_Grid implements GridRFFI {
 
         @SuppressWarnings("static-method")
         long getInitGrid() {
-            return initGrid;
+            return initGrid.asAddress();
         }
 
         @SuppressWarnings("static-method")
         long getKillGrid() {
-            return killGrid;
+            return killGrid.asAddress();
         }
     }
 
     @Override
     public Object initGrid(REnvironment gridEvalEnv) {
         long initGrid = GridProvider.gridProvider().getInitGrid();
-        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(initGrid, "L_initGrid", new Object[]{gridEvalEnv});
+        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(initGrid), "L_initGrid", new Object[]{gridEvalEnv});
     }
 
     @Override
     public Object killGrid() {
         long killGrid = GridProvider.gridProvider().getKillGrid();
-        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(killGrid, "L_killGrid", new Object[0]);
+        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(killGrid), "L_killGrid", new Object[0]);
     }
 }

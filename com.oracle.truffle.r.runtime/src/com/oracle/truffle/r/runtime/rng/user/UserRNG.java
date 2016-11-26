@@ -43,7 +43,7 @@ public final class UserRNG extends RNGInitAdapter {
         NSeed(OPTIONAL),
         Seedloc(OPTIONAL);
 
-        private long address;
+        private DLL.SymbolHandle symbolHandle;
         private final String symbol;
         private final boolean optional;
 
@@ -53,15 +53,15 @@ public final class UserRNG extends RNGInitAdapter {
         }
 
         private boolean isDefined() {
-            return address != 0;
+            return symbolHandle != null;
         }
 
-        public long getAddress() {
-            return address;
+        public DLL.SymbolHandle getSymbolHandle() {
+            return symbolHandle;
         }
 
-        private void setAddress(DLLInfo dllInfo) {
-            this.address = findSymbol(symbol, dllInfo, optional);
+        private void setSymbolHandle(DLLInfo dllInfo) {
+            this.symbolHandle = findSymbol(symbol, dllInfo, optional);
         }
 
     }
@@ -77,7 +77,7 @@ public final class UserRNG extends RNGInitAdapter {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, Function.Rand.symbol);
         }
         for (Function f : Function.values()) {
-            f.setAddress(dllInfo);
+            f.setSymbolHandle(dllInfo);
         }
         userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
         if (Function.Init.isDefined()) {
@@ -100,13 +100,13 @@ public final class UserRNG extends RNGInitAdapter {
         }
     }
 
-    private static long findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {
-        long func = DLL.findSymbol(symbol, dllInfo.name, DLL.RegisteredNativeSymbol.any());
+    private static DLL.SymbolHandle findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {
+        DLL.SymbolHandle func = DLL.findSymbol(symbol, dllInfo.name, DLL.RegisteredNativeSymbol.any());
         if (func == DLL.SYMBOL_NOT_FOUND) {
             if (!optional) {
                 throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, symbol);
             } else {
-                return 0;
+                return null;
             }
         } else {
             return func;

@@ -72,6 +72,25 @@ public final class Utils {
         return (/* lower case */c >= '\u00DF' && c <= '\u00FF') || (/* upper case */c >= '\u00C0' && c <= '\u00DE');
     }
 
+    /**
+     * For methods converting strings to numbers. Removes leading zeroes up to first non zero
+     * character, but if the string is only string of zeroes e.g. '000', returns '0'. Strings
+     * starting with '0x' are returned as is.
+     */
+    public static String trimLeadingZeros(String value) {
+        if (value.length() <= 1 || value.charAt(0) != '0' || value.charAt(1) == 'x') {
+            return value;
+        }
+
+        int i;
+        for (i = 1; i < value.length() - 1; i++) {
+            if (value.charAt(i) != '0') {
+                break;
+            }
+        }
+        return value.substring(i);
+    }
+
     public static int incMod(int value, int mod) {
         int result = (value + 1);
         if (result == mod) {

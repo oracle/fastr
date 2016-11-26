@@ -23,8 +23,7 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -53,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -93,15 +93,15 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
-        protected AttributeAccess createPckgAttrAccess() {
-            return AttributeAccessNodeGen.create(RRuntime.PCKG_ATTR_KEY);
+        protected GetFixedAttributeNode createPckgAttrAccess() {
+            return GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table, //
-                        @Cached("createPckgAttrAccess()") AttributeAccess klassPckgAttrAccess, //
-                        @Cached("createPckgAttrAccess()") AttributeAccess valPckgAttrAccess) {
+                        @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess, //
+                        @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
             Object value = table.get(klassString);
@@ -418,7 +418,7 @@ public class MethodsListDispatch {
             // whose only purpose is to throw an error indicating that it shouldn't be called
             // TODO: finesse error handling in case a function stored in this pointer is actually
             // called
-            return RDataFactory.createExternalPtr(0, RNull.instance, RNull.instance);
+            return RDataFactory.createExternalPtr(new DLL.SymbolHandle(0L), RNull.instance, RNull.instance);
         }
     }
 }

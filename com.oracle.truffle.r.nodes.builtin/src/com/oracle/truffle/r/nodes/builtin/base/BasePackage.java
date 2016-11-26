@@ -168,6 +168,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BinaryLogic.NonVectorOrBuiltin.class, () -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR));
 
         // Now load the rest of the builtins in "base"
+        add(Abbrev.class, AbbrevNodeGen::create);
         add(APerm.class, APermNodeGen::create);
         add(NumericalFunctions.Abs.class, NumericalFunctionsFactory.AbsNodeGen::create);
         add(All.class, AllNodeGen::create);
@@ -532,6 +533,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Paste.class, PasteNodeGen::create);
         add(Paste0.class, Paste0NodeGen::create);
         add(PathExpand.class, PathExpandNodeGen::create);
+        add(Pretty.class, PrettyNodeGen::create);
         add(Primitive.class, PrimitiveNodeGen::create);
         add(PrintFunctions.PrintDefault.class, PrintFunctionsFactory.PrintDefaultNodeGen::create);
         add(PrintFunctions.PrintFunction.class, PrintFunctionsFactory.PrintFunctionNodeGen::create);

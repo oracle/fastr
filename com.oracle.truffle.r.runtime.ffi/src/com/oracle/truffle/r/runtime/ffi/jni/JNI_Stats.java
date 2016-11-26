@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 // Checkstyle: stop method name
@@ -33,31 +34,31 @@ public class JNI_Stats implements StatsRFFI {
     @Override
     @TruffleBoundary
     public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
-        native_fft_factor(fft_factor_address(), n, pmaxf, pmaxp);
+        native_fft_factor(fft_factor_address().asAddress(), n, pmaxf, pmaxp);
     }
 
     @Override
     @TruffleBoundary
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-        return native_fft_work(fft_work_address(), a, nseg, n, nspn, isn, work, iwork);
+        return native_fft_work(fft_work_address().asAddress(), a, nseg, n, nspn, isn, work, iwork);
     }
 
-    private long fft_factor_address;
-    private long fft_work_address;
+    private SymbolHandle fft_factor_address;
+    private SymbolHandle fft_work_address;
 
-    private long fft_factor_address() {
-        if (fft_factor_address == 0) {
+    private SymbolHandle fft_factor_address() {
+        if (fft_factor_address == null) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
-            fft_factor_address = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, "fft_factor");
+            fft_factor_address = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, "fft_factor");
             assert fft_factor_address != DLL.SYMBOL_NOT_FOUND;
         }
         return fft_factor_address;
     }
 
-    private long fft_work_address() {
-        if (fft_work_address == 0) {
+    private SymbolHandle fft_work_address() {
+        if (fft_work_address == null) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
-            fft_work_address = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, "fft_work");
+            fft_work_address = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, "fft_work");
             assert fft_work_address != DLL.SYMBOL_NOT_FOUND;
         }
         return fft_work_address;

@@ -33,8 +33,13 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,8 +49,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -63,6 +67,9 @@ public abstract class Attr extends RBuiltinNode {
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
+    @Child private UpdateSharedAttributeNode sharedAttrUpdate = UpdateSharedAttributeNode.create();
+    @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
+    @Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -99,9 +106,10 @@ public abstract class Attr extends RBuiltinNode {
         return Utils.intern(name);
     }
 
-    private static Object searchKeyPartial(RAttributes attributes, String name) {
+    private Object searchKeyPartial(DynamicObject attributes, String name) {
         Object val = RNull.instance;
-        for (RAttribute e : attributes) {
+
+        for (RAttributesLayout.RAttribute e : iterAttrAccess.execute(attributes)) {
             if (e.getName().startsWith(name)) {
                 if (val == RNull.instance) {
                     val = e.getValue();
@@ -115,15 +123,15 @@ public abstract class Attr extends RBuiltinNode {
     }
 
     private Object attrRA(RAttributable attributable, String name, boolean exact) {
-        RAttributes attributes = attributable.getAttributes();
+        DynamicObject attributes = attributable.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
-            Object result = attributes.get(name);
+            Object result = attrAccess.execute(attributes, name);
             if (searchPartialProfile.profile(!exact && result == null)) {
                 return searchKeyPartial(attributes, name);
             }
-            return result == null ? RNull.instance : result;
+            return result == null ? RNull.instance : sharedAttrUpdate.updateState(attributable, result);
         }
     }
 
@@ -140,7 +148,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(guards = "isRowNamesAttr(name)")
     protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact) {
         // TODO: if exact == false, check for partial match (there is an ignored tests for it)
-        RAttributes attributes = container.getAttributes();
+        DynamicObject attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {

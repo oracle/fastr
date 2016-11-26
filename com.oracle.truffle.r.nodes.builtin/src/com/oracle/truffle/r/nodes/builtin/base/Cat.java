@@ -53,9 +53,12 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -139,6 +142,7 @@ public abstract class Cat extends RBuiltinNode {
                 if (objVec.getLength() == 0) {
                     stringVecs.add("");
                 } else {
+                    validateType(i + 1, obj);
                     for (int j = 0; j < objVec.getLength(); j++) {
                         stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), false, ""));
                     }
@@ -194,6 +198,13 @@ public abstract class Cat extends RBuiltinNode {
         }
 
         return RNull.instance;
+    }
+
+    private void validateType(int argIndex, Object obj) {
+        if (obj instanceof RList || obj instanceof RLanguage || obj instanceof RExpression) {
+            RTypedValue rType = (RTypedValue) obj;
+            throw RError.error(this, Message.CAT_ARGUMENT_OF_TYPE, argIndex, rType.getRType().getName());
+        }
     }
 
     @TruffleBoundary

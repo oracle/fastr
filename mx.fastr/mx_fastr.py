@@ -195,7 +195,7 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     ns, rargs = parser.parse_known_args(args)
 
     if ns.extraVmArgsList:
-        j_extraVmArgsList = mx.split_j_args(ns.extraVmArgsList)
+        j_extraVmArgsList = split_j_args(ns.extraVmArgsList)
         if extraVmArgs is None:
             extraVmArgs = []
         extraVmArgs += j_extraVmArgsList

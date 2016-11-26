@@ -179,8 +179,9 @@ public final class UnaryMapNode extends RBaseNode {
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
 
     private boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector && (hasDimensionsProfile.profile(vector.hasDimensions()) || vector.getAttributes() != null || hasNamesProfile.profile(vector.getNames(attrProfiles) != null) ||
-                        vector.getDimNames(attrProfiles) != null);
+        return vector instanceof RVector &&
+                        (hasDimensionsProfile.profile(vector.hasDimensions()) || vector.getAttributes() != null || hasNamesProfile.profile(vector.getNames(attrProfiles) != null) ||
+                                        vector.getDimNames(attrProfiles) != null);
     }
 
     @TruffleBoundary

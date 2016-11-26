@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -25,8 +26,7 @@ import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -46,10 +45,10 @@ abstract class LoadMethod extends RBaseNode {
 
     public abstract RFunction executeRFunction(VirtualFrame frame, RAttributable fdef, String fname);
 
-    @Child private AttributeAccess targetAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_TARGET);
-    @Child private AttributeAccess definedAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_DEFINED);
-    @Child private AttributeAccess nextMethodAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_NEXT_METHOD);
-    @Child private AttributeAccess sourceAttrAccess = AttributeAccessNodeGen.create(RRuntime.R_SOURCE);
+    @Child private GetFixedAttributeNode targetAttrAccess = GetFixedAttributeNode.create(RRuntime.R_TARGET);
+    @Child private GetFixedAttributeNode definedAttrAccess = GetFixedAttributeNode.create(RRuntime.R_DEFINED);
+    @Child private GetFixedAttributeNode nextMethodAttrAccess = GetFixedAttributeNode.create(RRuntime.R_NEXT_METHOD);
+    @Child private GetFixedAttributeNode sourceAttrAccess = GetFixedAttributeNode.create(RRuntime.R_SOURCE);
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
@@ -69,7 +68,7 @@ abstract class LoadMethod extends RBaseNode {
     protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname, //
                     @Cached("createClassProfile()") ValueProfile regFrameAccessProfile, //
                     @Cached("createClassProfile()") ValueProfile methodsFrameAccessProfile) {
-        RAttributes attributes = fdef.getAttributes();
+        DynamicObject attributes = fdef.getAttributes();
         assert attributes != null; // should have at least class attribute
         int found;
         Object nextMethodAttr = nextMethodAttrAccess.execute(attributes);

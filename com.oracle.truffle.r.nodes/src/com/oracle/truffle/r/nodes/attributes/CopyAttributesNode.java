@@ -25,11 +25,11 @@ package com.oracle.truffle.r.nodes.attributes;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -38,8 +38,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Simple attribute access node that specializes on the position at which the attribute was found
- * last time.
+ * Copies attributes from two source nodes into one result node.
+ *
+ * @see UnaryCopyAttributesNode
+ * @see CopyOfRegAttributesNode
  */
 public abstract class CopyAttributesNode extends RBaseNode {
 
@@ -111,11 +113,12 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft,
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegRight,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributes,
-                    @Cached("createDim()") RemoveAttributeNode removeDim,
-                    @Cached("createDimNames()") RemoveAttributeNode removeDimNames,
+                    @Cached("createDim()") RemoveFixedAttributeNode removeDim,
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("create()") InitAttributesNode initAttributes,
-                    @Cached("createNames()") PutAttributeNode putNames,
-                    @Cached("createDim()") PutAttributeNode putDim,
+                    @Cached("createNames()") SetFixedAttributeNode putNames,
+                    @Cached("createDim()") SetFixedAttributeNode putDim,
+                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames,
                     @Cached("create()") BranchProfile leftHasDimensions,
                     @Cached("create()") BranchProfile rightHasDimensions,
                     @Cached("create()") BranchProfile noDimensions,
@@ -141,7 +144,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             newDimensions = right.getDimensions();
             if (newDimensions == null) {
                 noDimensions.enter();
-                RAttributes attributes = result.getAttributes();
+                DynamicObject attributes = result.getAttributes();
                 if (hasAttributes.profile(attributes != null)) {
                     removeDim.execute(attributes);
                     removeDimNames.execute(attributes);
@@ -178,7 +181,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
         if (result != left) {
             RList newDimNames = left.getDimNames(attrLeftProfiles);
             if (hasDimNames.profile(newDimNames != null)) {
-                result.getAttributes().put(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+                putDimNames.execute(result.getAttributes(), newDimNames);
+
                 newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
                 result.setInternalDimNames(newDimNames);
                 return result;
@@ -200,8 +204,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") PutAttributeNode putNames, //
-                    @Cached("createDim()") PutAttributeNode putDim, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
@@ -255,8 +259,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") PutAttributeNode putNames, //
-                    @Cached("createDim()") PutAttributeNode putDim, //
+                    @Cached("createNames()") SetFixedAttributeNode putNames, //
+                    @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {

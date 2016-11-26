@@ -58,5 +58,6 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
+        assertEval(Output.IgnoreErrorMessage, "y <- 2; x <- 2 ; eval(quote(x+y), c(-1, -2))");
     }
 }

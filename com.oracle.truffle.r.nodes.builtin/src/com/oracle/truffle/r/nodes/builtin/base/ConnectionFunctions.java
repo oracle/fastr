@@ -178,6 +178,10 @@ public abstract class ConnectionFunctions {
         private static void swap(CastBuilder casts) {
             casts.arg("swap").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
+
+        private static void method(CastBuilder casts) {
+            casts.arg("method").asStringVector().findFirst();
+        }
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
@@ -189,7 +193,7 @@ public abstract class ConnectionFunctions {
             Casts.open(casts);
             casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
             Casts.encoding(casts);
-            casts.arg("method").asStringVector().findFirst();
+            Casts.method(casts);
             Casts.raw(casts);
         }
 
@@ -356,7 +360,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
+    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method"}, behavior = IO)
     public abstract static class URLConnection extends RBuiltinNode {
 
         @Override
@@ -365,11 +369,13 @@ public abstract class ConnectionFunctions {
             Casts.open(casts);
             Casts.blocking(casts);
             Casts.encoding(casts);
+            Casts.method(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding) {
+        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding,
+                        @SuppressWarnings("unused") String method) {
             try {
                 return new URLRConnection(url, open).asVector();
             } catch (MalformedURLException ex) {
@@ -716,7 +722,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object readBin(int con, String what, int n, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") boolean signed, boolean swap) {
+        protected Object readBin(int con, String what, int n, int size, boolean signed, boolean swap) {
             RVector<?> result = null;
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
@@ -726,7 +732,14 @@ public abstract class ConnectionFunctions {
                 switch (what) {
                     case "int":
                     case "integer":
-                        result = readInteger(connection, n, swap);
+                        if (size == RRuntime.INT_NA) {
+                            size = 4;
+                        }
+                        if (size == 1 || size == 4) {
+                            result = readInteger(connection, n, size, swap, signed);
+                        } else {
+                            throw RError.nyi(this, "readBin \"int\" size not implemented");
+                        }
                         break;
                     case "double":
                     case "numeric":
@@ -753,23 +766,32 @@ public abstract class ConnectionFunctions {
             return result;
         }
 
-        private static RIntVector readInteger(RConnection con, int n, boolean swap) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n * 4);
+        private static RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(n * size);
             int bytesRead = con.readBin(buffer);
             if (bytesRead == 0) {
                 return RDataFactory.createEmptyIntVector();
             }
             buffer.flip();
-            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
-            int nInts = bytesRead / 4;
+            checkOrder(buffer, swap);
+            int nInts = bytesRead / size;
             int[] data = new int[nInts];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
-            for (int i = 0; i < nInts; i++) {
-                int d = intBuffer.get();
-                if (RRuntime.isNA(d)) {
-                    complete = RDataFactory.INCOMPLETE_VECTOR;
+            if (size == 4) {
+                IntBuffer intBuffer = buffer.asIntBuffer();
+                for (int i = 0; i < nInts; i++) {
+                    int d = intBuffer.get();
+                    if (RRuntime.isNA(d)) {
+                        complete = RDataFactory.INCOMPLETE_VECTOR;
+                    }
+                    data[i] = d;
                 }
-                data[i] = d;
+            } else if (size == 1) {
+                for (int i = 0; i < nInts; i++) {
+                    byte b = buffer.get();
+                    int d = signed ? b : b & 0xFF;
+                    data[i] = d;
+                }
             }
             return RDataFactory.createIntVector(data, complete);
         }
@@ -1073,10 +1095,23 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected long seek(int con, double where, int origin, int rw) {
-            long offset = (long) where;
+        protected int seek(int con, double where, int origin, int rw) {
+            /*
+             * N.B. 0,1,2 are valid values for "rw"; 1,2,3 are valid values for "origin". We use 0
+             * for the NA (enquiry) case.
+             */
+            long offset = 0;
+            if (RRuntime.isNAorNaN(where)) {
+                origin = 0;
+            } else {
+                offset = (long) where;
+            }
             try {
-                return RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[origin], RConnection.SeekRWMode.values()[rw]);
+                long newOffset = RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[origin], RConnection.SeekRWMode.values()[rw]);
+                if (newOffset > Integer.MAX_VALUE) {
+                    throw RError.nyi(this, "seek > Integer.MAX_VALUE");
+                }
+                return (int) newOffset;
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.GENERIC, x.getMessage());
             }

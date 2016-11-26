@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
-import com.oracle.truffle.r.nodes.function.RCallSpecialNode.RecursiveSpecialBailout;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -241,10 +240,10 @@ abstract class ReplacementNode extends OperatorNode {
             RNode extractFunc = target;
             for (int i = calls.size() - 1; i >= 1; i--) {
                 extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
-                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException(true);
+                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException();
             }
             this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
-            this.replaceCall.setPropagateFullCallNeededException(true);
+            this.replaceCall.setPropagateFullCallNeededException();
         }
 
         @Override
@@ -255,7 +254,7 @@ abstract class ReplacementNode extends OperatorNode {
                 // shared, it could not be extracted from a shared container (list), so we should be
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
-            } catch (FullCallNeededException | RecursiveSpecialBailout e) {
+            } catch (FullCallNeededException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).executeReplacement(frame);
             }
@@ -295,10 +294,10 @@ abstract class ReplacementNode extends OperatorNode {
             RNode extractFunc = target;
             for (int i = calls.size() - 1; i >= 1; i--) {
                 extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
-                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException(true);
+                ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException();
             }
             this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), rhs.asRSyntaxNode(), calls.get(0), codeBuilderContext);
-            this.replaceCall.setPropagateFullCallNeededException(true);
+            this.replaceCall.setPropagateFullCallNeededException();
         }
 
         @Override
@@ -316,17 +315,16 @@ abstract class ReplacementNode extends OperatorNode {
                 // shared, it could not be extracted from a shared container (list), so we should be
                 // OK with not calling any other update function and just update the value directly.
                 replaceCall.execute(frame);
-            } catch (FullCallNeededException | RecursiveSpecialBailout e) {
+            } catch (FullCallNeededException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 GenericReplacementNode replacement = replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex));
 
-                Object rhsValue = e instanceof FullCallNeededException ? ((FullCallNeededException) e).rhsValue : ((RecursiveSpecialBailout) e).rhsValue;
-                if (rhsValue == null) {
+                if (e.rhsValue == null) {
                     // we haven't queried the rhs value yet
                     replacement.voidExecute(frame);
                 } else {
                     // rhs was already queried, so pass it along
-                    replacement.voidExecuteWithRhs(frame, rhsValue);
+                    replacement.voidExecuteWithRhs(frame, e.rhsValue);
                 }
             }
         }

@@ -32,7 +32,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -40,8 +42,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributes;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -73,6 +74,8 @@ public abstract class Identical extends RBuiltinNode {
 
     @Child private Identical identicalRecursive;
     @Child private Identical identicalRecursiveAttr;
+    @Child private IterableAttributeNode attrIterNodeX = IterableAttributeNode.create();
+    @Child private IterableAttributeNode attrIterNodeY = IterableAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -84,6 +87,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile differentTypesProfile = ConditionProfile.createBinaryProfile();
 
     // Note: the execution of the recursive cases is not done directly and not through RCallNode or
     // similar, this means that the visibility handling is left to us.
@@ -137,18 +141,18 @@ public abstract class Identical extends RBuiltinNode {
 
     private byte identicalAttr(RAttributable x, RAttributable y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         // TODO interpret attribAsSet correctly
-        RAttributes xAttributes = x.getAttributes();
-        RAttributes yAttributes = y.getAttributes();
+        DynamicObject xAttributes = x.getAttributes();
+        DynamicObject yAttributes = y.getAttributes();
         if (xAttributes == null && yAttributes == null) {
             return RRuntime.LOGICAL_TRUE;
         } else if (xAttributes == null || yAttributes == null) {
             return RRuntime.LOGICAL_FALSE;
         } else if (xAttributes.size() == yAttributes.size()) {
-            Iterator<RAttribute> xIter = xAttributes.iterator();
-            Iterator<RAttribute> yIter = yAttributes.iterator();
+            Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
+            Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
             while (xIter.hasNext()) {
-                RAttribute xAttr = xIter.next();
-                RAttribute yAttr = yIter.next();
+                RAttributesLayout.RAttribute xAttr = xIter.next();
+                RAttributesLayout.RAttribute yAttr = yIter.next();
                 if (!xAttr.getName().equals(yAttr.getName())) {
                     return RRuntime.LOGICAL_FALSE;
                 }
@@ -241,7 +245,7 @@ public abstract class Identical extends RBuiltinNode {
 
     @Specialization(guards = "!vectorsLists(x, y)")
     protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
+        if (vecLengthProfile.profile(x.getLength() != y.getLength()) || differentTypesProfile.profile(x.getRType() != y.getRType())) {
             return RRuntime.LOGICAL_FALSE;
         } else {
             for (int i = 0; i < x.getLength(); i++) {

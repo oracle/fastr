@@ -22,7 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -34,6 +40,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
@@ -66,7 +73,7 @@ public abstract class Eval extends RBuiltinNode {
      */
     abstract static class EvalEnvCast extends RBaseNode {
 
-        public abstract REnvironment execute(Object env, Object enclos);
+        public abstract REnvironment execute(VirtualFrame frame, Object env, Object enclos);
 
         private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
 
@@ -113,6 +120,18 @@ public abstract class Eval extends RBuiltinNode {
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
             return REnvironment.createFromList(attributeProfiles, list.toRList(), REnvironment.baseEnv());
         }
+
+        @Specialization
+        protected REnvironment cast(VirtualFrame frame, int envirIn, @SuppressWarnings("unused") Object enclos,
+                        @Cached("create()") SysFrame sysFrameNode) {
+            int envir = envirIn;
+            if (envirIn != 0) {
+                // because we are invoking SysFrame directly and normally SysFrame skips its
+                // .Internal frame
+                envir = envirIn < 0 ? envirIn + 1 : envirIn - 1;
+            }
+            return sysFrameNode.executeInt(frame, envir);
+        }
     }
 
     @Child private EvalEnvCast envCast = EvalEnvCastNodeGen.create();
@@ -120,14 +139,17 @@ public abstract class Eval extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("envir").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RList.class)).or(instanceOf(RPairList.class)));
+        // @formatter:off
+        casts.arg("envir").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RList.class)).or(instanceOf(RPairList.class)).or(numericValue())).
+                mapIf(numericValue(), chain(asIntegerVector()).with(mustBe(singleElement())).with(findFirst().integerElement()).end());
         casts.arg("enclos").allowNull().mustBe(REnvironment.class);
+        // @formatter:on
     }
 
     @Specialization
     protected Object doEval(VirtualFrame frame, RLanguage expr, Object envir, Object enclos) {
         RCaller rCaller = RCaller.create(frame, getOriginalCall());
-        REnvironment environment = envCast.execute(envir, enclos);
+        REnvironment environment = envCast.execute(frame, envir, enclos);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } finally {
@@ -138,7 +160,7 @@ public abstract class Eval extends RBuiltinNode {
     @Specialization
     protected Object doEval(VirtualFrame frame, RExpression expr, Object envir, Object enclos) {
         RCaller rCaller = RCaller.create(frame, getOriginalCall());
-        REnvironment environment = envCast.execute(envir, enclos);
+        REnvironment environment = envCast.execute(frame, envir, enclos);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } finally {
@@ -153,7 +175,7 @@ public abstract class Eval extends RBuiltinNode {
     @Specialization
     protected Object doEval(VirtualFrame frame, RSymbol expr, Object envir, Object enclos,
                     @Cached("createGet()") Get get) {
-        REnvironment environment = envCast.execute(envir, enclos);
+        REnvironment environment = envCast.execute(frame, envir, enclos);
 
         try {
             // no need to do the full eval for symbols: just do the lookup
@@ -166,7 +188,7 @@ public abstract class Eval extends RBuiltinNode {
     @Fallback
     protected Object doEval(VirtualFrame frame, Object expr, Object envir, Object enclos) {
         // just return value
-        envCast.execute(envir, enclos);
+        envCast.execute(frame, envir, enclos);
         visibility.execute(frame, true);
         return expr;
     }

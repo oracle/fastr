@@ -65,6 +65,7 @@ static jmethodID Rf_gsetVarMethodID;
 static jmethodID Rf_inheritsMethodID;
 static jmethodID Rf_lengthgetsMethodID;
 static jmethodID CADR_MethodID;
+static jmethodID CADDR_MethodID;
 static jmethodID TAG_MethodID;
 static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
@@ -113,6 +114,9 @@ static jclass rErrorHandlingClass;
 static jclass handlerStacksClass;
 static jmethodID resetAndGetHandlerStacksMethodID;
 static jmethodID restoreHandlerStacksMethodID;
+
+static jclass SymbolHandleClass;
+static jmethodID symbolHandleConsMethodID;
 
 static jclass RExternalPtrClass;
 static jmethodID createExternalPtrMethodID;
@@ -169,6 +173,7 @@ void init_internals(JNIEnv *env) {
 //	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
 //	Rf_iPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 1);
 	CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	CADDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TAG", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -217,14 +222,16 @@ void init_internals(JNIEnv *env) {
 	restoreHandlerStacksMethodID = checkGetMethodID(env, rErrorHandlingClass, "restoreHandlerStacks", "(Lcom/oracle/truffle/r/runtime/RErrorHandling$HandlerStacks;)V", 1);
 
 	RExternalPtrClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RExternalPtr");
-	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
-	externalPtrGetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "getAddr", "()J", 0);
+	createExternalPtrMethodID = checkGetMethodID(env, RDataFactoryClass, "createExternalPtr", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;Ljava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
+	externalPtrGetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "getAddr", "()Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;", 0);
 	externalPtrGetTagMethodID = checkGetMethodID(env, RExternalPtrClass, "getTag", "()Ljava/lang/Object;", 0);
 	externalPtrGetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "getProt", "()Ljava/lang/Object;", 0);
-	externalPtrSetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "setAddr", "(J)V", 0);
+	externalPtrSetAddrMethodID = checkGetMethodID(env, RExternalPtrClass, "setAddr", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle;)V", 0);
 	externalPtrSetTagMethodID = checkGetMethodID(env, RExternalPtrClass, "setTag", "(Ljava/lang/Object;)V", 0);
 	externalPtrSetProtMethodID = checkGetMethodID(env, RExternalPtrClass, "setProt", "(Ljava/lang/Object;)V", 0);
 
+	SymbolHandleClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$SymbolHandle");
+	symbolHandleConsMethodID = checkGetMethodID(env, SymbolHandleClass, "<init>", "(Ljava/lang/Object;)V", 0);
 	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$CharSXPWrapper");
 	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 
@@ -713,7 +720,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	invalidateCopiedObject(thisenv, x);
+	invalidateNativeArray(thisenv, x);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
 	return checkRef(thisenv, result);
 }
@@ -862,8 +869,10 @@ SEXP CDDDR(SEXP e) {
 }
 
 SEXP CADDR(SEXP e) {
-    unimplemented("CADDR");
-    return NULL;
+    TRACE(TARGp, e);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADDR_MethodID, e);
+    return checkRef(thisenv, result);
 }
 
 SEXP CADDDR(SEXP e) {
@@ -1503,7 +1512,8 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, (jlong) p, tag, prot);
+	jobject handle = (*thisenv)->CallStaticObjectMethod(thisenv, SymbolHandleClass, symbolHandleConsMethodID, (jobject) p);
+	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, handle, tag, prot);
     return checkRef(thisenv, result);
 }
 

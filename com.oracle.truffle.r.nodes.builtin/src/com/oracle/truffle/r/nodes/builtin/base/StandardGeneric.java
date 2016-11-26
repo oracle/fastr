@@ -25,12 +25,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
-import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -60,7 +59,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
     // TODO: for now, we always go through generic dispatch
 
-    @Child private AttributeAccess genericAttrAccess;
+    @Child private GetFixedAttributeNode genericAttrAccess;
     @Child private FrameFunctions.SysFunction sysFunction;
     @Child private LocalReadVariableNode readMTableFirst = LocalReadVariableNode.create(RRuntime.DOT_ALL_MTABLE, true);
     @Child private LocalReadVariableNode readSigLength = LocalReadVariableNode.create(RRuntime.DOT_SIG_LENGTH, true);
@@ -130,14 +129,14 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
         RFunction fn = (RFunction) fnObj;
         Object genObj = null;
-        RAttributes attributes = fn.getAttributes();
+        DynamicObject attributes = fn.getAttributes();
         if (attributes == null) {
             noGenFunFound.enter();
             return null;
         }
         if (genericAttrAccess == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
+            genericAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY));
         }
         genObj = genericAttrAccess.execute(attributes);
         if (genObj == null) {

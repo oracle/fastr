@@ -202,6 +202,11 @@ public class TestBuiltin_identical extends TestBase {
     }
 
     @Test
+    public void testAttrOrder() {
+        assertEval(Ignored.ImplementationError, "x <- 1; y <- 1; attr(x, \"f\") <- 2; attr(x, \"g\") <- 1; attr(y, \"g\") <- 1; attr(y, \"f\") <- 2; identical(x, y)");
+    }
+
+    @Test
     public void testIdentical() {
         assertEval("{ identical(1,1) }");
         assertEval("{ identical(1L,1) }");

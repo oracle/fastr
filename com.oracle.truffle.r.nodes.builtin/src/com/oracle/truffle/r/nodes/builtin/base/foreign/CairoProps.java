@@ -12,11 +12,17 @@
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public abstract class CairoProps extends RExternalBuiltinNode.Arg1 {
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).asIntegerVector();
+    }
 
     @Specialization
     protected byte cairoProps(@SuppressWarnings("unused") RAbstractIntVector param) {

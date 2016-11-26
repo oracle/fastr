@@ -42,18 +42,24 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
+import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.Dbinom;
-import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
+import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
-import com.oracle.truffle.r.library.stats.RbinomNodeGen;
-import com.oracle.truffle.r.library.stats.RnormNodeGen;
-import com.oracle.truffle.r.library.stats.RunifNodeGen;
+import com.oracle.truffle.r.library.stats.RBeta;
+import com.oracle.truffle.r.library.stats.RCauchy;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
+import com.oracle.truffle.r.library.stats.Rbinom;
+import com.oracle.truffle.r.library.stats.Rnorm;
+import com.oracle.truffle.r.library.stats.Runif;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
@@ -93,6 +99,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -191,7 +198,7 @@ public class ForeignFunctions {
             return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
         }
 
-        protected long getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
+        protected SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
             if (addressExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
@@ -260,7 +267,7 @@ public class ForeignFunctions {
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
-            long func = DLL.findSymbol(f.getDataAt(0), libName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(f.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
@@ -358,17 +365,21 @@ public class ForeignFunctions {
                 case "qnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qnorm());
                 case "rnorm":
-                    return RnormNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rnorm());
                 case "runif":
-                    return RunifNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Runif());
+                case "rbeta":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RBeta());
+                case "rcauchy":
+                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RCauchy());
                 case "qgamma":
-                    return QgammaNodeGen.create();
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qbinom());
                 case "rbinom":
-                    return RbinomNodeGen.create();
+                    return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new Rbinom());
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pf":
@@ -377,7 +388,12 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.ApproxNodeGen.create();
                 case "ApproxTest":
                     return StatsFunctionsFactory.ApproxTestNodeGen.create();
+                case "Cdist":
+                    return CdistNodeGen.create();
+                case "DoubleCentre":
+                    return DoubleCentreNodeGen.create();
                 case "cutree":
+                    return CutreeNodeGen.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":
@@ -414,14 +430,12 @@ public class ForeignFunctions {
                 case "logit_mu_eta":
                 case "binomial_dev_resids":
                 case "rWishart":
-                case "Cdist":
                 case "mvfft":
                 case "nextn":
                 case "r2dtable":
                 case "cfilter":
                 case "rfilter":
                 case "lowess":
-                case "DoubleCentre":
                 case "BinDist":
                 case "Rsm":
                 case "tukeyline":
@@ -546,7 +560,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -633,7 +647,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -706,7 +720,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -764,7 +778,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
@@ -820,7 +834,7 @@ public class ForeignFunctions {
         @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            long func = DLL.findSymbol(name, packageName, rns);
+            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);

@@ -60,6 +60,15 @@ public final class RInternalError extends Error {
         verboseStackTrace = createVerboseStackTrace();
     }
 
+    /**
+     * Constructor that does not use {@code String.format} so that the message may contain
+     * formatting instructions.
+     */
+    public RInternalError(Throwable cause, String message) {
+        super(message, cause);
+        verboseStackTrace = createVerboseStackTrace();
+    }
+
     public String getVerboseStackTrace() {
         return verboseStackTrace;
     }

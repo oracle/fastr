@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -128,6 +129,8 @@ public class RRuntime {
     public static final String CLASS_DATA_FRAME = "data.frame";
     public static final String CLASS_FACTOR = "factor";
     public static final String ORDERED_ATTR_KEY = "ordered";
+
+    public static final String CONN_ID_ATTR_KEY = "conn_id";
 
     public static final String RS3MethodsTable = ".__S3MethodsTable__.";
 
@@ -347,7 +350,7 @@ public class RRuntime {
         // FIXME use R rules
         int result;
         try {
-            result = Integer.decode(s);  // decode supports hex constants
+            result = Integer.decode(Utils.trimLeadingZeros(s));  // decode supports hex constants
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;
@@ -856,4 +859,36 @@ public class RRuntime {
     public static double normalizeZero(double value) {
         return value == 0.0 ? 0.0 : value;
     }
+
+    public static int nrows(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                return xa.getDimensions()[0];
+            } else {
+                return xa.getLength();
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
+    public static int ncols(Object x) {
+        if (x instanceof RAbstractContainer) {
+            RAbstractContainer xa = (RAbstractContainer) x;
+            if (xa.hasDimensions()) {
+                int[] dims = xa.getDimensions();
+                if (dims.length >= 2) {
+                    return dims[1];
+                } else {
+                    return 1;
+                }
+            } else {
+                return 1;
+            }
+        } else {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+        }
+    }
+
 }
