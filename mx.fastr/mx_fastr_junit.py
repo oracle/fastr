@@ -76,18 +76,9 @@ def junit(args, harness, parser=None, jdk_default=None):
             if not found:
                 mx.warn('no tests matched by substring "' + t + '"')
 
-    projectscp = mx.classpath([pcp.name for pcp in mx.projects(opt_limit_to_suite=True) if pcp.isJavaProject() and pcp.javaCompliance <= jdk.javaCompliance], jdk=jdk)
+    vmArgs += mx.get_runtime_jvm_args([pcp.name for pcp in mx.projects(opt_limit_to_suite=True) if pcp.isJavaProject() and pcp.javaCompliance <= jdk.javaCompliance], jdk=jdk)
 
     if len(classes) != 0:
-        # Compiling wrt projectscp avoids a dependency on junit.jar in mxtool itself
-        # However, perhaps because it's Friday 13th javac is not actually compiling
-        # this file, yet not returning error. It is perhaps related to annotation processors
-        # so the workaround is to extract the junit path as that is all we need.
-        junitpath = [s for s in projectscp.split(":") if "junit" in s]
-        if len(junitpath) is 0:
-            junitpath = [s for s in projectscp.split(":") if "JUNIT" in s]
-        junitpath = junitpath[0]
-
         if len(classes) == 1:
             testClassArgs = ['--testclass', classes[0]]
         else:
@@ -95,7 +86,7 @@ def junit(args, harness, parser=None, jdk_default=None):
                 for c in classes:
                     f.write(c + '\n')
             testClassArgs = ['--testsfile', testfile]
-        junitArgs = ['-cp', projectscp, 'com.oracle.truffle.r.test.FastRJUnitWrapper'] + testClassArgs
+        junitArgs = ['com.oracle.truffle.r.test.FastRJUnitWrapper'] + testClassArgs
         rc = harness(args, vmArgs, jdk, junitArgs)
         return rc
     else:

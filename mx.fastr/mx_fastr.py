@@ -91,7 +91,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath('FASTR', jdk=jdk)]
+    vmArgs = mx.get_runtime_jvm_args('FASTR', jdk=jdk)
 
     vmArgs += set_graal_options()
 
@@ -434,7 +434,7 @@ def testgen(args):
     if version_check:
         # check the version of GnuR against FastR
         try:
-            fastr_version = subprocess.check_output([mx.get_jdk().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
+            fastr_version = subprocess.check_output([mx.get_jdk().java, mx.get_runtime_jvm_args('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
             gnur_version = subprocess.check_output([rpath, '--version'])
             if not gnur_version.startswith(fastr_version):
                 mx.abort('R version is incompatible with FastR, please update to ' + fastr_version)
@@ -471,10 +471,11 @@ def rbcheck(args):
 
     If the option --filter is not given, shows all groups.
     Multiple groups can be combined: e.g. "--filter gnur-only,fastr-only"'''
-    cp = mx.classpath('com.oracle.truffle.r.test')
+    vmArgs = mx.get_runtime_jvm_args('com.oracle.truffle.r.test')
     args.append("--suite-path")
     args.append(mx.primary_suite().dir)
-    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.RBuiltinCheck'] + args)
+    vmArgs += ['com.oracle.truffle.r.test.tools.RBuiltinCheck']
+    mx.run_java(vmArgs + args)
 
 def rbdiag(args):
     '''Diagnoses FastR builtins
@@ -503,14 +504,15 @@ def rbdiag(args):
     	mx rbdiag colSums --sweep
     	mx rbdiag com.oracle.truffle.r.library.stats.Rnorm
     '''
-    cp = mx.classpath('com.oracle.truffle.r.nodes.test')
+    vmArgs = mx.get_runtime_jvm_args('com.oracle.truffle.r.nodes.test')
 
     setREnvironment()
     os.environ["FASTR_TESTGEN_GNUR"] = "internal"
     # this should work for Linux and Mac:
     os.environ["TZDIR"] = "/usr/share/zoneinfo/"
 
-    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics'] + args)
+    vmArgs += ['com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics']
+    mx.run_java(vmArgs + args)
 
 def _gnur_path():
     np = mx.project('com.oracle.truffle.r.native')
