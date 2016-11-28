@@ -116,6 +116,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStats;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStatsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTry;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTryNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
@@ -344,6 +346,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
+        add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);

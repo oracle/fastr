@@ -263,4 +263,13 @@ public class TestBuiltin_identical extends TestBase {
         assertEval(Ignored.ImplementationError, "{ identical(function() 42, function() 42) }");
 
     }
+
+    @Test
+    public void testDoubles() {
+        assertEval(template("identical(%0, num.eq=%1, single.NA=%2)", new String[][]{
+                        new String[]{"NA, NA", "NaN, NaN", "0/0, NaN", "0/-1, NaN"},
+                        new String[]{"T", "F"},
+                        new String[]{"T", "F"}
+        }));
+    }
 }
