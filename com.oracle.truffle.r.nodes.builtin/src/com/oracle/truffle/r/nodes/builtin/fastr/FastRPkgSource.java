@@ -148,6 +148,7 @@ public abstract class FastRPkgSource extends RBuiltinNode {
         RError.warning(this, RError.Message.GENERIC, String.format("function '%s::%s' failed to deparse - ignoring", pkg, fname));
     }
 
+    @TruffleBoundary
     private static void saveSource(String pkg, String fname, String deparseResult) {
         RSerialize.setSaveDeparse(false);
         try {
