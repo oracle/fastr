@@ -28,13 +28,13 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
-import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
+import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
 /**
  * Interface to a user-supplied RNG.
  */
-public final class UserRNG extends RNGInitAdapter {
+public final class UserRNG implements RandomNumberGenerator {
     private static final boolean OPTIONAL = true;
 
     public enum Function {
@@ -124,8 +124,10 @@ public final class UserRNG extends RNGInitAdapter {
         if (!Function.Seedloc.isDefined()) {
             return null;
         }
-        int[] result = new int[nSeeds];
-        userRngRFFI.seeds(result);
+        int[] seeds = new int[nSeeds];
+        userRngRFFI.seeds(seeds);
+        int[] result = new int[nSeeds + 1];
+        System.arraycopy(seeds, 0, result, 1, seeds.length);
         return result;
     }
 
@@ -142,6 +144,11 @@ public final class UserRNG extends RNGInitAdapter {
     @Override
     public int getNSeed() {
         return nSeeds;
+    }
+
+    @Override
+    public void setISeed(int[] seeds) {
+        // TODO: userRNG seems to be not using iseed?
     }
 
 }
