@@ -18,14 +18,14 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
 import static com.oracle.truffle.r.library.stats.StatsUtil.fmin2;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
 public final class RBeta implements RandFunction2_Double {
 
     private static final double expmax = (DBL_MAX_EXP * M_LN2); /* = log(DBL_MAX) */
 
     @Override
-    public double evaluate(int index, double aa, double bb, double random, RandomNumberNode randomNode) {
+    public double evaluate(double aa, double bb, RandomNumberGenerator rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
             StatsUtil.mlError();
         }
@@ -33,7 +33,7 @@ public final class RBeta implements RandFunction2_Double {
             return 0.5;
         }
         if (aa == 0. && bb == 0.) { // point mass 1/2 at each of {0,1} :
-            return (randomNode.executeSingleDouble() < 0.5) ? 0. : 1.;
+            return (rand.genrandDouble() < 0.5) ? 0. : 1.;
         }
         // now, at least one of a, b is finite and positive
         if (!Double.isFinite(aa) || bb == 0.) {
@@ -84,8 +84,8 @@ public final class RBeta implements RandFunction2_Double {
             }
             /* FIXME: "do { } while()", but not trivially because of "continue"s: */
             for (;;) {
-                u1 = randomNode.executeSingleDouble();
-                u2 = randomNode.executeSingleDouble();
+                u1 = rand.genrandDouble();
+                u2 = rand.genrandDouble();
                 if (u1 < 0.5) {
                     y = u1 * u2;
                     z = u1 * y;
@@ -120,8 +120,8 @@ public final class RBeta implements RandFunction2_Double {
                 gamma = a + 1.0 / beta;
             }
             do {
-                u1 = randomNode.executeSingleDouble();
-                u2 = randomNode.executeSingleDouble();
+                u1 = rand.genrandDouble();
+                u2 = rand.genrandDouble();
 
                 v = beta * Math.log(u1 / (1.0 - u1));
                 w = wFromU1Bet(a, v, w);

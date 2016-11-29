@@ -14,7 +14,7 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Int;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
 // transcribed from rbinom.c
 
@@ -22,12 +22,12 @@ public final class Rbinom implements RandFunction2_Int {
 
     private final Qbinom qbinom = new Qbinom();
 
-    private static double unifRand(RandomNumberNode randNode) {
-        return randNode.executeDouble(1)[0];
+    private static double unifRand(RandomNumberGenerator rand) {
+        return rand.genrandDouble();
     }
 
     @Override
-    public int evaluate(int index, double nin, double pp, RandomNumberNode randomNode) {
+    public int evaluate(double nin, double pp, RandomNumberGenerator rand) {
         double psave = -1.0;
         int nsave = -1;
 
@@ -54,7 +54,7 @@ public final class Rbinom implements RandFunction2_Int {
             /*
              * evade integer overflow, and r == INT_MAX gave only even values
              */
-            return (int) qbinom.evaluate(unifRand(randomNode), r, pp, /* lower_tail */false, /* log_p */false);
+            return (int) qbinom.evaluate(unifRand(rand), r, pp, /* lower_tail */false, /* log_p */false);
         }
         /* else */
         int n = (int) r;
@@ -135,8 +135,8 @@ public final class Rbinom implements RandFunction2_Int {
 
                 /*-------------------------- np = n*p >= 30 : ------------------- */
                 while (true) {
-                    u = unifRand(randomNode) * p4;
-                    v = unifRand(randomNode);
+                    u = unifRand(rand) * p4;
+                    v = unifRand(rand);
                     /* triangular region */
                     if (u <= p1) {
                         ix = (int) (xm - p1 * v + u);
@@ -223,7 +223,7 @@ public final class Rbinom implements RandFunction2_Int {
             while (true) {
                 ix = 0;
                 f = qn;
-                u = unifRand(randomNode);
+                u = unifRand(rand);
                 while (true) {
                     if (u < f) {
                         // goto finis;

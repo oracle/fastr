@@ -190,7 +190,7 @@ public class RRNG {
         return getContextState().currentGenerator.getKind();
     }
 
-    static RandomNumberGenerator currentGenerator() {
+    public static RandomNumberGenerator currentGenerator() {
         return getContextState().currentGenerator;
     }
 
