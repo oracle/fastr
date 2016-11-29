@@ -294,6 +294,7 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
                fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, freedata=%d)\n", cv.obj, i, freedata);
 #endif
 	if (cv.obj != NULL) {
+		jboolean complete = JNI_FALSE; // pessimal
 		switch (cv.type) {
 		case INTSXP: {
 			jintArray intArray = (jintArray) cv.jArray;
@@ -307,13 +308,21 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 			int len = (*env)->GetArrayLength(env, byteArray);
 			jbyte* internalData = (*env)->GetByteArrayElements(env, byteArray, NULL);
 			int* data = (int*) cv.data;
+			complete = JNI_TRUE; // since we going to look at each element anyway
 			for (int i = 0; i < len; i++) {
-				internalData[i] = data[i] == NA_INTEGER ? 255 : (jbyte) data[i];
+				int isNA = data[i] == NA_INTEGER ? JNI_TRUE : JNI_FALSE;
+				if (isNA) {
+					internalData[i] = 255;
+					complete = JNI_FALSE;
+				} else {
+					internalData[i] = (jbyte) data[i];
+				}
+
 			}
 			(*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-                       if (freedata){
-                           free(data); // was malloc'ed in addNativeArray
-                       }
+            if (freedata){
+                free(data); // was malloc'ed in addNativeArray
+            }
 			break;
 		}
 
@@ -333,10 +342,13 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 		default:
 			fatalError("releaseNativeArray type");
 		}
-               if (freedata) {
-                   // free up the slot
+		// update complete status
+		(*env)->CallVoidMethod(env, cv.obj, setCompleteMethodID, cv.obj, complete);
+
+        if (freedata) {
+            // free up the slot
 		    cv.obj = NULL;
-               }
+        }
 	}
 }
 
