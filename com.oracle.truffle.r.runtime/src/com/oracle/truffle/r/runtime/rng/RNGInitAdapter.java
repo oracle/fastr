@@ -11,9 +11,9 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.r.runtime.rng.RRNG.RandomNumberGenerator;
-
 public abstract class RNGInitAdapter implements RandomNumberGenerator {
+
+    protected static final double I2_32M1 = 2.3283064365386963e-10;
 
     // TODO: it seems like GNU R this is shared between the generators (does it matter?)
     protected final int[] iSeed = new int[625];
@@ -24,5 +24,19 @@ public abstract class RNGInitAdapter implements RandomNumberGenerator {
             iSeed[i - 1] = seeds[i];
         }
         fixupSeeds(false);
+    }
+
+    /**
+     * Ensure 0 and 1 are never returned from rand generation algorithm.
+     */
+    protected static double fixup(double x) {
+        /* transcribed from GNU R, RNG.c (fixup) */
+        if (x <= 0.0) {
+            return 0.5 * I2_32M1;
+        }
+        // removed fixup for 1.0 since x is in [0,1).
+        // TODO Since GnuR does include this is should we not for compatibility (probably).
+        // if ((1.0 - x) <= 0.0) return 1.0 - 0.5 * I2_32M1;
+        return x;
     }
 }

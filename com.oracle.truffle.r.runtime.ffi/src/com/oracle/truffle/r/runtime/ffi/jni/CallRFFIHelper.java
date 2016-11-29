@@ -1279,7 +1279,7 @@ public class CallRFFIHelper {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("putRNGstate");
         }
-        RRNG.updateDotRandomSeed();
+        RRNG.putRNGState();
     }
 
     public static double unifRand() {

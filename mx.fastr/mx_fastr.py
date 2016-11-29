@@ -391,7 +391,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4']))
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4', 'rng']))
 
 def _package_unit_tests():
     return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
