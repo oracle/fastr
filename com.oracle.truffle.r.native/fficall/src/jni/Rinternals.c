@@ -136,6 +136,8 @@ static jmethodID Rf_ncolsMethodID;
 static jclass CharSXPWrapperClass;
 static jfieldID CharSXPWrapperContentsFieldID;
 
+jmethodID setCompleteMethodID;
+
 void init_internals(JNIEnv *env) {
 	Rf_ScalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	Rf_ScalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
@@ -240,6 +242,8 @@ void init_internals(JNIEnv *env) {
     Rf_copyMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
     Rf_nrowsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_nrows", "(Ljava/lang/Object;)I", 1);
     Rf_ncolsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ncols", "(Ljava/lang/Object;)I", 1);
+
+    setCompleteMethodID = checkGetMethodID(env, CallRFFIHelperClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {

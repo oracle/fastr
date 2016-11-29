@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -656,6 +657,17 @@ public class CallRFFIHelper {
         } else {
             guaranteeInstanceOf(x, Double.class);
             return new double[]{(Double) x};
+        }
+    }
+
+    /**
+     * Called to possibly update the "complete" status on {@code x}. N.B. {@code x} may not be an
+     * object with a concrete {@code setComplete} method, e.g. see {@link #INTEGER(Object)}.
+     */
+    public static void setComplete(Object x, boolean complete) {
+        // only care about concrete vectors
+        if (x instanceof RVector) {
+            ((RVector<?>) x).setComplete(complete);
         }
     }
 

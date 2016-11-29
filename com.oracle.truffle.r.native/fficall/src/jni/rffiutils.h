@@ -126,6 +126,7 @@ extern jmethodID INTEGER_MethodID;
 extern jmethodID LOGICAL_MethodID;
 extern jmethodID REAL_MethodID;
 extern jmethodID RAW_MethodID;
+extern jmethodID setCompleteMethodID;
 
 extern int callDepth;
 
