@@ -30,7 +30,7 @@ public final class Runif implements RandFunction2_Double {
 
     @Override
     public boolean hasCustomRandomGeneration() {
-        return false;
+        return true;
     }
 
     @Override
@@ -38,6 +38,6 @@ public final class Runif implements RandFunction2_Double {
         if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
             return StatsUtil.mlError();
         }
-        return min + random * (max - min);
+        return min + randomNode.executeSingleDouble() * (max - min);
     }
 }

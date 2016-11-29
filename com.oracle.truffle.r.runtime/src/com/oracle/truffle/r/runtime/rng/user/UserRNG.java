@@ -130,12 +130,8 @@ public final class UserRNG extends RNGInitAdapter {
     }
 
     @Override
-    public double[] genrandDouble(int count) {
-        double[] result = new double[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = userRngRFFI.rand();
-        }
-        return result;
+    public double genrandDouble() {
+        return userRngRFFI.rand();
     }
 
     @Override
