@@ -537,6 +537,15 @@ install.suggests <- function(pkgnames) {
 	for (pkgname in pkgnames) {
 		suggests <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "suggests")
 		if (length(suggests) > 0) {
+			if (is.fastr() && !ignore.blacklist) {
+				# no point in trying to install blacklisted packages (which are likely)
+				blacklist <- get.blacklist()
+				nsuggests <- suggests[!suggests %in% blacklist]
+				if (length(nsuggests) != length(suggests)) {
+					cat("not installing Suggests of:", pkgname, ", one or more is blacklisted", "\n")
+					return()
+				}
+			}
 			dep.status <- install.status[suggests]
 			# three cases:
 			# 1. all TRUE: nothing to do all already installed ok

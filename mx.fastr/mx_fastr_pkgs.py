@@ -235,11 +235,27 @@ def pkgtest(args):
     return rc
 
 def tar_tests(testdir):
-    test_tar = join(_fastr_suite_dir, testdir + '.tar')
-    subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
-    if os.path.exists(test_tar + '.gz'):
-        os.remove(test_tar + '.gz')
-    subprocess.call(['gzip', test_tar])
+    if os.environ.has_key('FASTR_TEST_GZIP'):
+        test_tar = testdir + '.tar'
+        subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
+        if os.path.exists(test_tar + '.gz'):
+            os.remove(test_tar + '.gz')
+        subprocess.call(['gzip', test_tar])
+    else:
+        # workaround for lack of support for accessing gz files
+        with open(testdir + '.agg', 'w') as o:
+            for root, _, files in os.walk(testdir):
+                for f in files:
+                    ext = os.path.splitext(f)[1]
+                    if f == 'test_time' or f == 'testfile_status' or ext == '.pdf' or ext == '.prev' or ext == '.save':
+                        continue
+                    absfile = join(root, f)
+                    relfile = relpath(absfile, _fastr_suite_dir())
+                    o.write('#### ' + relfile + '\n')
+                    with open(absfile) as inp:
+                        text = inp.read()
+                        o.write(text)
+
 
 class TestFileStatus:
     '''
