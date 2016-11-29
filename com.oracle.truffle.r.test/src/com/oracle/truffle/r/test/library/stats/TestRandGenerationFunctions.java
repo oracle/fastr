@@ -35,7 +35,8 @@ public class TestRandGenerationFunctions extends TestBase {
     private static final String[] FUNCTION2_PARAMS = {
                     "10, 10, 10",
                     "20, c(-1, 0, 0.2, 2:5), c(-1, 0, 0.1, 0.9, 3)",
-                    "30, c(NA, 0, NaN, 1/0, -1/0), c(NaN, NaN, NA, 0, 1/0, -1/0)"
+                    "30, c(NA, 0, NaN, 1/0, -1/0), c(NaN, NaN, NA, 0, 1/0, -1/0)",
+                    "24, c(0.0653, 0.000123, 32e-80, 8833, 79e70), c(0.0653, 0.000123, 32e-80, 8833, 79e70, 0, -1)"
     };
 
     @Test
