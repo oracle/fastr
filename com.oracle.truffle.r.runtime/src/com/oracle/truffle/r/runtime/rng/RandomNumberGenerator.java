@@ -21,6 +21,10 @@ public interface RandomNumberGenerator {
 
     void fixupSeeds(boolean initial);
 
+    /**
+     * Returns array in the format of .Random.seed, i.e. under index 0 is id of the generator and
+     * the rest are the actual seeds.
+     */
     int[] getSeeds();
 
     double genrandDouble();
@@ -34,7 +38,8 @@ public interface RandomNumberGenerator {
 
     /**
      * Sets array which contains current generator flag under index 0 and seeds for random
-     * generation under the other indices.
+     * generation under the other indices. The generator may use the array as is without making a
+     * defensive copy, the caller must make sure the array contents do not get changed.
      */
     void setISeed(int[] seeds);
 }

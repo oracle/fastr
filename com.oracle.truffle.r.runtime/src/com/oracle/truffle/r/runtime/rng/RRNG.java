@@ -41,6 +41,9 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG;
  * uncontrolled way, which then has to be checked. Currently we do not support reading it, although
  * we do create/update it when the seed/kind is changed, primarily as a debugging aid. N.B. GnuR
  * updates it on <i>every</i> random number generation!
+ *
+ * Important note: make sure to invoke {@link #getRNGState()} before invoking any other methods from
+ * this class and to invoke {@link #putRNGState()} when done witch random number generation.
  */
 public class RRNG {
     /**
@@ -190,11 +193,11 @@ public class RRNG {
         return getContextState().currentGenerator.getKind();
     }
 
-    static RandomNumberGenerator currentGenerator() {
+    public static RandomNumberGenerator currentGenerator() {
         return getContextState().currentGenerator;
     }
 
-    private static NormKind currentNormKind() {
+    public static NormKind currentNormKind() {
         return getContextState().currentNormKind;
     }
 
@@ -381,6 +384,10 @@ public class RRNG {
             } else if (seedsObj instanceof RIntVector) {
                 RIntVector seedsVec = (RIntVector) seedsObj;
                 seeds = seedsVec.getDataWithoutCopying();
+                if (seeds == currentGenerator().getSeeds()) {
+                    // no change of the .Random.seed variable
+                    return;
+                }
             } else {
                 // seedsObj is not valid, which should have been reported and fixed in getRNGKind
                 return;
@@ -404,26 +411,8 @@ public class RRNG {
     @TruffleBoundary
     public static void putRNGState() {
         int[] seeds = currentGenerator().getSeeds();
-        int lenSeeds = currentGenerator().getNSeed();
-
-        // we update the existing vector from global env if possible
-        int[] data;
-        Object prevState = getDotRandomSeed();
-        boolean canReusePrev = prevState instanceof RIntVector && ((RIntVector) prevState).getLength() == lenSeeds + 1 && !((RIntVector) prevState).isShared();
-        if (canReusePrev) {
-            data = ((RIntVector) prevState).getDataWithoutCopying();
-        } else {
-            data = new int[lenSeeds + 1];
-        }
-
-        data[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
-        for (int i = 0; i < lenSeeds; i++) {
-            data[i + 1] = seeds[i];
-        }
-
-        if (!canReusePrev) {
-            RIntVector vector = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-            REnvironment.globalEnv().safePut(RANDOM_SEED, vector);
-        }
+        seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
+        RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.COMPLETE_VECTOR);
+        REnvironment.globalEnv().safePut(RANDOM_SEED, vector.makeSharedPermanent());
     }
 }

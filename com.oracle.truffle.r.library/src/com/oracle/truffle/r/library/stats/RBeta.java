@@ -18,22 +18,22 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
 import static com.oracle.truffle.r.library.stats.StatsUtil.fmin2;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
 public final class RBeta implements RandFunction2_Double {
 
     private static final double expmax = (DBL_MAX_EXP * M_LN2); /* = log(DBL_MAX) */
 
     @Override
-    public double evaluate(int index, double aa, double bb, double random, RandomNumberNode randomNode) {
+    public double evaluate(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
-            StatsUtil.mlError();
+            return StatsUtil.mlError();
         }
         if (!Double.isFinite(aa) && !Double.isFinite(bb)) { // a = b = Inf : all mass at 1/2
             return 0.5;
         }
         if (aa == 0. && bb == 0.) { // point mass 1/2 at each of {0,1} :
-            return (randomNode.executeSingleDouble() < 0.5) ? 0. : 1.;
+            return (rand.unifRand() < 0.5) ? 0. : 1.;
         }
         // now, at least one of a, b is finite and positive
         if (!Double.isFinite(aa) || bb == 0.) {
@@ -54,14 +54,15 @@ public final class RBeta implements RandFunction2_Double {
         double w = 0;
         double y;
         double z;
-        double olda = -1.0;
-        double oldb = -1.0;
 
+        // TODO: state variables
         double beta = 0;
         double gamma = 1;
         double delta;
         double k1 = 0;
         double k2 = 0;
+        double olda = -1.0;
+        double oldb = -1.0;
 
         /* Test if we need new "initializing" */
         boolean qsame = (olda == aa) && (oldb == bb);
@@ -84,8 +85,8 @@ public final class RBeta implements RandFunction2_Double {
             }
             /* FIXME: "do { } while()", but not trivially because of "continue"s: */
             for (;;) {
-                u1 = randomNode.executeSingleDouble();
-                u2 = randomNode.executeSingleDouble();
+                u1 = rand.unifRand();
+                u2 = rand.unifRand();
                 if (u1 < 0.5) {
                     y = u1 * u2;
                     z = u1 * y;
@@ -120,8 +121,8 @@ public final class RBeta implements RandFunction2_Double {
                 gamma = a + 1.0 / beta;
             }
             do {
-                u1 = randomNode.executeSingleDouble();
-                u2 = randomNode.executeSingleDouble();
+                u1 = rand.unifRand();
+                u2 = rand.unifRand();
 
                 v = beta * Math.log(u1 / (1.0 - u1));
                 w = wFromU1Bet(a, v, w);

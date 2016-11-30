@@ -14,18 +14,18 @@ package com.oracle.truffle.r.library.stats;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_PI;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
 public final class RCauchy implements RandFunction2_Double {
     @Override
-    public double evaluate(int index, double location, double scale, double random, RandomNumberNode randomNode) {
+    public double evaluate(double location, double scale, RandomNumberProvider rand) {
         if (Double.isNaN(location) || !Double.isFinite(scale) || scale < 0) {
             return StatsUtil.mlError();
         }
         if (scale == 0. || !Double.isFinite(location)) {
             return location;
         } else {
-            return location + scale * Math.tan(M_PI * randomNode.executeSingleDouble());
+            return location + scale * Math.tan(M_PI * rand.unifRand());
         }
     }
 }
