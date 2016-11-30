@@ -547,9 +547,9 @@ def nativebuild(args):
         ffidir = join(nativedir, 'fficall')
         jni_done = join(ffidir, 'jni.done')
         jniboot_done = join(ffidir, 'jniboot.done')
-        if (os.path.exists(jni_done)):
+        if os.path.exists(jni_done):
             os.remove(jni_done)
-        if (os.path.exists(jniboot_done)):
+        if os.path.exists(jniboot_done):
             os.remove(jniboot_done)
         return mx.build(['--no-java'])
 
