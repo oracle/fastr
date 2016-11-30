@@ -63,7 +63,7 @@ public class RGraphics {
                 DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
                 DLL.SymbolHandle func = DLL.findSymbol("InitGraphics", null, rns);
                 assert func != DLL.SYMBOL_NOT_FOUND;
-                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(func, "InitGraphics", new Object[0]);
+                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(func, "InitGraphics", DLL.findLibrary("graphics"), new Object[0]);
             }
         }
     }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
@@ -35,14 +36,16 @@ public interface CallRFFI {
      *
      * @param handle the address of the native function
      * @param name the name of the native function
+     * @param dllInfo TODO
      * @param args arguments
      */
-    Object invokeCall(SymbolHandle handle, String name, Object[] args);
+    Object invokeCall(SymbolHandle handle, String name, DLLInfo dllInfo, Object[] args);
 
     /**
      * Variant that does not return a result (primarily for library "init" methods).
+     * @param dllInfo TODO
      */
-    void invokeVoidCall(SymbolHandle handle, String name, Object[] args);
+    void invokeVoidCall(SymbolHandle handle, String name, DLLInfo dllInfo, Object[] args);
 
     /**
      * This interface is instantiated very early and sets the FFI global variables as part of that

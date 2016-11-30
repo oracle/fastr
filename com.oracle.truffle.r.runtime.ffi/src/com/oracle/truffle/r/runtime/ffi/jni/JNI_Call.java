@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
@@ -91,7 +92,7 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized Object invokeCall(SymbolHandle handleArg, String name, Object[] args) {
+    public synchronized Object invokeCall(SymbolHandle handleArg, String name, DLLInfo dllInfo, Object[] args) {
         long address = handleArg.asAddress();
         Object result = null;
         if (traceEnabled()) {
@@ -152,7 +153,7 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized void invokeVoidCall(SymbolHandle handle, String name, Object[] args) {
+    public synchronized void invokeVoidCall(SymbolHandle handle, String name, DLLInfo dllInfo, Object[] args) {
         if (traceEnabled()) {
             traceDownCall(name, args);
         }

@@ -65,12 +65,12 @@ public class Generic_Grid implements GridRFFI {
     @Override
     public Object initGrid(REnvironment gridEvalEnv) {
         long initGrid = GridProvider.gridProvider().getInitGrid();
-        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(initGrid), "L_initGrid", new Object[]{gridEvalEnv});
+        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(initGrid), "L_initGrid", DLL.findLibrary("grid"), new Object[]{gridEvalEnv});
     }
 
     @Override
     public Object killGrid() {
         long killGrid = GridProvider.gridProvider().getKillGrid();
-        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(killGrid), "L_killGrid", new Object[0]);
+        return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(killGrid), "L_killGrid", DLL.findLibrary("grid"), new Object[0]);
     }
 }

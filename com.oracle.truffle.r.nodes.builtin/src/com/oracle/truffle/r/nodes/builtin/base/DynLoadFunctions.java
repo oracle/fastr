@@ -175,7 +175,7 @@ public class DynLoadFunctions {
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, boolean withReg) {
-            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr().asAddress());
+            DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
             }

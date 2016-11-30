@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -285,7 +286,7 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
             Object[] data = new Object[NAMES.getLength()];
-            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr().asAddress());
+            DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             RInternalError.guarantee(dllInfo != null);
             for (DLL.NativeSymbolType nst : DLL.NativeSymbolType.values()) {
                 DLL.DotSymbol[] symbols = dllInfo.getNativeSymbols(nst);

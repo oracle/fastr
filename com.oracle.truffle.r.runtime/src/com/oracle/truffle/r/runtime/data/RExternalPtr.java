@@ -26,12 +26,22 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
- * The rarely seen {@code externalptr} type.
+ * The rarely seen {@code externalptr} type used in native code.
  */
 public class RExternalPtr extends RAttributeStorage implements RTypedValue {
+    /**
+     * In GNU R, typically the address of some C structure, so a {@code void*}. Represented here as
+     * our abstraction of a "native symbol" (even though there may not actually be a symbol
+     * associated with the address).
+     */
     private SymbolHandle handle;
     private Object tag;
     private Object prot;
+    /**
+     * Has no GNU R counterpart. Used internally to store a Java object that, for example,
+     * corresponds to the C state in {@link #handle}. Evidently, the R FFI never accesses this
+     * field.
+     */
     private Object externalObject;
 
     RExternalPtr(SymbolHandle handle, Object externalObject, Object tag, Object prot) {

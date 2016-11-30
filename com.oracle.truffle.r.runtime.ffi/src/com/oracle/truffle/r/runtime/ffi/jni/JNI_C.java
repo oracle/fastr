@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public class JNI_C implements CRFFI {
@@ -36,7 +37,7 @@ public class JNI_C implements CRFFI {
      */
     @Override
     @TruffleBoundary
-    public synchronized void invoke(SymbolHandle symbolHandle, Object[] args) {
+    public synchronized void invoke(SymbolHandle symbolHandle, Object[] args, DLLInfo dllInfo) {
         c(symbolHandle.asAddress(), args);
     }
 

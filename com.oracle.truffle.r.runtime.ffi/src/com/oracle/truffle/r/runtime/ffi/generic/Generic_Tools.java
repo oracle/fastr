@@ -72,7 +72,7 @@ public class Generic_Tools implements ToolsRFFI {
             parseRdCritical.acquire();
             long parseRd = ToolsProvider.toolsProvider().getParseRd();
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new SymbolHandle(parseRd), ToolsProvider.C_PARSE_RD,
-                            new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
+                            DLL.findLibrary("tools"), new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
         } catch (Throwable ex) {
             throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
         } finally {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
@@ -35,6 +36,7 @@ public interface CRFFI {
      *
      * @param handle of the native method
      * @param args native arguments
+     * @param dllInfo info on the library containing {@code handle}
      */
-    void invoke(SymbolHandle handle, Object[] args);
+    void invoke(SymbolHandle handle, Object[] args, DLLInfo dllInfo);
 }
