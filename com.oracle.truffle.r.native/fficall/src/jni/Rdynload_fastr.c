@@ -13,6 +13,7 @@
 #include <Rdynload.h>
 
 // Registering routines from loaded shared libraries
+// Currently an exception to the rule that all upcalls go via CallRFFIHelper
 
 static jclass DLLClass;
 static jclass JNI_PkgInitClass;

@@ -429,6 +429,13 @@ public class CallRFFIHelper {
         return result;
     }
 
+    public static Object Rf_install(String name) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("Rf_install", name);
+        }
+        return RDataFactory.createSymbolInterned(name);
+    }
+
     public static Object Rf_lengthgets(Object x, int newSize) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_lengthgets", x, newSize);
@@ -1027,15 +1034,6 @@ public class CallRFFIHelper {
         // TODO: copy OBJECT? and S4 attributes
     }
 
-    public static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_createNewEnv", parent, name, hashed, initialSize);
-        }
-        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
-        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
-        return env;
-    }
-
     public static int R_computeIdentical(Object x, Object y, int flags) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("R_computeIdentical", x, y, flags);
@@ -1520,4 +1518,14 @@ public class CallRFFIHelper {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setProt(prot);
     }
+
+    public static REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_NewHashedEnv", parent, name, hashed, initialSize);
+        }
+        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
+        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
+        return env;
+    }
+
 }

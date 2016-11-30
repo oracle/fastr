@@ -33,13 +33,8 @@
  * (portably) for MT use. JNI provides no help.
  */
 jclass CallRFFIHelperClass;
-jclass RDataFactoryClass;
-jclass RRuntimeClass;
 jclass CharSXPWrapperClass;
 
-static jclass RInternalErrorClass;
-static jmethodID unimplementedMethodID;
-jmethodID createSymbolMethodID;
 static jmethodID validateMethodID;
 
 static JNIEnv *curenv = NULL;
@@ -114,12 +109,7 @@ void init_utils(JNIEnv *env) {
 		    setvbuf(traceFile, (char*) NULL, _IONBF, 0);
 		}
 	}
-	RDataFactoryClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RDataFactory");
 	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper");
-	RRuntimeClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RRuntime");
-	RInternalErrorClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RInternalError");
-	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);
-	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbolInterned", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
     validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(GlobalRefElem));
     cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
