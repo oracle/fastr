@@ -85,6 +85,7 @@ public class ParserGeneration {
         "remove deprecated calls to SourceSection functions",
         "remove deprecated calls to Source functions",
         "remove restricion on fixed number of digits in UTF codes",
-        "support ? for help"
+        "support ? for help",
+        "support for hex float literals"
     };
 }
