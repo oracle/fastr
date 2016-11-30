@@ -160,7 +160,7 @@ public final class RPois {
         /* Only if mu >= 10 : ----------------------- */
 
         /* Step N. normal sample */
-        g = mu + s * rand.unifRand(); /* norm_rand() ~ N(0,1), standard normal */
+        g = mu + s * rand.normRand(); /* norm_rand() ~ N(0,1), standard normal */
 
         if (g >= 0.) {
             pois = Math.floor(g);

@@ -53,7 +53,13 @@ public final class Wilcox {
             r = 0.0;
             k = (int) (m + n);
 
-            int[] x = new int[k];
+            int[] x;
+            try {
+                x = new int[k];
+            } catch (OutOfMemoryError ex) {
+                // GnuR seems to be reporting the same number regardless of 'k'
+                throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
+            }
             for (i = 0; i < k; i++) {
                 x[i] = i;
             }
