@@ -41,7 +41,7 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testFunctions2() {
-        assertEval(Output.IgnoreWarningContext, template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS));
+        assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS));
     }
 
     @Test
