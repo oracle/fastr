@@ -78,6 +78,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
@@ -99,6 +100,14 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  */
 public class CallRFFIHelper {
 
+    /**
+     * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP}
+     * and {@code STRSXP} types, respectively. Although this difference is invisible at the R level,
+     * it manifests itself in the R FFI as several functions traffic in the {@code CHARSXP} type.
+     * Since FastR already uses {@code String} to denote a length-1 string vector, it cannot be used
+     * to represent a {@code CHARSXP}, so this class exists to do so.
+     *
+     */
     public static final class CharSXPWrapper {
         private final String contents;
 
@@ -418,6 +427,13 @@ public class CallRFFIHelper {
             }
         }
         return result;
+    }
+
+    public static Object Rf_install(String name) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("Rf_install", name);
+        }
+        return RDataFactory.createSymbolInterned(name);
     }
 
     public static Object Rf_lengthgets(Object x, int newSize) {
@@ -1018,15 +1034,6 @@ public class CallRFFIHelper {
         // TODO: copy OBJECT? and S4 attributes
     }
 
-    public static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_createNewEnv", parent, name, hashed, initialSize);
-        }
-        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
-        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
-        return env;
-    }
-
     public static int R_computeIdentical(Object x, Object y, int flags) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("R_computeIdentical", x, y, flags);
@@ -1069,6 +1076,27 @@ public class CallRFFIHelper {
         } finally {
             RErrorHandling.restoreStacks(handlerStack, restartStack);
         }
+    }
+
+    /**
+     * Helper function for {@code R_TopLevelExec} which is similar to {@code R_TryEval} except that
+     * a C function is invoked (in the native layer) instead of an R expression. assert: this is
+     * ONLY called from R_TopLevelExec prior to calling C function.
+     */
+    public static Object resetAndGetErrorHandlerStacks() {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_TopLevelExec");
+        }
+        return RErrorHandling.resetAndGetHandlerStacks();
+    }
+
+    /**
+     * Helper function for {@code R_TopLevelExec}, see {@link #resetAndGetErrorHandlerStacks()},
+     * called after C function returns.
+     */
+    public static void restoreErrorHandlerStacks(Object stacks) {
+        RErrorHandling.HandlerStacks handlerStacks = guaranteeInstanceOf(stacks, RErrorHandling.HandlerStacks.class);
+        RErrorHandling.restoreHandlerStacks(handlerStacks);
     }
 
     public static int RDEBUG(Object x) {
@@ -1434,6 +1462,70 @@ public class CallRFFIHelper {
         RAbstractVector vector = guaranteeInstanceOf(x, RAbstractVector.class);
         vector.setClassAttr(guaranteeInstanceOf(y, RStringVector.class));
         return RNull.instance;
+    }
+
+    public static RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_MakeExternalPtr", addr, tag, prot);
+        }
+        return RDataFactory.createExternalPtr(new SymbolHandle(addr), tag, prot);
+    }
+
+    public static long R_ExternalPtrAddr(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_ExternalPtrAddr", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        return p.getAddr().asAddress();
+    }
+
+    public static Object R_ExternalPtrTag(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_ExternalPtrTag", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        return p.getTag();
+    }
+
+    public static Object R_ExternalPtrProt(Object x) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        return p.getProt();
+    }
+
+    public static void R_SetExternalPtrAddr(Object x, long addr) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_SetExternalPtrAddr", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        p.setAddr(new SymbolHandle(addr));
+    }
+
+    public static void R_SetExternalPtrTag(Object x, Object tag) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_SetExternalPtrTag", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        p.setTag(tag);
+    }
+
+    public static void R_SetExternalPtrProt(Object x, Object prot) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
+        }
+        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
+        p.setProt(prot);
+    }
+
+    public static REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+        if (RFFIUtils.traceEnabled()) {
+            RFFIUtils.traceUpCall("R_NewHashedEnv", parent, name, hashed, initialSize);
+        }
+        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
+        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
+        return env;
     }
 
 }
