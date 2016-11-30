@@ -533,6 +533,26 @@ def gnu_rscript(args, env=None):
     cmd = [join(_gnur_path(), 'Rscript')] + args
     return mx.run(cmd, nonZeroIsFatal=False, env=env)
 
+def nativebuild(args):
+    '''
+    force the build of part or all of the native project
+    '''
+    parser = ArgumentParser(prog='nativebuild')
+    parser.add_argument('--all', action='store_true', help='clean and build everything, else just ffi')
+    args = parser.parse_args(args)
+    nativedir = mx.project('com.oracle.truffle.r.native').dir
+    if args.all:
+        return subprocess.call(['make clean && make'], shell=True, cwd=nativedir)
+    else:
+        ffidir = join(nativedir, 'fficall')
+        jni_done = join(ffidir, 'jni.done')
+        jniboot_done = join(ffidir, 'jniboot.done')
+        if (os.path.exists(jni_done)):
+            os.remove(jni_done)
+        if (os.path.exists(jniboot_done)):
+            os.remove(jniboot_done)
+        return mx.build(['--no-java'])
+
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
@@ -563,6 +583,7 @@ _commands = {
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
     'gnu-r' : [gnu_r, '[]'],
     'gnu-rscript' : [gnu_rscript, '[]'],
+    'nativebuild' : [nativebuild, '[]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)
