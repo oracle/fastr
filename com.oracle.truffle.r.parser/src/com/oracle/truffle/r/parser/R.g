@@ -575,13 +575,13 @@ INTEGER
 COMPLEX
     : ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i' { setText(getText().substring(0, getText().length()-1)); }
     | '.'? ('0'..'9')+ EXPONENT? 'i' { setText(getText().substring(0, getText().length()-1)); }
-    | '0x' HEX_DIGIT+ ('.' HEX_DIGIT* HEX_EXPONENT)? 'i' { setText(getText().substring(0, getText().length()-1)); }
+    | '0x' HEX_DIGIT+ ('.'? HEX_DIGIT* HEX_EXPONENT)? 'i' { setText(getText().substring(0, getText().length()-1)); }
     ;
 
 DOUBLE
     : ('0'..'9')+ '.' ('0'..'9')* EXPONENT?
     | '.'? ('0'..'9')+ EXPONENT?
-    | '0x' HEX_DIGIT+ ('.' HEX_DIGIT* HEX_EXPONENT)?
+    | '0x' HEX_DIGIT+ ('.'? HEX_DIGIT* HEX_EXPONENT)?
     ;
 
 DD : '..' ('0'..'9')+ ;

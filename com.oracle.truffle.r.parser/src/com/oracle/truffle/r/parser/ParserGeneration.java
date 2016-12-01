@@ -86,6 +86,7 @@ public class ParserGeneration {
         "remove deprecated calls to Source functions",
         "remove restricion on fixed number of digits in UTF codes",
         "support ? for help",
-        "support for hex float literals"
+        "support for hex float literals",
+        "support for hex float literals without decimal point: 0x0p0",
     };
 }
