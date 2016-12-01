@@ -29,15 +29,15 @@ public abstract class RNGInitAdapter implements RandomNumberGenerator {
     }
 
     @Override
-    public int[] getSeeds() {
+    public final int[] getSeeds() {
         return iSeed;
     }
 
-    protected int getISeedItem(int index) {
+    protected final int getISeedItem(int index) {
         return iSeed[index + 1];
     }
 
-    protected void setISeedItem(int index, int value) {
+    protected final void setISeedItem(int index, int value) {
         iSeed[index + 1] = value;
     }
 

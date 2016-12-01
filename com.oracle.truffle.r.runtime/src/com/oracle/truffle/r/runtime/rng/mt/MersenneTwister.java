@@ -64,7 +64,6 @@
 package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
@@ -159,8 +158,7 @@ public final class MersenneTwister extends RNGInitAdapter {
             int localMti = localDummy0;
             // It appears that this never happens
             // sgenrand(4357);
-            RInternalError.guarantee(localMti != N + 1);
-
+            assert localMti != N + 1;
             int pos = 0;
             while (true) {
                 int loopCount = Math.min(BUFFER_SIZE - pos, N - localMti);

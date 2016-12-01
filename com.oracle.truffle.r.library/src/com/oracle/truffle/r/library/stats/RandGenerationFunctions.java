@@ -101,15 +101,16 @@ public final class RandGenerationFunctions {
         final BranchProfile nan = BranchProfile.create();
         final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
         final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
-        final ValueProfile randClassProfile = ValueProfile.createClassProfile();
-        final ValueProfile normKindProfile = ValueProfile.createEqualityProfile();
+        private final ValueProfile randClassProfile = ValueProfile.createClassProfile();
+        private final ValueProfile generatorProfile = ValueProfile.createIdentityProfile();
+        private final ValueProfile normKindProfile = ValueProfile.createEqualityProfile();
 
         public static RandGenerationProfiles create() {
             return new RandGenerationProfiles();
         }
 
         public RandomNumberProvider createRandProvider() {
-            return new RandomNumberProvider(randClassProfile.profile(RRNG.currentGenerator()), normKindProfile.profile(RRNG.currentNormKind()));
+            return new RandomNumberProvider(randClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator())), normKindProfile.profile(RRNG.currentNormKind()));
         }
     }
 
@@ -133,6 +134,7 @@ public final class RandGenerationFunctions {
         int[] result = new int[length];
         RRNG.getRNGState();
         RandomNumberProvider rand = profiles.createRandProvider();
+        profiles.loopConditionProfile.profileCounted(length);
         for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -172,6 +174,7 @@ public final class RandGenerationFunctions {
         result = new double[length];
         RRNG.getRNGState();
         RandomNumberProvider rand = profiles.createRandProvider();
+        profiles.loopConditionProfile.profileCounted(length);
         for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
