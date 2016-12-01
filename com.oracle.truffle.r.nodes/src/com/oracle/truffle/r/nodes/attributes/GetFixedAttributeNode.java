@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
@@ -54,14 +55,18 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
     public abstract Object execute(DynamicObject attrs);
 
+    protected boolean hasProperty(Shape shape) {
+        return shape.hasProperty(name);
+    }
+
     @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)", "location != null"}, //
+                    guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     @SuppressWarnings("unused")
     protected Object getAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
-        return location.get(attrs);
+        return location == null ? null : location.get(attrs);
     }
 
     @Specialization(contains = "getAttrCached")
