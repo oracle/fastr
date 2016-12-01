@@ -355,7 +355,7 @@ public class DLL {
         if (initFunc != SYMBOL_NOT_FOUND) {
             synchronized (DLL.class) {
                 try {
-                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(initFunc, pkgInit, dllInfo, new Object[]{dllInfo});
+                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propogate

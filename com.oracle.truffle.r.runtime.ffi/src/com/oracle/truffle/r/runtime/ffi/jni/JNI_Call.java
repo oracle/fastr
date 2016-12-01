@@ -31,10 +31,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
+import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
@@ -92,11 +91,11 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized Object invokeCall(SymbolHandle handleArg, String name, DLLInfo dllInfo, Object[] args) {
-        long address = handleArg.asAddress();
+    public synchronized Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
+        long address = nativeCallInfo.address.asAddress();
         Object result = null;
         if (traceEnabled()) {
-            traceDownCall(name, args);
+            traceDownCall(nativeCallInfo.name, args);
         }
         try {
             switch (args.length) {
@@ -118,7 +117,7 @@ public class JNI_Call implements CallRFFI {
             return result;
         } finally {
             if (traceEnabled()) {
-                traceDownCallReturn(name, result);
+                traceDownCallReturn(nativeCallInfo.name, result);
             }
         }
     }
@@ -153,11 +152,11 @@ public class JNI_Call implements CallRFFI {
 
     @Override
     @TruffleBoundary
-    public synchronized void invokeVoidCall(SymbolHandle handle, String name, DLLInfo dllInfo, Object[] args) {
+    public synchronized void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
         if (traceEnabled()) {
-            traceDownCall(name, args);
+            traceDownCall(nativeCallInfo.name, args);
         }
-        long address = handle.asAddress();
+        long address = nativeCallInfo.address.asAddress();
         try {
             switch (args.length) {
                 case 0:
@@ -171,7 +170,7 @@ public class JNI_Call implements CallRFFI {
             }
         } finally {
             if (traceEnabled()) {
-                traceDownCallReturn(name, null);
+                traceDownCallReturn(nativeCallInfo.name, null);
             }
         }
     }

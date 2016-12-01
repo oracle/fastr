@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+
 /**
- * Support for the {.C} and {.Fortran} calls.
+ * The salient information needed for a native call extracted from the {@link RList} object passed
+ * by R.
  */
-public interface CRFFI {
-    /**
-     * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
-     * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]} not
-     * {@code RDoubleVector}.
-     */
-    void invoke(NativeCallInfo nativeCallInfo, Object[] args);
+@ValueType
+public final class NativeCallInfo {
+    public final String name;
+    public final SymbolHandle address;
+    public final DLLInfo dllInfo;
+
+    public NativeCallInfo(String name, SymbolHandle address, DLLInfo dllInfo) {
+        this.name = name;
+        this.address = address;
+        this.dllInfo = dllInfo;
+    }
 }

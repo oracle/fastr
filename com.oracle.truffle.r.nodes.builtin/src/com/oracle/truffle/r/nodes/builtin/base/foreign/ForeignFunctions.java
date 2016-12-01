@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -77,8 +76,6 @@ import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
-import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
-import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
@@ -93,16 +90,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 /**
  * {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2}, {@code External.graphics}
@@ -189,35 +183,10 @@ public class ForeignFunctions {
             throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
         }
 
-        @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private ExtractVectorNode packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private ExtractVectorNode infoExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
 
-        protected String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
-            if (nameExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-            }
-            return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
-        }
-
-        protected SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
-            if (addressExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-            }
-            return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
-        }
-
-        protected DLLInfo getDLLInfoFromSymbolInfo(VirtualFrame frame, RList symbol) {
-            if (packageExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-            }
-            // field name may be "package" or "dll", but always at (R) index 3
-            RList packageList = (RList) packageExtract.apply(frame, symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
-            return (DLLInfo) ((RExternalPtr) addressExtract.applyAccessField(frame, packageList, "info")).getExternalObject();
+        protected NativeCallInfo extractSymbolInfo(VirtualFrame frame, RList symbol) {
+            return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
         }
 
         protected String checkPackageArg(Object rPackage, BranchProfile errorProfile) {
@@ -273,7 +242,8 @@ public class ForeignFunctions {
         @Specialization(guards = "lookupBuiltin(symbol) == null")
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
-            return DotC.dispatch(this, getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), getDLLInfoFromSymbolInfo(frame, symbol), naok, dup, args);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            return DotC.dispatch(this, nativeCallInfo, naok, dup, args);
         }
 
         @Specialization
@@ -286,7 +256,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
             }
-            return DotC.dispatch(this, func, f.getDataAt(0), rns.getDllInfo(), naok, dup, args);
+            return DotC.dispatch(this, new NativeCallInfo(f.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
         }
 
         @SuppressWarnings("unused")
@@ -563,8 +533,8 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), getDLLInfoFromSymbolInfo(frame, symbol),
-                            args.getArguments());
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, args.getArguments());
         }
 
         @Specialization
@@ -580,7 +550,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, rns.getDllInfo(), args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback
@@ -649,9 +619,9 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(frame, symbol);
-            Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, getDLLInfoFromSymbolInfo(frame, symbol), new Object[]{list});
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -668,7 +638,7 @@ public class ForeignFunctions {
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, rns.getDllInfo(), new Object[]{list});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -721,10 +691,10 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(frame, symbol);
-            Object list = encodeArgumentPairList(args, name);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, getDLLInfoFromSymbolInfo(frame, symbol), new Object[]{CALL, OP, list, RHO});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
         }
 
         @Specialization
@@ -742,7 +712,7 @@ public class ForeignFunctions {
             }
             Object list = encodeArgumentPairList(args, name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, rns.getDllInfo(), new Object[]{CALL, OP, list, RHO});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
         }
 
         @Fallback
@@ -780,9 +750,9 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            String name = getNameFromSymbolInfo(frame, symbol);
-            Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), name, getDLLInfoFromSymbolInfo(frame, symbol), new Object[]{list});
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -799,7 +769,7 @@ public class ForeignFunctions {
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, rns.getDllInfo(), new Object[]{list});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -837,8 +807,8 @@ public class ForeignFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(getAddressFromSymbolInfo(frame, symbol), getNameFromSymbolInfo(frame, symbol), getDLLInfoFromSymbolInfo(frame, symbol),
-                            args.getArguments());
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, args.getArguments());
         }
 
         @Specialization
@@ -855,7 +825,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(func, name, rns.getDllInfo(), args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback
