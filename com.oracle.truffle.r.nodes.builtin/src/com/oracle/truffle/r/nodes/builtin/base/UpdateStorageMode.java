@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -47,6 +48,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private TypeofNode typeof;
     @Child private CastTypeNode castTypeNode;
     @Child private IsFactorNode isFactor;
+    @Child private SetClassAttributeNode setClassAttrNode;
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -80,10 +82,16 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                             String attrName = attr.getName();
                             Object v = attr.getValue();
                             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+
+                                if (setClassAttrNode == null) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    setClassAttrNode = insert(SetClassAttributeNode.create());
+                                }
+
                                 if (v == RNull.instance) {
-                                    rresult = (RAbstractContainer) rresult.setClassAttr(null);
+                                    setClassAttrNode.reset(rresult);
                                 } else {
-                                    rresult = (RAbstractContainer) rresult.setClassAttr((RStringVector) v);
+                                    setClassAttrNode.execute(rresult, v);
                                 }
                             } else {
                                 rresult.setAttr(Utils.intern(attrName), v);

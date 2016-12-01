@@ -59,19 +59,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
 
     public abstract void execute(DynamicObject attrs);
 
-    @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected void removeAttrCached(DynamicObject attrs,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupProperty(shape, name)") Property property) {
-        if (property != null) {
-            Shape newShape = attrs.getShape().removeProperty(property);
-            attrs.setShapeAndResize(shape, newShape);
-        }
-    }
-
-    @Specialization(contains = "removeAttrCached")
+    @Specialization
     @TruffleBoundary
     protected void removeAttrFallback(DynamicObject attrs) {
         attrs.delete(this.name);

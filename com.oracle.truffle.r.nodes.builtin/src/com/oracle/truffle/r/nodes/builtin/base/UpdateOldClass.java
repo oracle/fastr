@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class UpdateOldClass extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
+    @Child private SetClassAttributeNode setClassAttributeNode = SetClassAttributeNode.create();
 
     @Specialization(guards = "!isStringVector(className)")
     protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
@@ -73,14 +75,16 @@ public abstract class UpdateOldClass extends RBuiltinNode {
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(className);
+        setClassAttributeNode.execute(result, className);
+        return result;
     }
 
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
-        return result.setClassAttr(null);
+        setClassAttributeNode.reset(result);
+        return result;
     }
 
     protected boolean isStringVector(RAbstractVector className) {

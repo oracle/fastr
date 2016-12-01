@@ -122,6 +122,6 @@ public abstract class Attributes extends RBuiltinNode {
     }
 
     private static boolean hasAttributes(RAttributable attributable) {
-        return attributable.getAttributes() != null && attributable.getAttributes().size() > 0;
+        return attributable.getAttributes() != null && !attributable.getAttributes().isEmpty();
     }
 }

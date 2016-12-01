@@ -12,10 +12,12 @@
  */
 package com.oracle.truffle.r.nodes.objects;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -36,6 +38,7 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true, null, null);
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);
     @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
+    @Child private SetClassAttributeNode setClassAttrNode;
 
     @Child private CastNode castStringScalar;
     @Child private CastNode castLogicalScalar;
@@ -62,7 +65,13 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
         RAttributable valueAttr = (RAttributable) value;
         if (valueAttr instanceof RS4Object ||
                         (e instanceof RAttributable && ((RAttributable) e).getAttributes() != null && pckgAttrAccess.execute(((RAttributable) e).getAttributes()) != null)) {
-            valueAttr = valueAttr.setClassAttr((RStringVector) e);
+
+            if (setClassAttrNode == null) {
+                setClassAttrNode = insert(SetClassAttributeNode.create());
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+            }
+
+            setClassAttrNode.execute(valueAttr, e);
             valueAttr.setS4();
         }
         return value;

@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -43,6 +44,8 @@ public abstract class ProcTime extends RBuiltinNode {
     private static final RStringVector PROC_TIME_CLASS = RDataFactory.createStringVectorFromScalar("proc_time");
 
     private static RStringVector RNAMES;
+
+    @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
 
     @Specialization
     @TruffleBoundary
@@ -65,7 +68,8 @@ public abstract class ProcTime extends RBuiltinNode {
             RNAMES = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         }
         RDoubleVector result = RDataFactory.createDoubleVector(data, complete, RNAMES);
-        result.setClassAttr(PROC_TIME_CLASS);
+        setClassAttrNode.execute(result, PROC_TIME_CLASS);
+
         return result;
     }
 

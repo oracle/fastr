@@ -36,7 +36,9 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -280,7 +282,8 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RDoubleVector posix2date(RAbstractListVector x) {
+        protected RDoubleVector posix2date(RAbstractListVector x,
+                        @Cached("create()") SetClassAttributeNode setClassAttrNode) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -314,7 +317,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RDoubleVector result = RDataFactory.createDoubleVector(data, complete);
-            result.setClassAttr(CLASS_ATTR);
+            setClassAttrNode.execute(result, CLASS_ATTR);
             return result;
         }
     }

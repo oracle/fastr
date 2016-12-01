@@ -27,6 +27,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -49,6 +51,8 @@ public abstract class Tilde extends RBuiltinNode {
 
     private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
 
+    @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RMissing.instance};
@@ -58,7 +62,7 @@ public abstract class Tilde extends RBuiltinNode {
     protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model) {
         RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
         RLanguage lang = RDataFactory.createLanguage(call);
-        lang.setClassAttr(FORMULA_CLASS);
+        setClassAttrNode.execute(lang, FORMULA_CLASS);
         REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
         lang.setAttr(RRuntime.DOT_ENVIRONMENT, env);
         return lang;

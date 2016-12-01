@@ -30,7 +30,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -60,6 +64,9 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
+    @Child private SetClassAttributeNode setClassAttrNode;
+    @Child private InitAttributesNode initAttrNode;
+    @Child private SetAttributeNode setAttrNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -189,11 +196,16 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                 res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
-                if (value == RNull.instance) {
-                    res = (RAbstractContainer) result.setClassAttr(null);
-                } else {
-                    res = (RAbstractContainer) result.setClassAttr(UpdateAttr.convertClassAttrFromObject(value));
+                if (setClassAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setClassAttrNode = insert(SetClassAttributeNode.create());
                 }
+                if (value == RNull.instance) {
+                    setClassAttrNode.reset(result);
+                } else {
+                    setClassAttrNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
+                }
+                res = result;
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 res.setRowNames(castVector(value));
             } else {
@@ -222,7 +234,12 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         Object obj = getNonShared(o);
         RAttributable attrObj = (RAttributable) obj;
         attrObj.removeAllAttributes();
-        attrObj.setClassAttr(null);
+
+        if (setClassAttrNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            setClassAttrNode = insert(SetClassAttributeNode.create());
+        }
+        setClassAttrNode.reset(attrObj);
         return obj;
     }
 
@@ -251,9 +268,22 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 if (attrValue == null) {
                     throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                 }
-                attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
+
+                if (setClassAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setClassAttrNode = insert(SetClassAttributeNode.create());
+                }
+                setClassAttrNode.execute(attrObj, UpdateAttr.convertClassAttrFromObject(attrValue));
             } else {
-                attrObj.setAttr(attrName.intern(), operand.getDataAt(i));
+                if (setAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setAttrNode = insert(SetAttributeNode.create());
+                }
+                if (initAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    initAttrNode = insert(InitAttributesNode.create());
+                }
+                setAttrNode.execute(initAttrNode.execute(attrObj), attrName.intern(), operand.getDataAt(i));
             }
         }
         return obj;

@@ -18,6 +18,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,7 +44,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     @Specialization(guards = "method == cachedMethod")
     protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
                     @Cached("getMethod(method)") Method methodObj,
-                    @Cached("create()") SetAttributeNode setAttrNode) {
+                    @Cached("create()") SetAttributeNode setAttrNode,
+                    @Cached("create()") SetClassAttributeNode setClassAttrNode) {
         int nr = RRuntime.nrows(x);
         int nc = RRuntime.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
@@ -57,7 +59,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             String name = names.getDataAt(i);
             Object listValue = list.getDataAt(i);
             if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                result.setClassAttr(listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
+                setClassAttrNode.execute(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
             } else {
                 setAttrNode.execute(resultAttrs, name, listValue);
             }

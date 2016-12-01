@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -44,6 +47,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastListNode extends CastBaseNode {
+
+    @Child private SetClassAttributeNode setClassAttrNode;
 
     public abstract RList executeList(Object o);
 
@@ -93,7 +98,13 @@ public abstract class CastListNode extends CastBaseNode {
             // result may already have names, so can't call RVector.copyAttributesFrom
             for (RAttributesLayout.RAttribute attr : attrAttrAccess.execute(operandAttrs)) {
                 if (attr.getName().equals(RRuntime.CLASS_ATTR_KEY)) {
-                    result.setClassAttr((RStringVector) attr.getValue());
+
+                    if (setClassAttrNode == null) {
+                        setClassAttrNode = insert(SetClassAttributeNode.create());
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                    }
+
+                    setClassAttrNode.execute(result, attr.getValue());
                 } else {
                     result.setAttr(attr.getName(), attr.getValue());
                 }

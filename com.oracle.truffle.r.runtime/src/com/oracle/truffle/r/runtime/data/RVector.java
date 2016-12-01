@@ -533,6 +533,10 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return setClassAttrInternal(vector, classAttr);
     }
 
+    public abstract class CNode extends RBaseNode {
+
+    }
+
     private static RAbstractContainer setClassAttrInternal(RVector<?> vector, RStringVector classAttr) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
