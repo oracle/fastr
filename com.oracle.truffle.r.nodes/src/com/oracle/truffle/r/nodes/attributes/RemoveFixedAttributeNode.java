@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
@@ -59,13 +60,17 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     public abstract void execute(DynamicObject attrs);
 
     @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)", "property != null"}, //
+                    guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected void removeAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupProperty(shape, name)") Property property) {
-        Shape newShape = attrs.getShape().removeProperty(property);
-        attrs.setShapeAndResize(shape, newShape);
+                    @Cached("lookupProperty(shape, name)") Property property,
+                    @Cached("create()") BranchProfile notNullProfile) {
+        if (property != null) {
+            notNullProfile.enter();
+            Shape newShape = attrs.getShape().removeProperty(property);
+            attrs.setShapeAndResize(shape, newShape);
+        }
     }
 
     @Specialization(contains = "removeAttrCached")

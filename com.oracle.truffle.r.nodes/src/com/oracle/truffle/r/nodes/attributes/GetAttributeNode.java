@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 public abstract class GetAttributeNode extends AttributeAccessNode {
 
@@ -41,14 +42,15 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     public abstract Object execute(DynamicObject attrs, String name);
 
     @Specialization(limit = "3", //
-                    guards = {"location != null", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
+                    guards = {"cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     @SuppressWarnings("unused")
     protected Object getAttrCached(DynamicObject attrs, String name,
                     @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
-        return location.get(attrs);
+                    @Cached("lookupLocation(shape, name)") Location location,
+                    @Cached("createBinaryProfile()") ConditionProfile nullProfile) {
+        return nullProfile.profile(location == null) ? null : location.get(attrs);
     }
 
     @TruffleBoundary
