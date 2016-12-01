@@ -64,10 +64,8 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
                     assumptions = {"shape.getValidAssumption()"})
     protected void removeAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupProperty(shape, name)") Property property,
-                    @Cached("create()") BranchProfile notNullProfile) {
+                    @Cached("lookupProperty(shape, name)") Property property) {
         if (property != null) {
-            notNullProfile.enter();
             Shape newShape = attrs.getShape().removeProperty(property);
             attrs.setShapeAndResize(shape, newShape);
         }

@@ -65,9 +65,8 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     @SuppressWarnings("unused")
     protected Object getAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location,
-                    @Cached("createBinaryProfile()") ConditionProfile nullProfile) {
-        return nullProfile.profile(location == null) ? null : location.get(attrs);
+                    @Cached("lookupLocation(shape, name)") Location location) {
+        return location == null ? null : location.get(attrs);
     }
 
     @Specialization(contains = "getAttrCached")

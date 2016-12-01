@@ -48,9 +48,8 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     protected Object getAttrCached(DynamicObject attrs, String name,
                     @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location,
-                    @Cached("createBinaryProfile()") ConditionProfile nullProfile) {
-        return nullProfile.profile(location == null) ? null : location.get(attrs);
+                    @Cached("lookupLocation(shape, name)") Location location) {
+        return location == null ? null : location.get(attrs);
     }
 
     @TruffleBoundary
