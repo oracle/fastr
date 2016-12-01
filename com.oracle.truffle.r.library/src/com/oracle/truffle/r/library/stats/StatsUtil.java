@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
@@ -117,6 +119,10 @@ public class StatsUtil {
 
     public static double rdfexp(double f, double x, boolean giveLog) {
         return giveLog ? -0.5 * Math.log(f) + x : Math.exp(x) / Math.sqrt(f);
+    }
+
+    public static double lfastchoose(double n, double k) {
+        return -Math.log(n + 1.) - lbeta(n - k + 1., k + 1.);
     }
 
     public static double fsign(double x, double y) {

@@ -11,13 +11,19 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RChisq {
+public final class RChisq implements RandFunction1_Double {
     public static double rchisq(double df, RandomNumberProvider rand) {
         if (!Double.isFinite(df) || df < 0.0) {
             return StatsUtil.mlError();
         }
         return new RGamma().evaluate(df / 2.0, 2.0, rand);
+    }
+
+    @Override
+    public double evaluate(double a, RandomNumberProvider rand) {
+        return rchisq(a, rand);
     }
 }

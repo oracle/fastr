@@ -12,18 +12,18 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Int;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 // transcribed from rbinom.c
 
-public final class Rbinom implements RandFunction2_Int {
+public final class Rbinom implements RandFunction2_Double {
 
     private final Qbinom qbinom = new Qbinom();
 
     @Override
-    public int evaluate(double nin, double pp, RandomNumberProvider rand) {
+    public double evaluate(double nin, double pp, RandomNumberProvider rand) {
         double psave = -1.0;
         int nsave = -1;
 

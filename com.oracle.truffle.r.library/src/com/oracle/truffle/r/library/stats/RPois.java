@@ -13,9 +13,10 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
 
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RPois {
+public final class RPois implements RandFunction1_Double {
 
     private static final double a0 = -0.5;
     private static final double a1 = 0.3333333;
@@ -271,5 +272,10 @@ public final class RPois {
             } /* t > -.67.. */
         }
         return pois;
+    }
+
+    @Override
+    public double evaluate(double mu, RandomNumberProvider rand) {
+        return rpois(mu, rand);
     }
 }
