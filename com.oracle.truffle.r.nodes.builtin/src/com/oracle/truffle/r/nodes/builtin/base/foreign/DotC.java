@@ -14,26 +14,19 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
-import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -42,8 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 /**
  * {@code .C} functions.
@@ -65,8 +58,11 @@ public abstract class DotC extends RBuiltinNode {
     private static final int VECTOR_LOGICAL = 12;
     @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
-    @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-    @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
+
+    protected NativeCallInfo extractSymbolInfo(VirtualFrame frame, RList symbol) {
+        return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -76,9 +72,8 @@ public abstract class DotC extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding) {
-        SymbolHandle handle = getAddressFromSymbolInfo(frame, symbol);
-        String name = getNameFromSymbolInfo(frame, symbol);
-        return dispatch(this, handle, name, naok, dup, args);
+        NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+        return dispatch(this, nativeCallInfo, naok, dup, args);
     }
 
     @SuppressWarnings("unused")
@@ -99,23 +94,7 @@ public abstract class DotC extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
-        return dispatch(this, func, f.getDataAt(0), naok, dup, args);
-    }
-
-    private String getNameFromSymbolInfo(VirtualFrame frame, RList symbol) {
-        if (nameExtract == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        }
-        return RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
-    }
-
-    private SymbolHandle getAddressFromSymbolInfo(VirtualFrame frame, RList symbol) {
-        if (addressExtract == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        }
-        return ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
+        return dispatch(this, new NativeCallInfo(f.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
     }
 
     private static int[] checkNAs(RBuiltinNode node, int argIndex, int[] data) {
@@ -151,7 +130,7 @@ public abstract class DotC extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected static RList dispatch(RBuiltinNode node, SymbolHandle handle, String name, byte naok, byte dup, RArgsValuesAndNames args) {
+    protected static RList dispatch(RBuiltinNode node, NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")
@@ -191,10 +170,7 @@ public abstract class DotC extends RBuiltinNode {
                 throw RError.error(node, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
         }
-        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
-            trace(name, nativeArgs);
-        }
-        RFFIFactory.getRFFI().getCRFFI().invoke(handle, nativeArgs);
+        RFFIFactory.getRFFI().getCRFFI().invoke(nativeCallInfo, nativeArgs);
         // we have to assume that the native method updated everything
         RStringVector listNames = validateArgNames(array.length, args.getSignature());
         Object[] results = new Object[array.length];
@@ -236,8 +212,4 @@ public abstract class DotC extends RBuiltinNode {
         return RDataFactory.createList(results, listNames);
     }
 
-    @TruffleBoundary
-    private static void trace(String name, Object[] nativeArgs) {
-        System.out.println("calling " + name + ": " + Arrays.toString(nativeArgs));
-    }
 }

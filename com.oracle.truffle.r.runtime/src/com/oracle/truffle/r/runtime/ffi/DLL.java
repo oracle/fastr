@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -188,16 +189,16 @@ public class DLL {
             data[0] = name;
             data[1] = path;
             data[2] = RRuntime.asLogical(dynamicLookup);
-            data[3] = createExternalPtr(new SymbolHandle(new Long(System.identityHashCode(handle))), HANDLE_CLASS);
+            data[3] = createExternalPtr(new SymbolHandle(new Long(System.identityHashCode(handle))), HANDLE_CLASS, handle);
             /*
-             * GnuR sets the info member to an externalptr whose value is the DllInfo structure
-             * itself. We can't do that, but we need a way to get back to it from R code that uses
-             * the value, e.g. getRegisteredRoutines. So we use the id value.
+             * GnuR sets the info member to an externalptr whose value is the C DllInfo structure
+             * itself. We use the internal "externalObject" slot instead, and we use the "id" for
+             * the "addr" slot.
              */
-            data[4] = createExternalPtr(new SymbolHandle(new Long(id)), INFO_REFERENCE_CLASS);
-            RList dllInfo = RDataFactory.createList(data, DLLInfo.NAMES);
-            dllInfo.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS));
-            return dllInfo;
+            data[4] = createExternalPtr(new SymbolHandle(new Long(id)), INFO_REFERENCE_CLASS, this);
+            RList result = RDataFactory.createList(data, DLLInfo.NAMES);
+            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS));
+            return result;
         }
 
         @Override
@@ -241,11 +242,11 @@ public class DLL {
                 /*
                  * GnuR stores this as an externalptr whose value is the C RegisteredNativeType
                  * struct. We can't do that, and it's not clear any code uses that fact, so we
-                 * stored the registered address.
+                 * stored the registered address. TODO use externalObject slot?
                  */
-                data[1] = DLL.createExternalPtr(rnt.dotSymbol.fun, REGISTERED_NATIVE_SYMBOL_CLASS);
+                data[1] = DLL.createExternalPtr(rnt.dotSymbol.fun, REGISTERED_NATIVE_SYMBOL_CLASS, null);
             } else {
-                data[1] = DLL.createExternalPtr(address, NATIVE_SYMBOL_CLASS);
+                data[1] = DLL.createExternalPtr(address, NATIVE_SYMBOL_CLASS, null);
             }
             data[2] = libInfo.toRList();
             if (n > 3) {
@@ -288,23 +289,14 @@ public class DLL {
 
     public static final SymbolHandle SYMBOL_NOT_FOUND = null;
 
-    public static synchronized DLLInfo getDLLInfoForId(int id) {
-        for (DLLInfo dllInfo : list) {
-            if (dllInfo.id == id) {
-                return dllInfo;
-            }
-        }
-        return null;
-    }
-
     public static boolean isDLLInfo(RExternalPtr info) {
         RSymbol tag = (RSymbol) info.getTag();
         return tag.getName().equals(DLLInfo.DLL_INFO_REFERENCE);
     }
 
-    public static RExternalPtr createExternalPtr(SymbolHandle value, RStringVector rClass) {
+    public static RExternalPtr createExternalPtr(SymbolHandle value, RStringVector rClass, Object externalObject) {
         CompilerAsserts.neverPartOfCompilation(); // for interning
-        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbolInterned(rClass.getDataAt(0)));
+        RExternalPtr result = RDataFactory.createExternalPtr(value, externalObject, RDataFactory.createSymbolInterned(rClass.getDataAt(0)), RNull.instance);
         result.setClassAttr(rClass);
         return result;
     }
@@ -363,7 +355,7 @@ public class DLL {
         if (initFunc != SYMBOL_NOT_FOUND) {
             synchronized (DLL.class) {
                 try {
-                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(initFunc, pkgInit, new Object[]{dllInfo});
+                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propogate
