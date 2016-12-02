@@ -20,7 +20,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -36,9 +37,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
@@ -53,7 +52,9 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
-    protected Object update(Object x, String value, @Cached("create()") ArrayAttributeNode attrAttrAccess) {
+    protected Object update(Object x, String value,
+                    @Cached("create()") ArrayAttributeNode attrAttrAccess,
+                    @Cached("create()") SetAttributeNode setAttrNode) {
         RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
@@ -94,7 +95,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                                     setClassAttrNode.execute(rresult, v);
                                 }
                             } else {
-                                rresult.setAttr(Utils.intern(attrName), v);
+                                setAttrNode.execute(rresult, Utils.intern(attrName), v);
                             }
                         }
                         return rresult;

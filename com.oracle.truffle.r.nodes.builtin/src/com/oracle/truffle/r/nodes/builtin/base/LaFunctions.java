@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -368,6 +369,8 @@ public class LaFunctions {
         private final ConditionProfile doUseLog = ConditionProfile.createBinaryProfile();
         private final NACheck naCheck = NACheck.create();
 
+        @Child private SetFixedAttributeNode setLogAttrNode = SetFixedAttributeNode.create("logarithm");
+
         @Override
         protected void createCasts(CastBuilder casts) {
             //@formatter:off
@@ -437,7 +440,7 @@ public class LaFunctions {
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
-            modulusVec.setAttr("logarithm", RRuntime.asLogical(useLog));
+            setLogAttrNode.execute(modulusVec, RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
             RVector.setVectorClassAttr(result, DET_CLASS);
             return result;
@@ -449,6 +452,9 @@ public class LaFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
+
+        @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
+        @Child private SetFixedAttributeNode setRankAttrNode = SetFixedAttributeNode.create("rank");
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -499,8 +505,8 @@ public class LaFunctions {
                     // TODO informative error message (aka GnuR)
                     throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
-                a.setAttr("pivot", RRuntime.asLogical(piv));
-                a.setAttr("rank", rank[0]);
+                setPivotAttrNode.execute(a, RRuntime.asLogical(piv));
+                setRankAttrNode.execute(a, rank[0]);
                 RList dn = a.getDimNames();
                 if (dn != null && dn.getDataAt(0) != null) {
                     Object[] dn2 = new Object[m];

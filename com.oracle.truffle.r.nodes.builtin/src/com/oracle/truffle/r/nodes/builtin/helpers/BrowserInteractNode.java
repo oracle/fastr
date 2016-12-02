@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -68,6 +69,9 @@ public abstract class BrowserInteractNode extends RNode {
     public static final int NEXT = 1;
     public static final int CONTINUE = 2;
     public static final int FINISH = 3;
+
+    @Child private GetFixedAttributeNode getSrcRefAttrNode;
+    @Child private GetFixedAttributeNode getSrcFileAttrNode;
 
     @Specialization
     protected int interact(VirtualFrame frame) {
@@ -179,11 +183,20 @@ public abstract class BrowserInteractNode extends RNode {
         return RCaller.create(null, currentCaller, builder.call(RSyntaxNode.INTERNAL, builder.lookup(RSyntaxNode.INTERNAL, "browser", true)));
     }
 
-    private static String getSrcinfo(RStringVector element) {
-        Object srcref = element.getAttr(RRuntime.R_SRCREF);
+    private String getSrcinfo(RStringVector element) {
+        if (getSrcRefAttrNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getSrcRefAttrNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCREF));
+        }
+
+        Object srcref = getSrcRefAttrNode.execute(element);
         if (srcref != null) {
+            if (getSrcFileAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getSrcFileAttrNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCFILE));
+            }
             RIntVector lloc = (RIntVector) srcref;
-            Object srcfile = lloc.getAttr(RRuntime.R_SRCFILE);
+            Object srcfile = getSrcFileAttrNode.execute(lloc);
             if (srcfile != null) {
                 REnvironment env = (REnvironment) srcfile;
                 return " at " + RRuntime.asString(env.get(RSrcref.SrcrefFields.filename.name())) + "#" + lloc.getDataAt(0);

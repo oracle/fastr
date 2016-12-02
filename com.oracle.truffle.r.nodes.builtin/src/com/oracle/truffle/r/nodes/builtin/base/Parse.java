@@ -33,8 +33,10 @@ import java.net.URISyntaxException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -95,6 +97,10 @@ public abstract class Parse extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
+
+    @Child private SetFixedAttributeNode setSrcRefAttrNode = SetFixedAttributeNode.create("srcref");
+    @Child private SetFixedAttributeNode setWholeSrcRefAttrNode = SetFixedAttributeNode.create("wholeSrcref");
+    @Child private SetFixedAttributeNode setSrcFileAttrNode = SetFixedAttributeNode.create("srcfile");
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -219,7 +225,7 @@ public abstract class Parse extends RBuiltinNode {
         }
     }
 
-    private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
+    private void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
             Object data = exprs.getDataAt(i);
@@ -239,7 +245,7 @@ public abstract class Parse extends RBuiltinNode {
             }
 
         }
-        exprs.setAttr("srcref", RDataFactory.createList(srcrefData));
+        setSrcRefAttrNode.execute(exprs, RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
         int endOffset = source.getCode().length() - 1;
         wholeSrcrefData[0] = source.getLineNumber(0);
@@ -248,8 +254,8 @@ public abstract class Parse extends RBuiltinNode {
         wholeSrcrefData[6] = wholeSrcrefData[0];
         wholeSrcrefData[6] = wholeSrcrefData[3];
 
-        exprs.setAttr("wholeSrcref", RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
-        exprs.setAttr("srcfile", srcFile);
+        setWholeSrcRefAttrNode.execute(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
+        setSrcFileAttrNode.execute(exprs, srcFile);
     }
 
 }

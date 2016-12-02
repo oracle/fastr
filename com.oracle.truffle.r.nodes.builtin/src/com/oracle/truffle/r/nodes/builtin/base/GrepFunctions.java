@@ -11,7 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -26,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -664,6 +666,13 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
 
+        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             castPattern(casts);
@@ -755,19 +764,19 @@ public class GrepFunctions {
                 }
             }
             RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
-            ret.setAttr("match.length", RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
+            setMatchLengthAttrNode.execute(ret, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
             if (useBytes) {
-                ret.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
             }
             if (hasAnyCapture) {
                 RStringVector captureNamesVec = RDataFactory.createStringVector(captureNames, RDataFactory.COMPLETE_VECTOR);
                 RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
-                captureStartVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
-                ret.setAttr("capture.start", captureStartVec);
+                setDimNamesAttrNode.execute(captureStartVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                setCaptureStartAttrNode.execute(ret, captureStartVec);
                 RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
-                captureLengthVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
-                ret.setAttr("capture.length", captureLengthVec);
-                ret.setAttr("capture.names", captureNamesVec);
+                setDimNamesAttrNode.execute(captureLengthVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                setCaptureLengthAttrNode.execute(ret, captureLengthVec);
+                setCaptureNamesAttrNode.execute(ret, captureNamesVec);
             }
             return ret;
         }
@@ -845,6 +854,13 @@ public class GrepFunctions {
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexp {
 
+        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             castPattern(casts);
@@ -855,19 +871,19 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        private static void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
+        private void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
             int len = captureNames.getLength();
             int[] captureStartData = new int[len];
             int[] captureLengthData = new int[len];
             Arrays.fill(captureStartData, -1);
             Arrays.fill(captureLengthData, -1);
             RIntVector captureStart = RDataFactory.createIntVector(captureStartData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
-            captureStart.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            setDimNamesAttrNode.execute(captureStart, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
             RIntVector captureLength = RDataFactory.createIntVector(captureLengthData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
-            captureLength.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
-            vec.setAttr("capture.start", captureStart);
-            vec.setAttr("capture.length", captureLength);
-            vec.setAttr("capture.names", captureNames);
+            setDimNamesAttrNode.execute(captureLength, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            setCaptureStartAttrNode.execute(vec, captureStart);
+            setCaptureLengthAttrNode.execute(vec, captureLength);
+            setCaptureNamesAttrNode.execute(vec, captureNames);
         }
 
         @Specialization
@@ -899,16 +915,16 @@ public class GrepFunctions {
                     for (int j = 0; j < txt.length(); j++) {
                         res.setDataAt(res.getDataWithoutCopying(), j, j + 1);
                     }
-                    res.setAttr("match.length", RDataFactory.createIntVector(txt.length()));
+                    setMatchLengthAttrNode.execute(res, RDataFactory.createIntVector(txt.length()));
                     if (useBytes) {
-                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                        setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                     }
                 } else {
                     List<Info> l = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed);
                     res = toIndexOrSizeVector(l, true);
-                    res.setAttr("match.length", toIndexOrSizeVector(l, false));
+                    setMatchLengthAttrNode.execute(res, toIndexOrSizeVector(l, false));
                     if (useBytes) {
-                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                        setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                     }
                     RIntVector captureStart = toCaptureStartOrLength(l, true);
                     if (captureStart != null) {
@@ -923,9 +939,9 @@ public class GrepFunctions {
                             }
                         }
                         hasAnyCapture = true;
-                        res.setAttr("capture.start", captureStart);
-                        res.setAttr("capture.length", captureLength);
-                        res.setAttr("capture.names", captureNames);
+                        setCaptureStartAttrNode.execute(res, captureStart);
+                        setCaptureLengthAttrNode.execute(res, captureLength);
+                        setCaptureNamesAttrNode.execute(res, captureNames);
                     } else if (hasAnyCapture) {
                         assert captureNames != null;
                         // it's capture names from previous iteration, so copy
@@ -947,7 +963,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
+        private RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
             assert list.size() > 0;
             Info firstInfo = list.get(0);
             if (!firstInfo.hasCapture) {
@@ -966,7 +982,7 @@ public class GrepFunctions {
                 }
             }
             RIntVector ret = RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR, new int[]{list.size(), firstInfo.captureNames.length});
-            ret.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
+            setDimNamesAttrNode.execute(ret, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
             return ret;
         }
 

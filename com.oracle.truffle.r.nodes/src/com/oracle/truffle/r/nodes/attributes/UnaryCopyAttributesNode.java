@@ -102,7 +102,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                 removeDimNames.execute(attributes);
                 result.setInternalDimNames(null);
             }
-            result.setInternalDimensions(null);
 
             RStringVector vecNames = source.getNames(attrSourceProfiles);
             if (hasNamesSource.profile(vecNames != null)) {
@@ -114,7 +113,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         }
 
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
-        result.setInternalDimensions(newDimensions);
 
         RList newDimNames = source.getDimNames(attrSourceProfiles);
         if (hasDimNames.profile(newDimNames != null)) {

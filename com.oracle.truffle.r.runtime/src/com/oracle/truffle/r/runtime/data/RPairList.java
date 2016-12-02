@@ -329,7 +329,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public void setNames(RStringVector newNames) {
+    public final void setNames(RStringVector newNames) {
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;

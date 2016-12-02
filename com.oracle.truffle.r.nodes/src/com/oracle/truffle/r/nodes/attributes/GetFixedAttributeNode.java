@@ -22,16 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
+
+    @Child private GetFixedAttributeNode recursive;
 
     protected GetFixedAttributeNode(String name) {
         super(name);
@@ -53,7 +57,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         return GetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
     }
 
-    public abstract Object execute(DynamicObject attrs);
+    public abstract Object execute(Object attrs);
 
     protected boolean hasProperty(Shape shape) {
         return shape.hasProperty(name);
@@ -74,4 +78,22 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     protected Object getAttrFallback(DynamicObject attrs) {
         return attrs.get(name);
     }
+
+    @Specialization
+    protected Object getAttrFromAttributable(RAttributable x,
+                    @Cached("create()") BranchProfile attrNullProfile) {
+        DynamicObject attributes = x.getAttributes();
+        if (attributes == null) {
+            attrNullProfile.enter();
+            return null;
+        }
+
+        if (recursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursive = insert(create(name));
+        }
+
+        return recursive.execute(attributes);
+    }
+
 }

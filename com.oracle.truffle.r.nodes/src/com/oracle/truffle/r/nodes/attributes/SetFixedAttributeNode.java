@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,13 +31,22 @@ import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetSpecialAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
+    @Child private SetFixedAttributeNode recursive;
+    @Child private SetSpecialAttributeNode setSpecialAttrNode;
+
+    private final boolean isSpecialAttribute;
+
     protected SetFixedAttributeNode(String name) {
         super(name);
+        this.isSpecialAttribute = SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name);
     }
 
     public static SetFixedAttributeNode create(String name) {
@@ -59,7 +69,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return SetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
     }
 
-    public abstract void execute(DynamicObject attrs, Object value);
+    public abstract void execute(Object attr, Object value);
 
     @Specialization(limit = "3", //
                     guards = {"shapeCheck(shape, attrs)", "location != null"}, //
@@ -78,6 +88,31 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     @TruffleBoundary
     protected void setFallback(DynamicObject attrs, Object value) {
         attrs.define(name, value);
+    }
+
+    @Specialization
+    protected void setAttrInAttributable(RAttributable x, Object value,
+                    @Cached("create()") BranchProfile attrNullProfile) {
+        if (isSpecialAttribute) {
+            if (setSpecialAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setSpecialAttrNode = insert(SpecialAttributesFunctions.createSpecialAttributeNode(name));
+            }
+            setSpecialAttrNode.execute(x, value);
+        } else {
+            DynamicObject attributes = x.getAttributes();
+            if (attributes == null) {
+                attrNullProfile.enter();
+                attributes = x.initAttributes();
+            }
+
+            if (recursive == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                recursive = insert(create(name));
+            }
+            recursive.execute(attributes, value);
+        }
+
     }
 
 }

@@ -150,7 +150,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     removeDimNames.execute(attributes);
                     result.setInternalDimNames(null);
                 }
-                result.setInternalDimensions(null);
 
                 RStringVector vecNames = left.getNames(attrLeftProfiles);
                 if (hasNamesLeft.profile(vecNames != null)) {
@@ -176,7 +175,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
         }
 
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
-        result.setInternalDimensions(newDimensions);
 
         if (result != left) {
             RList newDimNames = left.getDimNames(attrLeftProfiles);
@@ -243,7 +241,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
         RVector.verifyDimensions(result.getLength(), newDimensions, this);
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
-        result.setInternalDimensions(newDimensions);
         if (rightNotResult) {
             RList newDimNames = right.getDimNames(attrRightProfiles);
             if (hasDimNames.profile(newDimNames != null)) {
@@ -292,7 +289,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
             leftHasDimensions.enter();
         }
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
-        result.setInternalDimensions(newDimensions);
         if (left != result) {
             RList newDimNames = left.getDimNames(attrLeftProfiles);
             if (hasDimNames.profile(newDimNames != null)) {

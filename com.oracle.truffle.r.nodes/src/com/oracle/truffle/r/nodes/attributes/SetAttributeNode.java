@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,9 +31,13 @@ import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 public abstract class SetAttributeNode extends AttributeAccessNode {
+
+    @Child SetAttributeNode recursive;
 
     protected SetAttributeNode() {
     }
@@ -41,7 +46,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         return SetAttributeNodeGen.create();
     }
 
-    public abstract void execute(DynamicObject attrs, String name, Object value);
+    public abstract void execute(Object attrs, String name, Object value);
 
     @Specialization(limit = "3", //
                     guards = {
@@ -98,6 +103,49 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
     @Specialization(contains = {"setExistingAttrCached", "setNewAttrCached"})
     protected static void setAttrFallback(DynamicObject receiver, String name, Object value) {
         receiver.define(name, value);
+    }
+
+    protected static SpecialAttributesFunctions.SetSpecialAttributeNode createSpecAttrNode(String name) {
+        return SpecialAttributesFunctions.createSpecialAttributeNode(name);
+    }
+
+    @Specialization(limit = "3", //
+                    guards = {
+                                    "isSpecialAttributeNode.execute(name)",
+                                    "cachedName.equals(name)"
+                    })
+    @SuppressWarnings("unused")
+    protected void setSpecAttrInAttributable(RAttributable x, String name, Object value,
+                    @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
+                    @Cached("name") String cachedName,
+                    @Cached("createSpecAttrNode(cachedName)") SpecialAttributesFunctions.SetSpecialAttributeNode setSpecAttrNode) {
+        setSpecAttrNode.execute(x, value);
+    }
+
+    @Specialization(contains = "setSpecAttrInAttributable", //
+                    guards = "isSpecialAttributeNode.execute(name)")
+    @SuppressWarnings("unused")
+    protected void setSpecAttrInAttributable(RAttributable x, String name, Object value,
+                    @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
+                    @Cached("create()") SpecialAttributesFunctions.GenericSpecialAttributeNode genericSpecialAttrNode) {
+        genericSpecialAttrNode.execute(x, name, value);
+    }
+
+    @Specialization
+    protected void setAttrInAttributable(RAttributable x, String name, Object value,
+                    @Cached("create()") BranchProfile attrNullProfile) {
+        DynamicObject attributes = x.getAttributes();
+        if (attributes == null) {
+            attrNullProfile.enter();
+            attributes = x.initAttributes();
+        }
+
+        if (recursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursive = insert(create());
+        }
+
+        recursive.execute(attributes, name, value);
     }
 
     /**

@@ -542,7 +542,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public void setNames(RStringVector newNames) {
+        public final void setNames(RStringVector newNames) {
             throw RInternalError.shouldNotReachHere();
         }
 

@@ -96,7 +96,6 @@ public abstract class Transpose extends RBuiltinNode {
         copyRegAttributes.execute(vector, r);
         // set new dimensions
         int[] newDim = new int[]{secondDim, firstDim};
-        r.setInternalDimensions(newDim);
         putDimensions.execute(initAttributes.execute(r), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         // set new dim names
         RList dimNames = vector.getDimNames(attrProfiles);

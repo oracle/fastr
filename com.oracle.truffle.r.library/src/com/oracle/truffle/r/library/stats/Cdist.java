@@ -17,8 +17,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -32,6 +33,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     private static final NACheck naCheck = NACheck.create();
+
+    @Child private GetFixedAttributeNode getNamesAttrNode = GetFixedAttributeNode.createNames();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -54,7 +57,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         rdistance(xm.getDataWithoutCopying(), nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
         DynamicObject resultAttrs = result.initAttributes();
-        RStringVector names = (RStringVector) list.getAttr(RRuntime.NAMES_ATTR_KEY);
+
+        RStringVector names = (RStringVector) getNamesAttrNode.execute(list);
         for (int i = 0; i < names.getLength(); i++) {
             String name = names.getDataAt(i);
             Object listValue = list.getDataAt(i);

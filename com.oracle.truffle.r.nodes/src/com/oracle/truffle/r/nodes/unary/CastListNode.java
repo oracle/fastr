@@ -26,10 +26,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -91,7 +90,9 @@ public abstract class CastListNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RList doLanguage(RLanguage operand, @Cached("create()") ArrayAttributeNode attrAttrAccess) {
+    protected RList doLanguage(RLanguage operand,
+                    @Cached("create()") ArrayAttributeNode attrAttrAccess,
+                    @Cached("create()") SetAttributeNode setAttrNode) {
         RList result = RContext.getRRuntimeASTAccess().asList(operand);
         DynamicObject operandAttrs = operand.getAttributes();
         if (operandAttrs != null) {
@@ -106,7 +107,7 @@ public abstract class CastListNode extends CastBaseNode {
 
                     setClassAttrNode.execute(result, attr.getValue());
                 } else {
-                    result.setAttr(attr.getName(), attr.getValue());
+                    setAttrNode.execute(result, attr.getName(), attr.getValue());
                 }
             }
         }

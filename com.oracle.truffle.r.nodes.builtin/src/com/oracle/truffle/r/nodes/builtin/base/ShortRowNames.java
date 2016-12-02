@@ -27,10 +27,12 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,6 +52,8 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 
+    @Child private GetFixedAttributeNode getRowNamesAttrNode;
+
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("type").asIntegerVector().findFirst().mustBe(gte0().and(lte(2)));
@@ -64,7 +68,11 @@ public abstract class ShortRowNames extends RBuiltinNode {
         if (operand instanceof RAbstractContainer) {
             rowNames = ((RAbstractContainer) operand).getRowNames(attrProfiles);
         } else if (operand instanceof REnvironment) {
-            rowNames = ((REnvironment) operand).getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+            if (getRowNamesAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getRowNamesAttrNode = insert(GetFixedAttributeNode.create(RRuntime.ROWNAMES_ATTR_KEY));
+            }
+            rowNames = getRowNamesAttrNode.execute(operand);
         } else {
             // for any other type GnuR returns 0
             return 0;

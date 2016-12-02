@@ -47,14 +47,14 @@ public class RExpression extends RListBase implements RAbstractVector {
 
     @Override
     protected RExpression internalCopy() {
-        return new RExpression(Arrays.copyOf(data, data.length), dimensions, null);
+        return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
     }
 
     @Override
     protected RExpression internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), dimensions, null);
+        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {
