@@ -62,6 +62,7 @@ import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RGeom;
 import com.oracle.truffle.r.library.stats.RHyper;
 import com.oracle.truffle.r.library.stats.RLogis;
+import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
 import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RPois;
@@ -426,6 +427,8 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "rmultinom":
+                    return RMultinomNodeGen.create();
                 case "Approx":
                     return StatsFunctionsFactory.ApproxNodeGen.create();
                 case "ApproxTest":

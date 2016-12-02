@@ -84,4 +84,16 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("set.seed(3); rhyper(2, 1000, 1000, 5)");
         assertEval("set.seed(3); rhyper(3, 10, 79e70, 2)");
     }
+
+    @Test
+    public void testRmultinom() {
+        assertEval("set.seed(11); rmultinom(10, 5, c(0.1, 0.1, 0.3, 0.2, 0.3))");
+        assertEval("set.seed(11); rmultinom(7, 8, structure(c(0.1, 0.1), .Names=c('a', 'B')))");
+        assertEval("set.seed(12); rmultinom('5', 3.1, c(2, 5, 10))");
+        // test args validation
+        assertEval("rmultinom(1, 1, -0.15)");
+        assertEval(Output.IgnoreErrorContext, Output.IgnoreErrorMessage, "rmultinom('string', 1, 0.15)");
+        assertEval("rmultinom(1, NA, 0.2)");
+        assertEval("rmultinom(NA, 1, 0.2)");
+    }
 }
