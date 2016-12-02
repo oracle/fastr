@@ -55,16 +55,24 @@ import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RCauchy;
+import com.oracle.truffle.r.library.stats.RChisq;
+import com.oracle.truffle.r.library.stats.RExp;
 import com.oracle.truffle.r.library.stats.RGamma;
+import com.oracle.truffle.r.library.stats.RGeom;
+import com.oracle.truffle.r.library.stats.RHyper;
 import com.oracle.truffle.r.library.stats.RLogis;
+import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
 import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
+import com.oracle.truffle.r.library.stats.RPois;
 import com.oracle.truffle.r.library.stats.RWeibull;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
 import com.oracle.truffle.r.library.stats.Rbinom;
 import com.oracle.truffle.r.library.stats.Rf;
 import com.oracle.truffle.r.library.stats.Rnorm;
+import com.oracle.truffle.r.library.stats.Rt;
 import com.oracle.truffle.r.library.stats.Runif;
+import com.oracle.truffle.r.library.stats.Signrank.RSignrank;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
@@ -376,7 +384,21 @@ public class ForeignFunctions {
                 case "rnbinom_mu":
                     return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RNbinomMu());
                 case "rwilcox":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RWilcox());
+                    return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new RWilcox());
+                case "rchisq":
+                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new RChisq());
+                case "rexp":
+                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new RExp());
+                case "rgeom":
+                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RGeom());
+                case "rpois":
+                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RPois());
+                case "rt":
+                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new Rt());
+                case "rsignrank":
+                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RSignrank());
+                case "rhyper":
+                    return RandGenerationFunctionsFactory.Function3_IntNodeGen.create(new RHyper());
                 case "qgamma":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
@@ -389,6 +411,8 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "rmultinom":
+                    return RMultinomNodeGen.create();
                 case "Approx":
                     return StatsFunctionsFactory.ApproxNodeGen.create();
                 case "ApproxTest":

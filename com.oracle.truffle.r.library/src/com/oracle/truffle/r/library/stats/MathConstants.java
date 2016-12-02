@@ -77,6 +77,8 @@ public final class MathConstants {
     // log(sqrt(pi/2)) == log(pi/2)/2
     public static final double M_LN_SQRT_PId2 = 0.225791352644727432363097614947;
 
+    public static final double DBL_EPSILON = Math.ulp(1.0);
+
     /**
      * Compute the log of a sum from logs of terms, i.e.,
      *
@@ -90,7 +92,9 @@ public final class MathConstants {
     }
 
     // R_forceint
-    public static long forceint(double x) {
-        return Math.round(x);
+    public static double forceint(double x) {
+        // Note: in GnuR this is alias for nearbyint, which may not behave exactly like Math.round,
+        // especially Math.round(-0.5) == 0.0, instead of -0.0, does it matter a lot?
+        return Double.isFinite(x) ? Math.round(x) : x;
     }
 }

@@ -58,4 +58,42 @@ public class TestRandGenerationFunctions extends TestBase {
         // wrong parameters
         assertEval("runif(-1, 1, 2)");
     }
+
+    private static final String[] FUNCTION1_NAMES = {"rchisq", "rexp", "rgeom", "rpois", "rt"};
+
+    @Test
+    public void testFunctions1() {
+        assertEval(Output.IgnoreWhitespace, template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", FUNCTION1_NAMES));
+        // Note: signrank has loop with 'n' iterations: we have to leave out the large numbers
+        assertEval(Output.IgnoreWhitespace, "set.seed(10); rsignrank(12, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.6, 0.0653, 0.000123, 32e-80, 10))");
+    }
+
+    @Test
+    public void testFunctions3() {
+        // error: drawn (20) mare than red + blue (5+5)
+        assertEval("rhyper(1, 5, 5, 20)");
+        // error: negative number of balls
+        assertEval("rhyper(1, -5, 5, 20)");
+        // common errors with NA, NaN, Inf
+        assertEval("rhyper(1, NA, 5, 20)");
+        assertEval("rhyper(1, 5, NaN, 20)");
+        assertEval("rhyper(1, 5, 5, 1/0)");
+        assertEval("rhyper(1, 5, 5, -1/0)");
+        // few simple tests (note: rhyper seems to be quite slow even in GnuR).
+        assertEval("set.seed(3); rhyper(3, 10, 10, 5)");
+        assertEval("set.seed(3); rhyper(2, 1000, 1000, 5)");
+        assertEval("set.seed(3); rhyper(3, 10, 79e70, 2)");
+    }
+
+    @Test
+    public void testRmultinom() {
+        assertEval("set.seed(11); rmultinom(10, 5, c(0.1, 0.1, 0.3, 0.2, 0.3))");
+        assertEval("set.seed(11); rmultinom(7, 8, structure(c(0.1, 0.1), .Names=c('a', 'B')))");
+        assertEval("set.seed(12); rmultinom('5', 3.1, c(2, 5, 10))");
+        // test args validation
+        assertEval("rmultinom(1, 1, -0.15)");
+        assertEval(Output.IgnoreErrorContext, Output.IgnoreErrorMessage, "rmultinom('string', 1, 0.15)");
+        assertEval("rmultinom(1, NA, 0.2)");
+        assertEval("rmultinom(NA, 1, 0.2)");
+    }
 }
