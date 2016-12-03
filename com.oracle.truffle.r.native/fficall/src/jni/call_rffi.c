@@ -25,10 +25,11 @@
 #include <string.h>
 #include <setjmp.h>
 
+// The entry point from JNI_Call that initializes the system
 JNIEXPORT void JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_initialize(JNIEnv *env, jclass c,
-		jobjectArray initialValues) {
-	init_utils(env); // must be first
+		jobject upCallInstance, jobjectArray initialValues) {
+	init_utils(env, upCallInstance); // must be first
 	init_variables(env, initialValues);
 	init_dynload(env);
 	init_internals(env);

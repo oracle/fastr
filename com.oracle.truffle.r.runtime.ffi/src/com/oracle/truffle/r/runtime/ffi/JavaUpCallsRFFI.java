@@ -20,12 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jni;
+package com.oracle.truffle.r.runtime.ffi;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -79,17 +78,16 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
+import com.oracle.truffle.r.runtime.ffi.ParseResult.ParseStatus;
+import com.oracle.truffle.r.runtime.ffi.jni.TraceUpCallsAdapter;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
- * This class provides methods that match the functionality of the macro/function definitions in the
- * R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
- * identification, we use method names that, as far as possible, match the names in the header
- * files. These methods should never be called from normal FastR code.
+ * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, using no Truffle
+ * mechanisms.
  *
  * TODO Many of the implementations here are incomplete and/or duplicate code that exists in the
  * Truffle side of the implementation, i.e., {@link RNode} subclasses. A complete refactoring that
@@ -98,35 +96,14 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * is desirable. In some cases it may be possible to "implement" the functions in R (which is a
  * simple way to achieve the above).
  */
-public class CallRFFIHelper {
+public class JavaUpCallsRFFI implements UpCallsRFFI {
 
-    /**
-     * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP}
-     * and {@code STRSXP} types, respectively. Although this difference is invisible at the R level,
-     * it manifests itself in the R FFI as several functions traffic in the {@code CHARSXP} type.
-     * Since FastR already uses {@code String} to denote a length-1 string vector, it cannot be used
-     * to represent a {@code CHARSXP}, so this class exists to do so.
-     *
-     */
-    public static final class CharSXPWrapper {
-        private final String contents;
+    private TraceUpCallsAdapter tracer;
 
-        CharSXPWrapper(String contents) {
-            this.contents = contents;
+    public JavaUpCallsRFFI() {
+        if (RFFIUtils.traceEnabled()) {
+            tracer = new TraceUpCallsAdapter();
         }
-
-        public String getContents() {
-            return contents;
-        }
-
-        @Override
-        public String toString() {
-            return "CHARSXP(" + contents + ")";
-        }
-    }
-
-    public static Object createCharSXP(String contents) {
-        return new CharSXPWrapper(contents);
     }
 
     private static RuntimeException unimplemented() {
@@ -169,38 +146,43 @@ public class CallRFFIHelper {
 
     // Checkstyle: stop method name check
 
-    public static RIntVector Rf_ScalarInteger(int value) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_ScalarInteger", value);
+    @Override
+    public RIntVector Rf_ScalarInteger(int value) {
+        if (tracer != null) {
+            tracer.Rf_ScalarInteger(value);
         }
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
-    public static RLogicalVector Rf_ScalarLogical(int value) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_ScalarLogical", value);
+    @Override
+    public RLogicalVector Rf_ScalarLogical(int value) {
+        if (tracer != null) {
+            tracer.Rf_ScalarLogical(value);
         }
         return RDataFactory.createLogicalVectorFromScalar(value != 0);
     }
 
-    public static RDoubleVector Rf_ScalarDouble(double value) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_ScalarDouble", value);
+    @Override
+    public RDoubleVector Rf_ScalarDouble(double value) {
+        if (tracer != null) {
+            tracer.Rf_ScalarDouble(value);
         }
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
-    public static RStringVector Rf_ScalarString(Object value) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_ScalarString", value);
+    @Override
+    public RStringVector Rf_ScalarString(Object value) {
+        if (tracer != null) {
+            tracer.Rf_ScalarString(value);
         }
         CharSXPWrapper chars = guaranteeInstanceOf(value, CharSXPWrapper.class);
         return RDataFactory.createStringVectorFromScalar(chars.getContents());
     }
 
-    public static int Rf_asInteger(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_asInteger", x);
+    @Override
+    public int Rf_asInteger(Object x) {
+        if (tracer != null) {
+            tracer.Rf_asInteger(x);
         }
         // TODO this is quite incomplete and really should be implemented with CastIntegerNode
         if (x instanceof Integer) {
@@ -217,9 +199,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static double Rf_asReal(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_asReal", x);
+    @Override
+    public double Rf_asReal(Object x) {
+        if (tracer != null) {
+            tracer.Rf_asReal(x);
         }
         if (x instanceof Double) {
             return ((Double) x).doubleValue();
@@ -231,9 +214,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int Rf_asLogical(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_asLogical", x);
+    @Override
+    public int Rf_asLogical(Object x) {
+        if (tracer != null) {
+            tracer.Rf_asLogical(x);
         }
         if (x instanceof Byte) {
             return ((Byte) x).intValue();
@@ -243,14 +227,15 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object Rf_asChar(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_asChar", x);
+    @Override
+    public Object Rf_asChar(Object x) {
+        if (tracer != null) {
+            tracer.Rf_asChar(x);
         }
         if (x instanceof CharSXPWrapper) {
             return x;
         } else if (x instanceof RSymbol) {
-            return new CharSXPWrapper(((RSymbol) x).getName());
+            return CharSXPWrapper.create(((RSymbol) x).getName());
         }
 
         Object obj = RRuntime.asAbstractVector(x);
@@ -258,34 +243,37 @@ public class CallRFFIHelper {
             RAbstractVector vector = (RAbstractVector) obj;
             if (vector.getLength() > 0) {
                 if (vector instanceof RAbstractStringVector) {
-                    return new CharSXPWrapper(((RAbstractStringVector) vector).getDataAt(0));
+                    return CharSXPWrapper.create(((RAbstractStringVector) vector).getDataAt(0));
                 } else {
                     unimplemented("asChar type " + x.getClass());
                 }
             }
         }
 
-        return new CharSXPWrapper(RRuntime.STRING_NA);
+        return CharSXPWrapper.create(RRuntime.STRING_NA);
     }
 
-    public static Object Rf_mkCharLenCE(byte[] bytes, @SuppressWarnings("unused") int encoding) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_mkCharLenCE", bytes);
+    @Override
+    public Object Rf_mkCharLenCE(byte[] bytes, int encoding) {
+        if (tracer != null) {
+            tracer.Rf_mkCharLenCE(bytes, encoding);
         }
         // TODO: handle encoding properly
-        return new CharSXPWrapper(new String(bytes, StandardCharsets.UTF_8));
+        return CharSXPWrapper.create(new String(bytes, StandardCharsets.UTF_8));
     }
 
-    public static Object Rf_cons(Object car, Object cdr) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_cons", car, cdr);
+    @Override
+    public Object Rf_cons(Object car, Object cdr) {
+        if (tracer != null) {
+            tracer.Rf_cons(car, cdr);
         }
         return RDataFactory.createPairList(car, cdr);
     }
 
-    public static void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_defineVar", symbolArg, value, envArg);
+    @Override
+    public void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
+        if (tracer != null) {
+            tracer.Rf_defineVar(symbolArg, value, envArg);
         }
         REnvironment env = (REnvironment) envArg;
         RSymbol name = (RSymbol) symbolArg;
@@ -296,33 +284,39 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object R_do_MAKE_CLASS(String clazz) {
+    @Override
+    public Object R_do_MAKE_CLASS(String clazz) {
+        if (tracer != null) {
+            tracer.R_do_MAKE_CLASS(clazz);
+        }
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), null, clazz);
     }
 
-    public static Object Rf_findVar(Object symbolArg, Object envArg) {
-        // WARNING: argument order reversed from Rf_findVarInFrame!
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_findVar", symbolArg, envArg);
+    @Override
+    public Object Rf_findVar(Object symbolArg, Object envArg) {
+        if (tracer != null) {
+            tracer.Rf_findVar(symbolArg, envArg);
         }
         return findVarInFrameHelper(envArg, symbolArg, true);
     }
 
-    public static Object Rf_findVarInFrame(Object envArg, Object symbolArg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_findVarInFrame", envArg, symbolArg);
+    @Override
+    public Object Rf_findVarInFrame(Object envArg, Object symbolArg) {
+        if (tracer != null) {
+            tracer.Rf_findVarInFrame(envArg, symbolArg);
         }
         return findVarInFrameHelper(envArg, symbolArg, false);
     }
 
-    public static Object Rf_findVarInFrame3(Object envArg, Object symbolArg, @SuppressWarnings("unused") int doGet) {
+    @Override
+    public Object Rf_findVarInFrame3(Object envArg, Object symbolArg, int doGet) {
+        if (tracer != null) {
+            tracer.Rf_findVarInFrame3(envArg, symbolArg, doGet);
+        }
         // GNU R has code for IS_USER_DATBASE that uses doGet
         // This is a lookup in the single environment (envArg) only, i.e. inherits=false
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_findVarInFrame3", envArg, symbolArg);
-        }
         return findVarInFrameHelper(envArg, symbolArg, false);
     }
 
@@ -349,9 +343,10 @@ public class CallRFFIHelper {
         return RUnboundValue.instance;
     }
 
-    public static Object Rf_getAttrib(Object obj, Object name) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_getAttrib", obj, name);
+    @Override
+    public Object Rf_getAttrib(Object obj, Object name) {
+        if (tracer != null) {
+            tracer.Rf_getAttrib(obj, name);
         }
         Object result = RNull.instance;
         if (obj instanceof RAttributable) {
@@ -368,9 +363,10 @@ public class CallRFFIHelper {
         return result;
     }
 
-    public static void Rf_setAttrib(Object obj, Object name, Object val) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_setAttrib", obj, name, val);
+    @Override
+    public void Rf_setAttrib(Object obj, Object name, Object val) {
+        if (tracer != null) {
+            tracer.Rf_setAttrib(obj, name, val);
         }
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
@@ -415,9 +411,10 @@ public class CallRFFIHelper {
         return result;
     }
 
-    public static int Rf_inherits(Object x, String clazz) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_inherits", x, clazz);
+    @Override
+    public int Rf_inherits(Object x, String clazz) {
+        if (tracer != null) {
+            tracer.Rf_inherits(x, clazz);
         }
         int result = 0;
         RStringVector hierarchy = getClassHr(x);
@@ -429,38 +426,43 @@ public class CallRFFIHelper {
         return result;
     }
 
-    public static Object Rf_install(String name) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_install", name);
+    @Override
+    public Object Rf_install(String name) {
+        if (tracer != null) {
+            tracer.Rf_install(name);
         }
         return RDataFactory.createSymbolInterned(name);
     }
 
-    public static Object Rf_lengthgets(Object x, int newSize) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_lengthgets", x, newSize);
+    @Override
+    public Object Rf_lengthgets(Object x, int newSize) {
+        if (tracer != null) {
+            tracer.Rf_lengthgets(x, newSize);
         }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         return vec.resize(newSize);
     }
 
-    public static int Rf_isString(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_isString", x);
+    @Override
+    public int Rf_isString(Object x) {
+        if (tracer != null) {
+            tracer.Rf_isString(x);
         }
         return RRuntime.checkType(x, RType.Character) ? 1 : 0;
     }
 
-    public static int Rf_isNull(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_isNull", x);
+    @Override
+    public int Rf_isNull(Object x) {
+        if (tracer != null) {
+            tracer.Rf_isNull(x);
         }
         return x == RNull.instance ? 1 : 0;
     }
 
-    public static Object Rf_PairToVectorList(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_PairToVectorList", x);
+    @Override
+    public Object Rf_PairToVectorList(Object x) {
+        if (tracer != null) {
+            tracer.Rf_PairToVectorList(x);
         }
         if (x == RNull.instance) {
             return RDataFactory.createList();
@@ -469,30 +471,34 @@ public class CallRFFIHelper {
         return pl.toRList();
     }
 
-    public static void Rf_error(String msg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_error", msg);
+    @Override
+    public void Rf_error(String msg) {
+        if (tracer != null) {
+            tracer.Rf_error(msg);
         }
         throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
     }
 
-    public static void Rf_warning(String msg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_warning", msg);
+    @Override
+    public void Rf_warning(String msg) {
+        if (tracer != null) {
+            tracer.Rf_warning(msg);
         }
         RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
     }
 
-    public static void Rf_warningcall(Object call, String msg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_warningcall", call, msg);
+    @Override
+    public void Rf_warningcall(Object call, String msg) {
+        if (tracer != null) {
+            tracer.Rf_warningcall(call, msg);
         }
         RErrorHandling.warningcallRFFI(call, msg);
     }
 
-    public static Object Rf_allocateVector(int mode, int n) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_allocateVector", mode, n);
+    @Override
+    public Object Rf_allocateVector(int mode, int n) {
+        if (tracer != null) {
+            tracer.Rf_allocateVector(mode, n);
         }
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n < 0) {
@@ -521,9 +527,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object Rf_allocateArray(int mode, Object dimsObj) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_allocateArray", mode, dimsObj);
+    @Override
+    public Object Rf_allocateArray(int mode, Object dimsObj) {
+        if (tracer != null) {
+            tracer.Rf_allocateArray(mode, dimsObj);
         }
         RIntVector dims = (RIntVector) dimsObj;
         int n = 1;
@@ -539,9 +546,10 @@ public class CallRFFIHelper {
 
     }
 
-    public static Object Rf_allocateMatrix(int mode, int nrow, int ncol) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_allocateMatrix", mode, ncol, nrow);
+    @Override
+    public Object Rf_allocateMatrix(int mode, int nrow, int ncol) {
+        if (tracer != null) {
+            tracer.Rf_allocateMatrix(mode, ncol, nrow);
         }
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (nrow < 0 || ncol < 0) {
@@ -565,23 +573,26 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int Rf_nrows(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_nrows", x);
+    @Override
+    public int Rf_nrows(Object x) {
+        if (tracer != null) {
+            tracer.Rf_nrows(x);
         }
         return RRuntime.nrows(x);
     }
 
-    public static int Rf_ncols(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_ncols", x);
+    @Override
+    public int Rf_ncols(Object x) {
+        if (tracer != null) {
+            tracer.Rf_ncols(x);
         }
         return RRuntime.ncols(x);
     }
 
-    public static int LENGTH(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("LENGTH", x);
+    @Override
+    public int LENGTH(Object x) {
+        if (tracer != null) {
+            tracer.LENGTH(x);
         }
         if (x instanceof RAbstractContainer) {
             return ((RAbstractContainer) x).getLength();
@@ -596,26 +607,29 @@ public class CallRFFIHelper {
         }
     }
 
-    public static void SET_STRING_ELT(Object x, int i, Object v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_STRING_ELT", x, i, v);
+    @Override
+    public void SET_STRING_ELT(Object x, int i, Object v) {
+        if (tracer != null) {
+            tracer.SET_STRING_ELT(x, i, v);
         }
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
         vector.setElement(i, element.getContents());
     }
 
-    public static void SET_VECTOR_ELT(Object x, int i, Object v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_VECTOR_ELT", i, v);
+    @Override
+    public void SET_VECTOR_ELT(Object x, int i, Object v) {
+        if (tracer != null) {
+            tracer.SET_VECTOR_ELT(x, i, v);
         }
         RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement(i, v);
     }
 
-    public static byte[] RAW(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("RAW", x);
+    @Override
+    public byte[] RAW(Object x) {
+        if (tracer != null) {
+            tracer.RAW(x);
         }
         if (x instanceof RRawVector) {
             return ((RRawVector) x).getDataWithoutCopying();
@@ -626,9 +640,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static byte[] LOGICAL(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("LOGICAL", x);
+    @Override
+    public byte[] LOGICAL(Object x) {
+        if (tracer != null) {
+            tracer.LOGICAL(x);
         }
         if (x instanceof RLogicalVector) {
             return ((RLogicalVector) x).getDataWithoutCopying();
@@ -639,9 +654,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int[] INTEGER(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("INTEGER", x);
+    @Override
+    public int[] INTEGER(Object x) {
+        if (tracer != null) {
+            tracer.INTEGER(x);
         }
         if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataWithoutCopying();
@@ -662,9 +678,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static double[] REAL(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("REAL", x);
+    @Override
+    public double[] REAL(Object x) {
+        if (tracer != null) {
+            tracer.REAL(x);
         }
         if (x instanceof RDoubleVector) {
             return ((RDoubleVector) x).getDataWithoutCopying();
@@ -676,33 +693,19 @@ public class CallRFFIHelper {
         }
     }
 
-    /**
-     * Called to possibly update the "complete" status on {@code x}. N.B. {@code x} may not be an
-     * object with a concrete {@code setComplete} method, e.g. see {@link #INTEGER(Object)}.
-     */
-    public static void setComplete(Object x, boolean complete) {
-        // only care about concrete vectors
-        if (x instanceof RVector) {
-            ((RVector<?>) x).setComplete(complete);
-        }
-    }
-
-    public static void logObject(Object x) {
-        System.out.println("object " + x);
-        System.out.println("class " + x.getClass());
-    }
-
-    public static Object STRING_ELT(Object x, int i) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("STRING_ELT", x, i);
+    @Override
+    public Object STRING_ELT(Object x, int i) {
+        if (tracer != null) {
+            tracer.STRING_ELT(x, i);
         }
         RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
-        return new CharSXPWrapper(vector.getDataAt(i));
+        return CharSXPWrapper.create(vector.getDataAt(i));
     }
 
-    public static Object VECTOR_ELT(Object x, int i) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("VECTOR_ELT", x, i);
+    @Override
+    public Object VECTOR_ELT(Object x, int i) {
+        if (tracer != null) {
+            tracer.VECTOR_ELT(x, i);
         }
         Object vec = x;
         if (vec instanceof RExpression) {
@@ -712,9 +715,10 @@ public class CallRFFIHelper {
         return list.getDataAt(i);
     }
 
-    public static int NAMED(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("NAMED", x);
+    @Override
+    public int NAMED(Object x) {
+        if (tracer != null) {
+            tracer.NAMED(x);
         }
         if (x instanceof RShareable) {
             return ((RShareable) x).isShared() ? 1 : 0;
@@ -723,9 +727,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object SET_TYPEOF_FASTR(Object x, int v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_TYPEOF_FASTR", x, v);
+    @Override
+    public Object SET_TYPEOF_FASTR(Object x, int v) {
+        if (tracer != null) {
+            tracer.SET_TYPEOF_FASTR(x, v);
         }
         int code = SEXPTYPE.gnuRCodeForObject(x);
         if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
@@ -735,9 +740,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int TYPEOF(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("TYPEOF", x);
+    @Override
+    public int TYPEOF(Object x) {
+        if (tracer != null) {
+            tracer.TYPEOF(x);
         }
         if (x instanceof CharSXPWrapper) {
             return SEXPTYPE.CHARSXP.code;
@@ -746,9 +752,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int OBJECT(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("OBJECT", x);
+    @Override
+    public int OBJECT(Object x) {
+        if (tracer != null) {
+            tracer.OBJECT(x);
         }
         if (x instanceof RAttributable) {
             return ((RAttributable) x).getAttr(RRuntime.CLASS_ATTR_KEY) == null ? 0 : 1;
@@ -757,9 +764,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object Rf_duplicate(Object x, int deep) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_duplicate", x, deep);
+    @Override
+    public Object Rf_duplicate(Object x, int deep) {
+        if (tracer != null) {
+            tracer.Rf_duplicate(x, deep);
         }
         guarantee(x != null, "unexpected type: null instead of " + x.getClass().getSimpleName());
         guarantee(x instanceof RShareable || x instanceof RIntSequence || x instanceof RExternalPtr,
@@ -773,9 +781,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int Rf_anyDuplicated(Object x, int fromLast) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_anyDuplicated", x, fromLast);
+    @Override
+    public int Rf_anyDuplicated(Object x, int fromLast) {
+        if (tracer != null) {
+            tracer.Rf_anyDuplicated(x, fromLast);
         }
         RAbstractVector vec = (RAbstractVector) x;
         if (vec.getLength() == 0) {
@@ -785,17 +794,19 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object PRINTNAME(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("PRINTNAME", x);
+    @Override
+    public Object PRINTNAME(Object x) {
+        if (tracer != null) {
+            tracer.PRINTNAME(x);
         }
         guaranteeInstanceOf(x, RSymbol.class);
-        return new CharSXPWrapper(((RSymbol) x).getName());
+        return CharSXPWrapper.create(((RSymbol) x).getName());
     }
 
-    public static Object TAG(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("TAG", e);
+    @Override
+    public Object TAG(Object e) {
+        if (tracer != null) {
+            tracer.TAG(e);
         }
         if (e instanceof RPairList) {
             return ((RPairList) e).getTag();
@@ -806,9 +817,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object CAR(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("CAR", e);
+    @Override
+    public Object CAR(Object e) {
+        if (tracer != null) {
+            tracer.CAR(e);
         }
         guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CAR only works on pair lists and language objects");
         if (e instanceof RPairList) {
@@ -818,9 +830,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object CDR(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("CDR", e);
+    @Override
+    public Object CDR(Object e) {
+        if (tracer != null) {
+            tracer.CDR(e);
         }
         if (e instanceof RLanguage) {
             RLanguage lang = (RLanguage) e;
@@ -832,9 +845,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object CADR(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("CADR", e);
+    @Override
+    public Object CADR(Object e) {
+        if (tracer != null) {
+            tracer.CADR(e);
         }
         guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CADR only works on pair lists and language objects");
         if (e instanceof RPairList) {
@@ -844,9 +858,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object CADDR(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("CADDR", e);
+    @Override
+    public Object CADDR(Object e) {
+        if (tracer != null) {
+            tracer.CADDR(e);
         }
         guarantee(e != null && (RPairList.class.isInstance(e) || RLanguage.class.isInstance(e)), "CADDR only works on pair lists and language objects");
         if (e instanceof RPairList) {
@@ -856,9 +871,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object CDDR(Object e) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("CDDR", e);
+    @Override
+    public Object CDDR(Object e) {
+        if (tracer != null) {
+            tracer.CDDR(e);
         }
         if (e instanceof RLanguage) {
             RLanguage lang = (RLanguage) e;
@@ -870,9 +886,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object SET_TAG(Object x, Object y) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_TAG", x, y);
+    @Override
+    public Object SET_TAG(Object x, Object y) {
+        if (tracer != null) {
+            tracer.SET_TAG(x, y);
         }
         if (x instanceof RPairList) {
             ((RPairList) x).setTag(y);
@@ -884,32 +901,39 @@ public class CallRFFIHelper {
         return y;
     }
 
-    public static Object SETCAR(Object x, Object y) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SETCAR", x, y);
+    @Override
+    public Object SETCAR(Object x, Object y) {
+        if (tracer != null) {
+            tracer.SETCAR(x, y);
         }
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCar(y);
         return y;
     }
 
-    public static Object SETCDR(Object x, Object y) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SETCDR", x, y);
+    @Override
+    public Object SETCDR(Object x, Object y) {
+        if (tracer != null) {
+            tracer.SETCDR(x, y);
         }
         guaranteeInstanceOf(x, RPairList.class);
         ((RPairList) x).setCdr(y);
         return y;
     }
 
-    public static Object SETCADR(Object x, Object y) {
+    @Override
+    public Object SETCADR(Object x, Object y) {
+        if (tracer != null) {
+            tracer.SETCADR(x, y);
+        }
         SETCAR(CDR(x), y);
         return y;
     }
 
-    public static Object SYMVALUE(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SYMVALUE", x);
+    @Override
+    public Object SYMVALUE(Object x) {
+        if (tracer != null) {
+            tracer.SYMVALUE(x);
         }
         if (!(x instanceof RSymbol)) {
             throw RInternalError.shouldNotReachHere();
@@ -922,9 +946,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static void SET_SYMVALUE(Object x, Object v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_SYMVALUE", x, v);
+    @Override
+    public void SET_SYMVALUE(Object x, Object v) {
+        if (tracer != null) {
+            tracer.SET_SYMVALUE(x, v);
         }
         if (!(x instanceof RSymbol)) {
             throw RInternalError.shouldNotReachHere();
@@ -932,27 +957,29 @@ public class CallRFFIHelper {
         REnvironment.baseEnv().safePut(((RSymbol) x).getName(), v);
     }
 
-    public static int R_BindingIsLocked(Object sym, Object env) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_BindingIsLocked", sym, env);
+    @Override
+    public int R_BindingIsLocked(Object sym, Object env) {
+        if (tracer != null) {
+            tracer.R_BindingIsLocked(sym, env);
         }
         guaranteeInstanceOf(sym, RSymbol.class);
         guaranteeInstanceOf(env, REnvironment.class);
         return ((REnvironment) env).bindingIsLocked(((RSymbol) sym).getName()) ? 1 : 0;
     }
 
-    public static Object R_FindNamespace(Object name) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_FindNamespace", name);
+    @Override
+    public Object R_FindNamespace(Object name) {
+        if (tracer != null) {
+            tracer.R_FindNamespace(name);
         }
         Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
         return result;
     }
 
-    @TruffleBoundary
-    public static Object Rf_eval(Object expr, Object env) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_eval", expr, env);
+    @Override
+    public Object Rf_eval(Object expr, Object env) {
+        if (tracer != null) {
+            tracer.Rf_eval(expr, env);
         }
         guarantee(env instanceof REnvironment);
         Object result;
@@ -981,9 +1008,10 @@ public class CallRFFIHelper {
         return result;
     }
 
-    public static Object Rf_findfun(Object symbolObj, Object envObj) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_findfun", symbolObj, envObj);
+    @Override
+    public Object Rf_findfun(Object symbolObj, Object envObj) {
+        if (tracer != null) {
+            tracer.Rf_findfun(symbolObj, envObj);
         }
         guarantee(envObj instanceof REnvironment);
         REnvironment env = (REnvironment) envObj;
@@ -999,18 +1027,20 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object Rf_GetOption1(Object tag) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_GetOption1", tag);
+    @Override
+    public Object Rf_GetOption1(Object tag) {
+        if (tracer != null) {
+            tracer.Rf_GetOption1(tag);
         }
         guarantee(tag instanceof RSymbol);
         Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
         return result;
     }
 
-    public static void Rf_gsetVar(Object symbol, Object value, Object rho) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_gsetVar", symbol, value, rho);
+    @Override
+    public void Rf_gsetVar(Object symbol, Object value, Object rho) {
+        if (tracer != null) {
+            tracer.Rf_gsetVar(symbol, value, rho);
         }
         guarantee(symbol instanceof RSymbol);
         REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
@@ -1022,9 +1052,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static void DUPLICATE_ATTRIB(Object to, Object from) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("DUPLICATE_ATTRIB", to, from);
+    @Override
+    public void DUPLICATE_ATTRIB(Object to, Object from) {
+        if (tracer != null) {
+            tracer.DUPLICATE_ATTRIB(to, from);
         }
         if (from instanceof RAttributable) {
             guaranteeInstanceOf(to, RAttributable.class);
@@ -1034,9 +1065,10 @@ public class CallRFFIHelper {
         // TODO: copy OBJECT? and S4 attributes
     }
 
-    public static int R_computeIdentical(Object x, Object y, int flags) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_computeIdentical", x, y, flags);
+    @Override
+    public int R_computeIdentical(Object x, Object y, int flags) {
+        if (tracer != null) {
+            tracer.R_computeIdentical(x, y, flags);
         }
         RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
         Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
@@ -1044,25 +1076,26 @@ public class CallRFFIHelper {
         return (int) res;
     }
 
-    @SuppressWarnings("unused")
-    public static void Rf_copyListMatrix(Object s, Object t, int byrow) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_copyListMatrix", t, byrow);
+    @Override
+    public void Rf_copyListMatrix(Object s, Object t, int byrow) {
+        if (tracer != null) {
+            tracer.Rf_copyListMatrix(s, t, byrow);
         }
         throw unimplemented();
     }
 
-    @SuppressWarnings("unused")
-    public static void Rf_copyMatrix(Object s, Object t, int byrow) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("Rf_copyMatrix", t, byrow);
+    @Override
+    public void Rf_copyMatrix(Object s, Object t, int byrow) {
+        if (tracer != null) {
+            tracer.Rf_copyMatrix(s, t, byrow);
         }
         throw unimplemented();
     }
 
-    public static Object R_tryEval(Object expr, Object env, boolean silent) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_tryEval", expr, env, silent);
+    @Override
+    public Object R_tryEval(Object expr, Object env, boolean silent) {
+        if (tracer != null) {
+            tracer.R_tryEval(expr, env, silent);
         }
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
@@ -1083,25 +1116,27 @@ public class CallRFFIHelper {
      * a C function is invoked (in the native layer) instead of an R expression. assert: this is
      * ONLY called from R_TopLevelExec prior to calling C function.
      */
-    public static Object resetAndGetErrorHandlerStacks() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_TopLevelExec");
+    @Override
+    public Object R_ToplevelExec() {
+        if (tracer != null) {
+            tracer.R_ToplevelExec();
         }
         return RErrorHandling.resetAndGetHandlerStacks();
     }
 
     /**
-     * Helper function for {@code R_TopLevelExec}, see {@link #resetAndGetErrorHandlerStacks()},
-     * called after C function returns.
+     * Helper function for {@code R_TopLevelExec}, see {@link #R_ToplevelExec()}, called after C
+     * function returns.
      */
-    public static void restoreErrorHandlerStacks(Object stacks) {
+    public void R_ToplevelExecRestoreErrorHandlerStacks(Object stacks) {
         RErrorHandling.HandlerStacks handlerStacks = guaranteeInstanceOf(stacks, RErrorHandling.HandlerStacks.class);
         RErrorHandling.restoreHandlerStacks(handlerStacks);
     }
 
-    public static int RDEBUG(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("RDEBUG", x);
+    @Override
+    public int RDEBUG(Object x) {
+        if (tracer != null) {
+            tracer.RDEBUG(x);
         }
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         if (env instanceof REnvironment.Function) {
@@ -1113,9 +1148,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static void SET_RDEBUG(Object x, int v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_RDEBUG", x, v);
+    @Override
+    public void SET_RDEBUG(Object x, int v) {
+        if (tracer != null) {
+            tracer.SET_RDEBUG(x, v);
         }
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         if (env instanceof REnvironment.Function) {
@@ -1129,27 +1165,30 @@ public class CallRFFIHelper {
         }
     }
 
-    public static int RSTEP(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("RSTEP", x);
+    @Override
+    public int RSTEP(Object x) {
+        if (tracer != null) {
+            tracer.RSTEP(x);
         }
         @SuppressWarnings("unused")
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("RSTEP");
     }
 
-    public static void SET_RSTEP(Object x, int v) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("SET_RSTEP", x, v);
+    @Override
+    public void SET_RSTEP(Object x, int v) {
+        if (tracer != null) {
+            tracer.SET_RSTEP(x, v);
         }
         @SuppressWarnings("unused")
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("SET_RSTEP");
     }
 
-    public static Object ENCLOS(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("ENCLOS", x);
+    @Override
+    public Object ENCLOS(Object x) {
+        if (tracer != null) {
+            tracer.ENCLOS(x);
         }
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         Object result = env.getParent();
@@ -1159,35 +1198,19 @@ public class CallRFFIHelper {
         return result;
     }
 
-    public static Object PRVALUE(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("PRVALUE", x);
+    @Override
+    public Object PRVALUE(Object x) {
+        if (tracer != null) {
+            tracer.PRVALUE(x);
         }
         RPromise p = guaranteeInstanceOf(x, RPromise.class);
         return p.isEvaluated() ? p.getValue() : RUnboundValue.instance;
     }
 
-    private enum ParseStatus {
-        PARSE_NULL,
-        PARSE_OK,
-        PARSE_INCOMPLETE,
-        PARSE_ERROR,
-        PARSE_EOF
-    }
-
-    private static class ParseResult {
-        @SuppressWarnings("unused") private final int parseStatus;
-        @SuppressWarnings("unused") private final Object expr;
-
-        private ParseResult(int parseStatus, Object expr) {
-            this.parseStatus = parseStatus;
-            this.expr = expr;
-        }
-    }
-
-    public static Object R_ParseVector(Object text, int n, Object srcFile) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_ParseVector", text, n, srcFile);
+    @Override
+    public Object R_ParseVector(Object text, int n, Object srcFile) {
+        if (tracer != null) {
+            tracer.R_ParseVector(text, n, srcFile);
         }
         // TODO general case
         assert n == 1;
@@ -1206,9 +1229,10 @@ public class CallRFFIHelper {
 
     }
 
-    public static Object R_lsInternal3(Object envArg, int allArg, int sortedArg) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_lsInternal3", envArg, allArg, sortedArg);
+    @Override
+    public Object R_lsInternal3(Object envArg, int allArg, int sortedArg) {
+        if (tracer != null) {
+            tracer.R_lsInternal3(envArg, allArg, sortedArg);
         }
         boolean sorted = sortedArg != 0;
         boolean all = allArg != 0;
@@ -1216,29 +1240,28 @@ public class CallRFFIHelper {
         return env.ls(all, null, sorted);
     }
 
-    public static String R_HomeDir() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_HomeDir");
+    @Override
+    public String R_HomeDir() {
+        if (tracer != null) {
+            tracer.R_HomeDir();
         }
         return REnvVars.rHome();
     }
 
-    @SuppressWarnings("unused")
-    private static void R_CleanUp(int sa, int status, int runlast) {
+    @Override
+    public void R_CleanUp(int sa, int status, int runlast) {
+        if (tracer != null) {
+            tracer.R_CleanUp(sa, status, runlast);
+        }
         RCleanUp.stdCleanUp(SA_TYPE.values()[sa], status, runlast != 0);
     }
 
-    // Checkstyle: resume method name check
-
-    public static Object validate(Object x) {
-        return x;
-    }
-
-    public static Object getGlobalContext() {
-        Utils.warn("Potential memory leak (global context object)");
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getGlobalContext");
+    @Override
+    public Object R_GlobalContext() {
+        if (tracer != null) {
+            tracer.R_GlobalContext();
         }
+        Utils.warn("Potential memory leak (global context object)");
         Frame frame = Utils.getActualCurrentFrame();
         if (frame == null) {
             return RCaller.topLevel;
@@ -1250,80 +1273,94 @@ public class CallRFFIHelper {
         return rCaller == null ? RCaller.topLevel : rCaller;
     }
 
-    public static Object getGlobalEnv() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getGlobalEnv");
+    @Override
+    public Object R_GlobalEnv() {
+        if (tracer != null) {
+            tracer.R_GlobalEnv();
         }
         return RContext.getInstance().stateREnvironment.getGlobalEnv();
     }
 
-    public static Object getBaseEnv() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getBaseEnv");
+    @Override
+    public Object R_BaseEnv() {
+        if (tracer != null) {
+            tracer.R_BaseEnv();
         }
         return RContext.getInstance().stateREnvironment.getBaseEnv();
     }
 
-    public static Object getBaseNamespace() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getBaseNamespace");
+    @Override
+    public Object R_BaseNamespace() {
+        if (tracer != null) {
+            tracer.R_BaseNamespace();
         }
         return RContext.getInstance().stateREnvironment.getBaseNamespace();
     }
 
-    public static Object getNamespaceRegistry() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getNamespaceRegistry");
+    @Override
+    public Object R_NamespaceRegistry() {
+        if (tracer != null) {
+            tracer.R_NamespaceRegistry();
         }
         return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
 
-    public static int isInteractive() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("isInteractive");
+    @Override
+    public int isInteractive() {
+        if (tracer != null) {
+            tracer.isInteractive();
         }
         return RContext.getInstance().isInteractive() ? 1 : 0;
     }
 
-    public static int isS4Object(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("isS4Object");
+    @Override
+    public int isS4Object(Object x) {
+        if (tracer != null) {
+            tracer.isS4Object(x);
         }
         return x instanceof RS4Object ? 1 : 0;
     }
 
-    public static void printf(String message) {
+    @Override
+    public void Rprintf(String message) {
+        if (tracer != null) {
+            tracer.Rprintf(message);
+        }
         RContext.getInstance().getConsoleHandler().print(message);
     }
 
-    public static void getRNGstate() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getRNGstate");
+    @Override
+    public void GetRNGstate() {
+        if (tracer != null) {
+            tracer.GetRNGstate();
         }
         RRNG.getRNGState();
     }
 
-    public static void putRNGstate() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("putRNGstate");
+    @Override
+    public void PutRNGstate() {
+        if (tracer != null) {
+            tracer.PutRNGstate();
         }
         RRNG.putRNGState();
     }
 
-    public static double unifRand() {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("unifRand");
+    @Override
+    public double unif_rand() {
+        if (tracer != null) {
+            tracer.unif_rand();
         }
         return RRNG.unifRand();
     }
 
     // Checkstyle: stop method name check
 
-    public static Object R_getGlobalFunctionContext() {
-        Utils.warn("Potential memory leak (global function context object)");
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getGlobalFunctionContext");
+    @Override
+    public Object R_getGlobalFunctionContext() {
+        if (tracer != null) {
+            tracer.R_getGlobalFunctionContext();
         }
+        Utils.warn("Potential memory leak (global function context object)");
         Frame frame = Utils.getActualCurrentFrame();
         if (frame == null) {
             return RNull.instance;
@@ -1338,11 +1375,12 @@ public class CallRFFIHelper {
         return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
 
-    public static Object R_getParentFunctionContext(Object c) {
-        Utils.warn("Potential memory leak (parent function context object)");
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getParentFunctionContext");
+    @Override
+    public Object R_getParentFunctionContext(Object c) {
+        if (tracer != null) {
+            tracer.R_getParentFunctionContext(c);
         }
+        Utils.warn("Potential memory leak (parent function context object)");
         RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
         while (true) {
             currentCaller = currentCaller.getParent();
@@ -1354,9 +1392,10 @@ public class CallRFFIHelper {
         return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
 
-    public static Object R_getContextEnv(Object c) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getContextEnv", c);
+    @Override
+    public Object R_getContextEnv(Object c) {
+        if (tracer != null) {
+            tracer.R_getContextEnv(c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
         if (rCaller == RCaller.topLevel) {
@@ -1382,9 +1421,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object R_getContextFun(Object c) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getContextEnv", c);
+    @Override
+    public Object R_getContextFun(Object c) {
+        if (tracer != null) {
+            tracer.R_getContextFun(c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
         if (rCaller == RCaller.topLevel) {
@@ -1410,9 +1450,10 @@ public class CallRFFIHelper {
         }
     }
 
-    public static Object R_getContextCall(Object c) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getContextEnv", c);
+    @Override
+    public Object R_getContextCall(Object c) {
+        if (tracer != null) {
+            tracer.R_getContextCall(c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
         if (rCaller == RCaller.topLevel) {
@@ -1421,9 +1462,10 @@ public class CallRFFIHelper {
         return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
     }
 
-    public static Object R_getContextSrcRef(Object c) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("getContextSrcRef", c);
+    @Override
+    public Object R_getContextSrcRef(Object c) {
+        if (tracer != null) {
+            tracer.R_getContextSrcRef(c);
         }
         Object o = R_getContextFun(c);
         if (!(o instanceof RFunction)) {
@@ -1438,94 +1480,133 @@ public class CallRFFIHelper {
 
     }
 
-    public static int R_insideBrowser() {
+    @Override
+    public int R_insideBrowser() {
+        if (tracer != null) {
+            tracer.R_insideBrowser();
+        }
         return RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser() ? 1 : 0;
     }
 
-    public static int R_isGlobal(Object c) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("isGlobal", c);
+    @Override
+    public int R_isGlobal(Object c) {
+        if (tracer != null) {
+            tracer.R_isGlobal(c);
         }
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
 
         return rCaller == RCaller.topLevel ? 1 : 0;
     }
 
-    public static int R_isEqual(Object x, Object y) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("isEqual", x, y);
+    @Override
+    public int R_isEqual(Object x, Object y) {
+        if (tracer != null) {
+            tracer.R_isEqual(x, y);
         }
         return x == y ? 1 : 0;
     }
 
-    public static Object Rf_classgets(Object x, Object y) {
+    @Override
+    public Object Rf_classgets(Object x, Object y) {
+        if (tracer != null) {
+            tracer.Rf_classgets(x, y);
+        }
         RAbstractVector vector = guaranteeInstanceOf(x, RAbstractVector.class);
         vector.setClassAttr(guaranteeInstanceOf(y, RStringVector.class));
         return RNull.instance;
     }
 
-    public static RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_MakeExternalPtr", addr, tag, prot);
+    @Override
+    public RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot) {
+        if (tracer != null) {
+            tracer.R_MakeExternalPtr(addr, tag, prot);
         }
         return RDataFactory.createExternalPtr(new SymbolHandle(addr), tag, prot);
     }
 
-    public static long R_ExternalPtrAddr(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_ExternalPtrAddr", x);
+    @Override
+    public long R_ExternalPtrAddr(Object x) {
+        if (tracer != null) {
+            tracer.R_ExternalPtrAddr(x);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getAddr().asAddress();
     }
 
-    public static Object R_ExternalPtrTag(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_ExternalPtrTag", x);
+    @Override
+    public Object R_ExternalPtrTag(Object x) {
+        if (tracer != null) {
+            tracer.R_ExternalPtrTag(x);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getTag();
     }
 
-    public static Object R_ExternalPtrProt(Object x) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
+    @Override
+    public Object R_ExternalPtrProt(Object x) {
+        if (tracer != null) {
+            tracer.R_ExternalPtrProt(x);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getProt();
     }
 
-    public static void R_SetExternalPtrAddr(Object x, long addr) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_SetExternalPtrAddr", x);
+    @Override
+    public void R_SetExternalPtrAddr(Object x, long addr) {
+        if (tracer != null) {
+            tracer.R_SetExternalPtrAddr(x, addr);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setAddr(new SymbolHandle(addr));
     }
 
-    public static void R_SetExternalPtrTag(Object x, Object tag) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_SetExternalPtrTag", x);
+    @Override
+    public void R_SetExternalPtrTag(Object x, Object tag) {
+        if (tracer != null) {
+            tracer.R_SetExternalPtrTag(x, tag);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setTag(tag);
     }
 
-    public static void R_SetExternalPtrProt(Object x, Object prot) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
+    @Override
+    public void R_SetExternalPtrProt(Object x, Object prot) {
+        if (tracer != null) {
+            tracer.R_SetExternalPtrProt(x, prot);
         }
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setProt(prot);
     }
 
-    public static REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
-        if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_NewHashedEnv", parent, name, hashed, initialSize);
+    @Override
+    public REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+        if (tracer != null) {
+            tracer.R_NewHashedEnv(parent, name, hashed, initialSize);
         }
         REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
+    }
+
+    // Implementation specific support
+
+    /**
+     * Called to possibly update the "complete" status on {@code x}. N.B. {@code x} may not be an
+     * object with a concrete {@code setComplete} method, e.g. see {@link #INTEGER(Object)}.
+     */
+    public void setComplete(Object x, boolean complete) {
+        // only care about concrete vectors
+        if (x instanceof RVector) {
+            ((RVector<?>) x).setComplete(complete);
+        }
+    }
+
+    /**
+     * Called when a {@link CharSXPWrapper} is expected and not found.
+     */
+    public void logNotCharSXPWrapper(Object x) {
+        System.out.println("object " + x);
+        System.out.println("class " + x.getClass());
     }
 
 }

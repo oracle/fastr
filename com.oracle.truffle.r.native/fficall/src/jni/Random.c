@@ -27,24 +27,24 @@ static jmethodID PutRNGstate_MethodID;
 static jmethodID UnifRand_MethodID;
 
 void init_random(JNIEnv *env) {
-	GetRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "getRNGstate", "()V", 1);
-	PutRNGstate_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "putRNGstate", "()V", 1);
-	UnifRand_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "unifRand", "()D", 1);
+	GetRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "GetRNGstate", "()V", 0);
+	PutRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "PutRNGstate", "()V", 0);
+	UnifRand_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "unif_rand", "()D", 0);
 }
 
 void GetRNGstate() {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, GetRNGstate_MethodID);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, GetRNGstate_MethodID);
 }
 
 void PutRNGstate() {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, PutRNGstate_MethodID);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, PutRNGstate_MethodID);
 }
 
 double unif_rand() {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, UnifRand_MethodID);
+	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, UnifRand_MethodID);
 }
 
 double norm_rand() {
