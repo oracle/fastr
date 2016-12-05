@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -55,7 +56,7 @@ public abstract class FastRTry extends RBuiltinNode {
             frame.setObject(frameSlot, RArgsValuesAndNames.EMPTY);
             call.execute(frame, func);
         } catch (Throwable ex) {
-            return String.format("Exception %s, message: %s", ex.getClass().getSimpleName(), ex.getMessage());
+            return Utils.stringFormat("Exception %s, message: %s", ex.getClass().getSimpleName(), ex.getMessage());
         } finally {
             frame.setObject(frameSlot, null);
         }
