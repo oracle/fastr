@@ -43,8 +43,15 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * This class defines a number of nodes used to handle the special attributes, such as names, dims,
+ * dimnames and rownames.
+ */
 public final class SpecialAttributesFunctions {
 
+    /**
+     * A node used in guards, for example, to determine whether an attribute is a special one.
+     */
     public static final class IsSpecialAttributeNode extends RBaseNode {
 
         private final BranchProfile namesProfile = BranchProfile.create();
@@ -95,6 +102,9 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    /**
+     * A node for setting a value to any special attribute.
+     */
     public static final class GenericSpecialAttributeNode extends RBaseNode {
 
         private final BranchProfile namesProfile = BranchProfile.create();
@@ -151,6 +161,12 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    /**
+     * A factory method for creating a node handling the given special attribute.
+     *
+     * @param name the special attribute name
+     * @return the node
+     */
     public static SetSpecialAttributeNode createSpecialAttributeNode(String name) {
         assert name.intern() == name;
         if (name == RRuntime.NAMES_ATTR_KEY) {
@@ -168,6 +184,9 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    /**
+     * The base class for the nodes setting values to special attributes.
+     */
     public abstract static class SetSpecialAttributeNode extends RBaseNode {
 
         public abstract void execute(RAttributable x, Object attrValue);

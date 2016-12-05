@@ -33,6 +33,12 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
+/**
+ * This node is responsible for retrieving a value from the predefined (fixed) attribute. It accepts
+ * both {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the
+ * first argument is {@link RAttributable} and its attributes are initialized, the recursive
+ * instance of this class is used to get the attribute value from the attributes.
+ */
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
     @Child private GetFixedAttributeNode recursive;

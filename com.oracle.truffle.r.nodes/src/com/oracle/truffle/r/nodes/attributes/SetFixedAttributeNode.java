@@ -37,6 +37,16 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
+/**
+ * This node is responsible for setting a value to the predefined (fixed) attribute. It accepts both
+ * {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the first
+ * argument is {@link RAttributable} and the attribute is a special one (i.e. names, dims, dimnames,
+ * rownames), a corresponding node defined in the {@link SpecialAttributesFunctions} class is
+ * created and the processing is delegated to it. If the first argument is {@link RAttributable} and
+ * the attribute is not a special one, it is made sure that the attributes in the first argument are
+ * initialized. Then the recursive instance of this class is used to set the attribute value to the
+ * attributes.
+ */
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     @Child private SetFixedAttributeNode recursive;

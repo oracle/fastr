@@ -32,6 +32,12 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
+/**
+ * This node is responsible for retrieving a value from an arbitrary attribute. It accepts both
+ * {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the first
+ * argument is {@link RAttributable} and its attributes are initialized, the recursive instance of
+ * this class is used to get the attribute value from the attributes.
+ */
 public abstract class GetAttributeNode extends AttributeAccessNode {
 
     @Child private GetAttributeNode recursive;
