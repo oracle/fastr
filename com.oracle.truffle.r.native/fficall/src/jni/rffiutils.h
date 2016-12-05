@@ -76,12 +76,12 @@ void updateNativeArrays(JNIEnv *env);
 
 SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
 
+void init_utils(JNIEnv *env, jobject upCallsInstance);
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
 void init_dynload(JNIEnv *env);
 void init_internals(JNIEnv *env);
 void init_random(JNIEnv *env);
-void init_utils(JNIEnv *env);
 void init_parse(JNIEnv *env);
 void init_pcre(JNIEnv *env);
 void init_c(JNIEnv *env);
@@ -90,7 +90,8 @@ void setEmbedded(void);
 
 void setTempDir(JNIEnv *, jstring tempDir);
 
-extern jclass CallRFFIHelperClass;
+extern jclass UpCallsRFFIClass;
+extern jobject UpCallsRFFIObject;
 extern FILE *traceFile;
 
 // tracing/debugging support, set to 1 and recompile to enable

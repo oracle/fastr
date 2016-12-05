@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -100,8 +101,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return String.format("%02x", value);
+        return Utils.stringFormat("%02x", value);
     }
 
     public static RRaw valueOf(byte value) {

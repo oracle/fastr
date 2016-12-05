@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
@@ -80,7 +82,7 @@ public class JNI_Call implements CallRFFI {
             traceDownCall("initialize");
         }
         try {
-            initialize(RFFIVariables.values());
+            initialize(UpCallsRFFIFactory.getInstance().getUpcallsRFFI(), RFFIVariables.values());
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
@@ -122,7 +124,7 @@ public class JNI_Call implements CallRFFI {
         }
     }
 
-    private static native void initialize(RFFIVariables[] variables);
+    private static native void initialize(UpCallsRFFI upCallRFFI, RFFIVariables[] variables);
 
     private static native void nativeSetTempDir(String tempDir);
 

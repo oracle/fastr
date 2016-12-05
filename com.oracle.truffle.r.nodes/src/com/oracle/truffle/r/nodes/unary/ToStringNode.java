@@ -207,6 +207,7 @@ public abstract class ToStringNode extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected String toString(REnvironment env, boolean quotes, String separator) {
         return env.toString();
     }

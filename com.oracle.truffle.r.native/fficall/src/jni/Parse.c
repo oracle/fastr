@@ -30,15 +30,15 @@ static jfieldID parseExprFieldID;
 
 
 void init_parse(JNIEnv *env) {
-	parseMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 1);
-	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$ParseResult");
+	parseMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 0);
+	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/ParseResult");
 	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
 	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
 }
 
 SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
 	JNIEnv *env = getEnv();
-	jobject result = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, parseMethodID, text, n, srcfile);
+	jobject result = (*env)->CallObjectMethod(env, UpCallsRFFIObject, parseMethodID, text, n, srcfile);
 	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
     return (*env)->GetObjectField(env, result, parseExprFieldID);
 }

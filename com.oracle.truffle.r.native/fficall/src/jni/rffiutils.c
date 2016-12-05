@@ -32,10 +32,9 @@
  * so we are safe to use static variables. TODO Figure out where to store such state
  * (portably) for MT use. JNI provides no help.
  */
-jclass CallRFFIHelperClass;
+jclass UpCallsRFFIClass;
+jobject UpCallsRFFIObject;
 jclass CharSXPWrapperClass;
-
-static jmethodID validateMethodID;
 
 static JNIEnv *curenv = NULL;
 
@@ -87,8 +86,10 @@ static int nativeArrayTableHwmStack[CALLDEPTH_STACK_SIZE];
 static jmp_buf* callErrorJmpBufTable[CALLDEPTH_STACK_SIZE];
 
 
-void init_utils(JNIEnv *env) {
+void init_utils(JNIEnv *env, jobject upCallsInstance) {
 	curenv = env;
+	UpCallsRFFIClass = (*env)->GetObjectClass(env, upCallsInstance);
+	UpCallsRFFIObject = (*env)->NewGlobalRef(env, upCallsInstance);
 	if (TRACE_ENABLED && traceFile == NULL) {
 		if (!isEmbedded) {
 			traceFile = stdout;
@@ -109,8 +110,6 @@ void init_utils(JNIEnv *env) {
 		    setvbuf(traceFile, (char*) NULL, _IONBF, 0);
 		}
 	}
-	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper");
-    validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(GlobalRefElem));
     cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
     cachedGlobalRefsHwm = 0;
@@ -230,7 +229,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 		jarray jArray;
 		switch (type) {
 		case INTSXP: {
-			jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
+			jintArray intArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, INTEGER_MethodID, x);
 			int len = (*thisenv)->GetArrayLength(thisenv, intArray);
 			data = (*thisenv)->GetIntArrayElements(thisenv, intArray, &isCopy);
 			jArray = intArray;
@@ -238,7 +237,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 		}
 
 		case REALSXP: {
-			jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
+			jdoubleArray doubleArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, REAL_MethodID, x);
 			int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
 			data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, &isCopy);
 			jArray = doubleArray;
@@ -246,7 +245,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 		}
 
 		case RAWSXP: {
-		    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
+		    jbyteArray byteArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, RAW_MethodID, x);
 		    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
 		    data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, &isCopy);
 	        jArray = byteArray;
@@ -255,7 +254,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 
 		case LGLSXP: {
 			// Special treatment becuase R FFI wants int* and FastR represents using byte[]
-		    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
+		    jbyteArray byteArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, LOGICAL_MethodID, x);
 		    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
 		    jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, &isCopy);
 		    int* idata = malloc(len * sizeof(int));
@@ -333,7 +332,7 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 			fatalError("releaseNativeArray type");
 		}
 		// update complete status
-		(*env)->CallVoidMethod(env, cv.obj, setCompleteMethodID, cv.obj, complete);
+		(*env)->CallVoidMethod(env, UpCallsRFFIObject, setCompleteMethodID, cv.obj, complete);
 
         if (freedata) {
             // free up the slot
@@ -425,10 +424,6 @@ void validateRef(JNIEnv *env, SEXP x, const char *msg) {
 		sprintf(buf, "%s %p", msg,x);
 		fatalError(buf);
 	}
-}
-
-void validate(SEXP x) {
-	(*curenv)->CallStaticObjectMethod(curenv, CallRFFIHelperClass, validateMethodID, x);
 }
 
 JNIEnv *getEnv() {
