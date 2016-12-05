@@ -41,6 +41,7 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.rqp01check;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -59,6 +60,13 @@ public abstract class GammaFunctions {
         @Override
         public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
             return GammaFunctions.qgamma(p, shape, scale, lowerTail, logP);
+        }
+    }
+
+    public static final class DGamma implements Function3_1 {
+        @Override
+        public double evaluate(double x, double shape, double scale, boolean giveLog) {
+            return dgamma(x, shape, scale, giveLog);
         }
     }
 
@@ -1246,7 +1254,7 @@ public abstract class GammaFunctions {
     // dpois
     //
 
-    private static double dpoisRaw(double x, double lambda, boolean giveLog) {
+    public static double dpoisRaw(double x, double lambda, boolean giveLog) {
         /*
          * x >= 0 ; integer for dpois(), but not e.g. for pgamma()! lambda >= 0
          */
@@ -1306,7 +1314,7 @@ public abstract class GammaFunctions {
     // dnorm
     //
 
-    private static double dnorm(double x, double mu, double sigma, boolean giveLog) {
+    static double dnorm(double x, double mu, double sigma, boolean giveLog) {
         double localX = x;
         if (Double.isNaN(localX) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return localX + mu + sigma;
@@ -1338,7 +1346,7 @@ public abstract class GammaFunctions {
     // dgamma
     //
 
-    private static double dgamma(double x, double shape, double scale, boolean giveLog) {
+    public static double dgamma(double x, double shape, double scale, boolean giveLog) {
         double pr;
         if (Double.isNaN(x) || Double.isNaN(shape) || Double.isNaN(scale)) {
             return x + shape + scale;

@@ -42,12 +42,23 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
+import com.oracle.truffle.r.library.stats.Chisq;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
+import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.Dt;
+import com.oracle.truffle.r.library.stats.Exp.DExp;
+import com.oracle.truffle.r.library.stats.Exp.PExp;
+import com.oracle.truffle.r.library.stats.Exp.QExp;
+import com.oracle.truffle.r.library.stats.Exp.RExp;
+import com.oracle.truffle.r.library.stats.GammaFunctions.DGamma;
 import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
+import com.oracle.truffle.r.library.stats.Geom;
+import com.oracle.truffle.r.library.stats.Geom.DGeom;
+import com.oracle.truffle.r.library.stats.Geom.RGeom;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
@@ -56,9 +67,7 @@ import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RCauchy;
 import com.oracle.truffle.r.library.stats.RChisq;
-import com.oracle.truffle.r.library.stats.RExp;
 import com.oracle.truffle.r.library.stats.RGamma;
-import com.oracle.truffle.r.library.stats.RGeom;
 import com.oracle.truffle.r.library.stats.RHyper;
 import com.oracle.truffle.r.library.stats.RLogis;
 import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
@@ -110,8 +119,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2}, {@code External.graphics}
@@ -411,6 +420,26 @@ public class ForeignFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "dgamma":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DGamma());
+                case "dchisq":
+                    return StatsFunctionsFactory.Function2_1NodeGen.create(new Chisq.DChisq());
+                case "qgeom":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Geom.QGeom());
+                case "pchisq":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Chisq.PChisq());
+                case "dexp":
+                    return StatsFunctionsFactory.Function2_1NodeGen.create(new DExp());
+                case "pexp":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new PExp());
+                case "qexp":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new QExp());
+                case "dgeom":
+                    return StatsFunctionsFactory.Function2_1NodeGen.create(new DGeom());
+                case "dpois":
+                    return StatsFunctionsFactory.Function2_1NodeGen.create(new DPois());
+                case "dt":
+                    return StatsFunctionsFactory.Function2_1NodeGen.create(new Dt());
                 case "rmultinom":
                     return RMultinomNodeGen.create();
                 case "Approx":

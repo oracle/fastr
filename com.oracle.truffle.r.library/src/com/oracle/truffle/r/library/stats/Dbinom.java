@@ -17,6 +17,7 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 
 // transcribed from dbinom.c
 
@@ -24,7 +25,7 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
 
     private final BranchProfile nanProfile = BranchProfile.create();
 
-    private static double dbinomRaw(double x, double n, double p, double q, boolean giveLog) {
+    public static double dbinomRaw(double x, double n, double p, double q, boolean giveLog) {
 
         if (p == 0) {
             return ((x == 0) ? DPQ.d1(giveLog) : DPQ.d0(giveLog));
@@ -76,7 +77,14 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
             nanProfile.enter();
             return Double.NaN;
         }
-        if (DPQ.dNonintCheck(x) || x < 0 || !Double.isFinite(x)) {
+
+        try {
+            DPQ.dNonintCheck(x, giveLog);
+        } catch (EarlyReturn e) {
+            return e.result;
+        }
+
+        if (x < 0 || !Double.isFinite(x)) {
             return DPQ.d0(giveLog);
         }
 
