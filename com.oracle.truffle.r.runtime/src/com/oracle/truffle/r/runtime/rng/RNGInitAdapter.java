@@ -11,19 +11,34 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+/**
+ * Manages the iSeed array for generators and contains some useful common code.
+ */
 public abstract class RNGInitAdapter implements RandomNumberGenerator {
 
     protected static final double I2_32M1 = 2.3283064365386963e-10;
+    protected static final int MAX_ISEED_SIZE = 625;
 
     // TODO: it seems like GNU R this is shared between the generators (does it matter?)
-    protected final int[] iSeed = new int[625];
+    private int[] iSeed = new int[MAX_ISEED_SIZE + 1];
 
     @Override
     public void setISeed(int[] seeds) {
-        for (int i = 1; i <= getNSeed(); i++) {
-            iSeed[i - 1] = seeds[i];
-        }
+        iSeed = seeds;
         fixupSeeds(false);
+    }
+
+    @Override
+    public final int[] getSeeds() {
+        return iSeed;
+    }
+
+    protected final int getISeedItem(int index) {
+        return iSeed[index + 1];
+    }
+
+    protected final void setISeedItem(int index, int value) {
+        iSeed[index + 1] = value;
     }
 
     /**

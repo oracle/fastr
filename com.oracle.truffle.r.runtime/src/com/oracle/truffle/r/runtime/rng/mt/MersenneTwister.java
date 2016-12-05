@@ -64,7 +64,6 @@
 package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
@@ -95,36 +94,18 @@ public final class MersenneTwister extends RNGInitAdapter {
      * pointer arithmetic to set {@code mt} to {@code dummy + 1}.
      */
     private int getMt(int i) {
-        return iSeed[i + 1];
+        return getISeedItem(i + 1);
     }
 
     private void setMt(int i, int val) {
-        iSeed[i + 1] = val;
+        setISeedItem(i + 1, val);
     }
-
-    // to keep variable naming (somewhat) consistent with GNU R
-    private int[] dummy = iSeed;
 
     @Override
     public void setISeed(int[] seeds) {
-        boolean changed = false;
-        for (int i = 1; i <= getNSeed(); i++) {
-            changed |= iSeed[i - 1] != seeds[i];
-            iSeed[i - 1] = seeds[i];
-        }
         fixupSeeds(false);
-        // kill the current buffer if seed changes
-        if (changed) {
-            bufferIndex = BUFFER_SIZE;
-        }
-    }
-
-    /**
-     * We have to recreate the effect of having the number of seeds in the array.
-     */
-    @Override
-    public int[] getSeeds() {
-        return iSeed;
+        // kill the current buffer if the seed changes
+        bufferIndex = BUFFER_SIZE;
     }
 
     /**
@@ -141,7 +122,7 @@ public final class MersenneTwister extends RNGInitAdapter {
         int seed = seedParam;
         for (int i = 0; i < getNSeed(); i++) {
             seed = (69069 * seed + 1);
-            iSeed[i] = seed;
+            setISeedItem(i, seed);
         }
         fixupSeeds(true);
         bufferIndex = BUFFER_SIZE;
@@ -151,14 +132,14 @@ public final class MersenneTwister extends RNGInitAdapter {
     @TruffleBoundary
     public void fixupSeeds(boolean initial) {
         if (initial) {
-            iSeed[0] = N;
+            setISeedItem(0, N);
         }
-        if (iSeed[0] <= 0) {
-            iSeed[0] = N;
+        if (getISeedItem(0) <= 0) {
+            setISeedItem(0, N);
         }
         boolean notAllZero = false;
         for (int i = 1; i <= N; i++) {
-            if (iSeed[i] != 0) {
+            if (getISeedItem(i) != 0) {
                 notAllZero = true;
             }
         }
@@ -173,12 +154,11 @@ public final class MersenneTwister extends RNGInitAdapter {
     @Override
     public double genrandDouble() {
         if (bufferIndex == BUFFER_SIZE) {
-            int localDummy0 = dummy[0];
+            int localDummy0 = getISeedItem(0);
             int localMti = localDummy0;
             // It appears that this never happens
             // sgenrand(4357);
-            RInternalError.guarantee(localMti != N + 1);
-
+            assert localMti != N + 1;
             int pos = 0;
             while (true) {
                 int loopCount = Math.min(BUFFER_SIZE - pos, N - localMti);
@@ -216,7 +196,7 @@ public final class MersenneTwister extends RNGInitAdapter {
                 localMti = 0;
             }
             localDummy0 = localMti;
-            dummy[0] = localDummy0;
+            setISeedItem(0, localDummy0);
             bufferIndex = 0;
         }
         return buffer[bufferIndex++];

@@ -433,7 +433,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
-        @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
         @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
 
         public abstract void execute(RVector<?> container, Object newNames);
@@ -446,7 +445,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (container.getAttributes() == null) {
                 // usual case
                 container.initAttributes(RAttributesLayout.createNames(newNames1));
-                namesAttrSetter.execute(container.initAttributes(), newNames1);
                 container.setInternalNames(newNames1);
             } else {
                 // from an RLanguage extraction that set a name

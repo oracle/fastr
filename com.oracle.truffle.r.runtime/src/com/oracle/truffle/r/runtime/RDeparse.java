@@ -153,7 +153,7 @@ public class RDeparse {
                     new Func("+", null, new PPInfo(PP.BINARY, PREC_SUM, false)),
                     new Func("-", null, new PPInfo(PP.BINARY, PREC_SUM, false)),
                     new Func("*", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
-                    new Func("/", null, new PPInfo(PP.BINARY, PREC_PROD, false)),
+                    new Func("/", null, new PPInfo(PP.BINARY2, PREC_PROD, false)),
                     new Func("^", null, new PPInfo(PP.BINARY2, PREC_POWER, false)),
                     new Func("%%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),
                     new Func("%/%", null, new PPInfo(PP.BINARY, PREC_PERCENT, false)),

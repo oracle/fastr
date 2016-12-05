@@ -167,7 +167,7 @@ public abstract class GammaFunctions {
     private static final double xbig = 94906265.62425156;
     private static final double lgc_xmax = 3.745194030963158e306;
 
-    private static double lgammacor(double x) {
+    static double lgammacor(double x) {
         double tmp;
 
         if (x < 10) {
@@ -181,6 +181,10 @@ public abstract class GammaFunctions {
             return chebyshevEval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
         }
         return 1 / (x * 12);
+    }
+
+    static double lgamma(double x) {
+        throw RError.nyi(RError.SHOW_CALLER, "lgamma from libc");
     }
 
     //
@@ -211,7 +215,7 @@ public abstract class GammaFunctions {
 
     private static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;
 
-    private static double gammafn(double x) {
+    static double gammafn(double x) {
         int i;
         int n;
         double y;

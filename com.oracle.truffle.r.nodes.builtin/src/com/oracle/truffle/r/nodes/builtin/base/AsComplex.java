@@ -29,12 +29,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 
-@RBuiltin(name = "as.complex", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
+@RBuiltin(name = "as.complex", kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsComplex extends RBuiltinNode {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();

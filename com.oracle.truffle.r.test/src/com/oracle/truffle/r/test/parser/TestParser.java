@@ -52,6 +52,16 @@ public class TestParser extends TestBase {
     }
 
     @Test
+    public void testDoubleLiterals() {
+        assertEval("0x1.1p2");
+        assertEval("0x1p2");
+        assertEval("0x0p0");
+        assertEval("0x1.aP2");
+        assertEval("0xa.p2");
+        assertEval("0xa.bp1i");
+    }
+
+    @Test
     public void testSpaceEscapeSequence() {
         assertEval("\"\\ \" == \" \"");
         assertEval("'\\ ' == ' '");

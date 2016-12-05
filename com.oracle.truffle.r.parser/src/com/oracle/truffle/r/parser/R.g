@@ -575,13 +575,13 @@ INTEGER
 COMPLEX
     : ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i' { setText(getText().substring(0, getText().length()-1)); }
     | '.'? ('0'..'9')+ EXPONENT? 'i' { setText(getText().substring(0, getText().length()-1)); }
-    | '0x' HEX_DIGIT 'i' { setText(getText().substring(0, getText().length()-1)); }
+    | '0x' HEX_DIGIT+ ('.'? HEX_DIGIT* HEX_EXPONENT)? 'i' { setText(getText().substring(0, getText().length()-1)); }
     ;
 
 DOUBLE
     : ('0'..'9')+ '.' ('0'..'9')* EXPONENT?
     | '.'? ('0'..'9')+ EXPONENT?
-    | '0x' HEX_DIGIT+
+    | '0x' HEX_DIGIT+ ('.'? HEX_DIGIT* HEX_EXPONENT)?
     ;
 
 DD : '..' ('0'..'9')+ ;
@@ -660,6 +660,7 @@ fragment LINE_BREAK
     ;
 
 fragment EXPONENT : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+fragment HEX_EXPONENT : ('p'|'P') ('+'|'-')? ('0'..'9')+ ;
 
 fragment OP_NAME
     : ID_NAME

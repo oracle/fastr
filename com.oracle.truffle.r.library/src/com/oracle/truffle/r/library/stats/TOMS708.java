@@ -67,7 +67,7 @@ public class TOMS708 {
         return Math.exp(v);
     }
 
-    private static double fabs(double v) {
+    public static double fabs(double v) {
         return Math.abs(v);
     }
 
