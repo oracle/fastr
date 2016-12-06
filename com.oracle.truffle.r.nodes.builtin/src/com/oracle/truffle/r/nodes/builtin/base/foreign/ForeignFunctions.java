@@ -163,17 +163,17 @@ public class ForeignFunctions {
             }
         }
 
-        protected abstract RExternalBuiltinNode lookupBuiltin(RList f);
+        protected abstract RExternalBuiltinNode lookupBuiltin(RList symbol);
 
         private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-        protected static String lookupName(RList f) {
+        protected static String lookupName(RList symbol) {
             CompilerAsserts.neverPartOfCompilation();
-            if (f.getNames() != null) {
-                RAbstractStringVector names = f.getNames();
+            if (symbol.getNames() != null) {
+                RAbstractStringVector names = symbol.getNames();
                 for (int i = 0; i < names.getLength(); i++) {
                     if (names.getDataAt(i).equals("name")) {
-                        String name = RRuntime.asString(f.getDataAt(i));
+                        String name = RRuntime.asString(symbol.getDataAt(i));
                         return name != null ? name : UNKNOWN_EXTERNAL_BUILTIN;
                     }
                 }
@@ -182,12 +182,12 @@ public class ForeignFunctions {
         }
 
         @TruffleBoundary
-        protected RuntimeException fallback(Object fobj) {
+        protected RuntimeException fallback(Object symbol) {
             String name = null;
-            if (fobj instanceof RList) {
-                name = lookupName((RList) fobj);
+            if (symbol instanceof RList) {
+                name = lookupName((RList) symbol);
                 name = name == UNKNOWN_EXTERNAL_BUILTIN ? null : name;
-                if (name != null && lookupBuiltin((RList) fobj) != null) {
+                if (name != null && lookupBuiltin((RList) symbol) != null) {
                     /*
                      * if we reach this point, then the cache saw a different value for f. the lists
                      * that contain the information about native calls are never expected to change.
@@ -219,6 +219,15 @@ public class ForeignFunctions {
         protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
             return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "model.R"), name);
         }
+
+        protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();
+        protected static final int ExternalNST = DLL.NativeSymbolType.External.ordinal();
+
+        public static DLL.RegisteredNativeSymbol createRegisteredNativeSymbol(int nstOrd) {
+            // DSL cannot resolve DLL.DLL.NativeSymbolType
+            DLL.NativeSymbolType nst = DLL.NativeSymbolType.values()[nstOrd];
+            return new DLL.RegisteredNativeSymbol(nst, null, null);
+        }
     }
 
     /**
@@ -235,8 +244,8 @@ public class ForeignFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            switch (lookupName(f)) {
+        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
+            switch (lookupName(symbol)) {
                 case "dqrdc2":
                     return new Dqrdc2();
                 case "dqrcf":
@@ -247,10 +256,10 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
-                        @Cached("f") RList cached, //
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
@@ -276,14 +285,26 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Fallback
-        protected Object fallback(Object f, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
-            throw fallback(f);
+        protected Object fallback(Object symbol, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
+            throw fallback(symbol);
         }
     }
 
     /**
      * Handles the generic case, but also many special case functions that are called from the
      * default packages.
+     *
+     * The native function to be called can be specified in two ways:
+     * <ol>
+     * <li>as an object of R class {@code NativeSymbolInfo} (passed as an {@link RList}. In this
+     * case {@code .PACKAGE} is ignored even if provided.</li>
+     * <li>as a character string. If {@code .PACKAGE} is provided the search is restricted to that
+     * package, else the symbol is searched in all loaded packages (evidently dangerous as the
+     * symbol could be duplicated)</li>
+     * </ol>
+     * Many of the functions in the builtin packages have been translated to Java which is handled
+     * by specializations that {@link #lookupBuiltin(RList)}. N.N. In principle such a function
+     * could be invoked by a string but experimentally that situation has never been encountered.
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends LookupAdapter {
@@ -297,8 +318,8 @@ public class ForeignFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            String name = lookupName(f);
+        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
+            String name = lookupName(symbol);
             switch (name) {
                 // methods
                 case "R_initMethodDispatch":
@@ -568,42 +589,65 @@ public class ForeignFunctions {
             }
         }
 
+        /**
+         * {@code .NAME = NativeSymbolInfo} implemented as a builtin.
+         */
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
-                        @Cached("f") RList cached, //
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+        /**
+         * {@code .NAME = NativeSymbolInfo} implementation remains in native code (e.g. non-builtin
+         * package)
+         */
+        @SuppressWarnings("unused")
+        @Specialization(limit = "1", guards = {"cached == symbol"})
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, args.getArguments());
         }
 
+        /**
+         * {@code .NAME = string}, no package specified.
+         */
         @Specialization
-        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callNamedFunctionWithPackage(name, args, null);
+        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName, //
+                        @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns) {
+            return callNamedFunctionWithPackage(symbol, args, null, rns);
         }
 
+        /**
+         * {@code .NAME = string, .PACKAGE = package}. An error if package provided and it does not
+         * define that symbol.
+         */
         @Specialization
-        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
+        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName, //
+                        @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns) {
+            DLL.SymbolHandle func = DLL.findSymbol(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
         }
 
+        @SuppressWarnings("unused")
         @Fallback
-        protected Object dotCallFallback(Object fobj, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(fobj);
+        protected Object dotCallFallback(Object symbol, Object args, Object packageName) {
+            throw fallback(symbol);
         }
+
     }
 
+    /**
+     * The interpretation of the {@code .NAME} and {code .PACKAGE} arguments as are for
+     * {@link DotCall}.
+     */
     @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
@@ -655,35 +699,38 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
-                        @Cached("f") RList cached, //
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+        @SuppressWarnings("unused")
+        @Specialization(limit = "1", guards = {"cached == symbol"})
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
-        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callNamedFunctionWithPackage(name, args, null);
+        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName, // )
+                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns) {
+            return callNamedFunctionWithPackage(symbol, args, null, rns);
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
+        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName, //
+                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns) {
+            DLL.SymbolHandle func = DLL.findSymbol(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
-            Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
+            Object list = encodeArgumentPairList(args, symbol);
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -702,14 +749,14 @@ public class ForeignFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
+        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-                switch (lookupName(f)) {
+                switch (lookupName(symbol)) {
                     case "C_par":
                         return new C_Par();
                 }
             }
-            String name = lookupName(f);
+            String name = lookupName(symbol);
             switch (name) {
                 // tools
                 case "writetable":
@@ -727,37 +774,40 @@ public class ForeignFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName, //
-                        @Cached("f") RList cached, //
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+        @SuppressWarnings("unused")
+        @Specialization(limit = "1", guards = {"cached == symbol"})
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
+                        @Cached("symbol") RList cached, //
+                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
         }
 
         @Specialization
-        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callNamedFunctionWithPackage(name, args, null);
+        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName, // )
+                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns) {
+            return callNamedFunctionWithPackage(symbol, args, null, rns);
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(name, packageName, rns);
+        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName, //
+                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns) {
+            DLL.SymbolHandle func = DLL.findSymbol(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
-            Object list = encodeArgumentPairList(args, name);
+            Object list = encodeArgumentPairList(args, symbol);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
         }
 
         @Fallback

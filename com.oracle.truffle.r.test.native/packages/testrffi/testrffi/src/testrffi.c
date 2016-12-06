@@ -28,6 +28,7 @@
 #include <Rinterface.h>
 #include <Rinternals.h>
 #include <Rinterface.h>
+#include "testrffi.h"
 
 void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
     for (int i = 0; i < len[0]; i++) {

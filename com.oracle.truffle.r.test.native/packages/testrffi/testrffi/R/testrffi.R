@@ -83,10 +83,6 @@ rffi.mkStringFromBytes <- function() {
 	.Call("mkStringFromBytes", PACKAGE = "testrffi")
 }
 
-rffi.null <- function() {
-	.Call("null", PACKAGE = "testrffi")
-}
-
 rffi.iterate_iarray <- function(x) {
 	.Call("iterate_iarray", x, PACKAGE = "testrffi")
 }
@@ -109,4 +105,17 @@ rffi.findvar <- function(x, env) {
 	}
 	.Call("findvar", x, env, PACKAGE = "testrffi")
 }
+
+rffi.null <- function() {
+	.Call("null", PACKAGE = "testrffi")
+}
+
+rffi.null.E <- function() {
+	.Call("null", PACKAGE = "foo")
+}
+
+rffi.null.C <- function() {
+	.Call(C_null)
+}
+
 
