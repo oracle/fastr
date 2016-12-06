@@ -29,10 +29,12 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -215,13 +217,68 @@ public final class SpecialAttributesFunctions {
         @Specialization
         protected void setOneDimInContainer(RAbstractContainer x, Integer dim, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
-            xProfiled.setDimensions(new int[]{dim});
+            // xProfiled.setDimensions(new int[]{dim});
+            xProfiled.setAttr(RRuntime.DIM_ATTR_KEY, new int[]{dim});
         }
 
         @Specialization
         protected void setDimsInContainer(RAbstractContainer x, RAbstractIntVector dims, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setDimensions(dims.materialize().getDataCopy());
+        }
+
+    }
+
+    public abstract static class GetDimAttributeNode extends GetFixedAttributeNode {
+
+        private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isContainerProfile = ConditionProfile.createBinaryProfile();
+
+        protected GetDimAttributeNode() {
+            super(RRuntime.DIM_ATTR_KEY);
+        }
+
+        public static GetDimAttributeNode create() {
+            return GetDimAttributeNodeGen.create();
+        }
+
+        public final int[] getDimensions(Object x) {
+            RIntVector dims = (RIntVector) execute(x);
+            return nullDimsProfile.profile(dims == null) ? null : dims.getInternalStore();
+        }
+
+        public int nrows(Object x) {
+            if (isContainerProfile.profile(x instanceof RAbstractContainer)) {
+                RAbstractContainer xa = (RAbstractContainer) x;
+                int[] dims = getDimensions(xa);
+                if (nonEmptyDimsProfile.profile(dims != null && dims.length > 0)) {
+                    return dims[0];
+                } else {
+                    return xa.getLength();
+                }
+            } else {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+            }
+        }
+
+        public int ncols(Object x) {
+            if (isContainerProfile.profile(x instanceof RAbstractContainer)) {
+                RAbstractContainer xa = (RAbstractContainer) x;
+                int[] dims = getDimensions(xa);
+                if (nonEmptyDimsProfile.profile(dims != null && dims.length > 0)) {
+                    if (twoDimsOrMoreProfile.profile(dims.length >= 2)) {
+                        return dims[1];
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 1;
+                }
+            } else {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+            }
         }
 
     }

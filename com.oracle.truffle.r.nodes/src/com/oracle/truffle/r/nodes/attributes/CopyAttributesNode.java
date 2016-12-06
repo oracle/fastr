@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -50,6 +51,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
     protected final RAttributeProfiles attrLeftProfiles = RAttributeProfiles.create();
     protected final RAttributeProfiles attrRightProfiles = RAttributeProfiles.create();
 
+    @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+
     protected CopyAttributesNode(boolean copyAllAttributes) {
         this.copyAllAttributes = copyAllAttributes;
     }
@@ -61,7 +64,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
-        return vector instanceof RVector && vector.hasDimensions() || (copyAllAttributes && vector.getAttributes() != null) || vector.getDimNames(attrProfiles) != null ||
+        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || vector.getDimNames(attrProfiles) != null ||
                         vector.getNames(attrProfiles) != null;
     }
 
@@ -124,7 +127,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") BranchProfile noDimensions,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesLeft,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesRight,
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("create()") GetDimAttributeNode getLeftDimsNode,
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
         if (LOG) {
             log("copyAttributes: ==");
             countEquals++;
@@ -139,9 +144,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
             }
         }
 
-        int[] newDimensions = left.getDimensions();
+        int[] newDimensions = getLeftDimsNode.getDimensions(left);
         if (newDimensions == null) {
-            newDimensions = right.getDimensions();
+            newDimensions = getRightDimsNode.getDimensions(right);
             if (newDimensions == null) {
                 noDimensions.enter();
                 DynamicObject attributes = result.getAttributes();
@@ -206,7 +211,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("create()") GetDimAttributeNode getLeftDimsNode,
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
         if (LOG) {
             log("copyAttributes: <");
             countSmaller++;
@@ -217,10 +224,10 @@ public abstract class CopyAttributesNode extends RBaseNode {
             copyOfReg.execute(right, result);
         }
 
-        int[] newDimensions = left.getDimensions();
+        int[] newDimensions = getLeftDimsNode.getDimensions(left);
         if (newDimensions == null || (newDimensions.length == 2 && newDimensions[0] == 1 && newDimensions[1] == 1)) {
             // 1-element matrix should be treated as 1-element vector
-            newDimensions = right.getDimensions();
+            newDimensions = getRightDimsNode.getDimensions(right);
             if (newDimensions == null || (newDimensions.length == 2 && newDimensions[0] == 1 && newDimensions[1] == 1)) {
                 // 1-element matrix should be treated as 1-element vector
                 noDimensions.enter();
@@ -260,7 +267,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createDim()") SetFixedAttributeNode putDim, //
                     @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("create()") GetDimAttributeNode getLeftDimsNode,
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
         if (LOG) {
             log("copyAttributes: >");
             countLarger++;
@@ -269,9 +278,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
         if (copyAllAttributes && result != left) {
             copyOfReg.execute(left, result);
         }
-        int[] newDimensions = left.getDimensions();
+        int[] newDimensions = getLeftDimsNode.getDimensions(left);
         if (newDimensions == null) {
-            newDimensions = right.getDimensions();
+            newDimensions = getRightDimsNode.getDimensions(right);
             if (newDimensions == null) {
                 noDimensions.enter();
                 if (left != result) {

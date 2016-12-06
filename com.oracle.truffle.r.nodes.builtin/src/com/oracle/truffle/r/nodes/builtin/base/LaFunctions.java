@@ -28,10 +28,12 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -96,8 +98,8 @@ public class LaFunctions {
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
         @Specialization
-        protected Object doRg(RDoubleVector matrix, boolean onlyValues) {
-            int[] dims = matrix.getDimensions();
+        protected Object doRg(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+            int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             double[] a = matrix.getDataCopy();
@@ -190,8 +192,8 @@ public class LaFunctions {
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
     public abstract static class Rs extends RsgAdapter {
         @Specialization
-        protected Object doRs(RDoubleVector matrix, boolean onlyValues) {
-            int[] dims = matrix.getDimensions();
+        protected Object doRs(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+            int[] dims = getDimsNode.getDimensions(matrix);
             int n = dims[0];
             char jobv = onlyValues ? 'N' : 'V';
             char uplo = 'L';
@@ -257,13 +259,13 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doQr(RAbstractDoubleVector aIn) {
+        protected RList doQr(RAbstractDoubleVector aIn, @Cached("create()") GetDimAttributeNode getDimsNode) {
             // This implementation is sufficient for B25 matcal-5.
             if (!(aIn instanceof RDoubleVector)) {
                 RError.nyi(this, "non-real vectors not supported (yet)");
             }
             RDoubleVector daIn = (RDoubleVector) aIn;
-            int[] dims = daIn.getDimensions();
+            int[] dims = getDimsNode.getDimensions(daIn);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             int m = dims[1];
@@ -312,7 +314,9 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
+        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn,
+                        @Cached("create()") GetDimAttributeNode getBDimsNode,
+                        @Cached("create()") GetDimAttributeNode getQDimsNode) {
             // If bIn was coerced this extra copy is unnecessary
             RDoubleVector b = (RDoubleVector) bIn.copy();
 
@@ -321,8 +325,8 @@ public class LaFunctions {
             RDoubleVector tau = (RDoubleVector) qIn.getDataAt(2);
             int k = tau.getLength();
 
-            int[] bDims = bIn.getDimensions();
-            int[] qrDims = qr.getDimensions();
+            int[] bDims = getBDimsNode.getDimensions(bIn);
+            int[] qrDims = getQDimsNode.getDimensions(qr);
             int n = qrDims[0];
             if (bDims[0] != n) {
                 errorProfile.enter();
@@ -387,9 +391,10 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog) {
+        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
-            int[] aDims = aIn.getDimensions();
+            int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
             int[] ipiv = new int[n];
             double modulus = 0;
@@ -475,9 +480,10 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol) {
+        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
-            int[] aDims = aIn.getDimensions();
+            int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
             int m = aDims[1];
             double[] aData = a.getDataWithoutCopying();
@@ -546,8 +552,10 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol) {
-            int[] aDims = a.getDimensions();
+        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
+                        @Cached("create()") GetDimAttributeNode getADimsNode,
+                        @Cached("create()") GetDimAttributeNode getBinDimsNode) {
+            int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
                 throw RError.error(this, RError.Message.GENERIC, "'a' is 0-diml");
@@ -561,7 +569,7 @@ public class LaFunctions {
             double[] bData;
             RDoubleVector b;
             if (bin.isMatrix()) {
-                int[] bDims = bin.getDimensions();
+                int[] bDims = getBinDimsNode.getDimensions(bin);
                 p = bDims[1];
                 if (p == 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no right-hand side in 'b'");

@@ -34,6 +34,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -75,6 +76,9 @@ public abstract class MatMult extends RBuiltinNode {
     private final RAttributeProfiles bDimAttributeProfile = RAttributeProfiles.create();
     private final ConditionProfile noDimAttributes = ConditionProfile.createBinaryProfile();
 
+    @Child protected GetDimAttributeNode getADimsNode = GetDimAttributeNode.create();
+    @Child protected GetDimAttributeNode getBDimsNode = GetDimAttributeNode.create();
+
     protected abstract Object executeObject(Object a, Object b);
 
     private final NACheck na;
@@ -88,24 +92,26 @@ public abstract class MatMult extends RBuiltinNode {
         return MatMultNodeGen.create(true);
     }
 
-    @Specialization(guards = "bothZeroDim(a, b)")
+    @Specialization(guards = "bothZeroDim(a, b, getADimsNode, getBDimsNode)")
     protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
-        int r = b.getDimensions()[1];
-        int c = a.getDimensions()[0];
+        int r = getBDimsNode.getDimensions(b)[1];
+        int c = getADimsNode.getDimensions(a)[0];
         RDoubleVector result = RDataFactory.createDoubleVector(r * c);
         result.setDimensions(new int[]{r, c});
         return result;
     }
 
-    @Specialization(guards = "hasZeroDim(a)")
+    @Specialization(guards = "hasZeroDim(a, getADimsNode)")
     protected RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b) {
-        int[] dim = a.getDimensions()[0] == 0 ? new int[]{0, b.getDimensions()[1]} : new int[]{b.getDimensions()[0], 0};
+        int[] aDim = getADimsNode.getDimensions(a);
+        int[] dim = aDim[0] == 0 ? new int[]{0, getBDimsNode.getDimensions(b)[1]} : new int[]{getBDimsNode.getDimensions(b)[0], 0};
         return a.copyWithNewDimensions(dim);
     }
 
-    @Specialization(guards = "hasZeroDim(b)")
+    @Specialization(guards = "hasZeroDim(b, getBDimsNode)")
     protected RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b) {
-        int[] dim = b.getDimensions()[0] == 0 ? new int[]{0, a.getDimensions()[1]} : new int[]{a.getDimensions()[0], 0};
+        int[] bDim = getBDimsNode.getDimensions(b);
+        int[] dim = bDim[0] == 0 ? new int[]{0, getADimsNode.getDimensions(a)[1]} : new int[]{getADimsNode.getDimensions(a)[0], 0};
         return b.copyWithNewDimensions(dim);
     }
 
@@ -268,12 +274,13 @@ public abstract class MatMult extends RBuiltinNode {
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
         if (aIsMatrix.profile(a.isMatrix())) {
             if (bIsMatrix.profile(b.isMatrix())) {
-                int[] aDimensions = a.getDimensions();
-                int[] bDimensions = b.getDimensions();
+                int[] aDimensions = getADimsNode.getDimensions(a);
+                int[] bDimensions = getBDimsNode.getDimensions(b);
                 return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
             } else {
-                int aRows = a.getDimensions()[0];
-                int aCols = a.getDimensions()[1];
+                int[] aDim = getADimsNode.getDimensions(a);
+                int aRows = aDim[0];
+                int aCols = aDim[1];
                 int bRows;
                 int bCols;
                 if (lengthEquals.profile(aCols == b.getLength())) {
@@ -287,8 +294,9 @@ public abstract class MatMult extends RBuiltinNode {
             }
         } else {
             if (bIsMatrix.profile(b.isMatrix())) {
-                int bRows = b.getDimensions()[0];
-                int bCols = b.getDimensions()[1];
+                int[] bDim = getBDimsNode.getDimensions(b);
+                int bRows = bDim[0];
+                int bCols = bDim[1];
                 int aRows;
                 int aCols;
                 if (lengthEquals.profile(bRows == a.getLength())) {
@@ -328,14 +336,16 @@ public abstract class MatMult extends RBuiltinNode {
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         if (aIsMatrix.profile(a.isMatrix())) {
             if (bIsMatrix.profile(b.isMatrix())) {
-                final int aCols = a.getDimensions()[1];
-                final int bRows = b.getDimensions()[0];
+                int[] aDim = getADimsNode.getDimensions(a);
+                int[] bDim = getBDimsNode.getDimensions(b);
+                final int aCols = aDim[1];
+                final int bRows = bDim[0];
                 if (aCols != bRows) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                final int aRows = a.getDimensions()[0];
-                final int bCols = b.getDimensions()[1];
+                final int aRows = aDim[0];
+                final int bCols = bDim[1];
                 double[] result = new double[(aRows * bCols) << 1];
                 na.enable(a);
                 na.enable(b);
@@ -353,8 +363,9 @@ public abstract class MatMult extends RBuiltinNode {
                 }
                 return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
             } else {
-                final int aCols = a.getDimensions()[1];
-                final int aRows = a.getDimensions()[0];
+                int[] aDim = getADimsNode.getDimensions(a);
+                final int aCols = aDim[1];
+                final int aRows = aDim[0];
                 if (aCols != 1 && aCols != b.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -388,8 +399,9 @@ public abstract class MatMult extends RBuiltinNode {
             }
         } else {
             if (bIsMatrix.profile(b.isMatrix())) {
-                final int bRows = b.getDimensions()[0];
-                final int bCols = b.getDimensions()[1];
+                int[] bDim = getBDimsNode.getDimensions(b);
+                final int bRows = bDim[0];
+                final int bCols = bDim[1];
                 if (bRows != 1 && bRows != a.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -445,14 +457,16 @@ public abstract class MatMult extends RBuiltinNode {
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         if (aIsMatrix.profile(a.isMatrix())) {
             if (bIsMatrix.profile(b.isMatrix())) {
-                final int aCols = a.getDimensions()[1];
-                final int bRows = b.getDimensions()[0];
+                int[] aDim = getADimsNode.getDimensions(a);
+                int[] bDim = getBDimsNode.getDimensions(b);
+                final int aCols = aDim[1];
+                final int bRows = bDim[0];
                 if (aCols != bRows) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                final int aRows = a.getDimensions()[0];
-                final int bCols = b.getDimensions()[1];
+                final int aRows = aDim[0];
+                final int bCols = bDim[1];
                 int[] result = new int[aRows * bCols];
                 na.enable(a);
                 na.enable(b);
@@ -468,8 +482,9 @@ public abstract class MatMult extends RBuiltinNode {
                 }
                 return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
             } else {
-                final int aCols = a.getDimensions()[1];
-                final int aRows = a.getDimensions()[0];
+                int[] aDim = getADimsNode.getDimensions(a);
+                final int aCols = aDim[1];
+                final int aRows = aDim[0];
                 if (aCols != 1 && aCols != b.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -500,9 +515,10 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             }
         } else {
+            int[] bDim = getBDimsNode.getDimensions(b);
             if (bIsMatrix.profile(b.isMatrix())) {
-                final int bCols = b.getDimensions()[1];
-                final int bRows = b.getDimensions()[0];
+                final int bCols = bDim[1];
+                final int bRows = bDim[0];
                 if (bRows != 1 && bRows != a.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -660,15 +676,16 @@ public abstract class MatMult extends RBuiltinNode {
 
     // guards
 
-    protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b) {
-        return hasZeroDim(a) && hasZeroDim(b);
+    protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b, GetDimAttributeNode getADimsNode, GetDimAttributeNode getBDimsNode) {
+        return hasZeroDim(a, getADimsNode) && hasZeroDim(b, getBDimsNode);
     }
 
-    protected static boolean hasZeroDim(RAbstractVector v) {
-        if (!v.hasDimensions()) {
+    protected static boolean hasZeroDim(RAbstractVector v, GetDimAttributeNode getDimsNode) {
+        int[] dims = getDimsNode.getDimensions(v);
+        if (dims == null || dims.length == 0) {
             return false;
         }
-        for (int d : v.getDimensions()) {
+        for (int d : dims) {
             if (d == 0) {
                 return true;
             }

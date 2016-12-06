@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -116,9 +117,10 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
-                    @Cached("createDimNames()") SetFixedAttributeNode attrSetter) {
+                    @Cached("createDimNames()") SetFixedAttributeNode attrSetter,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
-        setDimNames(result, convertToListOfStrings(list), attrSetter);
+        setDimNames(result, convertToListOfStrings(list), attrSetter, getDimNode);
         return result;
     }
 
@@ -128,11 +130,11 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
 
-    private void setDimNames(RAbstractContainer container, RList newDimNames, SetFixedAttributeNode attrSetter) {
+    private void setDimNames(RAbstractContainer container, RList newDimNames, SetFixedAttributeNode attrSetter, GetDimAttributeNode getDimNode) {
         assert newDimNames != null;
         if (isRVectorProfile.profile(container instanceof RVector)) {
             RVector<?> vector = (RVector<?>) container;
-            int[] dimensions = vector.getDimensions();
+            int[] dimensions = getDimNode.getDimensions(vector);
             if (dimensions == null) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);

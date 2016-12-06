@@ -36,6 +36,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
@@ -95,6 +96,7 @@ public abstract class Bind extends RBaseNode {
     @Child private CastToVectorNode castVector;
     @Child private UseMethodInternalNode dcn;
     @Child private CastLogicalNode castLogical;
+    @Child private GetDimAttributeNode getDimsNode;
 
     private final BindType type;
 
@@ -120,6 +122,14 @@ public abstract class Bind extends RBaseNode {
 
     protected Bind(BindType type) {
         this.type = type;
+    }
+
+    protected int[] getVectorDimensions(RAbstractVector v) {
+        if (getDimsNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getDimsNode = insert(GetDimAttributeNode.create());
+        }
+        return getDimsNode.getDimensions(v);
     }
 
     protected RAbstractVector castVector(Object value) {
@@ -275,7 +285,7 @@ public abstract class Bind extends RBaseNode {
             if (vecDimNames != null) {
                 firstDimNames = vecDimNames.getDataAt(dimInd);
             }
-        } else if (!vec.isArray() || vec.getDimensions().length == 1) {
+        } else if (!vec.isArray() || getVectorDimensions(vec).length == 1) {
             RStringVector names = vec.getNames(attrProfiles);
             firstDimNames = names == null ? RNull.instance : names;
         } else {
@@ -319,7 +329,7 @@ public abstract class Bind extends RBaseNode {
                 dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
             return -ind;
-        } else if (!vec.isArray() || vec.getDimensions().length == 1) {
+        } else if (!vec.isArray() || getVectorDimensions(vec).length == 1) {
             if (argNames == null) {
                 if (deparseLevel == 0) {
                     dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
@@ -377,7 +387,7 @@ public abstract class Bind extends RBaseNode {
     }
 
     protected int[] getDimensions(RAbstractVector vector) {
-        int[] dimensions = vector.getDimensions();
+        int[] dimensions = getVectorDimensions(vector);
         if (dimensions == null || dimensions.length != 2) {
             return type == BindType.cbind ? new int[]{vector.getLength(), 1} : new int[]{1, vector.getLength()};
         } else {

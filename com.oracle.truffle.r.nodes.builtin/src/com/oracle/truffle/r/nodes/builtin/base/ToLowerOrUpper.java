@@ -30,9 +30,11 @@ import java.util.function.BiFunction;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -55,6 +57,7 @@ public abstract class ToLowerOrUpper {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Child private CopyOfRegAttributesNode copyAttributes = CopyOfRegAttributesNodeGen.create();
+        @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
         private StringMapNode() {
             // nothing to do
@@ -82,7 +85,7 @@ public abstract class ToLowerOrUpper {
                 String value = vector.getDataAt(i);
                 stringVector[i] = elementFunction(value, i, function);
             }
-            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), vector.getDimensions(), vector.getNames(attrProfiles));
+            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), getDimNode.getDimensions(vector), vector.getNames(attrProfiles));
             copyAttributes.execute(vector, result);
             return result;
         }

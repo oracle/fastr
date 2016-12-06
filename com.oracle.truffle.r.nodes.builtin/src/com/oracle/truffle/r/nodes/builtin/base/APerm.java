@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -61,10 +62,11 @@ public abstract class APerm extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize) {
+    protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
         checkErrorConditions(vector);
 
-        int[] dim = vector.getDimensions();
+        int[] dim = getDimsNode.getDimensions(vector);
         final int diml = dim.length;
 
         RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
@@ -101,10 +103,11 @@ public abstract class APerm extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
+    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
         checkErrorConditions(vector);
 
-        int[] dim = vector.getDimensions();
+        int[] dim = getDimsNode.getDimensions(vector);
         int[] perm = getPermute(dim, permVector);
 
         int[] posV = new int[dim.length];
@@ -126,7 +129,8 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
-                    @Cached("create()") RAttributeProfiles dimNamesProfile) {
+                    @Cached("create()") RAttributeProfiles dimNamesProfile,
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
         RList dimNames = vector.getDimNames(dimNamesProfile);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
@@ -146,7 +150,7 @@ public abstract class APerm extends RBuiltinNode {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize);
+        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode);
     }
 
     private static int[] getReverse(int[] dim) {

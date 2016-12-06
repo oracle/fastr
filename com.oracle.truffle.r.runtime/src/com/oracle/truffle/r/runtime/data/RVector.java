@@ -28,9 +28,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -62,8 +59,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
 
     protected boolean complete; // "complete" means: does not contain NAs
-    private Shape attrShape;
-    private Location dimensionsLoc;
     protected RStringVector names;
     private RList dimNames;
     // cache rownames for data frames as they are accessed at every data frame access
@@ -96,34 +91,14 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 initAttributes(RAttributesLayout.createDim(RDataFactory.createIntVector(dimensions, true)));
             }
         }
-        updateLocationsFromAttrs();
-    }
-
-    private void updateLocationsFromAttrs() {
-        if (attributes == null) {
-            attrShape = null;
-            dimensionsLoc = null;
-        } else if (attributes.getShape() != attrShape) {
-            attrShape = attributes.getShape();
-            Property prop = attrShape.getProperty(RRuntime.DIM_ATTR_KEY);
-            if (prop == null) {
-                dimensionsLoc = null;
-            } else {
-                dimensionsLoc = prop.getLocation();
-            }
-            // TODO: the same for the other special attributes
-        }
     }
 
     private int[] getDimensionsFromAttrs() {
-        // Sync the shape
-        updateLocationsFromAttrs();
-
-        if (dimensionsLoc == null) {
+        if (attributes == null) {
             return null;
         } else {
-            RIntVector dims = (RIntVector) dimensionsLoc.get(attributes);
-            return dims.getInternalStore();
+            RIntVector dims = (RIntVector) attributes.get(RRuntime.DIM_ATTR_KEY);
+            return dims == null ? null : dims.getInternalStore();
         }
     }
 
@@ -507,9 +482,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     @Override
     public final boolean hasDimensions() {
         // Sync the shape
-        updateLocationsFromAttrs();
-
-        return dimensionsLoc != null;
+        return attributes == null ? false : attributes.containsKey(RRuntime.DIM_ATTR_KEY);
     }
 
     @Override

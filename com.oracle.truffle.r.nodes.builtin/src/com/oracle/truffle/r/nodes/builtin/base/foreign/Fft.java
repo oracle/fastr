@@ -11,8 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -36,15 +38,16 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Specialization
-    public Object execute(RAbstractComplexVector zVec, boolean inverse) {
+    public Object execute(RAbstractComplexVector zVec, boolean inverse, @Cached("create()") GetDimAttributeNode getDimNode) {
         double[] z = zVec.materialize().getDataTemp();
         int inv = inverse ? 2 : -2;
+        int[] d = getDimNode.getDimensions(zVec);
         @SuppressWarnings("unused")
         int retCode = 7;
         if (zVecLgt1.profile(zVec.getLength() > 1)) {
             int[] maxf = new int[1];
             int[] maxp = new int[1];
-            if (noDims.profile(zVec.getDimensions() == null)) {
+            if (noDims.profile(d == null)) {
                 int n = zVec.getLength();
                 fftNode.executeFactor(n, maxf, maxp);
                 if (maxf[0] == 0) {
@@ -57,7 +60,6 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
             } else {
                 int maxmaxf = 1;
                 int maxmaxp = 1;
-                int[] d = zVec.getDimensions();
                 int ndims = d.length;
                 /* do whole loop just for error checking and maxmax[fp] .. */
                 for (int i = 0; i < ndims; i++) {
@@ -91,6 +93,6 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 }
             }
         }
-        return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
+        return RDataFactory.createComplexVector(z, zVec.isComplete(), d);
     }
 }

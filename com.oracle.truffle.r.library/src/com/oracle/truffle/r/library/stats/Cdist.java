@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -48,9 +49,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
                     @Cached("getMethod(method)") Method methodObj,
                     @Cached("create()") SetAttributeNode setAttrNode,
-                    @Cached("create()") SetClassAttributeNode setClassAttrNode) {
-        int nr = RRuntime.nrows(x);
-        int nc = RRuntime.ncols(x);
+                    @Cached("create()") SetClassAttributeNode setClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
+        int nr = getDimNode.nrows(x);
+        int nc = getDimNode.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
         RDoubleVector xm = x.materialize();

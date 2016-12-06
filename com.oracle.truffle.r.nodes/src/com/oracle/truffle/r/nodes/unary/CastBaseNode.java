@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -47,6 +50,7 @@ public abstract class CastBaseNode extends CastNode {
     private final NullProfile hasDimensionsProfile = NullProfile.create();
     private final NullProfile hasNamesProfile = NullProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetDimAttributeNode getDimNode;
 
     private final boolean preserveNames;
     private final boolean preserveDimensions;
@@ -79,7 +83,11 @@ public abstract class CastBaseNode extends CastNode {
 
     protected int[] getPreservedDimensions(RAbstractContainer operand) {
         if (preserveDimensions()) {
-            return hasDimensionsProfile.profile(operand.getDimensions());
+            if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getDimNode = insert(GetDimAttributeNode.create());
+            }
+            return hasDimensionsProfile.profile(getDimNode.getDimensions(operand));
         } else {
             return null;
         }

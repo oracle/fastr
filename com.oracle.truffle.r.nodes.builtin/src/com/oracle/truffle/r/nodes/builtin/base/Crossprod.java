@@ -27,7 +27,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -62,21 +64,26 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization(guards = {"x.isMatrix()", "y.isMatrix()"})
-    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
-        int xRows = x.getDimensions()[0];
-        int xCols = x.getDimensions()[1];
-        int yRows = y.getDimensions()[0];
-        int yCols = y.getDimensions()[1];
+    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y,
+                    @Cached("create()") GetDimAttributeNode getXDimsNode,
+                    @Cached("create()") GetDimAttributeNode getYDimsNode) {
+        int[] xDims = getXDimsNode.getDimensions(x);
+        int[] yDims = getYDimsNode.getDimensions(y);
+        int xRows = xDims[0];
+        int xCols = xDims[1];
+        int yRows = yDims[0];
+        int yCols = yDims[1];
         return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false);
     }
 
-    private static RDoubleVector mirror(RDoubleVector result) {
+    private static RDoubleVector mirror(RDoubleVector result, GetDimAttributeNode getResultDimsNode) {
         /*
          * Mirroring the result is not only good for performance, but it is also required to produce
          * the same result as GNUR.
          */
-        assert result.isMatrix() && result.getDimensions()[0] == result.getDimensions()[1];
-        int size = result.getDimensions()[0];
+        int[] resultDims = getResultDimsNode.getDimensions(result);
+        assert result.isMatrix() && resultDims[0] == resultDims[1];
+        int size = resultDims[0];
         double[] data = result.getDataWithoutCopying();
         for (int row = 0; row < size; row++) {
             int destIndex = row * size + row + 1;
@@ -96,10 +103,12 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization(guards = "x.isMatrix()")
-    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-        int xRows = x.getDimensions()[0];
-        int xCols = x.getDimensions()[1];
-        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true));
+    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
+                    @Cached("create()") GetDimAttributeNode getDimsNode, @Cached("create()") GetDimAttributeNode getResultDimsNode) {
+        int[] xDims = getDimsNode.getDimensions(x);
+        int xRows = xDims[0];
+        int xCols = xDims[1];
+        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true), getResultDimsNode);
     }
 
     @Specialization

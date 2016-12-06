@@ -10,7 +10,9 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -29,7 +31,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector cutree(RAbstractIntVector mergeIn, RAbstractIntVector whichIn) {
+    protected RIntVector cutree(RAbstractIntVector mergeIn, RAbstractIntVector whichIn, @Cached("create()") GetDimAttributeNode getDimNode) {
         RIntVector merge = mergeIn.materialize();
         RIntVector which = whichIn.materialize();
         int whichLen = which.getLength();
@@ -43,7 +45,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
         int mm = 0;
         boolean foundJ;
 
-        int n = RRuntime.nrows(merge) + 1;
+        int n = getDimNode.nrows(merge) + 1;
         /*
          * The C code uses 1-based indices for the next three arrays and so set the int * value
          * behind the actual start of the array. To keep the logic equivalent, we call adj(k) on the

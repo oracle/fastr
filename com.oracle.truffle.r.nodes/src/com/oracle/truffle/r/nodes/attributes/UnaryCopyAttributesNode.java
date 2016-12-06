@@ -24,8 +24,10 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -49,6 +51,8 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
     protected final RAttributeProfiles attrSourceProfiles = RAttributeProfiles.create();
 
+    @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+
     protected UnaryCopyAttributesNode(boolean copyAllAttributes) {
         this.copyAllAttributes = copyAllAttributes;
     }
@@ -60,7 +64,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
 
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
-        return vector instanceof RVector && vector.hasDimensions() || (copyAllAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null ||
+        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null ||
                         vector.getDimNames(attrProfiles) != null;
     }
 
@@ -87,14 +91,15 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createDimNames()") SetFixedAttributeNode putDimNames, //
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
         RVector<?> result = target.materialize();
 
         if (copyAllAttributes) {
             copyOfReg.execute(source, result);
         }
 
-        int[] newDimensions = source.getDimensions();
+        int[] newDimensions = getDimsNode.getDimensions(source);
         if (noDimensions.profile(newDimensions == null)) {
             DynamicObject attributes = result.getAttributes();
             if (attributes != null) {

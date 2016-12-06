@@ -35,36 +35,28 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
 /**
- * This node is responsible for retrieving a value from the predefined (fixed) attribute. It accepts
- * both {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the
- * first argument is {@link RAttributable} and its attributes are initialized, the recursive
- * instance of this class is used to get the attribute value from the attributes.
+ * This node is responsible for determining the existence of the predefined (fixed) attribute. It
+ * accepts both {@link DynamicObject} and {@link RAttributable} instances as the first argument. If
+ * the first argument is {@link RAttributable} and its attributes are initialized, the recursive
+ * instance of this class is used to determine the existence from the attributes.
  */
-public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
 
-    @Child private GetFixedAttributeNode recursive;
+    @Child private HasFixedAttributeNode recursive;
 
-    protected GetFixedAttributeNode(String name) {
+    protected HasFixedAttributeNode(String name) {
         super(name);
     }
 
-    public static GetFixedAttributeNode create(String name) {
-        return GetFixedAttributeNodeGen.create(name);
+    public static HasFixedAttributeNode create(String name) {
+        return HasFixedAttributeNodeGen.create(name);
     }
 
-    public static GetFixedAttributeNode createNames() {
-        return GetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+    public static HasFixedAttributeNode createDim() {
+        return HasFixedAttributeNodeGen.create(RRuntime.DIM_ATTR_KEY);
     }
 
-    public static GetDimAttributeNode createDim() {
-        return GetDimAttributeNode.create();
-    }
-
-    public static GetFixedAttributeNode createClass() {
-        return GetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
-    }
-
-    public abstract Object execute(Object attr);
+    public abstract boolean execute(Object attr);
 
     protected boolean hasProperty(Shape shape) {
         return shape.hasProperty(name);
@@ -74,25 +66,25 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
                     guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     @SuppressWarnings("unused")
-    protected Object getAttrCached(DynamicObject attrs,
+    protected boolean hasAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs);
+        return location != null;
     }
 
-    @Specialization(contains = "getAttrCached")
+    @Specialization(contains = "hasAttrCached")
     @TruffleBoundary
-    protected Object getAttrFallback(DynamicObject attrs) {
-        return attrs.get(name);
+    protected boolean hasAttrFallback(DynamicObject attrs) {
+        return attrs.containsKey(name);
     }
 
     @Specialization
-    protected Object getAttrFromAttributable(RAttributable x,
+    protected boolean hasAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile) {
         DynamicObject attributes = x.getAttributes();
         if (attributes == null) {
             attrNullProfile.enter();
-            return null;
+            return false;
         }
 
         if (recursive == null) {

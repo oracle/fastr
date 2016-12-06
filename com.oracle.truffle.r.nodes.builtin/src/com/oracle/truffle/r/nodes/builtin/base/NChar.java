@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -68,7 +69,8 @@ public abstract class NChar extends RBuiltinNode {
     protected RIntVector ncharInt(RAbstractIntVector vector, String type, boolean allowNA, boolean keepNA,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("create()") RAttributeProfiles attrProfiles,
-                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         int len = vector.getLength();
         int[] result = new int[len];
         loopProfile.profileCounted(len);
@@ -80,7 +82,7 @@ public abstract class NChar extends RBuiltinNode {
                 result[i] = (int) (Math.log10(x) + 1); // not the fastest one
             }
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, true, vector.getDimensions(), vector.getNames(attrProfiles));
+        RIntVector resultVector = RDataFactory.createIntVector(result, true, getDimNode.getDimensions(vector), vector.getNames(attrProfiles));
         RList dimNames = vector.getDimNames(attrProfiles);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             resultVector.setDimNames(dimNames);
@@ -93,14 +95,15 @@ public abstract class NChar extends RBuiltinNode {
     protected RIntVector nchar(RAbstractStringVector vector, String type, boolean allowNA, boolean keepNA,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("create()") RAttributeProfiles attrProfiles,
-                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         int len = vector.getLength();
         int[] result = new int[len];
         loopProfile.profileCounted(len);
         for (int i = 0; loopProfile.inject(i < len); i++) {
             result[i] = vector.getDataAt(i).length();
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, true, vector.getDimensions(), vector.getNames(attrProfiles));
+        RIntVector resultVector = RDataFactory.createIntVector(result, true, getDimNode.getDimensions(vector), vector.getNames(attrProfiles));
         RList dimNames = vector.getDimNames(attrProfiles);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             resultVector.setDimNames(dimNames);

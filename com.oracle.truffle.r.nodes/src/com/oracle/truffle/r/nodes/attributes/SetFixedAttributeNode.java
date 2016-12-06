@@ -94,6 +94,25 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         }
     }
 
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null"}, //
+                    assumptions = {"oldShape.getValidAssumption()", "newShape.getValidAssumption()"})
+    protected static void setNewAttrCached(DynamicObject attrs, Object value,
+                    @Cached("lookupShape(attrs)") Shape oldShape,
+                    @SuppressWarnings("unused") @Cached("lookupLocation(oldShape, name)") Location oldLocation,
+                    @Cached("defineProperty(oldShape, name, value)") Shape newShape,
+                    @Cached("lookupLocation(newShape, name)") Location newLocation) {
+        try {
+            newLocation.set(attrs, value, oldShape, newShape);
+        } catch (IncompatibleLocationException ex) {
+            RInternalError.reportError(ex);
+        }
+    }
+
+    protected static Shape defineProperty(Shape oldShape, Object name, Object value) {
+        return oldShape.defineProperty(name, value, 0);
+    }
+
     @Specialization(contains = "setAttrCached")
     @TruffleBoundary
     protected void setFallback(DynamicObject attrs, Object value) {
