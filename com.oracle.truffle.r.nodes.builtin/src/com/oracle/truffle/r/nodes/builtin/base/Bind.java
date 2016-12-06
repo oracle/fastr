@@ -387,9 +387,10 @@ public abstract class Bind extends RBaseNode {
     }
 
     protected int[] getDimensions(RAbstractVector vector) {
-        int[] dimensions = getVectorDimensions(vector);
+        RAbstractVector vectorProfiled = vectorProfile.profile(vector);
+        int[] dimensions = getVectorDimensions(vectorProfiled);
         if (dimensions == null || dimensions.length != 2) {
-            return type == BindType.cbind ? new int[]{vector.getLength(), 1} : new int[]{1, vector.getLength()};
+            return type == BindType.cbind ? new int[]{vectorProfiled.getLength(), 1} : new int[]{1, vectorProfiled.getLength()};
         } else {
             assert dimensions.length == 2;
             return dimensions;
@@ -493,7 +494,8 @@ public abstract class Bind extends RBaseNode {
         int[] resultDimensions = new int[2];
         int[] secondDims = new int[vectors.length];
         boolean notEqualRows = getResultDimensions(vectors, resultDimensions, secondDims);
-        RVector<?> result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
+        RAbstractVector first = vectorProfile.profile(vectors[0]);
+        RVector<?> result = resultProfile.profile(first.createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
 
         int ind = 0;
         Object rowDimResultNames = RNull.instance;

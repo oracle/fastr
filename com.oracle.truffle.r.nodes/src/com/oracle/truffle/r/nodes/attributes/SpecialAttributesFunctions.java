@@ -202,7 +202,8 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected void setNamesInContainer(RAbstractContainer x, RStringVector names, @Cached("createClassProfile()") ValueProfile contClassProfile) {
+        protected void setNamesInContainer(RAbstractContainer x, RStringVector names,
+                        @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setNames(names);
         }
@@ -215,16 +216,30 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected void setOneDimInContainer(RAbstractContainer x, Integer dim, @Cached("createClassProfile()") ValueProfile contClassProfile) {
-            RAbstractContainer xProfiled = contClassProfile.profile(x);
-            // xProfiled.setDimensions(new int[]{dim});
-            xProfiled.setAttr(RRuntime.DIM_ATTR_KEY, new int[]{dim});
+        protected void setOneDimInContainer(RAbstractContainer x, Integer dim,
+                        @Cached("createClassProfile()") ValueProfile contClassProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile vectorProfile) {
+            int[] dims = new int[]{dim};
+            if (vectorProfile.profile(x instanceof RVector)) {
+                ((RVector<?>) x).setDimensions(dims);
+            } else {
+                RAbstractContainer xProfiled = contClassProfile.profile(x);
+                xProfiled.setDimensions(dims);
+            }
+
         }
 
         @Specialization
-        protected void setDimsInContainer(RAbstractContainer x, RAbstractIntVector dims, @Cached("createClassProfile()") ValueProfile contClassProfile) {
-            RAbstractContainer xProfiled = contClassProfile.profile(x);
-            xProfiled.setDimensions(dims.materialize().getDataCopy());
+        protected void setDimsInContainer(RAbstractContainer x, RAbstractIntVector dims,
+                        @Cached("createClassProfile()") ValueProfile contClassProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile vectorProfile) {
+            int[] dimsArr = dims.materialize().getDataCopy();
+            if (vectorProfile.profile(x instanceof RVector)) {
+                ((RVector<?>) x).setDimensions(dimsArr);
+            } else {
+                RAbstractContainer xProfiled = contClassProfile.profile(x);
+                xProfiled.setDimensions(dimsArr);
+            }
         }
 
     }
