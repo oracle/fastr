@@ -109,6 +109,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -150,6 +151,9 @@ public class ForeignFunctions {
      * handle.
      */
     protected abstract static class LookupAdapter extends RBuiltinNode {
+        @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
+        @Child protected CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
+
         protected static class UnimplementedExternal extends RExternalBuiltinNode {
             private final String name;
 
@@ -197,8 +201,6 @@ public class ForeignFunctions {
             }
             throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
         }
-
-        @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
 
         protected NativeCallInfo extractSymbolInfo(VirtualFrame frame, RList symbol) {
             return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
@@ -609,7 +611,7 @@ public class ForeignFunctions {
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName, //
                         @Cached("symbol") RList cached, //
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, args.getArguments());
+            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
         }
 
         /**
@@ -633,7 +635,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
         }
 
         @SuppressWarnings("unused")
@@ -712,7 +714,7 @@ public class ForeignFunctions {
                         @Cached("symbol") RList cached, //
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{list});
+            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -730,7 +732,7 @@ public class ForeignFunctions {
                 throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -788,7 +790,7 @@ public class ForeignFunctions {
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
         }
 
         @Specialization
@@ -807,7 +809,7 @@ public class ForeignFunctions {
             }
             Object list = encodeArgumentPairList(args, symbol);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
         }
 
         @Fallback
@@ -847,7 +849,7 @@ public class ForeignFunctions {
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, new Object[]{list});
+            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -864,7 +866,7 @@ public class ForeignFunctions {
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -903,7 +905,7 @@ public class ForeignFunctions {
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(nativeCallInfo, args.getArguments());
+            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
         }
 
         @Specialization
@@ -920,7 +922,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback

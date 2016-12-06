@@ -187,10 +187,10 @@ void init_internals(JNIEnv *env) {
 	SET_SYMVALUE_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 0);
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 0);
-	RAW_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "RAW", "(Ljava/lang/Object;)[B", 0);
-	REAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "REAL", "(Ljava/lang/Object;)[D", 0);
-	LOGICAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LOGICAL", "(Ljava/lang/Object;)[B", 0);
-	INTEGER_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "INTEGER", "(Ljava/lang/Object;)[I", 0);
+	RAW_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "RAW", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	REAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "REAL", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	LOGICAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LOGICAL", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	INTEGER_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "INTEGER", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	STRING_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	LENGTH_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LENGTH", "(Ljava/lang/Object;)I", 0);

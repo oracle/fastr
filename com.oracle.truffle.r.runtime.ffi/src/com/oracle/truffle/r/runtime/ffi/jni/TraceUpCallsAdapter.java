@@ -298,7 +298,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public byte[] RAW(Object x) {
+    public Object RAW(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("RAW", x);
         }
@@ -306,7 +306,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public byte[] LOGICAL(Object x) {
+    public Object LOGICAL(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("LOGICAL", x);
         }
@@ -314,7 +314,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public int[] INTEGER(Object x) {
+    public Object INTEGER(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("INTEGER", x);
         }
@@ -322,7 +322,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public double[] REAL(Object x) {
+    public Object REAL(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("REAL", x);
         }
