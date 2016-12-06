@@ -28,7 +28,7 @@ import com.oracle.truffle.api.nodes.Node;
  * Support for the {.Call} and {.External} calls.
  */
 public interface CallRFFI {
-    public abstract static class CallRFFINode extends Node {
+    abstract class CallRFFINode extends Node {
         /**
          * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} can be any of the types used to represent

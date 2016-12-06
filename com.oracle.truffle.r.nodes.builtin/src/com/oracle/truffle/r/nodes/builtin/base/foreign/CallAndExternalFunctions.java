@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -91,7 +90,6 @@ import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
@@ -99,8 +97,6 @@ import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -108,22 +104,21 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
- * {@code .Call} {@code .Fortran}, {@code .External}, {@code .External2}, {@code External.graphics}
- * functions.
+ * {@code .Call}, {@code .Call.graphics}, {@code .External}, {@code .External2},
+ * {@code External.graphics} functions, which share a common signature.
  *
  * TODO Completeness (more types, more error checks), Performance (copying). Especially all the
  * subtleties around copying.
  *
  * See <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
  */
-public class ForeignFunctions {
+public class CallAndExternalFunctions {
 
     @TruffleBoundary
     protected static Object encodeArgumentPairList(RArgsValuesAndNames args, String symbolName) {
@@ -136,160 +131,8 @@ public class ForeignFunctions {
         return list;
     }
 
-    /**
-     * Locator for "builtin" package function implementations. The "builtin" packages contain many
-     * functions that are called from R code via the FFI, e.g. {@code .Call}, but implemented
-     * internally in GnuR, and not necessarily following the FFI API. The value passed to
-     * {@code .Call} etc., is a symbol, created when the package is loaded and stored in the
-     * namespace environment of the package, that is a list-valued object. Evidently these
-     * "builtins" are somewhat similar to the {@code .Primitive} and {@code .Internal} builtins and,
-     * similarly, most of these are re-implemented in Java in FastR. The
-     * {@link #lookupBuiltin(RList)} method checks the name in the list object and returns the
-     * {@link RExternalBuiltinNode} that implements the function, or {@code null}. A {@code null}
-     * result implies that the builtin is not implemented in Java, but called directly via the FFI
-     * interface, which is only possible for functions that use the FFI in a way that FastR can
-     * handle.
-     */
-    protected abstract static class LookupAdapter extends RBuiltinNode {
-        @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
+    protected abstract static class CallRFFIAdapter extends LookupAdapter {
         @Child protected CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
-
-        protected static class UnimplementedExternal extends RExternalBuiltinNode {
-            private final String name;
-
-            public UnimplementedExternal(String name) {
-                this.name = name;
-            }
-
-            @Override
-            public final Object call(RArgsValuesAndNames args) {
-                throw RInternalError.unimplemented("unimplemented external builtin: " + name);
-            }
-        }
-
-        protected abstract RExternalBuiltinNode lookupBuiltin(RList symbol);
-
-        private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
-
-        protected static String lookupName(RList symbol) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (symbol.getNames() != null) {
-                RAbstractStringVector names = symbol.getNames();
-                for (int i = 0; i < names.getLength(); i++) {
-                    if (names.getDataAt(i).equals("name")) {
-                        String name = RRuntime.asString(symbol.getDataAt(i));
-                        return name != null ? name : UNKNOWN_EXTERNAL_BUILTIN;
-                    }
-                }
-            }
-            return UNKNOWN_EXTERNAL_BUILTIN;
-        }
-
-        @TruffleBoundary
-        protected RuntimeException fallback(Object symbol) {
-            String name = null;
-            if (symbol instanceof RList) {
-                name = lookupName((RList) symbol);
-                name = name == UNKNOWN_EXTERNAL_BUILTIN ? null : name;
-                if (name != null && lookupBuiltin((RList) symbol) != null) {
-                    /*
-                     * if we reach this point, then the cache saw a different value for f. the lists
-                     * that contain the information about native calls are never expected to change.
-                     */
-                    throw RInternalError.shouldNotReachHere("fallback reached for " + getRBuiltin().name() + " " + name);
-                }
-            }
-            throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
-        }
-
-        protected NativeCallInfo extractSymbolInfo(VirtualFrame frame, RList symbol) {
-            return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
-        }
-
-        protected String checkPackageArg(Object rPackage, BranchProfile errorProfile) {
-            String libName = null;
-            if (!(rPackage instanceof RMissing)) {
-                libName = RRuntime.asString(rPackage);
-                if (libName == null) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
-                }
-            }
-            return libName;
-        }
-
-        protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
-            return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "model.R"), name);
-        }
-
-        protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();
-        protected static final int ExternalNST = DLL.NativeSymbolType.External.ordinal();
-
-        public static DLL.RegisteredNativeSymbol createRegisteredNativeSymbol(int nstOrd) {
-            // DSL cannot resolve DLL.DLL.NativeSymbolType
-            DLL.NativeSymbolType nst = DLL.NativeSymbolType.values()[nstOrd];
-            return new DLL.RegisteredNativeSymbol(nst, null, null);
-        }
-    }
-
-    /**
-     * Interface to .Fortran native functions. Some functions have explicit implementations in
-     * FastR, otherwise the .Fortran interface uses the machinery that implements the .C interface.
-     */
-    @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
-    public abstract static class Fortran extends LookupAdapter {
-
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
-        }
-
-        @Override
-        @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            switch (lookupName(symbol)) {
-                case "dqrdc2":
-                    return new Dqrdc2();
-                case "dqrcf":
-                    return new Dqrcf();
-                default:
-                    return null;
-            }
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
-                        @Cached("symbol") RList cached, //
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
-        }
-
-        @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
-                        @SuppressWarnings("unused") RMissing encoding) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
-            return DotC.dispatch(this, nativeCallInfo, naok, dup, args);
-        }
-
-        @Specialization
-        protected RList c(RAbstractStringVector f, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding, //
-                        @Cached("create()") BranchProfile errorProfile) {
-            String libName = checkPackageArg(rPackage, errorProfile);
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(f.getDataAt(0), libName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
-            }
-            return DotC.dispatch(this, new NativeCallInfo(f.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object fallback(Object symbol, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
-            throw fallback(symbol);
-        }
     }
 
     /**
@@ -309,7 +152,7 @@ public class ForeignFunctions {
      * could be invoked by a string but experimentally that situation has never been encountered.
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCall extends LookupAdapter {
+    public abstract static class DotCall extends CallRFFIAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -651,7 +494,7 @@ public class ForeignFunctions {
      * {@link DotCall}.
      */
     @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternal extends LookupAdapter {
+    public abstract static class DotExternal extends CallRFFIAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -742,7 +585,7 @@ public class ForeignFunctions {
     }
 
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternal2 extends LookupAdapter {
+    public abstract static class DotExternal2 extends CallRFFIAdapter {
         private static final Object CALL = "call";
         private static final Object OP = "op";
         private static final Object RHO = "rho";
@@ -819,7 +662,7 @@ public class ForeignFunctions {
     }
 
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternalGraphics extends LookupAdapter {
+    public abstract static class DotExternalGraphics extends CallRFFIAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -876,7 +719,7 @@ public class ForeignFunctions {
     }
 
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCallGraphics extends LookupAdapter {
+    public abstract static class DotCallGraphics extends CallRFFIAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 

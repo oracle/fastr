@@ -30,7 +30,7 @@ import com.oracle.truffle.api.nodes.Node;
  * {@code fft_factor} and {@code fft_work}. functions from the GNU R C code.
  */
 public interface StatsRFFI {
-    public abstract static class FFTNode extends Node {
+    abstract class FFTNode extends Node {
         public abstract void executeFactor(int n, int[] pmaxf, int[] pmaxp);
 
         public abstract int executeWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);

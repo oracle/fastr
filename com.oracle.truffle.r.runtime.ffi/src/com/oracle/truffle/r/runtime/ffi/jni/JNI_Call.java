@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
  */
 public class JNI_Call implements CallRFFI {
 
-    public static class JNI_CallRFFINode extends CallRFFINode {
+    private static class JNI_CallRFFINode extends CallRFFINode {
 
         @Override
         @TruffleBoundary
