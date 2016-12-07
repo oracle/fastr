@@ -31,11 +31,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -72,6 +74,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     @Child private SetClassAttributeNode setClassAttrNode;
     @Child private SetRowNamesAttributeNode setRowNamesAttrNode;
     @Child private SetAttributeNode setGenAttrNode;
+    @Child private SetDimAttributeNode setDimNode;
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
@@ -144,7 +147,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
-            result.setDimensions(null);
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+            setDimNode.setDimensions(result, null);
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
             return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
@@ -186,7 +193,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
-            result.setDimensions(dimsVector.materialize().getDataCopy());
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+            setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
             return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {

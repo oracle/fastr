@@ -32,7 +32,9 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -52,11 +54,15 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     }
 
     public static GetFixedAttributeNode create(String name) {
-        return GetFixedAttributeNodeGen.create(name);
+        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
+            return SpecialAttributesFunctions.createGetSpecialAttributeNode(name);
+        } else {
+            return GetFixedAttributeNodeGen.create(name);
+        }
     }
 
     public static GetFixedAttributeNode createNames() {
-        return GetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+        return GetNamesAttributeNode.create();
     }
 
     public static GetDimAttributeNode createDim() {
@@ -64,7 +70,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     }
 
     public static GetFixedAttributeNode createClass() {
-        return GetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
+        return GetClassAttributeNode.create();
     }
 
     public abstract Object execute(Object attr);

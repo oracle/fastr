@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -279,6 +280,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile originalDimNamesPRofile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
+    @Child private SetDimAttributeNode setDimNode;
+
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
@@ -325,7 +328,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         if (resultHasDimensions.profile(dimCount > 1)) {
             metadataApplied.enter();
-            extractedTarget.setDimensions(newDimensions);
+
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+
+            setDimNode.setDimensions(extractedTarget, newDimensions);
             if (newDimNames != null) {
                 extractedTarget.setDimNames(RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
             }

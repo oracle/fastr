@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -259,7 +260,9 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doQr(RAbstractDoubleVector aIn, @Cached("create()") GetDimAttributeNode getDimsNode) {
+        protected RList doQr(RAbstractDoubleVector aIn,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") SetDimAttributeNode setDimsNode) {
             // This implementation is sufficient for B25 matcal-5.
             if (!(aIn instanceof RDoubleVector)) {
                 RError.nyi(this, "non-real vectors not supported (yet)");
@@ -290,7 +293,7 @@ public class LaFunctions {
             // TODO check complete
             RDoubleVector ra = RDataFactory.createDoubleVector(a, RDataFactory.COMPLETE_VECTOR);
             // TODO check pivot
-            ra.setDimensions(dims);
+            setDimsNode.setDimensions(ra, dims);
             data[0] = ra;
             data[1] = m < n ? m : n;
             data[2] = RDataFactory.createDoubleVector(tau, RDataFactory.COMPLETE_VECTOR);
@@ -554,7 +557,8 @@ public class LaFunctions {
         @Specialization
         protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
                         @Cached("create()") GetDimAttributeNode getADimsNode,
-                        @Cached("create()") GetDimAttributeNode getBinDimsNode) {
+                        @Cached("create()") GetDimAttributeNode getBinDimsNode,
+                        @Cached("create()") SetDimAttributeNode setBDimsNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
@@ -580,7 +584,7 @@ public class LaFunctions {
                 }
                 bData = new double[n * p];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
-                b.setDimensions(new int[]{n, p});
+                setBDimsNode.setDimensions(b, new int[]{n, p});
                 RList binDn = bin.getDimNames();
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
                 if (aDn != null || binDn != null) {

@@ -103,7 +103,6 @@ public abstract class Transpose extends RBuiltinNode {
             hasDimNamesProfile.enter();
             assert dimNames.getLength() == 2;
             RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)});
-            r.setInternalDimNames(newDimNames);
             putDimNames.execute(r.getAttributes(), newDimNames);
         }
         return r;

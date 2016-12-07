@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -64,6 +65,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private SetAttributeNode setAttrNode;
+    @Child private SetDimAttributeNode setDimNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -165,14 +167,20 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             Object value = sourceList.getDataAt(i);
             String attrName = listNames.getDataAt(i);
             if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
+
+                if (setDimNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setDimNode = insert(SetDimAttributeNode.create());
+                }
+
                 if (value == RNull.instance) {
-                    result.setDimensions(null);
+                    setDimNode.setDimensions(result, null);
                 } else {
                     RAbstractIntVector dimsVector = castInteger(castVector(value));
                     if (dimsVector.getLength() == 0) {
                         throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }
-                    result.setDimensions(dimsVector.materialize().getDataCopy());
+                    setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
                 }
             }
         }

@@ -24,6 +24,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
     static final ListPrinter INSTANCE = new ListPrinter();
+    private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     private ListPrinter() {
         // singleton
@@ -168,7 +170,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
 
         RAbstractStringVector names;
-        names = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(RRuntime.NAMES_ATTR_KEY)));
+        names = Utils.castTo(RRuntime.asAbstractVector(s.getNames(dummyAttrProfiles)));
 
         if (ns > 0) {
             int npr = (ns <= pp.getMax() + 1) ? ns : pp.getMax();

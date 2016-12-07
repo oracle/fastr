@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -55,6 +56,7 @@ public final class UnaryMapNode extends RBaseNode {
     @Child private UnaryMapFunctionNode scalarNode;
     @Child private MapUnaryVectorInternalNode vectorNode;
     @Child private GetDimAttributeNode getDimNode;
+    @Child private SetDimAttributeNode setDimNode;
 
     // profiles
     private final Class<? extends RAbstractVector> operandClass;
@@ -181,7 +183,14 @@ public final class UnaryMapNode extends RBaseNode {
                 getDimNode = insert(GetDimAttributeNode.create());
             }
 
-            copyAttributesInternal((RVector<?>) result, operand, getDimNode.getDimensions(operand));
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+
+            setDimNode.setDimensions(result, getDimNode.getDimensions(operand));
+
+            copyAttributesInternal((RVector<?>) result, operand);
         }
         return result;
     }
@@ -198,9 +207,8 @@ public final class UnaryMapNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource, int[] dims) {
+    private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
-        result.setDimensions(dims);
         result.copyNamesFrom(attrProfiles, attributeSource);
     }
 

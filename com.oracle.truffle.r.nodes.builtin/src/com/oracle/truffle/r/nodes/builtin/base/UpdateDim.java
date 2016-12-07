@@ -70,7 +70,6 @@ public abstract class UpdateDim extends RBuiltinNode {
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
         RVector<?> result = ((RAbstractVector) reuse.execute(vector)).materialize();
         result.setInternalNames(null);
-        result.setInternalDimNames(null);
 
         DynamicObject attrs = result.getAttributes();
         if (initAttrProfile.profile(attrs == null)) {

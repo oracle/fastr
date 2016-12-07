@@ -153,7 +153,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 if (hasAttributes.profile(attributes != null)) {
                     removeDim.execute(attributes);
                     removeDimNames.execute(attributes);
-                    result.setInternalDimNames(null);
                 }
 
                 RStringVector vecNames = left.getNames(attrLeftProfiles);
@@ -187,7 +186,6 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 putDimNames.execute(result.getAttributes(), newDimNames);
 
                 newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-                result.setInternalDimNames(newDimNames);
                 return result;
             }
             if (result != right) {

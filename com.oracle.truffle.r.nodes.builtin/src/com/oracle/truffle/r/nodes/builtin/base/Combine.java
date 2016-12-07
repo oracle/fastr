@@ -478,10 +478,9 @@ public abstract class Combine extends RBuiltinNode {
                 result.initAttributes(RAttributesLayout.createNames(vecNames));
                 result.setInternalNames(vecNames);
             } else {
-                RList dimNames = materialized.getInternalDimNames();
+                RList dimNames = materialized.getDimNames();
                 if (hasDimNamesProfile.profile(dimNames != null)) {
-                    result.initAttributes(RAttributesLayout.createDimNames(vecNames));
-                    result.setInternalDimNames(dimNames);
+                    result.initAttributes(RAttributesLayout.createDimNames(dimNames));
                 }
             }
             return result;

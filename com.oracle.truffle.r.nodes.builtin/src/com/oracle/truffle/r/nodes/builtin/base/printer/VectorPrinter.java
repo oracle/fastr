@@ -80,7 +80,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(vector.getAttr(RRuntime.DIMNAMES_ATTR_KEY));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getAttr(RRuntime.NAMES_ATTR_KEY)));
+                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -685,7 +685,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             } else {
                 rl = getDimNamesAt(0);
                 cl = getDimNamesAt(1);
-                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getAttr(RRuntime.NAMES_ATTR_KEY));
+                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getNames());
                 if (axisNames == null) {
                     rn = null;
                     cn = null;

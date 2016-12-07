@@ -24,6 +24,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -63,7 +64,8 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
-                    @Cached("create()") GetDimAttributeNode getDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimNode) {
         checkErrorConditions(vector);
 
         int[] dim = getDimsNode.getDimensions(vector);
@@ -76,9 +78,9 @@ public abstract class APerm extends RBuiltinNode {
             for (int i = 0; i < diml; i++) {
                 pDim[i] = dim[diml - 1 - i];
             }
-            result.setDimensions(pDim);
+            setDimNode.setDimensions(result, pDim);
         } else {
-            result.setDimensions(dim);
+            setDimNode.setDimensions(result, dim);
         }
 
         // Move along the old array using stride
@@ -104,7 +106,8 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
-                    @Cached("create()") GetDimAttributeNode getDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode) {
         checkErrorConditions(vector);
 
         int[] dim = getDimsNode.getDimensions(vector);
@@ -115,7 +118,7 @@ public abstract class APerm extends RBuiltinNode {
 
         RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
-        result.setDimensions(resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
+        setDimsNode.setDimensions(result, resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         // Move along the old array using stride
         for (int i = 0; i < result.getLength(); i++) {
@@ -130,7 +133,8 @@ public abstract class APerm extends RBuiltinNode {
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
                     @Cached("create()") RAttributeProfiles dimNamesProfile,
-                    @Cached("create()") GetDimAttributeNode getDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode) {
         RList dimNames = vector.getDimNames(dimNamesProfile);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
@@ -150,7 +154,7 @@ public abstract class APerm extends RBuiltinNode {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode);
+        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode, setDimsNode);
     }
 
     private static int[] getReverse(int[] dim) {

@@ -60,13 +60,11 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     protected boolean complete; // "complete" means: does not contain NAs
     protected RStringVector names;
-    private RList dimNames;
     // cache rownames for data frames as they are accessed at every data frame access
     private Object rowNames;
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
-        // this.dimensions = dimensions;
         assert names != this;
         this.names = names;
         this.rowNames = RNull.instance;
@@ -83,7 +81,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                     // one-dimensional arrays do not have names, only dimnames with one value
                     RList newDimNames = RDataFactory.createList(new Object[]{names});
                     initAttributes(RAttributesLayout.createDimAndDimNames(dimensionsVector, newDimNames));
-                    this.dimNames = newDimNames;
                 }
             }
         } else {
@@ -99,6 +96,14 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         } else {
             RIntVector dims = (RIntVector) attributes.get(RRuntime.DIM_ATTR_KEY);
             return dims == null ? null : dims.getInternalStore();
+        }
+    }
+
+    private RList getDimNamesFromAttrs() {
+        if (attributes == null) {
+            return null;
+        } else {
+            return (RList) attributes.get(RRuntime.DIMNAMES_ATTR_KEY);
         }
     }
 
@@ -146,14 +151,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         names = newNames;
     }
 
-    public final RList getInternalDimNames() {
-        return dimNames;
-    }
-
-    public final void setInternalDimNames(RList newDimNames) {
-        dimNames = newDimNames;
-    }
-
     public final Object getInternalRowNames() {
         return rowNames;
     }
@@ -183,6 +180,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             return null;
         } else {
             if (attrProfiles.attrNullNamesProfile(names == null)) {
+                RList dimNames = getDimNames();
                 if (dimNames != null && dimNames.getLength() == 1) {
                     return (RStringVector) dimNames.getDataAt(0);
                 } else {
@@ -200,6 +198,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      */
     public final RStringVector getNames() {
         if (names == null) {
+            RList dimNames = getDimNames();
             if (dimNames != null && dimNames.getLength() == 1) {
                 return (RStringVector) dimNames.getDataAt(0);
             } else {
@@ -369,7 +368,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 RList newDimNames = RDataFactory.createList(new Object[]{newNames});
                 newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
                 putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
-                this.dimNames = newDimNames;
             } else {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
                 assert newNames != this;
@@ -384,7 +382,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     public final RList getDimNames() {
-        return dimNames;
+        return getDimNamesFromAttrs();
     }
 
     /**
@@ -398,7 +396,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         } else {
             putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
         }
-        this.dimNames = newDimNames;
     }
 
     @Override
@@ -411,7 +408,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     private void setDimNames(RList newDimNames, RBaseNode invokingNode) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
-            this.dimNames = null;
         } else if (newDimNames != null) {
             int[] dimensions = getDimensionsFromAttrs();
             if (dimensions == null) {
@@ -450,7 +446,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             }
             putAttribute(RRuntime.DIMNAMES_ATTR_KEY, resDimNames);
             resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-            this.dimNames = resDimNames;
         }
     }
 
@@ -481,8 +476,11 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public final boolean hasDimensions() {
-        // Sync the shape
         return attributes == null ? false : attributes.containsKey(RRuntime.DIM_ATTR_KEY);
+    }
+
+    public final boolean hasDimNames() {
+        return attributes == null ? false : attributes.containsKey(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override
@@ -573,7 +571,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     public final void setAttributes(RVector<?> result) {
         result.names = this.names;
-        result.dimNames = this.dimNames;
         result.rowNames = this.rowNames;
         if (this.attributes != null) {
             result.initAttributes(RAttributesLayout.copy(this.attributes));
@@ -671,7 +668,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     public final RAttributable copyAttributesFrom(RAttributeProfiles attrProfiles, RAbstractContainer vector) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
-        assert (this.dimNames == null);
+        assert (!hasDimNames());
         assert (this.rowNames == RNull.instance);
         assert (!hasDimensions());
         assert (this.attributes == null || this.attributes.size() == 0) : this.attributes.size();
@@ -680,7 +677,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             // one-dimensional array)
             this.names = vector.getNames(attrProfiles);
         }
-        this.dimNames = vector.getDimNames(attrProfiles);
         this.rowNames = vector.getRowNames(attrProfiles);
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
@@ -699,7 +695,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             this.names = vector.getNames();
         }
-        this.dimNames = vector.getDimNames();
         this.rowNames = vector.getRowNames();
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
@@ -713,7 +708,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, RBaseNode invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
-        assert (this.dimNames == null);
+        assert (!hasDimNames());
         assert (!hasDimensions());
         assert (this.attributes == null);
         // for some reason, names is copied first, then dims, then dimnames
@@ -801,7 +796,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         // whether we nullify dimensions or re-set them to a different value, names and dimNames
         // must be reset
         this.names = null;
-        this.dimNames = null;
         if (newDimensions != null) {
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, true));
         } else {
@@ -817,7 +811,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     @Override
     public final void resetAllAttributes(boolean nullify) {
         this.names = null;
-        this.dimNames = null;
         this.rowNames = RNull.instance;
         if (nullify) {
             this.attributes = null;

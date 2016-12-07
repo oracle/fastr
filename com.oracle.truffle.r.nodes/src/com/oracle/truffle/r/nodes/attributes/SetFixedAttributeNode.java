@@ -32,10 +32,12 @@ import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetSpecialAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for setting a value to the predefined (fixed) attribute. It accepts both
@@ -52,31 +54,32 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     @Child private SetFixedAttributeNode recursive;
     @Child private SetSpecialAttributeNode setSpecialAttrNode;
 
-    private final boolean isSpecialAttribute;
-
     protected SetFixedAttributeNode(String name) {
         super(name);
-        this.isSpecialAttribute = SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name);
     }
 
     public static SetFixedAttributeNode create(String name) {
-        return SetFixedAttributeNodeGen.create(name);
+        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
+            return SpecialAttributesFunctions.createSetSpecialAttributeNode(name);
+        } else {
+            return SetFixedAttributeNodeGen.create(name);
+        }
     }
 
     public static SetFixedAttributeNode createNames() {
-        return SetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+        return SpecialAttributesFunctions.SetNamesAttributeNode.create();
     }
 
     public static SetFixedAttributeNode createDim() {
-        return SetFixedAttributeNode.create(RRuntime.DIM_ATTR_KEY);
+        return SpecialAttributesFunctions.SetDimAttributeNode.create();
     }
 
     public static SetFixedAttributeNode createDimNames() {
-        return SetFixedAttributeNode.create(RRuntime.DIMNAMES_ATTR_KEY);
+        return SpecialAttributesFunctions.SetDimNamesAttributeNode.create();
     }
 
     public static SetFixedAttributeNode createClass() {
-        return SetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
+        return SpecialAttributesFunctions.SetClassAttributeNode.create();
     }
 
     public abstract void execute(Object attr, Object value);
@@ -121,27 +124,26 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     @Specialization
     protected void setAttrInAttributable(RAttributable x, Object value,
-                    @Cached("create()") BranchProfile attrNullProfile) {
-        if (isSpecialAttribute) {
-            if (setSpecialAttrNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                setSpecialAttrNode = insert(SpecialAttributesFunctions.createSpecialAttributeNode(name));
-            }
-            setSpecialAttrNode.execute(x, value);
+                    @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+        DynamicObject attributes;
+        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
+            attributes = ((RAttributeStorage) x).getAttributes();
         } else {
-            DynamicObject attributes = x.getAttributes();
-            if (attributes == null) {
-                attrNullProfile.enter();
-                attributes = x.initAttributes();
-            }
-
-            if (recursive == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursive = insert(create(name));
-            }
-            recursive.execute(attributes, value);
+            attributes = xTypeProfile.profile(x).getAttributes();
         }
 
+        if (attributes == null) {
+            attrNullProfile.enter();
+            attributes = x.initAttributes();
+        }
+
+        if (recursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursive = insert(create(name));
+        }
+        recursive.execute(attributes, value);
     }
 
 }

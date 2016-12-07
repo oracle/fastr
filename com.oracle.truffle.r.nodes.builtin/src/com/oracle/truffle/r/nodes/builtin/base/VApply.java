@@ -29,9 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
@@ -90,6 +92,7 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastLogicalNode castLogical;
     @Child private CastStringNode castString;
+    @Child private SetDimAttributeNode setDimNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -186,7 +189,11 @@ public abstract class VApply extends RBuiltinNode {
         }
 
         if (dimsProfile.profile(funValueVecLen > 1)) {
-            result.setDimensions(new int[]{funValueVecLen, applyResult.length});
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+            setDimNode.setDimensions(result, new int[]{funValueVecLen, applyResult.length});
         }
 
         // TODO: handle names in case of matrices

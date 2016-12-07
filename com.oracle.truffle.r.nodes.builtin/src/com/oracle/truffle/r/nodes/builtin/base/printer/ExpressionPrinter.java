@@ -46,7 +46,7 @@ final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
         valPrintCtx.parameters().setSuppressIndexLabels(true);
 
         out.print("expression(");
-        RStringVector names = (RStringVector) expr.getAttr(RRuntime.NAMES_ATTR_KEY);
+        RStringVector names = expr.getNames();
         for (int i = 0; i < expr.getLength(); i++) {
             if (i != 0) {
                 out.print(", ");

@@ -105,7 +105,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
             if (attributes != null) {
                 removeDim.execute(attributes);
                 removeDimNames.execute(attributes);
-                result.setInternalDimNames(null);
             }
 
             RStringVector vecNames = source.getNames(attrSourceProfiles);
@@ -123,7 +122,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         if (hasDimNames.profile(newDimNames != null)) {
             putDimNames.execute(result.getAttributes(), newDimNames);
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-            result.setInternalDimNames(newDimNames);
             return result;
         }
         return result;

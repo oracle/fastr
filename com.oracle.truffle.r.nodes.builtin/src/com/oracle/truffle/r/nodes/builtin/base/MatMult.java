@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -78,6 +79,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Child protected GetDimAttributeNode getADimsNode = GetDimAttributeNode.create();
     @Child protected GetDimAttributeNode getBDimsNode = GetDimAttributeNode.create();
+    @Child protected SetDimAttributeNode setDimsNode = SetDimAttributeNode.create();
 
     protected abstract Object executeObject(Object a, Object b);
 
@@ -97,7 +99,7 @@ public abstract class MatMult extends RBuiltinNode {
         int r = getBDimsNode.getDimensions(b)[1];
         int c = getADimsNode.getDimensions(a)[0];
         RDoubleVector result = RDataFactory.createDoubleVector(r * c);
-        result.setDimensions(new int[]{r, c});
+        setDimsNode.setDimensions(result, new int[]{r, c});
         return result;
     }
 

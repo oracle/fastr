@@ -32,8 +32,11 @@ import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for setting a value to an arbitrary attribute. It accepts both
@@ -116,7 +119,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
     }
 
     protected static SpecialAttributesFunctions.SetSpecialAttributeNode createSpecAttrNode(String name) {
-        return SpecialAttributesFunctions.createSpecialAttributeNode(name);
+        return SpecialAttributesFunctions.createSetSpecialAttributeNode(name);
     }
 
     @Specialization(limit = "3", //
@@ -143,8 +146,16 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
     @Specialization
     protected void setAttrInAttributable(RAttributable x, String name, Object value,
-                    @Cached("create()") BranchProfile attrNullProfile) {
-        DynamicObject attributes = x.getAttributes();
+                    @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+        DynamicObject attributes;
+        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
+            attributes = ((RAttributeStorage) x).getAttributes();
+        } else {
+            attributes = xTypeProfile.profile(x).getAttributes();
+        }
+
         if (attributes == null) {
             attrNullProfile.enter();
             attributes = x.initAttributes();

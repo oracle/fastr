@@ -28,12 +28,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -164,12 +166,12 @@ public final class SpecialAttributesFunctions {
     }
 
     /**
-     * A factory method for creating a node handling the given special attribute.
+     * A factory method for creating a node setting the given special attribute.
      *
      * @param name the special attribute name
      * @return the node
      */
-    public static SetSpecialAttributeNode createSpecialAttributeNode(String name) {
+    public static SetSpecialAttributeNode createSetSpecialAttributeNode(String name) {
         assert name.intern() == name;
         if (name == RRuntime.NAMES_ATTR_KEY) {
             return SetNamesAttributeNode.create();
@@ -187,21 +189,107 @@ public final class SpecialAttributesFunctions {
     }
 
     /**
+     * A factory method for creating a node removing the given special attribute.
+     *
+     * @param name the special attribute name
+     * @return the node
+     */
+    public static RemoveSpecialAttributeNode createRemoveSpecialAttributeNode(String name) {
+        assert name.intern() == name;
+        if (name == RRuntime.NAMES_ATTR_KEY) {
+            return RemoveNamesAttributeNode.create();
+        } else if (name == RRuntime.DIM_ATTR_KEY) {
+            return RemoveDimAttributeNode.create();
+        } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+            return RemoveDimNamesAttributeNode.create();
+        } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+            return RemoveRowNamesAttributeNode.create();
+        } else if (name == RRuntime.CLASS_ATTR_KEY) {
+            return RemoveClassAttributeNode.create();
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    /**
+     * A factory method for creating a node retrieving the given special attribute.
+     *
+     * @param name the special attribute name
+     * @return the node
+     */
+    public static GetFixedAttributeNode createGetSpecialAttributeNode(String name) {
+        assert name.intern() == name;
+        if (name == RRuntime.NAMES_ATTR_KEY) {
+            return GetNamesAttributeNode.create();
+        } else if (name == RRuntime.DIM_ATTR_KEY) {
+            return GetDimAttributeNode.create();
+        } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+            return GetDimNamesAttributeNode.create();
+        } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+            return GetRowNamesAttributeNode.create();
+        } else if (name == RRuntime.CLASS_ATTR_KEY) {
+            return GetClassAttributeNode.create();
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    /**
      * The base class for the nodes setting values to special attributes.
      */
-    public abstract static class SetSpecialAttributeNode extends RBaseNode {
+    public abstract static class SetSpecialAttributeNode extends SetFixedAttributeNode {
+
+        protected SetSpecialAttributeNode(String name) {
+            super(name);
+        }
 
         public abstract void execute(RAttributable x, Object attrValue);
 
     }
 
+    /**
+     * The base class for the nodes removing values from special attributes.
+     */
+    public abstract static class RemoveSpecialAttributeNode extends RemoveFixedAttributeNode {
+
+        protected RemoveSpecialAttributeNode(String name) {
+            super(name);
+        }
+
+        public abstract void execute(RAttributable x);
+
+        @Specialization(insertBefore = "removeAttrFromAttributable")
+        protected void removeAttrFromVector(RVector<?> x,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("create()") BranchProfile attrEmptyProfile) {
+            DynamicObject attributes = x.getAttributes();
+            if (attributes == null) {
+                attrNullProfile.enter();
+                return;
+            }
+
+            attrNullProfile.enter();
+            attributes.delete(name);
+
+            if (attributes.isEmpty()) {
+                attrEmptyProfile.enter();
+                x.initAttributes(null);
+            }
+        }
+
+    }
+
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
+
+        protected SetNamesAttributeNode() {
+            super(RRuntime.NAMES_ATTR_KEY);
+        }
 
         public static SetNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen.create();
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void setNamesInContainer(RAbstractContainer x, RStringVector names,
                         @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
@@ -209,37 +297,158 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    public abstract static class RemoveNamesAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveNamesAttributeNode() {
+            super(RRuntime.NAMES_ATTR_KEY);
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+
+        public static RemoveNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveNamesAttributeNodeGen.create();
+        }
+    }
+
+    public abstract static class GetNamesAttributeNode extends GetFixedAttributeNode {
+
+        protected GetNamesAttributeNode() {
+            super(RRuntime.NAMES_ATTR_KEY);
+        }
+
+        public static GetNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization(contains = "getAttrCached")
+        protected Object getAttrFallback(DynamicObject attrs) {
+            return super.getAttrFallback(attrs);
+        }
+
+    }
+
     public abstract static class SetDimAttributeNode extends SetSpecialAttributeNode {
+
+        private final ConditionProfile nullDimProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile naDimProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile negativeDimProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile dimNotMatchLengthProfile = ConditionProfile.createBinaryProfile();
+        private final ValueProfile contArgClassProfile = ValueProfile.createClassProfile();
+        private final ValueProfile dimArgClassProfile = ValueProfile.createClassProfile();
+        private final LoopConditionProfile verifyLoopProfile = LoopConditionProfile.createCountingProfile();
+
+        protected SetDimAttributeNode() {
+            super(RRuntime.DIM_ATTR_KEY);
+        }
 
         public static SetDimAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetDimAttributeNodeGen.create();
         }
 
-        @Specialization
-        protected void setOneDimInContainer(RAbstractContainer x, Integer dim,
-                        @Cached("createClassProfile()") ValueProfile contClassProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile vectorProfile) {
-            int[] dims = new int[]{dim};
-            if (vectorProfile.profile(x instanceof RVector)) {
-                ((RVector<?>) x).setDimensions(dims);
+        public void setDimensions(RAbstractContainer x, int[] dims) {
+            if (nullDimProfile.profile(dims == null)) {
+                execute(x, RNull.instance);
             } else {
-                RAbstractContainer xProfiled = contClassProfile.profile(x);
-                xProfiled.setDimensions(dims);
+                execute(x, RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR));
             }
-
         }
 
-        @Specialization
-        protected void setDimsInContainer(RAbstractContainer x, RAbstractIntVector dims,
-                        @Cached("createClassProfile()") ValueProfile contClassProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile vectorProfile) {
-            int[] dimsArr = dims.materialize().getDataCopy();
-            if (vectorProfile.profile(x instanceof RVector)) {
-                ((RVector<?>) x).setDimensions(dimsArr);
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void resetDims(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveDimAttributeNode removeDimAttrNode,
+                        @Cached("createBinaryProfile()") ConditionProfile vectorClassProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            removeDimAttrNode.execute(x);
+            if (vectorClassProfile.profile(x instanceof RVector)) {
+                ((RVector<?>) x).setDimNames(null);
             } else {
-                RAbstractContainer xProfiled = contClassProfile.profile(x);
-                xProfiled.setDimensions(dimsArr);
+                xTypeProfile.profile(x).setDimNames(null);
             }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setOneDimInVector(RVector<?> x, int dim,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            int[] dims = new int[]{dim};
+            verifyOneDimensions(x.getLength(), dim);
+            super.setAttrInAttributable(x, RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR), attrNullProfile, attrStorageProfile, xTypeProfile);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setDimsInVector(RVector<?> x, RAbstractIntVector dims,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            RAbstractContainer xProfiled = contArgClassProfile.profile(x);
+            verifyDimensions(xProfiled.getLength(), dims);
+            super.setAttrInAttributable(x, dims, attrNullProfile, attrStorageProfile, xTypeProfile);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setDimsInContainerFallback(RAbstractContainer x, RAbstractIntVector dims,
+                        @Cached("create()") SetDimAttributeNode setDimNode) {
+            int[] dimsArr = dims.materialize().getDataCopy();
+            setDimNode.setDimensions(x, dimsArr);
+        }
+
+        private void verifyOneDimensions(int vectorLength, int dim) {
+            int length = dim;
+            if (naDimProfile.profile(RRuntime.isNA(dim))) {
+                throw RError.error(this, RError.Message.DIMS_CONTAIN_NA);
+            } else if (negativeDimProfile.profile(dim < 0)) {
+                throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            }
+            if (dimNotMatchLengthProfile.profile(length != vectorLength && vectorLength > 0)) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(this, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+            }
+        }
+
+        public void verifyDimensions(int vectorLength, RAbstractIntVector dims) {
+            RAbstractIntVector dimsProfiled = dimArgClassProfile.profile(dims);
+            int dimLen = dims.getLength();
+            verifyLoopProfile.profileCounted(dimLen);
+            int length = 1;
+            for (int i = 0; i < dimLen; i++) {
+                int dim = dimsProfiled.getDataAt(i);
+                if (naDimProfile.profile(RRuntime.isNA(dim))) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.error(this, RError.Message.DIMS_CONTAIN_NA);
+                } else if (negativeDimProfile.profile(dim < 0)) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+                }
+                length *= dim;
+            }
+            if (length != vectorLength && vectorLength > 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(this, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+            }
+        }
+
+    }
+
+    public abstract static class RemoveDimAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveDimAttributeNode() {
+            super(RRuntime.DIM_ATTR_KEY);
+        }
+
+        public static RemoveDimAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveDimAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
         }
 
     }
@@ -300,11 +509,79 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class SetDimNamesAttributeNode extends SetSpecialAttributeNode {
 
+        private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
+
+        protected SetDimNamesAttributeNode() {
+            super(RRuntime.DIMNAMES_ATTR_KEY);
+        }
+
         public static SetDimNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetDimNamesAttributeNodeGen.create();
         }
 
-        @Specialization
+        public void setDimNames(RAbstractContainer x, RList dimNames) {
+            if (nullDimNamesProfile.profile(dimNames == null)) {
+                execute(x, RNull.instance);
+            } else {
+                execute(x, dimNames);
+            }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveDimNamesAttributeNode removeDimNamesAttrNode) {
+// removeDimNamesAttrNode.execute(x);
+            x.setDimNames(null);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setDimNamesInVector(RVector<?> x, RList newDimNames,
+                        @Cached("create()") GetDimAttributeNode getDimNode,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            x.setDimNames(newDimNames);
+// int[] dimensions = getDimNode.getDimensions(x);
+// if (dimensions == null) {
+// throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);
+// }
+// int newDimNamesLength = newDimNames.getLength();
+// if (newDimNamesLength > dimensions.length) {
+// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength,
+// dimensions.length);
+// }
+// for (int i = 0; i < newDimNamesLength; i++) {
+// Object dimObject = newDimNames.getDataAt(i);
+// if (dimObject != RNull.instance) {
+// if (dimObject instanceof String) {
+// if (dimensions[i] != 1) {
+// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+// }
+// } else {
+// RStringVector dimVector = (RStringVector) dimObject;
+// if (dimVector == null) {
+// newDimNames.updateDataAt(i, RNull.instance, null);
+// } else if (dimVector.getLength() != dimensions[i]) {
+// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+// }
+// }
+// }
+// }
+//
+// RList resDimNames = newDimNames;
+// if (newDimNamesLength < dimensions.length) {
+// // resize the array and fill the missing entries with NULL-s
+// resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
+// resDimNames.setAttributes(newDimNames);
+// for (int i = newDimNamesLength; i < dimensions.length; i++) {
+// resDimNames.updateDataAt(i, RNull.instance, null);
+// }
+// }
+// resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
+// super.setAttrInAttributable(x, newDimNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void setDimNamesInContainer(RAbstractContainer x, RList dimNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setDimNames(dimNames);
@@ -312,13 +589,56 @@ public final class SpecialAttributesFunctions {
 
     }
 
+    public abstract static class RemoveDimNamesAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveDimNamesAttributeNode() {
+            super(RRuntime.DIMNAMES_ATTR_KEY);
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+
+        public static RemoveDimNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveDimNamesAttributeNodeGen.create();
+        }
+    }
+
+    public abstract static class GetDimNamesAttributeNode extends GetFixedAttributeNode {
+
+        protected GetDimNamesAttributeNode() {
+            super(RRuntime.DIMNAMES_ATTR_KEY);
+        }
+
+        public static GetDimNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetDimNamesAttributeNodeGen.create();
+        }
+
+        public final RList getDimNames(Object x) {
+            return (RList) execute(x);
+        }
+
+        @Override
+        @Specialization(contains = "getAttrCached")
+        protected Object getAttrFallback(DynamicObject attrs) {
+            return super.getAttrFallback(attrs);
+        }
+
+    }
+
     public abstract static class SetRowNamesAttributeNode extends SetSpecialAttributeNode {
+
+        protected SetRowNamesAttributeNode() {
+            super(RRuntime.ROWNAMES_ATTR_KEY);
+        }
 
         public static SetRowNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetRowNamesAttributeNodeGen.create();
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setRowNames(rowNames);
@@ -326,7 +646,46 @@ public final class SpecialAttributesFunctions {
 
     }
 
+    public abstract static class RemoveRowNamesAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveRowNamesAttributeNode() {
+            super(RRuntime.DIMNAMES_ATTR_KEY);
+        }
+
+        public static RemoveRowNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveRowNamesAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+    }
+
+    public abstract static class GetRowNamesAttributeNode extends GetFixedAttributeNode {
+
+        protected GetRowNamesAttributeNode() {
+            super(RRuntime.ROWNAMES_ATTR_KEY);
+        }
+
+        public static GetRowNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetRowNamesAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization(contains = "getAttrCached")
+        protected Object getAttrFallback(DynamicObject attrs) {
+            return super.getAttrFallback(attrs);
+        }
+
+    }
+
     public abstract static class SetClassAttributeNode extends SetSpecialAttributeNode {
+
+        protected SetClassAttributeNode() {
+            super(RRuntime.CLASS_ATTR_KEY);
+        }
 
         public static SetClassAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetClassAttributeNodeGen.create();
@@ -336,7 +695,7 @@ public final class SpecialAttributesFunctions {
             execute(x, RNull.instance);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected <T> void handleVectorNullClass(RVector<T> vector, @SuppressWarnings("unused") RNull classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createClass()") SetFixedAttributeNode setClassAttrNode,
@@ -346,7 +705,7 @@ public final class SpecialAttributesFunctions {
             handleVector(vector, null, removeClassAttrNode, setClassAttrNode, nullAttrProfile, nullClassProfile, notNullClassProfile);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected <T> void handleVector(RVector<T> vector, RStringVector classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createClass()") SetFixedAttributeNode setClassAttrNode,
@@ -385,12 +744,12 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void handleAttributable(RAttributable x, @SuppressWarnings("unused") RNull classAttr) {
             x.setClassAttr(null);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void handleAttributable(RAttributable x, RStringVector classAttr) {
             x.setClassAttr(classAttr);
         }
@@ -402,6 +761,42 @@ public final class SpecialAttributesFunctions {
                     x.initAttributes(null);
                 }
             }
+        }
+
+    }
+
+    public abstract static class RemoveClassAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveClassAttributeNode() {
+            super(RRuntime.CLASS_ATTR_KEY);
+        }
+
+        public static RemoveClassAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveClassAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+
+    }
+
+    public abstract static class GetClassAttributeNode extends GetFixedAttributeNode {
+
+        protected GetClassAttributeNode() {
+            super(RRuntime.CLASS_ATTR_KEY);
+        }
+
+        public static GetClassAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization(contains = "getAttrCached")
+        protected Object getAttrFallback(DynamicObject attrs) {
+            return super.getAttrFallback(attrs);
         }
 
     }
