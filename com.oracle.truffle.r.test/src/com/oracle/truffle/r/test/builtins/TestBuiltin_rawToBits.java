@@ -41,6 +41,8 @@ public class TestBuiltin_rawToBits extends TestBase {
         assertEval("rawToBits(as.raw(0:255))");
         assertEval("rawToBits(as.raw(c(0,1,255)))");
 
+        assertEval("rawToBits(as.raw(1)[1])");
+
         assertEval("rawToBits(0:255)");
         assertEval("rawToBits(NA)");
         assertEval("rawToBits(NULL)");

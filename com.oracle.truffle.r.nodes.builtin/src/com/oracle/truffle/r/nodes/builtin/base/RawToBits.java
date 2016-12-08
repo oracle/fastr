@@ -45,7 +45,7 @@ public abstract class RawToBits extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractRawVector rawToBits(RRawVector x) {
+    protected RAbstractRawVector rawToBits(RAbstractRawVector x) {
         byte[] result = new byte[8 * x.getLength()];
         int pos = 0;
         for (int j = 0; j < x.getLength(); j++) {
