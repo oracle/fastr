@@ -31,9 +31,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -58,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class IsNA extends RBuiltinNode {
 
     @Child private IsNA recursiveIsNA;
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
@@ -217,7 +220,7 @@ public abstract class IsNA extends RBuiltinNode {
 
     private RLogicalVector createResult(byte[] data, RAbstractVector originalVector, GetDimAttributeNode getDimsNode, SetDimNamesAttributeNode setDimNamesNode,
                     GetDimNamesAttributeNode getDimNamesNode) {
-        RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(originalVector), originalVector.getNames(attrProfiles));
+        RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(originalVector), getNamesNode.getNames(originalVector));
         RList dimNames = getDimNamesNode.getDimNames(originalVector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             setDimNamesNode.setDimNames(result, dimNames);

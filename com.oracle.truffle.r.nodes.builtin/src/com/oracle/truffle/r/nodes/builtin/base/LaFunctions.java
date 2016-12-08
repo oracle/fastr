@@ -487,7 +487,8 @@ public class LaFunctions {
         @Specialization
         protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
@@ -519,7 +520,7 @@ public class LaFunctions {
                 }
                 setPivotAttrNode.execute(a, RRuntime.asLogical(piv));
                 setRankAttrNode.execute(a, rank[0]);
-                RList dn = a.getDimNames();
+                RList dn = getDimNamesNode.getDimNames(a);
                 if (dn != null && dn.getDataAt(0) != null) {
                     Object[] dn2 = new Object[m];
                     // need to pivot the colnames
@@ -563,7 +564,8 @@ public class LaFunctions {
                         @Cached("create()") GetDimAttributeNode getBinDimsNode,
                         @Cached("create()") SetDimAttributeNode setBDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode,
-                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                        @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getBinDimNamesNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
@@ -573,7 +575,7 @@ public class LaFunctions {
             if (n2 != n) {
                 throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a", n, n2);
             }
-            RList aDn = getDimNamesNode.getDimNames(a);
+            RList aDn = getADimNamesNode.getDimNames(a);
             int p;
             double[] bData;
             RDoubleVector b;
@@ -590,7 +592,7 @@ public class LaFunctions {
                 bData = new double[n * p];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 setBDimsNode.setDimensions(b, new int[]{n, p});
-                RList binDn = bin.getDimNames();
+                RList binDn = getBinDimNamesNode.getDimNames(bin);
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
                 if (aDn != null || binDn != null) {
                     // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)

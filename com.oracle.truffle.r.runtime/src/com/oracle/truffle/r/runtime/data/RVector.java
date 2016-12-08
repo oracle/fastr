@@ -105,7 +105,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
     }
 
-    public final RStringVector getNamesFromAttrs() {
+    protected final RStringVector getNamesFromAttrs() {
         if (attributes == null) {
             return null;
         } else {

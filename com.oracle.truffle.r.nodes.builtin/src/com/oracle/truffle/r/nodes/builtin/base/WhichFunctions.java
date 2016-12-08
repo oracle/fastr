@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMaxNodeGen;
@@ -64,7 +65,7 @@ public class WhichFunctions {
                         @Cached("create()") VectorLengthProfile lengthProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
-                        @Cached("create()") RAttributeProfiles attrProfiles,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") NACheck naCheck) {
             int length = lengthProfile.profile(x.getLength());
             loopProfile.profileCounted(length);
@@ -83,7 +84,7 @@ public class WhichFunctions {
                     result[pos++] = i + 1;
                 }
             }
-            RStringVector names = x.getNames(attrProfiles);
+            RStringVector names = getNamesNode.getNames(x);
             if (hasNamesProfile.profile(names != null)) {
                 // collect result names
                 String[] resultNames = new String[resultLength];
@@ -122,7 +123,7 @@ public class WhichFunctions {
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isNaNProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
-                        @Cached("create()") RAttributeProfiles attrProfiles) {
+                        @Cached("create()") GetNamesAttributeNode getNamesNode) {
             int length = lengthProfile.profile(x.getLength());
             loopProfile.profileCounted(length);
             double extreme = Double.NaN;
@@ -138,7 +139,7 @@ public class WhichFunctions {
             if (isNaNProfile.profile(extremeIndex == -1)) {
                 return RDataFactory.createEmptyIntVector();
             }
-            RStringVector names = x.getNames(attrProfiles);
+            RStringVector names = getNamesNode.getNames(x);
             if (hasNamesProfile.profile(names != null)) {
                 // collect result names
                 RStringVector resultNames = RDataFactory.createStringVectorFromScalar(names.getDataAt(extremeIndex));

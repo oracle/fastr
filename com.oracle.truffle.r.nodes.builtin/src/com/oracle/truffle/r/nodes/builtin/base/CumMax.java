@@ -24,6 +24,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class CumMax extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -96,7 +97,7 @@ public abstract class CumMax extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
+        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
     @Specialization(contains = "cummaxIntSequence")
@@ -118,7 +119,7 @@ public abstract class CumMax extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
+        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
 }

@@ -30,10 +30,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -41,12 +42,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class Names extends RBuiltinNode {
 
     private final ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
     @Specialization
     protected Object getNames(RAbstractContainer container) {
-        if (hasNames.profile(container.getNames(attrProfiles) != null)) {
-            return container.getNames(attrProfiles);
+        RStringVector names = getNames.getNames(container);
+        if (hasNames.profile(names != null)) {
+            return names;
         } else {
             return RNull.instance;
         }

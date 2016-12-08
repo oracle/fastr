@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -128,8 +129,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return position;
     }
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @Specialization(/* contains = "doSequence" */)
     protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength, //
                     @Cached("create()") BranchProfile seenZeroProfile, //
@@ -137,11 +136,12 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenNegativeProfile, //
                     @Cached("create()") BranchProfile seenOutOfBounds, //
                     @Cached("create()") NullProfile hasNamesProfile, //
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
         intPosition.setComplete(position.isComplete());
         // requires names preservation
-        RStringVector names = hasNamesProfile.profile(position.getNames(attrProfiles));
+        RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
         if (names != null) {
             intPosition.setNames(names);
         }

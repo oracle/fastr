@@ -23,7 +23,9 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,7 +45,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class CumMin extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -96,7 +98,7 @@ public abstract class CumMin extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cminV, i, cminV.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
+        return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
     @Specialization(contains = "cumminIntSequence")
@@ -118,7 +120,7 @@ public abstract class CumMin extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
+        return RDataFactory.createIntVector(cminV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
 }

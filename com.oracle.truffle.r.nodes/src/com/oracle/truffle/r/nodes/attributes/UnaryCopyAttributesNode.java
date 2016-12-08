@@ -28,6 +28,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -49,10 +50,9 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
     protected final boolean copyAllAttributes;
 
-    protected final RAttributeProfiles attrSourceProfiles = RAttributeProfiles.create();
-
     @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
     @Child protected GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     protected UnaryCopyAttributesNode(boolean copyAllAttributes) {
         this.copyAllAttributes = copyAllAttributes;
@@ -64,13 +64,13 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
 
-    protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
-        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null ||
+    protected boolean containsMetadata(RAbstractVector vector) {
+        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || getNamesNode.getNames(vector) != null ||
                         getDimNamesNode.getDimNames(vector) != null;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!containsMetadata(source, attrSourceProfiles)")
+    @Specialization(guards = "!containsMetadata(source)")
     protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
         return target;
     }
@@ -81,7 +81,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         return target;
     }
 
-    @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source, attrSourceProfiles)"})
+    @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source)"})
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("createDim()") RemoveFixedAttributeNode removeDim, //
@@ -108,7 +108,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                 removeDimNames.execute(attributes);
             }
 
-            RStringVector vecNames = source.getNames(attrSourceProfiles);
+            RStringVector vecNames = getNamesNode.getNames(source);
             if (hasNamesSource.profile(vecNames != null)) {
                 putNames.execute(initAttributes.execute(result), vecNames);
                 return result;

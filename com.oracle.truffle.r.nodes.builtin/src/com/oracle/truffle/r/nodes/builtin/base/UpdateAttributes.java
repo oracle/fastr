@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -59,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
@@ -119,7 +121,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
-        Object listNamesObject = list.getNames(attrProfiles);
+        Object listNamesObject = getNamesNode.getNames(list);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
@@ -160,7 +162,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     private void setDimAttribute(RAbstractContainer result, RList sourceList) {
-        RStringVector listNames = sourceList.getNames(attrProfiles);
+        RStringVector listNames = getNamesNode.getNames(sourceList);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 0; i < sourceList.getLength(); i++) {
@@ -187,7 +189,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     private RAbstractContainer setRemainingAttributes(RAbstractContainer result, RList sourceList) {
-        RStringVector listNames = sourceList.getNames(attrProfiles);
+        RStringVector listNames = getNamesNode.getNames(sourceList);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         RAbstractContainer res = result;

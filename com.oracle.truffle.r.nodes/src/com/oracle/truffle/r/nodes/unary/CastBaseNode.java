@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,7 +51,7 @@ public abstract class CastBaseNode extends CastNode {
     private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
     private final NullProfile hasDimensionsProfile = NullProfile.create();
     private final NullProfile hasNamesProfile = NullProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode;
     @Child private SetDimNamesAttributeNode setDimNamesNode;
     @Child private GetDimNamesAttributeNode getDimNamesNode;
@@ -101,7 +102,7 @@ public abstract class CastBaseNode extends CastNode {
 
     protected RStringVector getPreservedNames(RAbstractContainer operand) {
         if (preserveNames()) {
-            return hasNamesProfile.profile(operand.getNames(attrProfiles));
+            return hasNamesProfile.profile(getNamesNode.getNames(operand));
         } else {
             return null;
         }

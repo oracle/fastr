@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,7 +63,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     }
 
     @Specialization
-    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength) {
+    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         positionNACheck.enable(position);
         byte value = position.getDataAt(0);
         if (positionLength != 1) {
@@ -77,11 +80,12 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             }
         }
 
-        return doIntegerImpl(statistics, dimSize, positionNACheck.convertLogicalToInt(value), position);
+        return doIntegerImpl(statistics, dimSize, positionNACheck.convertLogicalToInt(value), position, getNamesNode);
     }
 
     @Specialization
-    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength) {
+    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         if (positionLength != 1) {
             error.enter();
             Message message;
@@ -99,12 +103,12 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
-        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position);
+        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
         return result;
 
     }
 
-    private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector) {
+    private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector, GetNamesAttributeNode getNamesNode) {
         int result;
         if (greaterZero.profile(value > 0)) {
             // fast path
@@ -121,7 +125,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         profile.selectedPositionsCount = 1;
 
-        RStringVector names = originalVector.getNames(attributeProfile);
+        RStringVector names = getNamesNode.getNames(originalVector);
         if (names != null) {
             return RDataFactory.createIntVector(new int[]{result}, !profile.containsNA, names);
         } else {

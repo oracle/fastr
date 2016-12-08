@@ -22,13 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -40,13 +39,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 final class PositionCharacterLookupNode extends Node {
 
     private final ElementAccessMode mode;
-    private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
     private final int numDimensions;
     private final int dimensionIndex;
     private final BranchProfile emptyProfile = BranchProfile.create();
 
     @Child private SearchFirstStringNode searchNode;
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     PositionCharacterLookupNode(ElementAccessMode mode, int numDimensions, int dimensionIndex, boolean useNAForNotFound, boolean exact) {
         this.numDimensions = numDimensions;
@@ -59,7 +58,7 @@ final class PositionCharacterLookupNode extends Node {
         // lookup names for single dimension case
         RAbstractIntVector result;
         if (numDimensions <= 1) {
-            RStringVector names = target.getNames(attributeProfiles);
+            RStringVector names = getNamesNode.getNames(target);
             if (names == null) {
                 emptyProfile.enter();
                 names = RDataFactory.createEmptyStringVector();

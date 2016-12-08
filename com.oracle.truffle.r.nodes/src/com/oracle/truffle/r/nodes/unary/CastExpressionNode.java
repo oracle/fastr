@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -35,8 +37,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 public abstract class CastExpressionNode extends CastBaseNode {
-
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object executeExpression(Object o);
 
@@ -85,7 +85,8 @@ public abstract class CastExpressionNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RExpression doAbstractContainer(RAbstractContainer obj) {
+    protected RExpression doAbstractContainer(RAbstractContainer obj,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         int len = obj.getLength();
         Object[] data = new Object[len];
         for (int i = 0; i < len; i++) {
@@ -94,7 +95,7 @@ public abstract class CastExpressionNode extends CastBaseNode {
         if (obj instanceof RList) {
             RList list = (RList) obj;
             // TODO other attributes
-            return RDataFactory.createExpression(data, list.getNames(attrProfiles));
+            return RDataFactory.createExpression(data, getNamesNode.getNames(list));
         } else {
             return RDataFactory.createExpression(data);
         }

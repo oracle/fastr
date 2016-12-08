@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -50,11 +51,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     private final boolean copyAllAttributes;
 
-    protected final RAttributeProfiles attrLeftProfiles = RAttributeProfiles.create();
-    protected final RAttributeProfiles attrRightProfiles = RAttributeProfiles.create();
-
     @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
     @Child protected GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     protected CopyAttributesNode(boolean copyAllAttributes) {
         this.copyAllAttributes = copyAllAttributes;
@@ -66,9 +65,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
-    protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
+    protected boolean containsMetadata(RAbstractVector vector) {
         return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || getDimNamesNode.getDimNames(vector) != null ||
-                        vector.getNames(attrProfiles) != null;
+                        getNamesNode.getNames(vector) != null;
     }
 
     private static int countNo;
@@ -104,7 +103,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!containsMetadata(left, attrLeftProfiles)", "!containsMetadata(right, attrRightProfiles)"})
+    @Specialization(guards = {"!containsMetadata(left)", "!containsMetadata(right)"})
     protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
         if (LOG) {
             log("copyAttributes: no");
@@ -113,7 +112,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return target;
     }
 
-    @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
+    @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left) || containsMetadata(right)"})
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right,
                     @SuppressWarnings("unused") int rightLength,
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft,
@@ -159,7 +158,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     removeDimNames.execute(attributes);
                 }
 
-                RStringVector vecNames = left.getNames(attrLeftProfiles);
+                RStringVector vecNames = getNamesNode.getNames(left);
                 if (hasNamesLeft.profile(vecNames != null)) {
                     if (result != left) {
                         putNames.execute(initAttributes.execute(result), vecNames);
@@ -167,7 +166,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     return result;
                 }
                 if (result != right) {
-                    vecNames = right.getNames(attrRightProfiles);
+                    vecNames = getNamesNode.getNames(right);
                     if (hasNamesRight.profile(vecNames != null)) {
                         putNames.execute(initAttributes.execute(result), vecNames);
                     }
@@ -200,7 +199,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
+    @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left) || containsMetadata(right)"})
     protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile, //
@@ -233,7 +232,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 // 1-element matrix should be treated as 1-element vector
                 noDimensions.enter();
                 if (rightNotResult) {
-                    RStringVector vecNames = right.getNames(attrRightProfiles);
+                    RStringVector vecNames = getNamesNode.getNames(right);
                     if (hasNames.profile(vecNames != null)) {
                         putNames.execute(initAttributes.execute(result), vecNames);
                     }
@@ -257,7 +256,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
+    @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left) || containsMetadata(right)"})
     protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
@@ -285,7 +284,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             if (newDimensions == null) {
                 noDimensions.enter();
                 if (left != result) {
-                    RStringVector vecNames = left.getNames(attrLeftProfiles);
+                    RStringVector vecNames = getNamesNode.getNames(left);
                     if (hasNames.profile(vecNames != null)) {
                         putNames.execute(initAttributes.execute(result), vecNames);
                     }

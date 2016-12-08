@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.S
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
@@ -71,11 +72,15 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final boolean dropDimensions;
 
     private final VectorLengthProfile vectorLengthProfile = VectorLengthProfile.create();
-    private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
 
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
     @Child private SetNamesNode setNamesNode;
+    @Child private SetDimAttributeNode setDimNode;
+    @Child private SetDimNamesAttributeNode setDimNamesNode;
+    @Child private GetDimNamesAttributeNode getDimNamesNode;
+    @Child private GetNamesAttributeNode getNamesNode;
+    @Child private GetNamesAttributeNode getNamesFromDimNamesNode;
     @Children private final CachedExtractVectorNode[] extractNames;
     @Children private final CachedExtractVectorNode[] extractNamesAlternative;
 
@@ -187,7 +192,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             }
             if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
                 // names only need to be considered for single dimensional accesses
-                RStringVector originalNames = vector.getNames(vectorNamesProfile);
+                if (getNamesNode == null) {
+                    CompilerDirectives.transferToInterpreter();
+                    getNamesNode = insert(GetNamesAttributeNode.create());
+                }
+                RStringVector originalNames = getNamesNode.getNames(vector);
                 if (originalNames != null) {
                     metadataApplied.enter();
                     setNames(extractedVector, extractNames(originalNames, positions, positionProfiles, 0, originalExact, originalDropDimensions));
@@ -276,15 +285,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles dimnamesNamesProfile = RAttributeProfiles.create();
     private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
     private final ConditionProfile selectPositionsProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile originalDimNamesPRofile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
-
-    @Child private SetDimAttributeNode setDimNode;
-    @Child private SetDimNamesAttributeNode setDimNamesNode;
-    @Child private GetDimNamesAttributeNode getDimNamesNode;
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
@@ -306,8 +310,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             originalDimNamesNames = null;
             newDimNamesNames = null;
         } else {
+            if (getNamesFromDimNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNamesFromDimNamesNode = insert(GetNamesAttributeNode.create());
+            }
             newDimNames = new Object[dimCount];
-            originalDimNamesNames = originalDimNames.getNames(dimnamesNamesProfile);
+            originalDimNamesNames = getNamesFromDimNamesNode.getNames(originalDimNames);
             newDimNamesNames = originalDimNamesNames == null ? null : new String[dimCount];
         }
 

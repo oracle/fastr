@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
@@ -69,8 +71,6 @@ public abstract class Lapply extends RBuiltinNode {
 
     private static final Source CALL_SOURCE = RSource.fromTextInternal("FUN(X[[i]], ...)", RSource.Internal.LAPPLY);
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create();
 
     @Override
@@ -83,10 +83,10 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, @Cached("create()") GetNamesAttributeNode getNamesNode) {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
-        return RDataFactory.createList(result, vec.getNames(attrProfiles));
+        return RDataFactory.createList(result, getNamesNode.getNames(vec));
     }
 
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {

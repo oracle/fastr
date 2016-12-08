@@ -29,10 +29,10 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -82,7 +81,6 @@ public abstract class VApply extends RBuiltinNode {
 
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final NACheck naCheck = NACheck.create();
 
     @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create();
@@ -93,6 +91,7 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CastLogicalNode castLogical;
     @Child private CastStringNode castString;
     @Child private SetDimAttributeNode setDimNode;
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -198,7 +197,7 @@ public abstract class VApply extends RBuiltinNode {
 
         // TODO: handle names in case of matrices
         if (useNamesProfile.profile(RRuntime.fromLogical(useNames))) {
-            RStringVector names = vecMat.getNames(attrProfiles);
+            RStringVector names = getNamesNode.getNames(vecMat);
             RStringVector newNames = null;
             if (names != null) {
                 newNames = names;

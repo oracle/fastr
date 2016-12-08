@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
@@ -40,7 +41,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -81,7 +81,7 @@ public class LogFunctions {
         @Specialization
         protected RDoubleVector log(RAbstractIntVector vector, double base,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") RAttributeProfiles attrProfiles,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
             double[] resultVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
@@ -92,13 +92,13 @@ public class LogFunctions {
                 }
                 resultVector[i] = result;
             }
-            return createResult(vector, resultVector, base, copyAttrsNode, attrProfiles, getDimsNode);
+            return createResult(vector, resultVector, base, copyAttrsNode, getNamesNode, getDimsNode);
         }
 
         @Specialization
         protected RDoubleVector log(RAbstractDoubleVector vector, double base,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") RAttributeProfiles attrProfiles,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
             double[] doubleVector = new double[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
@@ -108,7 +108,7 @@ public class LogFunctions {
                 }
                 doubleVector[i] = value;
             }
-            return createResult(vector, doubleVector, base, copyAttrsNode, attrProfiles, getDimsNode);
+            return createResult(vector, doubleVector, base, copyAttrsNode, getNamesNode, getDimsNode);
         }
 
         private double logb(double x, double base) {
@@ -124,9 +124,9 @@ public class LogFunctions {
             return Math.log(x) / Math.log(base);
         }
 
-        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, double base, CopyOfRegAttributesNode copyAttrsNode, RAttributeProfiles attrProfiles,
+        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, double base, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
                         GetDimAttributeNode getDimsNode) {
-            RDoubleVector result = RDataFactory.createDoubleVector(resultData, source.isComplete() && !RRuntime.isNA(base), getDimsNode.getDimensions(source), source.getNames(attrProfiles));
+            RDoubleVector result = RDataFactory.createDoubleVector(resultData, source.isComplete() && !RRuntime.isNA(base), getDimsNode.getDimensions(source), getNamesNode.getNames(source));
             copyAttrsNode.execute(source, result);
             return result;
         }

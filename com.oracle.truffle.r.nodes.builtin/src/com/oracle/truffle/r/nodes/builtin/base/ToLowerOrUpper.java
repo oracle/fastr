@@ -30,17 +30,16 @@ import java.util.function.BiFunction;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -54,7 +53,7 @@ public abstract class ToLowerOrUpper {
         private final VectorLengthProfile lengthProfile = VectorLengthProfile.create();
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
         private final NACheck na = NACheck.create();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
         @Child private CopyOfRegAttributesNode copyAttributes = CopyOfRegAttributesNodeGen.create();
         @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
@@ -85,7 +84,7 @@ public abstract class ToLowerOrUpper {
                 String value = vector.getDataAt(i);
                 stringVector[i] = elementFunction(value, i, function);
             }
-            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), getDimNode.getDimensions(vector), vector.getNames(attrProfiles));
+            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), getDimNode.getDimensions(vector), getNames.getNames(vector));
             copyAttributes.execute(vector, result);
             return result;
         }

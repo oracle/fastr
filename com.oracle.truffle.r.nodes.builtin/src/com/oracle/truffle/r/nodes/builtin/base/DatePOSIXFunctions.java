@@ -38,6 +38,7 @@ import java.util.TimeZone;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -139,6 +140,7 @@ public class DatePOSIXFunctions {
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -163,7 +165,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
                 ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
             }
@@ -175,6 +177,7 @@ public class DatePOSIXFunctions {
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -205,7 +208,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
                 ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
             }
