@@ -594,6 +594,7 @@ public final class RError extends RuntimeException {
         UNIMPLEMENTED_ARG_TYPE("unimplemented argument type (arg %d)"),
         C_SYMBOL_NOT_IN_TABLE("C symbol name \"%s\" not in load table"),
         FORTRAN_SYMBOL_NOT_IN_TABLE("Fortran symbol name \"%s\" not in load table"),
+        SYMBOL_NOT_IN_TABLE("\"%s\" not available for .%s() for package \"%s\""),
         NOT_THAT_MANY_FRAMES("not that many frames on the stack"),
         UNIMPLEMENTED_ARGUMENT_TYPE("unimplemented argument type"),
         MUST_BE_SQUARE_NUMERIC("'%s' must be a square numeric matrix"),

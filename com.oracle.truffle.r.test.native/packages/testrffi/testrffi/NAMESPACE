@@ -1,5 +1,5 @@
 ## package has a dynamic library
-useDynLib(testrffi)
+useDynLib(testrffi, .registration = TRUE, .fixes = "C_")
 
 ## and exported functions
 exportPattern("rffi\\..*")

@@ -37,8 +37,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
+    @Child ToolsRFFI.ToolsRFFINode toolsRFFINode = RFFIFactory.getRFFI().getToolsRFFI().toolsRFFINode();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -64,7 +66,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
         try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {
             // @formatter:off
-            return RFFIFactory.getRFFI().getToolsRFFI().parseRd(openConn, srcfile,
+            return toolsRFFINode.parseRd(openConn, srcfile,
                             RDataFactory.createLogicalVectorFromScalar(verboseL),
                             RDataFactory.createLogicalVectorFromScalar(fragmentL),
                             RDataFactory.createStringVectorFromScalar(basename.getDataAt(0)),

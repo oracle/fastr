@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -61,18 +62,22 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class LaFunctions {
 
+    protected abstract static class Adapter extends RBuiltinNode {
+        @Child protected LapackRFFI.LapackRFFINode lapackRFFINode = RFFIFactory.getRFFI().getLapackRFFI().getLapackRFFINode();
+    }
+
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Version extends RBuiltinNode {
+    public abstract static class Version extends Adapter {
         @Specialization
         @TruffleBoundary
         protected String doVersion() {
             int[] version = new int[3];
-            RFFIFactory.getRFFI().getLapackRFFI().ilaver(version);
+            lapackRFFINode.ilaver(version);
             return version[0] + "." + version[1] + "." + version[2];
         }
     }
 
-    private abstract static class RsgAdapter extends RBuiltinNode {
+    private abstract static class RsgAdapter extends Adapter {
         protected static final String[] NAMES = new String[]{"values", "vectors"};
         protected final BranchProfile errorProfile = BranchProfile.create();
 
@@ -108,7 +113,7 @@ public class LaFunctions {
             double[] wi = new double[n];
             double[] work = new double[1];
             // ask for optimal size of work array
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
+            int info = lapackRFFINode.dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
             if (info != 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dgeev");
@@ -116,7 +121,7 @@ public class LaFunctions {
             // now allocate work array and make the actual call
             int lwork = (int) work[0];
             work = new double[lwork];
-            info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
+            info = lapackRFFINode.dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
             if (info != 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dgeev");
@@ -209,7 +214,7 @@ public class LaFunctions {
             int[] isuppz = new int[2 * n];
             double[] work = new double[1];
             int[] iwork = new int[1];
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
+            int info = lapackRFFINode.dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
             if (info != 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dysevr");
@@ -218,7 +223,7 @@ public class LaFunctions {
             liwork = iwork[0];
             work = new double[lwork];
             iwork = new int[liwork];
-            info = RFFIFactory.getRFFI().getLapackRFFI().dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
+            info = lapackRFFINode.dsyevr(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
             if (info != 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dysevr");
@@ -239,7 +244,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)
-    public abstract static class Qr extends RBuiltinNode {
+    public abstract static class Qr extends Adapter {
 
         @CompilationFinal private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
@@ -266,14 +271,14 @@ public class LaFunctions {
             double[] tau = new double[m < n ? m : n];
             double[] work = new double[1];
             // ask for optimal size of work array
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, -1);
+            int info = lapackRFFINode.dgeqp3(m, n, a, m, jpvt, tau, work, -1);
             if (info < 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dgeqp3");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
-            info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, lwork);
+            info = lapackRFFINode.dgeqp3(m, n, a, m, jpvt, tau, work, lwork);
             if (info < 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dgeqp3");
@@ -292,7 +297,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"}, behavior = PURE)
-    public abstract static class QrCoefReal extends RBuiltinNode {
+    public abstract static class QrCoefReal extends Adapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -330,19 +335,19 @@ public class LaFunctions {
             // we work directly in the internal data of b
             double[] bData = b.getDataWithoutCopying();
             // ask for optimal size of work array
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
+            int info = lapackRFFINode.dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
             if (info < 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dormqr");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
-            info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
+            info = lapackRFFINode.dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
             if (info < 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dormqr");
             }
-            info = RFFIFactory.getRFFI().getLapackRFFI().dtrtrs('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
+            info = lapackRFFINode.dtrtrs('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
             if (info < 0) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dtrtrs");
@@ -353,7 +358,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"}, behavior = PURE)
-    public abstract static class DetGeReal extends RBuiltinNode {
+    public abstract static class DetGeReal extends Adapter {
 
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector DET_CLASS = RDataFactory.createStringVector(new String[]{"det"}, RDataFactory.COMPLETE_VECTOR);
@@ -386,7 +391,7 @@ public class LaFunctions {
             int[] ipiv = new int[n];
             double modulus = 0;
             double[] aData = a.getDataWithoutCopying();
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
+            int info = lapackRFFINode.dgetrf(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
                 errorProfile.enter();
@@ -440,7 +445,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"}, behavior = PURE)
-    public abstract static class LaChol extends RBuiltinNode {
+    public abstract static class LaChol extends Adapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
@@ -478,7 +483,7 @@ public class LaFunctions {
             }
             int info;
             if (noPivot.profile(!piv)) {
-                info = RFFIFactory.getRFFI().getLapackRFFI().dpotrf('U', m, aData, m);
+                info = lapackRFFINode.dpotrf('U', m, aData, m);
                 if (info != 0) {
                     errorProfile.enter();
                     // TODO informative error message (aka GnuR)
@@ -488,7 +493,7 @@ public class LaFunctions {
                 int[] ipiv = new int[m];
                 double[] work = new double[2 * m];
                 int[] rank = new int[1];
-                info = RFFIFactory.getRFFI().getLapackRFFI().dpstrf('U', n, aData, n, ipiv, rank, tol, work);
+                info = lapackRFFINode.dpstrf('U', n, aData, n, ipiv, rank, tol, work);
                 if (info != 0) {
                     errorProfile.enter();
                     // TODO informative error message (aka GnuR)
@@ -511,7 +516,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"}, behavior = PURE)
-    public abstract static class LaSolve extends RBuiltinNode {
+    public abstract static class LaSolve extends Adapter {
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);
 
@@ -601,7 +606,7 @@ public class LaFunctions {
                 assert aDouble != a;
                 avals = aDouble.getInternalStore();
             }
-            int info = RFFIFactory.getRFFI().getLapackRFFI().dgesv(n, p, avals, n, ipiv, bData, n);
+            int info = lapackRFFINode.dgesv(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
                 RError.error(this, RError.Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
@@ -609,10 +614,10 @@ public class LaFunctions {
                 RError.error(this, RError.Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
             }
             if (tol > 0) {
-                double anorm = RFFIFactory.getRFFI().getLapackRFFI().dlange('1', n, n, avals, n, null);
+                double anorm = lapackRFFINode.dlange('1', n, n, avals, n, null);
                 double[] work = new double[4 * n];
                 double[] rcond = new double[1];
-                RFFIFactory.getRFFI().getLapackRFFI().dgecon('1', n, avals, n, anorm, rcond, work, ipiv);
+                lapackRFFINode.dgecon('1', n, avals, n, anorm, rcond, work, ipiv);
                 if (rcond[0] < tol) {
                     RError.error(this, RError.Message.SYSTEM_COMP_SINGULAR, rcond[0]);
                 }

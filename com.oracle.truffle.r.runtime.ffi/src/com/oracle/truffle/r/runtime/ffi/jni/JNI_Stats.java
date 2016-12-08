@@ -29,42 +29,52 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
-// Checkstyle: stop method name
 public class JNI_Stats implements StatsRFFI {
-    @Override
-    @TruffleBoundary
-    public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
-        native_fft_factor(fft_factor_address().asAddress(), n, pmaxf, pmaxp);
-    }
 
-    @Override
-    @TruffleBoundary
-    public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-        return native_fft_work(fft_work_address().asAddress(), a, nseg, n, nspn, isn, work, iwork);
-    }
+    public static class JNI_FFTNode extends FFTNode {
+        private SymbolHandle fftWorkAddress;
+        private SymbolHandle fftFactorAddress;
 
-    private SymbolHandle fft_factor_address;
-    private SymbolHandle fft_work_address;
-
-    private SymbolHandle fft_factor_address() {
-        if (fft_factor_address == null) {
-            DLLInfo dllInfo = DLL.findLibrary("stats");
-            fft_factor_address = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, "fft_factor");
-            assert fft_factor_address != DLL.SYMBOL_NOT_FOUND;
+        @Override
+        @TruffleBoundary
+        public int executeWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
+            initialize();
+            return native_fft_work(fftWorkAddress.asAddress(), a, nseg, n, nspn, isn, work, iwork);
         }
-        return fft_factor_address;
-    }
 
-    private SymbolHandle fft_work_address() {
-        if (fft_work_address == null) {
-            DLLInfo dllInfo = DLL.findLibrary("stats");
-            fft_work_address = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, "fft_work");
-            assert fft_work_address != DLL.SYMBOL_NOT_FOUND;
+        @Override
+        @TruffleBoundary
+        public void executeFactor(int n, int[] pmaxf, int[] pmaxp) {
+            initialize();
+            native_fft_factor(fftFactorAddress.asAddress(), n, pmaxf, pmaxp);
+
         }
-        return fft_work_address;
+
+        private void initialize() {
+            if (fftWorkAddress == null) {
+                fftWorkAddress = fftAddress("fft_work");
+                fftFactorAddress = fftAddress("fft_factor");
+            }
+        }
+
+        private static SymbolHandle fftAddress(String symbol) {
+            SymbolHandle fftAddress;
+            DLLInfo dllInfo = DLL.findLibrary("stats");
+            fftAddress = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, symbol);
+            assert fftAddress != DLL.SYMBOL_NOT_FOUND;
+            return fftAddress;
+        }
+
     }
 
+    @Override
+    public FFTNode fftNode() {
+        return new JNI_FFTNode();
+    }
+
+    // Checkstyle: stop method name
     private static native void native_fft_factor(long address, int n, int[] pmaxf, int[] pmaxp);
 
     private static native int native_fft_work(long address, double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
+
 }

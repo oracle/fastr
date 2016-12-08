@@ -22,10 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public interface GridRFFI {
-    Object initGrid(REnvironment gridEvalEnv);
+    abstract class GridRFFINode extends Node {
+        public abstract Object initGrid(REnvironment gridEvalEnv);
 
-    Object killGrid();
+        public abstract Object killGrid();
+    }
+
+    GridRFFINode gridRFFINode();
 }

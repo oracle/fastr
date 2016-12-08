@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
+
 /**
- * Interface to native (C) methods provided by the {@code stats} package.
+ * Interface to native (C) methods provided by the {@code stats} package that are used to implement
+ * {@code.Call(C_fft)}. The implementation is split into a Java part which calls the
+ * {@code fft_factor} and {@code fft_work}. functions from the GNU R C code.
  */
 public interface StatsRFFI {
-    // Checkstyle: stop method name
-    void fft_factor(int n, int[] pmaxf, int[] pmaxp);
+    abstract class FFTNode extends Node {
+        public abstract void executeFactor(int n, int[] pmaxf, int[] pmaxp);
 
-    int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
+        public abstract int executeWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
+    }
+
+    FFTNode fftNode();
 
 }

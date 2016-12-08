@@ -23,25 +23,31 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * The .Call support for the grid package.
  */
 public class GridFunctions {
+
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().gridRFFINode();
+
         @Specialization
         @TruffleBoundary
         protected Object initGrid(REnvironment gridEvalEnv) {
-            return RFFIFactory.getRFFI().getGridRFFI().initGrid(gridEvalEnv);
+            return gridRFFINode.initGrid(gridEvalEnv);
         }
     }
 
     public static final class KillGrid extends RExternalBuiltinNode {
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().gridRFFINode();
+
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
-            return RFFIFactory.getRFFI().getGridRFFI().killGrid();
+            return gridRFFINode.killGrid();
         }
     }
 

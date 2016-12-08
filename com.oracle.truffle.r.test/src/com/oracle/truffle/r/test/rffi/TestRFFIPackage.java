@@ -87,6 +87,16 @@ public class TestRFFIPackage extends TestRPackages {
     }
 
     @Test
+    public void testRFFI7E() {
+        assertEvalWithLib("rffi.null.E()");
+    }
+
+    @Test
+    public void testRFFI7C() {
+        assertEvalWithLib("rffi.null.C()");
+    }
+
+    @Test
     public void testRFFI8() {
         assertEvalWithLib("rffi.isRString(character(0))");
     }

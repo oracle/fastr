@@ -627,7 +627,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
-    public byte[] RAW(Object x) {
+    public Object RAW(Object x) {
         if (tracer != null) {
             tracer.RAW(x);
         }
@@ -641,7 +641,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
-    public byte[] LOGICAL(Object x) {
+    public Object LOGICAL(Object x) {
         if (tracer != null) {
             tracer.LOGICAL(x);
         }
@@ -655,7 +655,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
-    public int[] INTEGER(Object x) {
+    public Object INTEGER(Object x) {
         if (tracer != null) {
             tracer.INTEGER(x);
         }
@@ -679,7 +679,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
-    public double[] REAL(Object x) {
+    public Object REAL(Object x) {
         if (tracer != null) {
             tracer.REAL(x);
         }

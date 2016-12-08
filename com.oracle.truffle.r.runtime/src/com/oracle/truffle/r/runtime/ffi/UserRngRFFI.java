@@ -22,17 +22,23 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * Explicit statically typed interface to user-supplied random number generators.
  */
 public interface UserRngRFFI {
+    abstract class UserRngRFFINode extends Node {
 
-    void init(int seed);
+        public abstract void init(int seed);
 
-    double rand();
+        public abstract double rand();
 
-    int nSeed();
+        public abstract int nSeed();
 
-    void seeds(int[] n);
+        public abstract void seeds(int[] n);
+    }
+
+    UserRngRFFINode userRngRFFINode();
 
 }

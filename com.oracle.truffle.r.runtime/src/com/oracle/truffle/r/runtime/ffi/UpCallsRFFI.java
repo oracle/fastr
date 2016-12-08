@@ -116,13 +116,13 @@ public interface UpCallsRFFI {
 
     void SET_VECTOR_ELT(Object x, int i, Object v);
 
-    byte[] RAW(Object x);
+    Object RAW(Object x);
 
-    byte[] LOGICAL(Object x);
+    Object LOGICAL(Object x);
 
-    int[] INTEGER(Object x);
+    Object INTEGER(Object x);
 
-    double[] REAL(Object x);
+    Object REAL(Object x);
 
     Object STRING_ELT(Object x, int i);
 
