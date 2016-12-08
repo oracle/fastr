@@ -13,7 +13,6 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
 
 public final class Pbinom implements StatsFunctions.Function3_2 {
 
@@ -34,8 +33,8 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
 
         if (DPQ.nonint(size)) {
             nanProfile.enter();
-            RError.warning(RError.SHOW_CALLER, RError.Message.NON_INTEGER_N, "n", size);
-            return Double.NaN;
+            DPQ.nointCheckWarning(size, "n");
+            return DPQ.d0(logP);
         }
         size = Math.round(size);
         /* PR#8560: n=0 is a valid value */

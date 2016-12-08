@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
+
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -22,6 +24,8 @@ public final class DPQ {
     }
 
     // R >= 3.1.0: # define R_nonint(x) (fabs((x) - R_forceint(x)) > 1e-7)
+    // Note: if true should be followed by "return d0(logP)"
+    // Consider using dNointCheck instead
     public static boolean nonint(double x) {
         return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1., Math.abs(x));
     }
@@ -39,6 +43,11 @@ public final class DPQ {
     // R_DT_0
     public static double dt0(boolean logP, boolean lowerTail) {
         return lowerTail ? d0(logP) : d1(logP);
+    }
+
+    // R_D_log
+    public static double dLog(double p, boolean logP) {
+        return logP ? p : Math.log(p);
     }
 
     // R_DT_1
@@ -62,15 +71,29 @@ public final class DPQ {
         return logP ? Math.log(x) : x; /* x in pF(x,..) */
     }
 
-    // #define R_D_qIv(p) (log_p ? exp(p) : (p)) /* p in qF(p,..) */
-    // R_D_exp
     public static double dExp(double x, boolean logP) {
         return logP ? x : Math.exp(x); /* exp(x) */
     }
 
+    /* log(1-exp(x)): R_D_LExp(x) == (log1p(- R_D_qIv(x))) but even more stable: */
+    // #define R_D_LExp(x) (log_p ? R_Log1_Exp(x) : log1p(-x))
+    public static double dLExp(double x, boolean logP) {
+        return (logP ? log1Exp(x, logP) : StatsUtil.log1p(-x));
+    }
+
+    // #define R_Log1_Exp(x) ((x) > -M_LN2 ? log(-expm1(x)) : log1p(-exp(x)))
+    public static double log1Exp(double x, boolean logP) {
+        return ((x) > -M_LN2 ? Math.log(-StatsUtil.expm1(x)) : StatsUtil.log1p(-Math.exp(x)));
+    }
+
     // #define R_D_log(p) (log_p ? (p) : log(p)) /* log(p) */
     public static double dClog(double p, boolean logP) {
-        return logP ? Math.log1p(-p) : 0.5 - p + 0.5; /* [log](1-p) */
+        return logP ? StatsUtil.log1p(-p) : 0.5 - p + 0.5; /* [log](1-p) */
+    }
+
+    // #define R_DT_Clog(p) (lower_tail? R_D_LExp(p): R_D_log(p))/* log(1-p) in qF*/
+    public static double dtCLog(double p, boolean lowerTail, boolean logP) {
+        return lowerTail ? dLExp(p, logP) : dLog(p, logP);
     }
 
     //
@@ -148,17 +171,31 @@ public final class DPQ {
         }
     }
 
+    // #define R_Q_P01_check(p) \
+    // if ((log_p && p > 0) || \
+    // (!log_p && (p < 0 || p > 1)) ) \
+    // ML_ERR_return_NAN
+    public static void qQP01Check(double p, boolean logP) throws EarlyReturn {
+        if ((logP && p > 0) || (!logP && (p < 0 || p > 1))) {
+            throw new EarlyReturn(StatsUtil.mlError());
+        }
+    }
+
     /* [neg]ative or [non int]eger : */
     public static boolean dNegInonint(double x) {
         return x < 0 || nonint(x);
     }
 
-    // for discrete d<distr>(x, ...) :
-    public static boolean dNonintCheck(double x) {
+    // FastR helpers:
+
+    public static void nointCheckWarning(double x, String varName) {
+        RError.warning(RError.SHOW_CALLER, Message.NON_INTEGER_N, varName, x);
+    }
+
+    public static void dNonintCheck(double x, boolean giveLog) throws EarlyReturn {
         if (nonint(x)) {
-            RError.warning(RError.SHOW_CALLER, Message.NON_INTEGER_N, "x", x);
-            return true;
+            nointCheckWarning(x, "x");
+            throw new EarlyReturn(d0(giveLog));
         }
-        return false;
     }
 }
