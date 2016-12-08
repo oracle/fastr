@@ -71,4 +71,10 @@ public class TestBuiltin_dimassign extends TestBase {
     public void testdimassign11() {
         assertEval("argv <- list(structure(NA, .Dim = c(1L, 1L)), value = c(1L, 1L));`dim<-`(argv[[1]],argv[[2]]);");
     }
+
+    @Test
+    public void testdimassign12() {
+        assertEval("b <- c(a=1+2i,b=3+4i);dim(b) <- c(2,1);attributes(x)");
+    }
+
 }

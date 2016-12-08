@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -94,8 +93,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
         RVector<?> result = target.materialize();
 
         if (copyAllAttributes) {
@@ -113,7 +111,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
             RStringVector vecNames = source.getNames(attrSourceProfiles);
             if (hasNamesSource.profile(vecNames != null)) {
                 putNames.execute(initAttributes.execute(result), vecNames);
-                result.setInternalNames(vecNames);
                 return result;
             }
             return result;

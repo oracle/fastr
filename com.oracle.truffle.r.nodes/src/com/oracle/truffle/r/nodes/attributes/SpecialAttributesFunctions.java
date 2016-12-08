@@ -282,6 +282,8 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
 
+        private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
+
         protected SetNamesAttributeNode() {
             super(RRuntime.NAMES_ATTR_KEY);
         }
@@ -290,11 +292,52 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen.create();
         }
 
+        public void setNames(RAbstractContainer x, RStringVector newNames) {
+            if (nullDimNamesProfile.profile(newNames == null)) {
+                execute(x, RNull.instance);
+            } else {
+                execute(x, newNames);
+            }
+        }
+
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setNamesInContainer(RAbstractContainer x, RStringVector names,
+        protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveNamesAttributeNode removeNamesAttrNode) {
+            removeNamesAttrNode.execute(x);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setNamesInVector(RVector<?> x, RStringVector newNames,
+                        @Cached("create()") BranchProfile namesTooLongProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile useDimNamesProfile,
+                        @Cached("create()") GetDimAttributeNode getDimNode,
+                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            RVector<?> xProfiled = xTypeProfile.profile(x);
+            if (newNames.getLength() > xProfiled.getLength()) {
+                namesTooLongProfile.enter();
+                throw RError.error(this, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
+            }
+            int[] dimensions = getDimNode.getDimensions(x);
+            if (useDimNamesProfile.profile(dimensions != null && dimensions.length == 1)) {
+                // for one dimensional array, "names" is really "dimnames[[1]]" (see R
+                // documentation for "names" function)
+                RList newDimNames = RDataFactory.createList(new Object[]{newNames});
+                newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
+                setDimNamesNode.setDimNames(xProfiled, newDimNames);
+            } else {
+                super.setAttrInAttributable(xProfiled, newNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+                assert newNames != xProfiled;
+            }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setNamesInContainer(RAbstractContainer x, RStringVector newNames,
                         @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
-            xProfiled.setNames(names);
+            xProfiled.setNames(newNames);
         }
     }
 

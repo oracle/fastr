@@ -475,10 +475,9 @@ public abstract class Combine extends RBuiltinNode {
             RVector<?> materialized = vector.materialize();
             RVector<?> result = materialized.copyDropAttributes();
 
-            RStringVector vecNames = materialized.getInternalNames();
+            RStringVector vecNames = materialized.getNamesFromAttrs();
             if (hasNamesProfile.profile(vecNames != null)) {
                 result.initAttributes(RAttributesLayout.createNames(vecNames));
-                result.setInternalNames(vecNames);
             } else {
                 RList dimNames = materialized.getDimNames();
                 if (hasDimNamesProfile.profile(dimNames != null)) {

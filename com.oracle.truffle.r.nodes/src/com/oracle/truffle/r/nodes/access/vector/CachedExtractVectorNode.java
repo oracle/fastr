@@ -467,7 +467,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (container.getAttributes() == null) {
                 // usual case
                 container.initAttributes(RAttributesLayout.createNames(newNames1));
-                container.setInternalNames(newNames1);
             } else {
                 // from an RLanguage extraction that set a name
                 RStringVector oldNames = (RStringVector) namesAttrGetter.execute(container.getAttributes());

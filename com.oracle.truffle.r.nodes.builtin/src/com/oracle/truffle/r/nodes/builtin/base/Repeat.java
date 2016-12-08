@@ -168,7 +168,6 @@ public abstract class Repeat extends RBuiltinNode {
             r = handleTimes(input, times, false);
         }
         putNames.execute(initAttributes.execute(r), names);
-        r.setInternalNames(names);
         return r;
     }
 
@@ -186,7 +185,6 @@ public abstract class Repeat extends RBuiltinNode {
             r = handleTimes(x, times, true);
         }
         putNames.execute(initAttributes.execute(r), names);
-        r.setInternalNames(names);
         return r;
     }
 
