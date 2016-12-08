@@ -47,6 +47,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
@@ -454,6 +455,7 @@ public abstract class Combine extends RBuiltinNode {
     protected abstract static class CombineInputCast extends RNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
         public abstract Object execute(Object operand);
 
@@ -492,7 +494,7 @@ public abstract class Combine extends RBuiltinNode {
         }
 
         protected boolean needsCopy(RAbstractVector vector) {
-            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null;
+            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || getDimNamesNode.getDimNames(vector) != null;
         }
     }
 }

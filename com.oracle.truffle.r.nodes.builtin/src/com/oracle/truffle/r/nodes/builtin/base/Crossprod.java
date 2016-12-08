@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -68,14 +69,16 @@ public abstract class Crossprod extends RBuiltinNode {
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y,
                     @Cached("create()") GetDimAttributeNode getXDimsNode,
                     @Cached("create()") GetDimAttributeNode getYDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
         int[] xDims = getXDimsNode.getDimensions(x);
         int[] yDims = getYDimsNode.getDimensions(y);
         int xRows = xDims[0];
         int xCols = xDims[1];
         int yRows = yDims[0];
         int yCols = yDims[1];
-        return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false, setDimNamesNode);
+        return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
     }
 
     private static RDoubleVector mirror(RDoubleVector result, GetDimAttributeNode getResultDimsNode) {
@@ -108,11 +111,13 @@ public abstract class Crossprod extends RBuiltinNode {
     protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") GetDimAttributeNode getResultDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
         int[] xDims = getDimsNode.getDimensions(x);
         int xRows = xDims[0];
         int xCols = xDims[1];
-        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true, setDimNamesNode), getResultDimsNode);
+        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true, setDimNamesNode, getADimNamesNode, getBDimNamesNode), getResultDimsNode);
     }
 
     @Specialization

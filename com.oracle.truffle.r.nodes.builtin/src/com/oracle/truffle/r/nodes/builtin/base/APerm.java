@@ -24,6 +24,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -132,10 +133,10 @@ public abstract class APerm extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
-                    @Cached("create()") RAttributeProfiles dimNamesProfile,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimAttributeNode setDimsNode) {
-        RList dimNames = vector.getDimNames(dimNamesProfile);
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+        RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
             errorProfile.enter();

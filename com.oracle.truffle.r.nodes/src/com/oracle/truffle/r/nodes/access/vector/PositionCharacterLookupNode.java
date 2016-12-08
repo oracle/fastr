@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -44,6 +46,7 @@ final class PositionCharacterLookupNode extends Node {
     private final BranchProfile emptyProfile = BranchProfile.create();
 
     @Child private SearchFirstStringNode searchNode;
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     PositionCharacterLookupNode(ElementAccessMode mode, int numDimensions, int dimensionIndex, boolean useNAForNotFound, boolean exact) {
         this.numDimensions = numDimensions;
@@ -63,7 +66,7 @@ final class PositionCharacterLookupNode extends Node {
             }
             result = searchNode.apply(names, position, notFoundStartIndex, position.materialize());
         } else {
-            RList dimNames = target.getDimNames(attributeProfiles);
+            RList dimNames = getDimNamesNode.getDimNames(target);
             if (dimNames != null) {
                 Object dataAt = dimNames.getDataAt(dimensionIndex);
                 if (dataAt != RNull.instance) {

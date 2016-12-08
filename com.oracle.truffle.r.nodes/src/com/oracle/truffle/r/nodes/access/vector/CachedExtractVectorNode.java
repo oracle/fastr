@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
@@ -283,14 +284,20 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @Child private SetDimAttributeNode setDimNode;
     @Child private SetDimNamesAttributeNode setDimNamesNode;
+    @Child private GetDimNamesAttributeNode getDimNamesNode;
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
         int dimCount = countDimensions(positionProfile);
 
+        if (getDimNamesNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getDimNamesNode = insert(GetDimNamesAttributeNode.create());
+        }
+
         int[] newDimensions = new int[dimCount];
-        RList originalDimNames = originalTarget.getDimNames(null);
+        RList originalDimNames = getDimNamesNode.getDimNames(originalTarget);
         RStringVector originalDimNamesNames;
         Object[] newDimNames;
         String[] newDimNamesNames;

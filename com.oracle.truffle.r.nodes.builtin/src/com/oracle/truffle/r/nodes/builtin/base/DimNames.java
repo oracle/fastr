@@ -26,8 +26,10 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -38,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 @RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class DimNames extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization(guards = "!isRAbstractContainer(operand)")
@@ -47,8 +48,8 @@ public abstract class DimNames extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getDimNames(RAbstractContainer container) {
-        RList names = container.getDimNames(attrProfiles);
+    protected Object getDimNames(RAbstractContainer container, @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+        RList names = getDimNamesNode.getDimNames(container);
         return nullProfile.profile(names == null) ? RNull.instance : names;
     }
 }

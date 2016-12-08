@@ -51,7 +51,6 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     protected static final String DIMNAMES_ATTR_KEY = RRuntime.DIMNAMES_ATTR_KEY;
 
     private final ConditionProfile shareListProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isRVectorProfile = ConditionProfile.createBinaryProfile();
 
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;

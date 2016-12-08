@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -561,7 +562,8 @@ public class LaFunctions {
                         @Cached("create()") GetDimAttributeNode getADimsNode,
                         @Cached("create()") GetDimAttributeNode getBinDimsNode,
                         @Cached("create()") SetDimAttributeNode setBDimsNode,
-                        @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode) {
+                        @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
@@ -571,7 +573,7 @@ public class LaFunctions {
             if (n2 != n) {
                 throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a", n, n2);
             }
-            RList aDn = a.getDimNames(attrProfiles);
+            RList aDn = getDimNamesNode.getDimNames(a);
             int p;
             double[] bData;
             RDoubleVector b;

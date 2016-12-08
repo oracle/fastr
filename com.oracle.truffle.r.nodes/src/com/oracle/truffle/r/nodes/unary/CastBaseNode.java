@@ -26,10 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -51,6 +52,8 @@ public abstract class CastBaseNode extends CastNode {
     private final NullProfile hasNamesProfile = NullProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child private GetDimAttributeNode getDimNode;
+    @Child private SetDimNamesAttributeNode setDimNamesNode;
+    @Child private GetDimNamesAttributeNode getDimNamesNode;
 
     private final boolean preserveNames;
     private final boolean preserveDimensions;
@@ -60,13 +63,16 @@ public abstract class CastBaseNode extends CastNode {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
+        if (preserveDimensions) {
+            getDimNamesNode = GetDimNamesAttributeNode.create();
+        }
     }
 
     public boolean preserveNames() {
         return preserveNames;
     }
 
-    public boolean preserveDimensions() {
+    public final boolean preserveDimensions() {
         return preserveDimensions;
     }
 
@@ -103,9 +109,13 @@ public abstract class CastBaseNode extends CastNode {
 
     protected void preserveDimensionNames(RAbstractContainer operand, RVector<?> ret) {
         if (preserveDimensions()) {
-            RList dimNames = operand.getDimNames(attrProfiles);
+            RList dimNames = getDimNamesNode.getDimNames(operand);
             if (hasDimNamesProfile.profile(dimNames != null)) {
-                ret.setDimNames((RList) dimNames.copy());
+                if (setDimNamesNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setDimNamesNode = insert(SetDimNamesAttributeNode.create());
+                }
+                setDimNamesNode.setDimNames(ret, (RList) dimNames.copy());
             }
         }
     }

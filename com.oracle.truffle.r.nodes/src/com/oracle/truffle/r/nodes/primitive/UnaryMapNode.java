@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -199,11 +200,12 @@ public final class UnaryMapNode extends RBaseNode {
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     private boolean containsMetadata(RAbstractVector vector) {
         return vector instanceof RVector &&
                         (hasDimensionsProfile.profile(hasDimNode.execute(vector)) || vector.getAttributes() != null || hasNamesProfile.profile(vector.getNames(attrProfiles) != null) ||
-                                        vector.getDimNames(attrProfiles) != null);
+                                        getDimNamesNode.getDimNames(vector) != null);
     }
 
     @TruffleBoundary

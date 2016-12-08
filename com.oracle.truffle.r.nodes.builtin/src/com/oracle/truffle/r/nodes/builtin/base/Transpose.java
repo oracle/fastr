@@ -25,8 +25,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,7 +51,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @RBuiltin(name = "t.default", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Transpose extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile hasDimNamesProfile = BranchProfile.create();
     private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
 
@@ -61,6 +61,7 @@ public abstract class Transpose extends RBuiltinNode {
     @Child private InitAttributesNode initAttributes = InitAttributesNode.create();
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     public abstract Object execute(RAbstractVector o);
 
@@ -98,7 +99,7 @@ public abstract class Transpose extends RBuiltinNode {
         int[] newDim = new int[]{secondDim, firstDim};
         putDimensions.execute(initAttributes.execute(r), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         // set new dim names
-        RList dimNames = vector.getDimNames(attrProfiles);
+        RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames != null) {
             hasDimNamesProfile.enter();
             assert dimNames.getLength() == 2;
