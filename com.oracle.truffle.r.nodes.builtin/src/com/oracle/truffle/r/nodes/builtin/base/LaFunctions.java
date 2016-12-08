@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -484,7 +485,8 @@ public class LaFunctions {
 
         @Specialization
         protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
-                        @Cached("create()") GetDimAttributeNode getDimsNode) {
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
@@ -523,7 +525,7 @@ public class LaFunctions {
                     for (int i = 0; i < m; i++) {
                         dn2[i] = dn.getDataAt(ipiv[i] - 1);
                     }
-                    a.setDimNames(RDataFactory.createList(dn2));
+                    setDimNamesNode.setDimNames(a, RDataFactory.createList(dn2));
                 }
             }
             return a;
@@ -558,7 +560,8 @@ public class LaFunctions {
         protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
                         @Cached("create()") GetDimAttributeNode getADimsNode,
                         @Cached("create()") GetDimAttributeNode getBinDimsNode,
-                        @Cached("create()") SetDimAttributeNode setBDimsNode) {
+                        @Cached("create()") SetDimAttributeNode setBDimsNode,
+                        @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
@@ -597,7 +600,7 @@ public class LaFunctions {
                         bDnData[1] = binDn.getDataAt(1);
                     }
                     if (bDnData[0] != null || bDnData[1] != null) {
-                        b.setDimNames(RDataFactory.createList(bDnData));
+                        setBDimNamesNode.setDimNames(b, RDataFactory.createList(bDnData));
                     }
                 }
             } else {

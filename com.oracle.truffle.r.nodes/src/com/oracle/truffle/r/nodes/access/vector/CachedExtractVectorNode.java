@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.S
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -281,6 +282,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Child private SetDimAttributeNode setDimNode;
+    @Child private SetDimNamesAttributeNode setDimNamesNode;
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
@@ -336,7 +338,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
             setDimNode.setDimensions(extractedTarget, newDimensions);
             if (newDimNames != null) {
-                extractedTarget.setDimNames(RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
+                if (setDimNamesNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setDimNamesNode = insert(SetDimNamesAttributeNode.create());
+                }
+                setDimNamesNode.setDimNames(extractedTarget,
+                                RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
             }
         } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);

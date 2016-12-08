@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
@@ -361,14 +362,9 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void resetDims(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("create()") RemoveDimAttributeNode removeDimAttrNode,
-                        @Cached("createBinaryProfile()") ConditionProfile vectorClassProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
             removeDimAttrNode.execute(x);
-            if (vectorClassProfile.profile(x instanceof RVector)) {
-                ((RVector<?>) x).setDimNames(null);
-            } else {
-                xTypeProfile.profile(x).setDimNames(null);
-            }
+            setDimNamesNode.setDimNames(x, null);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -530,55 +526,73 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("create()") RemoveDimNamesAttributeNode removeDimNamesAttrNode) {
-// removeDimNamesAttrNode.execute(x);
-            x.setDimNames(null);
+            removeDimNamesAttrNode.execute(x);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void setDimNamesInVector(RVector<?> x, RList newDimNames,
                         @Cached("create()") GetDimAttributeNode getDimNode,
+                        @Cached("create()") BranchProfile nullDimsProfile,
+                        @Cached("create()") BranchProfile dimsLengthProfile,
+                        @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                        @Cached("create()") BranchProfile invalidDimProfile,
+                        @Cached("create()") BranchProfile nullDimProfile,
+                        @Cached("create()") BranchProfile resizeDimsProfile,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            x.setDimNames(newDimNames);
-// int[] dimensions = getDimNode.getDimensions(x);
-// if (dimensions == null) {
-// throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);
-// }
-// int newDimNamesLength = newDimNames.getLength();
-// if (newDimNamesLength > dimensions.length) {
-// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength,
-// dimensions.length);
-// }
-// for (int i = 0; i < newDimNamesLength; i++) {
-// Object dimObject = newDimNames.getDataAt(i);
-// if (dimObject != RNull.instance) {
-// if (dimObject instanceof String) {
-// if (dimensions[i] != 1) {
-// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
-// }
-// } else {
-// RStringVector dimVector = (RStringVector) dimObject;
-// if (dimVector == null) {
-// newDimNames.updateDataAt(i, RNull.instance, null);
-// } else if (dimVector.getLength() != dimensions[i]) {
-// throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
-// }
-// }
-// }
-// }
-//
-// RList resDimNames = newDimNames;
-// if (newDimNamesLength < dimensions.length) {
-// // resize the array and fill the missing entries with NULL-s
-// resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
-// resDimNames.setAttributes(newDimNames);
-// for (int i = newDimNamesLength; i < dimensions.length; i++) {
-// resDimNames.updateDataAt(i, RNull.instance, null);
-// }
-// }
-// resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-// super.setAttrInAttributable(x, newDimNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+            int[] dimensions = getDimNode.getDimensions(x);
+            if (dimensions == null) {
+                nullDimsProfile.enter();
+                throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);
+            }
+            int newDimNamesLength = newDimNames.getLength();
+            if (newDimNamesLength > dimensions.length) {
+                dimsLengthProfile.enter();
+                throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength,
+                                dimensions.length);
+            }
+
+            loopProfile.profileCounted(newDimNamesLength);
+            for (int i = 0; loopProfile.inject(i < newDimNamesLength); i++) {
+                Object dimObject = newDimNames.getDataAt(i);
+
+                if ((dimObject instanceof String && dimensions[i] != 1) ||
+                                (dimObject instanceof RStringVector && !isValidDimLength((RStringVector) dimObject, dimensions[i]))) {
+                    invalidDimProfile.enter();
+                    throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                }
+
+                if (dimObject == null || (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0)) {
+                    nullDimProfile.enter();
+                    newDimNames.updateDataAt(i, RNull.instance, null);
+                }
+            }
+
+            RList resDimNames = newDimNames;
+            if (newDimNamesLength < dimensions.length) {
+                resizeDimsProfile.enter();
+                // resize the array and fill the missing entries with NULL-s
+                resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
+                resDimNames.setAttributes(newDimNames);
+                for (int i = newDimNamesLength; i < dimensions.length; i++) {
+                    resDimNames.updateDataAt(i, RNull.instance, null);
+                }
+            }
+            resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
+
+            if (x.getAttributes() == null) {
+                attrNullProfile.enter();
+                x.initAttributes(RAttributesLayout.createDimNames(resDimNames));
+                return;
+            }
+
+            super.setAttrInAttributable(x, resDimNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+        }
+
+        private static boolean isValidDimLength(RStringVector x, int expectedDim) {
+            int len = x.getLength();
+            return len == 0 || len == expectedDim;
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")

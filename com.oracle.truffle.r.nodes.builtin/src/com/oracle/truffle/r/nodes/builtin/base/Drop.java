@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -52,7 +53,8 @@ public abstract class Drop extends RBuiltinNode {
     @Specialization
     protected RAbstractVector doDrop(RAbstractVector x,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimAttributeNode setDimsNode) {
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimsNamseNode) {
         int[] dims = getDimsNode.getDimensions(x);
         if (nullDimensions.profile(dims == null)) {
             return x;
@@ -73,7 +75,7 @@ public abstract class Drop extends RBuiltinNode {
             @SuppressWarnings("unused")
             RAbstractVector r = x.copy();
             setDimsNode.setDimensions(x, null);
-            x.setDimNames(null);
+            setDimsNamseNode.setDimNames(x, null);
             x.setNames(null);
             return x;
         }
@@ -105,9 +107,9 @@ public abstract class Drop extends RBuiltinNode {
                     newDimNames[newDimsIdx++] = oldDimNames.getDataAt(i);
                 }
             }
-            result.setDimNames(RDataFactory.createList(newDimNames));
+            setDimsNamseNode.setDimNames(result, RDataFactory.createList(newDimNames));
         } else {
-            result.setDimNames(null);
+            setDimsNamseNode.setDimNames(result, null);
         }
 
         return result;

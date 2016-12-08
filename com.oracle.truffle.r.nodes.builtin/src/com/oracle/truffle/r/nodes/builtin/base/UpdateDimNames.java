@@ -31,8 +31,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -41,11 +40,8 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -109,10 +105,9 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
-                    @Cached("createDimNames()") SetFixedAttributeNode attrSetter,
-                    @Cached("create()") GetDimAttributeNode getDimNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
-        setDimNames(result, convertToListOfStrings(list), attrSetter, getDimNode);
+        setDimNamesNode.setDimNames(result, convertToListOfStrings(list));
         return result;
     }
 
@@ -122,57 +117,4 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
 
-    private void setDimNames(RAbstractContainer container, RList newDimNames, SetFixedAttributeNode attrSetter, GetDimAttributeNode getDimNode) {
-        assert newDimNames != null;
-        if (isRVectorProfile.profile(container instanceof RVector)) {
-            RVector<?> vector = (RVector<?>) container;
-            int[] dimensions = getDimNode.getDimensions(vector);
-            if (dimensions == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);
-            }
-            int newDimNamesLength = newDimNames.getLength();
-            if (newDimNamesLength > dimensions.length) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
-            }
-            for (int i = 0; i < newDimNamesLength; i++) {
-                Object dimObject = newDimNames.getDataAt(i);
-                if (dimObject != RNull.instance) {
-                    if (dimObject instanceof String) {
-                        if (dimensions[i] != 1) {
-                            CompilerDirectives.transferToInterpreter();
-                            throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
-                        }
-                    } else {
-                        RStringVector dimVector = (RStringVector) dimObject;
-                        if (dimVector == null || dimVector.getLength() == 0) {
-                            newDimNames.updateDataAt(i, RNull.instance, null);
-                        } else if (dimVector.getLength() != dimensions[i]) {
-                            CompilerDirectives.transferToInterpreter();
-                            throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
-                        }
-                    }
-                }
-            }
-
-            RList resDimNames = newDimNames;
-            if (newDimNamesLength < dimensions.length) {
-                // resize the array and fill the missing entries with NULL-s
-                resDimNames = (RList) resDimNames.copyResized(dimensions.length, true);
-                resDimNames.setAttributes(newDimNames);
-                for (int i = newDimNamesLength; i < dimensions.length; i++) {
-                    resDimNames.updateDataAt(i, RNull.instance, null);
-                }
-            }
-            if (vector.getAttributes() == null) {
-                vector.initAttributes(RAttributesLayout.createDimNames(resDimNames));
-            } else {
-                attrSetter.execute(vector.getAttributes(), resDimNames);
-            }
-            resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-        } else {
-            container.setDimNames(newDimNames);
-        }
-    }
 }

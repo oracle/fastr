@@ -29,6 +29,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -129,7 +130,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesRight,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
-                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
         if (LOG) {
             log("copyAttributes: ==");
             countEquals++;
@@ -191,7 +193,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             if (result != right) {
                 newDimNames = right.getDimNames(attrRightProfiles);
                 if (hasDimNames.profile(newDimNames != null)) {
-                    result.setDimNames(newDimNames);
+                    setDimNamesNode.setDimNames(result, newDimNames);
                 }
             }
         }
@@ -211,7 +213,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
-                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
         if (LOG) {
             log("copyAttributes: <");
             countSmaller++;
@@ -249,7 +252,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         if (rightNotResult) {
             RList newDimNames = right.getDimNames(attrRightProfiles);
             if (hasDimNames.profile(newDimNames != null)) {
-                result.setDimNames(newDimNames);
+                setDimNamesNode.setDimNames(result, newDimNames);
             }
         }
         return result;
@@ -267,7 +270,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
-                    @Cached("create()") GetDimAttributeNode getRightDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getRightDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
         if (LOG) {
             log("copyAttributes: >");
             countLarger++;
@@ -299,7 +303,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         if (left != result) {
             RList newDimNames = left.getDimNames(attrLeftProfiles);
             if (hasDimNames.profile(newDimNames != null)) {
-                result.setDimNames(newDimNames);
+                setDimNamesNode.setDimNames(result, newDimNames);
             }
         }
         return result;
