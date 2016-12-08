@@ -20,21 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.context;
+package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
-public interface RForeignAccessFactory {
+@MessageResolution(receiverType = RSymbol.class, language = TruffleRLanguage.class)
+public class RSymbolMR {
+    @CanResolve
+    public abstract static class RSymbolCheck extends Node {
 
-    /**
-     * Return the appropriate {@link ForeignAccess} instance for {@code obj}.
-     */
-    ForeignAccess getForeignAccess(RTruffleObject obj);
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof RSymbol;
+        }
+    }
 
-    /**
-     * Return the {@link TruffleLanguage} instance for R. (Project circularity workaround).
-     */
-    Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
 }

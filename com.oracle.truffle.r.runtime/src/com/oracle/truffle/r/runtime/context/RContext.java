@@ -465,7 +465,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
-
         state.add(State.CONSTRUCTED);
     }
 
@@ -523,8 +522,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateStdConnections.initialize(this);
         stateRNG.initialize(this);
         this.stateRFFI = RFFIContextStateFactory.newContextState().initialize(this);
-
-        stateRFFI.initialize(this);
         stateRSerialize.initialize(this);
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
@@ -785,6 +782,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static Engine getEngine() {
         return RContext.getInstance().engine;
+    }
+
+    public ContextState getStateRFFI() {
+        assert stateRFFI != null;
+        return stateRFFI;
     }
 
     public PolyglotEngine getVM() {
