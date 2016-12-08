@@ -11,7 +11,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.*;
+import static com.oracle.truffle.r.library.stats.DPQ.rdt0;
+import static com.oracle.truffle.r.library.stats.DPQ.rdt1;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -45,7 +46,7 @@ public final class Pf implements StatsFunctions.Function3_2 {
                     return rdt0(lowerTail, logP);
                 }
                 if (x == 1) {
-                    return logP ? -M_LN2 : 0.5;
+                    return logP ? -MathConstants.M_LN2 : 0.5;
                 }
                 if (x > 1) {
                     return rdt1(lowerTail, logP);

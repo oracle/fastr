@@ -39,11 +39,11 @@ public class Geom {
     public static final class QGeom implements Function2_2 {
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
             if (prob <= 0 || prob > 1) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             try {
-                DPQ.qP01Boundaries(p, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
+                DPQ.rqp01boundaries(p, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
             } catch (EarlyReturn e) {
                 return e.result;
             }
@@ -56,7 +56,7 @@ public class Geom {
                 return 0;
             }
             /* add a fuzz to ensure left continuity, but value must be >= 0 */
-            return StatsUtil.fmax2(0, Math.ceil(DPQ.dtCLog(p, lowerTail, logP) / StatsUtil.log1p(-prob) - 1 - 1e-12));
+            return RMath.fmax2(0, Math.ceil(DPQ.rdtclog(p, lowerTail, logP) / RMath.log1p(-prob) - 1 - 1e-12));
         }
 
     }
@@ -68,17 +68,17 @@ public class Geom {
                 return x + p;
             }
             if (p <= 0 || p > 1) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             try {
-                DPQ.dNonintCheck(x, giveLog);
+                DPQ.nonintCheck(x, giveLog);
             } catch (EarlyReturn e) {
                 return e.result;
             }
 
             if (x < 0 || !Double.isFinite(x) || p == 0) {
-                return DPQ.d0(giveLog);
+                return DPQ.rd0(giveLog);
             }
             /* prob = (1-p)^x, stable for small p */
             double prob = Dbinom.dbinomRaw(0., forceint(x), p, 1 - p, giveLog);
@@ -90,7 +90,7 @@ public class Geom {
         @Override
         public double evaluate(double p, RandomNumberProvider rand) {
             if (!Double.isFinite(p) || p <= 0 || p > 1) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
             return RPois.rpois(rand.expRand() * ((1 - p) / p), rand);
         }

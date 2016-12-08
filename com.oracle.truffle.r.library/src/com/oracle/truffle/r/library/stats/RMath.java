@@ -18,107 +18,18 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
- * Auxiliary functions and constants from GNU R. These are originally found in the source files
- * mentioned in the code.
+ * Encapsulates functions to be found in Rmath.h or in nmath directory in GnuR except for random
+ * distribution related functions, which usually have their own files.
+ *
+ * @see DPQ
  */
-public class StatsUtil {
+public class RMath {
 
     /**
      * corresponds to macro {@code ML_ERR_return_NAN} in GnuR.
      */
     public static double mlError() {
         return Double.NaN;
-    }
-
-    public static final double DBLEPSILON = 2.2204460492503131e-16;
-
-    @TruffleBoundary
-    private static void fail(String message) {
-        throw new RuntimeException(message);
-    }
-
-    // Constants and auxiliary functions originate from dpq.h and Rmath.h.
-
-    public static final double M_LN2 = 0.693147180559945309417232121458;
-
-    public static final double M_PI = 3.141592653589793238462643383280;
-
-    public static final double M_2PI = 6.283185307179586476925286766559;
-
-    public static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;
-
-    public static final double M_SQRT_32 = 5.656854249492380195206754896838;
-
-    public static final double M_LOG10_2 = 0.301029995663981195213738894724;
-
-    public static final double DBL_MANT_DIG = 53;
-
-    public static final int DBL_MAX_EXP = 1024;
-
-    public static final int DBL_MIN_EXP = -1021;
-
-    public static double rdtlog(double p, boolean lowerTail, boolean logp) {
-        return lowerTail ? rdlog(p, logp) : rdlexp(p, logp);
-    }
-
-    public static double rdlog(double p, boolean logp) {
-        return logp ? p : Math.log(p);
-    }
-
-    public static double rdlexp(double x, boolean logp) {
-        return logp ? rlog1exp(x) : log1p(-x);
-    }
-
-    public static double rlog1exp(double x) {
-        return x > -M_LN2 ? Math.log(-expm1(x)) : log1p(-Math.exp(x));
-    }
-
-    public static double rdtclog(double p, boolean lowerTail, boolean logp) {
-        return lowerTail ? rdlexp(p, logp) : rdlog(p, logp);
-    }
-
-    public static double rdtqiv(double p, boolean lowerTail, boolean logp) {
-        return logp ? (lowerTail ? Math.exp(p) : -expm1(p)) : rdlval(p, lowerTail);
-    }
-
-    public static double rdtciv(double p, boolean lowerTail, boolean logp) {
-        return logp ? (lowerTail ? -expm1(p) : Math.exp(p)) : rdcval(p, lowerTail);
-    }
-
-    public static double rdlval(double p, boolean lowerTail) {
-        return lowerTail ? p : (0.5 - (p) + 0.5);
-    }
-
-    public static double rdcval(double p, boolean lowerTail) {
-        return lowerTail ? (0.5 - p + 0.5) : p;
-    }
-
-    public static double rd0(boolean logp) {
-        return logp ? Double.NEGATIVE_INFINITY : 0.;
-    }
-
-    public static double rd1(boolean logp) {
-        return logp ? 0. : 1.;
-    }
-
-    public static double rdt0(boolean lowerTail, boolean logp) {
-        return lowerTail ? rd0(logp) : rd1(logp);
-    }
-
-    public static double rdt1(boolean lowerTail, boolean logp) {
-        return lowerTail ? rd1(logp) : rd0(logp);
-    }
-
-    public static boolean rqp01check(double p, boolean logp) {
-        return (logp && p > 0) || (!logp && (p < 0 || p > 1));
-    }
-
-    public static double rdexp(double x, boolean logp) {
-        return logp ? x : Math.exp(x);
-    }
-
-    public static double rdfexp(double f, double x, boolean giveLog) {
-        return giveLog ? -0.5 * Math.log(f) + x : Math.exp(x) / Math.sqrt(f);
     }
 
     public static double lfastchoose(double n, double k) {
@@ -158,7 +69,7 @@ public class StatsUtil {
         double y;
         double a = Math.abs(x);
 
-        if (a < DBLEPSILON) {
+        if (a < MathConstants.DBL_EPSILON) {
             return x;
         }
         if (a > 0.697) {
@@ -173,7 +84,7 @@ public class StatsUtil {
         }
         /* Newton step for solving log(1 + y) = x for y : */
         /* WARNING: does not work for y ~ -1: bug in 1.5.0 */
-        y -= (1 + y) * (log1p(y) - x);
+        y -= (1 + y) * (RMath.log1p(y) - x);
         return y;
     }
 
@@ -216,7 +127,7 @@ public class StatsUtil {
             /*
              * Improve on speed (only); again give result accurate to IEEE double precision:
              */
-            if (Math.abs(x) < .5 * DBLEPSILON) {
+            if (Math.abs(x) < .5 * MathConstants.DBL_EPSILON) {
                 return x;
             }
 
@@ -262,5 +173,10 @@ public class StatsUtil {
             b0 = twox * b1 - b2 + a[n - i];
         }
         return (b0 - b2) * 0.5;
+    }
+
+    @TruffleBoundary
+    private static void fail(String message) {
+        throw new RuntimeException(message);
     }
 }

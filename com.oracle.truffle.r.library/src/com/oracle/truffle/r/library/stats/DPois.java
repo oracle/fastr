@@ -25,16 +25,16 @@ public final class DPois implements Function2_1 {
             return x + lambda;
         }
         if (lambda < 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         try {
-            DPQ.dNonintCheck(x, giveLog);
+            DPQ.nonintCheck(x, giveLog);
         } catch (EarlyReturn e) {
             return e.result;
         }
         if (x < 0 || !Double.isFinite(x)) {
-            return DPQ.d0(giveLog);
+            return DPQ.rd0(giveLog);
         }
 
         return dpoisRaw(forceint(x), lambda, giveLog);

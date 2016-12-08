@@ -12,10 +12,10 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MAX_EXP;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MAX_EXP;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmin2;
+import static com.oracle.truffle.r.library.stats.RMath.fmax2;
+import static com.oracle.truffle.r.library.stats.RMath.fmin2;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
@@ -27,7 +27,7 @@ public final class RBeta implements RandFunction2_Double {
     @Override
     public double evaluate(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (!Double.isFinite(aa) && !Double.isFinite(bb)) { // a = b = Inf : all mass at 1/2
             return 0.5;

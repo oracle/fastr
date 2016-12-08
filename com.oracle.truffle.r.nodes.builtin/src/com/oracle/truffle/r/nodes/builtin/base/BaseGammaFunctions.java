@@ -12,13 +12,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBLEPSILON;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MANT_DIG;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MAX_EXP;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MIN_EXP;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_LOG10_2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_PI;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MANT_DIG;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MAX_EXP;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN_EXP;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LOG10_2;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_PI;
+import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
@@ -300,7 +300,7 @@ public class BaseGammaFunctions {
             // mVal.nz = 0;
             xln = Math.log(x);
             if (kode == 1 /* && m == 1 */) { /* the R case --- for very large x: */
-                double lrg = 1 / (2. * DBLEPSILON);
+                double lrg = 1 / (2. * DBL_EPSILON);
                 if (n == 0 && x * xln > lrg) {
                     // ans[0] = -xln;
                     ans = -xln;
@@ -316,7 +316,7 @@ public class BaseGammaFunctions {
             nx = Math.min(-DBL_MIN_EXP, DBL_MAX_EXP);
             assert (nx == 1021);
             r1m5 = M_LOG10_2; // Rf_d1mach(5);
-            r1m4 = DBLEPSILON * 0.5; // Rf_d1mach(4) * 0.5;
+            r1m4 = DBL_EPSILON * 0.5; // Rf_d1mach(4) * 0.5;
             wdtol = fmax2(r1m4, 0.5e-18); /* 1.11e-16 */
 
             /* elim = approximate exponential over and underflow limit */

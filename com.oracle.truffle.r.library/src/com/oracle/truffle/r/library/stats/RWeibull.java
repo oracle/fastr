@@ -18,7 +18,7 @@ public final class RWeibull implements RandFunction2_Double {
     @Override
     public double evaluate(double shape, double scale, RandomNumberProvider rand) {
         if (!Double.isFinite(shape) || !Double.isFinite(scale) || shape <= 0. || scale <= 0.) {
-            return scale == 0. ? 0. : StatsUtil.mlError();
+            return scale == 0. ? 0. : RMath.mlError();
         }
 
         return scale * Math.pow(-Math.log(rand.unifRand()), 1.0 / shape);

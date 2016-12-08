@@ -11,8 +11,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdtciv;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdtqiv;
+import static com.oracle.truffle.r.library.stats.DPQ.rdtciv;
+import static com.oracle.truffle.r.library.stats.DPQ.rdtqiv;
 
 /*
  * Logic derived from GNU-R, see inline comments.

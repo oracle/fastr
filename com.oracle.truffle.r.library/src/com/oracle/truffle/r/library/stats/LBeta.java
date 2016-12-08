@@ -38,7 +38,7 @@ public final class LBeta {
 
         /* both arguments must be >= 0 */
         if (p < 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         } else if (p == 0) {
             return Double.POSITIVE_INFINITY;
         } else if (!Double.isFinite(q)) { /* q == +Inf */

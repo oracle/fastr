@@ -30,7 +30,7 @@ public final class Runif implements RandFunction2_Double {
     @Override
     public double evaluate(double min, double max, RandomNumberProvider rand) {
         if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (min == max) {
             return min;

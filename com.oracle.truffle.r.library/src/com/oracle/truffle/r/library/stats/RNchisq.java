@@ -22,7 +22,7 @@ public final class RNchisq implements RandFunction2_Double {
     @Override
     public double evaluate(double df, double lambda, RandomNumberProvider rand) {
         if (!Double.isFinite(df) || !Double.isFinite(lambda) || df < 0. || lambda < 0.) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         if (lambda == 0.) {
