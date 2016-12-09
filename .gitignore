@@ -73,7 +73,7 @@
 *.dot
 *.pyc
 *.hprof
-\javafilelist.txt
+javafilelist.txt
 .hprof.txt
 /compilations-*.cfg
 /graal/.*/build.xml
