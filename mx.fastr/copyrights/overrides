@@ -73,6 +73,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RChisq.java,
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Exp.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Geom.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Dt.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DBeta.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DPois.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RNchisq.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Wilcox.java,gnu_r.core.copyright

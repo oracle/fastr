@@ -79,7 +79,8 @@ public final class DPQ {
         return lowerTail ? 0.5 - p + 0.5 : p; /* 1 - p */
     }
 
-    public static double dval(double x, boolean logP) {
+    // R_D_val
+    public static double rdval(double x, boolean logP) {
         return logP ? Math.log(x) : x; /* x in pF(x,..) */
     }
 

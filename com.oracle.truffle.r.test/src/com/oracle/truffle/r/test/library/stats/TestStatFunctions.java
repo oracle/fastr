@@ -30,7 +30,7 @@ import com.oracle.truffle.r.test.TestBase;
  * Common tests for functions implemented using {@code StatsFunctions} infrastructure.
  */
 public class TestStatFunctions extends TestBase {
-    private static final String[] FUNCTION3_1_NAMES = {"dgamma"};
+    private static final String[] FUNCTION3_1_NAMES = {"dgamma", "dbeta"};
     private static final String[] FUNCTION3_1_PARAMS = {
                     "10, 10, 10, log=TRUE",
                     "3, 3, 3, log=FALSE",

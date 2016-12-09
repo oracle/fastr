@@ -45,6 +45,7 @@ import com.oracle.truffle.r.library.stats.Chisq;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
+import com.oracle.truffle.r.library.stats.DBeta;
 import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
@@ -304,6 +305,8 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new DGeom());
                 case "dpois":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new DPois());
+                case "dbeta":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DBeta());
                 case "dt":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new Dt());
                 case "rmultinom":
