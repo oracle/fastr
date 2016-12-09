@@ -40,6 +40,10 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.Cauchy;
+import com.oracle.truffle.r.library.stats.Cauchy.DCauchy;
+import com.oracle.truffle.r.library.stats.Cauchy.PCauchy;
+import com.oracle.truffle.r.library.stats.Cauchy.RCauchy;
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.Chisq;
 import com.oracle.truffle.r.library.stats.CompleteCases;
@@ -59,13 +63,13 @@ import com.oracle.truffle.r.library.stats.GammaFunctions.QgammaFunc;
 import com.oracle.truffle.r.library.stats.Geom;
 import com.oracle.truffle.r.library.stats.Geom.DGeom;
 import com.oracle.truffle.r.library.stats.Geom.RGeom;
+import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.RBeta;
-import com.oracle.truffle.r.library.stats.RCauchy;
 import com.oracle.truffle.r.library.stats.RChisq;
 import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RHyper;
@@ -285,6 +289,14 @@ public class CallAndExternalFunctions {
                     return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new Rbinom());
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
+                case "pbeta":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbeta());
+                case "dcauchy":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DCauchy());
+                case "pcauchy":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PCauchy());
+                case "qcauchy":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Cauchy.QCauchy());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
                 case "dgamma":

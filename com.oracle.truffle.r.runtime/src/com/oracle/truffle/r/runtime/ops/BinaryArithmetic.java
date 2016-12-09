@@ -110,7 +110,8 @@ public abstract class BinaryArithmetic extends Operation {
     public abstract String op(String left, String right);
 
     public static double fmod(double a, double b) {
-        // LICENSE: transcribed code from GNU R, which is licensed under GPL
+        // TODO: this is duplicated in RMath, once RMath is moved to runtime, this should be
+        // replaced
         double q = a / b;
         if (b != 0) {
             double tmp = a - Math.floor(q) * b;

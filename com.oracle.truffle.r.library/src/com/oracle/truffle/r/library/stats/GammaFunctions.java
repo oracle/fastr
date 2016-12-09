@@ -371,7 +371,7 @@ public abstract class GammaFunctions {
         }
 
         if (x <= 0 && x == (long) x) { /* Negative integer argument */
-            RError.warning(RError.SHOW_CALLER2, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RError.warning(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY; /* +Inf, since lgamma(x) = log|gamma(x)| */
         }
 
@@ -388,7 +388,7 @@ public abstract class GammaFunctions {
          */
 
         if (y > gfn_sign_xmax) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RError.warning(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
             return Double.POSITIVE_INFINITY;
         }
 

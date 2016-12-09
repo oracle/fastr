@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * Encapsulates functions to be found in Rmath.h or in nmath directory in GnuR except for random
@@ -41,6 +42,38 @@ public class RMath {
             return x + y;
         }
         return ((y >= 0) ? TOMS708.fabs(x) : -TOMS708.fabs(x));
+    }
+
+    public static double fmod(double a, double b) {
+        double q = a / b;
+        if (b != 0) {
+            double tmp = a - Math.floor(q) * b;
+            if (RRuntime.isFinite(q) && Math.abs(q) > 1 / RRuntime.EPSILON) {
+                // TODO support warning here
+                throw new UnsupportedOperationException();
+            }
+            return tmp - Math.floor(tmp / b) * b;
+        } else {
+            return Double.NaN;
+        }
+    }
+
+    public static double tanpi(double x) {
+        if (Double.isNaN(x)) {
+            return x;
+        }
+        if (!Double.isFinite(x)) {
+            return mlError();
+        }
+
+        x = fmod(x, 1.); // tan(pi(x + k)) == tan(pi x) for all integer k
+        // map (-1,1) --> (-1/2, 1/2] :
+        if (x <= -0.5) {
+            x++;
+        } else if (x > 0.5) {
+            x--;
+        }
+        return (x == 0.) ? 0. : ((x == 0.5) ? Double.NaN : Math.tan(MathConstants.M_PI * x));
     }
 
     //

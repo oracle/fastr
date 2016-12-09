@@ -12,14 +12,21 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.library.stats.TOMS708.Bratio;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 // transcribed from pbeta.c
 
-public abstract class Pbeta extends RExternalBuiltinNode.Arg5 {
+public final class Pbeta implements Function3_2 {
+
+    private final BranchProfile naProfile = BranchProfile.create();
+
+    @Override
+    public double evaluate(double x, double a, double b, boolean lowerTail, boolean logP) {
+        return pbeta(x, a, b, lowerTail, logP, naProfile);
+    }
 
     @TruffleBoundary
     private static double pbetaRaw(double x, double a, double b, boolean lowerTail, boolean logProb) {
