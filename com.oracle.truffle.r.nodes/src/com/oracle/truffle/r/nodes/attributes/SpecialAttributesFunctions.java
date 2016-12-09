@@ -184,9 +184,9 @@ public final class SpecialAttributesFunctions {
         } else if (name == RRuntime.DIM_ATTR_KEY) {
             return SetDimAttributeNode.create();
         } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
-            return SpecialAttributesFunctions.SetDimNamesAttributeNode.create();
+            return SetDimNamesAttributeNode.create();
         } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
-            return SpecialAttributesFunctions.SetRowNamesAttributeNode.create();
+            return SetRowNamesAttributeNode.create();
         } else if (name == RRuntime.CLASS_ATTR_KEY) {
             throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
         } else {
@@ -766,12 +766,28 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class SetRowNamesAttributeNode extends SetSpecialAttributeNode {
 
+        private final ConditionProfile nullRowNamesProfile = ConditionProfile.createBinaryProfile();
+
         protected SetRowNamesAttributeNode() {
             super(RRuntime.ROWNAMES_ATTR_KEY);
         }
 
         public static SetRowNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetRowNamesAttributeNodeGen.create();
+        }
+
+        public void setRowNames(RAbstractContainer x, RAbstractVector rowNames) {
+            if (nullRowNamesProfile.profile(rowNames == null)) {
+                execute(x, RNull.instance);
+            } else {
+                execute(x, rowNames);
+            }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void resetRowNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveRowNamesAttributeNode removeRowNamesAttrNode) {
+            removeRowNamesAttrNode.execute(x);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -809,12 +825,28 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetRowNamesAttributeNodeGen.create();
         }
 
+        public Object getRowNames(RAbstractContainer x) {
+            return execute(x);
+        }
+
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorRowNames(RVector<?> x,
+        protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RScalarVector x) {
+            return RNull.instance;
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RSequence x) {
+            return RNull.class;
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getVectorRowNames(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            return super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile nullRowNamesProfile) {
+            Object res = super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
+            return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")

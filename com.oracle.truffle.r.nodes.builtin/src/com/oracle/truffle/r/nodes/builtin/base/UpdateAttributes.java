@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -66,6 +67,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private SetAttributeNode setAttrNode;
     @Child private SetDimAttributeNode setDimNode;
+    @Child private SetRowNamesAttributeNode setRowNamesNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -208,7 +210,11 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 }
                 res = result;
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                res.setRowNames(castVector(value));
+                if (setRowNamesNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setRowNamesNode = insert(SetRowNamesAttributeNode.create());
+                }
+                setRowNamesNode.setRowNames(res, castVector(value));
             } else {
                 if (value == RNull.instance) {
                     res.removeAttr(attrProfiles, attrName);

@@ -163,7 +163,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
             setClassAttrNode.reset(result);
             return result;
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            result.setRowNames(null);
+            if (setRowNamesAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
+            }
+            setRowNamesAttrNode.setRowNames(result, null);
         } else if (result.getAttributes() != null) {
             result.removeAttr(attrProfiles, internedName);
         }
@@ -213,7 +217,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
             }
-            setRowNamesAttrNode.execute(result, castVector(value));
+            setRowNamesAttrNode.setRowNames(result, castVector(value));
         } else {
             // generic attribute
             if (setGenAttrNode == null) {
