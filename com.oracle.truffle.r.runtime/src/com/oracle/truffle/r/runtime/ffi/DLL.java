@@ -386,6 +386,7 @@ public class DLL {
                 if (rc != 0) {
                     throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                 }
+                list.remove(info);
                 return;
             }
         }
