@@ -3,9 +3,10 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 1995-2012, The R Core Team
- * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (C) 1998 Ross Ihaka
+ * Copyright (c) 1998--2012, The R Core Team
+ * Copyright (c) 2004, The R Foundation
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,7 +56,7 @@ public final class MathConstants {
     // 1/sqrt(2)
     public static final double M_SQRT1_2 = 0.707106781186547524400844362105;
 
-    /* R-Specific Constants */
+    /* R-Specific Constants from dpq.h and Rmath.h and others */
     // sqrt(3)
     public static final double M_SQRT_3 = 1.732050807568877293527446341506;
     // sqrt(32)
@@ -76,6 +77,12 @@ public final class MathConstants {
     public static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;
     // log(sqrt(pi/2)) == log(pi/2)/2
     public static final double M_LN_SQRT_PId2 = 0.225791352644727432363097614947;
+
+    public static final double DBL_MANT_DIG = 53;
+
+    public static final int DBL_MAX_EXP = 1024;
+
+    public static final int DBL_MIN_EXP = -1021;
 
     public static final double DBL_EPSILON = Math.ulp(1.0);
 

@@ -61,4 +61,20 @@ public class TestBuiltin_sign extends TestBase {
     public void testsign9() {
         assertEval("argv <- list(numeric(0));sign(argv[[1]]);");
     }
+
+    @Test
+    public void testsign10() {
+        assertEval("sign(c(FALSE))");
+        assertEval("sign(c(FALSE, TRUE))");
+        assertEval("sign(c(1, -1, FALSE))");
+        assertEval("sign(list(c(1, -1, FALSE))[[1]])");
+        assertEval("sign(1i)");
+        assertEval("sign(c(1, -1, FALSE, 1i))");
+        assertEval("sign('a')");
+        assertEval("sign('1')");
+        assertEval("sign('1L')");
+        assertEval("sign(NULL)");
+        assertEval("sign(NaN)");
+        assertEval("sign(NA_real_)");
+    }
 }

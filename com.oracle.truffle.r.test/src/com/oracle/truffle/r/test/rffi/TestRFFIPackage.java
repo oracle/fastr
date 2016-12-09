@@ -43,8 +43,13 @@ public class TestRFFIPackage extends TestRPackages {
         tearDownUninstallTestPackages(TEST_PACKAGES);
     }
 
+    /**
+     * This is somewhat expensive to do per test, but the only alternative is to put all the
+     * micro-tests in one big test. It might be that this should be switched to an R file-based
+     * approach as the number of tests increase.
+     */
     private void assertEvalWithLibWithSetup(String setup, String test) {
-        assertEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); " + setup + "x <- " + test + "; detach(\"package:testrffi\"); x }", new String[]{TestRPackages.libLoc()}));
+        assertEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); " + setup + "x <- " + test + "; detach(\"package:testrffi\", unload=T); x }", new String[]{TestRPackages.libLoc()}));
     }
 
     private void assertEvalWithLib(String test) {
@@ -84,6 +89,16 @@ public class TestRFFIPackage extends TestRPackages {
     @Test
     public void testRFFI7() {
         assertEvalWithLib("rffi.null()");
+    }
+
+    @Test
+    public void testRFFI7E() {
+        assertEvalWithLib("rffi.null.E()");
+    }
+
+    @Test
+    public void testRFFI7C() {
+        assertEvalWithLib("rffi.null.C()");
     }
 
     @Test
@@ -143,6 +158,6 @@ public class TestRFFIPackage extends TestRPackages {
 
     @Test
     public void testRFFI19() {
-        assertEvalWithLibWithSetup("x <- 1; ", "rffi.findVar(x, globalenv())");
+        assertEvalWithLibWithSetup("x <- 1; ", "rffi.findvar(\"x\", globalenv())");
     }
 }

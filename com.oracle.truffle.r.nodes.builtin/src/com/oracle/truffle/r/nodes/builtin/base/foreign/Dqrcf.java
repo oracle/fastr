@@ -21,9 +21,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public final class Dqrcf extends RExternalBuiltinNode {
+    @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().rApplRFFINode();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);
@@ -45,7 +47,7 @@ public final class Dqrcf extends RExternalBuiltinNode {
             double[] y = yVec.materialize().getDataTemp();
             double[] b = bVec.materialize().getDataTemp();
             int[] info = infoVec.materialize().getDataTemp();
-            RFFIFactory.getRFFI().getRApplRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
+            rApplRFFINode.dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
             RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
             coef.copyAttributesFrom(attrProfiles, bVec);
             // @formatter:off

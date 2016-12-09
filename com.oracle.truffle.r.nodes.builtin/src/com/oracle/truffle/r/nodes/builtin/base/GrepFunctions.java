@@ -63,6 +63,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
+        @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().pcreRFFINode();
 
         /**
          * This profile is needed to satisfy API requirements.
@@ -205,8 +206,8 @@ public class GrepFunctions {
 
         protected PCRERFFI.Result compilePerlPattern(String pattern, boolean ignoreCase) {
             int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-            long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
-            PCRERFFI.Result pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
+            long tables = pcreRFFINode.maketables();
+            PCRERFFI.Result pcre = pcreRFFINode.compile(pattern, cflags, tables);
             if (pcre.result == 0) {
                 // TODO output warning if pcre.errorMessage not NULL
                 throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
@@ -246,7 +247,7 @@ public class GrepFunctions {
                 for (int i = 0; i < len; i++) {
                     String text = vector.getDataAt(i);
                     if (!RRuntime.isNA(text)) {
-                        if (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, 0, 0, ovector) >= 0) {
+                        if (pcreRFFINode.exec(pcre.result, 0, text, 0, 0, ovector) >= 0) {
                             matches[i] = true;
                         }
                     }
@@ -433,7 +434,7 @@ public class GrepFunctions {
                         int eflag = 0;
                         int lastEnd = -1;
                         StringBuffer sb = new StringBuffer();
-                        while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
+                        while (pcreRFFINode.exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
                             nmatch++;
                             for (int j = offset; j < ovector[0]; j++) {
                                 sb.append(input.charAt(j));
@@ -789,13 +790,13 @@ public class GrepFunctions {
                 }
             } else if (perl) {
                 PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
-                int maxCaptureCount = RFFIFactory.getRFFI().getPCRERFFI().getCaptureCount(pcre.result, 0);
+                int maxCaptureCount = pcreRFFINode.getCaptureCount(pcre.result, 0);
                 int[] ovector = new int[(maxCaptureCount + 1) * 3];
                 int offset = 0;
                 while (true) {
-                    int captureCount = RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, offset, 0, ovector);
+                    int captureCount = pcreRFFINode.exec(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
-                        String[] captureNames = RFFIFactory.getRFFI().getPCRERFFI().getCaptureNames(pcre.result, 0, maxCaptureCount);
+                        String[] captureNames = pcreRFFINode.getCaptureNames(pcre.result, 0, maxCaptureCount);
                         for (int i = 0; i < captureNames.length; i++) {
                             if (captureNames[i] == null) {
                                 captureNames[i] = "";
@@ -1152,7 +1153,7 @@ public class GrepFunctions {
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];
-            long pcreTables = perl ? RFFIFactory.getRFFI().getPCRERFFI().maketables() : 0;
+            long pcreTables = perl ? pcreRFFINode.maketables() : 0;
             PCRERFFI.Result[] pcreSplits = perl ? new PCRERFFI.Result[splits.length] : null;
 
             na.enable(x);
@@ -1161,7 +1162,7 @@ public class GrepFunctions {
                 splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
                 if (perl) {
                     if (!currentSplit.isEmpty()) {
-                        pcreSplits[i] = RFFIFactory.getRFFI().getPCRERFFI().compile(currentSplit, 0, pcreTables);
+                        pcreSplits[i] = pcreRFFINode.compile(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
                             throw RError.error(this, RError.Message.INVALID_REGEXP, currentSplit);
@@ -1231,14 +1232,14 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(result, true);
         }
 
-        private static RStringVector splitPerl(String data, PCRERFFI.Result pcre) {
+        private RStringVector splitPerl(String data, PCRERFFI.Result pcre) {
             ArrayList<String> matches = new ArrayList<>();
             int lastEndOffset = 0;
             int lastEndIndex = 0;
             int[] ovector = new int[30];
             int[] fromByteMapping = getFromByteMapping(data); // non-null if it's necessary
 
-            while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
+            while (pcreRFFINode.exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
                 // offset == byte position
                 // index == character position
                 int startOffset = ovector[0];

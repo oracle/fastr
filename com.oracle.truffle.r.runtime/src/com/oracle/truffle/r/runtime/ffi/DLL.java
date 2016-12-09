@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.CallRFFINode;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -345,6 +346,7 @@ public class DLL {
     }
 
     private static final String R_INIT_PREFIX = "R_init_";
+    private static CallRFFINode callRFFINode;
 
     @TruffleBoundary
     public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
@@ -355,7 +357,10 @@ public class DLL {
         if (initFunc != SYMBOL_NOT_FOUND) {
             synchronized (DLL.class) {
                 try {
-                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                    if (callRFFINode == null) {
+                        callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
+                    }
+                    callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propogate
@@ -381,6 +386,7 @@ public class DLL {
                 if (rc != 0) {
                     throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                 }
+                list.remove(info);
                 return;
             }
         }

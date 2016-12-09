@@ -31,7 +31,7 @@ public final class Qnorm implements StatsFunctions.Function3_2 {
             return p + mu + sigma;
         }
         try {
-            DPQ.qP01Boundaries(p, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, lowerTail, logP);
+            DPQ.rqp01boundaries(p, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, lowerTail, logP);
         } catch (EarlyReturn early) {
             return early.result;
         }
@@ -44,7 +44,7 @@ public final class Qnorm implements StatsFunctions.Function3_2 {
             return mu;
         }
 
-        double p2 = DPQ.dtQIv(p, lowerTail, logP); /* real lower_tail prob. p */
+        double p2 = DPQ.rdtqiv(p, lowerTail, logP); /* real lower_tail prob. p */
         double q = p2 - 0.5;
 
         debugPrintf("qnorm(p=%10.7g, m=%g, s=%g, l.t.= %d, log= %d): q = %g\n", p, mu, sigma, lowerTail, logP, q);
@@ -76,7 +76,7 @@ public final class Qnorm implements StatsFunctions.Function3_2 {
             /* r = min(p, 1-p) < 0.075 */
             double r;
             if (q > 0) {
-                r = DPQ.dtCIv(p, lowerTail, logP); /* 1-p */
+                r = DPQ.rdtciv(p, lowerTail, logP); /* 1-p */
             } else {
                 r = p2; /* = R_DT_Iv(p) ^= p */
             }

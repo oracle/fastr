@@ -66,8 +66,15 @@ public final class UserRNG implements RandomNumberGenerator {
 
     }
 
-    private UserRngRFFI userRngRFFI;
     private int nSeeds = 0;
+    private UserRngRFFI.UserRngRFFINode userRngRFFINode;
+
+    private UserRngRFFI.UserRngRFFINode getUserRngRFFINode() {
+        if (userRngRFFINode == null) {
+            userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().userRngRFFINode();
+        }
+        return userRngRFFINode;
+    }
 
     @Override
     @TruffleBoundary
@@ -79,15 +86,14 @@ public final class UserRNG implements RandomNumberGenerator {
         for (Function f : Function.values()) {
             f.setSymbolHandle(dllInfo);
         }
-        userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
         if (Function.Init.isDefined()) {
-            userRngRFFI.init(seed);
+            getUserRngRFFINode().init(seed);
         }
         if (Function.Seedloc.isDefined() && !Function.NSeed.isDefined()) {
             RError.warning(RError.NO_CALLER, RError.Message.RNG_READ_SEEDS);
         }
         if (Function.NSeed.isDefined()) {
-            int ns = userRngRFFI.nSeed();
+            int ns = getUserRngRFFINode().nSeed();
             if (ns < 0 || ns > 625) {
                 RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "seed length must be in 0...625; ignored");
             } else {
@@ -125,7 +131,7 @@ public final class UserRNG implements RandomNumberGenerator {
             return null;
         }
         int[] seeds = new int[nSeeds];
-        userRngRFFI.seeds(seeds);
+        getUserRngRFFINode().seeds(seeds);
         int[] result = new int[nSeeds + 1];
         System.arraycopy(seeds, 0, result, 1, seeds.length);
         return result;
@@ -133,7 +139,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
     @Override
     public double genrandDouble() {
-        return userRngRFFI.rand();
+        return getUserRngRFFINode().rand();
     }
 
     @Override

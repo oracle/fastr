@@ -18,29 +18,26 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBLEPSILON;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_1_SQRT_2PI;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_2PI;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_LN2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_SQRT_32;
-import static com.oracle.truffle.r.library.stats.StatsUtil.chebyshevEval;
-import static com.oracle.truffle.r.library.stats.StatsUtil.expm1;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.log1p;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rd0;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rd1;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdexp;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdfexp;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdt0;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdt1;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdtclog;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdtlog;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rdtqiv;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rlog1exp;
-import static com.oracle.truffle.r.library.stats.StatsUtil.rqp01check;
+import static com.oracle.truffle.r.library.stats.DPQ.rd0;
+import static com.oracle.truffle.r.library.stats.DPQ.rd1;
+import static com.oracle.truffle.r.library.stats.DPQ.rdexp;
+import static com.oracle.truffle.r.library.stats.DPQ.rdfexp;
+import static com.oracle.truffle.r.library.stats.DPQ.rdt0;
+import static com.oracle.truffle.r.library.stats.DPQ.rdt1;
+import static com.oracle.truffle.r.library.stats.DPQ.rdtclog;
+import static com.oracle.truffle.r.library.stats.DPQ.rdtqiv;
+import static com.oracle.truffle.r.library.stats.DPQ.rlog1exp;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_2PI;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT_32;
+import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -59,6 +56,13 @@ public abstract class GammaFunctions {
         @Override
         public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
             return GammaFunctions.qgamma(p, shape, scale, lowerTail, logP);
+        }
+    }
+
+    public static final class DGamma implements Function3_1 {
+        @Override
+        public double evaluate(double x, double shape, double scale, boolean giveLog) {
+            return dgamma(x, shape, scale, giveLog);
         }
     }
 
@@ -178,7 +182,7 @@ public abstract class GammaFunctions {
             /* allow to underflow below */
         } else if (x < xbig) {
             tmp = 10 / x;
-            return chebyshevEval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
+            return RMath.chebyshevEval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
         }
         return 1 / (x * 12);
     }
@@ -249,7 +253,7 @@ public abstract class GammaFunctions {
             }
             y = x - n; /* n = floor(x) ==> y in [ 0, 1 ) */
             --n;
-            value = chebyshevEval(y * 2 - 1, GAMCS, ngam) + .9375;
+            value = RMath.chebyshevEval(y * 2 - 1, GAMCS, ngam) + .9375;
             if (n == 0) {
                 return value; /* x = 1.dddd = 1+y */
             }
@@ -453,9 +457,10 @@ public abstract class GammaFunctions {
             return p + nu;
         }
 
-        if (rqp01check(p, logp)) {
-            // TODO ML_ERR_return_NAN
-            return Double.NaN;
+        try {
+            DPQ.rqp01check(p, logp);
+        } catch (EarlyReturn e) {
+            return e.result;
         }
 
         if (nu <= 0) {
@@ -466,7 +471,7 @@ public abstract class GammaFunctions {
         alpha = 0.5 * nu; /* = [pq]gamma() shape */
         c = alpha - 1;
 
-        if (nu < (-1.24) * (p1 = rdtlog(p, lowerTail, logp))) { /* for small chi-squared */
+        if (nu < (-1.24) * (p1 = DPQ.rdtlog(p, lowerTail, logp))) { /* for small chi-squared */
             /*
              * log(alpha) + g = log(alpha) + log(gamma(alpha)) = = log(alpha*gamma(alpha)) =
              * lgamma(alpha+1) suffers from catastrophic cancellation when alpha << 1
@@ -769,7 +774,7 @@ public abstract class GammaFunctions {
     /* Accurate calculation of log(1+x)-x, particularly for small x. */
     private static double log1pmx(double x) {
         if (x > 1 || x < minLog1Value) {
-            return log1p(x) - x;
+            return RMath.log1p(x) - x;
         } else { /*
                   * -.791 <= x <= 1 -- expand in [x/(2+x)]^2 =: y : log(1+x) - x = x/(2+x) * [ 2 * y
                   * * S(y) - x], with --------------------------------------------- S(y) = 1/3 + y/5
@@ -831,7 +836,7 @@ public abstract class GammaFunctions {
     } /* lgamma1p */
 
     /* If |x| > |k| * M_cutoff, then log[ exp(-x) * k^x ] =~= -x */
-    private static final double M_cutoff = M_LN2 * Double.MAX_EXPONENT / DBLEPSILON;
+    private static final double M_cutoff = M_LN2 * Double.MAX_EXPONENT / DBL_EPSILON;
 
     /*
      * dpois_wrap (x_P_1, lambda, g_log) == dpois (x_P_1 - 1, lambda, g_log) := exp(-L) L^k /
@@ -871,10 +876,10 @@ public abstract class GammaFunctions {
             c *= -x / n;
             term = c / (alph + n);
             sum += term;
-        } while (Math.abs(term) > DBLEPSILON * Math.abs(sum));
+        } while (Math.abs(term) > DBL_EPSILON * Math.abs(sum));
 
         if (lowerTail) {
-            double f1 = logp ? log1p(sum) : 1 + sum;
+            double f1 = logp ? RMath.log1p(sum) : 1 + sum;
             double f2;
             if (alph > 1) {
                 f2 = dpoisRaw(alph, x, logp);
@@ -888,10 +893,10 @@ public abstract class GammaFunctions {
         } else {
             double lf2 = alph * Math.log(x) - lgamma1p(alph);
             if (logp) {
-                return rlog1exp(log1p(sum) + lf2);
+                return rlog1exp(RMath.log1p(sum) + lf2);
             } else {
                 double f1m1 = sum;
-                double f2m1 = expm1(lf2);
+                double f2m1 = RMath.expm1(lf2);
                 return -(f1m1 + f2m1 + f1m1 * f2m1);
             }
         }
@@ -906,7 +911,7 @@ public abstract class GammaFunctions {
             localY++;
             term *= x / localY;
             sum += term;
-        } while (term > sum * DBLEPSILON);
+        } while (term > sum * DBL_EPSILON);
 
         /*
          * sum = \sum_{n=1}^ oo x^n / (y*(y+1)*...*(y+n-1)) = \sum_{n=0}^ oo x^(n+1) /
@@ -948,7 +953,7 @@ public abstract class GammaFunctions {
 
         f0 = y / d;
         /* Needed, e.g. for pgamma(10^c(100,295), shape= 1.1, log=TRUE): */
-        if (Math.abs(y - 1) < Math.abs(d) * DBLEPSILON) { /* includes y < d = Inf */
+        if (Math.abs(y - 1) < Math.abs(d) * DBL_EPSILON) { /* includes y < d = Inf */
             return f0;
         }
 
@@ -999,7 +1004,7 @@ public abstract class GammaFunctions {
             if (b2 != 0) {
                 f = a2 / b2;
                 /* convergence check: relative; "absolute" for very small f : */
-                if (Math.abs(f - of) <= DBLEPSILON * fmax2(f0, Math.abs(f))) {
+                if (Math.abs(f - of) <= DBL_EPSILON * fmax2(f0, Math.abs(f))) {
                     return f;
                 }
                 of = f;
@@ -1015,7 +1020,7 @@ public abstract class GammaFunctions {
         double term = 1;
         double sum = 0;
 
-        while (localY >= 1 && term > sum * DBLEPSILON) {
+        while (localY >= 1 && term > sum * DBL_EPSILON) {
             term *= localY / lambda;
             sum += term;
             localY--;
@@ -1076,7 +1081,7 @@ public abstract class GammaFunctions {
                 term *= -i / x2;
                 sum += term;
                 i += 2;
-            } while (Math.abs(term) > DBLEPSILON * sum);
+            } while (Math.abs(term) > DBL_EPSILON * sum);
 
             return 1 / sum;
         } else {
@@ -1154,7 +1159,7 @@ public abstract class GammaFunctions {
 
         if (logp) {
             double ndOverP = dpnorm(s2pt, !lowerTail, np);
-            return np + log1p(f * ndOverP);
+            return np + RMath.log1p(f * ndOverP);
         } else {
             double nd = dnorm(s2pt, 0., 1., logp);
             return np + f * nd;
@@ -1190,7 +1195,7 @@ public abstract class GammaFunctions {
             double sum;
             double d = dpoisWrap(alph, x, logp);
             if (alph < 1) {
-                if (x * DBLEPSILON > 1 - alph) {
+                if (x * DBL_EPSILON > 1 - alph) {
                     sum = rd1(logp);
                 } else {
                     double f = pdLowerCf(alph, x - (alph - 1)) * x / alph;
@@ -1199,7 +1204,7 @@ public abstract class GammaFunctions {
                 }
             } else {
                 sum = pdLowerSeries(x, alph - 1); /* = (alph-1)/x + o((alph-1)/x) */
-                sum = logp ? log1p(sum) : 1 + sum;
+                sum = logp ? RMath.log1p(sum) : 1 + sum;
             }
             if (!lowerTail) {
                 res = logp ? sum + d : sum * d;
@@ -1214,7 +1219,7 @@ public abstract class GammaFunctions {
          * We lose a fair amount of accuracy to underflow in the cases where the final result is
          * very close to DBL_MIN. In those cases, simply redo via log space.
          */
-        if (!logp && res < Double.MIN_VALUE / DBLEPSILON) {
+        if (!logp && res < Double.MIN_VALUE / DBL_EPSILON) {
             /* with(.Machine, double.xmin / double.eps) #|-> 1.002084e-292 */
             return Math.exp(pgammaRaw(x, alph, lowerTail, true));
         } else {
@@ -1246,7 +1251,7 @@ public abstract class GammaFunctions {
     // dpois
     //
 
-    private static double dpoisRaw(double x, double lambda, boolean giveLog) {
+    public static double dpoisRaw(double x, double lambda, boolean giveLog) {
         /*
          * x >= 0 ; integer for dpois(), but not e.g. for pgamma()! lambda >= 0
          */
@@ -1306,7 +1311,7 @@ public abstract class GammaFunctions {
     // dnorm
     //
 
-    private static double dnorm(double x, double mu, double sigma, boolean giveLog) {
+    static double dnorm(double x, double mu, double sigma, boolean giveLog) {
         double localX = x;
         if (Double.isNaN(localX) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return localX + mu + sigma;
@@ -1338,7 +1343,7 @@ public abstract class GammaFunctions {
     // dgamma
     //
 
-    private static double dgamma(double x, double shape, double scale, boolean giveLog) {
+    public static double dgamma(double x, double shape, double scale, boolean giveLog) {
         double pr;
         if (Double.isNaN(x) || Double.isNaN(shape) || Double.isNaN(scale)) {
             return x + shape + scale;
@@ -1431,7 +1436,7 @@ public abstract class GammaFunctions {
         if (logp) {
             cum[0] = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
             if ((lower && x > 0.) || (upper && x <= 0.)) {
-                ccum[0] = log1p(-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
+                ccum[0] = RMath.log1p(-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
             }
         } else {
             cum[0] = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
@@ -1472,7 +1477,7 @@ public abstract class GammaFunctions {
         }
 
         /* Consider changing these : */
-        eps = DBLEPSILON * 0.5;
+        eps = DBL_EPSILON * 0.5;
 
         /* i_tail in {0,1,2} =^= {lower, upper, both} */
         lower = iTail != 1;

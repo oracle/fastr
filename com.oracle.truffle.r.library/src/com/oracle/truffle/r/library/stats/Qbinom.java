@@ -126,7 +126,7 @@ public final class Qbinom implements StatsFunctions.Function3_2 {
          * [cancellation for p ~= 1, etc]:
          */
         if (!lowerTail || logProb) {
-            p = DPQ.dtQIv(p, lowerTail, logProb); /* need check again (cancellation!): */
+            p = DPQ.rdtqiv(p, lowerTail, logProb); /* need check again (cancellation!): */
             if (p == 0) {
                 return 0;
             }

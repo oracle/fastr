@@ -100,7 +100,7 @@ public final class RHyper implements RandFunction3_Double {
         /* check parameter validity */
 
         if (!Double.isFinite(nn1in) || !Double.isFinite(nn2in) || !Double.isFinite(kkin)) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         nn1in = forceint(nn1in);
@@ -108,7 +108,7 @@ public final class RHyper implements RandFunction3_Double {
         kkin = forceint(kkin);
 
         if (nn1in < 0 || nn2in < 0 || kkin < 0 || kkin > nn1in + nn2in) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (nn1in >= Integer.MAX_VALUE || nn2in >= Integer.MAX_VALUE || kkin >= Integer.MAX_VALUE) {
             /*
@@ -230,7 +230,7 @@ public final class RHyper implements RandFunction3_Double {
                 nUv++;
                 if (nUv >= 10000) {
                     RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("rhyper() branch III: giving up after %d rejections", nUv));
-                    return StatsUtil.mlError();
+                    return RMath.mlError();
                 }
 
                 if (u < p1) { /* rectangular region */

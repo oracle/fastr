@@ -17,6 +17,7 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 
 // transcribed from dbinom.c
 
@@ -24,28 +25,28 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
 
     private final BranchProfile nanProfile = BranchProfile.create();
 
-    private static double dbinomRaw(double x, double n, double p, double q, boolean giveLog) {
+    public static double dbinomRaw(double x, double n, double p, double q, boolean giveLog) {
 
         if (p == 0) {
-            return ((x == 0) ? DPQ.d1(giveLog) : DPQ.d0(giveLog));
+            return ((x == 0) ? DPQ.rd1(giveLog) : DPQ.rd0(giveLog));
         }
         if (q == 0) {
-            return ((x == n) ? DPQ.d1(giveLog) : DPQ.d0(giveLog));
+            return ((x == n) ? DPQ.rd1(giveLog) : DPQ.rd0(giveLog));
         }
 
         if (x == 0) {
             if (n == 0) {
-                return DPQ.d1(giveLog);
+                return DPQ.rd1(giveLog);
             }
             double lc = (p < 0.1) ? -GammaFunctions.bd0(n, n * q) - n * p : n * Math.log(q);
-            return DPQ.dExp(lc, giveLog);
+            return DPQ.rdexp(lc, giveLog);
         }
         if (x == n) {
             double lc = (q < 0.1) ? -GammaFunctions.bd0(n, n * p) - n * q : n * Math.log(p);
-            return DPQ.dExp(lc, giveLog);
+            return DPQ.rdexp(lc, giveLog);
         }
         if (x < 0 || x > n) {
-            return DPQ.d0(giveLog);
+            return DPQ.rd0(giveLog);
         }
 
         /*
@@ -61,7 +62,7 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
          */
         double lf = MathConstants.M_LN_2PI + Math.log(x) + Math.log1p(-x / n);
 
-        return DPQ.dExp(lc - 0.5 * lf, giveLog);
+        return DPQ.rdexp(lc - 0.5 * lf, giveLog);
     }
 
     @Override
@@ -72,12 +73,19 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
             return x + n + p;
         }
 
-        if (p < 0 || p > 1 || DPQ.dNegInonint(n)) {
+        if (p < 0 || p > 1 || n < 0 || DPQ.nonint(n)) {
             nanProfile.enter();
             return Double.NaN;
         }
-        if (DPQ.dNonintCheck(x) || x < 0 || !Double.isFinite(x)) {
-            return DPQ.d0(giveLog);
+
+        try {
+            DPQ.nonintCheck(x, giveLog);
+        } catch (EarlyReturn e) {
+            return e.result;
+        }
+
+        if (x < 0 || !Double.isFinite(x)) {
+            return DPQ.rd0(giveLog);
         }
 
         return dbinomRaw(MathConstants.forceint(x), MathConstants.forceint(n), p, 1 - p, giveLog);

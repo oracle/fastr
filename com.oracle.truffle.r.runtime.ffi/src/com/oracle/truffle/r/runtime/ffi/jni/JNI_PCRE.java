@@ -28,45 +28,47 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class JNI_PCRE implements PCRERFFI {
-    @Override
-    public long maketables() {
-        return nativeMaketables();
-    }
-
-    @Override
-    public Result compile(String pattern, int options, long tables) {
-        return nativeCompile(pattern, options, tables);
-    }
-
-    @Override
-    public int getCaptureCount(long code, long extra) {
-        int res = nativeGetCaptureCount(code, extra);
-        if (res < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+    private static class JNI_PCRERFFINode extends PCRERFFINode {
+        @Override
+        public long maketables() {
+            return nativeMaketables();
         }
-        return res;
-    }
 
-    @Override
-    public String[] getCaptureNames(long code, long extra, int captureCount) {
-        String[] ret = new String[captureCount];
-        int res = nativeGetCaptureNames(code, extra, ret);
-        if (res < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+        @Override
+        public Result compile(String pattern, int options, long tables) {
+            return nativeCompile(pattern, options, tables);
         }
-        return ret;
-    }
 
-    @Override
-    public Result study(long code, int options) {
-        throw RInternalError.unimplemented("pcre_study");
-    }
+        @Override
+        public int getCaptureCount(long code, long extra) {
+            int res = nativeGetCaptureCount(code, extra);
+            if (res < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+            }
+            return res;
+        }
 
-    @Override
-    public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
-        return nativeExec(code, extra, subject, offset, options, ovector, ovector.length);
+        @Override
+        public String[] getCaptureNames(long code, long extra, int captureCount) {
+            String[] ret = new String[captureCount];
+            int res = nativeGetCaptureNames(code, extra, ret);
+            if (res < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, res);
+            }
+            return ret;
+        }
+
+        @Override
+        public Result study(long code, int options) {
+            throw RInternalError.unimplemented("pcre_study");
+        }
+
+        @Override
+        public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
+            return nativeExec(code, extra, subject, offset, options, ovector, ovector.length);
+        }
     }
 
     private static native long nativeMaketables();
@@ -79,5 +81,10 @@ public class JNI_PCRE implements PCRERFFI {
 
     private static native int nativeExec(long code, long extra, String subject, int offset,
                     int options, int[] ovector, int ovectorLen);
+
+    @Override
+    public PCRERFFINode pcreRFFINode() {
+        return new JNI_PCRERFFINode();
+    }
 
 }

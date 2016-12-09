@@ -17,7 +17,7 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 public final class RChisq implements RandFunction1_Double {
     public static double rchisq(double df, RandomNumberProvider rand) {
         if (!Double.isFinite(df) || df < 0.0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         return new RGamma().evaluate(df / 2.0, 2.0, rand);
     }

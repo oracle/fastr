@@ -32,19 +32,19 @@ public abstract class Pbeta extends RExternalBuiltinNode.Arg5 {
             }
             if (a == 0 || a / b == 0) {
                 // point mass 1 at 0 ==> P(X <= x) = 1, all x > 0
-                return DPQ.dt1(logProb, lowerTail);
+                return DPQ.rdt1(lowerTail, logProb);
             }
             if (b == 0 || b / a == 0) {
                 // point mass 1 at 1 ==> P(X <= x) = 0, all x < 1
-                return DPQ.dt0(logProb, lowerTail);
+                return DPQ.rdt0(lowerTail, logProb);
             }
 
             // else, remaining case: a = b = Inf : point mass 1 at 1/2
             if (x < 0.5) {
-                return DPQ.dt0(logProb, lowerTail);
+                return DPQ.rdt0(lowerTail, logProb);
             }
             // else, x >= 0.5 :
-            return DPQ.dt1(logProb, lowerTail);
+            return DPQ.rdt1(lowerTail, logProb);
         }
         // Now: 0 < a < Inf; 0 < b < Inf
 
@@ -77,10 +77,10 @@ public abstract class Pbeta extends RExternalBuiltinNode.Arg5 {
         // allowing a==0 and b==0 <==> treat as one- or two-point mass
 
         if (x <= 0) {
-            return DPQ.dt0(logP, lowerTail);
+            return DPQ.rdt0(lowerTail, logP);
         }
         if (x >= 1) {
-            return DPQ.dt1(logP, lowerTail);
+            return DPQ.rdt1(lowerTail, logP);
         }
 
         return pbetaRaw(x, a, b, lowerTail, logP);

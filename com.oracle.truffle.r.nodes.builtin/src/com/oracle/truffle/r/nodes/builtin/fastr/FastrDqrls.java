@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 @RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
 public abstract class FastrDqrls extends RBuiltinNode {
+    @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().rApplRFFINode();
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
     private static RStringVector namesVector = null;
@@ -82,7 +84,7 @@ public abstract class FastrDqrls extends RBuiltinNode {
             pivot[i] = i + 1;
         }
 
-        RFFIFactory.getRFFI().getRApplRFFI().dqrls(x, n, p, y, ny, tol, coeff, residuals, effects, rank, pivot, qraux, work);
+        rApplRFFINode.dqrls(x, n, p, y, ny, tol, coeff, residuals, effects, rank, pivot, qraux, work);
 
         RDoubleVector resultCoeffVect = RDataFactory.createDoubleVector(coeff, RDataFactory.COMPLETE_VECTOR);
         resultCoeffVect.copyAttributesFrom(coeffAttributeProfiles, coeffVec);

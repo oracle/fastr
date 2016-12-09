@@ -20,11 +20,13 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
+    @Child private StatsRFFI.FFTNode fftNode = RFFIFactory.getRFFI().getStatsRFFI().fftNode();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -44,14 +46,14 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
             int[] maxp = new int[1];
             if (noDims.profile(zVec.getDimensions() == null)) {
                 int n = zVec.getLength();
-                RFFIFactory.getRFFI().getStatsRFFI().fft_factor(n, maxf, maxp);
+                fftNode.executeFactor(n, maxf, maxp);
                 if (maxf[0] == 0) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.FFT_FACTORIZATION);
                 }
                 double[] work = new double[4 * maxf[0]];
                 int[] iwork = new int[maxp[0]];
-                retCode = RFFIFactory.getRFFI().getStatsRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
+                retCode = fftNode.executeWork(z, 1, n, 1, inv, work, iwork);
             } else {
                 int maxmaxf = 1;
                 int maxmaxp = 1;
@@ -60,7 +62,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 /* do whole loop just for error checking and maxmax[fp] .. */
                 for (int i = 0; i < ndims; i++) {
                     if (d[i] > 1) {
-                        RFFIFactory.getRFFI().getStatsRFFI().fft_factor(d[i], maxf, maxp);
+                        fftNode.executeFactor(d[i], maxf, maxp);
                         if (maxf[0] == 0) {
                             errorProfile.enter();
                             throw RError.error(this, RError.Message.FFT_FACTORIZATION);
@@ -83,8 +85,8 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                         nspn *= n;
                         n = d[i];
                         nseg /= n;
-                        RFFIFactory.getRFFI().getStatsRFFI().fft_factor(n, maxf, maxp);
-                        RFFIFactory.getRFFI().getStatsRFFI().fft_work(z, nseg, n, nspn, inv, work, iwork);
+                        fftNode.executeFactor(n, maxf, maxp);
+                        fftNode.executeWork(z, nseg, n, nspn, inv, work, iwork);
                     }
                 }
             }

@@ -18,7 +18,7 @@ public final class Rf implements RandFunction2_Double {
     @Override
     public double evaluate(double n1, double n2, RandomNumberProvider rand) {
         if (Double.isNaN(n1) || Double.isNaN(n2) || n1 <= 0. || n2 <= 0.) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         double v1;

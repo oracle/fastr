@@ -13,9 +13,9 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmin2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.lfastchoose;
+import static com.oracle.truffle.r.library.stats.RMath.fmax2;
+import static com.oracle.truffle.r.library.stats.RMath.fmin2;
+import static com.oracle.truffle.r.library.stats.RMath.lfastchoose;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 
@@ -34,7 +34,7 @@ public final class QHyper {
             return p + nr + nb + n;
         }
         if (!Double.isFinite(p) || !Double.isFinite(nr) || !Double.isFinite(nb) || !Double.isFinite(n)) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         nr = forceint(nr);
@@ -42,7 +42,7 @@ public final class QHyper {
         capN = nr + nb;
         n = forceint(n);
         if (nr < 0 || nb < 0 || n < 0 || n > capN) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         /*
@@ -54,7 +54,7 @@ public final class QHyper {
         xend = fmin2(n, nr);
 
         try {
-            DPQ.qP01Boundaries(p, xstart, xend, lowerTail, logP);
+            DPQ.rqp01boundaries(p, xstart, xend, lowerTail, logP);
         } catch (EarlyReturn ex) {
             return ex.result;
         }
@@ -75,7 +75,7 @@ public final class QHyper {
         nb -= xb;
 
         if (!lowerTail || logP) {
-            p = DPQ.dtQIv(p, lowerTail, logP);
+            p = DPQ.rdtqiv(p, lowerTail, logP);
         }
         p *= 1 - 1000 * DBL_EPSILON; /* was 64, but failed on FreeBSD sometimes */
         sum = smallN ? term : Math.exp(term);

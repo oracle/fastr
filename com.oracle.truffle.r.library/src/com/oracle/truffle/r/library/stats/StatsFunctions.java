@@ -14,6 +14,7 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -27,6 +28,7 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -36,6 +38,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 // inspired by arithmetic.c
 
 public final class StatsFunctions {
+    @CompilationFinal private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
+
     private StatsFunctions() {
         // private
     }
@@ -51,6 +55,24 @@ public final class StatsFunctions {
         }
 
         double evaluate(double a, double b, double c, boolean x);
+    }
+
+    public interface Function2_1 extends Function3_2 {
+        @Override
+        default double evaluate(double a, double b, double c, boolean x, boolean y) {
+            return evaluate(a, b, x);
+        }
+
+        double evaluate(double a, double b, boolean x);
+    }
+
+    public interface Function2_2 extends Function3_2 {
+        @Override
+        default double evaluate(double a, double b, double c, boolean x, boolean y) {
+            return evaluate(a, b, x, y);
+        }
+
+        double evaluate(double a, double b, boolean x, boolean y);
     }
 
     static final class StatFunctionProfiles {
@@ -86,6 +108,7 @@ public final class StatsFunctions {
         profiles.aCheck.enable(a);
         profiles.bCheck.enable(b);
         profiles.cCheck.enable(c);
+        profiles.loopConditionProfile.profileCounted(length);
         for (int i = 0; profiles.loopConditionProfile.inject(i < length); i++) {
             double aValue = a.getDataAt(i % aLength);
             double bValue = b.getDataAt(i % bLength);
@@ -150,7 +173,7 @@ public final class StatsFunctions {
     }
 
     public abstract static class Function3_1Node extends RExternalBuiltinNode.Arg4 {
-        private final Function3_2 function;
+        private final Function3_1 function;
 
         public Function3_1Node(Function3_1 function) {
             this.function = function;
@@ -169,6 +192,51 @@ public final class StatsFunctions {
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate3(this, function, a, b, c, x, false /* dummy */, profiles, copyAttributesNode);
+        }
+    }
+
+    public abstract static class Function2_1Node extends RExternalBuiltinNode.Arg3 {
+        private final Function2_1 function;
+
+        public Function2_1Node(Function2_1 function) {
+            this.function = function;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(0).asDoubleVector();
+            casts.arg(1).asDoubleVector();
+            casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, boolean x,
+                        @Cached("create()") StatFunctionProfiles profiles,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+            return evaluate3(this, function, a, b, DUMMY_VECTOR, x, false /* dummy */, profiles, copyAttributesNode);
+        }
+    }
+
+    public abstract static class Function2_2Node extends RExternalBuiltinNode.Arg4 {
+        private final Function2_2 function;
+
+        public Function2_2Node(Function2_2 function) {
+            this.function = function;
+        }
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(0).asDoubleVector();
+            casts.arg(1).asDoubleVector();
+            casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, boolean x, boolean y,
+                        @Cached("create()") StatFunctionProfiles profiles,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+            return evaluate3(this, function, a, b, DUMMY_VECTOR, x, y, profiles, copyAttributesNode);
         }
     }
 

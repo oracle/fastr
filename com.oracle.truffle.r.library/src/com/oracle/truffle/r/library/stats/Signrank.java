@@ -31,12 +31,12 @@ public final class Signrank {
             if (Double.isInfinite(n)) {
                 // In GnuR these "results" seem to be generated due to the behaviour of R_forceint,
                 // and the "(int) n" cast, which ends up casting +/-infinity to integer...
-                return n < 0 ? StatsUtil.mlError() : 0;
+                return n < 0 ? RMath.mlError() : 0;
             }
 
             n = forceint(n);
             if (n < 0) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             if (n == 0) {

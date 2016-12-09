@@ -22,32 +22,38 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * Support for the {.Call} and {.External} calls.
  */
 public interface CallRFFI {
-    /**
-     * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
-     * {@code args}. The values in {@code args} can be any of the types used to represent {@code R}
-     * values in the implementation.
-     */
-    Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args);
+    abstract class CallRFFINode extends Node {
+        /**
+         * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
+         * {@code args}. The values in {@code args} can be any of the types used to represent
+         * {@code R} values in the implementation.
+         */
+        public abstract Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args);
 
-    /**
-     * Variant that does not return a result (primarily for library "init" methods).
-     */
-    void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args);
+        /**
+         * Variant that does not return a result (primarily for library "init" methods).
+         */
+        public abstract void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args);
 
-    /**
-     * This interface is instantiated very early and sets the FFI global variables as part of that
-     * process. However, at that stage {@code tempDir} is not established so this call exists to set
-     * the value later.
-     */
-    void setTempDir(String tempDir);
+        /**
+         * This interface is instantiated very early and sets the FFI global variables as part of
+         * that process. However, at that stage {@code tempDir} is not established so this call
+         * exists to set the value later.
+         */
+        public abstract void setTempDir(String tempDir);
 
-    /**
-     * Sets the {@code R_Interactive} FFI variable. Similar rationale to {#link setTmpDir}.
-     */
-    void setInteractive(boolean interactive);
+        /**
+         * Sets the {@code R_Interactive} FFI variable. Similar rationale to {#link setTmpDir}.
+         */
+        public abstract void setInteractive(boolean interactive);
+    }
+
+    CallRFFINode callRFFINode();
 
 }

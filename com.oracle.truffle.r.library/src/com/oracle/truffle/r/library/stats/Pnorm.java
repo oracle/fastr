@@ -41,11 +41,11 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
                 return Double.NaN;
             }
             /* sigma = 0 : */
-            return (x < mu) ? DPQ.d0(logP) : DPQ.d1(logP);
+            return (x < mu) ? DPQ.rd0(logP) : DPQ.rd1(logP);
         }
         double p = (x - mu) / sigma;
         if (!Double.isFinite(p)) {
-            return (x < mu) ? DPQ.d0(logP) : DPQ.d1(logP);
+            return (x < mu) ? DPQ.rd0(logP) : DPQ.rd1(logP);
         }
 
         PnormBoth pnormBoth = new PnormBoth(p);
@@ -204,11 +204,11 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
                 swapTail(x, lower);
             } else { /* large x such that probs are 0 or 1 */
                 if (x > 0) {
-                    cum = DPQ.d1(logP);
-                    ccum = DPQ.d0(logP);
+                    cum = DPQ.rd1(logP);
+                    ccum = DPQ.rd0(logP);
                 } else {
-                    cum = DPQ.d0(logP);
-                    ccum = DPQ.d1(logP);
+                    cum = DPQ.rd0(logP);
+                    ccum = DPQ.rd1(logP);
                 }
             }
 
