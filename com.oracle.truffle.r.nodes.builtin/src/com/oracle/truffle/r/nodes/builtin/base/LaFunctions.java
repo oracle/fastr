@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -565,7 +566,8 @@ public class LaFunctions {
                         @Cached("create()") SetDimAttributeNode setBDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode,
                         @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                        @Cached("create()") GetDimNamesAttributeNode getBinDimNamesNode) {
+                        @Cached("create()") GetDimNamesAttributeNode getBinDimNamesNode,
+                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
@@ -615,7 +617,7 @@ public class LaFunctions {
                 bData = new double[n];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 if (aDn != null) {
-                    b.setNames(RDataFactory.createStringVector((String) aDn.getDataAt(1)));
+                    setNamesNode.setNames(b, RDataFactory.createStringVector((String) aDn.getDataAt(1)));
                 }
             }
 

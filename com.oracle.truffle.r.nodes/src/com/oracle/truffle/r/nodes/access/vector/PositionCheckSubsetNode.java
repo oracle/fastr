@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -137,13 +138,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenOutOfBounds, //
                     @Cached("create()") NullProfile hasNamesProfile, //
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") GetNamesAttributeNode getNamesNode,
+                    @Cached("create()") SetNamesAttributeNode setNamesNode) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
         intPosition.setComplete(position.isComplete());
         // requires names preservation
         RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
         if (names != null) {
-            intPosition.setNames(names);
+            setNamesNode.setNames(intPosition, names);
         }
         Object convertedStore = intPosition.getInternalStore();
 

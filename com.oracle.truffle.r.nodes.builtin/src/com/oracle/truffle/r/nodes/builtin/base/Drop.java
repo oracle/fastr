@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -56,7 +57,8 @@ public abstract class Drop extends RBuiltinNode {
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimsNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimsNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimsNamesNode,
+                    @Cached("create()") SetNamesAttributeNode setNamesNode) {
         int[] dims = getDimsNode.getDimensions(x);
         if (nullDimensions.profile(dims == null)) {
             return x;
@@ -78,13 +80,13 @@ public abstract class Drop extends RBuiltinNode {
             RAbstractVector r = x.copy();
             setDimsNode.setDimensions(x, null);
             setDimsNamesNode.setDimNames(x, null);
-            x.setNames(null);
+            setNamesNode.setNames(x, null);
             return x;
         }
 
         // the result is vector
         if (resultIsVector.profile(newDimsLength <= 1)) {
-            return toVector(x, lastNonOneIndex, setDimsNode, getDimsNamesNode);
+            return toVector(x, lastNonOneIndex, setDimsNode, getDimsNamesNode, setNamesNode);
         }
 
         // else: the result will be a matrix, copy non-1 dimensions
@@ -121,14 +123,14 @@ public abstract class Drop extends RBuiltinNode {
      * Handles the case when result is just a vector. The only catch is that we might have to copy
      * corresponding index from dimnames to names attribute of the new vector.
      */
-    private RAbstractVector toVector(RAbstractVector x, int nonOneIndex, SetDimAttributeNode setDimsNode, GetDimNamesAttributeNode getDimNamesNode) {
+    private RAbstractVector toVector(RAbstractVector x, int nonOneIndex, SetDimAttributeNode setDimsNode, GetDimNamesAttributeNode getDimNamesNode, SetNamesAttributeNode setNamesNode) {
         RAbstractVector result = x.copy(); // share?
         setDimsNode.setDimensions(result, null);
 
         // copy dimnames to names if possible
         RList dimNames = getDimNamesNode.getDimNames(x);
         if (noDimNamesProfile.profile(dimNames != null) && nonOneIndex < dimNames.getLength()) {
-            result.setNames(ensureStringVector(dimNames.getDataAt(nonOneIndex)));
+            setNamesNode.setNames(result, ensureStringVector(dimNames.getDataAt(nonOneIndex)));
         }
 
         return result;

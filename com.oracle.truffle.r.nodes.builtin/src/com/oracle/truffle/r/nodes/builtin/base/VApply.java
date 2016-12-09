@@ -34,6 +34,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
@@ -92,6 +93,7 @@ public abstract class VApply extends RBuiltinNode {
     @Child private CastStringNode castString;
     @Child private SetDimAttributeNode setDimNode;
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -205,7 +207,7 @@ public abstract class VApply extends RBuiltinNode {
                 newNames = (RStringVector) vecMat.copy();
             }
             if (newNames != null) {
-                result.setNames(newNames);
+                setNamesNode.setNames(result, newNames);
             }
         }
         return result;

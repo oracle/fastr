@@ -35,6 +35,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -53,6 +54,7 @@ public abstract class Attributes extends RBuiltinNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
     @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
+    @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
     @Specialization
     protected Object attributesNull(RAbstractContainer container, //
@@ -117,7 +119,7 @@ public abstract class Attributes extends RBuiltinNode {
             }
         }
         RList result = RDataFactory.createList(values);
-        result.setNames(RDataFactory.createStringVector(names, true));
+        setNamesNode.setNames(result, RDataFactory.createStringVector(names, true));
         return result;
     }
 
