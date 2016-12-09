@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_loadMethod function)
 abstract class LoadMethod extends RBaseNode {
 
     private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("method", "fname", "envir");
