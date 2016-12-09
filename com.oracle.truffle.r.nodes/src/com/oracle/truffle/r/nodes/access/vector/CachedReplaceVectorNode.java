@@ -81,7 +81,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final VectorLengthProfile valueLengthProfile = VectorLengthProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
     private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
-    private final RAttributeProfiles positionNamesProfile = RAttributeProfiles.create();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
@@ -546,7 +545,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         RStringVector oldNames = vector.getNames(vectorNamesProfile);
         RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
-            res.copyAttributesFrom(positionNamesProfile, vector);
+            res.copyAttributesFrom(vector);
         }
         res.setDimensionsNoCheck(null);
         res.setDimNamesNoCheck(null);

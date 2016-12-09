@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 
 @MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)

@@ -475,7 +475,7 @@ public class GrepFunctions {
                     result[i] = value;
                 }
                 RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
-                ret.copyAttributesFrom(attrProfiles, vector);
+                ret.copyAttributesFrom(vector);
                 return ret;
             } catch (PatternSyntaxException e) {
                 CompilerDirectives.transferToInterpreter();

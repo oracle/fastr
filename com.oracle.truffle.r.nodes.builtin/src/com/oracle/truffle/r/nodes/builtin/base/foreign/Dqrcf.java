@@ -49,7 +49,7 @@ public final class Dqrcf extends RExternalBuiltinNode {
             int[] info = infoVec.materialize().getDataTemp();
             rApplRFFINode.dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
             RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
-            coef.copyAttributesFrom(attrProfiles, bVec);
+            coef.copyAttributesFrom(bVec);
             // @formatter:off
             Object[] data = new Object[]{
                         RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR),
