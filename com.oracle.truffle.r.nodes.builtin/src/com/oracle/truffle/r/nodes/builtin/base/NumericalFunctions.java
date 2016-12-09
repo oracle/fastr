@@ -264,12 +264,12 @@ public class NumericalFunctions {
     public abstract static class Sign extends UnaryArithmeticBuiltinNode {
 
         public Sign() {
-            super(RType.Logical);
+            super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
         }
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").defaultError(RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue());
+            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue());
         }
 
         @Override
