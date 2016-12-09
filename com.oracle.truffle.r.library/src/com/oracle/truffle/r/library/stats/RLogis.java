@@ -18,7 +18,7 @@ public final class RLogis implements RandFunction2_Double {
     @Override
     public double evaluate(double location, double scale, RandomNumberProvider rand) {
         if (Double.isNaN(location) || !Double.isFinite(scale)) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         if (scale == 0. || !Double.isFinite(location)) {

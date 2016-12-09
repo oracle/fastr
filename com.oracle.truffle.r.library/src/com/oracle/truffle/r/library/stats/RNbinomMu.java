@@ -20,7 +20,7 @@ public final class RNbinomMu implements RandFunction2_Double {
     @Override
     public double evaluate(double size, double mu, RandomNumberProvider rand) {
         if (!Double.isFinite(mu) || Double.isNaN(size) || size <= 0 || mu < 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (!Double.isFinite(size)) {
             size = Double.MAX_VALUE / 2.;

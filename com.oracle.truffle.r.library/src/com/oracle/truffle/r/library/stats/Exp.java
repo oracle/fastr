@@ -27,11 +27,11 @@ public class Exp {
             }
 
             if (scale <= 0.0) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             if (x < 0.) {
-                return DPQ.d0(giveLog);
+                return DPQ.rd0(giveLog);
             }
             return (giveLog ? (-x / scale) - Math.log(scale) : Math.exp(-x / scale) / scale);
         }
@@ -41,7 +41,7 @@ public class Exp {
         @Override
         public double evaluate(double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(scale) || scale <= 0.0) {
-                return scale == 0. ? 0. : StatsUtil.mlError();
+                return scale == 0. ? 0. : RMath.mlError();
             }
             return scale * rand.expRand();
         }
@@ -54,16 +54,16 @@ public class Exp {
                 return x + scale;
             }
             if (scale < 0) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             if (x <= 0.) {
-                return DPQ.dt0(logP, lowerTail);
+                return DPQ.rdt0(lowerTail, logP);
             }
 
             /* same as weibull( shape = 1): */
             x = -(x / scale);
-            return lowerTail ? (logP ? DPQ.log1Exp(x, logP) : -StatsUtil.expm1(x)) : DPQ.dExp(x, logP);
+            return lowerTail ? (logP ? DPQ.rlog1exp(x) : -RMath.expm1(x)) : DPQ.rdexp(x, logP);
         }
     }
 
@@ -75,20 +75,20 @@ public class Exp {
             }
 
             if (scale < 0) {
-                return StatsUtil.mlError();
+                return RMath.mlError();
             }
 
             try {
-                DPQ.qQP01Check(p, logP);
+                DPQ.rqp01check(p, logP);
             } catch (EarlyReturn e) {
                 return e.result;
             }
 
-            if (p == DPQ.dt0(logP, lowerTail)) {
+            if (p == DPQ.rdt0(lowerTail, logP)) {
                 return 0;
             }
 
-            return -scale * DPQ.dtCLog(p, lowerTail, logP);
+            return -scale * DPQ.rdtclog(p, lowerTail, logP);
 
         }
     }

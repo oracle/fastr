@@ -34,7 +34,7 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
         if (DPQ.nonint(size)) {
             nanProfile.enter();
             DPQ.nointCheckWarning(size, "n");
-            return DPQ.d0(logP);
+            return DPQ.rd0(logP);
         }
         size = Math.round(size);
         /* PR#8560: n=0 is a valid value */
@@ -44,11 +44,11 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
         }
 
         if (q < 0) {
-            return DPQ.dt0(logP, lowerTail);
+            return DPQ.rdt0(lowerTail, logP);
         }
         q = Math.floor(q + 1e-7);
         if (size <= q) {
-            return DPQ.dt1(logP, lowerTail);
+            return DPQ.rdt1(lowerTail, logP);
         }
         return Pbeta.pbeta(prob, q + 1, size - q, !lowerTail, logP, nanProfile);
     }

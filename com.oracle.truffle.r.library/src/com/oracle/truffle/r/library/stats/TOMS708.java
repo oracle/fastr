@@ -177,8 +177,8 @@ public class TOMS708 {
             eps = RRuntime.EPSILON; /* == DBL_EPSILON (in R, Rmath) */
 
             /* ----------------------------------------------------------------------- */
-            w = DPQ.d0(logP);
-            w1 = DPQ.d0(logP);
+            w = DPQ.rd0(logP);
+            w1 = DPQ.rd0(logP);
 
             if (a < 0.0 || b < 0.0) {
                 return result(w, w1, 1);
@@ -206,8 +206,8 @@ public class TOMS708 {
                     return result(w, w1, 6);
                 }
                 // else:
-                w = DPQ.d0(logP);
-                w1 = DPQ.d1(logP);
+                w = DPQ.rd0(logP);
+                w1 = DPQ.rd1(logP);
                 return result(w, w1, 0);
             }
             if (y == 0.0) {
@@ -215,20 +215,20 @@ public class TOMS708 {
                     return result(w, w1, 7);
                 }
                 // else:
-                w = DPQ.d1(logP);
-                w1 = DPQ.d0(logP);
+                w = DPQ.rd1(logP);
+                w1 = DPQ.rd0(logP);
                 return result(w, w1, 0);
             }
 
             if (a == 0.0) {
                 // else:
-                w = DPQ.d1(logP);
-                w1 = DPQ.d0(logP);
+                w = DPQ.rd1(logP);
+                w1 = DPQ.rd0(logP);
                 return result(w, w1, 0);
             }
             if (b == 0.0) {
-                w = DPQ.d0(logP);
-                w1 = DPQ.d1(logP);
+                w = DPQ.rd0(logP);
+                w1 = DPQ.rd1(logP);
                 return result(w, w1, 0);
             }
 
@@ -762,7 +762,7 @@ public class TOMS708 {
          */
 
         if (x == 0.) {
-            return DPQ.d0(logP);
+            return DPQ.rd0(logP);
         }
         /* ----------------------------------------------------------------------- */
         /* compute the factor x^a/(a*Beta(a,b)) */
@@ -850,7 +850,7 @@ public class TOMS708 {
             }
         }
         debugPrintf(" bpser(a=%f, b=%f, x=%f, log=%b): prelim.ans = %.14f;\n", a, b, x, logP, ans);
-        if (ans == DPQ.d0(logP) || (!logP && a <= eps * 0.1)) {
+        if (ans == DPQ.rd0(logP) || (!logP && a <= eps * 0.1)) {
             return ans;
         }
 
@@ -1059,7 +1059,7 @@ public class TOMS708 {
         /* R has M_1_SQRT_2PI , and M_LN_SQRT_2PI = ln(sqrt(2*pi)) = 0.918938.. */
 
         if (x == 0.0 || y == 0.0) {
-            return DPQ.d0(logP);
+            return DPQ.rd0(logP);
         }
         double a0 = min(a, b);
         if (a0 < 8.0) {
@@ -1081,7 +1081,7 @@ public class TOMS708 {
             double z = a * lnx + b * lny;
             if (a0 >= 1.) {
                 z -= betaln(a, b);
-                return DPQ.dExp(z, logP);
+                return DPQ.rdexp(z, logP);
             }
 
             /* ----------------------------------------------------------------------- */
@@ -1098,7 +1098,7 @@ public class TOMS708 {
 
             if (b0 <= 1.0) { /* algorithm for max(a,b) = b0 <= 1 */
 
-                double eZ = DPQ.dExp(z, logP);
+                double eZ = DPQ.rdexp(z, logP);
 
                 if (!logP && eZ == 0.0) {
                     /* exp() underflow */

@@ -18,7 +18,7 @@ public final class Rnorm implements RandFunction2_Double {
     @Override
     public double evaluate(double mu, double sigma, RandomNumberProvider rand) {
         if (Double.isNaN(mu) || !Double.isFinite(sigma) || sigma < 0.) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (sigma == 0. || !Double.isFinite(mu)) {
             return mu; /* includes mu = +/- Inf with finite sigma */

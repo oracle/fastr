@@ -29,11 +29,11 @@ public final class Dt implements Function2_1 {
         }
 
         if (n <= 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         if (!Double.isFinite(x)) {
-            return DPQ.d0(giveLog);
+            return DPQ.rd0(giveLog);
         }
         if (!Double.isFinite(n)) {
             return dnorm(x, 0., 1., giveLog);

@@ -66,13 +66,13 @@ public class RGamma implements RandFunction2_Double {
         double retVal;
 
         if (Double.isNaN(a) || Double.isNaN(scale)) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (a <= 0.0 || scale <= 0.0) {
             if (scale == 0. || a == 0.) {
                 return 0.;
             }
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (!Double.isFinite(a) || !Double.isFinite(scale)) {
             return Double.POSITIVE_INFINITY;
@@ -192,7 +192,7 @@ public class RGamma implements RandFunction2_Double {
                 /* Step 11: hat acceptance (h) */
                 /* (if q not positive go to step 8) */
                 if (q > 0.0) {
-                    w = StatsUtil.expm1(q);
+                    w = RMath.expm1(q);
                     /* ^^^^^ original code had approximation with rel.err < 2e-7 */
                     /* if t is rejected sample again at step 8 */
                     if (c * fabs(u) <= w * Math.exp(e - 0.5 * t * t)) {

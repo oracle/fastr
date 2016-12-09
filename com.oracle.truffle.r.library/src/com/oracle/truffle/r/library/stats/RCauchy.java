@@ -20,7 +20,7 @@ public final class RCauchy implements RandFunction2_Double {
     @Override
     public double evaluate(double location, double scale, RandomNumberProvider rand) {
         if (Double.isNaN(location) || !Double.isFinite(scale) || scale < 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
         if (scale == 0. || !Double.isFinite(location)) {
             return location;

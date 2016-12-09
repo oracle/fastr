@@ -80,7 +80,7 @@ public final class RPois implements RandFunction1_Double {
         boolean newBigMu = false;
 
         if (!Double.isFinite(mu) || mu < 0) {
-            return StatsUtil.mlError();
+            return RMath.mlError();
         }
 
         if (mu <= 0.) {
@@ -219,7 +219,7 @@ public final class RPois implements RandFunction1_Double {
                  * sample t from the laplace 'hat' (if t <= -0.6744 then pk < fk for all mu >= 10.)
                  */
                 u = 2 * rand.unifRand() - 1.;
-                t = 1.8 + StatsUtil.fsign(e, u);
+                t = 1.8 + RMath.fsign(e, u);
             }
 
             if (t > -0.6744 || gotoStepF) {

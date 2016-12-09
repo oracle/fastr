@@ -74,6 +74,7 @@ import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RPois;
 import com.oracle.truffle.r.library.stats.RWeibull;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
 import com.oracle.truffle.r.library.stats.Rbinom;
 import com.oracle.truffle.r.library.stats.Rf;
@@ -84,7 +85,6 @@ import com.oracle.truffle.r.library.stats.Signrank.RSignrank;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
-import com.oracle.truffle.r.library.stats.StatsUtil;
 import com.oracle.truffle.r.library.stats.Wilcox.RWilcox;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
@@ -396,7 +396,7 @@ public class CallAndExternalFunctions {
                     return getExternalModelBuiltinNode("updateform");
 
                 case "Cdqrls":
-                    return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(StatsUtil.class, "lm.R"), "Cdqrls");
+                    return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandGenerationFunctions.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
