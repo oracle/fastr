@@ -27,12 +27,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 @RBuiltin(name = "rawToBits", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
@@ -40,7 +39,7 @@ public abstract class RawToBits extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustNotBeNull(RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(instanceOf(RAbstractRawVector.class), RError.SHOW_CALLER,
+        casts.arg("x").mustNotBeNull(RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(Predef.rawValue(), RError.SHOW_CALLER,
                         RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
     }
 
