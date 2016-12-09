@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -84,12 +85,13 @@ class SpecialsUtils {
         @CompilationFinal private String cachedField;
         @CompilationFinal private RStringVector cachedNames;
         @Child private ClassHierarchyNode hierarchyNode = ClassHierarchyNode.create();
+        @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         protected final void updateCache(RList list, String field) {
             if (cachedField == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedField = field;
-                cachedNames = list.getNames();
+                cachedNames = getNamesNode.getNames(list);
             }
         }
 
@@ -98,7 +100,7 @@ class SpecialsUtils {
         }
 
         protected final boolean isCached(RList list, String field) {
-            return cachedField == null || (cachedField == field && list.getNames() == cachedNames);
+            return cachedField == null || (cachedField == field && getNamesNode.getNames(list) == cachedNames);
         }
 
         protected static int getIndex(RStringVector names, String field) {
