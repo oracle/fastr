@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine.interop;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -75,7 +76,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
  * {@link RContext#getInstance()} will fail. In short the mapping has to be established using
  * {@link Thread} not {@link RContext} and there is no call that informs us ahead of a call to
  * {@link #getForeignAccess} that a new thread is in play. We use a Truffle {@link Assumption} to
- * provide a fast path in the normal, single-threaded, case.
+ * provide a fast path in the normal, single-threaded, case. TODO Apparently a call to
+ * {@link #getForeignAccess(RTruffleObject)} should,in fact, only occur on the slow path, and an
+ * assertion to that effect has been added. If true, then the fast path code can be simplified.
  *
  * For most types we use the {@link MessageResolution} facility to automatically generate the
  * factory for creating the {@link ForeignAccess} instance. The exceptions are the (many) subclasses
@@ -235,6 +238,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
     @Override
     public ForeignAccess getForeignAccess(RTruffleObject obj) {
+        CompilerAsserts.neverPartOfCompilation("getForeignAccess");
         ForeignAccessState foreignAccessState;
         if (singleStateAssumption.isValid()) {
             foreignAccessState = singleForeignAccessState;
