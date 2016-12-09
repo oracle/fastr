@@ -41,11 +41,11 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
                 return Double.NaN;
             }
             /* sigma = 0 : */
-            return (x < mu) ? DPQ.rd0(logP) : DPQ.rd1(logP);
+            return (x < mu) ? DPQ.rdt0(lowerTail, logP) : DPQ.rdt1(lowerTail, logP);
         }
         double p = (x - mu) / sigma;
         if (!Double.isFinite(p)) {
-            return (x < mu) ? DPQ.rd0(logP) : DPQ.rd1(logP);
+            return (x < mu) ? DPQ.rdt0(lowerTail, logP) : DPQ.rdt1(lowerTail, logP);
         }
 
         PnormBoth pnormBoth = new PnormBoth(p);

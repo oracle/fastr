@@ -30,7 +30,7 @@ import com.oracle.truffle.r.test.TestBase;
  * Common tests for functions implemented using {@code StatsFunctions} infrastructure.
  */
 public class TestStatFunctions extends TestBase {
-    private static final String[] FUNCTION3_1_NAMES = {"dgamma", "dbeta", "dcauchy"};
+    private static final String[] FUNCTION3_1_NAMES = {"dgamma", "dbeta", "dcauchy", "dlnorm"};
     private static final String[] FUNCTION3_1_PARAMS = {
                     "10, 10, 10, log=TRUE",
                     "3, 3, 3, log=FALSE",
@@ -80,7 +80,7 @@ public class TestStatFunctions extends TestBase {
         assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_2_NAMES, new String[]{"rep(c(1, 0, 0.1), 5), c(NA, 0, NaN, 1/0, -1/0)"}));
     }
 
-    private static final String[] FUNCTION3_2_NAMES = {"pbeta", "pcauchy", "qcauchy"};
+    private static final String[] FUNCTION3_2_NAMES = {"pbeta", "pcauchy", "qcauchy", "qlnorm", "plnorm"};
     private static final String[] FUNCTION3_2_PARAMS = {
                     "0, 10, 10",
                     "c(-1, 0, 0.2, 2), c(-1, 0, 0.1, 0.9, 3), rep(c(-1, 0, 1, 0.1, -0.1, 0.0001), 20)",
