@@ -71,7 +71,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
     private UserRngRFFI.UserRngRFFINode getUserRngRFFINode() {
         if (userRngRFFINode == null) {
-            userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().userRngRFFINode();
+            userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().createUserRngRFFINode();
         }
         return userRngRFFINode;
     }

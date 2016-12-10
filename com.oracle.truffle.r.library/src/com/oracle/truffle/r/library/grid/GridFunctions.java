@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 public class GridFunctions {
 
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
-        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().gridRFFINode();
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
 
         @Specialization
         @TruffleBoundary
@@ -42,7 +42,7 @@ public class GridFunctions {
     }
 
     public static final class KillGrid extends RExternalBuiltinNode {
-        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().gridRFFINode();
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
 
         @Override
         @TruffleBoundary

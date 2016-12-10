@@ -32,5 +32,5 @@ public interface GridRFFI {
         public abstract Object killGrid();
     }
 
-    GridRFFINode gridRFFINode();
+    GridRFFINode createGridRFFINode();
 }

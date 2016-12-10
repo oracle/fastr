@@ -55,6 +55,8 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
     public abstract static class DynLoad extends RBuiltinNode {
+        @Child private DLL.LoadPackageDLLNode loadPackageDLLNode = DLL.LoadPackageDLLNode.create();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
@@ -67,7 +69,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected RList doDynLoad(String lib, boolean local, boolean now, @SuppressWarnings("unused") String unused) {
             try {
-                DLLInfo dllInfo = DLL.loadPackageDLL(lib, local, now);
+                DLLInfo dllInfo = loadPackageDLLNode.loadPackageDLL(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
                 // This is not a recoverable error

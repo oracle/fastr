@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class Generic_Tools implements ToolsRFFI {
     private static class Generic_ToolsRFFINode extends ToolsRFFINode {
-        private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
+        @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
 
         private static final class ToolsProvider {
             private static final String C_PARSE_RD = "C_parseRd";
@@ -91,7 +91,7 @@ public class Generic_Tools implements ToolsRFFI {
     }
 
     @Override
-    public ToolsRFFINode toolsRFFINode() {
+    public ToolsRFFINode createToolsRFFINode() {
         return new Generic_ToolsRFFINode();
     }
 }

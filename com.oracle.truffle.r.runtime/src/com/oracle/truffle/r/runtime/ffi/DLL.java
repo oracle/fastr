@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -345,36 +346,42 @@ public class DLL {
         return DLLInfo.create(name, absPath, true, handle);
     }
 
-    private static final String R_INIT_PREFIX = "R_init_";
-    private static CallRFFINode callRFFINode;
+    public static class LoadPackageDLLNode extends Node {
+        private static final String R_INIT_PREFIX = "R_init_";
+        @Child private CallRFFINode callRFFINode;
 
-    @TruffleBoundary
-    public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
-        DLLInfo dllInfo = load(path, local, now);
-        // Search for init method
-        String pkgInit = R_INIT_PREFIX + dllInfo.name;
-        SymbolHandle initFunc = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, pkgInit);
-        if (initFunc != SYMBOL_NOT_FOUND) {
-            synchronized (DLL.class) {
-                try {
-                    if (callRFFINode == null) {
-                        callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
-                    }
-                    callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
-                } catch (ReturnException ex) {
-                    // An error call can, due to condition handling, throw this which we must
-                    // propogate
-                    throw ex;
-                } catch (Throwable ex) {
-                    if (RContext.isInitialContextInitialized()) {
-                        throw new DLLException(RError.Message.DLL_RINIT_ERROR);
-                    } else {
-                        throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+        public static LoadPackageDLLNode create() {
+            return new LoadPackageDLLNode();
+        }
+
+        @TruffleBoundary
+        public DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
+            DLLInfo dllInfo = load(path, local, now);
+            // Search for init method
+            String pkgInit = R_INIT_PREFIX + dllInfo.name;
+            SymbolHandle initFunc = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, pkgInit);
+            if (initFunc != SYMBOL_NOT_FOUND) {
+                synchronized (DLL.class) {
+                    try {
+                        if (callRFFINode == null) {
+                            callRFFINode = insert(RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode());
+                        }
+                        callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                    } catch (ReturnException ex) {
+                        // An error call can, due to condition handling, throw this which we must
+                        // propogate
+                        throw ex;
+                    } catch (Throwable ex) {
+                        if (RContext.isInitialContextInitialized()) {
+                            throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+                        } else {
+                            throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                        }
                     }
                 }
             }
+            return dllInfo;
         }
-        return dllInfo;
     }
 
     @TruffleBoundary

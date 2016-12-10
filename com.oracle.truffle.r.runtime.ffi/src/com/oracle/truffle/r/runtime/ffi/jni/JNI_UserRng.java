@@ -55,7 +55,7 @@ public class JNI_UserRng implements UserRngRFFI {
     }
 
     @Override
-    public UserRngRFFINode userRngRFFINode() {
+    public UserRngRFFINode createUserRngRFFINode() {
         return new JNI_UserRngRFFINode();
     }
 

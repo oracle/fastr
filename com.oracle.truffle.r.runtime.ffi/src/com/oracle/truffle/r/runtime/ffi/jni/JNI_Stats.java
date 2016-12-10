@@ -68,7 +68,7 @@ public class JNI_Stats implements StatsRFFI {
     }
 
     @Override
-    public FFTNode fftNode() {
+    public FFTNode createFFTNode() {
         return new JNI_FFTNode();
     }
 

@@ -26,7 +26,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
-    @Child private StatsRFFI.FFTNode fftNode = RFFIFactory.getRFFI().getStatsRFFI().fftNode();
+    @Child private StatsRFFI.FFTNode fftNode = RFFIFactory.getRFFI().getStatsRFFI().createFFTNode();
 
     @Override
     protected void createCasts(CastBuilder casts) {

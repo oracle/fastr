@@ -547,7 +547,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
         if (initial && !embedded) {
-            RFFIFactory.getRFFI().getCallRFFI().callRFFINode().setInteractive(isInteractive());
+            RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode().setInteractive(isInteractive());
             initialContextInitialized = true;
         }
         return this;

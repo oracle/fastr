@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class Generic_Grid implements GridRFFI {
     private static class Generic_GridRFFINode extends GridRFFINode {
-        private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
+        @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
 
         private static final class GridProvider {
             private static GridProvider grid;
@@ -81,7 +81,7 @@ public class Generic_Grid implements GridRFFI {
     }
 
     @Override
-    public GridRFFINode gridRFFINode() {
+    public GridRFFINode createGridRFFINode() {
         return new Generic_GridRFFINode();
     }
 }

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
 public class Geom {
     public static final class QGeom implements Function2_2 {
+        @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
             if (prob <= 0 || prob > 1) {
                 return RMath.mlError();

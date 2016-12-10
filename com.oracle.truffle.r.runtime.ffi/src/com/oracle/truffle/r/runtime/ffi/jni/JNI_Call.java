@@ -209,7 +209,7 @@ public class JNI_Call implements CallRFFI {
     private static native void callVoid1(long address, Object arg1);
 
     @Override
-    public CallRFFINode callRFFINode() {
+    public CallRFFINode createCallRFFINode() {
         return new JNI_CallRFFINode();
     }
 

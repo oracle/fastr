@@ -90,5 +90,5 @@ public interface LapackRFFI {
                         double[] z, int ldz, int[] isuppz, double[] work, int lwork, int[] iwork, int liwork);
     }
 
-    LapackRFFINode getLapackRFFINode();
+    LapackRFFINode createLapackRFFINode();
 }

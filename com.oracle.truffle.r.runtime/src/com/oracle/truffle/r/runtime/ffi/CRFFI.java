@@ -37,5 +37,5 @@ public interface CRFFI {
         public abstract void invoke(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
-    CRFFINode getCRFFINode();
+    CRFFINode createCRFFINode();
 }
