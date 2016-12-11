@@ -468,7 +468,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.stateDLL = DLL.ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
-
         state.add(State.CONSTRUCTED);
     }
 
@@ -525,8 +524,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRConnection.initialize(this);
         stateStdConnections.initialize(this);
         stateRNG.initialize(this);
-        this.stateRFFI = RFFIContextStateFactory.newContextState().initialize(this);
-
+        stateRFFI = RFFIContextStateFactory.newContextState();
+        // separate in case initialize calls getStateRFFI()!
         stateRFFI.initialize(this);
         stateRSerialize.initialize(this);
         stateLazyDBCache.initialize(this);
@@ -791,6 +790,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         return RContext.getInstance().engine;
     }
 
+    public ContextState getStateRFFI() {
+        assert stateRFFI != null;
+        return stateRFFI;
+    }
+
     public PolyglotEngine getVM() {
         return info.getVM();
     }
@@ -809,6 +813,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public Map<String, TruffleObject> getExportedSymbols() {
         return exportedSymbols;
+    }
+
+    public void addExportedSymbol(String name, TruffleObject obj) {
+        exportedSymbols.put(name, obj);
     }
 
     public TimeZone getSystemTimeZone() {
