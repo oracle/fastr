@@ -137,7 +137,7 @@ public class JNI_Call implements CallRFFI {
     private static final boolean ForceRTLDGlobal = false;
 
     protected JNI_Call() {
-        loadLibrary();
+        loadLibRLibrary();
     }
 
     /**
@@ -151,13 +151,13 @@ public class JNI_Call implements CallRFFI {
      * {@link DLLRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
      */
     @TruffleBoundary
-    private static void loadLibrary() {
+    private static void loadLibRLibrary() {
         String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
         System.load(libjnibootPath);
 
         String librffiPath = LibPaths.getBuiltinLibPath("R");
         try {
-            DLL.load(librffiPath, ForceRTLDGlobal, false);
+            DLL.loadLibR(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
             throw new RInternalError(ex, "error while loading " + librffiPath);
         }

@@ -13,8 +13,6 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -28,6 +26,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -48,33 +47,62 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.CallRFFINode;
  * <li>support native code of dynamically loaded user packages</li>
  * </ol>
  *
- * In general, unloading a DLL may not be possible, so the set of DLLs have to be considered VM
- * wide, in the sense of multiple {@link RContext}s. TODO what about mutable state in native code?
- * So in the case of multiple {@link RContext}s package shared libraries may be registered multiple
- * times and we must take care not to duplicate them in the meta-data here ({@link #list}).
- *
  * Logic derived from Rdynload.c. For the most part we use the same type/function names as GnuR,
  * e.g. {@link NativeSymbolType}.
+ *
+ * Abstractly every {@link RContext} has its own unique list of loaded libraries, stored in the
+ * {@link ContextStateImpl} class. Concretely, an implementation of the {@link DLLRFFI} may or may
+ * not maintain separate instances.
+ *
+ * The {@code libR} library is a special case, as it is an implementation artifact and not visible
+ * at the R level. However, it is convenient to manage it in a similar way in this code. It is
+ * always stored in slot 0 of the list, and is hidden from R code. It is loaded by the
+ * {@link RFFIFactory} early in the startup, before the initial {@link RContext} is created, by
+ * {@link #loadLibR}. This should only be called once.
  */
 public class DLL {
+
+    public static class ContextStateImpl implements RContext.ContextState {
+        private ArrayList<DLLInfo> list;
+        private RContext context;
+
+        public static ContextStateImpl newContextState() {
+            return new ContextStateImpl();
+        }
+
+        @Override
+        public ContextState initialize(RContext contextArg) {
+            this.context = contextArg;
+            if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+                list = context.getParent().stateDLL.list;
+            } else {
+                list = new ArrayList<>();
+                list.add(libRDLLInfo);
+            }
+            return this;
+        }
+
+        @Override
+        public void beforeDestroy(RContext contextArg) {
+            if (context.getKind() != RContext.ContextKind.SHARE_PARENT_RW) {
+                for (int i = 1; i < list.size(); i++) {
+                    DLLInfo dllInfo = list.get(i);
+                    RFFIFactory.getRFFI().getDLLRFFI().dlclose(dllInfo.handle);
+                }
+            }
+            list = null;
+        }
+
+    }
 
     /**
      * The list of loaded DLLs.
      */
-    private static Deque<DLLInfo> list = new ConcurrentLinkedDeque<>();
 
     /**
      * Uniquely identifies the DLL (for use in an {@code externalptr}).
      */
     private static final AtomicInteger ID = new AtomicInteger();
-
-    public static Deque<DLLInfo> getList() {
-        return list;
-    }
-
-    public static void addDLL(DLLInfo dllInfo) {
-        list.add(dllInfo);
-    }
 
     public enum NativeSymbolType {
         C,
@@ -146,9 +174,12 @@ public class DLL {
             this.handle = handle;
         }
 
-        private static synchronized DLLInfo create(String name, String path, boolean dynamicLookup, Object handle) {
+        private static DLLInfo create(String name, String path, boolean dynamicLookup, Object handle, boolean addToList) {
             DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle);
-            list.add(result);
+            if (addToList) {
+                ContextStateImpl contextState = getContextState();
+                contextState.list.add(result);
+            }
             return result;
         }
 
@@ -291,6 +322,10 @@ public class DLL {
 
     public static final SymbolHandle SYMBOL_NOT_FOUND = null;
 
+    private static ContextStateImpl getContextState() {
+        return RContext.getInstance().stateDLL;
+    }
+
     public static boolean isDLLInfo(RExternalPtr info) {
         RSymbol tag = (RSymbol) info.getTag();
         return tag.getName().equals(DLLInfo.DLL_INFO_REFERENCE);
@@ -311,6 +346,34 @@ public class DLL {
         }
     }
 
+    /**
+     * A temporary stash until such time as the initial context is initialized.
+     */
+    private static DLLInfo libRDLLInfo;
+
+    /**
+     * Loads a the {@code libR} library. This is an implementation specific library N.B., when this
+     * is called for the first time, there is no {@link RContext} available, so we stash the result
+     * until {@link ContextStateImpl#initialize} is called.
+     */
+    public static void loadLibR(String path, boolean local, boolean now) throws DLLException {
+        assert libRDLLInfo == null;
+        libRDLLInfo = doLoad(path, local, now, false);
+    }
+
+    @TruffleBoundary
+    public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
+        String absPath = Utils.tildeExpand(path);
+        ContextStateImpl contextState = getContextState();
+        for (DLLInfo dllInfo : contextState.list) {
+            if (dllInfo.path.equals(absPath)) {
+                // already loaded
+                return dllInfo;
+            }
+        }
+        return doLoad(absPath, local, now, true);
+    }
+
     /*
      * There is no sense in throwing an RError if we fail to load/init a (default) package during
      * initial context initialization, as it is essentially fatal for any of the standard packages
@@ -319,35 +382,33 @@ public class DLL {
      * R_DEFAULT_PACKAGES do throw RErrors.
      */
 
-    @TruffleBoundary
-    public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
-        String absPath = Utils.tildeExpand(path);
-        for (DLLInfo dllInfo : list) {
-            if (dllInfo.path.equals(absPath)) {
-                // already loaded
-                return dllInfo;
-            }
-        }
-        File file = new File(absPath);
-        Object handle = RFFIFactory.getRFFI().getDLLRFFI().dlopen(path, local, now);
+    private static DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
+        Object handle = RFFIFactory.getRFFI().getDLLRFFI().dlopen(absPath, local, now);
         if (handle == null) {
             String dlError = RFFIFactory.getRFFI().getDLLRFFI().dlerror();
             if (RContext.isInitialContextInitialized()) {
-                throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+                throw new DLLException(RError.Message.DLL_LOAD_ERROR, absPath, dlError);
             } else {
-                throw Utils.rSuicide("error loading default package: " + path + "\n" + dlError);
+                throw Utils.rSuicide("error loading default package: " + absPath + "\n" + dlError);
             }
         }
+        DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
+        return dllInfo;
+    }
+
+    private static String libName(String absPath) {
+        File file = new File(absPath);
         String name = file.getName();
         int dx = name.lastIndexOf('.');
         if (dx > 0) {
             name = name.substring(0, dx);
         }
-        return DLLInfo.create(name, absPath, true, handle);
+        return name;
     }
 
+    public static final String R_INIT_PREFIX = "R_init_";
+
     public static class LoadPackageDLLNode extends Node {
-        private static final String R_INIT_PREFIX = "R_init_";
         @Child private CallRFFINode callRFFINode;
 
         public static LoadPackageDLLNode create() {
@@ -361,22 +422,20 @@ public class DLL {
             String pkgInit = R_INIT_PREFIX + dllInfo.name;
             SymbolHandle initFunc = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, pkgInit);
             if (initFunc != SYMBOL_NOT_FOUND) {
-                synchronized (DLL.class) {
-                    try {
-                        if (callRFFINode == null) {
-                            callRFFINode = insert(RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode());
-                        }
-                        callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
-                    } catch (ReturnException ex) {
-                        // An error call can, due to condition handling, throw this which we must
-                        // propogate
-                        throw ex;
-                    } catch (Throwable ex) {
-                        if (RContext.isInitialContextInitialized()) {
-                            throw new DLLException(RError.Message.DLL_RINIT_ERROR);
-                        } else {
-                            throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
-                        }
+                try {
+                    if (callRFFINode == null) {
+                        callRFFINode = insert(RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode());
+                    }
+                    callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                } catch (ReturnException ex) {
+                    // An error call can, due to condition handling, throw this which we must
+                    // propogate
+                    throw ex;
+                } catch (Throwable ex) {
+                    if (RContext.isInitialContextInitialized()) {
+                        throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+                    } else {
+                        throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
             }
@@ -385,24 +444,28 @@ public class DLL {
     }
 
     @TruffleBoundary
-    public static synchronized void unload(String path) throws DLLException {
+    public static void unload(String path) throws DLLException {
         String absPath = Utils.tildeExpand(path);
-        for (DLLInfo info : list) {
+        ContextStateImpl contextState = getContextState();
+        for (DLLInfo info : contextState.list) {
             if (info.path.equals(absPath)) {
                 int rc = RFFIFactory.getRFFI().getDLLRFFI().dlclose(info.handle);
                 if (rc != 0) {
                     throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                 }
-                list.remove(info);
+                contextState.list.remove(info);
                 return;
             }
         }
         throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
     }
 
-    public static synchronized ArrayList<DLLInfo> getLoadedDLLs() {
+    public static ArrayList<DLLInfo> getLoadedDLLs() {
         ArrayList<DLLInfo> result = new ArrayList<>();
-        for (DLLInfo dllInfo : list) {
+        ContextStateImpl contextState = getContextState();
+        // skip first entry (libR)
+        for (int i = 1; i < contextState.list.size(); i++) {
+            DLLInfo dllInfo = contextState.list.get(i);
             result.add(dllInfo);
         }
         return result;
@@ -478,9 +541,10 @@ public class DLL {
      *            {@code null})
      */
     @TruffleBoundary
-    public static synchronized SymbolHandle findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
+    public static SymbolHandle findSymbol(String name, String libName, RegisteredNativeSymbol rns) {
         boolean all = libName == null || libName.length() == 0;
-        for (DLLInfo dllInfo : list) {
+        ContextStateImpl contextState = getContextState();
+        for (DLLInfo dllInfo : contextState.list) {
             if (dllInfo.forceSymbols) {
                 continue;
             }
@@ -500,8 +564,9 @@ public class DLL {
         return SYMBOL_NOT_FOUND;
     }
 
-    public static synchronized DLLInfo findLibrary(String name) {
-        for (DLLInfo dllInfo : list) {
+    public static DLLInfo findLibrary(String name) {
+        ContextStateImpl contextState = getContextState();
+        for (DLLInfo dllInfo : contextState.list) {
             if (dllInfo.name.equals(name)) {
                 return dllInfo;
             }
@@ -542,7 +607,7 @@ public class DLL {
     public static DLLInfo getEmbeddingDLLInfo() {
         DLLInfo result = findLibrary(EMBEDDING);
         if (result == null) {
-            result = DLLInfo.create(EMBEDDING, EMBEDDING, false, null);
+            result = DLLInfo.create(EMBEDDING, EMBEDDING, false, null, true);
         }
         return result;
     }
