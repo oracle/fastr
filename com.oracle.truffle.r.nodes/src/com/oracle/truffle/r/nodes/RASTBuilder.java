@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
-import com.oracle.truffle.r.nodes.control.ParNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
@@ -88,8 +87,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 switch (symbol) {
                     case "repeat":
                         return new RepeatNode(source, lhsLookup, args.get(0).value);
-                    case "(":
-                        return new ParNode(source, lhsLookup, args.get(0).value);
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {

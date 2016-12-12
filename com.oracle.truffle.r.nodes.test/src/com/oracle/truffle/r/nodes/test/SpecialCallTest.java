@@ -164,11 +164,11 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("1 + 1", 1, 0, 1, 0);
         assertCallCounts("1 + 1 * 2 + 4", 3, 0, 3, 0);
 
-        assertCallCounts("{ a <- 1; b <- 2 }", "a + b", 1, 0, 1, 0);
-        assertCallCounts("{ a <- 1; b <- 2; c <- 3 }", "a + b * 2 * c", 3, 0, 3, 0);
+        assertCallCounts("a <- 1; b <- 2", "a + b", 1, 0, 1, 0);
+        assertCallCounts("a <- 1; b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 3, 0);
 
-        assertCallCounts("{ a <- data.frame(a=1); b <- 2; c <- 3 }", "a + b * 2 * c", 3, 0, 2, 1);
-        assertCallCounts("{ a <- 1; b <- data.frame(a=1); c <- 3 }", "a + b * 2 * c", 3, 0, 0, 3);
+        assertCallCounts("a <- data.frame(a=1); b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 2, 1);
+        assertCallCounts("a <- 1; b <- data.frame(a=1); c <- 3", "a + b * 2 * c", 3, 0, 0, 3);
 
         assertCallCounts("1 %*% 1", 0, 1, 0, 1);
     }
@@ -182,7 +182,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[0.1]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[5]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[0]", 1, 0, 1, 0);
-        assertCallCounts("{ a <- c(1,2,3,4); b <- -1 }", "a[b]", 1, 0, 1, 0);
+        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_]", 1, 0, 1, 0);
 
         assertCallCounts("a <- c(1,2,3,4)", "a[-1]", 0, 2, 0, 2); // "-1" is a unary expression
@@ -201,7 +201,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[[5]]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[[0]]", 1, 0, 1, 0);
-        assertCallCounts("{ a <- c(1,2,3,4); b <- -1 }", "a[[b]]", 1, 0, 1, 0);
+        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]]", 1, 0, 1, 0);
 
         assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]]", 0, 1, 0, 1);
@@ -218,7 +218,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[0.1] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[5] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[0] <- 1", 1, 0, 1, 1);
-        assertCallCounts("{ a <- c(1,2,3,4); b <- -1 }", "a[b] <- 1", 1, 0, 1, 1);
+        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_] <- 1", 1, 0, 1, 1);
 
         assertCallCounts("a <- c(1,2,3,4)", "a[-1] <- 1", 0, 2, 0, 3); // "-1" is a unary expression
@@ -237,12 +237,22 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]] <- 1", 1, 0, 2, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[[5]] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[[0]] <- 1", 1, 0, 1, 1);
-        assertCallCounts("{ a <- c(1,2,3,4); b <- -1 }", "a[[b]] <- 1", 1, 0, 1, 1);
+        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]] <- 1", 1, 0, 1, 1);
 
         assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]] <- 1", 0, 1, 0, 2);
         assertCallCounts("a <- c(1,2,3,4)", "a[[drop=F, 1]] <- 1", 0, 1, 0, 2);
         assertCallCounts("a <- c(1,2,3,4)", "a[[1, drop=F]] <- 1", 0, 1, 0, 2);
+    }
+
+    @Test
+    public void testParens() {
+        assertCallCounts("a <- 1", "(a)", 1, 0, 1, 0);
+        assertCallCounts("a <- 1", "(55)", 1, 0, 1, 0);
+        assertCallCounts("a <- 1", "('asdf')", 1, 0, 1, 0);
+        assertCallCounts("a <- 1; b <- 2", "(a + b)", 2, 0, 2, 0);
+        assertCallCounts("a <- 1; b <- 2; c <- 3", "a + (b + c)", 3, 0, 3, 0);
+        assertCallCounts("a <- 1; b <- 2; c <- 1:5", "a + (b + c)", 3, 0, 0, 3);
     }
 
     private static void assertCallCounts(String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
@@ -253,7 +263,7 @@ public class SpecialCallTest extends TestBase {
         if (!FastROptions.UseSpecials.getBooleanValue()) {
             return;
         }
-        Source setupSource = Source.newBuilder(setup).mimeType(TruffleRLanguage.MIME).name("test").build();
+        Source setupSource = Source.newBuilder("{" + setup + "}").mimeType(TruffleRLanguage.MIME).name("test").build();
         Source testSource = Source.newBuilder(test).mimeType(TruffleRLanguage.MIME).name("test").build();
 
         RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource);
