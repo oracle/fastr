@@ -161,8 +161,18 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         return Arguments.create(values, ArgumentsSignature.get(newNames));
     }
 
-    private ArgumentsSignature cachedVarArgsSignature;
-    private ArgumentsSignature cachedResultSignature;
+    private static final class CachedSignature {
+        private final ArgumentsSignature signature;
+        private final ArgumentsSignature resultSignature;
+
+        protected CachedSignature(ArgumentsSignature signature, ArgumentsSignature resultSignature) {
+            this.signature = signature;
+            this.resultSignature = resultSignature;
+        }
+    }
+
+    private CachedSignature cachedVarArgsSignature;
+
     private final BranchProfile regenerateSignatureProfile = BranchProfile.create();
 
     public ArgumentsSignature flattenNames(RArgsValuesAndNames varArgs) {
@@ -170,15 +180,15 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             return signature;
         }
         ArgumentsSignature varArgsSignature = varArgs.getSignature();
-        if (cachedVarArgsSignature == null) {
+        CachedSignature cached = cachedVarArgsSignature;
+        if (cached == null) {
             CompilerDirectives.transferToInterpreter();
         }
-        if (varArgsSignature == cachedVarArgsSignature) {
-            return cachedResultSignature;
+        if (cached == null || varArgsSignature != cached.signature) {
+            regenerateSignatureProfile.enter();
+            cachedVarArgsSignature = cached = new CachedSignature(varArgsSignature, flattenNamesInternal(varArgsSignature));
         }
-        regenerateSignatureProfile.enter();
-        cachedVarArgsSignature = varArgsSignature;
-        return cachedResultSignature = flattenNamesInternal(varArgsSignature);
+        return cached.resultSignature;
     }
 
     @TruffleBoundary
