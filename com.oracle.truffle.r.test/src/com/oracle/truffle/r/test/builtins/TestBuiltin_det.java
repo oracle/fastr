@@ -41,6 +41,6 @@ public class TestBuiltin_det extends TestBase {
     public void testDet() {
         assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
         assertEval("{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
-        assertEval(Ignored.Unknown, "{ det(matrix(c(1,0,4,NA),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,0,4,NA),nrow=2)) }");
     }
 }

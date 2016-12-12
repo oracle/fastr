@@ -197,7 +197,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter36() {
-        assertEval(Ignored.Unknown, "argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
+        assertEval("argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
     }
 
     @Test
@@ -262,7 +262,7 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
         assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
         assertEval("{ as.character(list(c(2L, 3L))) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }"); // GnuR prints no L
+        assertEval("{ as.character(list(c(2L, 3L, 5L))) }");
 
         assertEval("{ x<-as.character(Sys.time()) }");
         assertEval("{ f<-function(x) { sys.call() }; as.character(f(7)) }");
