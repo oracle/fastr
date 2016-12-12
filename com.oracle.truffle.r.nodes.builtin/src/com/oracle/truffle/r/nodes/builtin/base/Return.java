@@ -25,40 +25,27 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPromise;
 
 /**
- * In the normal case, we are returning from the currently executing function, but in the case where
- * "return" was passed as an argument (promise) (e.g. in tryCatch) to a function, we will be
- * evaluating that in the context of a PromiseEvalFrame and the frame we need to return to is that
- * given by the PromiseEvalFrame.
+ * Return a value from the currently executing function, which is identified by the
+ * {@link RArguments#getCall(com.oracle.truffle.api.frame.Frame) call}. The return value will be
+ * delivered via a {@link ReturnException}, which is subsequently caught in the
+ * {@link FunctionDefinitionNode}.
  */
-@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0}, behavior = COMPLEX)
+@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
 public abstract class Return extends RBuiltinNode {
 
     private final BranchProfile isPromiseEvalProfile = BranchProfile.create();
-
-    @Child private PromiseHelperNode promiseHelper;
-
-    private PromiseHelperNode initPromiseHelper() {
-        if (promiseHelper == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            promiseHelper = insert(new PromiseHelperNode());
-        }
-        return promiseHelper;
-    }
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -66,19 +53,7 @@ public abstract class Return extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object returnFunction(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
-        throw new ReturnException(RNull.instance, RArguments.getCall(frame));
-    }
-
-    @Specialization
-    protected Object returnFunction(VirtualFrame frame, RNull arg) {
-        throw new ReturnException(arg, RArguments.getCall(frame));
-    }
-
-    @Specialization
-    protected Object returnFunction(VirtualFrame frame, RPromise expr) {
-        // Evaluate the result
-        Object value = initPromiseHelper().evaluate(frame, expr);
+    protected Object returnFunction(VirtualFrame frame, Object value) {
         RCaller call = RArguments.getCall(frame);
         while (call.isPromise()) {
             isPromiseEvalProfile.enter();
