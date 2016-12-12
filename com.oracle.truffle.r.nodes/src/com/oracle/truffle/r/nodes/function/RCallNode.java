@@ -62,7 +62,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
-import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
@@ -399,21 +398,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[typeXIdx]));
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
-            try {
-                resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), null);
-            } catch (NoGenericMethodException e) {
-                // fall-through
-            }
+            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), null);
         }
         Result resultY = null;
         if (args.length > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
             RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, args[1]));
             if (implicitTypeProfileY.profile(typeY != null)) {
-                try {
-                    resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
-                } catch (NoGenericMethodException e) {
-                    // fall-through
-                }
+                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
             }
         }
 

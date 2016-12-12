@@ -23,7 +23,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -33,6 +32,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -74,18 +74,22 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             this.targetFunctionName = targetFunctionName;
             this.groupMatch = groupMatch;
         }
+
+        public S3Args createS3Args(Frame frame) {
+            return new S3Args(generic, clazz, targetFunctionName, frame.materialize(), null, null);
+        }
     }
 
     public static S3FunctionLookupNode create(boolean throwsError, boolean nextMethod) {
-        return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod);
+        return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, 0);
     }
 
     public static S3FunctionLookupNode createWithError() {
-        return new UseMethodFunctionLookupUninitializedNode(true, false);
+        return new UseMethodFunctionLookupUninitializedNode(true, false, 0);
     }
 
     public static S3FunctionLookupNode createWithException() {
-        return new UseMethodFunctionLookupUninitializedNode(false, false);
+        return new UseMethodFunctionLookupUninitializedNode(false, false, 0);
     }
 
     @FunctionalInterface
@@ -235,19 +239,21 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UseMethodFunctionLookupUninitializedNode extends S3FunctionLookupNode {
-        private int depth;
+        private final int depth;
 
-        UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod) {
+        UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod, int depth) {
             super(throwsError, nextMethod);
+            this.depth = depth;
         }
 
         @Override
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (++depth > MAX_CACHE_DEPTH) {
+            if (depth > MAX_CACHE_DEPTH) {
                 return replace(new UseMethodFunctionLookupGenericNode(throwsError, nextMethod)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             } else {
-                UseMethodFunctionLookupCachedNode cachedNode = replace(specialize(frame, genericName, type, group, callerFrame, genericDefFrame, this));
+                UseMethodFunctionLookupCachedNode cachedNode = replace(
+                                specialize(frame, genericName, type, group, callerFrame, genericDefFrame, new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, depth + 1)));
                 return cachedNode.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             }
         }
@@ -329,7 +335,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                     }
                     throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
                 } else {
-                    throw S3FunctionLookupNode.NoGenericMethodException.instance;
+                    return null;
                 }
             } while (true);
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -431,19 +437,10 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                     }
                     throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
                 } else {
-                    throw S3FunctionLookupNode.NoGenericMethodException.instance;
+                    return null;
                 }
             }
             return result;
-        }
-    }
-
-    @SuppressWarnings("serial")
-    public static final class NoGenericMethodException extends ControlFlowException {
-        private static final NoGenericMethodException instance = new NoGenericMethodException();
-
-        private NoGenericMethodException() {
-            // singleton
         }
     }
 }
