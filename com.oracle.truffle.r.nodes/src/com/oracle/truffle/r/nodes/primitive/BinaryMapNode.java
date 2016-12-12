@@ -67,8 +67,8 @@ public final class BinaryMapNode extends RBaseNode {
     @Child private CopyAttributesNode copyAttributes;
     @Child private GetDimAttributeNode getLeftDimNode = GetDimAttributeNode.create();
     @Child private GetDimAttributeNode getRightDimNode = GetDimAttributeNode.create();
-    @Child protected HasFixedAttributeNode hasLeftDimNode = HasFixedAttributeNode.createDim();
-    @Child protected HasFixedAttributeNode hasRightDimNode = HasFixedAttributeNode.createDim();
+    @Child private HasFixedAttributeNode hasLeftDimNode = HasFixedAttributeNode.createDim();
+    @Child private HasFixedAttributeNode hasRightDimNode = HasFixedAttributeNode.createDim();
 
     // profiles
     private final Class<? extends RAbstractVector> leftClass;

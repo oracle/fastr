@@ -143,6 +143,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursive = insert(create(name));
         }
+
         recursive.execute(attributes, value);
     }
 

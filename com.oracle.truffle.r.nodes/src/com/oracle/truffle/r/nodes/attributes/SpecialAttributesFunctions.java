@@ -188,7 +188,7 @@ public final class SpecialAttributesFunctions {
         } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
             return SetRowNamesAttributeNode.create();
         } else if (name == RRuntime.CLASS_ATTR_KEY) {
-            throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
+            return SetClassAttributeNode.create();
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -274,7 +274,6 @@ public final class SpecialAttributesFunctions {
                 return;
             }
 
-            attrNullProfile.enter();
             attributes.delete(name);
 
             if (attributes.isEmpty()) {
@@ -325,6 +324,7 @@ public final class SpecialAttributesFunctions {
                 namesTooLongProfile.enter();
                 throw RError.error(this, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
             }
+
             int[] dimensions = getDimNode.getDimensions(x);
             if (useDimNamesProfile.profile(dimensions != null && dimensions.length == 1)) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R
@@ -333,8 +333,16 @@ public final class SpecialAttributesFunctions {
                 newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
                 setDimNamesNode.setDimNames(xProfiled, newDimNames);
             } else {
-                super.setAttrInAttributable(xProfiled, newNames, attrNullProfile, attrStorageProfile, xTypeProfile);
                 assert newNames != xProfiled;
+                DynamicObject attrs = xProfiled.getAttributes();
+                if (attrs == null) {
+                    attrNullProfile.enter();
+                    attrs = RAttributesLayout.createNames(newNames);
+                    xProfiled.initAttributes(attrs);
+                    return;
+                }
+
+                super.setAttrInAttributable(xProfiled, newNames, attrNullProfile, attrStorageProfile, xTypeProfile);
             }
         }
 
@@ -447,9 +455,22 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            RAbstractContainer xProfiled = contArgClassProfile.profile(x);
+
             int[] dims = new int[]{dim};
-            verifyOneDimensions(x.getLength(), dim);
-            super.setAttrInAttributable(x, RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR), attrNullProfile, attrStorageProfile, xTypeProfile);
+            verifyOneDimensions(xProfiled.getLength(), dim);
+
+            RIntVector dimVec = RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR);
+
+            DynamicObject attrs = xProfiled.getAttributes();
+            if (attrs == null) {
+                attrNullProfile.enter();
+                attrs = RAttributesLayout.createDim(dimVec);
+                xProfiled.initAttributes(attrs);
+                return;
+            }
+
+            super.setAttrInAttributable(x, dimVec, attrNullProfile, attrStorageProfile, xTypeProfile);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -459,6 +480,15 @@ public final class SpecialAttributesFunctions {
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             RAbstractContainer xProfiled = contArgClassProfile.profile(x);
             verifyDimensions(xProfiled.getLength(), dims);
+
+            DynamicObject attrs = xProfiled.getAttributes();
+            if (attrs == null) {
+                attrNullProfile.enter();
+                attrs = RAttributesLayout.createDim(dims);
+                xProfiled.initAttributes(attrs);
+                return;
+            }
+
             super.setAttrInAttributable(x, dims, attrNullProfile, attrStorageProfile, xTypeProfile);
         }
 
@@ -785,9 +815,22 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void resetRowNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
+        protected void resetRowNames(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("create()") RemoveRowNamesAttributeNode removeRowNamesAttrNode) {
             removeRowNamesAttrNode.execute(x);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setRowNamesInVector(RVector<?> x, RAbstractVector newRowNames,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            if (x.getAttributes() == null) {
+                attrNullProfile.enter();
+                x.initAttributes(RAttributesLayout.createRowNames(newRowNames));
+                return;
+            }
+            setAttrInAttributable(x, newRowNames, attrNullProfile, attrStorageProfile, xTypeProfile);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -875,25 +918,31 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "setAttrInAttributable")
         protected <T> void handleVectorNullClass(RVector<T> vector, @SuppressWarnings("unused") RNull classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
-                        @Cached("createClass()") SetFixedAttributeNode setClassAttrNode,
+                        @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                         @Cached("create()") BranchProfile nullAttrProfile,
                         @Cached("createBinaryProfile()") ConditionProfile nullClassProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile) {
-            handleVector(vector, null, removeClassAttrNode, setClassAttrNode, nullAttrProfile, nullClassProfile, notNullClassProfile);
+                        @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            handleVector(vector, null, removeClassAttrNode, initAttrProfile, nullAttrProfile, nullClassProfile, notNullClassProfile, attrStorageProfile, xTypeProfile);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
         protected <T> void handleVector(RVector<T> vector, RStringVector classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
-                        @Cached("createClass()") SetFixedAttributeNode setClassAttrNode,
+                        @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                         @Cached("create()") BranchProfile nullAttrProfile,
                         @Cached("createBinaryProfile()") ConditionProfile nullClassProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
 
             DynamicObject attrs = vector.getAttributes();
-            if (attrs == null && classAttr != null && classAttr.getLength() != 0) {
+            boolean initializeAttrs = initAttrProfile.profile(attrs == null && classAttr != null && classAttr.getLength() != 0);
+            if (initializeAttrs) {
                 nullAttrProfile.enter();
-                attrs = vector.initAttributes();
+                attrs = RAttributesLayout.createClass(classAttr);
+                vector.initAttributes(attrs);
             }
             if (nullClassProfile.profile(attrs != null && (classAttr == null || classAttr.getLength() == 0))) {
                 removeAttributeMapping(vector, attrs, removeClassAttrNode);
@@ -903,7 +952,10 @@ public final class SpecialAttributesFunctions {
                     if (RRuntime.CLASS_FACTOR.equals(attr)) {
                         // TODO: Isn't this redundant when the same operation is done after the
                         // loop?
-                        setClassAttrNode.execute(attrs, classAttr);
+                        if (!initializeAttrs) {
+                            super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile);
+                        }
+                        // setClassAttrNode.execute(attrs, classAttr);
                         if (vector.getElementClass() != RInteger.class) {
                             // N.B. there used to be conversion to integer under certain
                             // circumstances.
@@ -917,7 +969,10 @@ public final class SpecialAttributesFunctions {
                         }
                     }
                 }
-                setClassAttrNode.execute(attrs, classAttr);
+
+                if (!initializeAttrs) {
+                    super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile);
+                }
             }
         }
 

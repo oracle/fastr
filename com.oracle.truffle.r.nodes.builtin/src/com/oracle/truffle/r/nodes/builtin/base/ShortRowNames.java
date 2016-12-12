@@ -27,20 +27,16 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.IntValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -53,7 +49,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 
-    @Child private GetFixedAttributeNode getRowNamesAttrNode;
+    @Child private GetRowNamesAttributeNode getRowNamesNode = GetRowNamesAttributeNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -63,18 +59,13 @@ public abstract class ShortRowNames extends RBuiltinNode {
     private final IntValueProfile typeProfile = IntValueProfile.createIdentityProfile();
 
     @Specialization
-    protected Object getNames(Object originalOperand, int originalType,
-                    @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
+    protected Object getNames(Object originalOperand, int originalType) {
         Object operand = operandTypeProfile.profile(originalOperand);
         Object rowNames;
         if (operand instanceof RAbstractContainer) {
             rowNames = getRowNamesNode.getRowNames((RAbstractContainer) operand);
         } else if (operand instanceof REnvironment) {
-            if (getRowNamesAttrNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getRowNamesAttrNode = insert(GetFixedAttributeNode.create(RRuntime.ROWNAMES_ATTR_KEY));
-            }
-            rowNames = getRowNamesAttrNode.execute(operand);
+            rowNames = getRowNamesNode.execute(operand);
         } else {
             // for any other type GnuR returns 0
             return 0;

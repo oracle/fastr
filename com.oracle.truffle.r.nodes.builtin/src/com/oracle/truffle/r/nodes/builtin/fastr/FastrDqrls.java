@@ -65,7 +65,7 @@ public abstract class FastrDqrls extends RBuiltinNode {
         return call(xVec, ((RAbstractDoubleVector) castNode.execute(xVec)).materialize(), n, p, yVec, ((RAbstractDoubleVector) castNode.execute(yVec)).materialize(), ny, tol, coeffVec);
     }
 
-    private static RList call(RAbstractVector originalXVec, RDoubleVector xVec, int n, int p, RAbstractVector originalYVec, RDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {
+    private RList call(RAbstractVector originalXVec, RDoubleVector xVec, int n, int p, RAbstractVector originalYVec, RDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {
         double[] x = xVec.getDataTemp();
         double[] y = yVec.getDataTemp();
         double[] coeff = coeffVec.materialize().getDataTemp();

@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -97,6 +98,7 @@ public abstract class UpdateClass extends RBuiltinNode {
                 return setClass((RAbstractVector) result, RNull.instance);
             }
         }
+
         RAbstractContainer result = reuseNonShared(arg);
         if (result instanceof RAbstractVector) {
             RAbstractVector resultVector = (RAbstractVector) result;

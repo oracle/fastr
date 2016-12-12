@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -60,8 +58,10 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Child private IsNA recursiveIsNA;
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
+    @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
 
     private Object isNARecursive(Object o) {
@@ -80,15 +80,12 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RAbstractIntVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RAbstractIntVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -97,28 +94,22 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RAbstractDoubleVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RAbstractDoubleVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(vector.getDataAt(i)));
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
-    protected RLogicalVector isNA(RComplexVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RComplexVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             RComplex complex = vector.getDataAt(i);
             resultVector[i] = RRuntime.asLogical(RRuntime.isNA(complex));
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -127,15 +118,12 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RStringVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RStringVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -170,15 +158,12 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RLogicalVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RLogicalVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -192,15 +177,12 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RRawVector vector,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RLogicalVector isNA(RRawVector vector) {
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = RRuntime.LOGICAL_FALSE;
         }
-        return createResult(resultVector, vector, getDimsNode, setDimNamesNode, getDimNamesNode);
+        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -217,8 +199,7 @@ public abstract class IsNA extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    private RLogicalVector createResult(byte[] data, RAbstractVector originalVector, GetDimAttributeNode getDimsNode, SetDimNamesAttributeNode setDimNamesNode,
-                    GetDimNamesAttributeNode getDimNamesNode) {
+    private RLogicalVector createResult(byte[] data, RAbstractVector originalVector) {
         RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(originalVector), getNamesNode.getNames(originalVector));
         RList dimNames = getDimNamesNode.getDimNames(originalVector);
         if (nullDimNamesProfile.profile(dimNames != null)) {

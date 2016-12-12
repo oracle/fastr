@@ -58,12 +58,13 @@ public final class RAttributesLayout {
     private static final AttrsLayout NAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY);
     private static final AttrsLayout DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIMNAMES_ATTR_KEY);
+    private static final AttrsLayout ROWNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.ROWNAMES_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout CLASS_AND_CONNID_ATTRS_LAYOUT = new AttrsLayout(RRuntime.CLASS_ATTR_KEY, RRuntime.CONN_ID_ATTR_KEY);
 
-    public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, NAMES_AND_DIM_ATTRS_LAYOUT,
-                    DIM_AND_DIMNAMES_ATTRS_LAYOUT};
+    public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, ROWNAMES_ATTRS_LAYOUT,
+                    NAMES_AND_DIM_ATTRS_LAYOUT, DIM_AND_DIMNAMES_ATTRS_LAYOUT};
 
     private static final Map<String, ConstantShapesAndProperties> constantShapesAndLocationsForAttribute = new HashMap<>();
 
@@ -113,6 +114,13 @@ public final class RAttributesLayout {
                         new Property[]{
                                         CLASS_AND_CONNID_ATTRS_LAYOUT.properties[0]
                         }));
+        constantShapesAndLocationsForAttribute.put(RRuntime.ROWNAMES_ATTR_KEY, new ConstantShapesAndProperties(
+                        new Shape[]{
+                                        ROWNAMES_ATTRS_LAYOUT.shape
+                        },
+                        new Property[]{
+                                        ROWNAMES_ATTRS_LAYOUT.properties[0]
+                        }));
 
     }
 
@@ -144,6 +152,10 @@ public final class RAttributesLayout {
 
     public static DynamicObject createDimNames(Object dimNames) {
         return DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dimNames);
+    }
+
+    public static DynamicObject createRowNames(Object rowNames) {
+        return ROWNAMES_ATTRS_LAYOUT.factory.newInstance(rowNames);
     }
 
     public static DynamicObject createNamesAndDim(Object names, Object dim) {

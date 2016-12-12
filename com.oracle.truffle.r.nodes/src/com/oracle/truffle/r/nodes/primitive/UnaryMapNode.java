@@ -200,7 +200,7 @@ public final class UnaryMapNode extends RBaseNode {
     private final ConditionProfile hasDimensionsProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
 
-    @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+    @Child private HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     private boolean containsMetadata(RAbstractVector vector) {

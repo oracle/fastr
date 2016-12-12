@@ -68,7 +68,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         return GetDimAttributeNode.create();
     }
 
-    public static GetFixedAttributeNode createClass() {
+    public static GetClassAttributeNode createClass() {
         return GetClassAttributeNode.create();
     }
 

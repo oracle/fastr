@@ -66,8 +66,8 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
                         (e instanceof RAttributable && ((RAttributable) e).getAttributes() != null && pckgAttrAccess.execute(((RAttributable) e).getAttributes()) != null)) {
 
             if (setClassAttrNode == null) {
-                setClassAttrNode = insert(SetClassAttributeNode.create());
                 CompilerDirectives.transferToInterpreterAndInvalidate();
+                setClassAttrNode = insert(SetClassAttributeNode.create());
             }
 
             setClassAttrNode.execute(valueAttr, e);
