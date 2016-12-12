@@ -53,6 +53,7 @@ public enum FastROptions {
     RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
     UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", false),
     UseSpecials("Whether the fast-path special call nodes should be created for simple enough arguments.", true),
+    ForceSources("Generate source sections for unserialized code", false),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),

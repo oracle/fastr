@@ -234,6 +234,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
+
+        if (FastROptions.ForceSources.getBooleanValue()) {
+            // forces source sections to be generated
+            rootNode.getSourceSection();
+        }
         return Truffle.getRuntime().createCallTarget(rootNode);
     }
 
