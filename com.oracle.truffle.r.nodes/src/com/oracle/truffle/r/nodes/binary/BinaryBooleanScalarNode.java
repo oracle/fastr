@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -65,26 +64,19 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
     BinaryBooleanScalarNode(BooleanOperationFactory factory) {
         this.booleanLogic = factory.createOperation();
+        logic = new BinaryMapBooleanFunctionNode(booleanLogic);
+        leftCast = LogicalScalarCastNodeGen.create(booleanLogic.opName(), "x", logic.getLeftNACheck());
+        leftBox = BoxPrimitiveNodeGen.create();
+        rightCast = LogicalScalarCastNodeGen.create(booleanLogic.opName(), "y", logic.getRightNACheck());
+        rightBox = BoxPrimitiveNodeGen.create();
+        promiseHelper = new PromiseCheckHelperNode();
     }
 
     @Specialization
     protected byte binary(VirtualFrame frame, Object leftValue, Object rightValue) {
-        if (leftCast == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            logic = insert(new BinaryMapBooleanFunctionNode(booleanLogic));
-            leftCast = insert(LogicalScalarCastNodeGen.create(booleanLogic.opName(), "x", logic.getLeftNACheck()));
-            leftBox = insert(BoxPrimitiveNodeGen.create());
-        }
         byte left = leftCast.executeCast(leftBox.execute(leftValue));
         if (profile.profile(logic.requiresRightOperand(left))) {
-            if (rightCast == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                rightCast = insert(LogicalScalarCastNodeGen.create(booleanLogic.opName(), "y", logic.getRightNACheck()));
-                rightBox = insert(BoxPrimitiveNodeGen.create());
-                promiseHelper = insert(new PromiseCheckHelperNode());
-            }
-            byte right = rightCast.executeCast(rightBox.execute(promiseHelper.checkEvaluate(frame, rightValue)));
-            return logic.applyLogical(left, right);
+            return logic.applyLogical(left, rightCast.executeCast(rightBox.execute(promiseHelper.checkEvaluate(frame, rightValue))));
         }
         return left;
     }

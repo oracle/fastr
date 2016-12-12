@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -89,21 +88,18 @@ public abstract class Lapply extends RBuiltinNode {
 
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {
 
-        protected ExtractElementInternal() {
-            super(RSyntaxNode.LAZY_DEPARSE);
-        }
-
         @Child private ExtractVectorNode extractElementNode = ExtractVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false);
-        @CompilationFinal private FrameSlot vectorSlot;
-        @CompilationFinal private FrameSlot indexSlot;
+        private final FrameSlot vectorSlot;
+        private final FrameSlot indexSlot;
+
+        protected ExtractElementInternal(FrameSlot vectorSlot, FrameSlot indexSlot) {
+            super(RSyntaxNode.LAZY_DEPARSE);
+            this.vectorSlot = vectorSlot;
+            this.indexSlot = indexSlot;
+        }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (vectorSlot == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                vectorSlot = frame.getFrameDescriptor().findFrameSlot("X");
-                indexSlot = frame.getFrameDescriptor().findFrameSlot("i");
-            }
             try {
                 return extractElementNode.apply(frame, frame.getObject(vectorSlot), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
@@ -149,8 +145,8 @@ public abstract class Lapply extends RBuiltinNode {
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot, //
                         @Cached("create()") RLengthNode lengthNode, //
                         @Cached("createCountingProfile()") LoopConditionProfile loop, //
-                        @Cached("createCallNode()") RCallNode firstCallNode, //
-                        @Cached("createCallNode()") RCallNode callNode) {
+                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode firstCallNode, //
+                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
             frame.setObject(vectorSlot, vector);
             int length = lengthNode.executeInteger(frame, vector);
@@ -171,10 +167,10 @@ public abstract class Lapply extends RBuiltinNode {
         /**
          * Creates the {@link RCallNode} for this target and {@code varArgs}.
          */
-        protected RCallNode createCallNode() {
+        protected RCallNode createCallNode(FrameSlot vectorSlot, FrameSlot indexSlot) {
             CompilerAsserts.neverPartOfCompilation();
 
-            ExtractElementInternal element = new ExtractElementInternal();
+            ExtractElementInternal element = new ExtractElementInternal(vectorSlot, indexSlot);
             ReadVariableNode readArgs = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
 
             return RCallNode.createCall(createCallSourceSection(), ReadVariableNode.create("FUN"), ArgumentsSignature.get(null, "..."), element, readArgs);

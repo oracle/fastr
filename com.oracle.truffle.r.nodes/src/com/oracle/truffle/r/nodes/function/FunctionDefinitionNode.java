@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -101,23 +102,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final BranchProfile breakProfile = BranchProfile.create();
     private final BranchProfile nextProfile = BranchProfile.create();
 
-    @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
-    // S3/S4 slots
-    @Child private FrameSlotNode dotGenericSlot;
-    @Child private FrameSlotNode dotMethodSlot;
-    // S3 slots
-    @Child private FrameSlotNode dotClassSlot;
-    @Child private FrameSlotNode dotGenericCallEnvSlot;
-    @Child private FrameSlotNode dotGenericCallDefSlot;
-    @Child private FrameSlotNode dotGroupSlot;
-    // S4 slots
-    @Child private FrameSlotNode dotDefinedSlot;
-    @Child private FrameSlotNode dotTargetSlot;
-    @Child private FrameSlotNode dotMethodsSlot;
-
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     @Child private PostProcessArgumentsNode argPostProcess;
+
+    @Child private SetupS3ArgsNode setupS3Args;
+    @Child private SetupS4ArgsNode setupS4Args;
 
     private final boolean needsSplitting;
 
@@ -317,55 +307,88 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
+    private abstract static class SetupDispatchNode extends Node {
+        // S3/S4 slots
+        private final FrameSlot dotGenericSlot;
+        private final FrameSlot dotMethodSlot;
+
+        final BranchProfile invalidateFrameSlotProfile = BranchProfile.create();
+
+        SetupDispatchNode(FrameDescriptor frameDescriptor) {
+            dotGenericSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC, FrameSlotKind.Object);
+            dotMethodSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_METHOD, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, DispatchArgs args) {
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot, args.generic, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot, args.method, false, invalidateFrameSlotProfile);
+        }
+    }
+
+    private static final class SetupS3ArgsNode extends SetupDispatchNode {
+        // S3 slots
+        private final FrameSlot dotClassSlot;
+        private final FrameSlot dotGenericCallEnvSlot;
+        private final FrameSlot dotGenericCallDefSlot;
+        private final FrameSlot dotGroupSlot;
+
+        SetupS3ArgsNode(FrameDescriptor frameDescriptor) {
+            super(frameDescriptor);
+            dotClassSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_CLASS, FrameSlotKind.Object);
+            dotGenericCallEnvSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV, FrameSlotKind.Object);
+            dotGenericCallDefSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV, FrameSlotKind.Object);
+            dotGroupSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GROUP, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, S3Args args) {
+            super.execute(frame, args);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot, args.clazz, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot, args.callEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot, args.defEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot, args.group, false, invalidateFrameSlotProfile);
+        }
+    }
+
+    private static final class SetupS4ArgsNode extends SetupDispatchNode {
+        // S4 slots
+        private final FrameSlot dotDefinedSlot;
+        private final FrameSlot dotTargetSlot;
+        private final FrameSlot dotMethodsSlot;
+
+        SetupS4ArgsNode(FrameDescriptor frameDescriptor) {
+            super(frameDescriptor);
+            dotDefinedSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_DEFINED, FrameSlotKind.Object);
+            dotTargetSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_TARGET, FrameSlotKind.Object);
+            dotMethodsSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_METHODS, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, S4Args args) {
+            super.execute(frame, args);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedSlot, args.defined, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetSlot, args.target, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsSlot, args.methods, false, invalidateFrameSlotProfile);
+        }
+    }
+
     private void setupDispatchSlots(VirtualFrame frame) {
         DispatchArgs dispatchArgs = RArguments.getDispatchArgs(frame);
         if (dispatchArgs == null) {
             return;
         }
-        if (dotGenericSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert invalidateFrameSlotProfile == null && dotMethodSlot == null;
-            invalidateFrameSlotProfile = BranchProfile.create();
-            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-            dotGenericSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC, true));
-            dotMethodSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHOD, true));
-        }
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), dispatchArgs.generic, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), dispatchArgs.method, false, invalidateFrameSlotProfile);
-
         if (dispatchArgs instanceof S3Args) {
             S3Args s3Args = (S3Args) dispatchArgs;
-            if (dotClassSlot == null) {
+            if (setupS3Args == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                assert dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
-                invalidateFrameSlotProfile = BranchProfile.create();
-                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-                dotClassSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_CLASS, true));
-                dotGenericCallEnvSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV, true));
-                dotGenericCallDefSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV, true));
-                dotGroupSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GROUP, true));
+                setupS3Args = insert(new SetupS3ArgsNode(frame.getFrameDescriptor()));
             }
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), s3Args.clazz, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), s3Args.callEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), s3Args.defEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), s3Args.group, false, invalidateFrameSlotProfile);
+            setupS3Args.execute(frame, s3Args);
         } else {
             S4Args s4Args = (S4Args) dispatchArgs;
-            if (dotDefinedSlot == null) {
+            if (setupS4Args == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                assert dotTargetSlot == null && dotMethodsSlot == null;
-                invalidateFrameSlotProfile = BranchProfile.create();
-                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-                dotDefinedSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_DEFINED, true));
-                dotTargetSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_TARGET, true));
-                dotMethodsSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHODS, true));
+                setupS4Args = insert(new SetupS4ArgsNode(frame.getFrameDescriptor()));
             }
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedSlot.executeFrameSlot(frame), s4Args.defined, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetSlot.executeFrameSlot(frame), s4Args.target, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsSlot.executeFrameSlot(frame), s4Args.methods, false, invalidateFrameSlotProfile);
+            setupS4Args.execute(frame, s4Args);
         }
     }
 
