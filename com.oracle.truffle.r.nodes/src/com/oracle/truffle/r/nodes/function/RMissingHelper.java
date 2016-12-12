@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -130,12 +129,11 @@ public class RMissingHelper {
                 return true;
             }
 
-            PromiseState state = promise.getState();
             try {
                 if (promise.isEvaluated()) {
                     return false;
                 }
-                promise.setState(PromiseState.UnderEvaluation);
+                promise.setUnderEvaluation();
                 // TODO Profile necessary here???
                 if (promise instanceof EagerPromiseBase) {
                     EagerPromiseBase eagerPromise = (EagerPromiseBase) promise;
@@ -151,7 +149,7 @@ public class RMissingHelper {
                 // promise.materialize(globalMissingPromiseProfile);
                 result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
             } finally {
-                promise.setState(state);
+                promise.resetUnderEvaluation();
             }
         }
         return result;
