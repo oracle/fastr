@@ -747,7 +747,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
 
-        setContainsDispatch(baseFrame, "sys.function", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
+        setContainsDispatch(baseFrame, "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {

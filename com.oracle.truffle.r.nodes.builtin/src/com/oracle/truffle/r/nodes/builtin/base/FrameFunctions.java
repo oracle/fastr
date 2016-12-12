@@ -38,6 +38,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -93,8 +94,6 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile caller1Profile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile caller2Profile = ConditionProfile.createBinaryProfile();
         protected final BranchProfile errorProfile = BranchProfile.create();
 
         /**
@@ -104,52 +103,83 @@ public class FrameFunctions {
          */
         protected abstract FrameAccess frameAccess();
 
+        protected Frame getFrame(VirtualFrame frame, int n) {
+            int actualFrame = decodeFrameNumber(RArguments.getCall(frame), n);
+            return RInternalError.guaranteeNonNull(getNumberedFrame(frame, actualFrame));
+        }
+
+        protected RCaller getCall(RCaller currentCall, int n) {
+            int actualFrame = decodeFrameNumber(currentCall, n);
+            RCaller call = currentCall;
+            while (call != null) {
+                while (call.isPromise()) {
+                    call = call.getPromiseOriginalCall();
+                }
+                if (call.getDepth() == actualFrame) {
+                    return call;
+                }
+                call = call.getParent();
+            }
+            throw RInternalError.shouldNotReachHere();
+        }
+
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
-        protected Frame getFrame(VirtualFrame frame, int n) {
-            RCaller call = RArguments.getCall(frame);
+        private int decodeFrameNumber(RCaller currentCall, int n) {
+            RCaller call = currentCall;
             call = call.getParent(); // skip the .Internal function
             while (call.isPromise()) {
                 call = call.getParent();
             }
             int depth = call.getDepth();
-            int actualFrame;
             if (n > 0) {
                 if (n > depth) {
                     errorProfile.enter();
                     throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
-                actualFrame = n;
+                return n;
             } else {
                 if (-n > depth) {
                     errorProfile.enter();
                     throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
-                actualFrame = depth + n;
+                return depth + n;
             }
-            Frame result = getNumberedFrame(frame, actualFrame);
-            RInternalError.guarantee(result != null);
-            return result;
         }
 
+        private static final int ITERATE_LEVELS = 2;
+
+        @ExplodeLoop
         protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame) {
             if (currentFrameProfile.profile(RArguments.getDepth(frame) == actualFrame)) {
                 return frame;
             } else {
-                MaterializedFrame caller1 = RArguments.getCallerFrame(frame);
-                if (caller1Profile.profile(caller1 != null)) {
-                    if (RArguments.getDepth(caller1) == actualFrame) {
-                        return caller1;
-                    }
-                    MaterializedFrame caller2 = RArguments.getCallerFrame(caller1);
-                    if (caller2Profile.profile(caller2 != null)) {
-                        if (RArguments.getDepth(caller2) == actualFrame) {
-                            return caller2;
+                if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
+                    Frame current = frame;
+                    for (int i = 0; i < ITERATE_LEVELS; i++) {
+                        current = current == null ? null : RArguments.getCallerFrame(current);
+                        if (current != null && RArguments.getDepth(current) == actualFrame) {
+                            return current;
                         }
                     }
+                    notifyRCallNodes(actualFrame, RArguments.getCall(frame));
                 }
                 return Utils.getStackFrame(frameAccess(), actualFrame);
+            }
+        }
+
+        @TruffleBoundary
+        private static void notifyRCallNodes(int actualFrame, RCaller caller) {
+            RCaller currentCaller = caller;
+            for (int i = 0; i < ITERATE_LEVELS; i++) {
+                if (currentCaller == null || currentCaller.getDepth() <= actualFrame) {
+                    break;
+                }
+                if (currentCaller.isValidCaller() && !currentCaller.isPromise() && currentCaller.getSyntaxNode() instanceof RCallNode) {
+                    ((RCallNode) currentCaller.getSyntaxNode()).setNeedsCallerFrame();
+                }
+                currentCaller = currentCaller.getParent();
             }
         }
     }
@@ -172,16 +202,16 @@ public class FrameFunctions {
             /*
              * sys.call preserves provided names but does not create them, unlike match.call.
              */
-            Frame cframe = getFrame(frame, which);
-            if (RArguments.getFunction(cframe) == null) {
-                return RNull.instance;
-            }
-            return createCall(RArguments.getCall(cframe));
+            return createCall(RArguments.getCall(frame), which);
         }
 
         @TruffleBoundary
-        private static RLanguage createCall(RCaller call) {
-            assert call != null;
+        private Object createCall(RCaller currentCall, int which) {
+            RCaller call = getCall(currentCall, which);
+            assert !call.isPromise();
+            if (call == null || !call.isValidCaller()) {
+                return RNull.instance;
+            }
             return RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
         }
     }
@@ -503,13 +533,19 @@ public class FrameFunctions {
                     public Object apply(Frame f) {
                         RCaller currentCall = RArguments.getCall(f);
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
-                            result = RDataFactory.createPairList(SysCall.createCall(currentCall), result);
+                            result = RDataFactory.createPairList(createCall(currentCall), result);
                         }
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }
                 });
                 return result;
             }
+        }
+
+        @TruffleBoundary
+        private static Object createCall(RCaller call) {
+            assert call != null;
+            return RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
         }
     }
 
