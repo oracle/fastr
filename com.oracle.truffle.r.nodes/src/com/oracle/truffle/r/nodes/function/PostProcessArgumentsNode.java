@@ -22,13 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.utilities.AssumedValue;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -41,28 +39,20 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public final class PostProcessArgumentsNode extends RNode {
 
     @Children private final LocalReadVariableNode[] sequence;
-    @Child private PostProcessArgumentsNode nextOptPostProccessArgNode;
-    @CompilationFinal int transArgsBitSet;
 
-    // the first time this node is cloned (via FunctionDefinitionNode) it's from the trufflerizer -
-    // in this case we should not create the node chain chain in the clone operation (below) at the
-    // reference count meta data needs to be associated with this node and not its clone
-    @CompilationFinal private boolean createClone;
+    // stays the same during cloning
+    private final AssumedValue<Integer> transArgsBitSet;
+
+    private final ConditionProfile isNonNull = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
-    private PostProcessArgumentsNode(LocalReadVariableNode[] sequence) {
-        this.sequence = sequence;
-        this.createClone = false;
-        this.transArgsBitSet = 0;
+    private PostProcessArgumentsNode(int length) {
+        this.sequence = new LocalReadVariableNode[Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS)];
+        this.transArgsBitSet = new AssumedValue<>("PostProcessArgumentsNode.transArgsBitSet", 0);
     }
 
     public static PostProcessArgumentsNode create(int length) {
-        int maxLength = Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS);
-        LocalReadVariableNode[] argReadNodes = new LocalReadVariableNode[maxLength];
-        for (int i = 0; i < maxLength; i++) {
-            argReadNodes[i] = LocalReadVariableNode.create(Integer.valueOf(1 << i), false);
-        }
-        return new PostProcessArgumentsNode(argReadNodes);
+        return new PostProcessArgumentsNode(length);
     }
 
     public int getLength() {
@@ -72,20 +62,20 @@ public final class PostProcessArgumentsNode extends RNode {
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        if (transArgsBitSet > 0) {
+        int bits = transArgsBitSet.get();
+        if (bits != 0) {
             for (int i = 0; i < sequence.length; i++) {
                 int mask = 1 << i;
-                if ((transArgsBitSet & mask) == mask) {
-                    RShareable s = (RShareable) sequence[i].execute(frame);
-                    if (s == null) {
-                        // it happens rarely in compiled code, but if it does happen, stop
-                        // decrementing reference counts
+                if ((bits & mask) != 0) {
+                    if (sequence[i] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        transArgsBitSet = ArgumentStatePush.INVALID_INDEX;
-                        break;
+                        sequence[i] = insert(LocalReadVariableNode.create(Integer.valueOf(mask), false));
                     }
-                    if (isRefCountUpdateable.profile(!s.isSharedPermanent())) {
-                        s.decRefCount();
+                    RShareable s = (RShareable) sequence[i].execute(frame);
+                    if (isNonNull.profile(s != null)) {
+                        if (isRefCountUpdateable.profile(!s.isSharedPermanent())) {
+                            s.decRefCount();
+                        }
                     }
                 }
             }
@@ -93,38 +83,15 @@ public final class PostProcessArgumentsNode extends RNode {
         return RNull.instance;
     }
 
-    @Override
-    public Node deepCopy() {
-        CompilerAsserts.neverPartOfCompilation();
-        if (createClone) {
-            return deepCopyUnconditional();
-        } else {
-            this.createClone = true;
-            return this;
+    public boolean updateBits(int index) {
+        if (index < sequence.length) {
+            int bits = transArgsBitSet.get();
+            int newBits = bits | (1 << index);
+            if (newBits != bits) {
+                transArgsBitSet.set(newBits);
+            }
+            return true;
         }
-    }
-
-    /*
-     * Deep copies are also made from other places than the trufflerizer, in which case we need to
-     * always create the node chain.
-     */
-    private PostProcessArgumentsNode deepCopyUnconditional() {
-        CompilerAsserts.neverPartOfCompilation();
-        PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
-        nextOptPostProccessArgNode = insert(copy);
-        return copy;
-
-    }
-
-    PostProcessArgumentsNode getActualNode() {
-        CompilerAsserts.neverPartOfCompilation();
-        if (nextOptPostProccessArgNode == null) {
-            return this;
-        } else {
-            PostProcessArgumentsNode nextNode = nextOptPostProccessArgNode.getActualNode();
-            // shorten up the lookup chain
-            nextOptPostProccessArgNode = insert(nextNode);
-            return nextNode;
-        }
+        return false;
     }
 }
