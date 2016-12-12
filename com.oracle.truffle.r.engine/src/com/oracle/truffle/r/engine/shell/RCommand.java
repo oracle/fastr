@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
+import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -203,8 +204,8 @@ public class RCommand {
      */
     static int readEvalPrint(PolyglotEngine vm) {
         int lastStatus = 0;
-        ContextInfo contextInfo = ContextInfo.getContextInfo(vm);
-        ConsoleHandler consoleHandler = contextInfo.getConsoleHandler();
+        RContext context = vm.eval(Engine.GET_CONTEXT).as(RContext.class);
+        ConsoleHandler consoleHandler = context.getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -261,7 +262,7 @@ public class RCommand {
                         } catch (ExitException e) {
                             // usually from quit
                             int status = e.getStatus();
-                            if (contextInfo.getParent() == null) {
+                            if (context.getParent() == null) {
                                 vm.dispose();
                                 Utils.systemExit(status);
                             } else {
@@ -287,7 +288,7 @@ public class RCommand {
                 Utils.systemExit(0);
             } catch (ExitException e) {
                 // normal quit, but with exit code based on lastStatus
-                if (contextInfo.getParent() == null) {
+                if (context.getParent() == null) {
                     Utils.systemExit(lastStatus);
                 } else {
                     return lastStatus;

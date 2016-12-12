@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -105,7 +106,7 @@ public class REmbedded {
      */
     public static void main(String[] args) {
         PolyglotEngine vm = initializeR(args);
-        RStartParams startParams = ContextInfo.getContextInfo(vm).getStartParams();
+        RStartParams startParams = vm.eval(Engine.GET_CONTEXT).as(RContext.class).getStartParams();
         startParams.setEmbedded();
         startParams.setLoadInitFile(false);
         startParams.setNoRenviron(true);

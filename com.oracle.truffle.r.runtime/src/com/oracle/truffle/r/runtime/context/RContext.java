@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -58,7 +57,6 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
@@ -71,6 +69,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -215,8 +214,6 @@ public final class RContext extends ExecutionContext {
      */
     public static class EvalThread extends ContextThread {
 
-        private static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
-
         private final Source source;
         private final ContextInfo info;
         private RList evalResult;
@@ -232,9 +229,9 @@ public final class RContext extends ExecutionContext {
 
         @Override
         public void run() {
-            PolyglotEngine vm = info.createVM();
+            PolyglotEngine vm = info.createVM(PolyglotEngine.newBuilder());
             try {
-                setContext(vm.eval(GET_CONTEXT).as(RContext.class));
+                setContext(vm.eval(Engine.GET_CONTEXT).as(RContext.class));
             } catch (Throwable t) {
                 throw new RInternalError(t, "error while initializing eval thread");
             }
@@ -260,6 +257,9 @@ public final class RContext extends ExecutionContext {
             } catch (ExitException e) {
                 // termination, treat this as "success"
                 evalResult = RDataFactory.createList(new Object[]{e.getStatus()});
+            } catch (RError e) {
+                // nothing to do
+                evalResult = RDataFactory.createList(new Object[]{RNull.instance});
             } catch (Throwable t) {
                 // some internal error
                 RInternalError.reportErrorAndConsoleLog(t, info.getConsoleHandler(), info.getId());
@@ -445,7 +445,7 @@ public final class RContext extends ExecutionContext {
      * @param isInitial {@code true} if this is the initial (primordial) context.
      */
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
-        Object initialInfo = env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
+        Object initialInfo = env.getConfig().get(ContextInfo.CONFIG_KEY);
         if (initialInfo == null) {
             /*
              * This implies that FastR is being invoked initially from another Truffle language and
@@ -455,7 +455,7 @@ public final class RContext extends ExecutionContext {
             this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"--no-restore"}, false), false), null,
                             ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
-            this.info = JavaInterop.asJavaObject(ContextInfo.class, (TruffleObject) initialInfo);
+            this.info = (ContextInfo) initialInfo;
         }
 
         this.initial = isInitial;
