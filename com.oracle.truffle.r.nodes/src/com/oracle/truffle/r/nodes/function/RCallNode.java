@@ -25,11 +25,13 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -143,14 +145,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
 
-    @CompilationFinal private boolean needsCallerFrame;
+    private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
 
-    boolean setNeedsCallerFrame() {
-        try {
-            return needsCallerFrame;
-        } finally {
-            needsCallerFrame = true;
-        }
+    public boolean setNeedsCallerFrame() {
+        boolean value = !needsNoCallerFrame.isValid();
+        needsNoCallerFrame.invalidate();
+        return value;
     }
 
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
@@ -727,26 +727,36 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
         }
 
+        private static final class GenericCallEntry extends Node {
+            private final RootCallTarget cachedTarget;
+            @Child private LeafCallNode leafCall;
+            @Child private PrepareArguments prepareArguments;
+
+            GenericCallEntry(RootCallTarget cachedTarget, LeafCallNode leafCall, PrepareArguments prepareArguments) {
+                this.cachedTarget = cachedTarget;
+                this.leafCall = leafCall;
+                this.prepareArguments = prepareArguments;
+            }
+        }
+
         /*
          * Use a TruffleBoundaryNode to be able to switch child nodes without invalidating the whole
          * method.
          */
         protected final class GenericCall extends TruffleBoundaryNode {
 
-            private RootCallTarget cachedTarget;
-            @Child private LeafCallNode leafCall;
-            @Child private PrepareArguments prepareArguments;
+            @Child private GenericCallEntry entry;
 
             @TruffleBoundary
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments) {
-                if (cachedTarget != function.getTarget()) {
-                    cachedTarget = function.getTarget();
-                    leafCall = insert(createCacheNode(cachedTarget));
-                    prepareArguments = insert(createArguments(cachedTarget));
+                GenericCallEntry e = entry;
+                RootCallTarget cachedTarget = function.getTarget();
+                if (e == null || e.cachedTarget != cachedTarget) {
+                    entry = e = insert(new GenericCallEntry(cachedTarget, createCacheNode(cachedTarget), createArguments(cachedTarget)));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
-                RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
-                return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
+                RArgsValuesAndNames orderedArguments = e.prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
+                return e.leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
             }
         }
 
@@ -949,7 +959,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
             this.visibility = fastPathFactory == null ? null : SetVisibilityNode.create();
-            originalCall.needsCallerFrame |= root.containsDispatch();
+            if (root.containsDispatch()) {
+                originalCall.setNeedsCallerFrame();
+            }
         }
 
         @Override
@@ -973,7 +985,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     call.getCallNode().cloneCallTarget();
                 }
             }
-            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
+            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsNoCallerFrame.isValid() ? null : frame.materialize();
 
             return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
                             function.getEnclosingFrame(), s3Args);

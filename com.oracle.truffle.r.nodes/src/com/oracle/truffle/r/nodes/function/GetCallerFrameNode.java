@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -39,31 +39,24 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class GetCallerFrameNode extends RBaseNode {
 
     private final BranchProfile topLevelProfile = BranchProfile.create();
-    @CompilationFinal private boolean needsSlowPath;
+    @CompilationFinal private boolean slowPathInitialized;
 
     @Override
     public NodeCost getCost() {
         return NodeCost.NONE;
     }
 
-    public MaterializedFrame execute(VirtualFrame frame) {
+    public MaterializedFrame execute(Frame frame) {
         MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
         if (funFrame == null) {
-            if (!needsSlowPath) {
+            if (!slowPathInitialized) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                needsSlowPath = true;
-                RCaller call = RArguments.getCall(frame);
-                while (call != null && call.isPromise()) {
-                    call = call.getParent();
-                }
-                if (call != null && call.isValidCaller() && call.getSyntaxNode() instanceof RCallNode) {
-                    if (!((RCallNode) call.getSyntaxNode()).setNeedsCallerFrame()) {
-                        needsSlowPath = false;
-                    }
-                }
+                slowPathInitialized = true;
             }
-            // TODO This does not just occur in UseMethod dispatch
-            RError.performanceWarning("slow caller frame access");
+            notifyCallers(RArguments.getCall(frame));
+            if (slowPathInitialized) {
+                RError.performanceWarning("slow caller frame access");
+            }
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             if (callerFrame != null) {
                 return callerFrame.materialize();
@@ -74,5 +67,18 @@ public final class GetCallerFrameNode extends RBaseNode {
             }
         }
         return funFrame;
+    }
+
+    @TruffleBoundary
+    private void notifyCallers(RCaller call) {
+        RCaller current = call;
+        while (current != null && current.isPromise()) {
+            current = current.getParent();
+        }
+        if (current != null && current.isValidCaller() && current.getSyntaxNode() instanceof RCallNode) {
+            if (!((RCallNode) current.getSyntaxNode()).setNeedsCallerFrame()) {
+                slowPathInitialized = false;
+            }
+        }
     }
 }
