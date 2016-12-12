@@ -45,6 +45,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
+
 /*
  * Used to collect arguments of the generic function for S4 method dispatch. Modeled after {@link CollectArgumentsNode}.
  */

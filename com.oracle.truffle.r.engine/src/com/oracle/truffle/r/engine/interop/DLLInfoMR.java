@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.context;
+package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 
-public interface RForeignAccessFactory {
+@MessageResolution(receiverType = DLL.DLLInfo.class, language = TruffleRLanguage.class)
+public class DLLInfoMR {
+    @CanResolve
+    public abstract static class DLLInfolCheck extends Node {
 
-    /**
-     * Return the appropriate {@link ForeignAccess} instance for {@code obj}.
-     */
-    ForeignAccess getForeignAccess(RTruffleObject obj);
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof DLL.DLLInfo;
+        }
+    }
 
-    /**
-     * Return the {@link TruffleLanguage} instance for R. (Project circularity workaround).
-     */
-    Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
 }
