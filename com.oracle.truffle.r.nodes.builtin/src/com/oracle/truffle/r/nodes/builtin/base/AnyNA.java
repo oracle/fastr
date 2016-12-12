@@ -54,20 +54,6 @@ public abstract class AnyNA extends RBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
 
-    private final boolean recursionAllowed;
-
-    protected AnyNA(boolean recursionAllowed) {
-        this.recursionAllowed = recursionAllowed;
-    }
-
-    protected AnyNA() {
-        this(true);
-    }
-
-    protected boolean isRecursionAllowed() {
-        return recursionAllowed;
-    }
-
     public abstract byte execute(VirtualFrame frame, Object value, boolean recursive);
 
     @Override
@@ -161,13 +147,13 @@ public abstract class AnyNA extends RBuiltinNode {
         return doScalar(false);
     }
 
-    protected AnyNA createRecursive(boolean recursive) {
-        return AnyNANodeGen.create(recursive);
+    protected AnyNA createRecursive() {
+        return AnyNANodeGen.create();
     }
 
-    @Specialization(guards = "isRecursionAllowed()")
+    @Specialization(guards = "recursive")
     protected byte isNA(VirtualFrame frame, RList list, boolean recursive,
-                    @Cached("createRecursive(recursive)") AnyNA recursiveNode,
+                    @Cached("createRecursive()") AnyNA recursiveNode,
                     @Cached("createClassProfile()") ValueProfile elementProfile,
                     @Cached("create()") RLengthNode length) {
 
@@ -183,7 +169,7 @@ public abstract class AnyNA extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "!isRecursionAllowed()")
+    @Specialization(guards = "!recursive")
     @SuppressWarnings("unused")
     protected byte isNA(VirtualFrame frame, RList list, boolean recursive) {
         return RRuntime.LOGICAL_FALSE;
