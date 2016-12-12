@@ -41,7 +41,6 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -648,13 +647,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static RContext getInstance() {
         RContext context = singleContext;
-        if (context != null) {
-            try {
-                singleContextAssumption.check();
-                return context;
-            } catch (InvalidAssumptionException e) {
-                // fallback to slow case
-            }
+        if (singleContextAssumption.isValid() && context != null) {
+            return context;
         }
 
         Thread current = Thread.currentThread();
