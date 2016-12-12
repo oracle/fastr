@@ -507,6 +507,7 @@ public class BasePackage extends RBuiltinPackage {
         add(MatMult.class, MatMult::create);
         add(Match.class, MatchNodeGen::create);
         add(MatchFun.class, MatchFunNodeGen::create);
+        add(MatchArg.class, MatchArgNodeGen::create);
         add(Matrix.class, MatrixNodeGen::create);
         add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
@@ -742,7 +743,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
 
-        setContainsDispatch(baseFrame, "sys.function", "match.arg", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
+        setContainsDispatch(baseFrame, "sys.function", "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }
 
     private static void setContainsDispatch(MaterializedFrame baseFrame, String... functions) {
