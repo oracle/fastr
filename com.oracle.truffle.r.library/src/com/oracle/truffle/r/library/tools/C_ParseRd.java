@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
-    @Child ToolsRFFI.ToolsRFFINode toolsRFFINode = RFFIFactory.getRFFI().getToolsRFFI().toolsRFFINode();
+    @Child ToolsRFFI.ToolsRFFINode toolsRFFINode = RFFIFactory.getRFFI().getToolsRFFI().createToolsRFFINode();
 
     @Override
     protected void createCasts(CastBuilder casts) {

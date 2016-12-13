@@ -47,7 +47,7 @@ public class JNI_RAppl implements RApplRFFI {
     }
 
     @Override
-    public RApplRFFINode rApplRFFINode() {
+    public RApplRFFINode createRApplRFFINode() {
         return new JNI_RApplRFFINode();
     }
     // Checkstyle: stop method name

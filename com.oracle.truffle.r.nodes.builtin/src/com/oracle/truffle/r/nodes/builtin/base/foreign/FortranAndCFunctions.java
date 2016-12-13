@@ -62,7 +62,7 @@ public class FortranAndCFunctions {
         private static final int VECTOR_LOGICAL = 12;
         @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
-        @Child private CRFFI.CRFFINode cRFFINode = RFFIFactory.getRFFI().getCRFFI().getCRFFINode();
+        @Child private CRFFI.CRFFINode cRFFINode = RFFIFactory.getRFFI().getCRFFI().createCRFFINode();
 
         @Override
         public Object[] getDefaultParameterValues() {

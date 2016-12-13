@@ -83,7 +83,7 @@ public class JNI_PCRE implements PCRERFFI {
                     int options, int[] ovector, int ovectorLen);
 
     @Override
-    public PCRERFFINode pcreRFFINode() {
+    public PCRERFFINode createPCRERFFINode() {
         return new JNI_PCRERFFINode();
     }
 

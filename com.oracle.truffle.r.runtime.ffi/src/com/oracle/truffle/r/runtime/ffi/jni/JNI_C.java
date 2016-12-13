@@ -50,7 +50,7 @@ public class JNI_C implements CRFFI {
     private static native void c(long address, Object[] args);
 
     @Override
-    public CRFFINode getCRFFINode() {
+    public CRFFINode createCRFFINode() {
         return new JNI_CRFFINode();
     }
 }

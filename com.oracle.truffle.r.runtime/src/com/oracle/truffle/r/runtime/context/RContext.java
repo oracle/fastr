@@ -73,6 +73,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
@@ -410,6 +411,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
     public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
+    public final DLL.ContextStateImpl stateDLL;
     /**
      * RFFI implementation state. Cannot be final as choice of FFI implementation is not made at the
      * time the constructor is called.
@@ -420,7 +422,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
-                        stateLazyDBCache, stateInstrumentation};
+                        stateLazyDBCache, stateInstrumentation, stateDLL};
     }
 
     public static void setEmbedded() {
@@ -464,6 +466,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.stateLazyDBCache = LazyDBCache.ContextStateImpl.newContextState();
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
+        this.stateDLL = DLL.ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
     }
@@ -521,11 +524,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRConnection.initialize(this);
         stateStdConnections.initialize(this);
         stateRNG.initialize(this);
-        this.stateRFFI = RFFIContextStateFactory.newContextState().initialize(this);
+        stateRFFI = RFFIContextStateFactory.newContextState();
+        // separate in case initialize calls getStateRFFI()!
+        stateRFFI.initialize(this);
         stateRSerialize.initialize(this);
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
+        stateDLL.initialize(this);
         state.add(State.INITIALIZED);
 
         if (!embedded) {
@@ -544,7 +550,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
         if (initial && !embedded) {
-            RFFIFactory.getRFFI().getCallRFFI().callRFFINode().setInteractive(isInteractive());
+            RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode().setInteractive(isInteractive());
             initialContextInitialized = true;
         }
         return this;
@@ -807,6 +813,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public Map<String, TruffleObject> getExportedSymbols() {
         return exportedSymbols;
+    }
+
+    public void addExportedSymbol(String name, TruffleObject obj) {
+        exportedSymbols.put(name, obj);
     }
 
     public TimeZone getSystemTimeZone() {

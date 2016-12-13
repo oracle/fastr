@@ -36,6 +36,6 @@ public interface StatsRFFI {
         public abstract int executeWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
     }
 
-    FFTNode fftNode();
+    FFTNode createFFTNode();
 
 }

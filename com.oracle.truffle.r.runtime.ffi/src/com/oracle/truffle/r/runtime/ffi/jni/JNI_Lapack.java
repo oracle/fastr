@@ -101,7 +101,7 @@ public class JNI_Lapack implements LapackRFFI {
     }
 
     @Override
-    public LapackRFFINode getLapackRFFINode() {
+    public LapackRFFINode createLapackRFFINode() {
         return new JNI_LapackRFFINode();
     }
 

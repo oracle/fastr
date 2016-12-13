@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class LaFunctions {
 
     protected abstract static class Adapter extends RBuiltinNode {
-        @Child protected LapackRFFI.LapackRFFINode lapackRFFINode = RFFIFactory.getRFFI().getLapackRFFI().getLapackRFFINode();
+        @Child protected LapackRFFI.LapackRFFINode lapackRFFINode = RFFIFactory.getRFFI().getLapackRFFI().createLapackRFFINode();
     }
 
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)

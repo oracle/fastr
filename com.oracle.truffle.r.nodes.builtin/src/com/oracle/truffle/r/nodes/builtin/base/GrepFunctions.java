@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
-        @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().pcreRFFINode();
+        @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
 
         /**
          * This profile is needed to satisfy API requirements.

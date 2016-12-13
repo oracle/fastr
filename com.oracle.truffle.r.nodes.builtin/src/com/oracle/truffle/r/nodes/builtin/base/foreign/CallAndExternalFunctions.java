@@ -141,7 +141,7 @@ public class CallAndExternalFunctions {
     }
 
     protected abstract static class CallRFFIAdapter extends LookupAdapter {
-        @Child protected CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().callRFFINode();
+        @Child protected CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
     }
 
     /**

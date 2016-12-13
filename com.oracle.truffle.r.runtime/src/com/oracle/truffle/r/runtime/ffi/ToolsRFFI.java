@@ -45,5 +45,5 @@ public interface ToolsRFFI {
                         RLogicalVector warndups);
     }
 
-    ToolsRFFINode toolsRFFINode();
+    ToolsRFFINode createToolsRFFINode();
 }

@@ -64,6 +64,6 @@ public interface PCRERFFI {
         public abstract int exec(long code, long extra, String subject, int offset, int options, int[] ovector);
     }
 
-    PCRERFFINode pcreRFFINode();
+    PCRERFFINode createPCRERFFINode();
 
 }

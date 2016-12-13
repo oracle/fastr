@@ -39,6 +39,6 @@ public interface UserRngRFFI {
         public abstract void seeds(int[] n);
     }
 
-    UserRngRFFINode userRngRFFINode();
+    UserRngRFFINode createUserRngRFFINode();
 
 }

@@ -54,6 +54,6 @@ public interface CallRFFI {
         public abstract void setInteractive(boolean interactive);
     }
 
-    CallRFFINode callRFFINode();
+    CallRFFINode createCallRFFINode();
 
 }
