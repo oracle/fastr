@@ -192,7 +192,11 @@ public class FastRContext {
             if (pc == 1) {
                 ContextInfo info = createContextInfo(contextKind);
                 PolyglotEngine vm = info.createVM();
-                results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+                try {
+                    results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+                } finally {
+                    vm.dispose();
+                }
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
                 RContext.EvalThread[] threads = new RContext.EvalThread[pc];
