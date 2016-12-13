@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Location;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -67,6 +69,15 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     public abstract void execute(Object attrs);
+
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(shape, attrs)", "location == null"}, //
+                    assumptions = {"shape.getValidAssumption()"})
+    protected void removeNonExistantAttr(@SuppressWarnings("unused") DynamicObject attrs,
+                    @SuppressWarnings("unused") @Cached("lookupShape(attrs)") Shape shape,
+                    @SuppressWarnings("unused") @Cached("lookupLocation(shape, name)") Location location) {
+        // do nothing
+    }
 
     @Specialization
     @TruffleBoundary
