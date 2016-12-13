@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class FFIRootNode extends RootNode {
-    @Child CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
+    @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
 
     public FFIRootNode() {
         super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
