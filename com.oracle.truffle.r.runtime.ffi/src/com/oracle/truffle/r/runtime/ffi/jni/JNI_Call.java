@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
  */
 public class JNI_Call implements CallRFFI {
 
-    private static class JNI_CallRFFINode extends CallRFFINode {
+    public static class JNI_CallRFFINode extends CallRFFINode {
 
         @Override
         @TruffleBoundary
@@ -136,7 +136,7 @@ public class JNI_Call implements CallRFFI {
 
     private static final boolean ForceRTLDGlobal = false;
 
-    protected JNI_Call() {
+    public JNI_Call() {
         loadLibRLibrary();
     }
 
