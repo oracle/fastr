@@ -34,12 +34,12 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -55,12 +55,12 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 abstract class SubsetSpecial extends SubscriptSpecialBase {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Override
     protected boolean simpleVector(RAbstractVector vector) {
         vector = vectorClassProfile.profile(vector);
-        return super.simpleVector(vector) && vector.getNames(attrProfiles) == null;
+        return super.simpleVector(vector) && getNamesNode.getNames(vector) == null;
     }
 
     @Override

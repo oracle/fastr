@@ -25,9 +25,15 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
@@ -47,8 +53,13 @@ public abstract class Drop extends RBuiltinNode {
     private final ConditionProfile noDimNamesProfile = ConditionProfile.createBinaryProfile();
 
     @Specialization
-    protected RAbstractVector doDrop(RAbstractVector x) {
-        int[] dims = x.getDimensions();
+    protected RAbstractVector doDrop(RAbstractVector x,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimsNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimsNamesNode,
+                    @Cached("create()") SetNamesAttributeNode setNamesNode) {
+        int[] dims = getDimsNode.getDimensions(x);
         if (nullDimensions.profile(dims == null)) {
             return x;
         }
@@ -67,15 +78,15 @@ public abstract class Drop extends RBuiltinNode {
         if (resultIsScalarProfile.profile(lastNonOneIndex == -1)) {
             @SuppressWarnings("unused")
             RAbstractVector r = x.copy();
-            x.setDimensions(null);
-            x.setDimNames(null);
-            x.setNames(null);
+            setDimsNode.setDimensions(x, null);
+            setDimsNamesNode.setDimNames(x, null);
+            setNamesNode.setNames(x, null);
             return x;
         }
 
         // the result is vector
         if (resultIsVector.profile(newDimsLength <= 1)) {
-            return toVector(x, lastNonOneIndex);
+            return toVector(x, lastNonOneIndex, setDimsNode, getDimsNamesNode, setNamesNode);
         }
 
         // else: the result will be a matrix, copy non-1 dimensions
@@ -88,10 +99,10 @@ public abstract class Drop extends RBuiltinNode {
         }
 
         RAbstractVector result = x.copy();
-        result.setDimensions(newDims);
+        setDimsNode.setDimensions(result, newDims);
 
         // if necessary, copy corresponding dimnames
-        RList oldDimNames = x.getDimNames(dimNamesAttrProfile);
+        RList oldDimNames = getDimsNamesNode.getDimNames(x);
         if (noDimNamesProfile.profile(oldDimNames != null)) {
             newDimsIdx = 0;
             Object[] newDimNames = new Object[newDimsLength];
@@ -100,9 +111,9 @@ public abstract class Drop extends RBuiltinNode {
                     newDimNames[newDimsIdx++] = oldDimNames.getDataAt(i);
                 }
             }
-            result.setDimNames(RDataFactory.createList(newDimNames));
+            setDimsNamesNode.setDimNames(result, RDataFactory.createList(newDimNames));
         } else {
-            result.setDimNames(null);
+            setDimsNamesNode.setDimNames(result, null);
         }
 
         return result;
@@ -112,14 +123,14 @@ public abstract class Drop extends RBuiltinNode {
      * Handles the case when result is just a vector. The only catch is that we might have to copy
      * corresponding index from dimnames to names attribute of the new vector.
      */
-    private RAbstractVector toVector(RAbstractVector x, int nonOneIndex) {
+    private RAbstractVector toVector(RAbstractVector x, int nonOneIndex, SetDimAttributeNode setDimsNode, GetDimNamesAttributeNode getDimNamesNode, SetNamesAttributeNode setNamesNode) {
         RAbstractVector result = x.copy(); // share?
-        result.setDimensions(null);
+        setDimsNode.setDimensions(result, null);
 
         // copy dimnames to names if possible
-        RList dimNames = x.getDimNames(dimNamesAttrProfile);
+        RList dimNames = getDimNamesNode.getDimNames(x);
         if (noDimNamesProfile.profile(dimNames != null) && nonOneIndex < dimNames.getLength()) {
-            result.setNames(ensureStringVector(dimNames.getDataAt(nonOneIndex)));
+            setNamesNode.setNames(result, ensureStringVector(dimNames.getDataAt(nonOneIndex)));
         }
 
         return result;

@@ -57,15 +57,16 @@ import java.util.stream.Stream;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -266,6 +267,8 @@ public class FileFunctions {
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector OCTMODE = RDataFactory.createStringVectorFromScalar("octmode");
 
+        @Child private SetClassAttributeNode setClassAttrNode;
+
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("extra_cols").asLogicalVector().findFirst().map(toBoolean());
@@ -400,12 +403,19 @@ public class FileFunctions {
             // @formatter:on
         }
 
-        private static Object createColumnResult(Column column, Object data, boolean complete) {
+        private Object createColumnResult(Column column, Object data, boolean complete) {
             // @formatter:off
             switch(column) {
                 case size: return RDataFactory.createDoubleVector((double[]) data, complete);
                 case isdir: return RDataFactory.createLogicalVector((byte[]) data, complete);
-                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE); return res;
+                case mode:
+                    if (setClassAttrNode == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        setClassAttrNode = insert(SetClassAttributeNode.create());
+                    }
+                    RIntVector res = RDataFactory.createIntVector((int[]) data, complete);
+                    setClassAttrNode.execute(res, OCTMODE);
+                    return res;
                 case mtime: case ctime: case atime:
                 case uid: case gid: return RDataFactory.createIntVector((int[]) data, complete);
                 case uname: case grname: return RDataFactory.createStringVector((String[]) data, complete);

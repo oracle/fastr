@@ -47,7 +47,8 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
@@ -96,7 +97,6 @@ public abstract class Combine extends RBuiltinNode {
     @Child private CombineInputCast inputCast = CombineInputCastNodeGen.create(null);
     @Child private CastToVectorNode castVector;
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile naBranch = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
     private final ConditionProfile fastNamesMerge = ConditionProfile.createBinaryProfile();
@@ -127,7 +127,8 @@ public abstract class Combine extends RBuiltinNode {
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("create()") BranchProfile naNameBranch, //
                     @Cached("create()") NACheck naNameCheck, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         CompilerAsserts.partialEvaluationConstant(cachedSignature);
         CompilerAsserts.partialEvaluationConstant(cachedPrecedence);
 
@@ -142,7 +143,8 @@ public abstract class Combine extends RBuiltinNode {
         // prepare the names (if there are any)
         boolean signatureHasNames = signatureHasNames(cachedSignature);
         CompilerAsserts.partialEvaluationConstant(signatureHasNames);
-        RStringVector namesVector = hasNamesProfile.profile(signatureHasNames || hasNames(elements)) ? foldNames(naNameBranch, naNameCheck, elements, size, cachedSignature) : null;
+        RStringVector namesVector = hasNamesProfile.profile(signatureHasNames || hasNames(elements, getNamesNode)) ? foldNames(naNameBranch, naNameCheck, elements, size, cachedSignature, getNamesNode)
+                        : null;
 
         // get the actual contents of the result
         RVector<?> result = foldContents(cachedPrecedence, elements, size, namesVector);
@@ -159,8 +161,9 @@ public abstract class Combine extends RBuiltinNode {
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("create()") BranchProfile naNameBranch, //
                     @Cached("create()") NACheck naNameCheck, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
-        return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile);
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+        return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile, getNamesNode);
     }
 
     @Specialization(guards = "recursive")
@@ -226,7 +229,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    private boolean hasNames(Object[] elements) {
+    private boolean hasNames(Object[] elements, GetNamesAttributeNode getNamesNode) {
         for (int i = 0; i < elements.length; i++) {
             Object element = elements[i];
             if (i < argProfiles.length) {
@@ -234,7 +237,7 @@ public abstract class Combine extends RBuiltinNode {
             }
             if (element instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) element;
-                if (vector.getNames(attrProfiles) != null) {
+                if (getNamesNode.getNames(vector) != null) {
                     return true;
                 }
             }
@@ -243,7 +246,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @ExplodeLoop
-    private RStringVector foldNames(BranchProfile naNameBranch, NACheck naNameCheck, Object[] elements, int size, ArgumentsSignature signature) {
+    private RStringVector foldNames(BranchProfile naNameBranch, NACheck naNameCheck, Object[] elements, int size, ArgumentsSignature signature, GetNamesAttributeNode getNamesNode) {
         RStringVector result = RDataFactory.createStringVector(new String[size], true);
         result.incRefCount();
         int pos = 0;
@@ -252,18 +255,19 @@ public abstract class Combine extends RBuiltinNode {
             if (i < argProfiles.length) {
                 element = argProfiles[i].profile(element);
             }
-            pos += processNamesElement(naNameBranch, naNameCheck, result, pos, element, i, signature);
+            pos += processNamesElement(naNameBranch, naNameCheck, result, pos, element, i, signature, getNamesNode);
         }
         return result;
     }
 
-    private int processNamesElement(BranchProfile naNameBranch, NACheck naNameCheck, RStringVector result, int pos, Object element, int index, ArgumentsSignature signature) {
+    private int processNamesElement(BranchProfile naNameBranch, NACheck naNameCheck, RStringVector result, int pos, Object element, int index, ArgumentsSignature signature,
+                    GetNamesAttributeNode getNamesNode) {
         String signatureName = signature.getName(index);
         if (element instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) element;
             int length = v.getLength();
 
-            RStringVector newNames = v.getNames(attrProfiles);
+            RStringVector newNames = getNamesNode.getNames(v);
             if (signatureName != null && length > 0) {
                 if (fastNamesMerge.profile(length == 1 && newNames == null)) {
                     newNames = RDataFactory.createStringVector(new String[]{signatureName}, true);
@@ -455,6 +459,8 @@ public abstract class Combine extends RBuiltinNode {
     protected abstract static class CombineInputCast extends RNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         public abstract Object execute(Object operand);
 
@@ -474,15 +480,13 @@ public abstract class Combine extends RBuiltinNode {
             RVector<?> materialized = vector.materialize();
             RVector<?> result = materialized.copyDropAttributes();
 
-            RStringVector vecNames = materialized.getInternalNames();
+            RStringVector vecNames = getNamesNode.getNames(materialized);
             if (hasNamesProfile.profile(vecNames != null)) {
                 result.initAttributes(RAttributesLayout.createNames(vecNames));
-                result.setInternalNames(vecNames);
             } else {
-                RList dimNames = materialized.getInternalDimNames();
+                RList dimNames = getDimNamesNode.getDimNames(materialized);
                 if (hasDimNamesProfile.profile(dimNames != null)) {
-                    result.initAttributes(RAttributesLayout.createDimNames(vecNames));
-                    result.setInternalDimNames(dimNames);
+                    result.initAttributes(RAttributesLayout.createDimNames(dimNames));
                 }
             }
             return result;
@@ -494,7 +498,7 @@ public abstract class Combine extends RBuiltinNode {
         }
 
         protected boolean needsCopy(RAbstractVector vector) {
-            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null;
+            return vector.getAttributes() != null || getNamesNode.getNames(vector) != null || getDimNamesNode.getDimNames(vector) != null;
         }
     }
 }

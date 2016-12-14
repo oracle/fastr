@@ -110,7 +110,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyAttributesFrom(attrProfiles, vector);
+        resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 
@@ -184,7 +184,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RRawVector resultVector = RDataFactory.createRawVector(result);
-        resultVector.copyAttributesFrom(attrProfiles, vector);
+        resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 

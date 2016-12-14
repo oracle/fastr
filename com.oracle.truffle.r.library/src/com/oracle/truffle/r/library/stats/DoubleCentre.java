@@ -10,10 +10,11 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
@@ -25,9 +26,9 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs) {
+    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs, @Cached("create()") GetDimAttributeNode getDimNode) {
         RDoubleVector aVec = aVecAbs.materialize();
-        int n = RRuntime.nrows(aVec);
+        int n = getDimNode.nrows(aVec);
         double[] a = aVec.getDataWithoutCopying(); // does not copy
 
         for (int i = 0; i < n; i++) {

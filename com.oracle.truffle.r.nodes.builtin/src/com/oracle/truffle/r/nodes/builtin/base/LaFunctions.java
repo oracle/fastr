@@ -28,9 +28,16 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -95,8 +102,8 @@ public class LaFunctions {
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
         @Specialization
-        protected Object doRg(RDoubleVector matrix, boolean onlyValues) {
-            int[] dims = matrix.getDimensions();
+        protected Object doRg(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+            int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             double[] a = matrix.getDataCopy();
@@ -189,8 +196,8 @@ public class LaFunctions {
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
     public abstract static class Rs extends RsgAdapter {
         @Specialization
-        protected Object doRs(RDoubleVector matrix, boolean onlyValues) {
-            int[] dims = matrix.getDimensions();
+        protected Object doRs(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+            int[] dims = getDimsNode.getDimensions(matrix);
             int n = dims[0];
             char jobv = onlyValues ? 'N' : 'V';
             char uplo = 'L';
@@ -256,13 +263,15 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doQr(RAbstractDoubleVector aIn) {
+        protected RList doQr(RAbstractDoubleVector aIn,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") SetDimAttributeNode setDimsNode) {
             // This implementation is sufficient for B25 matcal-5.
             if (!(aIn instanceof RDoubleVector)) {
                 RError.nyi(this, "non-real vectors not supported (yet)");
             }
             RDoubleVector daIn = (RDoubleVector) aIn;
-            int[] dims = daIn.getDimensions();
+            int[] dims = getDimsNode.getDimensions(daIn);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             int m = dims[1];
@@ -287,7 +296,7 @@ public class LaFunctions {
             // TODO check complete
             RDoubleVector ra = RDataFactory.createDoubleVector(a, RDataFactory.COMPLETE_VECTOR);
             // TODO check pivot
-            ra.setDimensions(dims);
+            setDimsNode.setDimensions(ra, dims);
             data[0] = ra;
             data[1] = m < n ? m : n;
             data[2] = RDataFactory.createDoubleVector(tau, RDataFactory.COMPLETE_VECTOR);
@@ -311,7 +320,9 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
+        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn,
+                        @Cached("create()") GetDimAttributeNode getBDimsNode,
+                        @Cached("create()") GetDimAttributeNode getQDimsNode) {
             // If bIn was coerced this extra copy is unnecessary
             RDoubleVector b = (RDoubleVector) bIn.copy();
 
@@ -320,8 +331,8 @@ public class LaFunctions {
             RDoubleVector tau = (RDoubleVector) qIn.getDataAt(2);
             int k = tau.getLength();
 
-            int[] bDims = bIn.getDimensions();
-            int[] qrDims = qr.getDimensions();
+            int[] bDims = getBDimsNode.getDimensions(bIn);
+            int[] qrDims = getQDimsNode.getDimensions(qr);
             int n = qrDims[0];
             if (bDims[0] != n) {
                 errorProfile.enter();
@@ -368,6 +379,8 @@ public class LaFunctions {
         private final ConditionProfile doUseLog = ConditionProfile.createBinaryProfile();
         private final NACheck naCheck = NACheck.create();
 
+        @Child private SetFixedAttributeNode setLogAttrNode = SetFixedAttributeNode.create("logarithm");
+
         @Override
         protected void createCasts(CastBuilder casts) {
             //@formatter:off
@@ -384,9 +397,10 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog) {
+        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
-            int[] aDims = aIn.getDimensions();
+            int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
             int[] ipiv = new int[n];
             double modulus = 0;
@@ -437,7 +451,7 @@ public class LaFunctions {
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
-            modulusVec.setAttr("logarithm", RRuntime.asLogical(useLog));
+            setLogAttrNode.execute(modulusVec, RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
             RVector.setVectorClassAttr(result, DET_CLASS);
             return result;
@@ -449,6 +463,9 @@ public class LaFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
+
+        @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
+        @Child private SetFixedAttributeNode setRankAttrNode = SetFixedAttributeNode.create("rank");
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -469,9 +486,12 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol) {
+        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
-            int[] aDims = aIn.getDimensions();
+            int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
             int m = aDims[1];
             double[] aData = a.getDataWithoutCopying();
@@ -499,16 +519,16 @@ public class LaFunctions {
                     // TODO informative error message (aka GnuR)
                     throw RError.error(this, RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
-                a.setAttr("pivot", RRuntime.asLogical(piv));
-                a.setAttr("rank", rank[0]);
-                RList dn = a.getDimNames();
+                setPivotAttrNode.execute(a, RRuntime.asLogical(piv));
+                setRankAttrNode.execute(a, rank[0]);
+                RList dn = getDimNamesNode.getDimNames(a);
                 if (dn != null && dn.getDataAt(0) != null) {
                     Object[] dn2 = new Object[m];
                     // need to pivot the colnames
                     for (int i = 0; i < m; i++) {
                         dn2[i] = dn.getDataAt(ipiv[i] - 1);
                     }
-                    a.setDimNames(RDataFactory.createList(dn2));
+                    setDimNamesNode.setDimNames(a, RDataFactory.createList(dn2));
                 }
             }
             return a;
@@ -540,8 +560,15 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol) {
-            int[] aDims = a.getDimensions();
+        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
+                        @Cached("create()") GetDimAttributeNode getADimsNode,
+                        @Cached("create()") GetDimAttributeNode getBinDimsNode,
+                        @Cached("create()") SetDimAttributeNode setBDimsNode,
+                        @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                        @Cached("create()") GetDimNamesAttributeNode getBinDimNamesNode,
+                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
+            int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
                 throw RError.error(this, RError.Message.GENERIC, "'a' is 0-diml");
@@ -550,12 +577,12 @@ public class LaFunctions {
             if (n2 != n) {
                 throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a", n, n2);
             }
-            RList aDn = a.getDimNames(attrProfiles);
+            RList aDn = getADimNamesNode.getDimNames(a);
             int p;
             double[] bData;
             RDoubleVector b;
             if (bin.isMatrix()) {
-                int[] bDims = bin.getDimensions();
+                int[] bDims = getBinDimsNode.getDimensions(bin);
                 p = bDims[1];
                 if (p == 0) {
                     throw RError.error(this, RError.Message.GENERIC, "no right-hand side in 'b'");
@@ -566,8 +593,8 @@ public class LaFunctions {
                 }
                 bData = new double[n * p];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
-                b.setDimensions(new int[]{n, p});
-                RList binDn = bin.getDimNames();
+                setBDimsNode.setDimensions(b, new int[]{n, p});
+                RList binDn = getBinDimNamesNode.getDimNames(bin);
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
                 if (aDn != null || binDn != null) {
                     // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)
@@ -579,7 +606,7 @@ public class LaFunctions {
                         bDnData[1] = binDn.getDataAt(1);
                     }
                     if (bDnData[0] != null || bDnData[1] != null) {
-                        b.setDimNames(RDataFactory.createList(bDnData));
+                        setBDimNamesNode.setDimNames(b, RDataFactory.createList(bDnData));
                     }
                 }
             } else {
@@ -590,7 +617,7 @@ public class LaFunctions {
                 bData = new double[n];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 if (aDn != null) {
-                    b.setNames(RDataFactory.createStringVector((String) aDn.getDataAt(1)));
+                    setNamesNode.setNames(b, RDataFactory.createStringVector((String) aDn.getDataAt(1)));
                 }
             }
 

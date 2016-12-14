@@ -31,12 +31,13 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -128,8 +129,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return position;
     }
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @Specialization(/* contains = "doSequence" */)
     protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength, //
                     @Cached("create()") BranchProfile seenZeroProfile, //
@@ -137,13 +136,15 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenNegativeProfile, //
                     @Cached("create()") BranchProfile seenOutOfBounds, //
                     @Cached("create()") NullProfile hasNamesProfile, //
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode,
+                    @Cached("create()") SetNamesAttributeNode setNamesNode) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
         intPosition.setComplete(position.isComplete());
         // requires names preservation
-        RStringVector names = hasNamesProfile.profile(position.getNames(attrProfiles));
+        RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
         if (names != null) {
-            intPosition.setNames(names);
+            setNamesNode.setNames(intPosition, names);
         }
         Object convertedStore = intPosition.getInternalStore();
 

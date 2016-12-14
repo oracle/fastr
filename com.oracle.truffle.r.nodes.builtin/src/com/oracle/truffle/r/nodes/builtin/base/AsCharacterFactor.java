@@ -25,8 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.InheritsNode;
@@ -47,6 +48,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
 
     @Child InheritsNode inheritsNode = InheritsNodeGen.create();
     @Child CastToVectorNode castToVectorNode = CastToVectorNode.create();
+    @Child private GetFixedAttributeNode getLevelsAttrNode = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
     @Specialization
     protected RStringVector doAsCharacterFactor(Object x) {
@@ -57,7 +59,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
         RIntVector xVec = (RIntVector) x;
         int n = xVec.getLength();
         String[] data = new String[n];
-        Object levsAttr = xVec.getAttr(RRuntime.LEVELS_ATTR_KEY);
+        Object levsAttr = getLevelsAttrNode.execute(xVec);
         Object levs;
         if (levsAttr == null || !((levs = castToVectorNode.execute(levsAttr)) instanceof RAbstractStringVector)) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.MALFORMED_FACTOR);

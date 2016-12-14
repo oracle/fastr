@@ -11,7 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -20,7 +21,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "abbreviate", kind = INTERNAL, parameterNames = {"x", "minlength", "use.classes"}, behavior = PURE)
 public abstract class Abbrev extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     public void createCasts(CastBuilder casts) {
@@ -56,7 +55,7 @@ public abstract class Abbrev extends RBuiltinNode {
             }
         }
         RStringVector result = RDataFactory.createStringVector(data, naCheck.neverSeenNA());
-        result.copyAttributesFrom(attrProfiles, x);
+        result.copyAttributesFrom(x);
         return result;
     }
 

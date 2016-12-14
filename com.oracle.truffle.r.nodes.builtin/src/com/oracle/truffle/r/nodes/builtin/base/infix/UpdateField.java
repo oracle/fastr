@@ -83,7 +83,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
     @Specialization(contains = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
     public RList doListDynamic(RList list, String field, Object value) {
-        return doList(list, field, value, getIndex(list.getNames(), field));
+        return doList(list, field, value, getIndex(getNamesNode.getNames(list), field));
     }
 
     @SuppressWarnings("unused")

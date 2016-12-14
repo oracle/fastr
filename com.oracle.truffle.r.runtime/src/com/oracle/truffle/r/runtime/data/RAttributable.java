@@ -142,7 +142,7 @@ public interface RAttributable extends RTypedValue {
      * initialized and will be just cleared, unless nullify is {@code true}.
      *
      * @param nullify Some implementations can force nullifying attributes instance if this flag is
-     *            set to {@code true}. Nullifying is not guaranteed for al implementations.
+     *            set to {@code true}. Nullifying is not guaranteed for all implementations.
      */
     default void resetAllAttributes(boolean nullify) {
         DynamicObject attributes = getAttributes();
@@ -164,12 +164,20 @@ public interface RAttributable extends RTypedValue {
         return (RStringVector) getAttr(profiles, RRuntime.CLASS_ATTR_KEY);
     }
 
+    default RStringVector getClassAttr() {
+        return (RStringVector) getAttr(RRuntime.CLASS_ATTR_KEY);
+    }
+
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
      * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
      */
     default boolean isObject(RAttributeProfiles profiles) {
         return getClassAttr(profiles) != null ? true : false;
+    }
+
+    default boolean isObject() {
+        return getClassAttr() != null ? true : false;
     }
 
     static void copyAttributes(RAttributable obj, DynamicObject attrs) {

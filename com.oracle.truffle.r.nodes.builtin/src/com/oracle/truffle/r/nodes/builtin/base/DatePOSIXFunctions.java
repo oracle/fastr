@@ -36,7 +36,10 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -137,6 +140,7 @@ public class DatePOSIXFunctions {
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -161,7 +165,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
                 ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
             }
@@ -173,6 +177,7 @@ public class DatePOSIXFunctions {
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -203,7 +208,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
                 ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
             }
@@ -280,7 +285,8 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RDoubleVector posix2date(RAbstractListVector x) {
+        protected RDoubleVector posix2date(RAbstractListVector x,
+                        @Cached("create()") SetClassAttributeNode setClassAttrNode) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -314,7 +320,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RDoubleVector result = RDataFactory.createDoubleVector(data, complete);
-            result.setClassAttr(CLASS_ATTR);
+            setClassAttrNode.execute(result, CLASS_ATTR);
             return result;
         }
     }

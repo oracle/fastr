@@ -18,6 +18,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
@@ -48,6 +50,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;
+    @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -61,7 +64,8 @@ public abstract class UpdateClass extends RBuiltinNode {
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         RAbstractContainer result = reuseNonShared(arg);
-        return result.setClassAttr(null);
+        setClassAttrNode.reset(result);
+        return result;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
@@ -94,6 +98,7 @@ public abstract class UpdateClass extends RBuiltinNode {
                 return setClass((RAbstractVector) result, RNull.instance);
             }
         }
+
         RAbstractContainer result = reuseNonShared(arg);
         if (result instanceof RAbstractVector) {
             RAbstractVector resultVector = (RAbstractVector) result;
@@ -114,73 +119,75 @@ public abstract class UpdateClass extends RBuiltinNode {
             }
         }
 
-        return result.setClassAttr(RDataFactory.createStringVector(className));
+        setClassAttrNode.execute(result, RDataFactory.createStringVector(className));
+        return result;
     }
 
     @Specialization
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         RAbstractContainer result = reuseNonShared(arg);
-        return result.setClassAttr(className);
+        setClassAttrNode.execute(result, className);
+        return result;
     }
 
     @Specialization
     protected Object setClass(RFunction arg, RAbstractStringVector className) {
-        arg.setClassAttr(className.materialize());
+        setClassAttrNode.execute(arg, className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
-        arg.setClassAttr(null);
+        setClassAttrNode.reset(arg);
         return arg;
     }
 
     @Specialization
     protected Object setClass(REnvironment arg, RAbstractStringVector className) {
-        arg.setClassAttr(className.materialize());
+        setClassAttrNode.execute(arg, className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
-        arg.setClassAttr(null);
+        setClassAttrNode.reset(arg);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RSymbol arg, RAbstractStringVector className) {
-        arg.setClassAttr(className.materialize());
+        setClassAttrNode.execute(arg, className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
-        arg.setClassAttr(null);
+        setClassAttrNode.reset(arg);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RExternalPtr arg, RAbstractStringVector className) {
-        arg.setClassAttr(className.materialize());
+        setClassAttrNode.execute(arg, className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
-        arg.setClassAttr(null);
+        setClassAttrNode.reset(arg);
         return arg;
     }
 
     @Specialization
     protected Object setClass(RS4Object arg, RAbstractStringVector className) {
-        arg.setClassAttr(className.materialize());
+        setClassAttrNode.execute(arg, className.materialize());
         return arg;
     }
 
     @Specialization
     protected Object setClass(RS4Object arg, @SuppressWarnings("unused") RNull className) {
-        arg.setClassAttr(null);
+        setClassAttrNode.reset(arg);
         return arg;
     }
 

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -59,6 +60,8 @@ abstract class CachedVectorNode extends RBaseNode {
 
     // if this is non-null, the node needs to throw the error whenever it is executed
     @CompilationFinal protected Runnable error;
+
+    @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
     CachedVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, boolean recursive) {
         this.mode = mode;
@@ -151,14 +154,13 @@ abstract class CachedVectorNode extends RBaseNode {
         }
     }
 
-    @SuppressWarnings("static-method")
     protected final int[] loadVectorDimensions(RAbstractContainer vector) {
         // N.B. (stepan) this method used to be instance method and have special handling for
         // RDataFrame, which was removed and any test case, which would require this special
         // handling was not found (see TestBuiltin_extract_dataframe for tests used and further
         // explanation). This method and note will remain here for a while in case this behavior
         // crops up somewhere
-        return vector.getDimensions();
+        return getDimNode.getDimensions(vector);
     }
 
     public ElementAccessMode getMode() {

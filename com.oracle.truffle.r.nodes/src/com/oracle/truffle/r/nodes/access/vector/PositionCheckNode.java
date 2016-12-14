@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionCheckNodeFactory.Mat2indsubNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -110,6 +111,8 @@ abstract class PositionCheckNode extends Node {
     }
 
     @Child private Mat2indsubNode mat2indsub;
+    @Child private GetDimAttributeNode getVectorDimsNode;
+    @Child private GetDimAttributeNode getVectorPosDimsNode;
 
     public final Object execute(PositionProfile profile, RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object position) {
         Object castPosition = castNode.execute(positionClass.cast(position));
@@ -124,12 +127,20 @@ abstract class PositionCheckNode extends Node {
         }
 
         if (mode.isSubset() && numDimensions == 1) {
-            int[] vectorDim = vector.getDimensions();
+            if (getVectorDimsNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getVectorDimsNode = insert(GetDimAttributeNode.create());
+            }
+            int[] vectorDim = getVectorDimsNode.getDimensions(vector);
             if (nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
                 if (vector instanceof RAbstractVector && ((RAbstractVector) vector).isArray()) {
                     if (castPosition instanceof RAbstractVector) {
+                        if (getVectorPosDimsNode == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            getVectorPosDimsNode = insert(GetDimAttributeNode.create());
+                        }
                         RAbstractVector vectorPosition = (RAbstractVector) castPosition;
-                        int[] posDim = vectorPosition.getDimensions();
+                        int[] posDim = getVectorPosDimsNode.getDimensions(vectorPosition);
                         if (posDim != null && posDim.length == 2 && posDim[1] == vectorDim.length) {
                             if (castPosition instanceof RAbstractIntVector || castPosition instanceof RAbstractDoubleVector) {
                                 if (mat2indsub == null) {

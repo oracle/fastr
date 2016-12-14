@@ -196,7 +196,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public void setNames(RStringVector newNames) {
+    public final void setNames(RStringVector newNames) {
         if (list == null) {
             /* See getNames */
             RContext.getRRuntimeASTAccess().setNames(this, newNames);

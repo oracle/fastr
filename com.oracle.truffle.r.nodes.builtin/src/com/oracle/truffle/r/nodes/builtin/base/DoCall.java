@@ -37,6 +37,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
@@ -50,7 +51,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -72,8 +72,8 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
 
     @Child private GetFunctions.Get getNode;
     @Child private GetCallerFrameNode getCallerFrame;
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
     private final BranchProfile containsRSymbolProfile = BranchProfile.create();
 
@@ -113,7 +113,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
          * To re-create the illusion of a normal call, turn the values in argsAsList into promises.
          */
         Object[] argValues = argsAsList.getDataCopy();
-        RStringVector n = argsAsList.getNames(attrProfiles);
+        RStringVector n = getNamesNode.getNames(argsAsList);
         ArgumentsSignature signature;
         if (n == null) {
             signature = ArgumentsSignature.empty(argValues.length);

@@ -146,6 +146,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @TruffleBoundary
     public final Object getNameAt(int index) {
+        RStringVector names = getNamesFromAttrs();
         if (names != null && names != null) {
             String name = names.getDataAt(index);
             if (name == RRuntime.STRING_NA) {

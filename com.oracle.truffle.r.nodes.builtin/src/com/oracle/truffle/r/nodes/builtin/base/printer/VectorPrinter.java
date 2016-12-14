@@ -19,7 +19,6 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -28,8 +27,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
 abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePrinter<T> {
-
-    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void printValue(T vector, PrintContext printCtx) throws IOException {
@@ -77,13 +74,13 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             MatrixDimNames mdn = null;
 
-            Object dimAttr = vector.getAttr(dummyAttrProfiles, RRuntime.DIM_ATTR_KEY);
+            Object dimAttr = vector.getAttr(RRuntime.DIM_ATTR_KEY);
             if (dimAttr instanceof RAbstractIntVector) {
                 dims = (RAbstractIntVector) dimAttr;
                 if (dims.getLength() == 1) {
-                    RList t = Utils.<RList> castTo(vector.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY));
+                    RList t = Utils.<RList> castTo(vector.getAttr(RRuntime.DIMNAMES_ATTR_KEY));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY)));
+                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -111,7 +108,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 }
             } else {
                 dims = null;
-                Object namesAttr = Utils.castTo(vector.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
+                Object namesAttr = Utils.castTo(vector.getAttr(RRuntime.NAMES_ATTR_KEY));
                 if (namesAttr != null) {
                     if (vector.getLength() > 0) {
                         names = Utils.castTo(RRuntime.asAbstractVector(namesAttr));
@@ -676,7 +673,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         final RAbstractStringVector axisNames;
 
         MatrixDimNames(RAbstractVector x) {
-            dimnames = Utils.<RList> castTo(x.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY));
+            dimnames = Utils.<RList> castTo(x.getAttr(RRuntime.DIMNAMES_ATTR_KEY));
 
             if (dimnames == null) {
                 rl = null;
@@ -688,7 +685,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             } else {
                 rl = getDimNamesAt(0);
                 cl = getDimNamesAt(1);
-                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY));
+                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getNames());
                 if (axisNames == null) {
                     rn = null;
                     cn = null;

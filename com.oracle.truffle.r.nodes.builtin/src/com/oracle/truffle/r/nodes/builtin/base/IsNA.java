@@ -31,11 +31,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -54,8 +57,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class IsNA extends RBuiltinNode {
 
     @Child private IsNA recursiveIsNA;
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
+    @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
 
     private Object isNARecursive(Object o) {
@@ -194,10 +200,10 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     private RLogicalVector createResult(byte[] data, RAbstractVector originalVector) {
-        RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, originalVector.getDimensions(), originalVector.getNames(attrProfiles));
-        RList dimNames = originalVector.getDimNames(attrProfiles);
+        RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(originalVector), getNamesNode.getNames(originalVector));
+        RList dimNames = getDimNamesNode.getDimNames(originalVector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
-            result.setDimNames(dimNames);
+            setDimNamesNode.setDimNames(result, dimNames);
         }
         return result;
     }

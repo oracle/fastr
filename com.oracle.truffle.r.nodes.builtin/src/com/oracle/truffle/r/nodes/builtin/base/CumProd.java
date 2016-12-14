@@ -24,11 +24,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class CumProd extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.createOperation();
 
@@ -88,7 +88,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
+        return RDataFactory.createIntVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
     }
 
     @Specialization
@@ -110,7 +110,7 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
+        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
     }
 
     @Specialization
@@ -133,6 +133,6 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, 2 * i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createComplexVector(array, !na.neverSeenNA(), arg.getNames(attrProfiles));
+        return RDataFactory.createComplexVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
     }
 }

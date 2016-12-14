@@ -29,6 +29,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
+import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNodeFactory.VectorMapBinaryInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -63,6 +65,10 @@ public final class BinaryMapNode extends RBaseNode {
     @Child private VectorMapBinaryInternalNode vectorNode;
     @Child private BinaryMapFunctionNode function;
     @Child private CopyAttributesNode copyAttributes;
+    @Child private GetDimAttributeNode getLeftDimNode = GetDimAttributeNode.create();
+    @Child private GetDimAttributeNode getRightDimNode = GetDimAttributeNode.create();
+    @Child private HasFixedAttributeNode hasLeftDimNode = HasFixedAttributeNode.createDim();
+    @Child private HasFixedAttributeNode hasRightDimNode = HasFixedAttributeNode.createDim();
 
     // profiles
     private final Class<? extends RAbstractVector> leftClass;
@@ -142,9 +148,9 @@ public final class BinaryMapNode extends RBaseNode {
         }
     }
 
-    private static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
-        int[] leftDimensions = left.getDimensions();
-        int[] rightDimensions = right.getDimensions();
+    private boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
+        int[] leftDimensions = getLeftDimNode.getDimensions(left);
+        int[] rightDimensions = getRightDimNode.getDimensions(right);
         int leftLength = leftDimensions.length;
         int rightLength = rightDimensions.length;
         if (leftLength != rightLength) {
@@ -227,7 +233,7 @@ public final class BinaryMapNode extends RBaseNode {
     }
 
     private Object applyVectorized(RAbstractVector left, RAbstractVector leftCast, int leftLength, RAbstractVector right, RAbstractVector rightCast, int rightLength) {
-        if (mayContainMetadata && (dimensionsProfile.profile(left.hasDimensions() && right.hasDimensions()))) {
+        if (mayContainMetadata && (dimensionsProfile.profile(hasLeftDimNode.execute(left) && hasRightDimNode.execute(right)))) {
             if (differentDimensions(left, right)) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, RError.Message.NON_CONFORMABLE_ARRAYS);

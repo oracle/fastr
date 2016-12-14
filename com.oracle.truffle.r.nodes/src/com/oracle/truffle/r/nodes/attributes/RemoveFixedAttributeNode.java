@@ -26,10 +26,17 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
@@ -38,42 +45,64 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     public static RemoveFixedAttributeNode create(String name) {
-        return RemoveFixedAttributeNodeGen.create(name);
-    }
-
-    public static RemoveFixedAttributeNode createNames() {
-        return RemoveFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
-    }
-
-    public static RemoveFixedAttributeNode createDim() {
-        return RemoveFixedAttributeNode.create(RRuntime.DIM_ATTR_KEY);
-    }
-
-    public static RemoveFixedAttributeNode createDimNames() {
-        return RemoveFixedAttributeNode.create(RRuntime.DIMNAMES_ATTR_KEY);
-    }
-
-    public static RemoveFixedAttributeNode createClass() {
-        return RemoveFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
-    }
-
-    public abstract void execute(DynamicObject attrs);
-
-    @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected void removeAttrCached(DynamicObject attrs,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupProperty(shape, name)") Property property) {
-        if (property != null) {
-            Shape newShape = attrs.getShape().removeProperty(property);
-            attrs.setShapeAndResize(shape, newShape);
+        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
+            return SpecialAttributesFunctions.createRemoveSpecialAttributeNode(name);
+        } else {
+            return RemoveFixedAttributeNodeGen.create(name);
         }
     }
 
-    @Specialization(contains = "removeAttrCached")
+    public static RemoveFixedAttributeNode createNames() {
+        return RemoveNamesAttributeNode.create();
+    }
+
+    public static RemoveFixedAttributeNode createDim() {
+        return RemoveDimAttributeNode.create();
+    }
+
+    public static RemoveFixedAttributeNode createDimNames() {
+        return RemoveDimNamesAttributeNode.create();
+    }
+
+    public static RemoveFixedAttributeNode createClass() {
+        return RemoveClassAttributeNode.create();
+    }
+
+    public abstract void execute(Object attrs);
+
+    @Specialization(limit = "3", //
+                    guards = {"shapeCheck(shape, attrs)", "location == null"}, //
+                    assumptions = {"shape.getValidAssumption()"})
+    protected void removeNonExistantAttr(@SuppressWarnings("unused") DynamicObject attrs,
+                    @SuppressWarnings("unused") @Cached("lookupShape(attrs)") Shape shape,
+                    @SuppressWarnings("unused") @Cached("lookupLocation(shape, name)") Location location) {
+        // do nothing
+    }
+
+    @Specialization
     @TruffleBoundary
     protected void removeAttrFallback(DynamicObject attrs) {
         attrs.delete(this.name);
     }
+
+    @Specialization
+    protected void removeAttrFromAttributable(RAttributable x,
+                    @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+        DynamicObject attributes;
+        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
+            attributes = ((RAttributeStorage) x).getAttributes();
+        } else {
+            attributes = xTypeProfile.profile(x).getAttributes();
+        }
+
+        if (attributes == null) {
+            attrNullProfile.enter();
+            return;
+        }
+
+        removeAttrFallback(attributes);
+    }
+
 }

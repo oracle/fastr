@@ -34,6 +34,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -66,6 +70,10 @@ public abstract class UpdateAttr extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
+    @Child private SetClassAttributeNode setClassAttrNode;
+    @Child private SetRowNamesAttributeNode setRowNamesAttrNode;
+    @Child private SetAttributeNode setGenAttrNode;
+    @Child private SetDimAttributeNode setDimNode;
 
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
@@ -138,15 +146,28 @@ public abstract class UpdateAttr extends RBuiltinNode {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
-            result.setDimensions(null);
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+            setDimNode.setDimensions(result, null);
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
             return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(null);
+            if (setClassAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setClassAttrNode = insert(SetClassAttributeNode.create());
+            }
+            setClassAttrNode.reset(result);
+            return result;
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            result.setRowNames(null);
+            if (setRowNamesAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
+            }
+            setRowNamesAttrNode.setRowNames(result, null);
         } else if (result.getAttributes() != null) {
             result.removeAttr(attrProfiles, internedName);
         }
@@ -175,18 +196,35 @@ public abstract class UpdateAttr extends RBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
-            result.setDimensions(dimsVector.materialize().getDataCopy());
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+            setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
             return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
             return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value));
+            if (setClassAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setClassAttrNode = insert(SetClassAttributeNode.create());
+            }
+            setClassAttrNode.execute(result, convertClassAttrFromObject(value));
+            return result;
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            result.setRowNames(castVector(value));
+            if (setRowNamesAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
+            }
+            setRowNamesAttrNode.setRowNames(result, castVector(value));
         } else {
             // generic attribute
-            result.setAttr(internedName, value);
+            if (setGenAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setGenAttrNode = insert(SetAttributeNode.create());
+            }
+            setGenAttrNode.execute(result, internedName, value);
         }
 
         return result;

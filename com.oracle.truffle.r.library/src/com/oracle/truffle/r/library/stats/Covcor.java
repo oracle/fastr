@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -75,6 +76,8 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     private final BranchProfile naInRes = BranchProfile.create();
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
+
+    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
 
     private final LoopConditionProfile loopLength = LoopConditionProfile.createCountingProfile();
 
@@ -175,14 +178,14 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         return ans;
     }
 
-    private static int ncols(RDoubleVector x) {
+    private int ncols(RDoubleVector x) {
         assert x.isMatrix();
-        return x.getDimensions()[1];
+        return getDimsNode.getDimensions(x)[1];
     }
 
-    private static int nrows(RDoubleVector x) {
+    private int nrows(RDoubleVector x) {
         assert x.isMatrix();
-        return x.getDimensions()[0];
+        return getDimsNode.getDimensions(x)[0];
     }
 
     private void complete1(int n, int ncx, RDoubleVector x, RIntVector ind, boolean naFail) {

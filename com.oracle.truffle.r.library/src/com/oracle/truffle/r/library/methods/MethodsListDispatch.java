@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -307,10 +306,11 @@ public class MethodsListDispatch {
 
         public abstract Object executeObject(String name, REnvironment rho, String pckg);
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
         @Child private PromiseHelperNode promiseHelper;
+        @Child private GetFixedAttributeNode getGenericAttrNode = GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY);
+        @Child private GetFixedAttributeNode getPckgAttrNode = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
 
         @Specialization
         protected Object getGeneric(String name, REnvironment env, String pckg) {
@@ -327,9 +327,9 @@ public class MethodsListDispatch {
                 if (o != null) {
                     RAttributable vl = (RAttributable) o;
                     boolean ok = false;
-                    if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
+                    if (vl instanceof RFunction && getGenericAttrNode.execute(vl) != null) {
                         if (pckg.length() > 0) {
-                            Object gpckgObj = vl.getAttr(attrProfiles, RRuntime.PCKG_ATTR_KEY);
+                            Object gpckgObj = getPckgAttrNode.execute(vl);
                             if (gpckgObj != null) {
                                 String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
                                 ok = pckg.equals(gpckg);

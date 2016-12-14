@@ -43,6 +43,7 @@ public class SplineFunctions {
     }
 
     public abstract static class SplineEval extends RExternalBuiltinNode.Arg2 {
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
         @TruffleBoundary
@@ -90,7 +91,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     * 
+     *
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -207,7 +208,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     * 
+     *
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */

@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -69,8 +70,8 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
     }
 
     @Specialization(contains = "doList", guards = {"isSimpleList(list)", "list.getNames() != null"})
-    public Object doListDynamic(RList list, String field) {
-        return doList(list, field, getIndex(list.getNames(), field));
+    public Object doListDynamic(RList list, String field, @Cached("create()") GetNamesAttributeNode getNamesNode) {
+        return doList(list, field, getIndex(getNamesNode.getNames(list), field));
     }
 
     @Fallback

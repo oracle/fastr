@@ -30,13 +30,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class AsCall extends RBuiltinNode {
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Specialization
     protected RLanguage asCallFunction(RList x) {
@@ -89,12 +89,12 @@ public abstract class AsCall extends RBuiltinNode {
             values[i] = x.getDataAtAsObject(i + 1);
         }
         ArgumentsSignature signature;
-        if (nullNamesProfile.profile(x.getNames(attrProfiles) == null)) {
+        if (nullNamesProfile.profile(getNamesNode.getNames(x) == null)) {
             signature = ArgumentsSignature.empty(values.length);
         } else {
             String[] names = new String[length];
             // extract names, converting "" to null
-            RStringVector ns = x.getNames(attrProfiles);
+            RStringVector ns = getNamesNode.getNames(x);
             for (int i = 0; i < length; i++) {
                 String name = ns.getDataAt(i + 1);
                 if (name != null && !name.isEmpty()) {
