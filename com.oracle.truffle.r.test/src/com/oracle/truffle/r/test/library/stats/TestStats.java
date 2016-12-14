@@ -155,12 +155,9 @@ public class TestStats extends TestBase {
 
         assertEval("{ set.seed(7); round( rcauchy(3), digits = 5 ) }");
         assertEval("{ set.seed(7); round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
-    }
 
-    @Test
-    public void testRandomIgnore() {
-        assertEval(Ignored.Unknown, "{ set.seed(7); round( rlnorm(3), digits = 5 ) }");
-        assertEval(Ignored.Unknown, "{ set.seed(7); round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
+        assertEval("{ set.seed(7); round( rlnorm(3), digits = 5 ) }");
+        assertEval("{ set.seed(7); round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
     }
 
     @Test
