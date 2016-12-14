@@ -761,7 +761,9 @@ public final class RError extends RuntimeException {
         GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer"),
         WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' "),
         BAD_FUNCTION_EXPR("badly formed function expression"),
-        FIRST_ELEMENT_ONLY("only first element of '%s' argument used");
+        FIRST_ELEMENT_ONLY("only first element of '%s' argument used"),
+        MUST_BE_GE_ONE("'%s' must be of length >= 1"),
+        MORE_THAN_ONE_MATCH("there is more than one match in '%s'");
 
         public final String message;
         final boolean hasArgs;
