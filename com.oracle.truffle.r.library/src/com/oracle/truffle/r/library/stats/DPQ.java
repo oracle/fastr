@@ -79,7 +79,8 @@ public final class DPQ {
         return lowerTail ? 0.5 - p + 0.5 : p; /* 1 - p */
     }
 
-    public static double dval(double x, boolean logP) {
+    // R_D_val
+    public static double rdval(double x, boolean logP) {
         return logP ? Math.log(x) : x; /* x in pF(x,..) */
     }
 
@@ -104,6 +105,11 @@ public final class DPQ {
     // R_DT_Clog
     public static double rdtclog(double p, boolean lowerTail, boolean logP) {
         return lowerTail ? rdlexp(p, logP) : rdlog(p, logP);
+    }
+
+    // R_D_Clog(p) (log_p ? log1p(-(p)) : (0.5 - (p) + 0.5)) /* [log](1-p) */
+    public static double rdclog(double p, boolean logP) {
+        return logP ? RMath.log1p(-(p)) : (0.5 - (p) + 0.5);
     }
 
     // R_DT_qIv
