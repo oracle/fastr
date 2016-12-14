@@ -33,6 +33,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
@@ -718,5 +719,11 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public void checkDebugRequest(RFunction func) {
         RInstrumentation.checkDebugRequested(func);
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public Class<? extends TruffleLanguage> getTruffleRLanguage() {
+        return TruffleRLanguage.class;
     }
 }

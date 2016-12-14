@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -41,5 +42,11 @@ public final class NativeCallInfo {
         this.name = name;
         this.address = address;
         this.dllInfo = dllInfo;
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return String.format("dll: %s, name: %s", dllInfo.name, name);
     }
 }
