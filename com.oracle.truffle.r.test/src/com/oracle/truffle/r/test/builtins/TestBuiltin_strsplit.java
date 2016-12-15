@@ -121,5 +121,6 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("strsplit('foo bar baz', '[f z]', perl=TRUE)");
         assertEval("strsplit('oo bar baz', '[f z]', perl=TRUE)");
         assertEval("strsplit('foo \u1010ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄbar baz ', '[f z]', perl=TRUE)");
+        assertEval("strsplit('Ä Ä', '[ ]', perl=TRUE)");
     }
 }
