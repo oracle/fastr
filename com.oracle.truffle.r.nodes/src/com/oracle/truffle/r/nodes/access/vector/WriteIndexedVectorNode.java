@@ -32,7 +32,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.vector.ExtractListElement.UpdateStateOfListElement;
+import com.oracle.truffle.r.nodes.attributes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
@@ -473,14 +473,14 @@ abstract class WriteIndexedVectorNode extends Node {
 
         private final boolean setListElementAsObject;
         private final boolean isReplace;
-        @Child private UpdateStateOfListElement updateStateOfListElement;
+        @Child private UpdateShareableChildValueNode updateStateOfListElement;
         @Child private ShareObjectNode shareObjectNode;
 
         WriteListAction(boolean setListElementAsObject, boolean isReplace) {
             this.setListElementAsObject = setListElementAsObject;
             this.isReplace = isReplace;
             if (!isReplace) {
-                updateStateOfListElement = UpdateStateOfListElement.create();
+                updateStateOfListElement = UpdateShareableChildValueNode.create();
             } else {
                 shareObjectNode = ShareObjectNode.create();
             }

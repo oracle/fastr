@@ -99,6 +99,12 @@ public class TestBuiltin_attrassign extends TestBase {
     }
 
     @Test
+    public void testRefCount() {
+        assertEval("x <- c(1,2); attr(x, \"foo\") <- c(\"a\",\"b\"); y <- x; attr(x,\"foo\")[[1]] <- \"c\"; y");
+        assertEval("x <- c(1,2,3); y <- 42; attr(y, 'at') <- x; x[[1]] <- 2; attr(y, 'at')");
+    }
+
+    @Test
     public void testArgsCasts() {
         assertEval(Output.IgnoreErrorContext, "x<-42; attr(x, NULL) <- NULL");
         assertEval(Output.IgnoreErrorContext, "x<-42; attr(x, 42) <- NULL");

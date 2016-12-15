@@ -27,11 +27,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class UpdateSharedAttributeNode extends RBaseNode {
+public abstract class UpdateShareableChildValueNode extends RBaseNode {
 
-    protected UpdateSharedAttributeNode() {
+    protected UpdateShareableChildValueNode() {
     }
 
     public abstract void execute(Object owner, Object attrValue);
@@ -41,12 +42,13 @@ public abstract class UpdateSharedAttributeNode extends RBaseNode {
         return item;
     }
 
-    public static UpdateSharedAttributeNode create() {
-        return UpdateSharedAttributeNodeGen.create();
+    public static UpdateShareableChildValueNode create() {
+        return UpdateShareableChildValueNodeGen.create();
     }
 
     @Specialization
     protected void doShareableValues(RShareable owner, RShareable value,
+                    @Cached("createClassProfile()") ValueProfile ownerProfile,
                     @Cached("createClassProfile()") ValueProfile valueProfile,
                     @Cached("createBinaryProfile()") ConditionProfile sharedValue,
                     @Cached("createBinaryProfile()") ConditionProfile temporaryOwner) {
@@ -56,17 +58,34 @@ public abstract class UpdateSharedAttributeNode extends RBaseNode {
             return;
         }
 
+        if (owner instanceof RSharingAttributeStorage) {
+            // monomorphic invocations of the owner
+            RSharingAttributeStorage shOwner = (RSharingAttributeStorage) owner;
+            incRef(shOwner, profiledValue, temporaryOwner);
+        } else {
+            // invoking a type-profiled owner
+            RShareable ownerProfiled = ownerProfile.profile(owner);
+            incRef(ownerProfiled, profiledValue, temporaryOwner);
+        }
+    }
+
+    private static void incRef(RShareable owner, RShareable value, ConditionProfile temporaryOwner) {
         if (temporaryOwner.profile(owner.isTemporary())) {
+            // This can happen, for example, when we immediately extract out of a temporary
+            // list that was returned by a built-in, like: strsplit(...)[[1L]]. We do not need
+            // to transition the element, it may stay temporary.
             return;
         }
 
-        if (profiledValue.isTemporary()) {
+        // the owner is at least non-shared
+
+        if (value.isTemporary()) {
             // make it at least non-shared (the owner must be also at least non-shared)
-            profiledValue.incRefCount();
+            value.incRefCount();
         }
         if (owner.isShared()) {
             // owner is shared, make the attribute value shared too
-            profiledValue.incRefCount();
+            value.incRefCount();
         }
     }
 

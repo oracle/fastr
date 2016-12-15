@@ -29,7 +29,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
@@ -58,7 +58,7 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
                     @Cached("create()") ReuseNonSharedNode reuseNonSharedNode,
                     @Cached("createClassProfile()") ValueProfile randGeneratorClassProfile,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile,
-                    @Cached("create()") UpdateSharedAttributeNode updateSharedAttributeNode,
+                    @Cached("create()") UpdateShareableChildValueNode updateSharedAttributeNode,
                     @Cached("createNames()") GetFixedAttributeNode getNamesNode,
                     @Cached("createDimNames()") SetFixedAttributeNode setDimNamesNode) {
         RAbstractDoubleVector nonSharedProbs = (RAbstractDoubleVector) reuseNonSharedNode.execute(probsVec);
