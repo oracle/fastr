@@ -1267,8 +1267,8 @@ public class GrepFunctions {
                 lastEndIndex = endIndex;
                 matches.add(match);
             }
-            if (lastEndOffset < data.length()) {
-                matches.add(data.substring(lastEndOffset));
+            if (lastEndIndex < data.length()) {
+                matches.add(data.substring(lastEndIndex));
             }
             String[] result = new String[matches.size()];
             matches.toArray(result);
