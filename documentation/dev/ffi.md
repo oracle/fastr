@@ -2,7 +2,7 @@
 
 # Introduction
 The implementation of the [R FFI](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) is contained in the `fficall` directory of
-the `com.oracle/truffle.r.native` project`. It`s actually a bit more than that as it also contains code copied from GNU R, for example that supports graphics or is sufficiently
+the `com.oracle/truffle.r.native` project`. It's actually a bit more than that as it also contains code copied from GNU R, for example that supports graphics or is sufficiently
 simple that it is neither necessary nor desirable to implement in Java. As this has evolved a better name for `fficall` would probably be `main`
 for compatibility with GNU R.
 
@@ -11,6 +11,7 @@ for compatibility with GNU R.
  * `common`
  * `variable_defs`
  * `jni`
+ * `truffle`
 
 ## The `fficall/include` directory
 
@@ -48,4 +49,6 @@ dependent. In order to support a JNI and a non-JNI implementation, the file is s
 ## The `jni` directory
 `jni` contains the implementation that is based on and has explicit dependencies on Java JNI. It is described in more detail [here](jni_ffi.md)
 
+## The `truffle` directory
 
+`truffle` contains the native side of the variant that is based on the Truffle LLVM implementation. It is described in more detail [here](truffle_ffi.md)

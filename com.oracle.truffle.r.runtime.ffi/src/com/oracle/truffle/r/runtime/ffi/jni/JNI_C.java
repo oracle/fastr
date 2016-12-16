@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class JNI_C implements CRFFI {
-    private static class JNI_CRFFINode extends CRFFINode {
+    public static class JNI_CRFFINode extends CRFFINode {
         /**
          * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
          * native array types, no upcalls are possible, and no result is returned. However, the

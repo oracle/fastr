@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,28 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+#!/bin/bash
 
-ifeq ($(TOPDIR),)
-    TOPDIR = $(abspath ..)
-endif
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
+with_sulong=0
+while [ $DIR != "/" ] ; do
+  if [ -d $DIR/sulong ] && [ -d $DIR/sulong/mx.sulong ] ; then
+    with_sulong=1
+    break
+  fi
+  DIR=`dirname $DIR`
+done
 
-ifneq ($(MAKECMDGOALS),clean)
-include $(NATIVE_PROJECT)/platform.mk
-endif
+if [ $with_sulong = 1 ] && [ "$FASTR_SULONG_IGNORE" = "" ] ; then
+    mx --dynamicimport sulong fastr-c++ $@
+else
+    g++ $@
+fi
 
-.PHONY: all clean
-
-OBJ = lib
-SRC = src
-C_SOURCES := $(wildcard $(SRC)/*.c)
-# Since this library is loaded explicitly we keep a consistent
-# extension so that the test script is portable for TestExpectedOutput
-C_LIBNAME := liburand.so
-C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-C_LIB := $(OBJ)/$(C_LIBNAME)
-
-
-INCLUDE_DIR := $(NATIVE_PROJECT)/include
-
-all: $(C_LIB)
-
-$(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
-
-$(OBJ):
-	mkdir -p $(OBJ)
-
-$(OBJ)/%.o: $(SRC)/%.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
-
-clean:
-	rm -rf $(OBJ)

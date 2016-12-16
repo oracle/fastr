@@ -65,6 +65,23 @@ CTXT FASTR_GlobalContext() {
     return addGlobalRef(env, res, 0);
 }
 
+static const char *R_Home_local;
+static void *R_NilValue_local;
+static void *R_UnboundValue_local;
+
+char *FASTR_R_Home() {
+	return (char *)R_Home_local;
+}
+
+SEXP FASTR_R_NilValue() {
+	return R_NilValue_local;
+}
+
+SEXP FASTR_R_UnboundValue() {
+	return R_UnboundValue_local;
+}
+
+
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	// initialValues is an array of enums
 	jclass enumClass = (*env)->GetObjectClass(env, (*env)->GetObjectArrayElement(env, initialValues, 0));
@@ -93,7 +110,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 		jobject value = (*env)->CallObjectMethod(env, variable, getValueMethodID);
 		if (value != NULL) {
 			if (strcmp(nameChars, "R_Home") == 0) {
-				R_Home = (*env)->GetStringUTFChars(env, value, NULL);
+				R_Home_local = (*env)->GetStringUTFChars(env, value, NULL);
 			} else if (strcmp(nameChars, "R_NaN") == 0) {
 				R_NaN = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_PosInf") == 0) {
@@ -109,9 +126,9 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {
-					R_NilValue = ref;
+					R_NilValue_local = ref;
 				} else if (strcmp(nameChars, "R_UnboundValue") == 0) {
-					R_UnboundValue = ref;
+					R_UnboundValue_local = ref;
 				} else if (strcmp(nameChars, "R_MissingArg") == 0) {
 					R_MissingArg = ref;
 				} else if (strcmp(nameChars, "R_Bracket2Symbol") == 0) {

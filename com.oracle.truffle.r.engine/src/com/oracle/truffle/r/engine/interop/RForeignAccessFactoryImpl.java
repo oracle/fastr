@@ -38,12 +38,14 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -99,7 +101,10 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                     RFunction.class, RNull.class, REnvironment.class,
                     RList.class, RSymbol.class,
                     RPairList.class, RExternalPtr.class, RUnboundValue.class,
-                    DLLInfo.class, DotSymbol.class};
+                    DLLInfo.class, DotSymbol.class,
+                    NativeRawArray.class, NativeCharArray.class, NativeIntegerArray.class,
+                    NativeDoubleArray.class, NativeLogicalArray.class,
+                    RDouble.class, RInteger.class};
 
     private static final class ForeignAccessState {
 
@@ -211,6 +216,20 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                 foreignAccess = RExternalPtrMRForeign.createAccess();
             } else if (RUnboundValue.class.isAssignableFrom(clazz)) {
                 foreignAccess = RUnboundValueMRForeign.createAccess();
+            } else if (NativeRawArray.class.isAssignableFrom(clazz)) {
+                foreignAccess = NativeRawArrayMRForeign.createAccess();
+            } else if (NativeLogicalArray.class.isAssignableFrom(clazz)) {
+                foreignAccess = NativeLogicalArrayMRForeign.createAccess();
+            } else if (NativeCharArray.class.isAssignableFrom(clazz)) {
+                foreignAccess = NativeCharArrayMRForeign.createAccess();
+            } else if (NativeDoubleArray.class.isAssignableFrom(clazz)) {
+                foreignAccess = NativeDoubleArrayMRForeign.createAccess();
+            } else if (NativeIntegerArray.class.isAssignableFrom(clazz)) {
+                foreignAccess = NativeIntegerArrayMRForeign.createAccess();
+            } else if (RInteger.class.isAssignableFrom(clazz)) {
+                foreignAccess = RIntegerMRForeign.createAccess();
+            } else if (RDouble.class.isAssignableFrom(clazz)) {
+                foreignAccess = RDoubleMRForeign.createAccess();
             } else {
                 if (RAbstractVector.class.isAssignableFrom(clazz)) {
                     foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());

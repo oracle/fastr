@@ -26,6 +26,7 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
+import mx_fastr_compile
 import mx_fastr_dists
 import mx_fastr_junit
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
@@ -47,6 +48,7 @@ _fastr_suite = mx.suite('fastr')
 If this is None, then we run under the standard VM in interpreted mode only.
 '''
 _mx_graal = mx.suite("graal-core", fatalIfMissing=False)
+_mx_sulong = mx.suite("sulong", fatalIfMissing=False)
 
 _r_command_package = 'com.oracle.truffle.r.engine'
 _repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
@@ -91,9 +93,14 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     if not jdk:
         jdk = get_default_jdk()
 
-    vmArgs = mx.get_runtime_jvm_args('FASTR', jdk=jdk)
+    dists = ['FASTR']
+    if _mx_sulong:
+        dists.append('SULONG')
+
+    vmArgs = mx.get_runtime_jvm_args(dists, jdk=jdk)
 
     vmArgs += set_graal_options()
+    vmArgs += _sulong_options()
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -139,6 +146,13 @@ def set_graal_options():
     if _mx_graal:
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         return result
+    else:
+        return []
+
+def _sulong_options():
+    if _mx_sulong:
+        return ['-Dfastr.ffi.factory.class=com.oracle.truffle.r.engine.interop.ffi.Truffle_RFFIFactory',
+                '-XX:-UseJVMCIClassLoader']
     else:
         return []
 
@@ -347,6 +361,7 @@ def _junit_r_harness(args, vmArgs, jdk, junitArgs):
     vmArgs += ['-Xss12m']
     # no point in printing errors to file when running tests (that contain errors on purpose)
     vmArgs += ['-DR:-PrintErrorStacktracesToFile']
+    vmArgs += _sulong_options()
 
     setREnvironment()
 
@@ -586,4 +601,5 @@ _commands = {
     'nativebuild' : [nativebuild, '[]'],
     }
 
+_commands.update(mx_fastr_compile._commands)
 mx.update_commands(_fastr_suite, _commands)
