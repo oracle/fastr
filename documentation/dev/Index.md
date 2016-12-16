@@ -2,7 +2,9 @@
 
 ## Index
 
-[R FFI Implementation](ffi.md)
+* [Project Structure](structure.md)
+* [Building](building.md)
+* [R FFI Implementation](ffi.md)
 
 
 
