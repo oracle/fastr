@@ -53,7 +53,7 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 
 INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
-all: $(OBJ)/main
+all: $(OBJ)/main Makefile
 
 $(OBJ)/main: | $(OBJ)
 
@@ -62,7 +62,7 @@ $(OBJ):
 
 
 $(OBJ)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 
 clean:
 	rm -rf $(OBJ)
