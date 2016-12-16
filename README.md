@@ -30,7 +30,7 @@ FastR is primarily aimed at long-running applications. The runtime performance b
 
 Building FastR from source is supported on Mac OS X (El Capitan onwards), and various flavors of Linux.
 FastR uses a build tool called `mx` (cf `maven`) which can be downloaded from [here](http://github.com/graalvm/mx).
-`mx` manages software in _suites_, which are normally one-to-one with a `git` repository. FastR depends fundamentally on the [truffle](http://github.com/graalvm/truffle) suite. However, performance also depends on the [graal compiler](http://github.com/graalvm/graal-core) as without it, FastR operates in interpreted mode only. The conventional way to arrange the Git repos (suites) is as siblings in a parent directory, which we will call `FASTR_HOME`.
+`mx` manages software in _suites_, which are normally one-to-one with a `git` repository. FastR depends fundamentally on the [truffle](http://github.com/graalvm/truffle) suite. However, performance also depends on the [Graal compiler](http://github.com/graalvm/graal-core) as without it, FastR operates in interpreted mode only. The conventional way to arrange the Git repos (suites) is as siblings in a parent directory, which we will call `FASTR_HOME`.
 
 ## Pre-Requisites
 FastR shares some code with GnuR, for example, the default packages and the Blas library. Therefore, a version of GnuR (currently
@@ -74,7 +74,14 @@ Use the following sequence of commands to download and build an interpreted vers
 	$ cd fastr
 	$ mx build
 
-The build will clone the Truffle repository and also download various required libraries.
+The build will clone the Truffle repository and also download various required libraries, including GNU R, which is built first. Any problems with the GNU R configure step likely relate
+to dependent packages, so review the previous section. For FastR development, GNU R only needs to be built once, but an `mx clean` will, by default remove it. This can be prevented by setting
+the `GNUR_NOCLEAN` environment variable to any value.
+
+It is possible to build FastR in "release mode" which builds and installs the GNU R "recommended" packages and also creates a `fastr-release.jar` file that contains everything that is needed to
+run FastR, apart from a Java VM. In particular it captures the package dependencies, e.g., `pcre` and `libgfortran`, so that when the file is unpacked on another system it will work regardless of whether the packages are installed on that system. For some systems that depend on FastR, e.g., GraalVM, it is a requirement to build in release mode as they depend on this file. To build in release mode, set the `FASTR_RELEASE` environment variable to any value. Note that this can be done at any time without doing a complete clean and rebuild. Simply set the variable and execute `mx build`.
+
+## Running FastR
 
 After building, running the FastR console can be done either with `bin/R` or  with `mx r` or `mx R`. Using `mx` makes available some additional options that are of interest to FastR developers.
 FastR supports the same command line arguments as R, so running an R script is done with `bin/R -f <file>` or `bin/Rscript <file>`.
@@ -85,7 +92,7 @@ FastR supports the same command line arguments as R, so running an R script is d
 
 ## Further Documentation
 
-Further documentation on FastR, its limitations and additional functionality is [here](Index.md).
+Further documentation on FastR, its limitations and additional functionality is [here](documentation/Index.md).
 
 ## Contributing
 

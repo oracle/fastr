@@ -1,6 +1,0 @@
-This is a multi-step process to build GnuR in such a way that FASTR can use some of the libraries.
-After building GnuR we extract configuration information for use in building packages in the FastR environment.
-This goes into the file platform.mk, which is included in the Makefile's for the standard packages built for FastR.
-The main change is to define the symbol FASTR to ensure that some important modifications to Rinternals.h are made
-(e.g. changing an SEXP to a JNI jobject).
-
