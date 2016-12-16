@@ -139,13 +139,4 @@ public class JNI_Base implements BaseRFFI {
     private static native long native_strtol(String s, int base, int[] errno);
 
     private static native String native_readlink(String s, int[] errno);
-
-    private static native long native_dlopen(String path, boolean local, boolean now);
-
-    private static native int native_dlclose(long handle);
-
-    private static native String native_dlerror();
-
-    private static native long native_dlsym(long handle, String symbol);
-
 }
