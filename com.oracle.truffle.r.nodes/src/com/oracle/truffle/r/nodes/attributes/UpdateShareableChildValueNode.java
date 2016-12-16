@@ -48,8 +48,9 @@ public abstract class UpdateShareableChildValueNode extends RBaseNode {
 
     @Specialization
     protected void doShareableValues(RShareable owner, RShareable value,
-                    @Cached("createClassProfile()") ValueProfile ownerProfile,
                     @Cached("createClassProfile()") ValueProfile valueProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile sharingAttrsStorageOwner,
+                    @Cached("createClassProfile()") ValueProfile ownerProfile,
                     @Cached("createBinaryProfile()") ConditionProfile sharedValue,
                     @Cached("createBinaryProfile()") ConditionProfile temporaryOwner) {
         RShareable profiledValue = valueProfile.profile(value);
@@ -58,7 +59,7 @@ public abstract class UpdateShareableChildValueNode extends RBaseNode {
             return;
         }
 
-        if (owner instanceof RSharingAttributeStorage) {
+        if (sharingAttrsStorageOwner.profile(owner instanceof RSharingAttributeStorage)) {
             // monomorphic invocations of the owner
             RSharingAttributeStorage shOwner = (RSharingAttributeStorage) owner;
             incRef(shOwner, profiledValue, temporaryOwner);
