@@ -22,17 +22,28 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.RRuntime;
 
-public final class Runif implements RandFunction2_Double {
+public final class Runif extends RandFunction2_Double {
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile minEqualsMaxProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile minValueProfile = ValueProfile.createEqualityProfile();
+    private final ValueProfile maxValueProfile = ValueProfile.createEqualityProfile();
+
     @Override
-    public double evaluate(double min, double max, RandomNumberProvider rand) {
+    public double execute(double minIn, double maxIn, RandomNumberProvider rand) {
+        double min = minValueProfile.profile(minIn);
+        double max = maxValueProfile.profile(maxIn);
         if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
+            errorProfile.enter();
             return RMath.mlError();
         }
-        if (min == max) {
+        if (minEqualsMaxProfile.profile(min == max)) {
             return min;
         }
         return min + rand.unifRand() * (max - min);

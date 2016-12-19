@@ -14,16 +14,16 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RChisq implements RandFunction1_Double {
+public final class RChisq extends RandFunction1_Double {
     public static double rchisq(double df, RandomNumberProvider rand) {
         if (!Double.isFinite(df) || df < 0.0) {
             return RMath.mlError();
         }
-        return new RGamma().evaluate(df / 2.0, 2.0, rand);
+        return new RGamma().execute(df / 2.0, 2.0, rand);
     }
 
     @Override
-    public double evaluate(double a, RandomNumberProvider rand) {
+    public double execute(double a, RandomNumberProvider rand) {
         return rchisq(a, rand);
     }
 }

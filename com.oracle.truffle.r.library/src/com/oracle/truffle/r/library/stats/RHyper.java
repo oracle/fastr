@@ -21,7 +21,7 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
-public final class RHyper implements RandFunction3_Double {
+public final class RHyper extends RandFunction3_Double {
     private static final double[] al = {
                     0.0, /* ln(0!)=ln(1) */
                     0.0, /* ln(1!)=ln(1) */
@@ -87,7 +87,7 @@ public final class RHyper implements RandFunction3_Double {
     // rhyper(NR, NB, n) -- NR 'red', NB 'blue', n drawn, how many are 'red'
     @Override
     @TruffleBoundary
-    public double evaluate(double nn1in, double nn2in, double kkin, RandomNumberProvider rand) {
+    public double execute(double nn1in, double nn2in, double kkin, RandomNumberProvider rand) {
         /* extern double afc(int); */
 
         int nn1;
@@ -117,7 +117,7 @@ public final class RHyper implements RandFunction3_Double {
             // FIXME: Much faster to give rbinom() approx when appropriate; -> see Kuensch(1989)
             // Johnson, Kotz,.. p.258 (top) mention the *four* different binomial approximations
             if (kkin == 1.) { // Bernoulli
-                return rbinom.evaluate(kkin, nn1in / (nn1in + nn2in), rand);
+                return rbinom.execute(kkin, nn1in / (nn1in + nn2in), rand);
             }
             // Slow, but safe: return F^{-1}(U) where F(.) = phyper(.) and U ~ U[0,1]
             return QHyper.qhyper(rand.unifRand(), nn1in, nn2in, kkin, false, false);

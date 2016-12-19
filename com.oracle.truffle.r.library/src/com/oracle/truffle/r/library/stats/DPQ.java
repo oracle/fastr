@@ -12,7 +12,6 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 
-import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
@@ -26,12 +25,18 @@ public final class DPQ {
         // only static methods
     }
 
-    public static final class EarlyReturn extends ControlFlowException {
+    public static final class EarlyReturn extends Exception {
         private static final long serialVersionUID = 1182697355931636213L;
         public final double result;
 
         private EarlyReturn(double result) {
             this.result = result;
+        }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return null;
         }
     }
 
@@ -145,6 +150,13 @@ public final class DPQ {
             if (p == 1) {
                 throw new EarlyReturn(lowerTail ? right : left);
             }
+        }
+    }
+
+    // R_P_bounds_Inf_01
+    public static void rpboundsinf01(double x, boolean lowerTail, boolean logP) throws EarlyReturn {
+        if (!Double.isFinite(x)) {
+            throw new EarlyReturn(x > 0 ? rdt0(lowerTail, logP) : rdt0(lowerTail, logP));
         }
     }
 

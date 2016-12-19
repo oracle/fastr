@@ -163,7 +163,7 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
             if (probK.compareTo(BigDecimal.ZERO) != 0) {
                 pp = probK.divide(pTot, RoundingMode.HALF_UP).doubleValue();
                 // System.out.printf("[%d] %.17f\n", k + 1, pp);
-                rN[rnStartIdx + k] = ((pp < 1.) ? (int) rbinom.evaluate((double) n, pp, rand) :
+                rN[rnStartIdx + k] = ((pp < 1.) ? (int) rbinom.execute((double) n, pp, rand) :
                 /* >= 1; > 1 happens because of rounding */
                                 n);
                 n -= rN[rnStartIdx + k];

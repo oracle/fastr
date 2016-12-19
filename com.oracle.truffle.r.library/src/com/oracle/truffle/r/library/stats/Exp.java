@@ -17,7 +17,11 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Exp {
+public final class Exp {
+    private Exp() {
+        // only static members
+    }
+
     public static final class DExp implements Function2_1 {
         @Override
         public double evaluate(double x, double scale, boolean giveLog) {
@@ -37,9 +41,9 @@ public class Exp {
         }
     }
 
-    public static final class RExp implements RandFunction1_Double {
+    public static final class RExp extends RandFunction1_Double {
         @Override
-        public double evaluate(double scale, RandomNumberProvider rand) {
+        public double execute(double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(scale) || scale <= 0.0) {
                 return scale == 0. ? 0. : RMath.mlError();
             }

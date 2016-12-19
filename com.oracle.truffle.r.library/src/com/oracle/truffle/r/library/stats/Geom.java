@@ -35,7 +35,11 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Geom {
+public final class Geom {
+    private Geom() {
+        // only static members
+    }
+
     public static final class QGeom implements Function2_2 {
         @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
@@ -87,9 +91,9 @@ public class Geom {
         }
     }
 
-    public static final class RGeom implements RandFunction1_Double {
+    public static final class RGeom extends RandFunction1_Double {
         @Override
-        public double evaluate(double p, RandomNumberProvider rand) {
+        public double execute(double p, RandomNumberProvider rand) {
             if (!Double.isFinite(p) || p <= 0 || p > 1) {
                 return RMath.mlError();
             }

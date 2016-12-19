@@ -20,12 +20,12 @@ import static com.oracle.truffle.r.library.stats.RMath.fmin2;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RBeta implements RandFunction2_Double {
+public final class RBeta extends RandFunction2_Double {
 
     private static final double expmax = (DBL_MAX_EXP * M_LN2); /* = log(DBL_MAX) */
 
     @Override
-    public double evaluate(double aa, double bb, RandomNumberProvider rand) {
+    public double execute(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
             return RMath.mlError();
         }
