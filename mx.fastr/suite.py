@@ -89,7 +89,7 @@ suite = {
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
-    
+
     "XZ-1.5" : {
       "path" : "libdownloads/xz-1.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.5/xz-1.5.jar"],
