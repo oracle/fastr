@@ -23,21 +23,17 @@ public final class Signrank {
 
     public static final class RSignrank extends RandFunction1_Double {
         @Override
-        public double execute(double n, RandomNumberProvider rand) {
-            int i;
-            int k;
-            double r;
-
-            if (Double.isNaN(n)) {
-                return n;
+        public double execute(double nIn, RandomNumberProvider rand) {
+            if (Double.isNaN(nIn)) {
+                return nIn;
             }
-            if (Double.isInfinite(n)) {
+            if (Double.isInfinite(nIn)) {
                 // In GnuR these "results" seem to be generated due to the behaviour of R_forceint,
                 // and the "(int) n" cast, which ends up casting +/-infinity to integer...
-                return n < 0 ? RMath.mlError() : 0;
+                return nIn < 0 ? RMath.mlError() : 0;
             }
 
-            n = forceint(n);
+            double n = forceint(nIn);
             if (n < 0) {
                 return RMath.mlError();
             }
@@ -45,9 +41,9 @@ public final class Signrank {
             if (n == 0) {
                 return 0;
             }
-            r = 0.0;
-            k = (int) n;
-            for (i = 0; i < k; i++) {
+            double r = 0.0;
+            int k = (int) n;
+            for (int i = 0; i < k; i++) {
                 r += (i + 1) * Math.floor(rand.unifRand() + 0.5);
             }
             return r;

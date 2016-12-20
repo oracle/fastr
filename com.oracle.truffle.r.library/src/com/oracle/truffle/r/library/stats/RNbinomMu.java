@@ -18,13 +18,11 @@ public final class RNbinomMu extends RandFunction2_Double {
     private final RGamma rgamma = new RGamma();
 
     @Override
-    public double execute(double size, double mu, RandomNumberProvider rand) {
-        if (!Double.isFinite(mu) || Double.isNaN(size) || size <= 0 || mu < 0) {
+    public double execute(double initialSize, double mu, RandomNumberProvider rand) {
+        if (!Double.isFinite(mu) || Double.isNaN(initialSize) || initialSize <= 0 || mu < 0) {
             return RMath.mlError();
         }
-        if (!Double.isFinite(size)) {
-            size = Double.MAX_VALUE / 2.;
-        }
+        double size = Double.isFinite(initialSize) ? initialSize : Double.MAX_VALUE / 2.;
         return (mu == 0) ? 0 : RPois.rpois(rgamma.execute(size, mu / size, rand), rand);
     }
 }

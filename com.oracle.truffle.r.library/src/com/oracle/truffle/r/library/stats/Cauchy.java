@@ -67,13 +67,13 @@ public final class Cauchy {
                 return RMath.mlError();
             }
 
-            x = (x - location) / scale;
-            if (Double.isNaN(x)) {
+            double x2 = (x - location) / scale;
+            if (Double.isNaN(x2)) {
                 return RMath.mlError();
             }
 
-            if (!Double.isFinite(x)) {
-                if (x < 0) {
+            if (!Double.isFinite(x2)) {
+                if (x2 < 0) {
                     return DPQ.rdt0(lowerTail, logP);
                 } else {
                     return DPQ.rdt1(lowerTail, logP);
@@ -81,7 +81,7 @@ public final class Cauchy {
             }
 
             if (!lowerTail) {
-                x = -x;
+                x2 = -x2;
             }
 
             /*
@@ -91,18 +91,19 @@ public final class Cauchy {
 
             // GnuR has #ifdef HAVE_ATANPI where it uses atanpi function, here we only implement the
             // case when atanpi is not available for the moment
-            if (fabs(x) > 1) {
-                double y = Math.atan(1 / x) / M_PI;
-                return (x > 0) ? DPQ.rdclog(y, logP) : DPQ.rdval(-y, logP);
+            if (fabs(x2) > 1) {
+                double y = Math.atan(1 / x2) / M_PI;
+                return (x2 > 0) ? DPQ.rdclog(y, logP) : DPQ.rdval(-y, logP);
             } else {
-                return DPQ.rdval(0.5 + Math.atan(x) / M_PI, logP);
+                return DPQ.rdval(0.5 + Math.atan(x2) / M_PI, logP);
             }
         }
     }
 
     public static final class QCauchy implements Function3_2 {
         @Override
-        public double evaluate(double p, double location, double scale, boolean lowerTail, boolean logP) {
+        public double evaluate(double pIn, double location, double scale, boolean lowerTailIn, boolean logP) {
+            double p = pIn;
             if (Double.isNaN(p) || Double.isNaN(location) || Double.isNaN(scale)) {
                 return p + location + scale;
             }
@@ -118,6 +119,7 @@ public final class Cauchy {
                 return RMath.mlError();
             }
 
+            boolean lowerTail = lowerTailIn;
             if (logP) {
                 if (p > -1) {
                     /*

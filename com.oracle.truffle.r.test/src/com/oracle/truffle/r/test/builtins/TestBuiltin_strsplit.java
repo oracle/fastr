@@ -29,8 +29,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

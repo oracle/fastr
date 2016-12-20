@@ -52,7 +52,7 @@ public abstract class Sprintf extends RBuiltinNode {
     @Child private Sprintf sprintfRecursive;
 
     @Specialization
-    protected RStringVector sprintf(RAbstractStringVector fmt, @SuppressWarnings("unused") RNull x) {
+    protected RStringVector sprintf(@SuppressWarnings("unused") RAbstractStringVector fmt, @SuppressWarnings("unused") RNull x) {
         return RDataFactory.createEmptyStringVector();
     }
 

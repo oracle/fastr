@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -47,8 +46,6 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     private final ConditionProfile greaterZero = ConditionProfile.createBinaryProfile();
 
     private final boolean recursive;
-
-    private final RAttributeProfiles attributeProfile = RAttributeProfiles.create();
 
     PositionCheckSubscriptNode(ElementAccessMode mode, RType containerType, Object positionValue, int dimensionIndex, int numDimensions, boolean exact, boolean assignment, boolean recursive) {
         super(mode, containerType, positionValue, dimensionIndex, numDimensions, exact, assignment);

@@ -131,7 +131,7 @@ public final class RPois extends RandFunction1_Double {
                     if (l != 0) {
                         for (k = (u <= 0.458) ? 1 : Math.min(l, m); k <= l; k++) {
                             if (u <= pp[k]) {
-                                return (double) k;
+                                return k;
                             }
                         }
                         if (l == 35) { /* u > pp[35] */
@@ -149,7 +149,7 @@ public final class RPois extends RandFunction1_Double {
                         pp[k] = q;
                         if (u <= q) {
                             l = k;
-                            return (double) k;
+                            return k;
                         }
                     }
                     l = 35;

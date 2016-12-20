@@ -70,8 +70,7 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), 8L, list(c('1', '2', '3', '4', '5', '6', '7', '8'))); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(list(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), 8L, list(c('1', '2', '3', '4', '5', '6', '7', '8'))); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
