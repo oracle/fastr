@@ -43,17 +43,8 @@ public final class RBeta extends RandFunction2_Double {
             return 0.0;
         }
 
-        double a;
-        double b;
-        double r;
-        double s;
-        double t;
-        double u1;
-        double u2;
         double v = 0;
         double w = 0;
-        double y;
-        double z;
 
         // TODO: state variables
         double beta = 0;
@@ -71,8 +62,8 @@ public final class RBeta extends RandFunction2_Double {
             oldb = bb;
         }
 
-        a = fmin2(aa, bb);
-        b = fmax2(aa, bb); /* a <= b */
+        double a = fmin2(aa, bb);
+        double b = fmax2(aa, bb); /* a <= b */
         double alpha = a + b;
 
         if (a <= 1.0) { /* --- Algorithm BC --- */
@@ -85,10 +76,11 @@ public final class RBeta extends RandFunction2_Double {
             }
             /* FIXME: "do { } while()", but not trivially because of "continue"s: */
             for (;;) {
-                u1 = rand.unifRand();
-                u2 = rand.unifRand();
+                double u1 = rand.unifRand();
+                double u2 = rand.unifRand();
+                double z;
                 if (u1 < 0.5) {
-                    y = u1 * u2;
+                    double y = u1 * u2;
                     z = u1 * y;
                     if (0.25 * u2 + z - y >= k1) {
                         continue;
@@ -97,7 +89,7 @@ public final class RBeta extends RandFunction2_Double {
                     z = u1 * u1 * u2;
                     if (z <= 0.25) {
                         v = beta * Math.log(u1 / (1.0 - u1));
-                        w = wFromU1Bet(b, v, w);
+                        w = wFromU1Bet(b, v);
                         break;
                     }
                     if (z >= k2) {
@@ -106,7 +98,7 @@ public final class RBeta extends RandFunction2_Double {
                 }
 
                 v = beta * Math.log(u1 / (1.0 - u1));
-                w = wFromU1Bet(b, v, w);
+                w = wFromU1Bet(b, v);
 
                 if (alpha * (Math.log(alpha / (a + w)) + v) - 1.3862944 >= Math.log(z)) {
                     break;
@@ -120,16 +112,18 @@ public final class RBeta extends RandFunction2_Double {
                 beta = Math.sqrt((alpha - 2.0) / (2.0 * a * b - alpha));
                 gamma = a + 1.0 / beta;
             }
+            double r;
+            double t;
             do {
-                u1 = rand.unifRand();
-                u2 = rand.unifRand();
+                double u1 = rand.unifRand();
+                double u2 = rand.unifRand();
 
                 v = beta * Math.log(u1 / (1.0 - u1));
-                w = wFromU1Bet(a, v, w);
+                w = wFromU1Bet(a, v);
 
-                z = u1 * u1 * u2;
+                double z = u1 * u1 * u2;
                 r = gamma * v - 1.3862944;
-                s = a + r - w;
+                double s = a + r - w;
                 if (s + 2.609438 >= 5.0 * z) {
                     break;
                 }
@@ -143,16 +137,13 @@ public final class RBeta extends RandFunction2_Double {
         }
     }
 
-    private static double wFromU1Bet(double aa, double v, double w) {
+    private static double wFromU1Bet(double aa, double v) {
         if (v <= expmax) {
-            w = aa * Math.exp(v);
-            if (!Double.isFinite(w)) {
-                w = Double.MAX_VALUE;
-            }
+            double result = aa * Math.exp(v);
+            return Double.isFinite(result) ? result : Double.MAX_VALUE;
         } else {
-            w = Double.MAX_VALUE;
+            return Double.MAX_VALUE;
         }
-        return w;
     }
 
 }

@@ -53,20 +53,20 @@ public final class Exp {
 
     public static final class PExp implements Function2_2 {
         @Override
-        public double evaluate(double x, double scale, boolean lowerTail, boolean logP) {
-            if (Double.isNaN(x) || Double.isNaN(scale)) {
-                return x + scale;
+        public double evaluate(double xIn, double scale, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(xIn) || Double.isNaN(scale)) {
+                return xIn + scale;
             }
             if (scale < 0) {
                 return RMath.mlError();
             }
 
-            if (x <= 0.) {
+            if (xIn <= 0.) {
                 return DPQ.rdt0(lowerTail, logP);
             }
 
             /* same as weibull( shape = 1): */
-            x = -(x / scale);
+            double x = -(xIn / scale);
             return lowerTail ? (logP ? DPQ.rlog1exp(x) : -RMath.expm1(x)) : DPQ.rdexp(x, logP);
         }
     }
@@ -93,7 +93,6 @@ public final class Exp {
             }
 
             return -scale * DPQ.rdtclog(p, lowerTail, logP);
-
         }
     }
 }

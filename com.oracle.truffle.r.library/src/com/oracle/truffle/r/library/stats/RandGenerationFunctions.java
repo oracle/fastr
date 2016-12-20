@@ -188,6 +188,7 @@ public final class RandGenerationFunctions {
             return result;
         }
 
+        @SuppressWarnings("unused")
         Object evaluate(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandGenerationNodeData nodeData, RandomNumberProvider randProvider) {
             // DSL generates code for this class too, with abstract method it would not compile
             throw RInternalError.shouldNotReachHere("must be overridden");

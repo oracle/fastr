@@ -66,14 +66,14 @@ public class RMath {
             return mlError();
         }
 
-        x = fmod(x, 1.); // tan(pi(x + k)) == tan(pi x) for all integer k
+        double x2 = fmod(x, 1.); // tan(pi(x + k)) == tan(pi x) for all integer k
         // map (-1,1) --> (-1/2, 1/2] :
-        if (x <= -0.5) {
-            x++;
-        } else if (x > 0.5) {
-            x--;
+        if (x2 <= -0.5) {
+            x2++;
+        } else if (x2 > 0.5) {
+            x2--;
         }
-        return (x == 0.) ? 0. : ((x == 0.5) ? Double.NaN : Math.tan(MathConstants.M_PI * x));
+        return (x2 == 0.) ? 0. : ((x2 == 0.5) ? Double.NaN : Math.tan(MathConstants.M_PI * x2));
     }
 
     //

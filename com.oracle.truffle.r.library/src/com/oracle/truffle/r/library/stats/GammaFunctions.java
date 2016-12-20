@@ -187,7 +187,7 @@ public abstract class GammaFunctions {
         return 1 / (x * 12);
     }
 
-    static double lgamma(double x) {
+    static double lgamma(@SuppressWarnings("unused") double x) {
         throw RError.nyi(RError.SHOW_CALLER, "lgamma from libc");
     }
 
