@@ -22,6 +22,8 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.SortedMap;
@@ -63,14 +65,17 @@ public class TestBase {
 
     public static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
 
+    /**
+     * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
+     */
     public enum Output implements TestTrait {
         IgnoreErrorContext, // the error context is ignored (e.g., "a+b" vs. "a + b")
         IgnoreErrorMessage, // the actual error message is ignored
         IgnoreWarningContext, // the warning context is ignored
-        MayIgnoreErrorContext,
+        MayIgnoreErrorContext, // like IgnoreErrorContext, but no warning if the messages match
         MayIgnoreWarningContext,
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
-        IgnoreWhitespace;
+        IgnoreWhitespace; // removes all whitespace from the whole output
 
         @Override
         public String getName() {
@@ -572,37 +577,51 @@ public class TestBase {
         }
     }
 
-    private void evalAndCompare(String[] inputs, TestTrait... traits) {
-        WhiteList[] whiteLists = TestTrait.collect(traits, WhiteList.class);
+    /**
+     * Wraps the traits, there are some meta-traits like {@link #isIgnored}, other traits can be
+     * accessed through the corresponding enum-set.
+     */
+    private static class TestTraitsSet {
+        EnumSet<Ignored> ignored = EnumSet.noneOf(Ignored.class);
+        EnumSet<Output> output = EnumSet.noneOf(Output.class);
+        EnumSet<Context> context = EnumSet.noneOf(Context.class);
+        boolean isIgnored;
+        boolean containsError;
 
-        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !(TestTrait.contains(traits, Ignored.Unstable) || TestTrait.contains(traits, Ignored.SideEffects)));
+        TestTraitsSet(TestTrait[] traits) {
+            ignored.addAll(Arrays.asList(TestTrait.collect(traits, Ignored.class)));
+            output.addAll(Arrays.asList(TestTrait.collect(traits, Output.class)));
+            context.addAll(Arrays.asList(TestTrait.collect(traits, Context.class)));
+            containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.IgnoreErrorMessage)));
+            isIgnored = ignored.size() > 0 ^ (ProcessFailedTests && !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
+            assert !output.contains(Output.IgnoreWhitespace) || output.size() == 1 : "IgnoreWhitespace trait does not work with any other Output trait";
 
-        boolean containsWarning = TestTrait.contains(traits, Output.IgnoreWarningContext);
-        boolean containsError = (!FULL_COMPARE_ERRORS && (TestTrait.contains(traits, Output.IgnoreErrorContext) || TestTrait.contains(traits, Output.IgnoreErrorMessage)));
-        boolean mayContainWarning = TestTrait.contains(traits, Output.MayIgnoreWarningContext);
-        boolean mayContainError = TestTrait.contains(traits, Output.MayIgnoreErrorContext);
-        boolean ambiguousError = TestTrait.contains(traits, Output.IgnoreErrorMessage);
-        boolean ignoreWhitespace = TestTrait.contains(traits, Output.IgnoreWhitespace);
-        boolean containsReferences = TestTrait.contains(traits, Output.ContainsReferences);
-        boolean nonSharedContext = TestTrait.contains(traits, Context.NonShared);
-        boolean longTimeout = TestTrait.contains(traits, Context.LongTimeout);
+        }
 
-        ContextInfo contextInfo = nonSharedContext ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
+        String preprocessOutput(String out) {
+            if (output.contains(Output.IgnoreWhitespace)) {
+                return out.replaceAll("\\s+", "");
+            }
+            if (output.contains(Output.ContainsReferences)) {
+                return convertReferencesInOutput(out);
+            }
+            return out;
+        }
+    }
 
+    private void evalAndCompare(String[] inputs, TestTrait... traitsList) {
+        WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
+        TestTraitsSet traits = new TestTraitsSet(traitsList);
+        ContextInfo contextInfo = traits.context.contains(Context.NonShared) ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
         int index = 1;
         boolean allOk = true;
         for (String input : inputs) {
-            String expected = expectedEval(input, traits);
-            if (ignored || generatingExpected()) {
+            String expected = expectedEval(input, traitsList);
+            if (traits.isIgnored || generatingExpected()) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextInfo, longTimeout);
-                if (ignoreWhitespace) {
-                    expected = expected.replaceAll("\\s+", "");
-                    result = result.replaceAll("\\s+", "");
-                }
-
-                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, containsReferences);
+                String result = fastREval(input, contextInfo, traits.context.contains(Context.LongTimeout));
+                CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
                 expected = checkResult.expected;
@@ -638,7 +657,7 @@ public class TestBase {
             }
             index++;
         }
-        if (ignored) {
+        if (traits.isIgnored) {
             ignoredTestCount++;
         } else if (allOk) {
             successfulTestCount++;
@@ -660,25 +679,20 @@ public class TestBase {
         }
     }
 
-    private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError, boolean ambiguousError, boolean convertReferences) {
+    private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, TestTraitsSet traits) {
         boolean ok;
         String result = originalResult;
         String expected = originalExpected;
-        if (convertReferences) {
-            result = convertReferencesInOutput(result);
-            expected = convertReferencesInOutput(expected);
-        }
-        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences)) {
+        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, traits)) {
             ok = true;
-            if (containsError && !ambiguousError) {
+            if (traits.containsError && !traits.output.contains(Output.IgnoreErrorMessage)) {
                 System.out.println("unexpected correct error message: " + getTestContext());
             }
-            if (containsWarning) {
+            if (traits.output.contains(Output.IgnoreWarningContext)) {
                 System.out.println("unexpected correct warning message: " + getTestContext());
             }
         } else {
-            if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
+            if (traits.output.contains(Output.IgnoreWarningContext) || (traits.output.contains(Output.MayIgnoreWarningContext) && expected.contains(WARNING))) {
                 String resultWarning = getWarningMessage(result);
                 String expectedWarning = getWarningMessage(expected);
                 ok = resultWarning.equals(expectedWarning);
@@ -688,8 +702,8 @@ public class TestBase {
                 ok = true;
             }
             if (ok) {
-                if (containsError || (mayContainError && expected.startsWith(ERROR))) {
-                    ok = result.startsWith(ERROR) && (ambiguousError || checkMessageStripped(expected, result) || checkMessageVectorInIndex(expected, result));
+                if (traits.containsError || (traits.output.contains(Output.MayIgnoreErrorContext) && expected.startsWith(ERROR))) {
+                    ok = result.startsWith(ERROR) && (traits.output.contains(Output.IgnoreErrorMessage) || checkMessageStripped(expected, result) || checkMessageVectorInIndex(expected, result));
                 } else {
                     ok = expected.equals(result);
                 }
@@ -714,8 +728,7 @@ public class TestBase {
         return result;
     }
 
-    private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError, boolean ambiguousError, boolean convertReferences) {
+    private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, TestTraitsSet testTraits) {
         if (whiteLists == null) {
             return false;
         }
@@ -723,13 +736,13 @@ public class TestBase {
             WhiteList.Results wlr = list.get(input);
             if (wlr != null) {
                 // Sanity check that "expected" matches the entry in the WhiteList
-                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences);
+                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, testTraits);
                 if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
                     return false;
                 }
                 // Substitute the FastR output and try to match that
-                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError, convertReferences);
+                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, testTraits);
                 if (fastRResult.ok) {
                     list.markUsed(input);
                     return true;
@@ -745,7 +758,7 @@ public class TestBase {
     private static final Pattern warningPattern4 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)$", Pattern.DOTALL);
     private static final Pattern warningPattern5 = Pattern.compile("^(?<pre>.*)Warning message:(?<msg0>.*)$", Pattern.DOTALL);
 
-    private static final Pattern warningMessagePattern = Pattern.compile("^\n? ? ?(?:In .* :[ \n])?(?<m>[^\n]*)\n?$", Pattern.DOTALL);
+    private static final Pattern warningMessagePattern = Pattern.compile("^\n? ? ?(?:In .* :[ \n])?[ \n]*(?<m>[^\n]*)\n?$", Pattern.DOTALL);
 
     private static final Pattern[] warningPatterns = new Pattern[]{warningPattern1, warningPattern2, warningPattern3, warningPattern4, warningPattern5};
 
