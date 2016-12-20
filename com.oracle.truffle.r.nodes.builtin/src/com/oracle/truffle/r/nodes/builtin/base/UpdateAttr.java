@@ -29,17 +29,21 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.UpdateAttrNodeGen.InternStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
@@ -75,8 +79,25 @@ public abstract class UpdateAttr extends RBuiltinNode {
     @Child private SetAttributeNode setGenAttrNode;
     @Child private SetDimAttributeNode setDimNode;
 
-    @CompilationFinal private String cachedName = "";
-    @CompilationFinal private String cachedInternedName = "";
+    @Child private InternStringNode intern = InternStringNodeGen.create();
+
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+    public abstract static class InternStringNode extends Node {
+
+        public abstract String execute(String value);
+
+        @Specialization(limit = "3", guards = "value == cachedValue")
+        protected static String internCached(@SuppressWarnings("unused") String value,
+                        @SuppressWarnings("unused") @Cached("value") String cachedValue,
+                        @Cached("intern(value)") String interned) {
+            return interned;
+        }
+
+        @Specialization(contains = "internCached")
+        protected static String intern(String value) {
+            return Utils.intern(value);
+        }
+    }
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -118,31 +139,9 @@ public abstract class UpdateAttr extends RBuiltinNode {
         return (RAbstractVector) castVector.execute(value);
     }
 
-    private String intern(String name) {
-        if (cachedName == null) {
-            // unoptimized case
-            return Utils.intern(name);
-        }
-        if (cachedName == name) {
-            // cached case
-            return cachedInternedName;
-        }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        // Checkstyle: stop StringLiteralEquality
-        if (cachedName == "") {
-            // Checkstyle: resume StringLiteralEquality
-            cachedName = name;
-            cachedInternedName = Utils.intern(name);
-        } else {
-            cachedName = null;
-            cachedInternedName = null;
-        }
-        return Utils.intern(name);
-    }
-
     @Specialization
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
-        String internedName = intern(name);
+        String internedName = intern.execute(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
@@ -187,7 +186,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
-        String internedName = intern(name);
+        String internedName = intern.execute(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
@@ -246,7 +245,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (object instanceof RShareable) {
             object = ((RShareable) object).getNonShared();
         }
-        String internedName = intern((String) name);
+        String internedName = intern.execute((String) name);
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {
