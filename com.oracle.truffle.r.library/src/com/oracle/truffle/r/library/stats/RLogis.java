@@ -14,9 +14,9 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RLogis implements RandFunction2_Double {
+public final class RLogis extends RandFunction2_Double {
     @Override
-    public double evaluate(double location, double scale, RandomNumberProvider rand) {
+    public double execute(double location, double scale, RandomNumberProvider rand) {
         if (Double.isNaN(location) || !Double.isFinite(scale)) {
             return RMath.mlError();
         }

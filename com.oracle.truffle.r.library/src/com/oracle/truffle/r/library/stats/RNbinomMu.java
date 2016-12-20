@@ -14,17 +14,17 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RNbinomMu implements RandFunction2_Double {
+public final class RNbinomMu extends RandFunction2_Double {
     private final RGamma rgamma = new RGamma();
 
     @Override
-    public double evaluate(double size, double mu, RandomNumberProvider rand) {
+    public double execute(double size, double mu, RandomNumberProvider rand) {
         if (!Double.isFinite(mu) || Double.isNaN(size) || size <= 0 || mu < 0) {
             return RMath.mlError();
         }
         if (!Double.isFinite(size)) {
             size = Double.MAX_VALUE / 2.;
         }
-        return (mu == 0) ? 0 : RPois.rpois(rgamma.evaluate(size, mu / size, rand), rand);
+        return (mu == 0) ? 0 : RPois.rpois(rgamma.execute(size, mu / size, rand), rand);
     }
 }

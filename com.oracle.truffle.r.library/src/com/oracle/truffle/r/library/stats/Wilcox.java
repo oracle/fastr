@@ -19,10 +19,13 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public final class Wilcox {
+    private Wilcox() {
+        // only static members
+    }
 
-    public static final class RWilcox implements RandFunction2_Double {
+    public static final class RWilcox extends RandFunction2_Double {
         @Override
-        public double evaluate(double m, double n, RandomNumberProvider rand) {
+        public double execute(double m, double n, RandomNumberProvider rand) {
             int i;
             int j;
             int k;

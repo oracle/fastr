@@ -17,10 +17,13 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
 public final class Signrank {
+    private Signrank() {
+        // only static members
+    }
 
-    public static final class RSignrank implements RandFunction1_Double {
+    public static final class RSignrank extends RandFunction1_Double {
         @Override
-        public double evaluate(double n, RandomNumberProvider rand) {
+        public double execute(double n, RandomNumberProvider rand) {
             int i;
             int k;
             double r;

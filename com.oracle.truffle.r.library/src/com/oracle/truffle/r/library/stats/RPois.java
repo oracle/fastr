@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RPois implements RandFunction1_Double {
+public final class RPois extends RandFunction1_Double {
 
     private static final double a0 = -0.5;
     private static final double a1 = 0.3333333;
@@ -38,25 +38,25 @@ public final class RPois implements RandFunction1_Double {
 
     /* These are static --- persistent between calls for same mu : */
     // TODO: state variables
-    static int l = 0;
-    static int m = 0;
-    static double b1;
-    static double b2;
-    static double c = 0;
-    static double c0 = 0;
-    static double c1 = 0;
-    static double c2 = 0;
-    static double c3 = 0;
-    static double[] pp = new double[36];
-    static double p0 = 0;
-    static double p = 0;
-    static double q = 0;
-    static double s = 0;
-    static double d = 0;
-    static double omega = 0;
-    static double bigL = 0; /* integer "w/o overflow" */
-    static double muprev = 0.;
-    static double muprev2 = 0.; /* , muold = 0. */
+    private static int l = 0;
+    private static int m = 0;
+    private static double b1;
+    private static double b2;
+    private static double c = 0;
+    private static double c0 = 0;
+    private static double c1 = 0;
+    private static double c2 = 0;
+    private static double c3 = 0;
+    private static final double[] pp = new double[36];
+    private static double p0 = 0;
+    private static double p = 0;
+    private static double q = 0;
+    private static double s = 0;
+    private static double d = 0;
+    private static double omega = 0;
+    private static double bigL = 0; /* integer "w/o overflow" */
+    private static double muprev = 0.;
+    private static double muprev2 = 0.; /* , muold = 0. */
 
     public static double rpois(double mu, RandomNumberProvider rand) {
         /* Local Vars [initialize some for -Wall]: */
@@ -275,7 +275,7 @@ public final class RPois implements RandFunction1_Double {
     }
 
     @Override
-    public double evaluate(double mu, RandomNumberProvider rand) {
+    public double execute(double mu, RandomNumberProvider rand) {
         return rpois(mu, rand);
     }
 }

@@ -14,9 +14,9 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RWeibull implements RandFunction2_Double {
+public final class RWeibull extends RandFunction2_Double {
     @Override
-    public double evaluate(double shape, double scale, RandomNumberProvider rand) {
+    public double execute(double shape, double scale, RandomNumberProvider rand) {
         if (!Double.isFinite(shape) || !Double.isFinite(scale) || shape <= 0. || scale <= 0.) {
             return scale == 0. ? 0. : RMath.mlError();
         }

@@ -25,9 +25,9 @@ public final class Cauchy {
         // contains only static classes
     }
 
-    public static final class RCauchy implements RandFunction2_Double {
+    public static final class RCauchy extends RandFunction2_Double {
         @Override
-        public double evaluate(double location, double scale, RandomNumberProvider rand) {
+        public double execute(double location, double scale, RandomNumberProvider rand) {
             if (Double.isNaN(location) || !Double.isFinite(scale) || scale < 0) {
                 return RMath.mlError();
             }

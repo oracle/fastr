@@ -14,9 +14,9 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class Rf implements RandFunction2_Double {
+public final class Rf extends RandFunction2_Double {
     @Override
-    public double evaluate(double n1, double n2, RandomNumberProvider rand) {
+    public double execute(double n1, double n2, RandomNumberProvider rand) {
         if (Double.isNaN(n1) || Double.isNaN(n2) || n1 <= 0. || n2 <= 0.) {
             return RMath.mlError();
         }
