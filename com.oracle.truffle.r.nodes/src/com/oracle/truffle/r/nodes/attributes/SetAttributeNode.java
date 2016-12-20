@@ -34,6 +34,7 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -148,7 +149,8 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
     protected void setAttrInAttributable(RAttributable x, String name, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject attributes;
         if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
             attributes = ((RAttributeStorage) x).getAttributes();
@@ -167,6 +169,11 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         }
 
         recursive.execute(attributes, name, value);
+
+        // TODO: To verify: It might be beneficial to increment the reference counter only if the
+        // old and new values differ. One should verify, though, whether the costs brought about by
+        // reading the old value do not prevail in the end.
+        updateRefCountNode.execute(value);
     }
 
     /**

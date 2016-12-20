@@ -23,16 +23,19 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The base class for the nodes that get/set/remove attributes. It encapsulates the common methods
  * used in guards and for caching.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class AttributeAccessNode extends RBaseNode {
 
     protected AttributeAccessNode() {

@@ -30,8 +30,10 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
  * Internal node that should be used whenever you need to increment reference count of some object.
@@ -48,10 +50,21 @@ public abstract class ShareObjectNode extends Node {
     }
 
     @Specialization
-    protected Object doShareable(RShareable obj,
+    protected Object doShareable(RSharingAttributeStorage obj,
                     @Cached("createBinaryProfile()") ConditionProfile sharedPermanent) {
         if (sharedPermanent.profile(!obj.isSharedPermanent())) {
             obj.incRefCount();
+        }
+        return obj;
+    }
+
+    @Specialization
+    protected Object doShareable(RShareable obj,
+                    @Cached("createBinaryProfile()") ConditionProfile sharedPermanent,
+                    @Cached("createClassProfile()") ValueProfile typeProfile) {
+        RShareable objProfiled = typeProfile.profile(obj);
+        if (sharedPermanent.profile(!objProfiled.isSharedPermanent())) {
+            objProfiled.incRefCount();
         }
         return obj;
     }

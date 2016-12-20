@@ -348,6 +348,11 @@ public class TestBuiltin_list extends TestBase {
     }
 
     @Test
+    public void testRefCount() {
+        assertEval("{ l <- list(a=c(1,2)); l2 <- l; l$a[[1]] <- 3; l2 }");
+    }
+
+    @Test
     public void testList() {
         assertEval("{ list(a=1, b=2) }");
         assertEval("{ list(a=1, 2) }");

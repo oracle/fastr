@@ -26,19 +26,16 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
-import com.oracle.truffle.r.nodes.access.vector.ExtractListElementNodeGen.UpdateStateOfListElementNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.RListBase;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Internal node that extracts data under given index from any RAbstractContainer. In the case of
- * RListBase, it also invokes {@link UpdateStateOfListElement} on the element before returning it.
+ * RListBase, it also invokes {@link UpdateShareableChildValueNode} on the element before returning
+ * it.
  *
  * There are two reasons for why one accesses an element of a list: to peek at it, possibly
  * calculate some values from it, and then forget it. In such case, it is OK to access the element
@@ -46,9 +43,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * {@link RAbstractContainer#getDataAtAsObject(int)}. However, if the object is going to be returned
  * to the user either as return value of a built-in, put inside a list, put as an attribute, or its
  * true reference count matters for some other reason, then its reference count must be put into a
- * consistent state, which is done by {@link UpdateStateOfListElement}. This node is a convenient
- * wrapper that performs the extraction as well as invocation of {@link UpdateStateOfListElement}.
- * See also the documentation of {@link RListBase}.
+ * consistent state, which is done by {@link UpdateShareableChildValueNode}. This node is a
+ * convenient wrapper that performs the extraction as well as invocation of
+ * {@link UpdateShareableChildValueNode}. See also the documentation of {@link RListBase}.
  */
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ExtractListElement extends Node {
@@ -60,7 +57,7 @@ public abstract class ExtractListElement extends Node {
     }
 
     @Specialization
-    protected Object doList(RListBase list, int index, @Cached("create()") UpdateStateOfListElement updateStateNode) {
+    protected Object doList(RListBase list, int index, @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
         Object element = list.getDataAt(index);
         return updateStateNode.updateState(list, element);
     }
@@ -72,62 +69,5 @@ public abstract class ExtractListElement extends Node {
 
     protected static boolean isNotList(RAbstractContainer x) {
         return !(x instanceof RAbstractListVector);
-    }
-
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
-    public abstract static class UpdateStateOfListElement extends Node {
-
-        public abstract void execute(Object owner, Object item);
-
-        /**
-         * Provides more convenient interface for the {@link #execute(Object, Object)} method.
-         */
-        public final <T> T updateState(RAbstractContainer owner, T item) {
-            execute(owner, item);
-            return item;
-        }
-
-        public static UpdateStateOfListElement create() {
-            return UpdateStateOfListElementNodeGen.create();
-        }
-
-        @Specialization
-        protected void doShareableValues(RListBase owner, RShareable value,
-                        @Cached("createClassProfile()") ValueProfile valueProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile sharedValue,
-                        @Cached("createBinaryProfile()") ConditionProfile temporaryOwner) {
-            RShareable profiledValue = valueProfile.profile(value);
-            if (sharedValue.profile(profiledValue.isShared())) {
-                // it is already shared, not need to do anything
-                return;
-            }
-
-            if (temporaryOwner.profile(owner.isTemporary())) {
-                // This can happen, for example, when we immediately extract out of a temporary
-                // list that was returned by a built-in, like: strsplit(...)[[1L]]. We do not need
-                // to transition the element, it may stay temporary.
-                return;
-            }
-
-            if (profiledValue.isTemporary()) {
-                // make it at least non-shared (parent list must be also at least non-shared)
-                profiledValue.incRefCount();
-            }
-            if (owner.isShared()) {
-                // owner is shared, make the value shared too
-                profiledValue.incRefCount();
-            }
-        }
-
-        @Specialization(guards = "isFallback(owner, value)")
-        protected void doFallback(Object owner, Object value) {
-            assert !(value instanceof RShareable && owner instanceof RAbstractVector && !(owner instanceof RListBase)) : "RShareables can only live inside lists and no other vectors.";
-            // nop: either value is not RShareable, or the owner is "list" like structure with
-            // reference semantics (e.g. REnvironment)
-        }
-
-        protected static boolean isFallback(Object owner, Object value) {
-            return !(value instanceof RShareable) || !(owner instanceof RListBase);
-        }
     }
 }
