@@ -170,6 +170,9 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
         recursive.execute(attributes, name, value);
 
+        // TODO: To verify: It might be beneficial to increment the reference counter only if the
+        // old and new values differ. One should verify, though, whether the costs brought about by
+        // reading the old value do not prevail in the end.
         updateRefCountNode.execute(value);
     }
 

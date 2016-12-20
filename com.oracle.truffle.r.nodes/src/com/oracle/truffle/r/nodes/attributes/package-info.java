@@ -36,7 +36,7 @@
  * <li>{@link com.oracle.truffle.r.nodes.attributes.GetAttributeNode}: retrieves the value of an
  * arbitrary attribute
  * <li>{@link com.oracle.truffle.r.nodes.attributes.SetAttributeNode}: sets the value of an
- * arbitrary attribute. If the first argument is an instance if
+ * arbitrary attribute. If the first argument is an instance
  * {@link com.oracle.truffle.r.runtime.data.RAttributable}, the node initializes the object with the
  * empty attributes.
  * </ul>
@@ -49,7 +49,7 @@
  * <li>{@link com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode}: determines the existence
  * of the predefined attribute
  * <li>{@link com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode}: sets the value of the
- * predefined attribute. If the first argument is an instance if
+ * predefined attribute. If the first argument is an instance
  * {@link com.oracle.truffle.r.runtime.data.RAttributable}, the node initializes the object with the
  * empty attributes.
  * <li>{@link com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode}: removes the
@@ -105,12 +105,12 @@
  *
  * <pre>
  * &#64;Child
- * private SetFixedAttributeNode setDimNode = SetAttributeNode.create();
+ * private SetFixedAttributeNode setAttrNode = SetAttributeNode.create();
  *
  * &#64;Specialization
  * protected Object handleStringVector(RAbstractStringVector v, String attrName, Object attrValue) {
  *    ...
- *    setDimNode.execute(vector, attrName, attrValue);
+ *    setAttrNode.execute(vector, attrName, attrValue);
  *    ...
  * }
  * </pre>
