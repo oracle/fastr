@@ -277,6 +277,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Contributors.class, ContributorsNodeGen::create);
         add(CopyDFAttr.class, CopyDFAttrNodeGen::create);
         add(Crossprod.class, CrossprodNodeGen::create);
+        add(CRC64.class, CRC64NodeGen::create);
         add(CumMax.class, CumMaxNodeGen::create);
         add(CumMin.class, CumMinNodeGen::create);
         add(CumProd.class, CumProdNodeGen::create);
