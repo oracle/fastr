@@ -78,7 +78,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name, value)") Location location) {
         try {
-            location.set(attrs, value);
+            location.set(attrs, value, shape);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
             RInternalError.reportError(ex);
         }
