@@ -30,7 +30,7 @@ public final class Rbinom extends RandFunction2_Double {
         if (!Double.isFinite(nin)) {
             return RRuntime.INT_NA;
         }
-        double r = MathConstants.forceint(nin);
+        double r = RMath.forceint(nin);
         if (r != nin) {
             return RRuntime.INT_NA;
         }

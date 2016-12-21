@@ -97,11 +97,4 @@ public final class MathConstants {
     public static double logspaceAdd(double logx, double logy) {
         return Math.max(logx, logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
     }
-
-    // R_forceint
-    public static double forceint(double x) {
-        // Note: in GnuR this is alias for nearbyint, which may not behave exactly like Math.round,
-        // especially Math.round(-0.5) == 0.0, instead of -0.0, does it matter a lot?
-        return Double.isFinite(x) ? Math.round(x) : x;
-    }
 }

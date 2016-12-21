@@ -68,6 +68,9 @@ import com.oracle.truffle.r.library.stats.LogNormal;
 import com.oracle.truffle.r.library.stats.LogNormal.DLNorm;
 import com.oracle.truffle.r.library.stats.LogNormal.PLNorm;
 import com.oracle.truffle.r.library.stats.LogNormal.QLNorm;
+import com.oracle.truffle.r.library.stats.Logis;
+import com.oracle.truffle.r.library.stats.Logis.DLogis;
+import com.oracle.truffle.r.library.stats.Logis.RLogis;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
@@ -78,7 +81,6 @@ import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RChisq;
 import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RHyper;
-import com.oracle.truffle.r.library.stats.RLogis;
 import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
 import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
@@ -338,6 +340,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QLNorm());
                 case "plnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new PLNorm());
+                case "dlogis":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DLogis());
+                case "qlogis":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.QLogis());
+                case "plogis":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.PLogis());
                 case "rmultinom":
                     return RMultinomNodeGen.create();
                 case "Approx":
