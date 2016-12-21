@@ -84,7 +84,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     public RNode create(boolean isVoid) {
         RNode replacement;
-        if (lhs instanceof RSyntaxCall) {
+        if (lhs.asRSyntaxNode() instanceof RSyntaxCall) {
             replacement = createReplacementNode(isVoid);
         } else {
             replacement = new WriteVariableSyntaxNode(getLazySourceSection(), operator, lhs.asRSyntaxNode(), rhs, isSuper);
