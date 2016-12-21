@@ -98,23 +98,23 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private static final boolean useSpecials = FastROptions.UseSpecials.getBooleanValue();
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
-    @CompilationFinal private SourceSection sourceSectionR;
+    @CompilationFinal private SourceSection sourceSection;
 
     @Override
     public void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
     }
 
     @Override
     public SourceSection getLazySourceSection() {
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Child private ForcePromiseNode functionNode;
@@ -136,7 +136,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private RCallSpecialNode callSpecialParent;
 
     private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special) {
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.expectedFunction = expectedFunction;
         this.special = special;
         this.functionNode = new ForcePromiseNode(functionNode);
@@ -272,7 +272,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     private RCallNode getRCallNode(RSyntaxNode[] newArguments) {
-        return RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
+        return RCallNode.createCall(sourceSection, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
     }
 
     private RCallNode getRCallNode() {

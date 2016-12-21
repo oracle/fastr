@@ -112,23 +112,23 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
-    @CompilationFinal private SourceSection sourceSectionR;
+    @CompilationFinal private SourceSection sourceSection;
 
     @Override
     public final void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
     }
 
     @Override
     public final SourceSection getLazySourceSection() {
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Override
     public final SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
-        return sourceSectionR;
+        return sourceSection;
     }
 
     protected abstract ForcePromiseNode getFunction();
@@ -164,7 +164,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     protected RCallNode(SourceSection sourceSection, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.arguments = arguments;
         this.explicitArgs = null;
         this.varArgIndexes = getVarArgIndexes(arguments);
@@ -184,7 +184,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.arguments = null;
         this.explicitArgs = LocalReadVariableNode.create(explicitArgsIdentifier, false);
         this.varArgIndexes = null;

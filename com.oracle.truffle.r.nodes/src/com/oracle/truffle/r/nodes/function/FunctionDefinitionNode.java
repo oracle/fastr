@@ -135,7 +135,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String name, PostProcessArgumentsNode argPostProcess) {
-        super(null, formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
+        super(formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;

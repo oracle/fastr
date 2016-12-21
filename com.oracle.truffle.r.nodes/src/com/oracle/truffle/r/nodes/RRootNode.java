@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -54,18 +53,10 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     private FastPathFactory fastPath;
 
-    protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
-        super(RContext.getRForeignAccessFactory().getTruffleLanguage(), checkSourceSection(src), frameDescriptor);
+    protected RRootNode(FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+        super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.SOURCE_UNAVAILABLE, frameDescriptor);
         this.formalArguments = formalArguments;
         this.fastPath = fastPath;
-    }
-
-    private static SourceSection checkSourceSection(SourceSection src) {
-        if (src == null) {
-            return RSyntaxNode.SOURCE_UNAVAILABLE;
-        } else {
-            return src;
-        }
     }
 
     @Override

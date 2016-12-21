@@ -48,7 +48,7 @@ public final class RBuiltinRootNode extends RRootNode {
     private final RBuiltinFactory factory;
 
     RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
-        super(null, formalArguments, frameDescriptor, fastPath);
+        super(formalArguments, frameDescriptor, fastPath);
         this.factory = factory;
         this.builtin = builtin;
         this.args = new AccessArgumentNode[factory.getSignature().getLength()];
