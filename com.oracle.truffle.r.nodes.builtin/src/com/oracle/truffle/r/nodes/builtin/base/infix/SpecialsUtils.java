@@ -22,17 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Helper methods for implementing special calls.
@@ -43,72 +54,86 @@ class SpecialsUtils {
     private static final String valueArgName = "value".intern();
 
     public static boolean isCorrectUpdateSignature(ArgumentsSignature signature) {
-        return signature.getLength() == 3 && signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == valueArgName;
+        if (signature.getLength() == 3) {
+            return signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == valueArgName;
+        } else if (signature.getLength() == 4) {
+            return signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == null && signature.getName(3) == valueArgName;
+        }
+        return false;
     }
 
     /**
      * Common code shared between specials doing subset/subscript related operation.
      */
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class SubscriptSpecialCommon extends RNode {
 
-        protected final ValueProfile vectorClassProfile = ValueProfile.createClassProfile();
+        protected final boolean inReplacement;
 
-        protected boolean isValidIndex(RAbstractVector vector, int index) {
-            vector = vectorClassProfile.profile(vector);
-            return index >= 1 && index <= vector.getLength();
-        }
-
-        protected boolean isValidDoubleIndex(RAbstractVector vector, double index) {
-            return isValidIndex(vector, toIndex(index));
+        protected SubscriptSpecialCommon(boolean inReplacement) {
+            this.inReplacement = inReplacement;
         }
 
         /**
-         * Note: conversion from double to an index differs in subscript and subset.
+         * Checks whether the given (1-based) index is valid for the given vector.
          */
-        protected int toIndex(double index) {
-            if (index == 0) {
-                return 0;
-            }
-            int i = (int) index;
-            return i == 0 ? 1 : i;
+        protected static boolean isValidIndex(RAbstractVector vector, int index) {
+            return index >= 1 && index <= vector.getLength();
         }
 
-        protected static int toIndexSubset(double index) {
-            return index == 0 ? 0 : (int) index;
+        /**
+         * Checks if the value is single element that can be put into a list or vector as is,
+         * because in the case of vectors on the LSH of update we take each element and put it into
+         * the RHS of the update function.
+         */
+        protected static boolean isSingleElement(Object value) {
+            return value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof String;
+        }
+    }
+
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+    abstract static class SubscriptSpecial2Common extends SubscriptSpecialCommon {
+
+        protected SubscriptSpecial2Common(boolean inReplacement) {
+            super(inReplacement);
+        }
+
+        @Child private GetDimAttributeNode getDimensions = GetDimAttributeNode.create();
+
+        protected int matrixIndex(RAbstractVector vector, int index1, int index2) {
+            return index1 - 1 + ((index2 - 1) * getDimensions.getDimensions(vector)[0]);
+        }
+
+        /**
+         * Checks whether the given (1-based) indexes are valid for the given matrix.
+         */
+        protected static boolean isValidIndex(RAbstractVector vector, int index1, int index2) {
+            int[] dimensions = vector.getDimensions();
+            return dimensions != null && dimensions.length == 2 && index1 >= 1 && index1 <= dimensions[0] && index2 >= 1 && index2 <= dimensions[1];
         }
     }
 
     /**
      * Common code shared between specials accessing/updating fields.
      */
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class ListFieldSpecialBase extends RNode {
-        @CompilationFinal private String cachedField;
-        @CompilationFinal private RStringVector cachedNames;
+
         @Child private ClassHierarchyNode hierarchyNode = ClassHierarchyNode.create();
         @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-
-        protected final void updateCache(RList list, String field) {
-            if (cachedField == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedField = field;
-                cachedNames = getNamesNode.getNames(list);
-            }
-        }
 
         protected final boolean isSimpleList(RList list) {
             return hierarchyNode.execute(list) == null;
         }
 
-        protected final boolean isCached(RList list, String field) {
-            return cachedField == null || (cachedField == field && getNamesNode.getNames(list) == cachedNames);
-        }
-
         protected static int getIndex(RStringVector names, String field) {
-            int fieldHash = field.hashCode();
-            for (int i = 0; i < names.getLength(); i++) {
-                String current = names.getDataAt(i);
-                if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
-                    return i;
+            if (names != null) {
+                int fieldHash = field.hashCode();
+                for (int i = 0; i < names.getLength(); i++) {
+                    String current = names.getDataAt(i);
+                    if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
+                        return i;
+                    }
                 }
             }
             return -1;
@@ -123,5 +148,80 @@ class SpecialsUtils {
         private static boolean hashCodeEquals(String current, int fieldHash) {
             return current.hashCode() == fieldHash;
         }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    public static final class ProfiledValue extends RBaseNode {
+
+        private final ValueProfile profile = ValueProfile.createClassProfile();
+
+        @Child private RNode delegate;
+
+        protected ProfiledValue(RNode delegate) {
+            this.delegate = delegate;
+        }
+
+        public Object execute(VirtualFrame frame) {
+            return profile.profile(delegate.execute(frame));
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return delegate.asRSyntaxNode();
+        }
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    @NodeChildren({@NodeChild(value = "delegate", type = RNode.class)})
+    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+    public abstract static class ConvertIndex extends RNode {
+
+        private final boolean isSubset;
+        private final ConditionProfile zeroProfile;
+
+        ConvertIndex(boolean isSubset) {
+            this.isSubset = isSubset;
+            this.zeroProfile = isSubset ? null : ConditionProfile.createBinaryProfile();
+        }
+
+        protected abstract RNode getDelegate();
+
+        @Specialization
+        protected static int convertInteger(int value) {
+            return value;
+        }
+
+        @Specialization
+        protected int convertDouble(double value) {
+            // Conversion from double to an index differs in subscript and subset.
+            int intValue = (int) value;
+            if (isSubset) {
+                return intValue;
+            } else {
+                return zeroProfile.profile(intValue == 0) ? (value == 0 ? 0 : 1) : intValue;
+            }
+        }
+
+        @Specialization(contains = {"convertInteger", "convertDouble"})
+        protected Object convert(Object value) {
+            return value;
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return getDelegate().asRSyntaxNode();
+        }
+    }
+
+    public static ProfiledValue profile(RNode value) {
+        return new ProfiledValue(value);
+    }
+
+    public static ConvertIndex convertSubscript(RNode value) {
+        return ConvertIndexNodeGen.create(false, value);
+    }
+
+    public static ConvertIndex convertSubset(RNode value) {
+        return ConvertIndexNodeGen.create(true, value);
     }
 }

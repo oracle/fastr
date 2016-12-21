@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertSubset;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -37,6 +38,8 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -44,24 +47,24 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@NodeChild(value = "arguments", type = RNode[].class)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
-abstract class UpdateSubsetSpecial extends UpdateSubscriptSpecial {
-
-    @Override
-    protected int toIndex(double index) {
-        return toIndexSubset(index);
-    }
-}
-
 @RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class UpdateSubset extends RBuiltinNode {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSET, false);
     private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
-        return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateSubsetSpecialNodeGen.create(arguments) : null;
+    public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
+        if (SpecialsUtils.isCorrectUpdateSignature(signature) && (args.length == 3 || args.length == 4)) {
+            ProfiledValue vector = profile(args[0]);
+            ConvertIndex index = convertSubset(args[1]);
+            if (args.length == 3) {
+                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, args[2]);
+            } else {
+                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertSubset(args[2]), args[3]);
+            }
+        }
+        return null;
     }
 
     @Specialization(guards = "!args.isEmpty()")

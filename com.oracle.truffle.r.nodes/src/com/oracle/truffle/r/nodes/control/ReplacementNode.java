@@ -69,6 +69,10 @@ abstract class ReplacementNode extends OperatorNode {
         // Note: if specials are turned off in FastR, onlySpecials will never be true
         boolean createSpecial = hasOnlySpecialCalls(calls);
         if (createSpecial) {
+            /*
+             * This assumes that whenever there's a special call for the "extract", there's also a
+             * special call for "replace".
+             */
             if (isVoid) {
                 return new SpecialVoidReplacementNode(source, operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
             } else {

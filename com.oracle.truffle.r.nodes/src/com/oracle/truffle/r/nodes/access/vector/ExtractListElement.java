@@ -57,7 +57,8 @@ public abstract class ExtractListElement extends Node {
     }
 
     @Specialization
-    protected Object doList(RListBase list, int index, @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
+    protected Object doList(RListBase list, int index,
+                    @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
         Object element = list.getDataAt(index);
         return updateStateNode.updateState(list, element);
     }
