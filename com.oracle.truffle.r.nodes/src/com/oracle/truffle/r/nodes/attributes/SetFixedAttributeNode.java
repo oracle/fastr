@@ -86,7 +86,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     public abstract void execute(Object attr, Object value);
 
     @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)", "location != null"}, //
+                    guards = {"shapeCheck(shape, attrs)", "location != null", "canSet(location, value)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected void setAttrCached(DynamicObject attrs, Object value,
                     @Cached("lookupShape(attrs)") Shape shape,
@@ -94,12 +94,12 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         try {
             location.set(attrs, value, shape);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
-            RInternalError.reportError(ex);
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
     @Specialization(limit = "3", //
-                    guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null"}, //
+                    guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null", "canStore(newLocation, value)"}, //
                     assumptions = {"oldShape.getValidAssumption()", "newShape.getValidAssumption()"})
     protected static void setNewAttrCached(DynamicObject attrs, Object value,
                     @Cached("lookupShape(attrs)") Shape oldShape,
@@ -109,7 +109,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         try {
             newLocation.set(attrs, value, oldShape, newShape);
         } catch (IncompatibleLocationException ex) {
-            RInternalError.reportError(ex);
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
