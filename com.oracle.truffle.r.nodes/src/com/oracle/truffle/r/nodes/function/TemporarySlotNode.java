@@ -37,42 +37,40 @@ public final class TemporarySlotNode extends Node {
 
     @CompilationFinal private FrameSlot tempSlot;
     private int tempIdentifier;
-    private Object identifier;
 
-    public void initialize(VirtualFrame frame, Object value, Runnable invalidate) {
+    public FrameSlot initialize(VirtualFrame frame, Object value) {
         if (tempSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            tempSlot = frame.getFrameDescriptor().findOrAddFrameSlot(identifier = defaultTempIdentifiers[0], FrameSlotKind.Object);
-            invalidate.run();
+            tempSlot = frame.getFrameDescriptor().findOrAddFrameSlot(defaultTempIdentifiers[0], FrameSlotKind.Object);
         }
+        FrameSlot slot = tempSlot;
         try {
-            if (frame.getObject(tempSlot) != null) {
+            if (frame.getObject(slot) != null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // keep the complete loop in the slow path
                 do {
                     tempIdentifier++;
-                    identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
-                    tempSlot = frame.getFrameDescriptor().findOrAddFrameSlot(identifier, FrameSlotKind.Object);
-                    invalidate.run();
-                } while (frame.getObject(tempSlot) != null);
+                    Object identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
+                    tempSlot = slot = frame.getFrameDescriptor().findOrAddFrameSlot(identifier, FrameSlotKind.Object);
+                    if (frame.getObject(slot) == null) {
+                        break;
+                    }
+                } while (true);
             }
         } catch (FrameSlotTypeException e) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere();
         }
-        frame.setObject(tempSlot, value);
+        frame.setObject(slot, value);
+        return slot;
     }
 
-    public void cleanup(VirtualFrame frame, Object object) {
+    public static void cleanup(VirtualFrame frame, Object object, FrameSlot tempSlot) {
         try {
             assert frame.getObject(tempSlot) == object;
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }
         frame.setObject(tempSlot, null);
-    }
-
-    public Object getIdentifier() {
-        return identifier;
     }
 }

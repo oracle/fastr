@@ -55,7 +55,7 @@ public class TestTestBase extends TestBase {
                         getCode("cat('Warning message: In .Internal(foo(42)): IgnoreWarningContext diff message')", "cat('Warning message in foo(42): IgnoreWarningContext should fail')"));
     }
 
-    private String getCode(String fastr, String gnur) {
+    private static String getCode(String fastr, String gnur) {
         return "if (exists('.fastr.identity')) { " + fastr + " } else { " + gnur + " }";
     }
 }
