@@ -67,7 +67,6 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.IfBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.NextBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.NextBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.ParenBuiltin;
-import com.oracle.truffle.r.nodes.builtin.base.infix.ParenBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.RepeatBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.RepeatBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.Subscript;
@@ -695,7 +694,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FunctionBuiltin.class, FunctionBuiltinNodeGen::create);
         add(IfBuiltin.class, IfBuiltinNodeGen::create);
         add(NextBuiltin.class, NextBuiltinNodeGen::create);
-        add(ParenBuiltin.class, ParenBuiltinNodeGen::create);
+        add(ParenBuiltin.class, ParenBuiltin::new, ParenBuiltin::special);
         add(RepeatBuiltin.class, RepeatBuiltinNodeGen::create);
         add(Tilde.class, TildeNodeGen::create);
         add(UpdateSubscript.class, UpdateSubscriptNodeGen::create, UpdateSubscript::special);
