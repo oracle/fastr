@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         TRACEMEM_NOT_NULL("cannot trace NULL"),
+        INPUT_MUST_BE_STRING("input must be a character string"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NOT_A_FUNCTION("'%s' is not a function"),
@@ -565,6 +566,7 @@ public final class RError extends RuntimeException {
         RECURSIVE_INDEXING_FAILED("recursive indexing failed at level %d"),
         ARGUMENTS_PASSED("%d arguments passed to '%s' which requires %d"),
         ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
+        ARGUMENTS_PASSED_INTERNAL_0_1("0 arguments passed to .Internal(%s) which requires 1"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
         WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),
