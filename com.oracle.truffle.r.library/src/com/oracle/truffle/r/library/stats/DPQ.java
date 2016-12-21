@@ -43,7 +43,7 @@ public final class DPQ {
     // R >= 3.1.0: # define R_nonint(x) (fabs((x) - R_forceint(x)) > 1e-7)
     // Note: if true should be followed by "return d0(logP)", consider using nointCheck instead
     public static boolean nonint(double x) {
-        return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1., Math.abs(x));
+        return Math.abs(x - RMath.forceint(x)) > 1e-7 * Math.max(1., Math.abs(x));
     }
 
     // R_D__0
@@ -156,7 +156,7 @@ public final class DPQ {
     // R_P_bounds_Inf_01
     public static void rpboundsinf01(double x, boolean lowerTail, boolean logP) throws EarlyReturn {
         if (!Double.isFinite(x)) {
-            throw new EarlyReturn(x > 0 ? rdt0(lowerTail, logP) : rdt0(lowerTail, logP));
+            throw new EarlyReturn(x > 0 ? rdt1(lowerTail, logP) : rdt0(lowerTail, logP));
         }
     }
 

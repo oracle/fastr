@@ -11,7 +11,7 @@
 
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;

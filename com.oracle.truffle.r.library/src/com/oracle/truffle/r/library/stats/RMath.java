@@ -37,6 +37,18 @@ public class RMath {
         return -Math.log(n + 1.) - lbeta(n - k + 1., k + 1.);
     }
 
+    /**
+     * Implementation of {@code R_forceint}, which is not equal to {@code Math.round}, because it
+     * returns {@code double} and so it can handle values that do not fit into long.
+     */
+    public static double forceint(double x) {
+        // Note: in GnuR this is alias for nearbyint
+        if (Double.isNaN(x)) {
+            return 0;
+        }
+        return Math.floor(x + 0.5);
+    }
+
     public static double fsign(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;
