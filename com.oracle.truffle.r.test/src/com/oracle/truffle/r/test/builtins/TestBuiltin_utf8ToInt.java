@@ -27,7 +27,8 @@ public class TestBuiltin_utf8ToInt extends TestBase {
         assertEval("utf8ToInt(numeric(0))");
         assertEval("utf8ToInt(NULL)");
         assertEval("utf8ToInt(NA)");
-        assertEval(Output.IgnoreWhitespace, "utf8ToInt(c('a', 'b'))"); // no extra newline in warning msg
+        assertEval(Output.IgnoreWhitespace, "utf8ToInt(c('a', 'b'))"); // no extra newline in
+                                                                       // warning msg
     }
 
     @Test
