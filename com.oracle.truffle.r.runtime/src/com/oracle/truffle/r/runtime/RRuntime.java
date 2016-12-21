@@ -512,13 +512,17 @@ public class RRuntime {
         return isNA(i) ? createComplexNA() : int2complexNoCheck(i);
     }
 
-    @TruffleBoundary
     public static String intToStringNoCheck(int operand) {
         if (operand >= MIN_CACHED_NUMBER && operand <= MAX_CACHED_NUMBER) {
             return numberStringCache[operand - MIN_CACHED_NUMBER];
         } else {
-            return String.valueOf(operand);
+            return intToStringInternal(operand);
         }
+    }
+
+    @TruffleBoundary
+    private static String intToStringInternal(int operand) {
+        return String.valueOf(operand);
     }
 
     public static boolean isCachedNumberString(int value) {
