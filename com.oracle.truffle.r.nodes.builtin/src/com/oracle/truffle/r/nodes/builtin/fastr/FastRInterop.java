@@ -117,12 +117,14 @@ public class FastRInterop {
 
             File file = new File(path);
             try {
-                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name("").internal();
+                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName()).internal();
                 if (mimeType != null) {
                     sourceBuilder.mimeType(mimeType);
                 }
                 Source sourceObject = sourceBuilder.build();
                 return RContext.getInstance().getEnv().parse(sourceObject);
+            } catch (IOException e) {
+                throw RError.error(this, Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
                 throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
