@@ -234,7 +234,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[[4]] <- 1", 1, 0, 2, 0);
         assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
         assertCallCounts("a <- list(a=c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]] <- 1", 1, 0, 2, 0);
+        assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[[5]] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[[0]] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]] <- 1", 1, 0, 1, 1);

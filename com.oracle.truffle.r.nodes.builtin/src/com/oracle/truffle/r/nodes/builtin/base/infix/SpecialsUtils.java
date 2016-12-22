@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
@@ -30,7 +31,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -176,14 +176,6 @@ class SpecialsUtils {
     @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class ConvertIndex extends RNode {
 
-        private final boolean isSubset;
-        private final ConditionProfile zeroProfile;
-
-        ConvertIndex(boolean isSubset) {
-            this.isSubset = isSubset;
-            this.zeroProfile = isSubset ? null : ConditionProfile.createBinaryProfile();
-        }
-
         protected abstract RNode getDelegate();
 
         @Specialization
@@ -191,14 +183,20 @@ class SpecialsUtils {
             return value;
         }
 
-        @Specialization
+        @Specialization(rewriteOn = IllegalArgumentException.class)
         protected int convertDouble(double value) {
-            // Conversion from double to an index differs in subscript and subset.
             int intValue = (int) value;
-            if (isSubset) {
-                return intValue;
+            if (intValue == 0) {
+                /*
+                 * Conversion from double to an index differs in subscript and subset for values in
+                 * the ]0..1[ range (subscript interprets 0.1 as 1, whereas subset treats it as 0).
+                 * We avoid this special case by simply going to the more generic case for this
+                 * range. Additionally, (int) Double.NaN is 0, which is also caught by this case.
+                 */
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw new IllegalArgumentException();
             } else {
-                return zeroProfile.profile(intValue == 0) ? (value == 0 ? 0 : 1) : intValue;
+                return intValue;
             }
         }
 
@@ -217,11 +215,7 @@ class SpecialsUtils {
         return new ProfiledValue(value);
     }
 
-    public static ConvertIndex convertSubscript(RNode value) {
-        return ConvertIndexNodeGen.create(false, value);
-    }
-
-    public static ConvertIndex convertSubset(RNode value) {
-        return ConvertIndexNodeGen.create(true, value);
+    public static ConvertIndex convertIndex(RNode value) {
+        return ConvertIndexNodeGen.create(value);
     }
 }

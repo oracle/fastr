@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertSubset;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -81,7 +81,7 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
-    protected static Object access(VirtualFrame frame, RAbstractVector vector, Object index,
+    protected Object access(VirtualFrame frame, RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
         return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }
@@ -124,11 +124,11 @@ public abstract class Subset extends RBuiltinNode {
     public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
         if (signature.getNonNullCount() == 0 && (args.length == 2 || args.length == 3)) {
             ProfiledValue profiledVector = profile(args[0]);
-            ConvertIndex index = convertSubset(args[1]);
+            ConvertIndex index = convertIndex(args[1]);
             if (args.length == 2) {
                 return SubsetSpecialNodeGen.create(inReplacement, profiledVector, index);
             } else {
-                return SubsetSpecial2NodeGen.create(inReplacement, profiledVector, index, convertSubset(args[2]));
+                return SubsetSpecial2NodeGen.create(inReplacement, profiledVector, index, convertIndex(args[2]));
             }
         }
         return null;
