@@ -75,8 +75,10 @@ import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
+import com.oracle.truffle.r.library.stats.Pt;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
+import com.oracle.truffle.r.library.stats.Qt;
 import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RChisq;
 import com.oracle.truffle.r.library.stats.RGamma;
@@ -94,11 +96,14 @@ import com.oracle.truffle.r.library.stats.Rbinom;
 import com.oracle.truffle.r.library.stats.Rf;
 import com.oracle.truffle.r.library.stats.Rnorm;
 import com.oracle.truffle.r.library.stats.Rt;
-import com.oracle.truffle.r.library.stats.Runif;
 import com.oracle.truffle.r.library.stats.Signrank.RSignrank;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
+import com.oracle.truffle.r.library.stats.Unif.DUnif;
+import com.oracle.truffle.r.library.stats.Unif.PUnif;
+import com.oracle.truffle.r.library.stats.Unif.QUnif;
+import com.oracle.truffle.r.library.stats.Unif.Runif;
 import com.oracle.truffle.r.library.stats.Wilcox.RWilcox;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
@@ -288,12 +293,22 @@ public class CallAndExternalFunctions {
                     return RandFunction1Node.createInt(new RSignrank());
                 case "rhyper":
                     return RandFunction3Node.createInt(new RHyper());
+                case "qt":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Qt());
+                case "pt":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Pt());
                 case "qgamma":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qbinom());
+                case "punif":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PUnif());
+                case "dunif":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DUnif());
+                case "qunif":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QUnif());
                 case "rbinom":
                     return RandFunction2Node.createInt(new Rbinom());
                 case "pbinom":
@@ -346,6 +361,8 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.QLogis());
                 case "plogis":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.PLogis());
+                case "pgeom":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Geom.PGeom());
                 case "rmultinom":
                     return RMultinomNodeGen.create();
                 case "Approx":
