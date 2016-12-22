@@ -336,42 +336,48 @@ suite = {
          "linux" : {
            "amd64" : {
              "path" : "mxbuild/dists/linux/amd64/fastr-unit-tests-native.jar",
-           }
+           },
+           "sparcv9" : {
+             "path" : "mxbuild/dists/linux/sparcv9/fastr-unit-tests-native.jar",
+           },
         },
-         "darwin" : {
+        "darwin" : {
            "amd64" : {
              "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
            },
         },
-         "solaris" : {
+        "solaris" : {
            "sparcv9" : {
              "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
-           }
+           },
         },
       },
     },
 
     "FASTR_NATIVE_DEV": {
-        "description" : "support for overriding the native project implementation in a separate suite",
-        "dependencies" : ["com.oracle.truffle.r.native"],
-        "exclude" : [
+      "description" : "support for overriding the native project implementation in a separate suite",
+      "dependencies" : ["com.oracle.truffle.r.native"],
+      "exclude" : [
         "GNUR",
         "GNU_ICONV",
-        ],
-       "os_arch" : {
-         "linux" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/linux/amd64/fastr-native-dev.jar",
-           },
-        },
-         "darwin" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
+      ],
+      "os_arch" : {
+        "linux" : {
+          "amd64" : {
+            "path" : "mxbuild/dists/linux/amd64/fastr-native-dev.jar",
+          },
+          "sparcv9" : {
+            "path" : "mxbuild/dists/linux/sparcv9/fastr-native-dev.jar",
           },
         },
-         "solaris" : {
-           "sparcv9" : {
-             "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
+        "darwin" : {
+          "amd64" : {
+            "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
+          },
+        },
+        "solaris" : {
+          "sparcv9" : {
+            "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
           },
         },
       },
@@ -382,19 +388,22 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.release"],
        "os_arch" : {
          "linux" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/linux/amd64/fastr-release.jar",
-           }
+          "amd64" : {
+            "path" : "mxbuild/dists/linux/amd64/fastr-release.jar",
+          },
+          "sparcv9" : {
+            "path" : "mxbuild/dists/linux/sparcv9/fastr-release.jar",
+          },
         },
-         "darwin" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
-           }
+        "darwin" : {
+          "amd64" : {
+            "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
+          },
         },
-         "solaris" : {
-           "sparcv9" : {
-             "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
-           }
+        "solaris" : {
+          "sparcv9" : {
+            "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
+          },
         },
       },
     },

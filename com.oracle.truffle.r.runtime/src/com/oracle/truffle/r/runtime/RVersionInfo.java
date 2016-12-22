@@ -92,7 +92,11 @@ public enum RVersionInfo {
                          * GnuR, this value on Linux has to be x86_64-unknown-linux-gnu
                          */
                         if (osName.equals("linux")) {
-                            data.value = "x86_64-unknown-linux-gnu";
+                            if (Arch.value.equals("sparcv9")) {
+                                data.value = "sparc64-unknown-linux-gnu";
+                            } else {
+                                data.value = "x86_64-unknown-linux-gnu";
+                            }
                         } else if (osName.toLowerCase().equals("sunos")) {
                             data.value = "sparc-sun-solaris2.11";
                         } else {
