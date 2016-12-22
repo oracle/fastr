@@ -89,7 +89,7 @@ public final class RBuiltinRootNode extends RRootNode {
             throw new RInternalError(e, "internal error");
         } finally {
             visibility.execute(frame, factory.getVisibility());
-            visibility.executeEndOfFunction(frame);
+            visibility.executeEndOfFunction(frame, this);
         }
     }
 
@@ -120,10 +120,5 @@ public final class RBuiltinRootNode extends RRootNode {
     @Override
     public String getName() {
         return "RBuiltin(" + builtin + ")";
-    }
-
-    @Override
-    public String toString() {
-        return getName();
     }
 }

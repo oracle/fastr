@@ -526,7 +526,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
-                setVisibility.executeEndOfFunction(vf);
+                setVisibility.executeEndOfFunction(vf, this);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
@@ -556,6 +556,11 @@ final class REngine implements Engine, Engine.Timings {
                 }
             }
             return result;
+        }
+
+        @Override
+        public String getName() {
+            return description;
         }
 
         @Override

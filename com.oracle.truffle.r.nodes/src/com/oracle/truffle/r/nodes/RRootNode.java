@@ -105,4 +105,9 @@ public abstract class RRootNode extends RootNode implements HasSignature {
     public boolean isCloningAllowed() {
         return true;
     }
+
+    @Override
+    public final String toString() {
+        return getName();
+    }
 }

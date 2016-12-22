@@ -278,7 +278,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
-            visibility.executeEndOfFunction(frame);
+            visibility.executeEndOfFunction(frame, this);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
@@ -404,11 +404,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public String getName() {
         return name == null ? "<no source>" : name;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
     }
 
     public void setName(String name) {
