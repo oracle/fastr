@@ -61,7 +61,7 @@ public class TestStatFunctions extends TestBase {
         assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_1_NAMES, FUNCTION2_1_PARAMS));
     }
 
-    private static final String[] FUNCTION2_2_NAMES = {"pchisq", "pexp", "qexp", "qgeom", "pgeom", "qt", "pt"};
+    private static final String[] FUNCTION2_2_NAMES = {"pchisq", "pexp", "qexp", "qgeom", "pgeom", "qt", "pt", "qpois", "ppois"};
     private static final String[] FUNCTION2_2_PARAMS = {
                     "0, 10",
                     "c(-1, 0, 0.2, 2), rep(c(-1, 0, 0.1, 0.9, 3), 4)",

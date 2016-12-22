@@ -71,11 +71,13 @@ import com.oracle.truffle.r.library.stats.LogNormal.QLNorm;
 import com.oracle.truffle.r.library.stats.Logis;
 import com.oracle.truffle.r.library.stats.Logis.DLogis;
 import com.oracle.truffle.r.library.stats.Logis.RLogis;
+import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Pt;
+import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.Qt;
@@ -309,6 +311,10 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DUnif());
                 case "qunif":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QUnif());
+                case "ppois":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new PPois());
+                case "qpois":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new QPois());
                 case "rbinom":
                     return RandFunction2Node.createInt(new Rbinom());
                 case "pbinom":
