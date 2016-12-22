@@ -354,6 +354,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
+        add(FastRInterop.EvalFile.class, FastRInteropFactory.EvalFileNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
         add(FastRInterop.HasSize.class, FastRInteropFactory.HasSizeNodeGen::create);
         add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);
