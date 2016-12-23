@@ -250,6 +250,8 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.File.class, ConnectionFunctionsFactory.FileNodeGen::create);
         add(ConnectionFunctions.Flush.class, ConnectionFunctionsFactory.FlushNodeGen::create);
         add(ConnectionFunctions.GZFile.class, ConnectionFunctionsFactory.GZFileNodeGen::create);
+        add(ConnectionFunctions.BZFile.class, ConnectionFunctionsFactory.BZFileNodeGen::create);
+        add(ConnectionFunctions.XZFile.class, ConnectionFunctionsFactory.XZFileNodeGen::create);
         add(ConnectionFunctions.GetAllConnections.class, ConnectionFunctionsFactory.GetAllConnectionsNodeGen::create);
         add(ConnectionFunctions.GetConnection.class, ConnectionFunctionsFactory.GetConnectionNodeGen::create);
         add(ConnectionFunctions.IsOpen.class, ConnectionFunctionsFactory.IsOpenNodeGen::create);

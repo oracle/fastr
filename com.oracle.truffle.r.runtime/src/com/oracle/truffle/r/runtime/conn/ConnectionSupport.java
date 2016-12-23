@@ -308,6 +308,8 @@ public class ConnectionSupport {
         Terminal("terminal"),
         File("file"),
         GZFile("gzfile"),
+        BZFile("bzfile"),
+        XZFile("xzfile"),
         Socket("sockconn"),
         Text("textConnection"),
         URL("url"),
@@ -511,7 +513,7 @@ public class ConnectionSupport {
          */
         private int descriptor;
 
-        private final ConnectionClass conClass;
+        private ConnectionClass conClass;
 
         /**
          * The constructor for every connection class except {@link StdConnections}.
@@ -546,6 +548,13 @@ public class ConnectionSupport {
 
         public final ConnectionClass getConnectionClass() {
             return conClass;
+        }
+
+        /**
+         * {@code gzfile} can open other connection classes, and this isn't known initially.
+         */
+        public final void updateConnectionClass(ConnectionClass conClass) {
+            this.conClass = conClass;
         }
 
         protected void openNonLazyConnection() throws IOException {
