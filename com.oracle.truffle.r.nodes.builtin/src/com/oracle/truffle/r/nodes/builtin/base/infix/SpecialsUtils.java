@@ -107,8 +107,8 @@ class SpecialsUtils {
         /**
          * Checks whether the given (1-based) indexes are valid for the given matrix.
          */
-        protected static boolean isValidIndex(RAbstractVector vector, int index1, int index2) {
-            int[] dimensions = vector.getDimensions();
+        protected boolean isValidIndex(RAbstractVector vector, int index1, int index2) {
+            int[] dimensions = getDimensions.getDimensions(vector);
             return dimensions != null && dimensions.length == 2 && index1 >= 1 && index1 <= dimensions[0] && index2 >= 1 && index2 <= dimensions[1];
         }
     }
