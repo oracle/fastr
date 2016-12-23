@@ -40,6 +40,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -309,6 +311,7 @@ final class REngine implements Engine, Engine.Timings {
     private final class PolyglotEngineRootNode extends RootNode {
 
         private final List<RSyntaxNode> statements;
+        @Children private final DirectCallNode[] calls;
         private final boolean printResult;
 
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
@@ -318,6 +321,7 @@ final class REngine implements Engine, Engine.Timings {
             // can't print if initializing the system in embedded mode (no builtins yet)
             this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string);
             this.statements = statements;
+            this.calls = new DirectCallNode[statements.size()];
         }
 
         /**
@@ -326,6 +330,7 @@ final class REngine implements Engine, Engine.Timings {
          * control over what that might be when the call is initiated.
          */
         @Override
+        @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             RContext oldContext = RContext.getThreadLocalInstance();
             RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
@@ -334,8 +339,11 @@ final class REngine implements Engine, Engine.Timings {
                 Object lastValue = RNull.instance;
                 for (int i = 0; i < statements.size(); i++) {
                     RSyntaxNode node = statements.get(i);
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true);
-                    lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
+                    if (calls[i] == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
+                    }
+                    lastValue = calls[i].call(frame, new Object[]{newContext.stateREnvironment.getGlobalFrame()});
                 }
                 return lastValue;
             } catch (ReturnException ex) {
