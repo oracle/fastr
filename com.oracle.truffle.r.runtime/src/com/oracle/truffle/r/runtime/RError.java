@@ -527,6 +527,7 @@ public final class RError extends RuntimeException {
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("negative probability"),
         NO_POSITIVE_PROBABILITIES("no positive probabilities"),
+        QBETA_ACURACY_WARNING("qbeta(a, *) =: x0 with |pbeta(x0,*%s) - alpha| = %.5g is not accurate"),
         NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),

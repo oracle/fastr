@@ -29,7 +29,7 @@ public final class Pbeta implements Function3_2 {
     }
 
     @TruffleBoundary
-    private static double pbetaRaw(double x, double a, double b, boolean lowerTail, boolean logProb) {
+    static double pbetaRaw(double x, double a, double b, boolean lowerTail, boolean logProb) {
         // treat limit cases correctly here:
         if (a == 0 || b == 0 || !Double.isFinite(a) || !Double.isFinite(b)) {
             // NB: 0 < x < 1 :
