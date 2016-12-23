@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
@@ -26,11 +27,34 @@ import com.oracle.truffle.r.runtime.RRuntime;
  */
 public class RMath {
 
+    public enum MLError {
+        DOMAIN,
+        RANGE,
+        NOCONV,
+        PRECISION,
+        UNDERFLOW
+    }
+
     /**
-     * corresponds to macro {@code ML_ERR_return_NAN} in GnuR.
+     * Corresponds to macro {@code ML_ERR_return_NAN} in GnuR.
      */
     public static double mlError() {
+        return mlError(MLError.DOMAIN, "");
+    }
+
+    /**
+     * Corresponds to macro {@code ML_ERR} in GnuR. TODO: raise corresponding warning
+     */
+    public static double mlError(@SuppressWarnings("unused") MLError error, @SuppressWarnings("unused") String message) {
         return Double.NaN;
+    }
+
+    public static void mlWarning(RError.Message message, Object... args) {
+        RError.warning(null, message, args);
+    }
+
+    public static boolean mlValid(double d) {
+        return !Double.isNaN(d);
     }
 
     public static double lfastchoose(double n, double k) {
@@ -56,7 +80,7 @@ public class RMath {
         return ((y >= 0) ? TOMS708.fabs(x) : -TOMS708.fabs(x));
     }
 
-    public static double fmod(double a, double b) {
+    private static double fmod(double a, double b) {
         double q = a / b;
         if (b != 0) {
             double tmp = a - Math.floor(q) * b;

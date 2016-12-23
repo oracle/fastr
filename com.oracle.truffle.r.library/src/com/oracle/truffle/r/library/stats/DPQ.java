@@ -51,6 +51,11 @@ public final class DPQ {
         return logP ? Double.NEGATIVE_INFINITY : 0.;
     }
 
+    // R_D_half (log_p ? -M_LN2 : 0.5)
+    public static double rdhalf(boolean logP) {
+        return logP ? -M_LN2 : 0.5;
+    }
+
     // R_D__1
     public static double rd1(boolean logP) {
         return logP ? 0. : 1.;

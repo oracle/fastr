@@ -30,7 +30,7 @@ public final class RNchisq extends RandFunction2_Double {
         } else {
             double r = RPois.rpois(lambda / 2., rand);
             if (r > 0.) {
-                r = RChisq.rchisq(2. * r, rand);
+                r = Chisq.RChisq.rchisq(2. * r, rand);
             }
             if (df > 0.) {
                 r += rgamma.execute(df / 2., 2., rand);
