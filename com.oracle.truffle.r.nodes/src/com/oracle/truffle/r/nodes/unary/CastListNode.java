@@ -101,8 +101,8 @@ public abstract class CastListNode extends CastBaseNode {
                 if (attr.getName().equals(RRuntime.CLASS_ATTR_KEY)) {
 
                     if (setClassAttrNode == null) {
-                        setClassAttrNode = insert(SetClassAttributeNode.create());
                         CompilerDirectives.transferToInterpreterAndInvalidate();
+                        setClassAttrNode = insert(SetClassAttributeNode.create());
                     }
 
                     setClassAttrNode.execute(result, attr.getValue());
