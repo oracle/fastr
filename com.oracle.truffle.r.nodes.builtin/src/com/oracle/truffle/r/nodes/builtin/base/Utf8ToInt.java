@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -42,7 +43,8 @@ public abstract class Utf8ToInt extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0, "x").defaultError(RError.SHOW_CALLER, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE, "x").mustBe(stringValue()).asStringVector().mustBe(notEmpty());
+        casts.arg(0, "x").defaultError(RError.SHOW_CALLER, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE, "x").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(size(1),
+                        RError.SHOW_CALLER, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE).findFirst();
     }
 
     @Specialization
@@ -60,14 +62,6 @@ public abstract class Utf8ToInt extends RBuiltinNode {
             ret = RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, false);
         }
         return ret;
-    }
-
-    @Specialization
-    protected RAbstractIntVector utf8ToInt(RAbstractStringVector x) {
-        if (x.getLength() > 1) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
-        }
-        return utf8ToInt(x.getDataAt(0));
     }
 
 }
