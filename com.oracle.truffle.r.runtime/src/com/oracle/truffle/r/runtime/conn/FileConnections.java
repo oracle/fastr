@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,6 +33,8 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
+
+import org.tukaani.xz.XZInputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCompression;
@@ -110,7 +113,15 @@ public class FileConnections {
                     inputStream = new BufferedInputStream(new FileInputStream(base.path));
                     break;
                 case GZIP:
-                    inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIPConnections.GZIP_BUFFER_SIZE);
+                    inputStream = new GZIPInputStream(new FileInputStream(base.path), CompressedConnections.GZIP_BUFFER_SIZE);
+                    break;
+                case BZIP2:
+                    // no in Java support, so go via byte array
+                    byte[] bzipUdata = RCompression.bzipUncompressFromFile(base.path);
+                    inputStream = new ByteArrayInputStream(bzipUdata);
+                    break;
+                case XZ:
+                    inputStream = new XZInputStream(new FileInputStream(base.path));
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "compression type: " + cType.name());

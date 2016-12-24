@@ -22,14 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
-
-import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
+import org.tukaani.xz.LZMA2InputStream;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -41,7 +46,7 @@ public class RCompression {
         NONE('0'),
         GZIP('1'),
         BZIP2('2'),
-        LZMA('Z');
+        XZ('Z');
 
         public final byte typeByte;
 
@@ -70,7 +75,7 @@ public class RCompression {
             } else if (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h') {
                 return RCompression.Type.BZIP2;
             } else if (buf[0] == (byte) 0xFD && buf[1] == '7' && buf[2] == 'z' && buf[3] == 'X' && buf[4] == 'Z') {
-                return RCompression.Type.LZMA;
+                return RCompression.Type.XZ;
             } else {
                 return RCompression.Type.NONE;
             }
@@ -88,6 +93,15 @@ public class RCompression {
         return RCompression.Type.NONE;
     }
 
+    /**
+     * Uncompress for internal use in {@code LazyLoadDBFetch} where size of uncompressed data is
+     * known.
+     *
+     * @param type compression type
+     * @param udata where to store uncompressed data
+     * @param cdata data to uncompress
+     * @return {@code true} iff success
+     */
     public static boolean uncompress(Type type, byte[] udata, byte[] cdata) {
         switch (type) {
             case NONE:
@@ -97,7 +111,7 @@ public class RCompression {
                 return gzipUncompress(udata, cdata);
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
-            case LZMA:
+            case XZ:
                 return lzmaUncompress(udata, cdata);
             default:
                 assert false;
@@ -105,6 +119,15 @@ public class RCompression {
         }
     }
 
+    /**
+     * Uncompress for internal use in {@code LazyLoadDBInsertValue} where size of uncompressed data
+     * is known.
+     *
+     * @param type compression type
+     * @param udata uncompressed data
+     * @param cdata where to store compressed data
+     * @return {@code true} iff success
+     */
     public static boolean compress(Type type, byte[] udata, byte[] cdata) {
         switch (type) {
             case NONE:
@@ -114,7 +137,7 @@ public class RCompression {
                 return gzipCompress(udata, cdata);
             case BZIP2:
                 throw RInternalError.unimplemented("BZIP2 compression");
-            case LZMA:
+            case XZ:
                 return lzmaCompress(udata, cdata);
             default:
                 assert false;
@@ -132,6 +155,10 @@ public class RCompression {
         return rc == 0;
     }
 
+    /**
+     * There is no obvious counterpart to {@link LZMA2InputStream} and according to the XZ forum it
+     * is not implemented for Java, so have to use sub-process.
+     */
     private static boolean lzmaCompress(byte[] udata, byte[] cdata) {
         int rc;
         ProcessBuilder pb = new ProcessBuilder("xz", "--compress", "--format=raw", "--lzma2", "--stdout");
@@ -157,67 +184,64 @@ public class RCompression {
     }
 
     private static boolean lzmaUncompress(byte[] udata, byte[] data) {
-        int rc;
-        ProcessBuilder pb = new ProcessBuilder("xz", "--decompress", "--format=raw", "--lzma2", "--stdout");
-        pb.redirectError(Redirect.INHERIT);
-        try {
-            Process p = pb.start();
-            OutputStream os = p.getOutputStream();
-            InputStream is = p.getInputStream();
-            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, udata);
-            readThread.start();
-            os.write(data);
-            os.close();
-            rc = p.waitFor();
-            if (rc == 0) {
-                readThread.join();
-                if (readThread.totalRead != udata.length) {
-                    return false;
-                }
+        int dictSize = udata.length < LZMA2InputStream.DICT_SIZE_MIN ? LZMA2InputStream.DICT_SIZE_MIN : udata.length;
+        try (LZMA2InputStream lzmaStream = new LZMA2InputStream(new ByteArrayInputStream(data), dictSize)) {
+            int totalRead = 0;
+            int n;
+            while ((n = lzmaStream.read(udata, totalRead, udata.length - totalRead)) > 0) {
+                totalRead += n;
             }
-        } catch (InterruptedException | IOException ex) {
+            return totalRead == udata.length;
+        } catch (IOException ex) {
             return false;
         }
-        return rc == 0;
     }
 
-    /**
-     * This is used by {@link GZIPRConnection}.
-     */
-    public static byte[] lzmaUncompressFromFile(String path) {
-        return genericUncompressFromFile(new String[]{"xz", "--decompress", "--lzma2", "--stdout", path});
+    public static byte[] bzipUncompressFromFile(String path) throws IOException {
+        String[] command = new String[]{"bzip2", "-dc", path};
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectError(Redirect.INHERIT);
+        Process p = pb.start();
+        InputStream is = p.getInputStream();
+        ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
+        readThread.start();
+        try {
+            int rc = p.waitFor();
+            if (rc == 0) {
+                readThread.join();
+                return Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
+            }
+        } catch (InterruptedException ex) {
+            // fall through
+        }
+        throw new IOException();
     }
 
-    public static byte[] bzipUncompressFromFile(String path) {
-        return genericUncompressFromFile(new String[]{"bzip2", "-dc", path});
-    }
-
-    private static byte[] genericUncompressFromFile(String[] command) {
+    public static void bzipCompressToFile(byte[] data, String path, boolean append) throws IOException {
+        String[] command = new String[]{"bzip2", "-zc"};
         int rc;
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectError(Redirect.INHERIT);
+        Process p = pb.start();
+        InputStream is = p.getInputStream();
+        OutputStream os = p.getOutputStream();
+        ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
+        readThread.start();
+        os.write(data);
+        os.close();
         try {
-            Process p = pb.start();
-            InputStream is = p.getInputStream();
-            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
-            readThread.start();
             rc = p.waitFor();
             if (rc == 0) {
                 readThread.join();
-                return readThread.getData();
+                byte[] cData = Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
+                OpenOption[] openOptions = append ? new OpenOption[]{StandardOpenOption.APPEND} : new OpenOption[0];
+                Files.write(Paths.get(path), cData, openOptions);
+                return;
             }
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException ex) {
             // fall through
         }
-        throw RInternalError.shouldNotReachHere(join(command));
+        throw new IOException();
     }
 
-    private static String join(String[] args) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : args) {
-            sb.append(s);
-            sb.append(' ');
-        }
-        return sb.toString();
-    }
 }

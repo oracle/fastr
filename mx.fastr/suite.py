@@ -142,7 +142,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.library",
-        "XZ-1.5"
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -217,6 +216,7 @@ suite = {
       "dependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
+        "XZ-1.5",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -311,6 +311,7 @@ suite = {
         "ANTLR-3.5",
         "GNUR",
         "GNU_ICONV",
+        "XZ-1.5",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
