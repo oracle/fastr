@@ -25,9 +25,11 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -112,6 +114,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final boolean needsSplitting;
 
     @CompilationFinal private boolean containsDispatch;
+
+    private final Assumption noHandlerStackSlot = Truffle.getRuntime().createAssumption();
+    private final Assumption noRestartStackSlot = Truffle.getRuntime().createAssumption();
+    @CompilationFinal private FrameSlot handlerStackSlot;
+    @CompilationFinal private FrameSlot restartStackSlot;
 
     /**
      * Profiling for catching {@link ReturnException}s.
@@ -229,12 +236,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public Object execute(VirtualFrame frame) {
-        /*
-         * It might be possible to only record this iff a handler is installed, by using the
-         * RArguments array.
-         */
-        Object handlerStack = RErrorHandling.getHandlerStack();
-        Object restartStack = RErrorHandling.getRestartStack();
         boolean runOnExitHandlers = true;
         try {
             verifyEnclosingAssumptions(frame);
@@ -278,13 +279,27 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
-            visibility.executeEndOfFunction(frame);
+            visibility.executeEndOfFunction(frame, this);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
             }
             if (runOnExitHandlers) {
-                RErrorHandling.restoreStacks(handlerStack, restartStack);
+                if (!noHandlerStackSlot.isValid() && frame.isObject(handlerStackSlot)) {
+                    try {
+                        RErrorHandling.restoreHandlerStack(frame.getObject(handlerStackSlot));
+                    } catch (FrameSlotTypeException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+                if (!noRestartStackSlot.isValid() && frame.isObject(restartStackSlot)) {
+                    try {
+                        RErrorHandling.restoreRestartStack(frame.getObject(restartStackSlot));
+                    } catch (FrameSlotTypeException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+
                 if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
                     if (onExitExpressionCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -406,11 +421,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return name == null ? "<no source>" : name;
     }
 
-    @Override
-    public String toString() {
-        return getName();
-    }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -459,5 +469,25 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public String getSyntaxDebugName() {
         return name;
+    }
+
+    public FrameSlot getRestartFrameSlot(VirtualFrame frame) {
+        if (noRestartStackSlot.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            restartStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.RestartStack);
+            noRestartStackSlot.invalidate();
+        }
+        assert restartStackSlot != null;
+        return restartStackSlot;
+    }
+
+    public FrameSlot getHandlerFrameSlot(VirtualFrame frame) {
+        if (noHandlerStackSlot.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handlerStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.HandlerStack);
+            noHandlerStackSlot.invalidate();
+        }
+        assert handlerStackSlot != null;
+        return handlerStackSlot;
     }
 }

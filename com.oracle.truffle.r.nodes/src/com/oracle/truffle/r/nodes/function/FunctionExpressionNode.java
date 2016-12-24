@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
@@ -48,6 +49,8 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
     public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget) {
         return new FunctionExpressionNode(src, callTarget);
     }
+
+    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     @CompilationFinal private RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
@@ -68,6 +71,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
 
     @Override
     public RFunction executeFunction(VirtualFrame frame) {
+        visibility.execute(frame, true);
         MaterializedFrame matFrame = frame.materialize();
         if (deoptFrameNode != null) {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack

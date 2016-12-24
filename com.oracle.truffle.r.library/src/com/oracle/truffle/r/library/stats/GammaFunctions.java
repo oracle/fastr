@@ -895,9 +895,8 @@ public abstract class GammaFunctions {
             if (logp) {
                 return rlog1exp(RMath.log1p(sum) + lf2);
             } else {
-                double f1m1 = sum;
                 double f2m1 = RMath.expm1(lf2);
-                return -(f1m1 + f2m1 + f1m1 * f2m1);
+                return -(sum + f2m1 + sum * f2m1);
             }
         }
     } /* pgamma_smallx() */
@@ -1382,7 +1381,7 @@ public abstract class GammaFunctions {
     // pnorm
     //
 
-    private static double pnorm(double x, double mu, double sigma, boolean lowerTail, boolean logp) {
+    static double pnorm(double x, double mu, double sigma, boolean lowerTail, boolean logp) {
         double p;
         double cp = 0;
         double localX = x;

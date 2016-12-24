@@ -86,6 +86,8 @@ public final class MathConstants {
 
     public static final double DBL_EPSILON = Math.ulp(1.0);
 
+    public static final double ML_NAN = Double.NaN;
+
     /**
      * Compute the log of a sum from logs of terms, i.e.,
      *

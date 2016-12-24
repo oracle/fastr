@@ -23,8 +23,8 @@ public final class Rf extends RandFunction2_Double {
 
         double v1;
         double v2;
-        v1 = Double.isFinite(n1) ? (RChisq.rchisq(n1, rand) / n1) : 1;
-        v2 = Double.isFinite(n2) ? (RChisq.rchisq(n2, rand) / n2) : 1;
+        v1 = Double.isFinite(n1) ? (Chisq.RChisq.rchisq(n1, rand) / n1) : 1;
+        v2 = Double.isFinite(n2) ? (Chisq.RChisq.rchisq(n2, rand) / n2) : 1;
         return v1 / v2;
     }
 }

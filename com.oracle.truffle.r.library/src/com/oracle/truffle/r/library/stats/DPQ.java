@@ -51,6 +51,11 @@ public final class DPQ {
         return logP ? Double.NEGATIVE_INFINITY : 0.;
     }
 
+    // R_D_half (log_p ? -M_LN2 : 0.5)
+    public static double rdhalf(boolean logP) {
+        return logP ? -M_LN2 : 0.5;
+    }
+
     // R_D__1
     public static double rd1(boolean logP) {
         return logP ? 0. : 1.;
@@ -115,6 +120,11 @@ public final class DPQ {
     // R_D_Clog(p) (log_p ? log1p(-(p)) : (0.5 - (p) + 0.5)) /* [log](1-p) */
     public static double rdclog(double p, boolean logP) {
         return logP ? RMath.log1p(-(p)) : (0.5 - (p) + 0.5);
+    }
+
+    // R_D_qIv (log_p ? exp(p) : (p))
+    public static double rdqiv(double p, boolean logP) {
+        return logP ? Math.exp(p) : p;
     }
 
     // R_DT_qIv
