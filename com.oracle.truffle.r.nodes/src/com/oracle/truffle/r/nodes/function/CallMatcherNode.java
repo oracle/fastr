@@ -60,7 +60,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     private static final int MAX_CACHE_DEPTH = 3;
 
     public static CallMatcherNode create(boolean argsAreEvaluated) {
-        return new CallMatcherUninitializedNode(argsAreEvaluated);
+        return new CallMatcherUninitializedNode(argsAreEvaluated, 0);
     }
 
     public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs);
@@ -151,19 +151,20 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class CallMatcherUninitializedNode extends CallMatcherNode {
-        CallMatcherUninitializedNode(boolean argsAreEvaluated) {
+        CallMatcherUninitializedNode(boolean argsAreEvaluated, int depth) {
             super(argsAreEvaluated);
+            this.depth = depth;
         }
 
-        private int depth;
+        private final int depth;
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (++depth > MAX_CACHE_DEPTH) {
+            if (depth > MAX_CACHE_DEPTH) {
                 return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             } else {
-                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
+                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
                     cachedNode.call.getCallNode().cloneCallTarget();

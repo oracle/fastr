@@ -67,7 +67,6 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.IfBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.NextBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.NextBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.ParenBuiltin;
-import com.oracle.truffle.r.nodes.builtin.base.infix.ParenBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.RepeatBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.RepeatBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.Subscript;
@@ -251,6 +250,8 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.File.class, ConnectionFunctionsFactory.FileNodeGen::create);
         add(ConnectionFunctions.Flush.class, ConnectionFunctionsFactory.FlushNodeGen::create);
         add(ConnectionFunctions.GZFile.class, ConnectionFunctionsFactory.GZFileNodeGen::create);
+        add(ConnectionFunctions.BZFile.class, ConnectionFunctionsFactory.BZFileNodeGen::create);
+        add(ConnectionFunctions.XZFile.class, ConnectionFunctionsFactory.XZFileNodeGen::create);
         add(ConnectionFunctions.GetAllConnections.class, ConnectionFunctionsFactory.GetAllConnectionsNodeGen::create);
         add(ConnectionFunctions.GetConnection.class, ConnectionFunctionsFactory.GetConnectionNodeGen::create);
         add(ConnectionFunctions.IsOpen.class, ConnectionFunctionsFactory.IsOpenNodeGen::create);
@@ -355,6 +356,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
+        add(FastRInterop.EvalFile.class, FastRInteropFactory.EvalFileNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
         add(FastRInterop.HasSize.class, FastRInteropFactory.HasSizeNodeGen::create);
         add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);
@@ -696,7 +698,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FunctionBuiltin.class, FunctionBuiltinNodeGen::create);
         add(IfBuiltin.class, IfBuiltinNodeGen::create);
         add(NextBuiltin.class, NextBuiltinNodeGen::create);
-        add(ParenBuiltin.class, ParenBuiltinNodeGen::create);
+        add(ParenBuiltin.class, ParenBuiltin::new, ParenBuiltin::special);
         add(RepeatBuiltin.class, RepeatBuiltinNodeGen::create);
         add(Tilde.class, TildeNodeGen::create);
         add(UpdateSubscript.class, UpdateSubscriptNodeGen::create, UpdateSubscript::special);

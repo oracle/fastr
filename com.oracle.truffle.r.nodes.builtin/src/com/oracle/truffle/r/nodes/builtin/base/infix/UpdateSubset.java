@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertSubset;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -57,11 +57,11 @@ public abstract class UpdateSubset extends RBuiltinNode {
     public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
         if (SpecialsUtils.isCorrectUpdateSignature(signature) && (args.length == 3 || args.length == 4)) {
             ProfiledValue vector = profile(args[0]);
-            ConvertIndex index = convertSubset(args[1]);
+            ConvertIndex index = convertIndex(args[1]);
             if (args.length == 3) {
                 return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, args[2]);
             } else {
-                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertSubset(args[2]), args[3]);
+                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), args[3]);
             }
         }
         return null;

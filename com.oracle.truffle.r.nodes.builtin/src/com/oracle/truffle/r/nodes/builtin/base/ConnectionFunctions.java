@@ -52,7 +52,6 @@ import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.zip.ZipException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -66,10 +65,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
-import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
+import com.oracle.truffle.r.runtime.conn.CompressedConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
@@ -225,34 +225,31 @@ public abstract class ConnectionFunctions {
 
     }
 
-    /**
-     * {@code gzfile} is very versatile (unfortunately); it can open uncompressed files, and files
-     * compressed by {@code bzip2, xz, lzma}. Currently we only support {@code gzip} and
-     * uncompressed.
+    /*
+     * In GNUR R {@code gzfile, bzfile, xzfile} are very versatile on input; they can open
+     * uncompressed files, and files compressed by {@code bzip2, xz, lzma}.
      */
-    @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
-    public abstract static class GZFile extends RBuiltinNode {
+
+    public abstract static class ZZFileAdapter extends RBuiltinNode {
+        private final RCompression.Type cType;
+
+        protected ZZFileAdapter(RCompression.Type cType) {
+            this.cType = cType;
+        }
+
         @Override
         protected void createCasts(CastBuilder casts) {
             Casts.description(casts);
             Casts.open(casts);
             Casts.encoding(casts);
-            casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(0).and(lte(9)));
+            casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
         }
 
         @Specialization
         @TruffleBoundary
-        @SuppressWarnings("unused")
-        protected RAbstractIntVector gzFile(RAbstractStringVector description, String open, RAbstractStringVector encoding, int compression) {
+        protected RAbstractIntVector zzFile(RAbstractStringVector description, String open, String encoding, int compression) {
             try {
-                return new GZIPRConnection(description.getDataAt(0), open).asVector();
-            } catch (ZipException ex) {
-                // wasn't a gzip file, try uncompressed text
-                try {
-                    return new FileRConnection(description.getDataAt(0), "r").asVector();
-                } catch (IOException ex1) {
-                    throw reportError(description.getDataAt(0), ex1);
-                }
+                return new CompressedRConnection(description.getDataAt(0), open, cType, encoding, compression).asVector();
             } catch (IOException ex) {
                 throw reportError(description.getDataAt(0), ex);
             }
@@ -262,6 +259,30 @@ public abstract class ConnectionFunctions {
             RError.warning(this, RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
             throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
         }
+    }
+
+    @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
+    public abstract static class GZFile extends ZZFileAdapter {
+        protected GZFile() {
+            super(RCompression.Type.GZIP);
+        }
+
+    }
+
+    @RBuiltin(name = "bzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
+    public abstract static class BZFile extends ZZFileAdapter {
+        protected BZFile() {
+            super(RCompression.Type.BZIP2);
+        }
+
+    }
+
+    @RBuiltin(name = "xzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
+    public abstract static class XZFile extends ZZFileAdapter {
+        protected XZFile() {
+            super(RCompression.Type.XZ);
+        }
+
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)

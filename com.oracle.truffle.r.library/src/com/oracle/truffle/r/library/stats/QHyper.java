@@ -12,9 +12,9 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
 import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 import static com.oracle.truffle.r.library.stats.RMath.fmin2;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 import static com.oracle.truffle.r.library.stats.RMath.lfastchoose;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;

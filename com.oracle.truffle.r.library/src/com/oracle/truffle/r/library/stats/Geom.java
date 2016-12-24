@@ -27,7 +27,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
@@ -88,6 +88,37 @@ public final class Geom {
             /* prob = (1-p)^x, stable for small p */
             double prob = Dbinom.dbinomRaw(0., forceint(x), p, 1 - p, giveLog);
             return ((giveLog) ? Math.log(p) + prob : p * prob);
+        }
+    }
+
+    public static final class PGeom implements Function2_2 {
+        @Override
+        public double evaluate(double xIn, double p, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(xIn) || Double.isNaN(p)) {
+                return xIn + p;
+            }
+            if (p <= 0 || p > 1) {
+                return RMath.mlError();
+            }
+
+            if (xIn < 0.) {
+                return DPQ.rdt0(lowerTail, logP);
+            }
+            if (!Double.isFinite(xIn)) {
+                return DPQ.rdt1(lowerTail, logP);
+            }
+            double x = Math.floor(xIn + 1e-7);
+
+            if (p == 1.) { /* we cannot assume IEEE */
+                x = lowerTail ? 1 : 0;
+                return logP ? Math.log(x) : x;
+            }
+            x = RMath.log1p(-p) * (x + 1);
+            if (logP) {
+                return DPQ.rdtclog(x, lowerTail, logP);
+            } else {
+                return lowerTail ? -RMath.expm1(x) : Math.exp(x);
+            }
         }
     }
 

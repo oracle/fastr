@@ -47,6 +47,14 @@ public class TestInterop extends TestBase {
         assertEvalFastR(".fastr.interop.export('foo', new.env())", "invisible()");
     }
 
+    @Test
+    public void testInteropEvalFile() {
+        assertEvalFastR("fileConn<-file(\"testScript.R\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"testScript.R\",\"application/x-r\")",
+                        "x<-c(1);cat(x)");
+        assertEvalFastR("fileConn<-file(\"testScript.R\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"testScript.R\")", "x<-c(1);cat(x)");
+        assertEvalFastR("tryCatch(.fastr.interop.evalFile(\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
+    }
+
     /**
      * Used for testing interop functionality.
      */

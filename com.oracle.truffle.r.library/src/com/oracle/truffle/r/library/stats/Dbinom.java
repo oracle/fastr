@@ -88,6 +88,6 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
             return DPQ.rd0(giveLog);
         }
 
-        return dbinomRaw(MathConstants.forceint(x), MathConstants.forceint(n), p, 1 - p, giveLog);
+        return dbinomRaw(RMath.forceint(x), RMath.forceint(n), p, 1 - p, giveLog);
     }
 }

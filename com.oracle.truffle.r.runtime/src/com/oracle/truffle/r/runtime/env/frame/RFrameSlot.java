@@ -51,5 +51,13 @@ public enum RFrameSlot {
      * each call site, the value of {@link RCaller#getVisibility()} is extracted and stored into the
      * frame slot.
      */
-    Visibility;
+    Visibility,
+    /**
+     * Used to save the handler stack in frames that modify it.
+     */
+    HandlerStack,
+    /**
+     * Used to save the restart stack in frames that modify it.
+     */
+    RestartStack
 }

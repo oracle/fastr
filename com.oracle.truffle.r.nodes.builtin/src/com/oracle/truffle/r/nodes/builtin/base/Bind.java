@@ -43,8 +43,9 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
-import com.oracle.truffle.r.nodes.function.UseMethodInternalNode;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -97,9 +98,11 @@ public abstract class Bind extends RBaseNode {
     public abstract Object execute(VirtualFrame frame, int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, int precedence);
 
     @Child private CastToVectorNode castVector;
-    @Child private UseMethodInternalNode dcn;
     @Child private CastLogicalNode castLogical;
     @Child private GetDimAttributeNode getDimsNode;
+
+    @Child private S3FunctionLookupNode lookup;
+    @Child private CallMatcherNode callMatcher;
 
     private final BindType type;
 
@@ -162,15 +165,19 @@ public abstract class Bind extends RBaseNode {
 
     @Specialization(guards = {"args.length > 0", "isDataFrame(args)"})
     protected Object allDataFrame(VirtualFrame frame, int deparseLevel, @SuppressWarnings("unused") Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence) {
-        if (dcn == null) {
+        if (lookup == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode(type.toString(), SIGNATURE, false));
+            lookup = insert(S3FunctionLookupNode.create(false, false));
         }
-        try {
-            return dcn.execute(frame, DATA_FRAME_CLASS, new Object[]{deparseLevel, promiseArgs});
-        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+        Result lookupResult = lookup.execute(frame, type.toString(), DATA_FRAME_CLASS, null, frame.materialize(), null);
+        if (lookupResult == null) {
             throw RInternalError.shouldNotReachHere();
         }
+        if (callMatcher == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callMatcher = insert(CallMatcherNode.create(false));
+        }
+        return callMatcher.execute(frame, SIGNATURE, new Object[]{deparseLevel, promiseArgs}, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
     }
 
     private Object bindInternal(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, CastNode castNode, boolean needsVectorCast, SetDimAttributeNode setDimNode,

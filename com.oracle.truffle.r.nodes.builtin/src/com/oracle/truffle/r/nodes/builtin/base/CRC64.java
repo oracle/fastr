@@ -52,13 +52,13 @@ public abstract class CRC64 extends RBuiltinNode {
         bytes = crc64(bytes);
         long l = 0;
         for (int i = 0; i < bytes.length; i++) {
-            l += ((long) bytes[i] & 0xffL) << (8 * i);
+            l += (bytes[i] & 0xffL) << (8 * i);
         }
         return RDataFactory.createStringVector(Long.toHexString(l));
     }
 
     @TruffleBoundary
-    private byte[] crc64(byte[] bytes) {
+    private static byte[] crc64(byte[] bytes) {
         org.tukaani.xz.check.CRC64 crc = new org.tukaani.xz.check.CRC64();
         crc.update(bytes);
         return crc.finish();

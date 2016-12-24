@@ -43,12 +43,17 @@ public final class DPQ {
     // R >= 3.1.0: # define R_nonint(x) (fabs((x) - R_forceint(x)) > 1e-7)
     // Note: if true should be followed by "return d0(logP)", consider using nointCheck instead
     public static boolean nonint(double x) {
-        return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1., Math.abs(x));
+        return Math.abs(x - RMath.forceint(x)) > 1e-7 * Math.max(1., Math.abs(x));
     }
 
     // R_D__0
     public static double rd0(boolean logP) {
         return logP ? Double.NEGATIVE_INFINITY : 0.;
+    }
+
+    // R_D_half (log_p ? -M_LN2 : 0.5)
+    public static double rdhalf(boolean logP) {
+        return logP ? -M_LN2 : 0.5;
     }
 
     // R_D__1
@@ -117,6 +122,11 @@ public final class DPQ {
         return logP ? RMath.log1p(-(p)) : (0.5 - (p) + 0.5);
     }
 
+    // R_D_qIv (log_p ? exp(p) : (p))
+    public static double rdqiv(double p, boolean logP) {
+        return logP ? Math.exp(p) : p;
+    }
+
     // R_DT_qIv
     public static double rdtqiv(double p, boolean lowerTail, boolean logP) {
         return logP ? lowerTail ? Math.exp(p) : -Math.expm1(p) : rdlval(p, lowerTail);
@@ -156,7 +166,7 @@ public final class DPQ {
     // R_P_bounds_Inf_01
     public static void rpboundsinf01(double x, boolean lowerTail, boolean logP) throws EarlyReturn {
         if (!Double.isFinite(x)) {
-            throw new EarlyReturn(x > 0 ? rdt0(lowerTail, logP) : rdt0(lowerTail, logP));
+            throw new EarlyReturn(x > 0 ? rdt1(lowerTail, logP) : rdt0(lowerTail, logP));
         }
     }
 

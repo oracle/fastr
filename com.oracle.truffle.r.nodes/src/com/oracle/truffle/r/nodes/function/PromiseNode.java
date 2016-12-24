@@ -409,8 +409,17 @@ public abstract class PromiseNode extends RNode {
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile containsVarargProfile = ConditionProfile.createBinaryProfile();
 
-        @CompilationFinal ArgumentsSignature cachedVarArgSignature;
-        @CompilationFinal ArgumentsSignature cachedResultSignature;
+        private static final class Cache {
+            private final ArgumentsSignature signature;
+            private final ArgumentsSignature result;
+
+            protected Cache(ArgumentsSignature signature, ArgumentsSignature result) {
+                this.signature = signature;
+                this.result = result;
+            }
+        }
+
+        @CompilationFinal private Cache varArgsCache;
 
         InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
@@ -455,13 +464,20 @@ public abstract class PromiseNode extends RNode {
                 if (evaluatedArgs.length == 1) {
                     finalSignature = ((RArgsValuesAndNames) evaluatedArgs[0]).getSignature();
                 } else {
-                    if (cachedVarArgSignature == ArgumentsSignature.INVALID_SIGNATURE) {
+                    Cache cache = varArgsCache;
+                    if (cache == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
                         finalSignature = createSignature(evaluatedArgs, flattenedArgs.length);
-                    } else if (varArgSignature == cachedVarArgSignature) {
-                        finalSignature = cachedResultSignature;
+                        varArgsCache = new Cache(varArgSignature, finalSignature);
+                    } else if (cache.signature == ArgumentsSignature.INVALID_SIGNATURE) {
+                        finalSignature = createSignature(evaluatedArgs, flattenedArgs.length);
+                    } else if (varArgSignature == cache.signature) {
+                        finalSignature = cache.result;
                     } else {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        // fallback to the generic case
                         finalSignature = createSignature(evaluatedArgs, flattenedArgs.length);
-                        cachedVarArgSignature = cachedVarArgSignature == null ? finalSignature : ArgumentsSignature.INVALID_SIGNATURE;
+                        varArgsCache = new Cache(ArgumentsSignature.INVALID_SIGNATURE, null);
                     }
                 }
                 return new RArgsValuesAndNames(flattenedArgs, finalSignature);
