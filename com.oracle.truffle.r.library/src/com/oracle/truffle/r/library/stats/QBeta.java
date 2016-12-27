@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.stats;
 import static com.oracle.truffle.r.library.stats.Arithmetic.powDi;
 import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MANT_DIG;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN_EXP;
 import static com.oracle.truffle.r.library.stats.MathConstants.ML_NAN;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
@@ -76,7 +77,7 @@ public final class QBeta implements Function3_2 {
     private static final double const3 = 0.99229;
     private static final double const4 = 0.04481;
 
-    private static final double DBL_very_MIN = Double.MIN_VALUE / 4.;
+    private static final double DBL_very_MIN = DBL_MIN / 4.;
     private static final double DBL_log_v_MIN = M_LN2 * (DBL_MIN_EXP - 2);
     private static final double DBL_1__eps = 0x1.fffffffffffffp-1; // = 1 - 2^-53
 
@@ -224,8 +225,8 @@ public final class QBeta implements Function3_2 {
             t = 0.2;
 
             debugPrintf(
-                            "qbeta(%g, %g, %g, lower_t=%d, log_p=%d):%s\n" +
-                                            "  swap_tail=%d, la=%g, u0=%g (bnd: %g (%g)) ",
+                            "qbeta(%g, %g, %g, lower_t=%b, log_p=%b):%s\n" +
+                                            "  swap_tail=%b, la=%g, u0=%g (bnd: %g (%g)) ",
                             alpha, p, q, lower_tail, log_p,
                             (log_p && (p_ == 0. || p_ == 1.)) ? (p_ == 0. ? " p_=0" : " p_=1") : "",
                             swap_tail, la, u0,
@@ -407,7 +408,7 @@ public final class QBeta implements Function3_2 {
                 if (u == Double.NEGATIVE_INFINITY) {
                     debugPrintf("  u = -Inf;");
                     u = M_LN2 * DBL_MIN_EXP;
-                    xinbta = Double.MIN_VALUE;
+                    xinbta = DBL_MIN;
                 } else {
                     debugPrintf(" bad_init: u=%g, xinbta=%g;", u, xinbta);
                     xinbta = (xinbta > 1.1) // i.e. "way off"
@@ -461,7 +462,7 @@ public final class QBeta implements Function3_2 {
                     if (i_pb >= n_N && w * wprev <= 0.) {
                         prev = RMath.fmax2(Math.abs(adj), fpu);
                     }
-                    debugPrintf("N(i=%2d): u=%#20.16g, pb(e^u)=%#12.6g, w=%#15.9g, %s prev=%11g,",
+                    debugPrintf("N(i=%2d): u=%g, pb(e^u)=%g, w=%g, %s prev=%g,",
                                     i_pb, u, y, w, (w * wprev <= 0.) ? "new" : "old", prev);
                     g = 1;
                     int i_inn;
