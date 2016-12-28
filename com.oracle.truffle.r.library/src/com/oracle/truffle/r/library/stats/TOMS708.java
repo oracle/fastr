@@ -11,7 +11,6 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT_PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.logspaceAdd;
@@ -36,11 +35,6 @@ public class TOMS708 {
     @TruffleBoundary
     private static void emitWarning(String format, Object... args) {
         RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format(format, args));
-    }
-
-    // R_Log1_Exp
-    public static double log1Exp(double x) {
-        return ((x) > -M_LN2 ? log(-rexpm1(x)) : RMath.log1p(-exp(x)));
     }
 
     private static double sin(double v) {
@@ -81,22 +75,6 @@ public class TOMS708 {
 
     private static final double ML_NEGINF = Double.NEGATIVE_INFINITY;
     private static final int INT_MAX = Integer.MAX_VALUE;
-    private static final double DBL_MIN = Double.MIN_NORMAL;
-    private static final double INV_SQRT_2_PI = .398942280401433; /* == 1/sqrt(2*pi); */
-
-    public static final class MathException extends RuntimeException {
-        private static final long serialVersionUID = -4745984791703065276L;
-
-        private final int code;
-
-        public MathException(int code) {
-            this.code = code;
-        }
-
-        public int getCode() {
-            return code;
-        }
-    }
 
     public static final class Bratio {
         public double w;
@@ -276,7 +254,7 @@ public class TOMS708 {
 
                                 if (b0 < Math.min(eps, eps * a0)) { /* L80: */
                                     w = fpser(a0, b0, x0, eps, logP);
-                                    w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                                    w1 = logP ? DPQ.rlog1exp(w) : 0.5 - w + 0.5;
                                     debugPrintf("  b0 small -> w := fpser(*) = %.15f\n", w);
                                     break L_end;
                                 }
@@ -424,7 +402,7 @@ public class TOMS708 {
 
                                 /* else if none of the above L180: */
                                 w = basym(a0, b0, lambda, eps * 100.0, logP);
-                                w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                                w1 = logP ? DPQ.rlog1exp(w) : 0.5 - w + 0.5;
                                 debugPrintf("  b0 >= a0 > 100; lambda <= a0 * 0.03: *w:= basym(*) =%.15f\n", w);
                                 break L_end;
 
@@ -434,19 +412,19 @@ public class TOMS708 {
 
                         case L_w_bpser: // was L100
                             w = bpser(a0, b0, x0, eps, logP);
-                            w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                            w1 = logP ? DPQ.rlog1exp(w) : 0.5 - w + 0.5;
                             debugPrintf(" L_w_bpser: *w := bpser(*) = %.1fg\n", w);
                             break L_end;
 
                         case L_w1_bpser:  // was L110
                             w1 = bpser(b0, a0, y0, eps, logP);
-                            w = logP ? log1Exp(w1) : 0.5 - w1 + 0.5;
+                            w = logP ? DPQ.rlog1exp(w1) : 0.5 - w1 + 0.5;
                             debugPrintf(" L_w1_bpser: *w1 := bpser(*) = %.15f\n", w1);
                             break L_end;
 
                         case L_bfrac:
                             w = bfrac(a0, b0, x0, y0, lambda, eps * 15.0, logP);
-                            w1 = logP ? log1Exp(w) : 0.5 - w + 0.5;
+                            w1 = logP ? DPQ.rlog1exp(w) : 0.5 - w + 0.5;
                             debugPrintf(" L_bfrac: *w := bfrac(*) = %f\n", w);
                             break L_end;
 
@@ -462,7 +440,7 @@ public class TOMS708 {
                             w = bup(b0, a0, y0, x0, n, eps, false);
 
                             debugPrintf(" L140: *w := bup(b0=%g,..) = %.15f; ", b0, w);
-                            if (w < DBL_MIN && logP) {
+                            if (w < MathConstants.DBL_MIN && logP) {
                                 /* do not believe it; try bpser() : */
                                 /* revert: */b0 += n;
                                 /* which is only valid if b0 <= 1 || b0*x0 <= 0.7 */
@@ -520,7 +498,7 @@ public class TOMS708 {
                             // *w1 = log(w1) already; w = 1 - w1 ==> log(w) = log(1 - w1) = log(1 -
                             // exp(*w1))
                             if (logP) {
-                                w = log1Exp(w1);
+                                w = DPQ.rlog1exp(w1);
                             } else {
                                 w = /* 1 - exp(*w1) */-Math.expm1(w1);
                                 w1 = Math.exp(w1);
@@ -658,7 +636,6 @@ public class TOMS708 {
             } else {
                 w += (u0 ? Math.exp(logU + Math.log(sum)) : u * sum);
             }
-            return;
         } /* bgrat */
     }
 
@@ -1177,7 +1154,7 @@ public class TOMS708 {
 
             double z = logP ? -(a * u + b * v) : exp(-(a * u + b * v));
 
-            return (logP ? -M_LN_SQRT_2PI + .5 * log(b * x0) + z - bcorr(a, b) : INV_SQRT_2_PI * sqrt(b * x0) * z * exp(-bcorr(a, b)));
+            return (logP ? -M_LN_SQRT_2PI + .5 * log(b * x0) + z - bcorr(a, b) : MathConstants.INV_SQRT_2_PI * sqrt(b * x0) * z * exp(-bcorr(a, b)));
         }
     } /* brcomp */
 
@@ -1323,7 +1300,7 @@ public class TOMS708 {
 
             // L130:
             double z = esum(mu, -(a * u + b * v), giveLog);
-            return giveLog ? log(INV_SQRT_2_PI) + (log(b) + lx0) / 2. + z - bcorr(a, b) : INV_SQRT_2_PI * sqrt(b * x0) * z * exp(-bcorr(a, b));
+            return giveLog ? log(MathConstants.INV_SQRT_2_PI) + (log(b) + lx0) / 2. + z - bcorr(a, b) : MathConstants.INV_SQRT_2_PI * sqrt(b * x0) * z * exp(-bcorr(a, b));
         }
     } /* brcmp1 */
 

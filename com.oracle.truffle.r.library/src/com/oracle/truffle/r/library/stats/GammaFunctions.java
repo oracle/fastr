@@ -38,10 +38,12 @@ import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
+import com.oracle.truffle.r.library.stats.RMathError.MLError;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 /**
@@ -179,8 +181,8 @@ public abstract class GammaFunctions {
             // TODO ML_ERR_return_NAN
             return Double.NaN;
         } else if (x >= lgc_xmax) {
-            // ML_ERROR(ME_UNDERFLOW, "lgammacor");
             /* allow to underflow below */
+            RMathError.error(MLError.UNDERFLOW, "lgammacor");
         } else if (x < xbig) {
             tmp = 10 / x;
             return RMath.chebyshevEval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
@@ -188,8 +190,12 @@ public abstract class GammaFunctions {
         return 1 / (x * 12);
     }
 
+    /**
+     * Should be used in places where GnuR itself uses std libc function {@code lgamma}. Under the
+     * hood it uses {@link #lgammafn(double)}.
+     */
     static double lgamma(@SuppressWarnings("unused") double x) {
-        throw RError.nyi(RError.SHOW_CALLER, "lgamma from libc");
+        return lgammafn(x);
     }
 
     //
@@ -267,7 +273,7 @@ public abstract class GammaFunctions {
                 /* The answer is less than half precision */
                 /* because x too near a negative integer. */
                 if (x < -0.5 && Math.abs(x - (int) (x - 0.5) / x) < gfn_dxrel) {
-                    // ML_ERROR(ME_PRECISION, "gammafn");
+                    RMathError.error(MLError.PRECISION, "gammafn");
                 }
 
                 /* The argument is so close to 0 that the result would overflow. */
@@ -320,16 +326,14 @@ public abstract class GammaFunctions {
             }
 
             if (Math.abs((x - (int) (x - 0.5)) / x) < gfn_dxrel) {
-
                 /* The answer is less than half precision because */
                 /* the argument is too near a negative integer. */
-
-                // ML_ERROR(ME_PRECISION, "gammafn");
+                RMathError.error(MLError.PRECISION, "gammafn");
             }
 
             sinpiy = Math.sin(Math.PI * y);
             if (sinpiy == 0) { /* Negative integer arg - overflow */
-                // ML_ERROR(ME_RANGE, "gammafn");
+                RMathError.error(MLError.RANGE, "gammafn");
                 return Double.POSITIVE_INFINITY;
             }
 
@@ -372,7 +376,7 @@ public abstract class GammaFunctions {
         }
 
         if (x <= 0 && x == (long) x) { /* Negative integer argument */
-            RError.warning(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RMathError.error(MLError.RANGE, "lgamma");
             return Double.POSITIVE_INFINITY; /* +Inf, since lgamma(x) = log|gamma(x)| */
         }
 
@@ -389,7 +393,7 @@ public abstract class GammaFunctions {
          */
 
         if (y > gfn_sign_xmax) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "lgamma");
+            RMathError.error(MLError.RANGE, "lgamma");
             return Double.POSITIVE_INFINITY;
         }
 
@@ -408,21 +412,18 @@ public abstract class GammaFunctions {
         if (sinpiy == 0) { /*
                             * Negative integer argument === Now UNNECESSARY: caught above
                             */
-            // MATHLIB_WARNING(" ** should NEVER happen! *** [lgamma.c: Neg.int, y=%g]\n",y);
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            RMathError.warning(Message.GENERIC, " ** should NEVER happen! *** [lgamma.c: Neg.int]");
+            return RMathError.defaultError();
         }
 
         ans = M_LN_SQRT_PId2 + (x - 0.5) * Math.log(y) - x - Math.log(sinpiy) - lgammacor(y);
 
         if (Math.abs((x - (long) (x - 0.5)) * ans / x) < gfn_sign_dxrel) {
-
             /*
              * The answer is less than half precision because the argument is too near a negative
              * integer.
              */
-
-            RError.warning(RError.SHOW_CALLER2, RError.Message.FULL_PRECISION, "lgamma");
+            RMathError.error(MLError.PRECISION, "lgamma");
         }
 
         return ans;
@@ -465,8 +466,7 @@ public abstract class GammaFunctions {
         }
 
         if (nu <= 0) {
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            return RMathError.defaultError();
         }
 
         alpha = 0.5 * nu; /* = [pq]gamma() shape */
@@ -550,8 +550,7 @@ public abstract class GammaFunctions {
         // expansion of R_Q_P01_boundaries(p, 0., ML_POSINF)
         if (localLogp) {
             if (localP > 0) {
-                // TODO ML_ERR_return_NAN;
-                return Double.NaN;
+                return RMathError.defaultError();
             }
             if (localP == 0) { /* upper bound */
                 return lowerTail ? Double.POSITIVE_INFINITY : 0;
@@ -561,8 +560,7 @@ public abstract class GammaFunctions {
             }
         } else { /* !log_p */
             if (localP < 0 || localP > 1) {
-                // TODO ML_ERR_return_NAN;
-                return Double.NaN;
+                return RMathError.defaultError();
             }
             if (localP == 0) {
                 return lowerTail ? 0 : Double.POSITIVE_INFINITY;
@@ -573,8 +571,7 @@ public abstract class GammaFunctions {
         }
 
         if (alpha < 0 || scale <= 0) {
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            return RMathError.defaultError();
         }
 
         if (alpha == 0) {
@@ -1011,7 +1008,7 @@ public abstract class GammaFunctions {
             }
         }
 
-        // MATHLIB_WARNING(" ** NON-convergence in pgamma()'s pd_lower_cf() f= %g.\n", f);
+        RMathError.warning(Message.GENERIC, Utils.stringFormat(" ** NON-convergence in pgamma()'s pd_lower_cf() f= %g.", f));
         return f; /* should not happen ... */
     } /* pd_lower_cf() */
 

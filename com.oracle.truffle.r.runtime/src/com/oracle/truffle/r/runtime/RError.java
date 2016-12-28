@@ -533,6 +533,7 @@ public final class RError extends RuntimeException {
         NEGATIVE_PROBABILITY("negative probability"),
         NO_POSITIVE_PROBABILITIES("no positive probabilities"),
         QBETA_ACURACY_WARNING("qbeta(a, *) =: x0 with |pbeta(x0,*%s) - alpha| = %.5g is not accurate"),
+        PCHISQ_NOT_CONVERGED_WARNING("pnchisq(x=%g, ..): not converged in %d iter."),
         NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),

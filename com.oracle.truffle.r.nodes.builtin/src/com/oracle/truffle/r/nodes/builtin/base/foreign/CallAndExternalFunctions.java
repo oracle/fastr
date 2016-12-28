@@ -51,6 +51,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DBeta;
+import com.oracle.truffle.r.library.stats.DNChisq;
 import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
@@ -74,6 +75,7 @@ import com.oracle.truffle.r.library.stats.Logis;
 import com.oracle.truffle.r.library.stats.Logis.DLogis;
 import com.oracle.truffle.r.library.stats.Logis.RLogis;
 import com.oracle.truffle.r.library.stats.PGamma;
+import com.oracle.truffle.r.library.stats.PNChisq;
 import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
@@ -81,6 +83,7 @@ import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Pt;
 import com.oracle.truffle.r.library.stats.QBeta;
+import com.oracle.truffle.r.library.stats.QNChisq;
 import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qf;
@@ -299,6 +302,12 @@ public class CallAndExternalFunctions {
                     return RandFunction1Node.createInt(new RSignrank());
                 case "rhyper":
                     return RandFunction3Node.createInt(new RHyper());
+                case "pnchisq":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PNChisq());
+                case "qnchisq":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QNChisq());
+                case "dnchisq":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DNChisq());
                 case "qt":
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new Qt());
                 case "pt":

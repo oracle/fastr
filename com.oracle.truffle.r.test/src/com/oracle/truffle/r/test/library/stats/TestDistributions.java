@@ -82,7 +82,14 @@ public class TestDistributions extends TestBase {
                     addErrorParamValues("-1", "0").
                     test("13e-20", withDefaultQ("10", "-10")).
                     test("42", withDefaultQ("42")).
-                    test("42e123", withDefaultQ("33e123"))
+                    test("42e123", withDefaultQ("33e123")),
+            // tests for nchisq, which is called in chisq when second param is not missing
+            distr("chisq").
+                    addErrorParamValues("-3", "0").
+                    test("1, 1", withDefaultQ("0.5", "2")).
+                    test("420, 4", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
+                    test("0.13e-8, 1", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
+                    test("1, 0.13e-8", withQuantiles("0.42e-10", "100", "13e10", "11e111"))
     };
     // @formatter:on
 
