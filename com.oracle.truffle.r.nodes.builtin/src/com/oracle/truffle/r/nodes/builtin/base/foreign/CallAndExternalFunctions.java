@@ -51,6 +51,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DBeta;
+import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.Df;
@@ -72,6 +73,7 @@ import com.oracle.truffle.r.library.stats.LogNormal.QLNorm;
 import com.oracle.truffle.r.library.stats.Logis;
 import com.oracle.truffle.r.library.stats.Logis.DLogis;
 import com.oracle.truffle.r.library.stats.Logis.RLogis;
+import com.oracle.truffle.r.library.stats.PGamma;
 import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
@@ -339,6 +341,8 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Df());
                 case "dgamma":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DGamma());
+                case "pgamma":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PGamma());
                 case "dchisq":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new Chisq.DChisq());
                 case "qchisq":
@@ -470,7 +474,7 @@ public class CallAndExternalFunctions {
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandGenerationFunctions.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
-                    return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DNorm());
 
                 // tools
                 case "doTabExpand":

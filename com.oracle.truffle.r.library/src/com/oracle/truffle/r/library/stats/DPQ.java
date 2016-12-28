@@ -81,6 +81,7 @@ public final class DPQ {
     }
 
     // R_D_Lval
+    // Use 0.5 - p + 0.5 to perhaps gain 1 bit of accuracy
     public static double rdlval(double p, boolean lowerTail) {
         return lowerTail ? p : 0.5 - p + 0.5;
     }
@@ -160,6 +161,15 @@ public final class DPQ {
             if (p == 1) {
                 throw new EarlyReturn(lowerTail ? right : left);
             }
+        }
+    }
+
+    // R_P_bounds_01
+    public static void rpbounds01(double x, double xMin, double xMax, boolean lowerTail, boolean logP) throws EarlyReturn {
+        if (x <= xMin) {
+            throw new EarlyReturn(rdt0(lowerTail, logP));
+        } else if (x >= xMax) {
+            throw new EarlyReturn(rdt1(lowerTail, logP));
         }
     }
 

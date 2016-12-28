@@ -14,6 +14,7 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MANT_DIG;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_PI;
@@ -111,7 +112,7 @@ public class Qt implements Function2_2 {
 
         double q;
         if (Math.abs(ndf - 2) < eps) { /* df ~= 2 */
-            if (capP > Double.MIN_VALUE) {
+            if (capP > DBL_MIN) {
                 if (3 * capP < DBL_EPSILON) { /* P ~= 0 */
                     q = 1 / Math.sqrt(capP);
                 } else if (capP > 0.9) { /* P ~= 1 */
@@ -148,7 +149,7 @@ public class Qt implements Function2_2 {
             double c = ((20700 * a / b - 98) * a - 16) * a + 96.36;
             double d = ((94.5 / (b + c) - 3) / b + 1) * Math.sqrt(a * M_PI_2) * ndf;
 
-            boolean pOk1 = capP > Double.MIN_VALUE || !logP;
+            boolean pOk1 = capP > DBL_MIN || !logP;
             boolean pOk = pOk1;
             if (pOk1) {
                 y = Math.pow(d * capP, 2.0 / ndf);

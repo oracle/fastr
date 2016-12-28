@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LOG10_2;
 
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -26,7 +27,7 @@ public final class MathInit {
     public static double d1mach(int i) {
         switch (i) {
             case 1:
-                return Double.MIN_VALUE;
+                return DBL_MIN;
             case 2:
                 return Double.MAX_VALUE;
             case 3:
