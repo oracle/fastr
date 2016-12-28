@@ -281,6 +281,7 @@ public final class RError extends RuntimeException {
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         TRACEMEM_NOT_NULL("cannot trace NULL"),
+        INPUT_MUST_BE_STRING("input must be a character string"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NOT_A_FUNCTION("'%s' is not a function"),
@@ -526,6 +527,7 @@ public final class RError extends RuntimeException {
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("negative probability"),
         NO_POSITIVE_PROBABILITIES("no positive probabilities"),
+        QBETA_ACURACY_WARNING("qbeta(a, *) =: x0 with |pbeta(x0,*%s) - alpha| = %.5g is not accurate"),
         NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
@@ -565,6 +567,7 @@ public final class RError extends RuntimeException {
         RECURSIVE_INDEXING_FAILED("recursive indexing failed at level %d"),
         ARGUMENTS_PASSED("%d arguments passed to '%s' which requires %d"),
         ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
+        ARGUMENTS_PASSED_INTERNAL_0_1("0 arguments passed to .Internal(%s) which requires 1"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
         WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),

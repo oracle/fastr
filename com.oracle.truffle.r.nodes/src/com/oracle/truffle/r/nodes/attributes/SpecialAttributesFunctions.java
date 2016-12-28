@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -318,7 +319,8 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
             RVector<?> xProfiled = xTypeProfile.profile(x);
             if (newNames.getLength() > xProfiled.getLength()) {
                 namesTooLongProfile.enter();
@@ -342,7 +344,7 @@ public final class SpecialAttributesFunctions {
                     return;
                 }
 
-                super.setAttrInAttributable(xProfiled, newNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+                super.setAttrInAttributable(xProfiled, newNames, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
             }
         }
 
@@ -454,7 +456,8 @@ public final class SpecialAttributesFunctions {
         protected void setOneDimInVector(RVector<?> x, int dim,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
             RAbstractContainer xProfiled = contArgClassProfile.profile(x);
 
             int[] dims = new int[]{dim};
@@ -467,17 +470,19 @@ public final class SpecialAttributesFunctions {
                 attrNullProfile.enter();
                 attrs = RAttributesLayout.createDim(dimVec);
                 xProfiled.initAttributes(attrs);
+                updateRefCountNode.execute(dimVec);
                 return;
             }
 
-            super.setAttrInAttributable(x, dimVec, attrNullProfile, attrStorageProfile, xTypeProfile);
+            super.setAttrInAttributable(x, dimVec, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void setDimsInVector(RVector<?> x, RAbstractIntVector dims,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
             RAbstractContainer xProfiled = contArgClassProfile.profile(x);
             verifyDimensions(xProfiled.getLength(), dims);
 
@@ -486,10 +491,11 @@ public final class SpecialAttributesFunctions {
                 attrNullProfile.enter();
                 attrs = RAttributesLayout.createDim(dims);
                 xProfiled.initAttributes(attrs);
+                updateRefCountNode.execute(dims);
                 return;
             }
 
-            super.setAttrInAttributable(x, dims, attrNullProfile, attrStorageProfile, xTypeProfile);
+            super.setAttrInAttributable(x, dims, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -683,7 +689,8 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") BranchProfile resizeDimsProfile,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
             int[] dimensions = getDimNode.getDimensions(x);
             if (dimensions == null) {
                 nullDimsProfile.enter();
@@ -727,10 +734,11 @@ public final class SpecialAttributesFunctions {
             if (x.getAttributes() == null) {
                 attrNullProfile.enter();
                 x.initAttributes(RAttributesLayout.createDimNames(resDimNames));
+                updateRefCountNode.execute(resDimNames);
                 return;
             }
 
-            super.setAttrInAttributable(x, resDimNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+            super.setAttrInAttributable(x, resDimNames, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
         private static boolean isValidDimLength(RStringVector x, int expectedDim) {
@@ -824,13 +832,15 @@ public final class SpecialAttributesFunctions {
         protected void setRowNamesInVector(RVector<?> x, RAbstractVector newRowNames,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
             if (x.getAttributes() == null) {
                 attrNullProfile.enter();
                 x.initAttributes(RAttributesLayout.createRowNames(newRowNames));
+                updateRefCountNode.execute(newRowNames);
                 return;
             }
-            setAttrInAttributable(x, newRowNames, attrNullProfile, attrStorageProfile, xTypeProfile);
+            setAttrInAttributable(x, newRowNames, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -923,8 +933,9 @@ public final class SpecialAttributesFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile nullClassProfile,
                         @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            handleVector(vector, null, removeClassAttrNode, initAttrProfile, nullAttrProfile, nullClassProfile, notNullClassProfile, attrStorageProfile, xTypeProfile);
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            handleVector(vector, null, removeClassAttrNode, initAttrProfile, nullAttrProfile, nullClassProfile, notNullClassProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
@@ -935,7 +946,8 @@ public final class SpecialAttributesFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile nullClassProfile,
                         @Cached("createBinaryProfile()") ConditionProfile notNullClassProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
 
             DynamicObject attrs = vector.getAttributes();
             boolean initializeAttrs = initAttrProfile.profile(attrs == null && classAttr != null && classAttr.getLength() != 0);
@@ -943,6 +955,7 @@ public final class SpecialAttributesFunctions {
                 nullAttrProfile.enter();
                 attrs = RAttributesLayout.createClass(classAttr);
                 vector.initAttributes(attrs);
+                updateRefCountNode.execute(classAttr);
             }
             if (nullClassProfile.profile(attrs != null && (classAttr == null || classAttr.getLength() == 0))) {
                 removeAttributeMapping(vector, attrs, removeClassAttrNode);
@@ -953,7 +966,7 @@ public final class SpecialAttributesFunctions {
                         // TODO: Isn't this redundant when the same operation is done after the
                         // loop?
                         if (!initializeAttrs) {
-                            super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile);
+                            super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
                         }
                         // setClassAttrNode.execute(attrs, classAttr);
                         if (vector.getElementClass() != RInteger.class) {
@@ -971,7 +984,7 @@ public final class SpecialAttributesFunctions {
                 }
 
                 if (!initializeAttrs) {
-                    super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile);
+                    super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
                 }
             }
         }

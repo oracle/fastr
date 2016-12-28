@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -30,6 +32,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,6 +41,9 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -54,23 +60,19 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@NodeChild(value = "arguments", type = RNode[].class)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
+@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index", type = ConvertIndex.class), @NodeChild(value = "value", type = RNode.class)})
 abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
+
+    protected UpdateSubscriptSpecial(boolean inReplacement) {
+        super(inReplacement);
+    }
+
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+
     private final NACheck naCheck = NACheck.create();
 
     protected boolean simple(Object vector) {
         return classHierarchy.execute(vector) == null;
-    }
-
-    /**
-     * Checks if the value is single element that can be put into a list or vector as is, because in
-     * the case of vectors on the LSH of update we take each element and put it into the RHS of the
-     * update function.
-     */
-    protected static boolean isSingleElement(Object value) {
-        return value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof String;
     }
 
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
@@ -94,35 +96,9 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
         return list;
     }
 
-    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RIntVector setDoubleIndex(RIntVector vector, double index, int value) {
-        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
-    }
-
     @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
     protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value) {
-        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
-    }
-
-    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RDoubleVector setDoubleIndexIntValue(RDoubleVector vector, double index, int value) {
-        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
-    }
-
-    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RDoubleVector setDoubleIndex(RDoubleVector vector, double index, double value) {
-        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
-    }
-
-    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidDoubleIndex(vector, index)"})
-    protected RStringVector setDoubleIndex(RStringVector vector, double index, String value) {
-        return vector.updateDataAt(toIndex(index) - 1, value, naCheck);
-    }
-
-    @Specialization(guards = {"simple(list)", "!list.isShared()", "isValidDoubleIndex(list, index)", "isSingleElement(value)"})
-    protected Object setDoubleIndex(RList list, double index, Object value) {
-        list.setDataAt(list.getInternalStore(), toIndex(index) - 1, value);
-        return list;
+        return vector.updateDataAt(index - 1, value, naCheck);
     }
 
     @SuppressWarnings("unused")
@@ -132,15 +108,74 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
     }
 }
 
+@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index1", type = ConvertIndex.class), @NodeChild(value = "index2", type = ConvertIndex.class),
+                @NodeChild(value = "value", type = RNode.class)})
+abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
+
+    protected UpdateSubscriptSpecial2(boolean inReplacement) {
+        super(inReplacement);
+    }
+
+    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+
+    private final NACheck naCheck = NACheck.create();
+
+    protected boolean simple(Object vector) {
+        return classHierarchy.execute(vector) == null;
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RIntVector set(RIntVector vector, int index1, int index2, int value) {
+        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector set(RDoubleVector vector, int index1, int index2, double value) {
+        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RStringVector set(RStringVector vector, int index1, int index2, String value) {
+        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    }
+
+    @Specialization(guards = {"simple(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
+    protected Object set(RList list, int index1, int index2, Object value) {
+        list.setDataAt(list.getInternalStore(), matrixIndex(list, index1, index2), value);
+        return list;
+    }
+
+    @Specialization(guards = {"simple(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index1, int index2, int value) {
+        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected static Object setFallback(Object vector, Object index1, Object index2, Object value) {
+        throw RSpecialFactory.throwFullCallNeeded(value);
+    }
+}
+
 @RBuiltin(name = "[[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class UpdateSubscript extends RBuiltinNode {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
 
     private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-    public static RNode special(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
-        return SpecialsUtils.isCorrectUpdateSignature(signature) && arguments.length == 3 ? UpdateSubscriptSpecialNodeGen.create(arguments) : null;
+    public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
+        if (SpecialsUtils.isCorrectUpdateSignature(signature) && (args.length == 3 || args.length == 4)) {
+            ProfiledValue vector = profile(args[0]);
+            ConvertIndex index = convertIndex(args[1]);
+            if (args.length == 3) {
+                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, args[2]);
+            } else {
+                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), args[3]);
+            }
+        }
+        return null;
     }
 
     @Specialization(guards = "!args.isEmpty()")

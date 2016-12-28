@@ -16,24 +16,24 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class RNchisq implements RandFunction2_Double {
+public final class RNchisq extends RandFunction2_Double {
     private final RGamma rgamma = new RGamma();
 
     @Override
-    public double evaluate(double df, double lambda, RandomNumberProvider rand) {
+    public double execute(double df, double lambda, RandomNumberProvider rand) {
         if (!Double.isFinite(df) || !Double.isFinite(lambda) || df < 0. || lambda < 0.) {
             return RMath.mlError();
         }
 
         if (lambda == 0.) {
-            return (df == 0.) ? 0. : rgamma.evaluate(df / 2., 2., rand);
+            return (df == 0.) ? 0. : rgamma.execute(df / 2., 2., rand);
         } else {
             double r = RPois.rpois(lambda / 2., rand);
             if (r > 0.) {
-                r = RChisq.rchisq(2. * r, rand);
+                r = Chisq.RChisq.rchisq(2. * r, rand);
             }
             if (df > 0.) {
-                r += rgamma.evaluate(df / 2., 2., rand);
+                r += rgamma.execute(df / 2., 2., rand);
             }
             return r;
         }

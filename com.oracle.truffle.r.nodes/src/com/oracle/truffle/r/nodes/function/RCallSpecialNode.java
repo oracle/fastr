@@ -98,23 +98,23 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private static final boolean useSpecials = FastROptions.UseSpecials.getBooleanValue();
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
-    @CompilationFinal private SourceSection sourceSectionR;
+    @CompilationFinal private SourceSection sourceSection;
 
     @Override
     public void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
     }
 
     @Override
     public SourceSection getLazySourceSection() {
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Override
     public SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Child private ForcePromiseNode functionNode;
@@ -136,7 +136,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private RCallSpecialNode callSpecialParent;
 
     private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special) {
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.expectedFunction = expectedFunction;
         this.special = special;
         this.functionNode = new ForcePromiseNode(functionNode);
@@ -197,16 +197,17 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
         RNode[] localArguments = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
+            RSyntaxNode arg = arguments[i];
             if (inReplace && contains(ignoredArguments, i)) {
-                localArguments[i] = arguments[i].asRNode();
+                localArguments[i] = arg.asRNode();
             } else {
-                if (arguments[i] instanceof RSyntaxLookup) {
-                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arguments[i]).getIdentifier());
-                } else if (arguments[i] instanceof RSyntaxConstant) {
-                    localArguments[i] = RContext.getASTBuilder().process(arguments[i]).asRNode();
+                if (arg instanceof RSyntaxLookup) {
+                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arg).getIdentifier());
+                } else if (arg instanceof RSyntaxConstant) {
+                    localArguments[i] = RContext.getASTBuilder().process(arg).asRNode();
                 } else {
-                    assert arguments[i] instanceof RCallSpecialNode;
-                    localArguments[i] = arguments[i].asRNode();
+                    assert arg instanceof RCallSpecialNode;
+                    localArguments[i] = arg.asRNode();
                 }
             }
         }
@@ -271,7 +272,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     private RCallNode getRCallNode(RSyntaxNode[] newArguments) {
-        return RCallNode.createCall(sourceSectionR, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
+        return RCallNode.createCall(sourceSection, functionNode == null ? null : functionNode.getValueNode(), signature, newArguments);
     }
 
     private RCallNode getRCallNode() {

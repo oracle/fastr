@@ -62,7 +62,7 @@ public abstract class UpdateSlotNode extends RNode {
         String identifier = "setDataPart";
         Object f = methodsNamespace.findFunction(identifier);
         RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(identifier, f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), null, object,
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), null, object,
                         prepareValue(value),
                         RRuntime.LOGICAL_TRUE);
     }

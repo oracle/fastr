@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,8 +33,15 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZ;
+import org.tukaani.xz.XZInputStream;
+import org.tukaani.xz.XZOutputStream;
+
 import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RCompression.Type;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
@@ -43,18 +51,40 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnect
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-public class GZIPConnections {
+public class CompressedConnections {
     public static final int GZIP_BUFFER_SIZE = (2 << 20);
 
     /**
-     * Base class for all modes of gzfile connections. N.B. gzfile is defined to be able to read
-     * gzip, bzip, lzma and uncompressed files, which has to be implemented by reading the first few
-     * bytes of the file and detecting the type of the file.
+     * Base class for all modes of gzfile/bzfile/xzfile connections. N.B. In GNU R these can read
+     * gzip, bzip, lzma and uncompressed files, and this has to be implemented by reading the first
+     * few bytes of the file and detecting the type of the file.
      */
-    public static class GZIPRConnection extends BasePathRConnection {
-        public GZIPRConnection(String path, String modeString) throws IOException {
-            super(path, ConnectionClass.GZFile, modeString, AbstractOpenMode.ReadBinary);
+    public static class CompressedRConnection extends BasePathRConnection {
+        private final RCompression.Type cType;
+        @SuppressWarnings("unused") private final String encoding; // TODO
+        @SuppressWarnings("unused") private final int compression; // TODO
+
+        public CompressedRConnection(String path, String modeString, Type cType, String encoding, int compression) throws IOException {
+            super(path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary);
+            this.cType = cType;
+            this.encoding = encoding;
+            this.compression = compression;
             openNonLazyConnection();
+        }
+
+        private static ConnectionClass mapConnectionClass(RCompression.Type cType) {
+            switch (cType) {
+                case NONE:
+                    return ConnectionClass.File;
+                case GZIP:
+                    return ConnectionClass.GZFile;
+                case BZIP2:
+                    return ConnectionClass.BZFile;
+                case XZ:
+                    return ConnectionClass.XZFile;
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
         }
 
         @Override
@@ -64,8 +94,15 @@ public class GZIPConnections {
             switch (openMode) {
                 case Read:
                 case ReadBinary:
-                    RCompression.Type cType = RCompression.getCompressionType(path);
-                    switch (cType) {
+                    /*
+                     * For input, we check the actual compression type as GNU R is permissive about
+                     * the claimed type.
+                     */
+                    RCompression.Type cTypeActual = RCompression.getCompressionType(path);
+                    if (cTypeActual != cType) {
+                        updateConnectionClass(mapConnectionClass(cTypeActual));
+                    }
+                    switch (cTypeActual) {
                         case NONE:
                             if (openMode == AbstractOpenMode.ReadBinary) {
                                 delegate = new FileConnections.FileReadBinaryRConnection(this);
@@ -74,26 +111,36 @@ public class GZIPConnections {
                             }
                             break;
                         case GZIP:
-                            delegate = new GZIPInputRConnection(this);
+                            delegate = new CompressedInputRConnection(this, new GZIPInputStream(new FileInputStream(path), GZIP_BUFFER_SIZE));
                             break;
-                        case LZMA:
-                            /*
-                             * no lzma support in Java. For now we use RCompression to a byte array
-                             * and return a ByteArrayInputStream on that.
-                             */
-                            byte[] lzmaUdata = RCompression.lzmaUncompressFromFile(path);
-                            delegate = new ByteGZipInputRConnection(this, new ByteArrayInputStream(lzmaUdata));
+                        case XZ:
+                            delegate = new CompressedInputRConnection(this, new XZInputStream(new FileInputStream(path)));
                             break;
                         case BZIP2:
-                            // ditto
+                            // no in Java support, so go via byte array
                             byte[] bzipUdata = RCompression.bzipUncompressFromFile(path);
-                            delegate = new ByteGZipInputRConnection(this, new ByteArrayInputStream(bzipUdata));
+                            delegate = new ByteStreamCompressedInputRConnection(this, new ByteArrayInputStream(bzipUdata));
                     }
                     break;
+
+                case Append:
+                case AppendBinary:
                 case Write:
-                case WriteBinary:
-                    delegate = new GZIPOutputRConnection(this);
+                case WriteBinary: {
+                    boolean append = openMode == AbstractOpenMode.Append || openMode == AbstractOpenMode.AppendBinary;
+                    switch (cType) {
+                        case GZIP:
+                            delegate = new CompressedOutputRConnection(this, new GZIPOutputStream(new FileOutputStream(path, append), GZIP_BUFFER_SIZE));
+                            break;
+                        case BZIP2:
+                            delegate = new BZip2OutputRConnection(this, new ByteArrayOutputStream(), append);
+                            break;
+                        case XZ:
+                            delegate = new CompressedOutputRConnection(this, new XZOutputStream(new FileOutputStream(path, append), new LZMA2Options(), XZ.CHECK_CRC32));
+                            break;
+                    }
                     break;
+                }
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
@@ -109,15 +156,10 @@ public class GZIPConnections {
         // }
     }
 
-    private static class GZIPInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    private static class CompressedInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {
         private InputStream inputStream;
 
-        GZIPInputRConnection(GZIPRConnection base) throws IOException {
-            super(base);
-            inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE);
-        }
-
-        protected GZIPInputRConnection(GZIPRConnection base, InputStream is) {
+        protected CompressedInputRConnection(CompressedRConnection base, InputStream is) {
             super(base);
             this.inputStream = is;
         }
@@ -159,18 +201,18 @@ public class GZIPConnections {
         }
     }
 
-    private static class ByteGZipInputRConnection extends GZIPInputRConnection {
-        ByteGZipInputRConnection(GZIPRConnection base, ByteArrayInputStream is) {
+    private static class ByteStreamCompressedInputRConnection extends CompressedInputRConnection {
+        ByteStreamCompressedInputRConnection(CompressedRConnection base, ByteArrayInputStream is) {
             super(base, is);
         }
     }
 
-    private static class GZIPOutputRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
-        private GZIPOutputStream outputStream;
+    private static class CompressedOutputRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
+        protected OutputStream outputStream;
 
-        GZIPOutputRConnection(GZIPRConnection base) throws IOException {
+        protected CompressedOutputRConnection(CompressedRConnection base, OutputStream os) {
             super(base);
-            outputStream = new GZIPOutputStream(new FileOutputStream(base.path), GZIP_BUFFER_SIZE);
+            this.outputStream = os;
         }
 
         @Override
@@ -215,4 +257,25 @@ public class GZIPConnections {
             outputStream.flush();
         }
     }
+
+    private static class BZip2OutputRConnection extends CompressedOutputRConnection {
+        private final ByteArrayOutputStream bos;
+        private final boolean append;
+
+        BZip2OutputRConnection(CompressedRConnection base, ByteArrayOutputStream os, boolean append) {
+            super(base, os);
+            this.bos = os;
+            this.append = append;
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            outputStream.close();
+            // Now actually do the compression using sub-process
+            byte[] data = bos.toByteArray();
+            RCompression.bzipCompressToFile(data, ((BasePathRConnection) base).path, append);
+        }
+    }
+
 }

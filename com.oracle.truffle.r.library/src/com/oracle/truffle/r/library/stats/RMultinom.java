@@ -13,10 +13,10 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_IN_PROB_VECTOR;
 import static com.oracle.truffle.r.runtime.RError.Message.NEGATIVE_PROBABILITY;
 import static com.oracle.truffle.r.runtime.RError.Message.NO_POSITIVE_PROBABILITIES;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,10 +29,10 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -58,7 +58,7 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
                     @Cached("create()") ReuseNonSharedNode reuseNonSharedNode,
                     @Cached("createClassProfile()") ValueProfile randGeneratorClassProfile,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile,
-                    @Cached("create()") UpdateSharedAttributeNode updateSharedAttributeNode,
+                    @Cached("create()") UpdateShareableChildValueNode updateSharedAttributeNode,
                     @Cached("createNames()") GetFixedAttributeNode getNamesNode,
                     @Cached("createDimNames()") SetFixedAttributeNode setDimNamesNode) {
         RAbstractDoubleVector nonSharedProbs = (RAbstractDoubleVector) reuseNonSharedNode.execute(probsVec);
@@ -115,9 +115,7 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
      * prob[j]) , sum_j rN[j] == n, sum_j prob[j] == 1.
      */
     @TruffleBoundary
-    private boolean rmultinom(int n, double[] prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand) {
-        int k;
-        double pp;
+    private boolean rmultinom(int nIn, double[] prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand) {
         BigDecimal pTot = BigDecimal.ZERO;
         /*
          * This calculation is sensitive to exact values, so we try to ensure that the calculations
@@ -125,6 +123,7 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
          * result.
          */
 
+        int n = nIn;
         if (RRuntime.isNA(maxK) || maxK < 1 || RRuntime.isNA(n) || n < 0) {
             if (rN.length > rnStartIdx) {
                 rN[rnStartIdx] = RRuntime.INT_NA;
@@ -136,8 +135,8 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
          * Note: prob[K] is only used here for checking sum_k prob[k] = 1 ; Could make loop one
          * shorter and drop that check !
          */
-        for (k = 0; k < maxK; k++) {
-            pp = prob[k];
+        for (int k = 0; k < maxK; k++) {
+            double pp = prob[k];
             if (!Double.isFinite(pp) || pp < 0. || pp > 1.) {
                 rN[rnStartIdx + k] = RRuntime.INT_NA;
                 return false;
@@ -158,12 +157,12 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
         }
 
         /* Generate the first K-1 obs. via binomials */
-        for (k = 0; k < maxK - 1; k++) { /* (p_tot, n) are for "remaining binomial" */
+        for (int k = 0; k < maxK - 1; k++) { /* (p_tot, n) are for "remaining binomial" */
             BigDecimal probK = new BigDecimal(prob[k]);
             if (probK.compareTo(BigDecimal.ZERO) != 0) {
-                pp = probK.divide(pTot, RoundingMode.HALF_UP).doubleValue();
+                double pp = probK.divide(pTot, RoundingMode.HALF_UP).doubleValue();
                 // System.out.printf("[%d] %.17f\n", k + 1, pp);
-                rN[rnStartIdx + k] = ((pp < 1.) ? (int) rbinom.evaluate((double) n, pp, rand) :
+                rN[rnStartIdx + k] = ((pp < 1.) ? (int) rbinom.execute(n, pp, rand) :
                 /* >= 1; > 1 happens because of rounding */
                                 n);
                 n -= rN[rnStartIdx + k];

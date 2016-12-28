@@ -14,17 +14,17 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class Rf implements RandFunction2_Double {
+public final class Rf extends RandFunction2_Double {
     @Override
-    public double evaluate(double n1, double n2, RandomNumberProvider rand) {
+    public double execute(double n1, double n2, RandomNumberProvider rand) {
         if (Double.isNaN(n1) || Double.isNaN(n2) || n1 <= 0. || n2 <= 0.) {
             return RMath.mlError();
         }
 
         double v1;
         double v2;
-        v1 = Double.isFinite(n1) ? (RChisq.rchisq(n1, rand) / n1) : 1;
-        v2 = Double.isFinite(n2) ? (RChisq.rchisq(n2, rand) / n2) : 1;
+        v1 = Double.isFinite(n1) ? (Chisq.RChisq.rchisq(n1, rand) / n1) : 1;
+        v2 = Double.isFinite(n2) ? (Chisq.RChisq.rchisq(n2, rand) / n2) : 1;
         return v1 / v2;
     }
 }

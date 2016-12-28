@@ -19,27 +19,30 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public final class Wilcox {
+    private Wilcox() {
+        // only static members
+    }
 
-    public static final class RWilcox implements RandFunction2_Double {
+    public static final class RWilcox extends RandFunction2_Double {
         @Override
-        public double evaluate(double m, double n, RandomNumberProvider rand) {
+        public double execute(double mIn, double nIn, RandomNumberProvider rand) {
             int i;
             int j;
             int k;
             double r;
 
             /* NaNs propagated correctly */
-            if (Double.isNaN(m) || Double.isNaN(n)) {
-                return (m + n);
+            if (Double.isNaN(mIn) || Double.isNaN(nIn)) {
+                return mIn + nIn;
             }
-            if (!Double.isFinite(m) || !Double.isFinite(n)) {
+            if (!Double.isFinite(mIn) || !Double.isFinite(nIn)) {
                 // GnuR does not check this and tries to allocate the memory, we do check this, but
                 // fail with the same error message for compatibility reasons.
                 throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
             }
 
-            m = Math.round(m);
-            n = Math.round(n);
+            double m = Math.round(mIn);
+            double n = Math.round(nIn);
             if ((m < 0) || (n < 0)) {
                 // TODO: for some reason the macro in GNUR here returns NA instead of NaN...
                 // return StatsUtil.mlError();

@@ -18,12 +18,26 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_utf8ToInt extends TestBase {
 
     @Test
+    public void testUtf8ToInt() {
+        assertEval("utf8ToInt('a')");
+        assertEval("utf8ToInt('Hello')");
+        assertEval("utf8ToInt('')");
+        assertEval("utf8ToInt(5)");
+        assertEval("utf8ToInt(character(0))");
+        assertEval("utf8ToInt(numeric(0))");
+        assertEval("utf8ToInt(NULL)");
+        assertEval("utf8ToInt(NA)");
+        assertEval(Output.IgnoreWhitespace, "utf8ToInt(c('a', 'b'))"); // no extra newline in
+                                                                       // warning msg
+    }
+
+    @Test
     public void testutf8ToInt1() {
-        assertEval(Ignored.Unknown, "argv <- list('lasy'); .Internal(utf8ToInt(argv[[1]]))");
+        assertEval("argv <- list('lasy'); .Internal(utf8ToInt(argv[[1]]))");
     }
 
     @Test
     public void testutf8ToInt3() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = NA_character_), .Names = 'x');do.call('utf8ToInt', argv)");
+        assertEval("argv <- structure(list(x = NA_character_), .Names = 'x');do.call('utf8ToInt', argv)");
     }
 }

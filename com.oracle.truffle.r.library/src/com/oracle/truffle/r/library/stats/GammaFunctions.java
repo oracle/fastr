@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.library.stats.DPQ.rdtclog;
 import static com.oracle.truffle.r.library.stats.DPQ.rdtqiv;
 import static com.oracle.truffle.r.library.stats.DPQ.rlog1exp;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
@@ -187,7 +188,7 @@ public abstract class GammaFunctions {
         return 1 / (x * 12);
     }
 
-    static double lgamma(double x) {
+    static double lgamma(@SuppressWarnings("unused") double x) {
         throw RError.nyi(RError.SHOW_CALLER, "lgamma from libc");
     }
 
@@ -678,7 +679,7 @@ public abstract class GammaFunctions {
             if (x == 0) {
                 final double u1p = 1. + 1e-7;
                 final double u1m = 1. - 1e-7;
-                x = Double.MIN_VALUE;
+                x = DBL_MIN;
                 pu = pgamma(x, alpha, scale, lowerTail, localLogp);
                 if ((lowerTail && pu > localP * u1p) || (!lowerTail && pu < localP * u1m)) {
                     return 0.;
@@ -895,9 +896,8 @@ public abstract class GammaFunctions {
             if (logp) {
                 return rlog1exp(RMath.log1p(sum) + lf2);
             } else {
-                double f1m1 = sum;
                 double f2m1 = RMath.expm1(lf2);
-                return -(f1m1 + f2m1 + f1m1 * f2m1);
+                return -(sum + f2m1 + sum * f2m1);
             }
         }
     } /* pgamma_smallx() */
@@ -1166,17 +1166,15 @@ public abstract class GammaFunctions {
         }
     } /* ppois_asymp() */
 
-    private static double pgammaRaw(double x, double alph, boolean lowerTail, boolean logp) {
+    static double pgammaRaw(double x, double alph, boolean lowerTail, boolean logp) {
         /* Here, assume that (x,alph) are not NA & alph > 0 . */
 
         double res;
 
-        // expansion of R_P_bounds_01(x, 0., ML_POSINF);
-        if (x <= 0) {
-            return rdt0(lowerTail, logp);
-        }
-        if (x >= Double.POSITIVE_INFINITY) {
-            return rdt1(lowerTail, logp);
+        try {
+            DPQ.rpbounds01(x, 0., Double.POSITIVE_INFINITY, lowerTail, logp);
+        } catch (EarlyReturn e) {
+            return e.result;
         }
 
         if (x < 1) {
@@ -1219,7 +1217,7 @@ public abstract class GammaFunctions {
          * We lose a fair amount of accuracy to underflow in the cases where the final result is
          * very close to DBL_MIN. In those cases, simply redo via log space.
          */
-        if (!logp && res < Double.MIN_VALUE / DBL_EPSILON) {
+        if (!logp && res < DBL_MIN / DBL_EPSILON) {
             /* with(.Machine, double.xmin / double.eps) #|-> 1.002084e-292 */
             return Math.exp(pgammaRaw(x, alph, lowerTail, true));
         } else {
@@ -1233,8 +1231,7 @@ public abstract class GammaFunctions {
             return localX + alph + scale;
         }
         if (alph < 0. || scale <= 0.) {
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            return RMath.mlError();
         }
         localX /= scale;
         if (Double.isNaN(localX)) { /* eg. original x = scale = +Inf */
@@ -1264,10 +1261,10 @@ public abstract class GammaFunctions {
         if (x < 0) {
             return rd0(giveLog);
         }
-        if (x <= lambda * Double.MIN_VALUE) {
+        if (x <= lambda * DBL_MIN) {
             return (rdexp(-lambda, giveLog));
         }
-        if (lambda < x * Double.MIN_VALUE) {
+        if (lambda < x * DBL_MIN) {
             return (rdexp(-lambda + x * Math.log(lambda) - lgammafn(x + 1), giveLog));
         }
         return rdfexp(M_2PI * x, -stirlerr(x) - bd0(x, lambda), giveLog);
@@ -1285,8 +1282,7 @@ public abstract class GammaFunctions {
         int j;
 
         if (!RRuntime.isFinite(x) || !RRuntime.isFinite(np) || np == 0.0) {
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            return RMath.mlError();
         }
 
         if (Math.abs(x - np) < 0.1 * (x + np)) {
@@ -1324,8 +1320,7 @@ public abstract class GammaFunctions {
         }
         if (sigma <= 0) {
             if (sigma < 0) {
-                // TODO ML_ERR_return_NAN;
-                return Double.NaN;
+                return RMath.mlError();
             }
             /* sigma == 0 */
             return (localX == mu) ? Double.POSITIVE_INFINITY : rd0(giveLog);
@@ -1349,8 +1344,7 @@ public abstract class GammaFunctions {
             return x + shape + scale;
         }
         if (shape < 0 || scale <= 0) {
-            // TODO ML_ERR_return_NAN;
-            return Double.NaN;
+            return RMath.mlError();
         }
         if (x < 0) {
             return rd0(giveLog);
@@ -1382,7 +1376,7 @@ public abstract class GammaFunctions {
     // pnorm
     //
 
-    private static double pnorm(double x, double mu, double sigma, boolean lowerTail, boolean logp) {
+    static double pnorm(double x, double mu, double sigma, boolean lowerTail, boolean logp) {
         double p;
         double cp = 0;
         double localX = x;
@@ -1399,8 +1393,7 @@ public abstract class GammaFunctions {
         }
         if (sigma <= 0) {
             if (sigma < 0) {
-                // TODO ML_ERR_return_NAN;
-                return Double.NaN;
+                return RMath.mlError();
             }
             /* sigma = 0 : */
             return (localX < mu) ? rdt0(lowerTail, logp) : rdt1(lowerTail, logp);

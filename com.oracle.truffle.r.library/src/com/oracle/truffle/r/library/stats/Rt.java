@@ -11,14 +11,14 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.RChisq.rchisq;
+import static com.oracle.truffle.r.library.stats.Chisq.RChisq.rchisq;
 
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class Rt implements RandFunction1_Double {
+public final class Rt extends RandFunction1_Double {
     @Override
-    public double evaluate(double df, RandomNumberProvider rand) {
+    public double execute(double df, RandomNumberProvider rand) {
         if (Double.isNaN(df) || df <= 0.0) {
             return RMath.mlError();
         }

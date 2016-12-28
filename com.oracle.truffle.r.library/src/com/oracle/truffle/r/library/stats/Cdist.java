@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -229,7 +230,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     if (bothNonNAN(x[i1], x[i2])) {
                         sum = Math.abs(x[i1] + x[i2]);
                         diff = Math.abs(x[i1] - x[i2]);
-                        if (sum > Double.MIN_VALUE || diff > Double.MIN_VALUE) {
+                        if (sum > DBL_MIN || diff > DBL_MIN) {
                             dev = diff / sum;
                             if (!RRuntime.isNAorNaN(dev) ||
                                             (!RRuntime.isFinite(diff) && diff == sum &&

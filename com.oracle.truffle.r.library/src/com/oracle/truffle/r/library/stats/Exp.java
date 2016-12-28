@@ -17,7 +17,11 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Exp {
+public final class Exp {
+    private Exp() {
+        // only static members
+    }
+
     public static final class DExp implements Function2_1 {
         @Override
         public double evaluate(double x, double scale, boolean giveLog) {
@@ -37,9 +41,9 @@ public class Exp {
         }
     }
 
-    public static final class RExp implements RandFunction1_Double {
+    public static final class RExp extends RandFunction1_Double {
         @Override
-        public double evaluate(double scale, RandomNumberProvider rand) {
+        public double execute(double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(scale) || scale <= 0.0) {
                 return scale == 0. ? 0. : RMath.mlError();
             }
@@ -49,20 +53,20 @@ public class Exp {
 
     public static final class PExp implements Function2_2 {
         @Override
-        public double evaluate(double x, double scale, boolean lowerTail, boolean logP) {
-            if (Double.isNaN(x) || Double.isNaN(scale)) {
-                return x + scale;
+        public double evaluate(double xIn, double scale, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(xIn) || Double.isNaN(scale)) {
+                return xIn + scale;
             }
             if (scale < 0) {
                 return RMath.mlError();
             }
 
-            if (x <= 0.) {
+            if (xIn <= 0.) {
                 return DPQ.rdt0(lowerTail, logP);
             }
 
             /* same as weibull( shape = 1): */
-            x = -(x / scale);
+            double x = -(xIn / scale);
             return lowerTail ? (logP ? DPQ.rlog1exp(x) : -RMath.expm1(x)) : DPQ.rdexp(x, logP);
         }
     }
@@ -89,7 +93,6 @@ public class Exp {
             }
 
             return -scale * DPQ.rdtclog(p, lowerTail, logP);
-
         }
     }
 }

@@ -458,8 +458,12 @@ public class RSerialize {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, null, s, "");
-                    return checkResult(addReadRef(r));
+                    // fast path through getRegisteredNamespace
+                    Object namespace = REnvironment.getRegisteredNamespace(s.getDataAt(0));
+                    if (namespace == null) {
+                        namespace = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, null, s, "");
+                    }
+                    return checkResult(addReadRef(namespace));
                 }
 
                 case PERSISTSXP: {

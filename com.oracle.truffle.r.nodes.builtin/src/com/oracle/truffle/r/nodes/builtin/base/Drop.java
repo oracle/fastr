@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -47,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Drop extends RBuiltinNode {
 
     private final ConditionProfile nullDimensions = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles dimNamesAttrProfile = RAttributeProfiles.create();
     private final ConditionProfile resultIsVector = ConditionProfile.createBinaryProfile();
     private final ConditionProfile resultIsScalarProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDimNamesProfile = ConditionProfile.createBinaryProfile();

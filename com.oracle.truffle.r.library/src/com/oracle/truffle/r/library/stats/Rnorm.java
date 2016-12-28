@@ -11,16 +11,27 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public final class Rnorm implements RandFunction2_Double {
+public final class Rnorm extends RandFunction2_Double {
+    private final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile zeroSigmaProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile sigmaValueProfile = ValueProfile.createEqualityProfile();
+    private final ValueProfile muValueProfile = ValueProfile.createEqualityProfile();
+
     @Override
-    public double evaluate(double mu, double sigma, RandomNumberProvider rand) {
+    public double execute(double muIn, double sigmaIn, RandomNumberProvider rand) {
+        double sigma = sigmaValueProfile.profile(sigmaIn);
+        double mu = muValueProfile.profile(muIn);
         if (Double.isNaN(mu) || !Double.isFinite(sigma) || sigma < 0.) {
+            errorProfile.enter();
             return RMath.mlError();
         }
-        if (sigma == 0. || !Double.isFinite(mu)) {
+        if (zeroSigmaProfile.profile(sigma == 0. || !Double.isFinite(mu))) {
             return mu; /* includes mu = +/- Inf with finite sigma */
         } else {
             return mu + sigma * rand.normRand();

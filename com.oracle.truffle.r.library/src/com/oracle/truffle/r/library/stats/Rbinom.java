@@ -18,19 +18,19 @@ import com.oracle.truffle.r.runtime.RRuntime;
 
 // transcribed from rbinom.c
 
-public final class Rbinom implements RandFunction2_Double {
+public final class Rbinom extends RandFunction2_Double {
 
     private final Qbinom qbinom = new Qbinom();
 
     @Override
-    public double evaluate(double nin, double pp, RandomNumberProvider rand) {
+    public double execute(double nin, double pp, RandomNumberProvider rand) {
         double psave = -1.0;
         int nsave = -1;
 
         if (!Double.isFinite(nin)) {
             return RRuntime.INT_NA;
         }
-        double r = MathConstants.forceint(nin);
+        double r = RMath.forceint(nin);
         if (r != nin) {
             return RRuntime.INT_NA;
         }

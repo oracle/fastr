@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "13641c9f68eefccd0099d283ca25d6bb44b3349a",
+               "version" : "720bba917bc2907b9e6620365a1b3c66e2ad3cc6",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -88,6 +88,12 @@ suite = {
       "path" : "libdownloads/antlr-complete-3.5.1.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
+    },
+
+    "XZ-1.5" : {
+      "path" : "libdownloads/xz-1.5.jar",
+      "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.5/xz-1.5.jar"],
+      "sha1" : "9c64274b7dbb65288237216e3fae7877fd3f2bee",
     },
 
   },
@@ -210,6 +216,7 @@ suite = {
       "dependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
+        "XZ-1.5",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -304,6 +311,7 @@ suite = {
         "ANTLR-3.5",
         "GNUR",
         "GNU_ICONV",
+        "XZ-1.5",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",

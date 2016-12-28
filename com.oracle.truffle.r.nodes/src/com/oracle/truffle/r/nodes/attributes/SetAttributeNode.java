@@ -34,6 +34,7 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -77,9 +78,9 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name, value)") Location location) {
         try {
-            location.set(attrs, value);
+            location.set(attrs, value, shape);
         } catch (IncompatibleLocationException | FinalLocationException ex) {
-            RInternalError.reportError(ex);
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -104,7 +105,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         try {
             newLocation.set(attrs, value, oldShape, newShape);
         } catch (IncompatibleLocationException ex) {
-            RInternalError.reportError(ex);
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -148,7 +149,8 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
     protected void setAttrInAttributable(RAttributable x, String name, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject attributes;
         if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
             attributes = ((RAttributeStorage) x).getAttributes();
@@ -167,6 +169,11 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         }
 
         recursive.execute(attributes, name, value);
+
+        // TODO: To verify: It might be beneficial to increment the reference counter only if the
+        // old and new values differ. One should verify, though, whether the costs brought about by
+        // reading the old value do not prevail in the end.
+        updateRefCountNode.execute(value);
     }
 
     /**
@@ -182,26 +189,4 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
         return location;
     }
-
-    protected static Shape defineProperty(Shape oldShape, Object name, Object value) {
-        return oldShape.defineProperty(name, value, 0);
-    }
-
-    /**
-     * There is a subtle difference between {@link Location#canSet} and {@link Location#canStore}.
-     * We need {@link Location#canSet} for the guard of {@link #setExistingAttrCached} because there
-     * we call {@link Location#set}. We use the more relaxed {@link Location#canStore} for the guard
-     * of {@link #setNewAttrCached} because there we perform a shape transition, i.e., we are not
-     * actually setting the value of the new location - we only transition to this location as part
-     * of the shape change.
-     */
-    protected static boolean canSet(Location location, Object value) {
-        return location.canSet(value);
-    }
-
-    /** See {@link #canSet} for the difference between the two methods. */
-    protected static boolean canStore(Location location, Object value) {
-        return location.canStore(value);
-    }
-
 }

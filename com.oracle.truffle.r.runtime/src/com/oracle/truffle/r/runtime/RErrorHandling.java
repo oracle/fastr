@@ -215,6 +215,16 @@ public class RErrorHandling {
         errorHandlingState.restartStack = savedRestartStack;
     }
 
+    public static void restoreHandlerStack(Object savedHandlerStack) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = savedHandlerStack;
+    }
+
+    public static void restoreRestartStack(Object savedRestartStack) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.restartStack = savedRestartStack;
+    }
+
     public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
         CompilerAsserts.neverPartOfCompilation();
         Object oldStack = getRestartStack();

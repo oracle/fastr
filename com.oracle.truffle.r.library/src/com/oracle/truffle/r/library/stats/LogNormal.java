@@ -23,15 +23,15 @@ public final class LogNormal {
         // only static members
     }
 
-    public static final class RLNorm implements RandFunction2_Double {
+    public static final class RLNorm extends RandFunction2_Double {
         private final Rnorm rnorm = new Rnorm();
 
         @Override
-        public double evaluate(double meanlog, double sdlog, RandomNumberProvider rand) {
+        public double execute(double meanlog, double sdlog, RandomNumberProvider rand) {
             if (Double.isNaN(meanlog) || !Double.isFinite(sdlog) || sdlog < 0.) {
                 return RMath.mlError();
             }
-            return Math.exp(rnorm.evaluate(meanlog, sdlog, rand));
+            return Math.exp(rnorm.execute(meanlog, sdlog, rand));
         }
     }
 

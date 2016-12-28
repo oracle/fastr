@@ -399,7 +399,7 @@ public class HiddenInternalFunctions {
                         throw RError.error(this, Message.GENERIC, "zlib compress error");
                     }
                 } else if (compression == 3) {
-                    ctype = RCompression.Type.LZMA;
+                    ctype = RCompression.Type.XZ;
                     offset = 5;
                     outLen = data.length;
                     cdata = new byte[outLen];
@@ -446,8 +446,8 @@ public class HiddenInternalFunctions {
                 byte[] ulenData = new byte[4];
                 dataLengthBuf.get(ulenData);
                 out.write(ulenData);
-                if (type == RCompression.Type.LZMA) {
-                    out.write(RCompression.Type.LZMA.typeByte);
+                if (type == RCompression.Type.XZ) {
+                    out.write(RCompression.Type.XZ.typeByte);
                 }
                 out.write(cdata);
                 return result;

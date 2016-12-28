@@ -40,6 +40,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -291,9 +293,9 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public CallTarget parseToCallTarget(Source source) throws ParseException {
+    public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         List<RSyntaxNode> statements = parseImpl(source);
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(statements)));
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(statements), executionFrame));
     }
 
     private static SourceSection createSourceSection(List<RSyntaxNode> statements) {
@@ -309,15 +311,19 @@ final class REngine implements Engine, Engine.Timings {
     private final class PolyglotEngineRootNode extends RootNode {
 
         private final List<RSyntaxNode> statements;
+        private final MaterializedFrame executionFrame;
+        @Children private final DirectCallNode[] calls;
         private final boolean printResult;
 
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection) {
+        PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
             super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
             // can't print if initializing the system in embedded mode (no builtins yet)
             this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string);
             this.statements = statements;
+            this.executionFrame = executionFrame;
+            this.calls = new DirectCallNode[statements.size()];
         }
 
         /**
@@ -326,6 +332,7 @@ final class REngine implements Engine, Engine.Timings {
          * control over what that might be when the call is initiated.
          */
         @Override
+        @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             RContext oldContext = RContext.getThreadLocalInstance();
             RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
@@ -334,8 +341,11 @@ final class REngine implements Engine, Engine.Timings {
                 Object lastValue = RNull.instance;
                 for (int i = 0; i < statements.size(); i++) {
                     RSyntaxNode node = statements.get(i);
-                    RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true);
-                    lastValue = callTarget.call(newContext.stateREnvironment.getGlobalFrame());
+                    if (calls[i] == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
+                    }
+                    lastValue = calls[i].call(frame, new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
                 }
                 return lastValue;
             } catch (ReturnException ex) {
@@ -526,7 +536,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
-                setVisibility.executeEndOfFunction(vf);
+                setVisibility.executeEndOfFunction(vf, this);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
@@ -556,6 +566,11 @@ final class REngine implements Engine, Engine.Timings {
                 }
             }
             return result;
+        }
+
+        @Override
+        public String getName() {
+            return description;
         }
 
         @Override

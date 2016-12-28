@@ -27,7 +27,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1_Double;
@@ -35,7 +35,11 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Geom {
+public final class Geom {
+    private Geom() {
+        // only static members
+    }
+
     public static final class QGeom implements Function2_2 {
         @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
@@ -87,9 +91,40 @@ public class Geom {
         }
     }
 
-    public static final class RGeom implements RandFunction1_Double {
+    public static final class PGeom implements Function2_2 {
         @Override
-        public double evaluate(double p, RandomNumberProvider rand) {
+        public double evaluate(double xIn, double p, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(xIn) || Double.isNaN(p)) {
+                return xIn + p;
+            }
+            if (p <= 0 || p > 1) {
+                return RMath.mlError();
+            }
+
+            if (xIn < 0.) {
+                return DPQ.rdt0(lowerTail, logP);
+            }
+            if (!Double.isFinite(xIn)) {
+                return DPQ.rdt1(lowerTail, logP);
+            }
+            double x = Math.floor(xIn + 1e-7);
+
+            if (p == 1.) { /* we cannot assume IEEE */
+                x = lowerTail ? 1 : 0;
+                return logP ? Math.log(x) : x;
+            }
+            x = RMath.log1p(-p) * (x + 1);
+            if (logP) {
+                return DPQ.rdtclog(x, lowerTail, logP);
+            } else {
+                return lowerTail ? -RMath.expm1(x) : Math.exp(x);
+            }
+        }
+    }
+
+    public static final class RGeom extends RandFunction1_Double {
+        @Override
+        public double execute(double p, RandomNumberProvider rand) {
             if (!Double.isFinite(p) || p <= 0 || p > 1) {
                 return RMath.mlError();
             }

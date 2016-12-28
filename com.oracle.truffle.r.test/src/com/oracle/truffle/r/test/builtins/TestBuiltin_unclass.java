@@ -150,7 +150,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass26() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list('a')));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list('a')));unclass(argv[[1]]);");
     }
 
     @Test

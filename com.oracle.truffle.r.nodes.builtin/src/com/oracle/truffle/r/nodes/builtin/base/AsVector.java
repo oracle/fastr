@@ -41,10 +41,11 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen.CastPairListNodeGen;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
-import com.oracle.truffle.r.nodes.function.UseMethodInternalNode;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
@@ -77,7 +78,9 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Child private AsVectorInternal internal = AsVectorInternalNodeGen.create();
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-    @Child private UseMethodInternalNode useMethod;
+
+    @Child private S3FunctionLookupNode lookup;
+    @Child private CallMatcherNode callMatcher;
 
     private final ConditionProfile hasClassProfile = ConditionProfile.createBinaryProfile();
 
@@ -98,16 +101,19 @@ public abstract class AsVector extends RBuiltinNode {
         // However, removing it causes unit test failures
         RStringVector clazz = classHierarchy.execute(x);
         if (hasClassProfile.profile(clazz != null)) {
-            if (useMethod == null) {
-                // Note: this dispatch takes care of factor, because there is as.vector.factor
-                // specialization in R
+            // Note: this dispatch takes care of factor, because there is as.vector.factor
+            // specialization in R
+            if (lookup == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                useMethod = insert(new UseMethodInternalNode("as.vector", SIGNATURE, false));
+                lookup = insert(S3FunctionLookupNode.create(false, false));
             }
-            try {
-                return useMethod.execute(frame, clazz, new Object[]{x, mode});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                // fallthrough
+            Result lookupResult = lookup.execute(frame, "as.vector", clazz, null, frame.materialize(), null);
+            if (lookupResult != null) {
+                if (callMatcher == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    callMatcher = insert(CallMatcherNode.create(false));
+                }
+                return callMatcher.execute(frame, SIGNATURE, new Object[]{x, mode}, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
             }
         }
         return internal.execute(x, mode);

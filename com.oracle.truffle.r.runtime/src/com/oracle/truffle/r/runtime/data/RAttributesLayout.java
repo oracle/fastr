@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -257,6 +258,9 @@ public final class RAttributesLayout {
     }
 
     public static final class RAttributeIterable implements Iterable<RAttributesLayout.RAttribute> {
+
+        public static final RAttributeIterable EMPTY = new RAttributeIterable(null, null);
+
         private final DynamicObject attrs;
         private final List<Property> properties;
 
@@ -267,7 +271,11 @@ public final class RAttributesLayout {
 
         @Override
         public Iterator<RAttributesLayout.RAttribute> iterator() {
-            return new Iter(attrs, properties.iterator());
+            if (attrs == null || properties == null) {
+                return Collections.emptyIterator();
+            } else {
+                return new Iter(attrs, properties.iterator());
+            }
         }
 
     }

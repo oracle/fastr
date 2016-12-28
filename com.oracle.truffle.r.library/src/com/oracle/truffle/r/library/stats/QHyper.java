@@ -12,35 +12,27 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
 import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 import static com.oracle.truffle.r.library.stats.RMath.fmin2;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 import static com.oracle.truffle.r.library.stats.RMath.lfastchoose;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 
 public final class QHyper {
-    public static double qhyper(double p, double nr, double nb, double n, boolean lowerTail, boolean logP) {
+    public static double qhyper(double pIn, double nrIn, double nbIn, double nIn, boolean lowerTail, boolean logP) {
         /* This is basically the same code as ./phyper.c *used* to be --> FIXME! */
-        double capN;
-        double xstart;
-        double xend;
-        double xr;
-        double xb;
-        double sum;
-        double term;
-        boolean smallN;
-        if (Double.isNaN(p) || Double.isNaN(nr) || Double.isNaN(nb) || Double.isNaN(n)) {
-            return p + nr + nb + n;
+        if (Double.isNaN(pIn) || Double.isNaN(nrIn) || Double.isNaN(nbIn) || Double.isNaN(nIn)) {
+            return pIn + nrIn + nbIn + nIn;
         }
-        if (!Double.isFinite(p) || !Double.isFinite(nr) || !Double.isFinite(nb) || !Double.isFinite(n)) {
+        if (!Double.isFinite(pIn) || !Double.isFinite(nrIn) || !Double.isFinite(nbIn) || !Double.isFinite(nIn)) {
             return RMath.mlError();
         }
 
-        nr = forceint(nr);
-        nb = forceint(nb);
-        capN = nr + nb;
-        n = forceint(n);
+        double nr = forceint(nrIn);
+        double nb = forceint(nbIn);
+        double capN = nr + nb;
+        double n = forceint(nIn);
         if (nr < 0 || nb < 0 || n < 0 || n > capN) {
             return RMath.mlError();
         }
@@ -50,24 +42,25 @@ public final class QHyper {
          * - 1, NR,NB, n)
          */
 
-        xstart = fmax2(0, n - nb);
-        xend = fmin2(n, nr);
+        double xstart = fmax2(0, n - nb);
+        double xend = fmin2(n, nr);
 
+        double p = pIn;
         try {
             DPQ.rqp01boundaries(p, xstart, xend, lowerTail, logP);
         } catch (EarlyReturn ex) {
             return ex.result;
         }
 
-        xr = xstart;
-        xb = n - xr; /* always ( = #{black balls in sample} ) */
+        double xr = xstart;
+        double xb = n - xr; /* always ( = #{black balls in sample} ) */
 
-        smallN = (capN < 1000); /* won't have underflow in product below */
+        boolean smallN = (capN < 1000); /* won't have underflow in product below */
         /*
          * if N is small, term := product.ratio( bin.coef ); otherwise work with its Math.logarithm
          * to protect against underflow
          */
-        term = lfastchoose(nr, xr) + lfastchoose(nb, xb) - lfastchoose(capN, n);
+        double term = lfastchoose(nr, xr) + lfastchoose(nb, xb) - lfastchoose(capN, n);
         if (smallN) {
             term = Math.exp(term);
         }
@@ -78,7 +71,7 @@ public final class QHyper {
             p = DPQ.rdtqiv(p, lowerTail, logP);
         }
         p *= 1 - 1000 * DBL_EPSILON; /* was 64, but failed on FreeBSD sometimes */
-        sum = smallN ? term : Math.exp(term);
+        double sum = smallN ? term : Math.exp(term);
 
         while (sum < p && xr < xend) {
             xr++;

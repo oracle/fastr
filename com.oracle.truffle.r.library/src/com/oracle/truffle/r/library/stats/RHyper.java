@@ -13,7 +13,7 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
-import static com.oracle.truffle.r.library.stats.MathConstants.forceint;
+import static com.oracle.truffle.r.library.stats.RMath.forceint;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction3_Double;
@@ -21,7 +21,7 @@ import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberPr
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
-public final class RHyper implements RandFunction3_Double {
+public final class RHyper extends RandFunction3_Double {
     private static final double[] al = {
                     0.0, /* ln(0!)=ln(1) */
                     0.0, /* ln(1!)=ln(1) */
@@ -34,7 +34,7 @@ public final class RHyper implements RandFunction3_Double {
                     /*
                      * 10.60460290274525022841722740072165, approx. value below = 10.6046028788027;
                      * rel.error = 2.26 10^{-9}
-                     * 
+                     *
                      * FIXME: Use constants and if(n > ..) decisions from ./stirlerr.c ----- will be
                      * even *faster* for n > 500 (or so)
                      */
@@ -87,15 +87,10 @@ public final class RHyper implements RandFunction3_Double {
     // rhyper(NR, NB, n) -- NR 'red', NB 'blue', n drawn, how many are 'red'
     @Override
     @TruffleBoundary
-    public double evaluate(double nn1in, double nn2in, double kkin, RandomNumberProvider rand) {
+    public double execute(double nn1in, double nn2in, double kkin, RandomNumberProvider rand) {
         /* extern double afc(int); */
 
-        int nn1;
-        int nn2;
-        int kk;
         int ix; // return value (coerced to double at the very end)
-        boolean setup1;
-        boolean setup2;
 
         /* check parameter validity */
 
@@ -103,30 +98,32 @@ public final class RHyper implements RandFunction3_Double {
             return RMath.mlError();
         }
 
-        nn1in = forceint(nn1in);
-        nn2in = forceint(nn2in);
-        kkin = forceint(kkin);
+        double nn1int = forceint(nn1in);
+        double nn2int = forceint(nn2in);
+        double kkint = forceint(kkin);
 
-        if (nn1in < 0 || nn2in < 0 || kkin < 0 || kkin > nn1in + nn2in) {
+        if (nn1int < 0 || nn2int < 0 || kkint < 0 || kkint > nn1int + nn2int) {
             return RMath.mlError();
         }
-        if (nn1in >= Integer.MAX_VALUE || nn2in >= Integer.MAX_VALUE || kkin >= Integer.MAX_VALUE) {
+        if (nn1int >= Integer.MAX_VALUE || nn2int >= Integer.MAX_VALUE || kkint >= Integer.MAX_VALUE) {
             /*
              * large n -- evade integer overflow (and inappropriate algorithms) --------
              */
             // FIXME: Much faster to give rbinom() approx when appropriate; -> see Kuensch(1989)
             // Johnson, Kotz,.. p.258 (top) mention the *four* different binomial approximations
-            if (kkin == 1.) { // Bernoulli
-                return rbinom.evaluate(kkin, nn1in / (nn1in + nn2in), rand);
+            if (kkint == 1.) { // Bernoulli
+                return rbinom.execute(kkint, nn1int / (nn1int + nn2int), rand);
             }
             // Slow, but safe: return F^{-1}(U) where F(.) = phyper(.) and U ~ U[0,1]
-            return QHyper.qhyper(rand.unifRand(), nn1in, nn2in, kkin, false, false);
+            return QHyper.qhyper(rand.unifRand(), nn1int, nn2int, kkint, false, false);
         }
-        nn1 = (int) nn1in;
-        nn2 = (int) nn2in;
-        kk = (int) kkin;
+        int nn1 = (int) nn1int;
+        int nn2 = (int) nn2int;
+        int kk = (int) kkint;
 
         /* if new parameter values, initialize */
+        boolean setup1;
+        boolean setup2;
         if (nn1 != n1s || nn2 != n2s) {
             setup1 = true;
             setup2 = true;
@@ -352,11 +349,11 @@ public final class RHyper implements RandFunction3_Double {
             if ((double) nn1 > (double) nn2) {
                 ix1 = (double) kk - (double) nn2 + ix1;
             } else {
-                ix1 = (double) nn1 - ix1;
+                ix1 = nn1 - ix1;
             }
         } else {
             if ((double) nn1 > (double) nn2) {
-                ix1 = (double) kk - ix1;
+                ix1 = kk - ix1;
             }
         }
         return ix1;

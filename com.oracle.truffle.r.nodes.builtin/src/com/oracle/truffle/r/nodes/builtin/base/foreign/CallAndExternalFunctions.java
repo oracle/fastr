@@ -46,10 +46,12 @@ import com.oracle.truffle.r.library.stats.Cauchy.PCauchy;
 import com.oracle.truffle.r.library.stats.Cauchy.RCauchy;
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.Chisq;
+import com.oracle.truffle.r.library.stats.Chisq.RChisq;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DBeta;
+import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.Df;
@@ -68,33 +70,46 @@ import com.oracle.truffle.r.library.stats.LogNormal;
 import com.oracle.truffle.r.library.stats.LogNormal.DLNorm;
 import com.oracle.truffle.r.library.stats.LogNormal.PLNorm;
 import com.oracle.truffle.r.library.stats.LogNormal.QLNorm;
+import com.oracle.truffle.r.library.stats.Logis;
+import com.oracle.truffle.r.library.stats.Logis.DLogis;
+import com.oracle.truffle.r.library.stats.Logis.RLogis;
+import com.oracle.truffle.r.library.stats.PGamma;
+import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
+import com.oracle.truffle.r.library.stats.Pt;
+import com.oracle.truffle.r.library.stats.QBeta;
+import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
+import com.oracle.truffle.r.library.stats.Qf;
 import com.oracle.truffle.r.library.stats.Qnorm;
+import com.oracle.truffle.r.library.stats.Qt;
 import com.oracle.truffle.r.library.stats.RBeta;
-import com.oracle.truffle.r.library.stats.RChisq;
 import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RHyper;
-import com.oracle.truffle.r.library.stats.RLogis;
 import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
 import com.oracle.truffle.r.library.stats.RNbinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RPois;
 import com.oracle.truffle.r.library.stats.RWeibull;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions;
-import com.oracle.truffle.r.library.stats.RandGenerationFunctionsFactory;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1Node;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2Node;
+import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction3Node;
 import com.oracle.truffle.r.library.stats.Rbinom;
 import com.oracle.truffle.r.library.stats.Rf;
 import com.oracle.truffle.r.library.stats.Rnorm;
 import com.oracle.truffle.r.library.stats.Rt;
-import com.oracle.truffle.r.library.stats.Runif;
 import com.oracle.truffle.r.library.stats.Signrank.RSignrank;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
+import com.oracle.truffle.r.library.stats.Unif.DUnif;
+import com.oracle.truffle.r.library.stats.Unif.PUnif;
+import com.oracle.truffle.r.library.stats.Unif.QUnif;
+import com.oracle.truffle.r.library.stats.Unif.Runif;
 import com.oracle.truffle.r.library.stats.Wilcox.RWilcox;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
@@ -140,7 +155,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 public class CallAndExternalFunctions {
 
     @TruffleBoundary
-    protected static Object encodeArgumentPairList(RArgsValuesAndNames args, String symbolName) {
+    private static Object encodeArgumentPairList(RArgsValuesAndNames args, String symbolName) {
         Object list = RNull.instance;
         for (int i = args.getLength() - 1; i >= 0; i--) {
             String name = args.getSignature().getName(i);
@@ -150,8 +165,8 @@ public class CallAndExternalFunctions {
         return list;
     }
 
-    protected abstract static class CallRFFIAdapter extends LookupAdapter {
-        @Child protected CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
+    abstract static class CallRFFIAdapter extends LookupAdapter {
+        @Child CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
     }
 
     /**
@@ -249,53 +264,69 @@ public class CallAndExternalFunctions {
                 case "qnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qnorm());
                 case "rnorm":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rnorm());
+                    return RandFunction2Node.createDouble(new Rnorm());
                 case "runif":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Runif());
+                    return RandFunction2Node.createDouble(new Runif());
                 case "rbeta":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RBeta());
+                    return RandFunction2Node.createDouble(new RBeta());
                 case "rgamma":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RGamma());
+                    return RandFunction2Node.createDouble(new RGamma());
                 case "rcauchy":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RCauchy());
+                    return RandFunction2Node.createDouble(new RCauchy());
                 case "rf":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new Rf());
+                    return RandFunction2Node.createDouble(new Rf());
                 case "rlogis":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RLogis());
+                    return RandFunction2Node.createDouble(new RLogis());
                 case "rweibull":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RWeibull());
+                    return RandFunction2Node.createDouble(new RWeibull());
                 case "rnchisq":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RNchisq());
+                    return RandFunction2Node.createDouble(new RNchisq());
                 case "rnbinom_mu":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new RNbinomMu());
+                    return RandFunction2Node.createDouble(new RNbinomMu());
                 case "rwilcox":
-                    return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new RWilcox());
+                    return RandFunction2Node.createInt(new RWilcox());
                 case "rchisq":
-                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new RChisq());
+                    return RandFunction1Node.createDouble(new RChisq());
                 case "rexp":
-                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new RExp());
+                    return RandFunction1Node.createDouble(new RExp());
                 case "rgeom":
-                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RGeom());
+                    return RandFunction1Node.createInt(new RGeom());
                 case "rpois":
-                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RPois());
+                    return RandFunction1Node.createInt(new RPois());
                 case "rt":
-                    return RandGenerationFunctionsFactory.Function1_DoubleNodeGen.create(new Rt());
+                    return RandFunction1Node.createDouble(new Rt());
                 case "rsignrank":
-                    return RandGenerationFunctionsFactory.Function1_IntNodeGen.create(new RSignrank());
+                    return RandFunction1Node.createInt(new RSignrank());
                 case "rhyper":
-                    return RandGenerationFunctionsFactory.Function3_IntNodeGen.create(new RHyper());
+                    return RandFunction3Node.createInt(new RHyper());
+                case "qt":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Qt());
+                case "pt":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Pt());
                 case "qgamma":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QgammaFunc());
                 case "dbinom":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Dbinom());
                 case "qbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Qbinom());
+                case "punif":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PUnif());
+                case "dunif":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DUnif());
+                case "qunif":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QUnif());
+                case "ppois":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new PPois());
+                case "qpois":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new QPois());
                 case "rbinom":
-                    return RandGenerationFunctionsFactory.Function2_IntNodeGen.create(new Rbinom());
+                    return RandFunction2Node.createInt(new Rbinom());
                 case "pbinom":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbinom());
                 case "pbeta":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pbeta());
+                case "qbeta":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QBeta());
                 case "dcauchy":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DCauchy());
                 case "pcauchy":
@@ -304,12 +335,18 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Cauchy.QCauchy());
                 case "pf":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Pf());
+                case "qf":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Qf());
                 case "df":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new Df());
                 case "dgamma":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DGamma());
+                case "pgamma":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PGamma());
                 case "dchisq":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new Chisq.DChisq());
+                case "qchisq":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Chisq.QChisq());
                 case "qgeom":
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new Geom.QGeom());
                 case "pchisq":
@@ -329,13 +366,21 @@ public class CallAndExternalFunctions {
                 case "dt":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new Dt());
                 case "rlnorm":
-                    return RandGenerationFunctionsFactory.Function2_DoubleNodeGen.create(new LogNormal.RLNorm());
+                    return RandFunction2Node.createDouble(new LogNormal.RLNorm());
                 case "dlnorm":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DLNorm());
                 case "qlnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new QLNorm());
                 case "plnorm":
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new PLNorm());
+                case "dlogis":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DLogis());
+                case "qlogis":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.QLogis());
+                case "plogis":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.PLogis());
+                case "pgeom":
+                    return StatsFunctionsFactory.Function2_2NodeGen.create(new Geom.PGeom());
                 case "rmultinom":
                     return RMultinomNodeGen.create();
                 case "Approx":
@@ -429,7 +474,7 @@ public class CallAndExternalFunctions {
                     return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandGenerationFunctions.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
-                    return StatsFunctionsFactory.Function3_1NodeGen.create(new Dnorm4());
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DNorm());
 
                 // tools
                 case "doTabExpand":

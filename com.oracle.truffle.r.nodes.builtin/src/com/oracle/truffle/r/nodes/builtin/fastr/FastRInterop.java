@@ -31,6 +31,9 @@ import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -44,6 +47,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -96,6 +100,46 @@ public class FastRInterop {
         @TruffleBoundary
         protected Object eval(String mimeType, String source) {
             return parse(mimeType, source).call();
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.evalFile", visibility = OFF, kind = PRIMITIVE, parameterNames = {"path", "mimeType"}, behavior = COMPLEX)
+    public abstract static class EvalFile extends RBuiltinNode {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("mimeType").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
+
+        protected CallTarget parse(String path, String mimeType) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            File file = new File(path);
+            try {
+                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName()).internal();
+                if (mimeType != null) {
+                    sourceBuilder.mimeType(mimeType);
+                }
+                Source sourceObject = sourceBuilder.build();
+                return RContext.getInstance().getEnv().parse(sourceObject);
+            } catch (IOException e) {
+                throw RError.error(this, Message.GENERIC, "Error reading file: " + e.getMessage());
+            } catch (Throwable t) {
+                throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
+            }
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object eval(String path, @SuppressWarnings("unused") RMissing missing) {
+            return parse(path, null).call();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object eval(String path, String mimeType) {
+            return parse(path, mimeType).call();
         }
     }
 

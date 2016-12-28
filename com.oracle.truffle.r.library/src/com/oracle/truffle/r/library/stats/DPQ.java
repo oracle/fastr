@@ -12,7 +12,6 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 
-import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
@@ -26,24 +25,35 @@ public final class DPQ {
         // only static methods
     }
 
-    public static final class EarlyReturn extends ControlFlowException {
+    public static final class EarlyReturn extends Exception {
         private static final long serialVersionUID = 1182697355931636213L;
         public final double result;
 
         private EarlyReturn(double result) {
             this.result = result;
         }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return null;
+        }
     }
 
     // R >= 3.1.0: # define R_nonint(x) (fabs((x) - R_forceint(x)) > 1e-7)
     // Note: if true should be followed by "return d0(logP)", consider using nointCheck instead
     public static boolean nonint(double x) {
-        return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1., Math.abs(x));
+        return Math.abs(x - RMath.forceint(x)) > 1e-7 * Math.max(1., Math.abs(x));
     }
 
     // R_D__0
     public static double rd0(boolean logP) {
         return logP ? Double.NEGATIVE_INFINITY : 0.;
+    }
+
+    // R_D_half (log_p ? -M_LN2 : 0.5)
+    public static double rdhalf(boolean logP) {
+        return logP ? -M_LN2 : 0.5;
     }
 
     // R_D__1
@@ -71,6 +81,7 @@ public final class DPQ {
     }
 
     // R_D_Lval
+    // Use 0.5 - p + 0.5 to perhaps gain 1 bit of accuracy
     public static double rdlval(double p, boolean lowerTail) {
         return lowerTail ? p : 0.5 - p + 0.5;
     }
@@ -112,6 +123,11 @@ public final class DPQ {
         return logP ? RMath.log1p(-(p)) : (0.5 - (p) + 0.5);
     }
 
+    // R_D_qIv (log_p ? exp(p) : (p))
+    public static double rdqiv(double p, boolean logP) {
+        return logP ? Math.exp(p) : p;
+    }
+
     // R_DT_qIv
     public static double rdtqiv(double p, boolean lowerTail, boolean logP) {
         return logP ? lowerTail ? Math.exp(p) : -Math.expm1(p) : rdlval(p, lowerTail);
@@ -145,6 +161,22 @@ public final class DPQ {
             if (p == 1) {
                 throw new EarlyReturn(lowerTail ? right : left);
             }
+        }
+    }
+
+    // R_P_bounds_01
+    public static void rpbounds01(double x, double xMin, double xMax, boolean lowerTail, boolean logP) throws EarlyReturn {
+        if (x <= xMin) {
+            throw new EarlyReturn(rdt0(lowerTail, logP));
+        } else if (x >= xMax) {
+            throw new EarlyReturn(rdt1(lowerTail, logP));
+        }
+    }
+
+    // R_P_bounds_Inf_01
+    public static void rpboundsinf01(double x, boolean lowerTail, boolean logP) throws EarlyReturn {
+        if (!Double.isFinite(x)) {
+            throw new EarlyReturn(x > 0 ? rdt1(lowerTail, logP) : rdt0(lowerTail, logP));
         }
     }
 

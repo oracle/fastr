@@ -40,7 +40,7 @@ public class TOMS708 {
 
     // R_Log1_Exp
     public static double log1Exp(double x) {
-        return ((x) > -M_LN2 ? log(-rexpm1(x)) : log1p(-exp(x)));
+        return ((x) > -M_LN2 ? log(-rexpm1(x)) : RMath.log1p(-exp(x)));
     }
 
     private static double sin(double v) {
@@ -57,10 +57,6 @@ public class TOMS708 {
 
     private static double sqrt(double v) {
         return Math.sqrt(v);
-    }
-
-    private static double log1p(double v) {
-        return Math.log1p(v);
     }
 
     private static double exp(double v) {
@@ -357,7 +353,7 @@ public class TOMS708 {
                                         w1 = Double.NEGATIVE_INFINITY; // = 0 on log-scale
                                     }
                                     bgrat.w = w1;
-                                    bgrat.bgrat(b0, a0, y0, x0, 15 * eps, false);
+                                    bgrat.bgrat(b0, a0, y0, x0, 15 * eps, true);
                                     w1 = bgrat.w;
                                     if (bgrat.ierr != 0) {
                                         ierr = 8;
@@ -594,7 +590,7 @@ public class TOMS708 {
             // exp(a*lnx) underflows for large (a * lnx); e.g. large a ==> using log_r := log(r):
             // r = r1 * exp(a * lnx) * exp(bm1 * 0.5 * lnx);
             // log(r)=log(b) + log1p(gam1(b)) + b * log(z) + (a * lnx) + (bm1 * 0.5 * lnx),
-            double logR = Math.log(b) + log1p(gam1(b)) + b * Math.log(z) + nu * lnx;
+            double logR = Math.log(b) + RMath.log1p(gam1(b)) + b * Math.log(z) + nu * lnx;
             // FIXME work with log_u = log(u) also when log_p=FALSE (??)
             // u is 'factored out' from the expansion {and multiplied back, at the end}:
             double logU = logR - (algdiv(b, a) + b * Math.log(nu)); // algdiv(b,a) =
@@ -613,7 +609,7 @@ public class TOMS708 {
             double l = // := *w/u .. but with care: such that it also works when u underflows to 0:
                             logW ? ((w == Double.NEGATIVE_INFINITY) ? 0. : Math.exp(w - logU)) : ((w == 0.) ? 0. : Math.exp(Math.log(w) - logU));
 
-            debugPrintf(" bgrat(a=%f, b=%f, x=%f, *)\n -> u=%f, l='w/u'=%f, ", a, b, x, u, l);
+            debugPrintf(" bgrat(a=%f, b=%f, x=%f, *)\n -> u=%f, l='w/u'=%f, \n", a, b, x, u, l);
 
             double qR = gratR(b, z, logR, eps); // = q/r of former grat1(b,z, r, &p, &q)
             double v = 0.25 / (nu * nu);
@@ -713,7 +709,7 @@ public class TOMS708 {
         } while (fabs(c) > tol);
 
         if (logP) {
-            ans += log1p(a * s);
+            ans += RMath.log1p(a * s);
         } else {
             ans *= a * s + 1.0;
         }
@@ -831,7 +827,7 @@ public class TOMS708 {
 
                     if (logP) {
                         /* FIXME? potential for improving log(t) */
-                        ans = z + log(a0 / a) + log1p(gam1(b0)) - log(t);
+                        ans = z + log(a0 / a) + RMath.log1p(gam1(b0)) - log(t);
                     } else {
                         ans = exp(z) * (a0 / a) * (gam1(b0) + 1.0) / t;
                     }
@@ -871,14 +867,14 @@ public class TOMS708 {
         } while (n < 1e7 && fabs(w) > tol);
         if (fabs(w) > tol) { // the series did not converge (in time)
             // warn only when the result seems to matter:
-            if ((logP && !(a * sum > -1. && fabs(log1p(a * sum)) < eps * fabs(ans))) || (!logP && fabs(a * sum + 1) != 1.)) {
+            if ((logP && !(a * sum > -1. && fabs(RMath.log1p(a * sum)) < eps * fabs(ans))) || (!logP && fabs(a * sum + 1) != 1.)) {
                 emitWarning(" bpser(a=%f, b=%f, x=%f,...) did not converge (n=1e7, |w|/tol=%f > 1; A=%f)", a, b, x, fabs(w) / tol, ans);
             }
         }
         debugPrintf("  -> n=%d iterations, |w|=%f %s %f=tol:=eps/a ==> a*sum=%f\n", (int) n, fabs(w), (fabs(w) > tol) ? ">!!>" : "<=", tol, a * sum);
         if (logP) {
             if (a * sum > -1.0) {
-                ans += log1p(a * sum);
+                ans += RMath.log1p(a * sum);
             } else {
                 ans = ML_NEGINF;
             }
@@ -1115,7 +1111,7 @@ public class TOMS708 {
 
                 double c = (gam1(a) + 1.0) * (gam1(b) + 1.0) / z;
                 /* FIXME? log(a0*c)= log(a0)+ log(c) and that is improvable */
-                return (logP ? eZ + log(a0 * c) - log1p(a0 / b0) : eZ * (a0 * c) / (a0 / b0 + 1.0));
+                return (logP ? eZ + log(a0 * c) - RMath.log1p(a0 / b0) : eZ * (a0 * c) / (a0 / b0 + 1.0));
             }
 
             /* else : ALGORITHM FOR 1 < b0 < 8 */
@@ -1141,7 +1137,7 @@ public class TOMS708 {
                 t = gam1(apb) + 1.0;
             }
 
-            return (logP ? log(a0) + z + log1p(gam1(b0)) - log(t) : a0 * exp(z) * (gam1(b0) + 1.0) / t);
+            return (logP ? log(a0) + z + RMath.log1p(gam1(b0)) - log(t) : a0 * exp(z) * (gam1(b0) + 1.0) / t);
 
         } else {
             /* ----------------------------------------------------------------------- */
@@ -1248,9 +1244,9 @@ public class TOMS708 {
                     z = gam1(apb) + 1.0;
                 }
                 // L50:
-                double c = giveLog ? log1p(gam1(a)) + log1p(gam1(b)) - log(z) : (gam1(a) + 1.0) * (gam1(b) + 1.0) / z;
+                double c = giveLog ? RMath.log1p(gam1(a)) + RMath.log1p(gam1(b)) - log(z) : (gam1(a) + 1.0) * (gam1(b) + 1.0) / z;
                 debugPrintf(" brcmp1(mu,a,b,*): a0 < 1, b0 <= 1;  c=%.15f\n", c);
-                return giveLog ? ans + log(a0) + c - log1p(a0 / b0) : ans * (a0 * c) / (a0 / b0 + 1.0);
+                return giveLog ? ans + log(a0) + c - RMath.log1p(a0 / b0) : ans * (a0 * c) / (a0 / b0 + 1.0);
             }
             // else: algorithm for a0 < 1 < b0 < 8
             // L60:
@@ -1278,7 +1274,7 @@ public class TOMS708 {
             }
             debugPrintf(" brcmp1(mu,a,b,*): a0 < 1 < b0 < 8;  t=%.15f\n", t);
             // L72:
-            return giveLog ? log(a0) + esum(mu, z, true) + log1p(gam1(b0)) - log(t) : a0 * esum(mu, z, false) * (gam1(b0) + 1.0) / t;
+            return giveLog ? log(a0) + esum(mu, z, true) + RMath.log1p(gam1(b0)) - log(t) : a0 * esum(mu, z, false) * (gam1(b0) + 1.0) / t;
 
         } else {
 
@@ -1302,7 +1298,7 @@ public class TOMS708 {
                 y0 = 1.0 / (h + 1.0);
                 lambda = a - (a + b) * x;
             }
-            double lx0 = -log1p(b / a); // in both cases
+            double lx0 = -RMath.log1p(b / a); // in both cases
 
             debugPrintf(" brcmp1(mu,a,b,*): a,b >= 8;  x0=%.15f, lx0=log(x0)=%.15f\n", x0, lx0);
             // L110:

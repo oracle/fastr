@@ -50,8 +50,8 @@ public class TestBuiltin_syscall extends TestBase {
         // these tests look a little weird as we seem to have some printing problems with language
         // objects (we should be able to simply print x, but the outputs don't quite match)
         assertEval("{ x<-do.call(function() sys.call(0), list()); x[[1]] }");
-        assertEval("{ x<-do.call(function() sys.call(1), list()); list(x[[1]], x[[2]][[1]], x[[2]][[2]], x[[2]][[3]]) }");
 
+        // whitespace in formatting of deparsed function
+        assertEval(Output.IgnoreWhitespace, "{ x<-(function(f) f())(function() sys.call(1)); list(x[[1]], x[[2]][[1]], x[[2]][[2]], x[[2]][[3]]) }");
     }
-
 }
