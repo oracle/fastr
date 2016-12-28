@@ -89,7 +89,14 @@ public class TestDistributions extends TestBase {
                     test("1, 1", withDefaultQ("0.5", "2")).
                     test("420, 4", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
                     test("0.13e-8, 1", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
-                    test("1, 0.13e-8", withQuantiles("0.42e-10", "100", "13e10", "11e111"))
+                    test("1, 0.13e-8", withQuantiles("0.42e-10", "100", "13e10", "11e111")),
+            // tests of nbeta, which is called in beta when third param is not missing
+            distr("beta").
+                    addErrorParamValues("-4", "0").
+                    test("10, 15, 0", withDefaultQ("10", "15", "100")).
+                    test("7, 13, 3", withDefaultQ("10", "15", "100")).
+                    test("7, 11, 0.37e-10", withQuantiles("10", "15", "100")).
+                    test("7, 113e11, 1", withQuantiles("10", "15", "100"))
     };
     // @formatter:on
 

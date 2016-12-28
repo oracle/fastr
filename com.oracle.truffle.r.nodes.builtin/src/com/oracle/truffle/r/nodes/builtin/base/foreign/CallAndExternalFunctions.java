@@ -51,6 +51,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DBeta;
+import com.oracle.truffle.r.library.stats.DNBeta;
 import com.oracle.truffle.r.library.stats.DNChisq;
 import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
@@ -75,6 +76,7 @@ import com.oracle.truffle.r.library.stats.Logis;
 import com.oracle.truffle.r.library.stats.Logis.DLogis;
 import com.oracle.truffle.r.library.stats.Logis.RLogis;
 import com.oracle.truffle.r.library.stats.PGamma;
+import com.oracle.truffle.r.library.stats.PNBeta;
 import com.oracle.truffle.r.library.stats.PNChisq;
 import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
@@ -83,6 +85,7 @@ import com.oracle.truffle.r.library.stats.Pf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Pt;
 import com.oracle.truffle.r.library.stats.QBeta;
+import com.oracle.truffle.r.library.stats.QNBeta;
 import com.oracle.truffle.r.library.stats.QNChisq;
 import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
@@ -108,6 +111,7 @@ import com.oracle.truffle.r.library.stats.Rt;
 import com.oracle.truffle.r.library.stats.Signrank.RSignrank;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
+import com.oracle.truffle.r.library.stats.StatsFunctions;
 import com.oracle.truffle.r.library.stats.StatsFunctionsFactory;
 import com.oracle.truffle.r.library.stats.Unif.DUnif;
 import com.oracle.truffle.r.library.stats.Unif.PUnif;
@@ -372,6 +376,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new DPois());
                 case "dbeta":
                     return StatsFunctionsFactory.Function3_1NodeGen.create(new DBeta());
+                case "dnbeta":
+                    return StatsFunctions.Function4_1Node.create(new DNBeta());
+                case "qnbeta":
+                    return StatsFunctions.Function4_2Node.create(new QNBeta());
+                case "pnbeta":
+                    return StatsFunctions.Function4_2Node.create(new PNBeta());
                 case "dt":
                     return StatsFunctionsFactory.Function2_1NodeGen.create(new Dt());
                 case "rlnorm":
