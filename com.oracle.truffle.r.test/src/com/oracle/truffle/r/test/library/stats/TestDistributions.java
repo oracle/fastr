@@ -96,7 +96,14 @@ public class TestDistributions extends TestBase {
                     test("10, 15, 0", withDefaultQ("10", "15", "100")).
                     test("7, 13, 3", withDefaultQ("10", "15", "100")).
                     test("7, 11, 0.37e-10", withQuantiles("10", "15", "100")).
-                    test("7, 113e11, 1", withQuantiles("10", "15", "100"))
+                    test("7, 113e11, 1", withQuantiles("10", "15", "100")),
+            // tests of nf (non central F distribution)
+            distr("f").
+                    addErrorParamValues("-1", "0").
+                    test("5, 5, 5", withDefaultQ("1", "10", "44", "123")).
+                    test("5, 0.12e-10, 5", withDefaultQ("1", "10", "44", "123")).
+                    test("5, 6, 0.12e-10", withDefaultQ("1", "10", "44", "123")).
+                    test("0.12e-10, 6, 31e10", withDefaultQ("1", "10", "44", "123"))
     };
     // @formatter:on
 

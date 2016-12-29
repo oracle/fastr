@@ -57,6 +57,7 @@ import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
 import com.oracle.truffle.r.library.stats.Dbinom;
 import com.oracle.truffle.r.library.stats.Df;
+import com.oracle.truffle.r.library.stats.Dnf;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
 import com.oracle.truffle.r.library.stats.Dt;
 import com.oracle.truffle.r.library.stats.Exp.DExp;
@@ -82,6 +83,7 @@ import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
 import com.oracle.truffle.r.library.stats.Pbinom;
 import com.oracle.truffle.r.library.stats.Pf;
+import com.oracle.truffle.r.library.stats.Pnf;
 import com.oracle.truffle.r.library.stats.Pnorm;
 import com.oracle.truffle.r.library.stats.Pt;
 import com.oracle.truffle.r.library.stats.QBeta;
@@ -90,6 +92,7 @@ import com.oracle.truffle.r.library.stats.QNChisq;
 import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
 import com.oracle.truffle.r.library.stats.Qf;
+import com.oracle.truffle.r.library.stats.Qnf;
 import com.oracle.truffle.r.library.stats.Qnorm;
 import com.oracle.truffle.r.library.stats.Qt;
 import com.oracle.truffle.r.library.stats.RBeta;
@@ -380,6 +383,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctions.Function4_1Node.create(new DNBeta());
                 case "qnbeta":
                     return StatsFunctions.Function4_2Node.create(new QNBeta());
+                case "dnf":
+                    return StatsFunctions.Function4_1Node.create(new Dnf());
+                case "qnf":
+                    return StatsFunctions.Function4_2Node.create(new Qnf());
+                case "pnf":
+                    return StatsFunctions.Function4_2Node.create(new Pnf());
                 case "pnbeta":
                     return StatsFunctions.Function4_2Node.create(new PNBeta());
                 case "dt":

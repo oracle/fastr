@@ -31,7 +31,7 @@ public class PNBeta implements Function4_2 {
         return pnbeta2(x, 1 - x, a, b, ncp, lowerTail, logP);
     }
 
-    private double pnbeta2(double x, double oX, double a, double b, double ncp, boolean lowerTail, boolean logP) {
+    double pnbeta2(double x, double oX, double a, double b, double ncp, boolean lowerTail, boolean logP) {
         /* LDOUBLE */
         double ans = pnbetaRaw(x, oX, a, b, ncp);
 
