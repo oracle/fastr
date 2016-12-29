@@ -25,7 +25,7 @@ public final class DPois implements Function2_1 {
             return x + lambda;
         }
         if (lambda < 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         try {

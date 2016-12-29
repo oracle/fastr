@@ -28,10 +28,10 @@ public final class DNorm implements Function3_1 {
         if (!Double.isFinite(sigma)) {
             return DPQ.rd0(giveLog);
         } else if (!Double.isFinite(x) && mu == x) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         } else if (sigma <= 0) {
             if (sigma < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             return (x == mu) ? Double.POSITIVE_INFINITY : DPQ.rd0(giveLog);
         }

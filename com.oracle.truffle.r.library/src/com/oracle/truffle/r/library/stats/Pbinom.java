@@ -34,7 +34,7 @@ public final class Pbinom implements StatsFunctions.Function3_2 {
         if (DPQ.nonint(size)) {
             nanProfile.enter();
             DPQ.nointCheckWarning(size, "n");
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         size = RMath.forceint(size);
         /* PR#8560: n=0 is a valid value */

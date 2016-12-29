@@ -38,7 +38,7 @@ public final class Unif {
             double max = maxValueProfile.profile(maxIn);
             if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
                 errorProfile.enter();
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (minEqualsMaxProfile.profile(min == max)) {
                 return min;
@@ -54,7 +54,7 @@ public final class Unif {
                 return x + min + max;
             }
             if (max < min || !Double.isFinite(min) || !Double.isFinite(max)) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (x >= max) {
                 return DPQ.rdt1(lowerTail, logP);
@@ -77,7 +77,7 @@ public final class Unif {
                 return x + min + max;
             }
             if (max <= min) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (min <= x && x <= max) {
                 return giveLog ? -Math.log(max - min) : 1. / (max - min);
@@ -101,7 +101,7 @@ public final class Unif {
             }
 
             if (max < min || !Double.isFinite(min) || !Double.isFinite(max)) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (max == min) {

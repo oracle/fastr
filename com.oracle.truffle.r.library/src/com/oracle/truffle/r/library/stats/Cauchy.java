@@ -29,7 +29,7 @@ public final class Cauchy {
         @Override
         public double execute(double location, double scale, RandomNumberProvider rand) {
             if (Double.isNaN(location) || !Double.isFinite(scale) || scale < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (scale == 0. || !Double.isFinite(location)) {
                 return location;
@@ -48,7 +48,7 @@ public final class Cauchy {
                 return x + location + scale;
             }
             if (scale <= 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             y = (x - location) / scale;
@@ -64,12 +64,12 @@ public final class Cauchy {
             }
 
             if (scale <= 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             double x2 = (x - location) / scale;
             if (Double.isNaN(x2)) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (!Double.isFinite(x2)) {
@@ -116,7 +116,7 @@ public final class Cauchy {
                 if (scale == 0) {
                     return location;
                 }
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             boolean lowerTail = lowerTailIn;

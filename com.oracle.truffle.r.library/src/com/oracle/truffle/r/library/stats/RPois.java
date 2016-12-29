@@ -80,7 +80,7 @@ public final class RPois extends RandFunction1_Double {
         boolean newBigMu = false;
 
         if (!Double.isFinite(mu) || mu < 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (mu <= 0.) {

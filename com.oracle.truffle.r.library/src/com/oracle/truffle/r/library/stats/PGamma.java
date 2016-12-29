@@ -23,7 +23,7 @@ public class PGamma implements Function3_2 {
             return xIn + alph + scale;
         }
         if (alph < 0 || scale < 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         double x = xIn / scale;

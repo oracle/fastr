@@ -29,7 +29,7 @@ public final class Dt implements Function2_1 {
         }
 
         if (n <= 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (!Double.isFinite(x)) {

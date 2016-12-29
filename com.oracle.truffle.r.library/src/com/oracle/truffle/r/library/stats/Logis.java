@@ -33,7 +33,7 @@ public final class Logis {
                 return x + location + scale;
             }
             if (scale <= 0.0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             x = TOMS708.fabs((x - location) / scale);
@@ -57,7 +57,7 @@ public final class Logis {
             }
 
             if (scale < 0.) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (scale == 0.) {
                 return location;
@@ -85,12 +85,12 @@ public final class Logis {
                 return x + location + scale;
             }
             if (scale <= 0.0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             x = (x - location) / scale;
             if (Double.isNaN(x)) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             try {
@@ -123,7 +123,7 @@ public final class Logis {
         @Override
         public double execute(double location, double scale, RandomNumberProvider rand) {
             if (Double.isNaN(location) || !Double.isFinite(scale)) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (scale == 0. || !Double.isFinite(location)) {

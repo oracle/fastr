@@ -19,7 +19,7 @@ public class PPois implements Function2_2 {
     @Override
     public double evaluate(double x, double lambda, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(lambda) || lambda < 0.) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (x < 0) {
             return DPQ.rdt0(lowerTail, logP);

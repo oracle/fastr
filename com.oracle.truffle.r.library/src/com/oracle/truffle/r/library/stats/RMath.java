@@ -16,42 +16,18 @@ import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * Encapsulates functions to be found in Rmath.h or in nmath directory in GnuR except for random
- * distribution related functions, which usually have their own files.
+ * distribution related functions, which usually have their own files, and other well defined groups
+ * of functions/macros referenced below.
  *
  * @see DPQ
+ * @see RMathError
+ * @see MathConstants
  */
 public class RMath {
-
-    public enum MLError {
-        DOMAIN,
-        RANGE,
-        NOCONV,
-        PRECISION,
-        UNDERFLOW
-    }
-
-    /**
-     * Corresponds to macro {@code ML_ERR_return_NAN} in GnuR.
-     */
-    public static double mlError() {
-        return mlError(MLError.DOMAIN, "");
-    }
-
-    /**
-     * Corresponds to macro {@code ML_ERR} in GnuR. TODO: raise corresponding warning
-     */
-    public static double mlError(@SuppressWarnings("unused") MLError error, @SuppressWarnings("unused") String message) {
-        return Double.NaN;
-    }
-
-    public static void mlWarning(RError.Message message, Object... args) {
-        RError.warning(null, message, args);
-    }
 
     public static boolean mlValid(double d) {
         return !Double.isNaN(d);
@@ -99,7 +75,7 @@ public class RMath {
             return x;
         }
         if (!Double.isFinite(x)) {
-            return mlError();
+            return RMathError.defaultError();
         }
 
         double x2 = fmod(x, 1.); // tan(pi(x + k)) == tan(pi x) for all integer k

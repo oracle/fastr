@@ -20,7 +20,7 @@ public final class Rt extends RandFunction1_Double {
     @Override
     public double execute(double df, RandomNumberProvider rand) {
         if (Double.isNaN(df) || df <= 0.0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (!Double.isFinite(df)) {

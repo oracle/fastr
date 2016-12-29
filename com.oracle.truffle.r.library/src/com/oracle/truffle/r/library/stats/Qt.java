@@ -47,7 +47,7 @@ public class Qt implements Function2_2 {
         }
 
         if (ndf <= 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (ndf < 1) { /* based on qnt */
@@ -89,7 +89,7 @@ public class Qt implements Function2_2 {
             } while ((ux - lx) / Math.abs(nx) > accu && ++iter < 1000);
 
             if (iter >= 1000) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             return 0.5 * (lx + ux);

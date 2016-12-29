@@ -28,7 +28,7 @@ public final class Qf implements Function3_2 {
         }
 
         if (df1 <= 0. || df2 <= 0.) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         try {

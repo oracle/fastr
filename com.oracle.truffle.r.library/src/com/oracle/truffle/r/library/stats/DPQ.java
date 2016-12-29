@@ -183,7 +183,7 @@ public final class DPQ {
     // R_Q_P01_check
     public static void rqp01check(double p, boolean logP) throws EarlyReturn {
         if ((logP && p > 0) || (!logP && (p < 0 || p > 1))) {
-            throw new EarlyReturn(RMath.mlError());
+            throw new EarlyReturn(RMathError.defaultError());
         }
     }
 

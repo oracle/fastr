@@ -27,7 +27,7 @@ public final class RBeta extends RandFunction2_Double {
     @Override
     public double execute(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (!Double.isFinite(aa) && !Double.isFinite(bb)) { // a = b = Inf : all mass at 1/2
             return 0.5;

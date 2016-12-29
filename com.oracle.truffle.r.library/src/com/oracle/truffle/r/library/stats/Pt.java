@@ -34,7 +34,7 @@ public class Pt implements Function2_2 {
         }
 
         if (n <= 0.0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (!Double.isFinite(x)) {

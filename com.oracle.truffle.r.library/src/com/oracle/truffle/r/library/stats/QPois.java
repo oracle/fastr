@@ -26,10 +26,10 @@ public class QPois implements Function2_2 {
             return p + lambda;
         }
         if (!Double.isFinite(lambda)) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (lambda < 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (lambda == 0) {
             return 0;
