@@ -143,6 +143,12 @@ public final class DPQ {
         return logP ? lowerTail ? -Math.expm1(p) : Math.exp(p) : rdcval(p, lowerTail);
     }
 
+    /* [neg]ative or [non int]eger : */
+    // R_D_negInonint
+    public static boolean rdneginonint(double x) {
+        return x < 0. || nonint(x);
+    }
+
     // R_Q_P01_boundaries
     public static void rqp01boundaries(double p, double left, double right, boolean lowerTail, boolean logP) throws EarlyReturn {
         if (logP) {

@@ -44,6 +44,8 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DPQ.java,gnu
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rt.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/GammaFunctions.java,gnu_r_qgamma.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/QHyper.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DHyper.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/PHyper.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Qt.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pt.java,gnu_r_scan.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RHyper.java,gnu_r_ihaka.copyright

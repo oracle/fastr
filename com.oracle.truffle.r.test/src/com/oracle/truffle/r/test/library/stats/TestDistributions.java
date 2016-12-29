@@ -103,7 +103,19 @@ public class TestDistributions extends TestBase {
                     test("5, 5, 5", withDefaultQ("1", "10", "44", "123")).
                     test("5, 0.12e-10, 5", withDefaultQ("1", "10", "44", "123")).
                     test("5, 6, 0.12e-10", withDefaultQ("1", "10", "44", "123")).
-                    test("0.12e-10, 6, 31e10", withDefaultQ("1", "10", "44", "123"))
+                    test("0.12e-10, 6, 31e10", withDefaultQ("1", "10", "44", "123")),
+            // hyper-geometric: #white balls in urn, #black balls in urn, #drawn balls
+            distr("hyper").
+                    addErrorParamValues("-10", "0.3").
+                    test("7, 11, 4", withQuantiles("1", "2", "3", "4", "20", "12e12")).
+                    test("7e12, 11, 4", withQuantiles("1", "2", "3", "4", "20", "12e12")).
+                    test("11, 7e12, 7", withQuantiles("1", "2", "3", "7", "20", "12e12")).
+                    // more drawn balls then there is white
+                    test("7, 11, 12", withQuantiles("1", "2", "3", "4", "5", "6", "7", "8", "11", "20", "12e12")).
+                    // this should show non-integer warnings for quantiles
+                    test("5, 5, 5", withQuantiles("0.1", "-Inf", "Inf", "0.3e89")).
+                    // too many drawn balls: should be error
+                    test("3, 4, 10", withQuantiles("2"))
     };
     // @formatter:on
 
