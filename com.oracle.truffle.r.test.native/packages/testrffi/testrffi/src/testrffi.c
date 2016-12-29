@@ -219,6 +219,15 @@ SEXP r_home(void) {
 	return mkString(R_Home);
 }
 
+SEXP char_length(SEXP x) {
+	const char *cx = R_CHAR(STRING_ELT(x, 0));
+	int count  = 0;
+	while (*cx++ != 0) {
+		count++;
+	}
+	return ScalarInteger(count);
+}
+
 SEXP mkStringFromChar(void) {
 	return mkString("hello");
 }

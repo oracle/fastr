@@ -26,18 +26,11 @@ import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Selects a particular subclass of {@link RFFIFactory}. Specification is based on system property
- * {@value #FACTORY_CLASS_PROPERTY}. Current default is a JNR-based implementation.
+ * {@value #FACTORY_CLASS_PROPERTY}. Current default is a JNI-based implementation.
  */
 public class Load_RFFIFactory {
     private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
-    private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.runtime.ffi.";
-    private static final String SUFFIX = "_RFFIFactory";
-    private static final String DEFAULT_FACTORY = "jni";
-    private static final String DEFAULT_FACTORY_CLASS = mapSimpleName(DEFAULT_FACTORY);
-
-    private static String mapSimpleName(String simpleName) {
-        return PACKAGE_PREFIX + simpleName + "." + simpleName.toUpperCase() + SUFFIX;
-    }
+    private static final String DEFAULT_FACTORY_CLASS = "com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory";
 
     /**
      * Singleton instance of the factory. Typically initialized at runtime but may be initialized
@@ -49,12 +42,7 @@ public class Load_RFFIFactory {
         if (instance == null) {
             String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
             try {
-                if (prop != null) {
-                    if (!prop.contains(".")) {
-                        // simple name
-                        prop = mapSimpleName(prop);
-                    }
-                } else {
+                if (prop == null) {
                     prop = DEFAULT_FACTORY_CLASS;
                 }
                 instance = (RFFIFactory) Class.forName(prop).newInstance();

@@ -78,6 +78,10 @@ rffi.r_home <- function() {
 	.Call("r_home", PACKAGE = "testrffi")
 }
 
+rffi.char_length <- function(x) {
+	.Call("char_length", PACKAGE = "testrffi", x)
+}
+
 rffi.mkStringFromChar <- function() {
 	.Call("mkStringFromChar", PACKAGE = "testrffi")
 }

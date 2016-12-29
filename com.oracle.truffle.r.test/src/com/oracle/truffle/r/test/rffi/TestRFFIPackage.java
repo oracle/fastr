@@ -160,4 +160,9 @@ public class TestRFFIPackage extends TestRPackages {
     public void testRFFI19() {
         assertEvalWithLibWithSetup("x <- 1; ", "rffi.findvar(\"x\", globalenv())");
     }
+
+    @Test
+    public void testRFFI20() {
+        assertEvalWithLibWithSetup("x <- \"12345\"; ", "rffi.char_length(x)");
+    }
 }

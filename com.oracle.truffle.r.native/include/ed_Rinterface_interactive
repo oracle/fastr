@@ -9,4 +9,15 @@ LibExtern Rboolean FASTR_Interactive();
 a
 #endif
 .
+/R_Home;/
+i
+#ifdef FASTR
+LibExtern char* FASTR_R_Home();
+#define R_Home FASTR_R_Home()
+#else
+.
++1
+a
+#endif
+.
 w Rinterface.h

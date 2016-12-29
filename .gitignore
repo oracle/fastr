@@ -127,5 +127,8 @@ test_gnur
 test_fastr
 lib.install.cran*
 package.blacklist
+*.ll
+*.su
+*.bc
 com.oracle.truffle.r.test.native/embedded/lib
 bench-results.json

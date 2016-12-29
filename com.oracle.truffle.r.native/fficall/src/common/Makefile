@@ -35,7 +35,7 @@ OBJ = ../../lib
 GNUR_APPL_C_FILES = pretty.c interv.c
 GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
 # the Fortran sources are not recompiled, just copied
-GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o)
+GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o $(GNUR_APPL_SRC)/d*.ll)
 
 GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main

@@ -38,7 +38,7 @@ SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
 # Since this library is loaded explicitly we keep a consistent
 # extension so that the test script is portable for TestExpectedOutput
-C_LIBNAME := lib$(subst $(SRC)/,,$(C_SOURCES:.c=.so))
+C_LIBNAME := liburand.so
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(OBJ)/$(C_LIBNAME)
 

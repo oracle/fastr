@@ -135,7 +135,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
         }
     }
 
-    private static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
+    public static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
             guarantee(false, "unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
@@ -388,7 +388,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
         }
     }
 
-    private static RStringVector getClassHr(Object v) {
+    public static RStringVector getClassHr(Object v) {
         RStringVector result;
         if (v instanceof RAttributable) {
             result = ((RAttributable) v).getClassHierarchy();

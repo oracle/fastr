@@ -40,11 +40,20 @@
 
 OSNAME := $(shell uname)
 
+ifdef FASTR_TRUFFLE_RFFI
+FC_DIR := $(abspath $(TOPDIR)/../mx.fastr/compilers)
+FASTR_COMPILERS := CC=$(FC_DIR)/fastr-cc FC=$(FC_DIR)/fastr-fc F77=$(FC_DIR)/fastr-fc CXX=$(FC_DIR)/fastr-c++ CXXCPP=$(FC_DIR)/fastr-cpp OBJC=$(FC_DIR)/fastr-cc
+endif
+
+ifndef FASTR_TRUFFLE_RFFI
+# LLVM text parser and -g don't get on
 OPT_FLAGS := -g -O2
+OPT_FLAGS := -O2
 
 CFLAGS := $(OPT_FLAGS)
 CPPFLAGS := $(OPT_FLAGS)
 CXXFLAGS := $(OPT_FLAGS)
+endif
 
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
@@ -59,6 +68,7 @@ all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
+
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
@@ -119,6 +129,9 @@ ifneq ($(PKG_LDFLAGS_OVERRIDE),)
         GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) LDFLAGS=$(PKG_LDFLAGS_OVERRIDE)
 endif
 
+# setup for LLVM (if enabled)
+GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) FFLAGS=-O2 $(FASTR_COMPILERS)
+
 endif
 # End of platform check
 
@@ -140,7 +153,7 @@ RECPKGS := "--without-recommended-packages"
 endif
 
 $(GNUR_HOME)/Makefile:
-	(cd $(GNUR_HOME); ./configure --with-x=no $(RECPKGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
+	(cd $(GNUR_HOME); ./configure --with-x=no --with-aqua=no $(RECPKGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 build: $(GNUR_HOME)/bin/R
 
