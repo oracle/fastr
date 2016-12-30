@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.stats.GammaFunctions;
+import com.oracle.truffle.r.library.stats.RMath;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
@@ -235,7 +236,7 @@ public class BaseGammaFunctions {
                  * use Abramowitz & Stegun 6.4.7 "Reflection Formula" psi(k, x) = (-1)^k psi(k, 1-x)
                  * - pi^{n+1} (d/dx)^n cot(x)
                  */
-                if (x == Math.round(x)) {
+                if (x == RMath.round(x)) {
                     /* non-positive integer : +Inf or NaN depends on n */
                     // for(j=0; j < m; j++) /* k = j + n : */
                     // ans[j] = ((j+n) % 2) ? ML_POSINF : ML_NAN;

@@ -115,7 +115,20 @@ public class TestDistributions extends TestBase {
                     // this should show non-integer warnings for quantiles
                     test("5, 5, 5", withQuantiles("0.1", "-Inf", "Inf", "0.3e89")).
                     // too many drawn balls: should be error
-                    test("3, 4, 10", withQuantiles("2"))
+                    test("3, 4, 10", withQuantiles("2")),
+            distr("pois").
+                    addErrorParamValues("-1", "0").
+                    test("10", withDefaultQ("5", "10", "15", "20", "30")).
+                    // seems to be the smallest lambda for which we get some results other than 0/1
+                    test("0.1e-6", withQuantiles("0.1e-10", "0.1", "1", "10")).
+                    test("1e100", withQuantiles("1e99", "1e99*9.999", "1e100-1", "1e100", "1e100+100", "1e101")),
+            distr("binom").
+                    addErrorParamValues("-1").
+                    test("20, 0.3", withDefaultQ("1", "2", "10", "20", "21")).
+                    test("10000, 0.01", withQuantiles("1", "10", "100", "500", "900", "1000")).
+                    // non-probability value is error for the second parameter
+                    test("10, -0.1", withQuantiles("2")).
+                    test("10, 5", withQuantiles("2"))
     };
     // @formatter:on
 
