@@ -645,17 +645,17 @@ SEXP R_getContextSrcRef(CTXT context) {
 int R_insideBrowser() {
 	JNIEnv *jniEnv = getEnv();
 	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_insideBrowser", "()I", 0);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, UpCallsRFFIClass, methodID);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID);
 }
 
 int R_isGlobal(CTXT context) {
 	JNIEnv *jniEnv = getEnv();
 	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_isGlobal", "(Ljava/lang/Object;)I", 0);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, UpCallsRFFIClass, methodID, context);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID, context);
 }
 
 int R_isEqual(void* x, void* y) {
 	JNIEnv *jniEnv = getEnv();
 	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_isEqual", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, UpCallsRFFIClass, methodID, x, y);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID, x, y);
 }
