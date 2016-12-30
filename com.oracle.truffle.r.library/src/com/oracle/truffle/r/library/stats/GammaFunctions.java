@@ -1231,7 +1231,7 @@ public abstract class GammaFunctions {
             return localX + alph + scale;
         }
         if (alph < 0. || scale <= 0.) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         localX /= scale;
         if (Double.isNaN(localX)) { /* eg. original x = scale = +Inf */
@@ -1282,7 +1282,7 @@ public abstract class GammaFunctions {
         int j;
 
         if (!RRuntime.isFinite(x) || !RRuntime.isFinite(np) || np == 0.0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         if (Math.abs(x - np) < 0.1 * (x + np)) {
@@ -1320,7 +1320,7 @@ public abstract class GammaFunctions {
         }
         if (sigma <= 0) {
             if (sigma < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             /* sigma == 0 */
             return (localX == mu) ? Double.POSITIVE_INFINITY : rd0(giveLog);
@@ -1344,7 +1344,7 @@ public abstract class GammaFunctions {
             return x + shape + scale;
         }
         if (shape < 0 || scale <= 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (x < 0) {
             return rd0(giveLog);
@@ -1393,7 +1393,7 @@ public abstract class GammaFunctions {
         }
         if (sigma <= 0) {
             if (sigma < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             /* sigma = 0 : */
             return (localX < mu) ? rdt0(lowerTail, logp) : rdt1(lowerTail, logp);

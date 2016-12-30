@@ -49,7 +49,7 @@ public final class Chisq {
     public static final class RChisq extends RandFunction1_Double {
         public static double rchisq(double df, RandomNumberProvider rand) {
             if (!Double.isFinite(df) || df < 0.0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             return new RGamma().execute(df / 2.0, 2.0, rand);
         }

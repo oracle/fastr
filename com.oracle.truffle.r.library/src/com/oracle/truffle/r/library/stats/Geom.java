@@ -44,7 +44,7 @@ public final class Geom {
         @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
             if (prob <= 0 || prob > 1) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             try {
@@ -73,7 +73,7 @@ public final class Geom {
                 return x + p;
             }
             if (p <= 0 || p > 1) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             try {
@@ -98,7 +98,7 @@ public final class Geom {
                 return xIn + p;
             }
             if (p <= 0 || p > 1) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (xIn < 0.) {
@@ -126,7 +126,7 @@ public final class Geom {
         @Override
         public double execute(double p, RandomNumberProvider rand) {
             if (!Double.isFinite(p) || p <= 0 || p > 1) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             return RPois.rpois(rand.expRand() * ((1 - p) / p), rand);
         }

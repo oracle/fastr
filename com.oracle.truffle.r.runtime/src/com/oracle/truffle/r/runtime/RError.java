@@ -282,6 +282,11 @@ public final class RError extends RuntimeException {
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         TRACEMEM_NOT_NULL("cannot trace NULL"),
         INPUT_MUST_BE_STRING("input must be a character string"),
+        // mathlib errors/warnings
+        ML_ERROR_RANGE("value out of range in '%s'"),
+        ML_ERROR_NOCONV("convergence failed in '%s'"),
+        ML_ERROR_PRECISION("full precision may not have been achieved in '%s'"),
+        ML_ERROR_UNDERFLOW("underflow occurred in '%s'"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NOT_A_FUNCTION("'%s' is not a function"),

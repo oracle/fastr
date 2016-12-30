@@ -30,7 +30,7 @@ public final class Df implements Function3_1 {
         }
 
         if (m <= 0 || n <= 0) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (x < 0.) {
             return DPQ.rd0(giveLog);

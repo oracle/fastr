@@ -31,7 +31,7 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 import static com.oracle.truffle.r.library.stats.Pbeta.pbetaRaw;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.library.stats.RMath.MLError;
+import com.oracle.truffle.r.library.stats.RMathError.MLError;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError.Message;
 
@@ -48,7 +48,7 @@ public final class QBeta implements Function3_2 {
         }
 
         if (p < 0. || q < 0.) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         // allowing p==0 and q==0 <==> treat as one- or two-point mass
 
@@ -158,7 +158,7 @@ public final class QBeta implements Function3_2 {
                                 alpha, p, q, log_p, "alpha not in ",
                                 log_p ? "[-Inf, 0]" : "[0,1]");
                 // ML_ERR_return_NAN :
-                RMath.mlError(MLError.DOMAIN, "");
+                RMathError.error(MLError.DOMAIN, "");
                 qb[0] = qb[1] = ML_NAN;
                 return;
             }
@@ -509,7 +509,7 @@ public final class QBeta implements Function3_2 {
                                                                                             // -Inf
                         // is ok if
                         // (log_p)
-                        RMath.mlError(MLError.DOMAIN, "");
+                        RMathError.error(MLError.DOMAIN, "");
                         qb[0] = qb[1] = ML_NAN;
                         return;
                     }
@@ -561,7 +561,7 @@ public final class QBeta implements Function3_2 {
 
             /*-- NOT converged: Iteration count --*/
             warned = true;
-            RMath.mlError(MLError.PRECISION, "qbeta");
+            RMathError.error(MLError.PRECISION, "qbeta");
 
             converged(log_p, qb);
         }
@@ -586,7 +586,7 @@ public final class QBeta implements Function3_2 {
                                 // warn
                                 pbetaRaw(DBL_1__eps, // = 1 - eps
                                                 pp, qq, true, true) > la + 2)) {
-                    RMath.mlWarning(Message.QBETA_ACURACY_WARNING, (log_ ? ", log_" : ""), Math.abs(y - (log_ ? la : a)));
+                    RMathError.warning(Message.QBETA_ACURACY_WARNING, (log_ ? ", log_" : ""), Math.abs(y - (log_ ? la : a)));
                 }
             }
 
@@ -600,7 +600,7 @@ public final class QBeta implements Function3_2 {
         private void finalStep(boolean log_p, double[] qb) {
             if (give_log_q) { // ==> use_log_x , too
                 if (!use_log_x) { // (see if claim above is true)
-                    RMath.mlWarning(Message.GENERIC,
+                    RMathError.warning(Message.GENERIC,
                                     "qbeta() L_return, u_n=%g;  give_log_q=true but use_log_x=false -- please report!",
                                     u_n);
                 }

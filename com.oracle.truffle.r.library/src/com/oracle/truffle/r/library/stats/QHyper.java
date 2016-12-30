@@ -26,7 +26,7 @@ public final class QHyper {
             return pIn + nrIn + nbIn + nIn;
         }
         if (!Double.isFinite(pIn) || !Double.isFinite(nrIn) || !Double.isFinite(nbIn) || !Double.isFinite(nIn)) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         double nr = forceint(nrIn);
@@ -34,7 +34,7 @@ public final class QHyper {
         double capN = nr + nb;
         double n = forceint(nIn);
         if (nr < 0 || nb < 0 || n < 0 || n > capN) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
 
         /*

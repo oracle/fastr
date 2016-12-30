@@ -29,7 +29,7 @@ public final class LogNormal {
         @Override
         public double execute(double meanlog, double sdlog, RandomNumberProvider rand) {
             if (Double.isNaN(meanlog) || !Double.isFinite(sdlog) || sdlog < 0.) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             return Math.exp(rnorm.execute(meanlog, sdlog, rand));
         }
@@ -43,7 +43,7 @@ public final class LogNormal {
             }
             if (sdlog <= 0) {
                 if (sdlog < 0) {
-                    return RMath.mlError();
+                    return RMathError.defaultError();
                 }
                 // sdlog == 0 :
                 return (Math.log(x) == meanlog) ? Double.POSITIVE_INFINITY : DPQ.rd0(giveLog);
@@ -84,7 +84,7 @@ public final class LogNormal {
                 return x + meanlog + sdlog;
             }
             if (sdlog < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
             if (x > 0) {
                 return pnorm.evaluate(Math.log(x), meanlog, sdlog, lowerTail, logP);

@@ -29,7 +29,7 @@ public final class Rnorm extends RandFunction2_Double {
         double mu = muValueProfile.profile(muIn);
         if (Double.isNaN(mu) || !Double.isFinite(sigma) || sigma < 0.) {
             errorProfile.enter();
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (zeroSigmaProfile.profile(sigma == 0. || !Double.isFinite(mu))) {
             return mu; /* includes mu = +/- Inf with finite sigma */

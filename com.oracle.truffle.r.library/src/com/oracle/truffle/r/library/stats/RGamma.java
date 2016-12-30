@@ -66,13 +66,13 @@ public class RGamma extends RandFunction2_Double {
         double retVal;
 
         if (Double.isNaN(a) || Double.isNaN(scale)) {
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (a <= 0.0 || scale <= 0.0) {
             if (scale == 0. || a == 0.) {
                 return 0.;
             }
-            return RMath.mlError();
+            return RMathError.defaultError();
         }
         if (!Double.isFinite(a) || !Double.isFinite(scale)) {
             return Double.POSITIVE_INFINITY;

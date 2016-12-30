@@ -31,7 +31,7 @@ public final class Exp {
             }
 
             if (scale <= 0.0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (x < 0.) {
@@ -45,7 +45,7 @@ public final class Exp {
         @Override
         public double execute(double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(scale) || scale <= 0.0) {
-                return scale == 0. ? 0. : RMath.mlError();
+                return scale == 0. ? 0. : RMathError.defaultError();
             }
             return scale * rand.expRand();
         }
@@ -58,7 +58,7 @@ public final class Exp {
                 return xIn + scale;
             }
             if (scale < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             if (xIn <= 0.) {
@@ -79,7 +79,7 @@ public final class Exp {
             }
 
             if (scale < 0) {
-                return RMath.mlError();
+                return RMathError.defaultError();
             }
 
             try {
