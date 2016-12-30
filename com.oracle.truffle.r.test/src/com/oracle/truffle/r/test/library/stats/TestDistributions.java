@@ -228,6 +228,12 @@ public class TestDistributions extends TestBase {
             return this;
         }
 
+        /**
+         * Removes the predefined "error" values for parameters. These are so far always the same,
+         * but this method is here to make the API "complete". May be removed if all distributions
+         * already have tests and non of them needs it.
+         */
+        @SuppressWarnings("unused")
         public DistrTest clearDefaultErrorParamValues() {
             errorParamValues.clear();
             return this;

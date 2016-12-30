@@ -16,16 +16,16 @@ import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_2;
 
-public class QNBeta implements Function4_2 {
+public final class QNBeta implements Function4_2 {
     private static final double accu = 1e-15;
     private static final double Eps = 1e-14; /* must be > accu */
 
     private final PNBeta pnbeta = new PNBeta();
 
     @Override
-    public double evaluate(double p, double a, double b, double ncp, boolean lowerTail, boolean logP) {
-        if (Double.isNaN(p) || Double.isNaN(a) || Double.isNaN(b) || Double.isNaN(ncp)) {
-            return p + a + b + ncp;
+    public double evaluate(double pIn, double a, double b, double ncp, boolean lowerTail, boolean logP) {
+        if (Double.isNaN(pIn) || Double.isNaN(a) || Double.isNaN(b) || Double.isNaN(ncp)) {
+            return pIn + a + b + ncp;
         }
         if (!Double.isFinite(a)) {
             return RMathError.defaultError();
@@ -36,12 +36,12 @@ public class QNBeta implements Function4_2 {
         }
 
         try {
-            DPQ.rqp01boundaries(p, 0, 1, lowerTail, logP);
+            DPQ.rqp01boundaries(pIn, 0, 1, lowerTail, logP);
         } catch (EarlyReturn e) {
             return e.result;
         }
 
-        p = DPQ.rdtqiv(p, lowerTail, logP);
+        double p = DPQ.rdtqiv(pIn, lowerTail, logP);
 
         /*
          * Invert pnbeta(.) : 1. finding an upper and lower bound

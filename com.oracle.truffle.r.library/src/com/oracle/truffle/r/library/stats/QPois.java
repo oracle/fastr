@@ -16,14 +16,14 @@ import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class QPois implements Function2_2 {
+public final class QPois implements Function2_2 {
     private final Qnorm qnorm = new Qnorm();
     private final PPois ppois = new PPois();
 
     @Override
-    public double evaluate(double p, double lambda, boolean lowerTail, boolean logP) {
-        if (Double.isNaN(p) || Double.isNaN(lambda)) {
-            return p + lambda;
+    public double evaluate(double pIn, double lambda, boolean lowerTail, boolean logP) {
+        if (Double.isNaN(pIn) || Double.isNaN(lambda)) {
+            return pIn + lambda;
         }
         if (!Double.isFinite(lambda)) {
             return RMathError.defaultError();
@@ -36,7 +36,7 @@ public class QPois implements Function2_2 {
         }
 
         try {
-            DPQ.rqp01boundaries(p, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
+            DPQ.rqp01boundaries(pIn, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
         } catch (EarlyReturn e) {
             return e.result;
         }
@@ -50,6 +50,7 @@ public class QPois implements Function2_2 {
          * Note : "same" code in qpois.c, qbinom.c, qnbinom.c -- FIXME: This is far from optimal
          * [cancellation for p ~= 1, etc]:
          */
+        double p = pIn;
         if (!lowerTail || logP) {
             p = DPQ.rdtqiv(p, lowerTail, logP); /* need check again (cancellation!): */
             if (p == 0.) {
@@ -109,7 +110,7 @@ public class QPois implements Function2_2 {
             double y = yIn;
             for (;;) {
                 y = y + incr;
-                double z = zIn;
+                double z;
                 if ((z = ppois.evaluate(y, lambda, /* l._t. */true, /* log_p */false)) >= p) {
                     return new SearchResult(y, z);
                 }

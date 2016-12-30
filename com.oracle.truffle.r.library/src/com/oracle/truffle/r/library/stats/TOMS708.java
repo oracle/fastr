@@ -25,7 +25,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * transcribed from toms708.c - as the original file contains no copyright header, we assume that it is copyright R code and R foundation.
  */
 
-public class TOMS708 {
+public final class TOMS708 {
+    private TOMS708() {
+        // only static members
+    }
 
     @SuppressWarnings("unused")
     private static void debugPrintf(String format, Object... args) {

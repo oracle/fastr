@@ -15,7 +15,7 @@ import static com.oracle.truffle.r.library.stats.GammaFunctions.pgamma;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class PPois implements Function2_2 {
+public final class PPois implements Function2_2 {
     @Override
     public double evaluate(double x, double lambda, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(lambda) || lambda < 0.) {
@@ -30,8 +30,8 @@ public class PPois implements Function2_2 {
         if (!Double.isFinite(x)) {
             return DPQ.rdt1(lowerTail, logP);
         }
-        x = Math.floor(x + 1e-7);
+        double floorX = Math.floor(x + 1e-7);
 
-        return pgamma(lambda, x + 1, 1., !lowerTail, logP);
+        return pgamma(lambda, floorX + 1, 1., !lowerTail, logP);
     }
 }

@@ -22,6 +22,9 @@ public final class Rbinom extends RandFunction2_Double {
 
     private final Qbinom qbinom = new Qbinom();
 
+    // TODO: some of the variables below are static in GnuR, because they cache intermediate results
+    // that depend on paremeters that often do not change between calls.
+
     @Override
     public double execute(double nin, double pp, RandomNumberProvider rand) {
         double psave = -1.0;

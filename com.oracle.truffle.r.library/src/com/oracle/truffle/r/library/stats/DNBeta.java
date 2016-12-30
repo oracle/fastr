@@ -15,7 +15,7 @@ import static com.oracle.truffle.r.library.stats.GammaFunctions.dpoisRaw;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_1;
 
-public class DNBeta implements Function4_1 {
+public final class DNBeta implements Function4_1 {
     private static final double eps = 1.e-15;
     private final DBeta dbeta = new DBeta();
 

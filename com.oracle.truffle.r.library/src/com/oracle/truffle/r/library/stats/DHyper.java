@@ -41,24 +41,24 @@ public final class DHyper implements Function4_1 {
             return e.result;
         }
 
-        x = RMath.forceint(x);
-        r = RMath.forceint(r);
-        b = RMath.forceint(b);
-        n = RMath.forceint(n);
+        double ix = RMath.forceint(x);
+        double ir = RMath.forceint(r);
+        double ib = RMath.forceint(b);
+        double in = RMath.forceint(n);
 
-        if (n < x || r < x || n - x > b) {
+        if (in < ix || ir < ix || in - ix > ib) {
             return DPQ.rd0(giveLog);
         }
-        if (n == 0) {
-            return (x == 0) ? DPQ.rd1(giveLog) : DPQ.rd0(giveLog);
+        if (in == 0) {
+            return (ix == 0) ? DPQ.rd1(giveLog) : DPQ.rd0(giveLog);
         }
 
-        double p = n / (r + b);
-        double q = (r + b - n) / (r + b);
+        double p = in / (ir + ib);
+        double q = (ir + ib - in) / (ir + ib);
 
-        double p1 = dbinomRaw(x, r, p, q, giveLog);
-        double p2 = dbinomRaw(n - x, b, p, q, giveLog);
-        double p3 = dbinomRaw(n, r + b, p, q, giveLog);
+        double p1 = dbinomRaw(ix, ir, p, q, giveLog);
+        double p2 = dbinomRaw(in - ix, ib, p, q, giveLog);
+        double p3 = dbinomRaw(in, ir + ib, p, q, giveLog);
 
         return (giveLog) ? p1 + p2 - p3 : p1 * p2 / p3;
     }

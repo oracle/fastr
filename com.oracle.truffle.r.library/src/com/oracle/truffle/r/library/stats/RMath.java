@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * @see RMathError
  * @see MathConstants
  */
-public class RMath {
+public final class RMath {
 
     public static boolean mlValid(double d) {
         return !Double.isNaN(d);

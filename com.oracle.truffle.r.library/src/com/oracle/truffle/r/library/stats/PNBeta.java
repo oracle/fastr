@@ -17,7 +17,7 @@ import com.oracle.truffle.r.library.stats.RMathError.MLError;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_2;
 import com.oracle.truffle.r.library.stats.TOMS708.Bratio;
 
-public class PNBeta implements Function4_2 {
+public final class PNBeta implements Function4_2 {
     @Override
     public double evaluate(double x, double a, double b, double ncp, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || Double.isNaN(ncp)) {
@@ -99,7 +99,7 @@ public class PNBeta implements Function4_2 {
 
         /* LDOUBLE */double sumq = 1. - q;
         /* LDOUBLE */double ans = q * temp;
-        /* LDOUBLE */double ax = ans;
+        /* LDOUBLE */double ax;
 
         /* recurse over subsequent terms until convergence is achieved */
         double j = Math.floor(x0); // x0 could be billions, and is in package EnvStats

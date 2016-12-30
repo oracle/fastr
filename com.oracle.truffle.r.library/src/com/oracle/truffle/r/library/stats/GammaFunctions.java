@@ -1152,7 +1152,7 @@ public abstract class GammaFunctions {
         }
         f = res12 / elfb;
 
-        np = pnorm(s2pt, 0.0, 1.0, !lowerTail, logp);
+        np = new Pnorm().evaluate(s2pt, 0.0, 1.0, !lowerTail, logp);
 
         if (logp) {
             double ndOverP = dpnorm(s2pt, !lowerTail, np);
@@ -1367,45 +1367,6 @@ public abstract class GammaFunctions {
         /* else shape >= 1 */
         pr = dpoisRaw(shape - 1, x / scale, giveLog);
         return giveLog ? pr - Math.log(scale) : pr / scale;
-    }
-
-    //
-    // pnorm
-    //
-
-    static double pnorm(double x, double mu, double sigma, boolean lowerTail, boolean logp) {
-        double p;
-        double cp = 0;
-        double localX = x;
-
-        /*
-         * Note: The structure of these checks has been carefully thought through. For example, if x
-         * == mu and sigma == 0, we get the correct answer 1.
-         */
-        if (Double.isNaN(localX) || Double.isNaN(mu) || Double.isNaN(sigma)) {
-            return localX + mu + sigma;
-        }
-        if (!RRuntime.isFinite(localX) && mu == localX) {
-            return Double.NaN; /* x-mu is NaN */
-        }
-        if (sigma <= 0) {
-            if (sigma < 0) {
-                return RMathError.defaultError();
-            }
-            /* sigma = 0 : */
-            return (localX < mu) ? rdt0(lowerTail, logp) : rdt1(lowerTail, logp);
-        }
-        p = (localX - mu) / sigma;
-        if (!RRuntime.isFinite(p)) {
-            return (localX < mu) ? rdt0(lowerTail, logp) : rdt1(lowerTail, logp);
-        }
-        localX = p;
-
-        double[] pa = new double[]{p};
-        double[] cpa = new double[]{cp};
-        pnormBoth(localX, pa, cpa, (lowerTail ? 0 : 1), logp);
-
-        return lowerTail ? pa[0] : cpa[0];
     }
 
     private static final double SIXTEN = 16; /* Cutoff allowing exact "*" and "/" */

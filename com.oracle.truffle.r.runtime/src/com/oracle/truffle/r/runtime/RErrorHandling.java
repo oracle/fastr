@@ -634,7 +634,7 @@ public class RErrorHandling {
                 throw RInternalError.unimplemented();
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
-            } else if (w == 0) {
+            } else if (w == 0 && errorHandlingState.warnings.size() < errorHandlingState.maxWarnings) {
                 errorHandlingState.warnings.add(new Warning(fmsg, call));
             }
         } finally {
@@ -695,7 +695,7 @@ public class RErrorHandling {
                 if (nWarnings < errorHandlingState.maxWarnings) {
                     Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    nWarnings = errorHandlingState.maxWarnings;
+                    assert nWarnings == errorHandlingState.maxWarnings : "warnings above the limit should not have been added";
                     Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, nWarnings), true);
                 }
             }

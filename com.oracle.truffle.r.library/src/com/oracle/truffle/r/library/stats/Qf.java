@@ -54,7 +54,7 @@ public final class Qf implements Function3_2 {
         }
 
         // FIXME: (1/qb - 1) = (1 - qb)/qb; if we know qb ~= 1, should use other tail
-        p = (1. / qbeta.evaluate(p, df2 / 2, df1 / 2, !lowerTail, logP) - 1.) * (df2 / df1);
-        return RMath.mlValid(p) ? p : Double.NaN;
+        double newP = (1. / qbeta.evaluate(p, df2 / 2, df1 / 2, !lowerTail, logP) - 1.) * (df2 / df1);
+        return RMath.mlValid(newP) ? newP : Double.NaN;
     }
 }

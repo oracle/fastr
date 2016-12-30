@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.library.stats.GammaFunctions.pgammaRaw;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 
-public class PGamma implements Function3_2 {
+public final class PGamma implements Function3_2 {
     @Override
     public double evaluate(double xIn, double alph, double scale, boolean lowerTail, boolean logP) {
         if (Double.isNaN(xIn) || Double.isNaN(alph) || Double.isNaN(scale)) {
