@@ -26,14 +26,13 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.r.engine.interop.NativeRawArray;
 import com.oracle.truffle.r.engine.interop.NativeCharArray;
 import com.oracle.truffle.r.engine.interop.NativeDoubleArray;
 import com.oracle.truffle.r.engine.interop.NativeIntegerArray;
 import com.oracle.truffle.r.engine.interop.NativeLogicalArray;
+import com.oracle.truffle.r.engine.interop.NativeRawArray;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;

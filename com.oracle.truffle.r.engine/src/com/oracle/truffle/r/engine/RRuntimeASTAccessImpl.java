@@ -68,11 +68,11 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -211,9 +211,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     result = ((RSyntaxFunction) s).getSyntaxBody();
                     break;
                 case 3:
-                    // TODO: handle srcref properly - for now, clearly mark an erroneous access to
-                    // this piece of data
-                    return new RArgsValuesAndNames(new String[]{"DUMMY UNIMPLEMENTED SRCREF"}, ArgumentsSignature.get("dummy"));
+                    // srcref
+                    return RSource.createSrcRef(s.getLazySourceSection());
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
