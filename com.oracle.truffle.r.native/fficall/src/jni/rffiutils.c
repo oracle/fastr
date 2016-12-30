@@ -88,7 +88,7 @@ static jmp_buf* callErrorJmpBufTable[CALLDEPTH_STACK_SIZE];
 
 void init_utils(JNIEnv *env, jobject upCallsInstance) {
 	curenv = env;
-	UpCallsRFFIClass = (*env)->GetObjectClass(env, upCallsInstance);
+	UpCallsRFFIClass = (*env)->NewGlobalRef(env, (*env)->GetObjectClass(env, upCallsInstance));
 	UpCallsRFFIObject = (*env)->NewGlobalRef(env, upCallsInstance);
 	if (TRACE_ENABLED && traceFile == NULL) {
 		if (!isEmbedded) {
