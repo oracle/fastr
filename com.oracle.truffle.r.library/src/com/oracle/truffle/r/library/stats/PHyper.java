@@ -29,21 +29,22 @@ public final class PHyper implements Function4_2 {
     private final DHyper dhyper = new DHyper();
 
     @Override
-    public double evaluate(double x, double nr, double nb, double n, boolean lowerTail, boolean logP) {
+    public double evaluate(double xIn, double nrIn, double nbIn, double nIn, boolean lowerTailIn, boolean logP) {
         /* Sample of n balls from nr red and nb black ones; x are red */
-        if (Double.isNaN(x) || Double.isNaN(nr) || Double.isNaN(nb) || Double.isNaN(n)) {
-            return x + nr + nb + n;
+        if (Double.isNaN(xIn) || Double.isNaN(nrIn) || Double.isNaN(nbIn) || Double.isNaN(nIn)) {
+            return xIn + nrIn + nbIn + nIn;
         }
 
-        x = Math.floor(x + 1e-7);
-        nr = RMath.forceint(nr);
-        nb = RMath.forceint(nb);
-        n = RMath.forceint(n);
+        double x = Math.floor(xIn + 1e-7);
+        double nr = RMath.forceint(nrIn);
+        double nb = RMath.forceint(nbIn);
+        double n = RMath.forceint(nIn);
 
         if (nr < 0 || nb < 0 || !Double.isFinite(nr + nb) || n < 0 || n > nr + nb) {
             return RMathError.defaultError();
         }
 
+        boolean lowerTail = lowerTailIn;
         if (x * (nr + nb) > n * nr) {
             /* Swap tails. */
             double oldNB = nb;
@@ -66,7 +67,7 @@ public final class PHyper implements Function4_2 {
         return logP ? DPQ.rdtlog(d + pd, lowerTail, logP) : DPQ.rdlval(d * pd, lowerTail);
     }
 
-    static double pdhyper(double x, double nr, double nb, double n, boolean logP) {
+    static double pdhyper(double xIn, double nr, double nb, double n, boolean logP) {
         /*
          * Calculate
          *
@@ -81,6 +82,7 @@ public final class PHyper implements Function4_2 {
         /* LDOUBLE */double sum = 0;
         /* LDOUBLE */double term = 1;
 
+        double x = xIn;
         while (x > 0 && term >= DBL_EPSILON * sum) {
             term *= x * (nb - n + x) / (n + 1 - x) / (nr + 1 - x);
             sum += term;

@@ -13,10 +13,10 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_IN_PROB_VECTOR;
 import static com.oracle.truffle.r.runtime.RError.Message.NEGATIVE_PROBABILITY;
 import static com.oracle.truffle.r.runtime.RError.Message.NO_POSITIVE_PROBABILITIES;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -89,16 +89,16 @@ public abstract class RMultinom extends RExternalBuiltinNode.Arg3 {
     private static void fixupProb(double[] p) {
         double sum = 0.0;
         int npos = 0;
-        for (int i = 0; i < p.length; i++) {
-            if (!Double.isFinite(p[i])) {
+        for (double prob : p) {
+            if (!Double.isFinite(prob)) {
                 throw RError.error(SHOW_CALLER, NA_IN_PROB_VECTOR);
             }
-            if (p[i] < 0.0) {
+            if (prob < 0.0) {
                 throw RError.error(SHOW_CALLER, NEGATIVE_PROBABILITY);
             }
-            if (p[i] > 0.0) {
+            if (prob > 0.0) {
                 npos++;
-                sum += p[i];
+                sum += prob;
             }
         }
         if (npos == 0) {

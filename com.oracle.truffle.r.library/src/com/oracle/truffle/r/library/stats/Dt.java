@@ -13,7 +13,6 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.GammaFunctions.bd0;
-import static com.oracle.truffle.r.library.stats.GammaFunctions.dnorm;
 import static com.oracle.truffle.r.library.stats.GammaFunctions.stirlerr;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
@@ -22,6 +21,8 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 
 public final class Dt implements Function2_1 {
+    private static final DNorm dnorm = new DNorm();
+
     @Override
     public double evaluate(double x, double n, boolean giveLog) {
         if (Double.isNaN(x) || Double.isNaN(n)) {
@@ -36,7 +37,7 @@ public final class Dt implements Function2_1 {
             return DPQ.rd0(giveLog);
         }
         if (!Double.isFinite(n)) {
-            return dnorm(x, 0., 1., giveLog);
+            return dnorm.evaluate(x, 0., 1., giveLog);
         }
 
         double u;

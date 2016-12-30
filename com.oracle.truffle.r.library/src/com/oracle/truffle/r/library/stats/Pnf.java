@@ -14,7 +14,7 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_2;
 
-public class Pnf implements Function4_2 {
+public final class Pnf implements Function4_2 {
     private final PNChisq pnchisq = new PNChisq();
     private final PNBeta pnbeta = new PNBeta();
 

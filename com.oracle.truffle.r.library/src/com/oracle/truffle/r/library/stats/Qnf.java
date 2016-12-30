@@ -13,7 +13,7 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_2;
 
-public class Qnf implements Function4_2 {
+public final class Qnf implements Function4_2 {
     private final QNChisq qnchisq = new QNChisq();
     private final QNBeta qnbeta = new QNBeta();
 

@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_1;
 
-public class DBeta implements Function3_1 {
+public final class DBeta implements Function3_1 {
     @Override
     public double evaluate(double x, double a, double b, boolean log) {
         /* NaNs propagated correctly */

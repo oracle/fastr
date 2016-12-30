@@ -24,6 +24,15 @@ public final class RBeta extends RandFunction2_Double {
 
     private static final double expmax = (DBL_MAX_EXP * M_LN2); /* = log(DBL_MAX) */
 
+    // TODO: state variables
+    private static double beta = 0;
+    private static double gamma = 1;
+    private static double delta;
+    private static double k1 = 0;
+    private static double k2 = 0;
+    private static double olda = -1.0;
+    private static double oldb = -1.0;
+
     @Override
     public double execute(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
@@ -43,18 +52,6 @@ public final class RBeta extends RandFunction2_Double {
             return 0.0;
         }
 
-        double v = 0;
-        double w = 0;
-
-        // TODO: state variables
-        double beta = 0;
-        double gamma = 1;
-        double delta;
-        double k1 = 0;
-        double k2 = 0;
-        double olda = -1.0;
-        double oldb = -1.0;
-
         /* Test if we need new "initializing" */
         boolean qsame = (olda == aa) && (oldb == bb);
         if (!qsame) {
@@ -65,6 +62,9 @@ public final class RBeta extends RandFunction2_Double {
         double a = fmin2(aa, bb);
         double b = fmax2(aa, bb); /* a <= b */
         double alpha = a + b;
+
+        double v;
+        double w;
 
         if (a <= 1.0) { /* --- Algorithm BC --- */
             /* changed notation, now also a <= b (was reversed) */

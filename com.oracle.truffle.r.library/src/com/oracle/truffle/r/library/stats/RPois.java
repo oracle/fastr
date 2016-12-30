@@ -40,8 +40,6 @@ public final class RPois extends RandFunction1_Double {
     // TODO: state variables
     private static int l = 0;
     private static int m = 0;
-    private static double b1;
-    private static double b2;
     private static double c = 0;
     private static double c0 = 0;
     private static double c1 = 0;
@@ -193,8 +191,8 @@ public final class RPois extends RandFunction1_Double {
              * discrete normal probabilities fk.
              */
 
-            b1 = one_24 / mu;
-            b2 = 0.3 * b1 * b1;
+            double b1 = one_24 / mu;
+            double b2 = 0.3 * b1 * b1;
             c3 = one_7 * b1 * b2;
             c2 = b2 - 15. * c3;
             c1 = b1 - 6. * b2 + 45. * c3;

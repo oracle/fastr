@@ -20,7 +20,7 @@ import static com.oracle.truffle.r.library.stats.GammaFunctions.dgamma;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_1;
 
-public class Dnf implements Function4_1 {
+public final class Dnf implements Function4_1 {
     private final DNChisq dnchisq = new DNChisq();
     private final DNBeta dnbeta = new DNBeta();
 

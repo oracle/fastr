@@ -17,7 +17,7 @@ import static com.oracle.truffle.r.library.stats.GammaFunctions.dpoisRaw;
 import com.oracle.truffle.r.library.stats.Chisq.DChisq;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_1;
 
-public class DNChisq implements Function3_1 {
+public final class DNChisq implements Function3_1 {
     private static final double eps = 5e-15;
     private final DChisq dchisq = new DChisq();
 
@@ -85,24 +85,24 @@ public class DNChisq implements Function3_1 {
         /* upper tail */
         /* LDOUBLE */double sum = mid;
         /* LDOUBLE */double term = mid;
-        df = dfmid;
+        double df2 = dfmid;
         double i = imax;
         double x2 = x * ncp2;
         double q;
         do {
             i++;
-            q = x2 / i / df;
-            df += 2;
+            q = x2 / i / df2;
+            df2 += 2;
             term *= q;
             sum += term;
         } while (q >= 1 || term * q > (1 - q) * eps || term > 1e-10 * sum);
         /* lower tail */
         term = mid;
-        df = dfmid;
+        df2 = dfmid;
         i = imax;
         while (i != 0) {
-            df -= 2;
-            q = i * df / x2;
+            df2 -= 2;
+            q = i * df2 / x2;
             i--;
             term *= q;
             sum += term;

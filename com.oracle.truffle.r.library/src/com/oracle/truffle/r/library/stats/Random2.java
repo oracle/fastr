@@ -17,7 +17,10 @@ import static com.oracle.truffle.r.library.stats.DPQ.rdtqiv;
 /*
  * Logic derived from GNU-R, see inline comments.
  */
-public class Random2 {
+public final class Random2 {
+    private Random2() {
+        // only static members
+    }
 
     // from GNUR: qnorm.c
     public static double qnorm5(double p, double mu, double sigma, boolean lowerTail, boolean logP) {

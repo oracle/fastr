@@ -61,7 +61,8 @@ public final class QBeta implements Function3_2 {
     /**
      * Debugging printfs should print exactly the same output as GnuR, this can help with debugging.
      */
-    private static void debugPrintf(@SuppressWarnings("unused") String fmt, @SuppressWarnings("unused") Object... args) {
+    @SuppressWarnings("unused")
+    private static void debugPrintf(String fmt, Object... args) {
         // System.out.printf(fmt + "\n", args);
     }
 
@@ -84,7 +85,7 @@ public final class QBeta implements Function3_2 {
     // The fields and variables are named after local variables from GnuR, we keep the original
     // names for the ease of debugging
     // Checkstyle: stop field name check
-    private static class QBetaRawMethod {
+    private static final class QBetaRawMethod {
         private boolean give_log_q;
         private boolean use_log_x;
         private boolean add_N_step;

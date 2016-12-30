@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.library.stats.TOMS708.fabs;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandomNumberProvider;
 
-public class RGamma extends RandFunction2_Double {
+public final class RGamma extends RandFunction2_Double {
     private static final double sqrt32 = 5.656854;
     private static final double exp_m1 = 0.36787944117144232159; /* exp(-1) = 1/e */
 
@@ -44,8 +44,8 @@ public class RGamma extends RandFunction2_Double {
     public double execute(double a, double scale, RandomNumberProvider rand) {
 
         // TODO: state variables
-        double aa = 0.;
-        double aaa = 0.;
+        double aa = Double.NaN;
+        double aaa = Double.NaN;
         double s = 0;
         double s2 = 0;
         double d = 0; /* no. 1 (step 1) */

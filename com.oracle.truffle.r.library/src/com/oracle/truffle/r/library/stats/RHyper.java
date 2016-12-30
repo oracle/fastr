@@ -73,7 +73,14 @@ public final class RHyper extends RandFunction3_Double {
     private static double w;
     // III:
     // Checkstyle: stop
-    private static double a, d, s, xl, xr, kl, kr, lamdl, lamdr, p1, p2, p3;
+    private static double a;
+    private static double xl;
+    private static double xr;
+    private static double lamdl;
+    private static double lamdr;
+    private static double p1;
+    private static double p2;
+    private static double p3;
     // // Checkstyle: resume
 
     private static final double scale = 1e25; // scaling factor against (early) underflow
@@ -201,18 +208,19 @@ public final class RHyper extends RandFunction3_Double {
             double u;
             double v;
 
+            double s;
             if (setup1 || setup2) {
                 s = Math.sqrt((tn - k) * k * n1 * n2 / (tn - 1) / tn / tn);
 
                 /* remark: d is defined in reference without int. */
                 /* the truncation centers the cell boundaries at 0.5 */
 
-                d = (int) (1.5 * s) + .5;
+                double d = (int) (1.5 * s) + .5;
                 xl = m - d + .5;
                 xr = m + d + .5;
                 a = afc(m) + afc(n1 - m) + afc(k - m) + afc(n2 - k + m);
-                kl = Math.exp(a - afc((int) (xl)) - afc((int) (n1 - xl)) - afc((int) (k - xl)) - afc((int) (n2 - k + xl)));
-                kr = Math.exp(a - afc((int) (xr - 1)) - afc((int) (n1 - xr + 1)) - afc((int) (k - xr + 1)) - afc((int) (n2 - k + xr - 1)));
+                double kl = Math.exp(a - afc((int) (xl)) - afc((int) (n1 - xl)) - afc((int) (k - xl)) - afc((int) (n2 - k + xl)));
+                double kr = Math.exp(a - afc((int) (xr - 1)) - afc((int) (n1 - xr + 1)) - afc((int) (k - xr + 1)) - afc((int) (n2 - k + xr - 1)));
                 lamdl = -Math.log(xl * (n2 - k + xl) / (n1 - xl + 1) / (k - xl + 1));
                 lamdr = -Math.log((n1 - xr + 1) * (k - xr + 1) / xr / (n2 - k + xr));
                 p1 = d + d;
@@ -329,11 +337,7 @@ public final class RHyper extends RandFunction3_Double {
                             /*
                              * * Stirling's formula to machine accuracy
                              */
-                            if (alv <= (a - afc(ix) - afc(n1 - ix) - afc(k - ix) - afc(n2 - k + ix))) {
-                                reject = false;
-                            } else {
-                                reject = true;
-                            }
+                            reject = !(alv <= (a - afc(ix) - afc(n1 - ix) - afc(k - ix) - afc(n2 - k + ix)));
                         }
                     }
                 } // else

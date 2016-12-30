@@ -24,7 +24,7 @@ import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT2;
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Qt implements Function2_2 {
+public final class Qt implements Function2_2 {
     private static final double eps = 1.e-12;
     private static final double accu = 1e-13;
     private static final double Eps = 1e-11; /* must be > accu */
@@ -34,14 +34,14 @@ public class Qt implements Function2_2 {
     private final Pt pt = new Pt();
 
     @Override
-    public double evaluate(double p, double ndf, boolean lowerTail, boolean logP) {
+    public double evaluate(double pIn, double ndf, boolean lowerTail, boolean logP) {
 
-        if (Double.isNaN(p) || Double.isNaN(ndf)) {
-            return p + ndf;
+        if (Double.isNaN(pIn) || Double.isNaN(ndf)) {
+            return pIn + ndf;
         }
 
         try {
-            DPQ.rqp01boundaries(p, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, lowerTail, logP);
+            DPQ.rqp01boundaries(pIn, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, lowerTail, logP);
         } catch (EarlyReturn earlyReturn) {
             return earlyReturn.result;
         }
@@ -50,6 +50,7 @@ public class Qt implements Function2_2 {
             return RMathError.defaultError();
         }
 
+        double p = pIn;
         if (ndf < 1) { /* based on qnt */
 
             int iter = 0;

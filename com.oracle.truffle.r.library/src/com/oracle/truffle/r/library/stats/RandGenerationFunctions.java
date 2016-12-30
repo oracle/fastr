@@ -184,8 +184,7 @@ public final class RandGenerationFunctions {
                         RandGenerationNodeData nodeData) {
             int length = nodeData.resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
             RNode.reportWork(this, length);
-            Object result = evaluate(length, a, b, c, nodeData, rand);
-            return result;
+            return evaluate(length, a, b, c, nodeData, rand);
         }
 
         @SuppressWarnings("unused")
@@ -308,12 +307,14 @@ public final class RandGenerationFunctions {
             return RandFunction3NodeGen.create(RandGenerationFunctionsFactory.RandFunctionIntExecutorNodeGen.create(function));
         }
 
+        // Note: for completeness of the API
+        @SuppressWarnings("unused")
         public static RandFunction3Node createDouble(RandFunction3_Double function) {
             return RandFunction3NodeGen.create(RandGenerationFunctionsFactory.RandFunctionDoubleExecutorNodeGen.create(function));
         }
 
         @Override
-        protected void createCasts(CastBuilder casts) {
+        protected final void createCasts(CastBuilder casts) {
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -343,7 +344,7 @@ public final class RandGenerationFunctions {
         }
 
         @Override
-        protected void createCasts(CastBuilder casts) {
+        protected final void createCasts(CastBuilder casts) {
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -372,7 +373,7 @@ public final class RandGenerationFunctions {
         }
 
         @Override
-        protected void createCasts(CastBuilder casts) {
+        protected final void createCasts(CastBuilder casts) {
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
         }

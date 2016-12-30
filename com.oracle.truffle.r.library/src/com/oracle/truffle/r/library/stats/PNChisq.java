@@ -38,7 +38,7 @@ import com.oracle.truffle.r.library.stats.RMathError.MLError;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.RError.Message;
 
-public class PNChisq implements Function3_2 {
+public final class PNChisq implements Function3_2 {
     private static final double _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
     private final PChisq pchisq = new PChisq();
 
@@ -284,7 +284,8 @@ public class PNChisq implements Function3_2 {
         }
     }
 
-    private void debugPrintf(@SuppressWarnings("unused") String fmt, @SuppressWarnings("unused") Object... args) {
+    @SuppressWarnings("unused")
+    private void debugPrintf(String fmt, Object... args) {
         // System.out.printf(fmt + "\n", args);
     }
 

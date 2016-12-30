@@ -28,15 +28,15 @@ public final class Logis {
 
     public static final class DLogis implements Function3_1 {
         @Override
-        public double evaluate(double x, double location, double scale, boolean giveLog) {
-            if (Double.isNaN(x) || Double.isNaN(location) || Double.isNaN(scale)) {
-                return x + location + scale;
+        public double evaluate(double xIn, double location, double scale, boolean giveLog) {
+            if (Double.isNaN(xIn) || Double.isNaN(location) || Double.isNaN(scale)) {
+                return xIn + location + scale;
             }
             if (scale <= 0.0) {
                 return RMathError.defaultError();
             }
 
-            x = TOMS708.fabs((x - location) / scale);
+            double x = TOMS708.fabs((xIn - location) / scale);
             double e = Math.exp(-x);
             double f = 1.0 + e;
             return giveLog ? -(x + Math.log(scale * f * f)) : e / (scale * f * f);
@@ -64,31 +64,32 @@ public final class Logis {
             }
 
             /* p := logit(p) = Math.log( p / (1-p) ) : */
+            double newP;
             if (logP) {
                 if (lowerTail) {
-                    p = p - DPQ.rlog1exp(p);
+                    newP = p - DPQ.rlog1exp(p);
                 } else {
-                    p = DPQ.rlog1exp(p) - p;
+                    newP = DPQ.rlog1exp(p) - p;
                 }
             } else {
-                p = Math.log(lowerTail ? (p / (1. - p)) : ((1. - p) / p));
+                newP = Math.log(lowerTail ? (p / (1. - p)) : ((1. - p) / p));
             }
 
-            return location + scale * p;
+            return location + scale * newP;
         }
     }
 
     public static final class PLogis implements Function3_2 {
         @Override
-        public double evaluate(double x, double location, double scale, boolean lowerTail, boolean logP) {
-            if (Double.isNaN(x) || Double.isNaN(location) || Double.isNaN(scale)) {
-                return x + location + scale;
+        public double evaluate(double xIn, double location, double scale, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(xIn) || Double.isNaN(location) || Double.isNaN(scale)) {
+                return xIn + location + scale;
             }
             if (scale <= 0.0) {
                 return RMathError.defaultError();
             }
 
-            x = (x - location) / scale;
+            double x = (xIn - location) / scale;
             if (Double.isNaN(x)) {
                 return RMathError.defaultError();
             }

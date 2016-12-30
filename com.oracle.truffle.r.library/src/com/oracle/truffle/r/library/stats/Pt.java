@@ -11,7 +11,6 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.GammaFunctions.pnorm;
 import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 import static com.oracle.truffle.r.library.stats.Pbeta.pbeta;
@@ -19,8 +18,9 @@ import static com.oracle.truffle.r.library.stats.Pbeta.pbeta;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_2;
 
-public class Pt implements Function2_2 {
+public final class Pt implements Function2_2 {
     private final BranchProfile pbetaNanProfile = BranchProfile.create();
+    private final Pnorm pnorm = new Pnorm();
 
     @Override
     public double evaluate(double x, double n, boolean lowerTail, boolean logP) {
@@ -41,7 +41,7 @@ public class Pt implements Function2_2 {
             return (x < 0) ? DPQ.rdt0(lowerTail, logP) : DPQ.rdt1(lowerTail, logP);
         }
         if (!Double.isFinite(n)) {
-            return pnorm(x, 0.0, 1.0, lowerTail, logP);
+            return pnorm.evaluate(x, 0.0, 1.0, lowerTail, logP);
         }
 
         double nx = 1 + (x / n) * x;
@@ -66,19 +66,17 @@ public class Pt implements Function2_2 {
         }
 
         /* Use "1 - v" if lower_tail and x > 0 (but not both): */
-        if (x <= 0.) {
-            lowerTail = !lowerTail;
-        }
+        boolean newLowerTail = x <= 0. ? !lowerTail : lowerTail;
 
         if (logP) {
-            if (lowerTail) {
+            if (newLowerTail) {
                 return RMath.log1p(-0.5 * Math.exp(val));
             } else {
                 return val - M_LN2; /* = Math.log(.5* pbeta(....)) */
             }
         } else {
             val /= 2.;
-            return DPQ.rdcval(val, lowerTail);
+            return DPQ.rdcval(val, newLowerTail);
         }
 
     }
