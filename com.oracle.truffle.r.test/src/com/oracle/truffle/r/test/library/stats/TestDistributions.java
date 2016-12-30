@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,6 +126,16 @@ public class TestDistributions extends TestBase {
                     addErrorParamValues("-1").
                     test("20, 0.3", withDefaultQ("1", "2", "10", "20", "21")).
                     test("10000, 0.01", withQuantiles("1", "10", "100", "500", "900", "1000")).
+                    // non-probability value is error for the second parameter
+                    test("10, -0.1", withQuantiles("2")).
+                    test("10, 5", withQuantiles("2")),
+            distr("nbinom").
+                    addErrorParamValues("-2").
+                    test("10, 0.33", withDefaultQ("5", "10", "11", "13", "20")).
+                    test("10.3, 0.4", withQuantiles("5", "10", "11", "13", "20")).
+                    test("1000, 0.5", withQuantiles("0", "10", "100", "1000", "1100", "1200")).
+                    test("1000, mu=10", withDefaultQ("5", "6", "10", "11", "20", "100")).
+                    test("10, mu=60", withQuantiles("3", "5", "6", "10", "11", "20", "100")).
                     // non-probability value is error for the second parameter
                     test("10, -0.1", withQuantiles("2")).
                     test("10, 5", withQuantiles("2"))
