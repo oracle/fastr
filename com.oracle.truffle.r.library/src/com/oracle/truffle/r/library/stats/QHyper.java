@@ -18,8 +18,14 @@ import static com.oracle.truffle.r.library.stats.RMath.forceint;
 import static com.oracle.truffle.r.library.stats.RMath.lfastchoose;
 
 import com.oracle.truffle.r.library.stats.DPQ.EarlyReturn;
+import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_2;
 
-public final class QHyper {
+public final class QHyper implements Function4_2 {
+    @Override
+    public double evaluate(double p, double nr, double nb, double n, boolean lowerTail, boolean logP) {
+        return qhyper(p, nr, nb, n, lowerTail, logP);
+    }
+
     public static double qhyper(double pIn, double nrIn, double nbIn, double nIn, boolean lowerTail, boolean logP) {
         /* This is basically the same code as ./phyper.c *used* to be --> FIXME! */
         if (Double.isNaN(pIn) || Double.isNaN(nrIn) || Double.isNaN(nbIn) || Double.isNaN(nIn)) {
@@ -87,5 +93,4 @@ public final class QHyper {
         }
         return xr;
     }
-
 }

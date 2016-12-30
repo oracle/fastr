@@ -95,6 +95,11 @@ public final class DPQ {
         return logP ? Math.log(x) : x; /* x in pF(x,..) */
     }
 
+    // R_DT_val
+    public static double rdtval(double x, boolean lowerTail, boolean logP) {
+        return lowerTail ? rdval(x, true) : rdclog(x, logP);
+    }
+
     public static double rdexp(double x, boolean logP) {
         return logP ? x : Math.exp(x); /* exp(x) */
     }
@@ -136,6 +141,12 @@ public final class DPQ {
     // R_DT_CIv
     public static double rdtciv(double p, boolean lowerTail, boolean logP) {
         return logP ? lowerTail ? -Math.expm1(p) : Math.exp(p) : rdcval(p, lowerTail);
+    }
+
+    /* [neg]ative or [non int]eger : */
+    // R_D_negInonint
+    public static boolean rdneginonint(double x) {
+        return x < 0. || nonint(x);
     }
 
     // R_Q_P01_boundaries

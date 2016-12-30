@@ -82,7 +82,40 @@ public class TestDistributions extends TestBase {
                     addErrorParamValues("-1", "0").
                     test("13e-20", withDefaultQ("10", "-10")).
                     test("42", withDefaultQ("42")).
-                    test("42e123", withDefaultQ("33e123"))
+                    test("42e123", withDefaultQ("33e123")),
+            // tests for nchisq, which is called in chisq when second param is not missing
+            distr("chisq").
+                    addErrorParamValues("-3", "0").
+                    test("1, 1", withDefaultQ("0.5", "2")).
+                    test("420, 4", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
+                    test("0.13e-8, 1", withQuantiles("0.42e-10", "100", "13e10", "11e111")).
+                    test("1, 0.13e-8", withQuantiles("0.42e-10", "100", "13e10", "11e111")),
+            // tests of nbeta, which is called in beta when third param is not missing
+            distr("beta").
+                    addErrorParamValues("-4", "0").
+                    test("10, 15, 0", withDefaultQ("10", "15", "100")).
+                    test("7, 13, 3", withDefaultQ("10", "15", "100")).
+                    test("7, 11, 0.37e-10", withQuantiles("10", "15", "100")).
+                    test("7, 113e11, 1", withQuantiles("10", "15", "100")),
+            // tests of nf (non central F distribution)
+            distr("f").
+                    addErrorParamValues("-1", "0").
+                    test("5, 5, 5", withDefaultQ("1", "10", "44", "123")).
+                    test("5, 0.12e-10, 5", withDefaultQ("1", "10", "44", "123")).
+                    test("5, 6, 0.12e-10", withDefaultQ("1", "10", "44", "123")).
+                    test("0.12e-10, 6, 31e10", withDefaultQ("1", "10", "44", "123")),
+            // hyper-geometric: #white balls in urn, #black balls in urn, #drawn balls
+            distr("hyper").
+                    addErrorParamValues("-10", "0.3").
+                    test("7, 11, 4", withQuantiles("1", "2", "3", "4", "20", "12e12")).
+                    test("7e12, 11, 4", withQuantiles("1", "2", "3", "4", "20", "12e12")).
+                    test("11, 7e12, 7", withQuantiles("1", "2", "3", "7", "20", "12e12")).
+                    // more drawn balls then there is white
+                    test("7, 11, 12", withQuantiles("1", "2", "3", "4", "5", "6", "7", "8", "11", "20", "12e12")).
+                    // this should show non-integer warnings for quantiles
+                    test("5, 5, 5", withQuantiles("0.1", "-Inf", "Inf", "0.3e89")).
+                    // too many drawn balls: should be error
+                    test("3, 4, 10", withQuantiles("2"))
     };
     // @formatter:on
 

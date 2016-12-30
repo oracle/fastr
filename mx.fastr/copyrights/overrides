@@ -44,11 +44,18 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DPQ.java,gnu
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rt.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/GammaFunctions.java,gnu_r_qgamma.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/QHyper.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DHyper.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/PHyper.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Qt.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pt.java,gnu_r_scan.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RHyper.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/MathInit.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pbeta.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/PNBeta.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/QNBeta.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Qnf.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Dnf.java,gnu_r.core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DNBeta.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/LBeta.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pbinom.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pf.java,gnu_r_ihaka_core.copyright
@@ -65,6 +72,9 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rbinom.java,
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Unif.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rnorm.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Chisq.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/PNChisq.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/QNChisq.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/DNChisq.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFunctions.java,gnu_r_splines.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandGenerationFunctions.java,gnu_r_gentleman_ihaka.copyright
@@ -79,6 +89,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RGamma.java,
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/PGamma.java,gnu_r_welinder.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RNbinomMu.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Logis.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Pnf.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Rf.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Exp.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Geom.java,gnu_r_ihaka_core.copyright

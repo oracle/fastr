@@ -88,8 +88,12 @@ public final class MathConstants {
 
     public static final double ML_NAN = Double.NaN;
 
-    // Different to Double.MIN_VALUE...
-    public static final double DBL_MIN = 2.2250738585072014e-308;
+    // Different to Double.MIN_VALUE!
+    public static final double DBL_MIN = Double.MIN_NORMAL;
+
+    public static final double DBL_MAX = Double.MAX_VALUE;
+
+    static final double INV_SQRT_2_PI = .398942280401433; /* == 1/sqrt(2*pi); */
 
     /**
      * Compute the log of a sum from logs of terms, i.e.,
