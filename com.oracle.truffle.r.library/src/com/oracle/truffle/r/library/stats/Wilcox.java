@@ -41,8 +41,8 @@ public final class Wilcox {
                 throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
             }
 
-            double m = Math.round(mIn);
-            double n = Math.round(nIn);
+            double m = RMath.round(mIn);
+            double n = RMath.round(nIn);
             if ((m < 0) || (n < 0)) {
                 // TODO: for some reason the macro in GNUR here returns NA instead of NaN...
                 // return StatsUtil.mlError();

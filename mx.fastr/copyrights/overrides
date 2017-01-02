@@ -79,6 +79,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFuncti
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandGenerationFunctions.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RMath.java,gnu_r_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/QuantileSearch.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RMathError.java,gnu_r.core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/LogNormal.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/MathConstants.java,gnu_r_ihaka.copyright

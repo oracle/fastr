@@ -49,6 +49,14 @@ public final class RMath {
         return Math.floor(x + 0.5);
     }
 
+    /**
+     * Implementation of C routine {@code round}, which is not equal to {@code Math.round}, because
+     * it returns {@code double} and so it can handle values that do not fit into long.
+     */
+    public static double round(double x) {
+        return forceint(x);
+    }
+
     public static double fsign(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;

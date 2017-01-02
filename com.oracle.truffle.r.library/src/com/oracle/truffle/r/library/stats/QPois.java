@@ -41,7 +41,6 @@ public final class QPois implements Function2_2 {
             return e.result;
         }
 
-        double mu = lambda;
         double sigma = Math.sqrt(lambda);
         /* gamma = sigma; PR#8058 should be kurtosis which is mu^-0.5 */
         double gamma = 1.0 / sigma;
@@ -70,61 +69,18 @@ public final class QPois implements Function2_2 {
         // #ifdef HAVE_NEARBYINT
         // y = nearbyint(mu + sigma * (z + gamma * (z*z - 1) / 6));
         // #else
-        double y = Math.round(mu + sigma * (z + gamma * (z * z - 1) / 6));
-
-        z = ppois.evaluate(y, lambda, /* lower_tail */true, /* log_p */false);
+        double y = RMath.round(lambda + sigma * (z + gamma * (z * z - 1) / 6));
 
         /* fuzz to ensure left continuity; 1 - 1e-7 may lose too much : */
         p *= 1 - 64 * DBL_EPSILON;
 
-        /* If the mean is not too large a simple search is OK */
+        QuantileSearch search = new QuantileSearch((quantile, lt, lp) -> ppois.evaluate(quantile, lambda, lt, lp));
         if (lambda < 1e5) {
-            return search(y, z, p, lambda, 1).y;
+            /* If the mean is not too large a simple search is OK */
+            return search.simpleSearch(y, p, 1);
         } else {
             /* Otherwise be a bit cleverer in the search */
-            double incr = Math.floor(y * 0.001);
-            double oldincr;
-            do {
-                oldincr = incr;
-                SearchResult searchResult = search(y, z, p, lambda, incr);
-                y = searchResult.y;
-                z = searchResult.z;
-                incr = RMath.fmax2(1, Math.floor(incr / 100));
-            } while (oldincr > 1 && incr > lambda * 1e-15);
-            return y;
-        }
-    }
-
-    private SearchResult search(double yIn, double zIn, double p, double lambda, double incr) {
-        if (zIn >= p) {
-            /* search to the left */
-            double y = yIn;
-            for (;;) {
-                double z = zIn;
-                if (y == 0 || (z = ppois.evaluate(y - incr, lambda, /* l._t. */true, /* log_p */false)) < p) {
-                    return new SearchResult(y, z);
-                }
-                y = RMath.fmax2(0, y - incr);
-            }
-        } else { /* search to the right */
-            double y = yIn;
-            for (;;) {
-                y = y + incr;
-                double z;
-                if ((z = ppois.evaluate(y, lambda, /* l._t. */true, /* log_p */false)) >= p) {
-                    return new SearchResult(y, z);
-                }
-            }
-        }
-    }
-
-    private static final class SearchResult {
-        final double y;
-        final double z;
-
-        SearchResult(double y, double z) {
-            this.y = y;
-            this.z = z;
+            return search.iterativeSearch(y, p);
         }
     }
 }

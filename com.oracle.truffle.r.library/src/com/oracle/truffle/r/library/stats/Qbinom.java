@@ -19,42 +19,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 // transcribed from qbinom.c
 
 public final class Qbinom implements StatsFunctions.Function3_2 {
-
-    private static final class Search {
-        private double z;
-
-        Search(double z) {
-            this.z = z;
-        }
-
-        double doSearch(double initialY, double p, double n, double pr, double incr, Pbinom pbinom1, Pbinom pbinom2) {
-            double y = initialY;
-            if (z >= p) {
-                /* search to the left */
-                for (;;) {
-                    double newz;
-                    if (y == 0 || (newz = pbinom1.evaluate(y - incr, n, pr, true, false)) < p) {
-                        return y;
-                    }
-                    y = Math.max(0, y - incr);
-                    z = newz;
-                }
-            } else { /* search to the right */
-                for (;;) {
-                    y = Math.min(y + incr, n);
-                    if (y == n || (z = pbinom2.evaluate(y, n, pr, true, false)) >= p) {
-                        return y;
-                    }
-                }
-            }
-        }
-    }
-
     private final BranchProfile nanProfile = BranchProfile.create();
     private final ConditionProfile smallNProfile = ConditionProfile.createBinaryProfile();
     private final Pbinom pbinom = new Pbinom();
-    private final Pbinom pbinomSearch1 = new Pbinom();
-    private final Pbinom pbinomSearch2 = new Pbinom();
 
     @Override
     public double evaluate(double initialP, double n, double pr, boolean lowerTail, boolean logProb) {
@@ -149,24 +116,14 @@ public final class Qbinom implements StatsFunctions.Function3_2 {
             y = n;
         }
 
-        z = pbinom.evaluate(y, n, pr, /* lowerTail */true, /* logP */false);
-
         /* fuzz to ensure left continuity: */
         p *= 1 - 64 * RRuntime.EPSILON;
 
-        Search search = new Search(z);
-
+        QuantileSearch search = new QuantileSearch(n, (quantile, lt, lp) -> pbinom.evaluate(quantile, n, pr, lt, lp));
         if (smallNProfile.profile(n < 1e5)) {
-            return search.doSearch(y, p, n, pr, 1, pbinomSearch1, pbinomSearch2);
+            return search.simpleSearch(y, p, 1);
+        } else {
+            return search.iterativeSearch(y, p, Math.floor(n * 0.001), 1e-15, 100);
         }
-        /* Otherwise be a bit cleverer in the search */
-        double incr = Math.floor(n * 0.001);
-        double oldincr;
-        do {
-            oldincr = incr;
-            y = search.doSearch(y, p, n, pr, incr, pbinomSearch1, pbinomSearch2);
-            incr = Math.max(1, Math.floor(incr / 100));
-        } while (oldincr > 1 && incr > n * 1e-15);
-        return y;
     }
 }
