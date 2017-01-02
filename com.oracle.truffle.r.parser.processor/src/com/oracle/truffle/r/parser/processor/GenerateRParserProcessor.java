@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
                 Filer filer = processingEnv.getFiler();
                 File srcGenDir = getSrcGenDir(filer);
                 // note("srcgendir: " + srcGenDir.getAbsolutePath());
-                File suiteRoot = srcGenDir.getParentFile().getParentFile().getParentFile();
+                File suiteRoot = srcGenDir.getCanonicalFile().getParentFile().getParentFile().getParentFile();
                 // note("suiteRoot: " + suiteRoot.getAbsolutePath());
 
                 // path to ANTLR jar
