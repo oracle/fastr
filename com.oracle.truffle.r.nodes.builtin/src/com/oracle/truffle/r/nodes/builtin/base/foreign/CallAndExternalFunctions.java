@@ -112,7 +112,6 @@ import com.oracle.truffle.r.library.stats.RNBinom.RNBinomFunc;
 import com.oracle.truffle.r.library.stats.RNBinom.RNBinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RPois;
-import com.oracle.truffle.r.library.stats.RWeibull;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1Node;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2Node;
@@ -130,6 +129,10 @@ import com.oracle.truffle.r.library.stats.Unif.DUnif;
 import com.oracle.truffle.r.library.stats.Unif.PUnif;
 import com.oracle.truffle.r.library.stats.Unif.QUnif;
 import com.oracle.truffle.r.library.stats.Unif.Runif;
+import com.oracle.truffle.r.library.stats.Weibull.DWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.PWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.QWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.RWeibull;
 import com.oracle.truffle.r.library.stats.Wilcox.RWilcox;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
@@ -353,6 +356,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new PPois());
                 case "qpois":
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new QPois());
+                case "qweibull":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QWeibull());
+                case "pweibull":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PWeibull());
+                case "dweibull":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DWeibull());
                 case "rbinom":
                     return RandFunction2Node.createInt(new Rbinom());
                 case "pbinom":

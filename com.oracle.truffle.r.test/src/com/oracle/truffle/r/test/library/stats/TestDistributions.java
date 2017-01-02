@@ -138,7 +138,12 @@ public class TestDistributions extends TestBase {
                     test("10, mu=60", withQuantiles("3", "5", "6", "10", "11", "20", "100")).
                     // non-probability value is error for the second parameter
                     test("10, -0.1", withQuantiles("2")).
-                    test("10, 5", withQuantiles("2"))
+                    test("10, 5", withQuantiles("2")),
+            distr("weibull").
+                    addErrorParamValues("-3.3", "0").
+                    test("1, 0.5", withDefaultQ("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
+                    test("0.5, 10", withQuantiles("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
+                    test("1e100, 1", withQuantiles("0.9", "0.99999999999999999", "1-1e-30", "1"))
     };
     // @formatter:on
 
