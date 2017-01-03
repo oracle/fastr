@@ -6,7 +6,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2016, The R Core Team
  * Copyright (c) 2003-2016, The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -15,8 +15,8 @@ package com.oracle.truffle.r.library.stats;
 /**
  * Searches for a quantile of given random variable using it's distribution function. The search
  * takes steps of given size until it reaches the quantile or until it steps over it. This class and
- * its {@code {@link #simpleSearch(double, double, double)}} method correspond to several
- * {@code do_search} functions in GnuR.
+ * its {@link #simpleSearch(double, double, double)} method correspond to several {@code do_search}
+ * functions in GnuR.
  */
 public final class QuantileSearch {
     /**

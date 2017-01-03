@@ -4,12 +4,13 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 1998-2016, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
@@ -36,6 +37,7 @@ public final class RMathError {
             this.message = message;
         }
 
+        @TruffleBoundary
         public void warning(String arg) {
             RError.warning(RError.SHOW_CALLER, message, arg);
         }
@@ -64,6 +66,7 @@ public final class RMathError {
     /**
      * Corresponds to macros {@code MATHLIB_WARNINGX} in GnuR.
      */
+    @TruffleBoundary
     public static void warning(RError.Message message, Object... args) {
         RError.warning(RError.SHOW_CALLER, message, args);
     }

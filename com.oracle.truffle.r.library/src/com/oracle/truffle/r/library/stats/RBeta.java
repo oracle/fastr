@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,7 +27,6 @@ public final class RBeta extends RandFunction2_Double {
     // TODO: state variables
     private static double beta = 0;
     private static double gamma = 1;
-    private static double delta;
     private static double k1 = 0;
     private static double k2 = 0;
     private static double olda = -1.0;
@@ -70,7 +69,7 @@ public final class RBeta extends RandFunction2_Double {
             /* changed notation, now also a <= b (was reversed) */
             if (!qsame) { /* initialize */
                 beta = 1.0 / a;
-                delta = 1.0 + b - a;
+                double delta = 1.0 + b - a;
                 k1 = delta * (0.0138889 + 0.0416667 * a) / (b * beta - 0.777778);
                 k2 = 0.25 + (0.5 + 0.25 / delta) * a;
             }

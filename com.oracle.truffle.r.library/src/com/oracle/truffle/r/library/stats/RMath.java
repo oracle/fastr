@@ -6,16 +6,17 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.LBeta.lbeta;
+import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.library.stats.RMathError.MLError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
@@ -193,7 +194,7 @@ public final class RMath {
         /* else */
         if (x < xmin) {
             /* answer less than half precision because x too near -1 */
-            fail("ERROR: ML_ERROR(ME_PRECISION, \"log1p\")");
+            RMathError.error(MLError.PRECISION, "log1p");
         }
         return Math.log(1 + x);
     }
@@ -210,11 +211,11 @@ public final class RMath {
         int i;
 
         if (n < 1 || n > 1000) {
-            return Double.NaN; // ML_ERR_return_NAN;
+            return RMathError.defaultError();
         }
 
         if (x < -1.1 || x > 1.1) {
-            return Double.NaN; // ML_ERR_return_NAN;
+            return RMathError.defaultError();
         }
 
         twox = x * 2;
@@ -228,8 +229,111 @@ public final class RMath {
         return (b0 - b2) * 0.5;
     }
 
-    @TruffleBoundary
-    private static void fail(String message) {
-        throw new RuntimeException(message);
+    //
+    // stirlerr
+    //
+
+    private static final double S0 = 0.083333333333333333333; /* 1/12 */
+    private static final double S1 = 0.00277777777777777777778; /* 1/360 */
+    private static final double S2 = 0.00079365079365079365079365; /* 1/1260 */
+    private static final double S3 = 0.000595238095238095238095238; /* 1/1680 */
+    private static final double S4 = 0.0008417508417508417508417508; /* 1/1188 */
+
+    /*
+     * error for 0, 0.5, 1.0, 1.5, ..., 14.5, 15.0.
+     */
+    @CompilationFinal private static final double[] sferr_halves = new double[]{
+                    0.0, /* n=0 - wrong, place holder only */
+                    0.1534264097200273452913848, /* 0.5 */
+                    0.0810614667953272582196702, /* 1.0 */
+                    0.0548141210519176538961390, /* 1.5 */
+                    0.0413406959554092940938221, /* 2.0 */
+                    0.03316287351993628748511048, /* 2.5 */
+                    0.02767792568499833914878929, /* 3.0 */
+                    0.02374616365629749597132920, /* 3.5 */
+                    0.02079067210376509311152277, /* 4.0 */
+                    0.01848845053267318523077934, /* 4.5 */
+                    0.01664469118982119216319487, /* 5.0 */
+                    0.01513497322191737887351255, /* 5.5 */
+                    0.01387612882307074799874573, /* 6.0 */
+                    0.01281046524292022692424986, /* 6.5 */
+                    0.01189670994589177009505572, /* 7.0 */
+                    0.01110455975820691732662991, /* 7.5 */
+                    0.010411265261972096497478567, /* 8.0 */
+                    0.009799416126158803298389475, /* 8.5 */
+                    0.009255462182712732917728637, /* 9.0 */
+                    0.008768700134139385462952823, /* 9.5 */
+                    0.008330563433362871256469318, /* 10.0 */
+                    0.007934114564314020547248100, /* 10.5 */
+                    0.007573675487951840794972024, /* 11.0 */
+                    0.007244554301320383179543912, /* 11.5 */
+                    0.006942840107209529865664152, /* 12.0 */
+                    0.006665247032707682442354394, /* 12.5 */
+                    0.006408994188004207068439631, /* 13.0 */
+                    0.006171712263039457647532867, /* 13.5 */
+                    0.005951370112758847735624416, /* 14.0 */
+                    0.005746216513010115682023589, /* 14.5 */
+                    0.005554733551962801371038690 /* 15.0 */
+    };
+
+    static double stirlerr(double n) {
+        double nn;
+
+        if (n <= 15.0) {
+            nn = n + n;
+            if (nn == (int) nn) {
+                return (sferr_halves[(int) nn]);
+            }
+            return (GammaFunctions.lgammafn(n + 1.) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI);
+        }
+
+        nn = n * n;
+        if (n > 500) {
+            return ((S0 - S1 / nn) / n);
+        }
+        if (n > 80) {
+            return ((S0 - (S1 - S2 / nn) / nn) / n);
+        }
+        if (n > 35) {
+            return ((S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / n);
+        }
+        /* 15 < n <= 35 : */
+        return ((S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) / n);
+    }
+
+    //
+    // bd0
+    //
+
+    /**
+     * Evaluates the "deviance part". Transcribed from GnuR.
+     */
+    static double bd0(double x, double np) {
+        double ej;
+        double s;
+        double s1;
+        double v;
+        int j;
+
+        if (!RRuntime.isFinite(x) || !RRuntime.isFinite(np) || np == 0.0) {
+            return RMathError.defaultError();
+        }
+
+        if (Math.abs(x - np) < 0.1 * (x + np)) {
+            v = (x - np) / (x + np);
+            s = (x - np) * v; /* s using v -- change by MM */
+            ej = 2 * x * v;
+            v = v * v;
+            for (j = 1;; j++) { /* Taylor series */
+                ej *= v;
+                s1 = s + ej / ((j << 1) + 1);
+                if (s1 == s) { /* last term was effectively 0 */
+                    return s1;
+                }
+                s = s1;
+            }
+        }
+        /* else: | x - np | is not too small */
+        return x * Math.log(x / np) + np - x;
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2006, The R Core Team
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,7 +14,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function3_2;
 import com.oracle.truffle.r.library.stats.TOMS708.Bratio;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 // transcribed from pbeta.c
@@ -68,7 +67,7 @@ public final class Pbeta implements Function3_2 {
 
     @TruffleBoundary
     private static void doWarning(double x, double a, double b, int ierr) {
-        RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("pbeta_raw(%g, a=%g, b=%g, ..) -> bratio() gave error code %d", x, a, b, ierr));
+        RMathError.warning(Message.GENERIC, String.format("pbeta_raw(%g, a=%g, b=%g, ..) -> bratio() gave error code %d", x, a, b, ierr));
     }
 
     static double pbeta(double x, double a, double b, boolean lowerTail, boolean logP, BranchProfile nanProfile) {
