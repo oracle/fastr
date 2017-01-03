@@ -6,24 +6,24 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
-import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MANT_DIG;
-import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MAX_EXP;
-import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN_EXP;
-import static com.oracle.truffle.r.library.stats.MathConstants.M_LOG10_2;
-import static com.oracle.truffle.r.library.stats.MathConstants.M_PI;
-import static com.oracle.truffle.r.library.stats.RMath.fmax2;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MANT_DIG;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX_EXP;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN_EXP;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LOG10_2;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
+import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -31,8 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.library.stats.GammaFunctions;
-import com.oracle.truffle.r.library.stats.RMath;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
@@ -45,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 

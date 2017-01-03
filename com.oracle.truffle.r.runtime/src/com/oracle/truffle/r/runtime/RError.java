@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -302,6 +302,7 @@ public final class RError extends RuntimeException {
         NON_CONFORMABLE_ARRAYS("non-conformable arrays"),
         UNKNOWN_UNNAMED_OBJECT("object not found"),
         CHOOSE_ROUNDING_WARNING("'k' (%g) must be integer, rounded to %d"),
+        WILCOX_TOO_MUCH_MEMORY("running wilcox with m=%g, n=%g would allocate too much memory, returning NaN instead."),
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),

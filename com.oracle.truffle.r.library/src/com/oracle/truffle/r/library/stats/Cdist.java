@@ -6,14 +6,14 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
