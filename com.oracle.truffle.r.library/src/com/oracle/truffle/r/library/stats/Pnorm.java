@@ -6,7 +6,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2013, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -223,7 +223,6 @@ public final class Pnorm implements StatsFunctions.Function3_2 {
             // if(*ccum < min) *ccum = 0.;
             // }
             // #endif
-            return;
         }
     }
 }

@@ -5,13 +5,13 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-12, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.GammaFunctions.dpoisRaw;
+import static com.oracle.truffle.r.library.stats.DPois.dpoisRaw;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function4_1;
 

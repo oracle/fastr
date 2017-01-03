@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -117,11 +117,11 @@ public final class QBeta implements Function3_2 {
 
         /**
          *
-         * @param alpha
-         * @param p
-         * @param q
-         * @param lower_tail
-         * @param log_p
+         * @param alpha parameter of beta distribution
+         * @param p probability
+         * @param q quantile
+         * @param lower_tail whether to use lower tail of the distribution function
+         * @param log_p is the probability given as log(p)
          * @param swap_01 {true, NA, false}: if NA, algorithm decides swap_tail
          * @param log_q_cut if == Inf: return Math.log(qbeta(..)); otherwise, if finite: the bound
          *            for switching to Math.log(x)-scale; see use_log_x
@@ -490,7 +490,7 @@ public final class QBeta implements Function3_2 {
                     // (cancellation in (u_n -u) => may differ from adj:
                     D = RMath.fmin2(Math.abs(adj), Math.abs(u_n - u));
                     /* R_ifDEBUG_printf(" delta(u)=%g\n", u_n - u); */
-                    debugPrintf(" it{in}=%d, delta(u)=%9.3g, D/|.|=%.3g\n",
+                    debugPrintf(" it{in}=%d, delta(u)=%.3g, D/|.|=%.3g\n",
                                     i_inn, u_n - u, D / Math.abs(u_n + u));
                     if (D <= 4e-16 * Math.abs(u_n + u)) {
                         converged(log_p, qb);
@@ -524,7 +524,7 @@ public final class QBeta implements Function3_2 {
                                     : (y - a) * Math.exp(logbeta + r * Math.log(xinbta) + t * Math.log1p(-xinbta));
                     if (i_pb >= n_N && w * wprev <= 0.)
                         prev = RMath.fmax2(Math.abs(adj), fpu);
-                    debugPrintf("N(i=%2d): x0=%#17.15g, pb(x0)=%#17.15g, w=%#17.15g, %s prev=%g,",
+                    debugPrintf("N(i=%d): x0=%.15g, pb(x0)=%.15g, w=%.15g, %s prev=%g,",
                                     i_pb, xinbta, y, w, (w * wprev <= 0.) ? "new" : "old", prev);
                     g = 1;
                     int i_inn;

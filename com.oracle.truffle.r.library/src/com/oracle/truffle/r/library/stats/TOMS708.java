@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,6 +20,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 
 /*
  * transcribed from toms708.c - as the original file contains no copyright header, we assume that it is copyright R code and R foundation.
@@ -555,7 +556,7 @@ public final class TOMS708 {
             if (b * z == 0.0) { // should not happen, but does, e.g.,
                 // for pbeta(1e-320, 1e-5, 0.5) i.e., _subnormal_ x,
                 // Warning ... bgrat(a=20.5, b=1e-05, x=1, y=9.99989e-321): ..
-                RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format(
+                RMathError.warning(Message.GENERIC, Utils.stringFormat(
                                 "bgrat(a=%f, b=%f, x=%f, y=%f): b*z == 0 underflow, hence inaccurate pbeta()",
                                 a, b, x, y));
                 /* L_Error: THE EXPANSION CANNOT BE COMPUTED */
@@ -627,7 +628,7 @@ public final class TOMS708 {
                     break;
                 } else if (n == n_terms_bgrat) {
                     // never? ; please notify R-core if seen:
-                    RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("bgrat(a=%f, b=%f, x=%f,..): did *not* converge; dj=%f, rel.err=%f\n", a, b, x, dj, Math.abs(dj) / (sum + l)));
+                    RMathError.warning(Message.GENERIC, Utils.stringFormat("bgrat(a=%f, b=%f, x=%f,..): did *not* converge; dj=%f, rel.err=%f\n", a, b, x, dj, Math.abs(dj) / (sum + l)));
                 }
             }
 

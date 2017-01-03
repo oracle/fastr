@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -12,11 +12,11 @@
 // Author: Catherine Loader, catherine@research.bell-labs.com, October 23, 2000.
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.library.stats.GammaFunctions.bd0;
-import static com.oracle.truffle.r.library.stats.GammaFunctions.stirlerr;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN_SQRT_2PI;
+import static com.oracle.truffle.r.library.stats.RMath.bd0;
+import static com.oracle.truffle.r.library.stats.RMath.stirlerr;
 
 import com.oracle.truffle.r.library.stats.StatsFunctions.Function2_1;
 

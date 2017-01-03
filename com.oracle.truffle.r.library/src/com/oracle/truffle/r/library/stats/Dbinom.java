@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2000-2014, The R Core Team
  * Copyright (c) 2008, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,11 +38,11 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
             if (n == 0) {
                 return DPQ.rd1(giveLog);
             }
-            double lc = (p < 0.1) ? -GammaFunctions.bd0(n, n * q) - n * p : n * Math.log(q);
+            double lc = (p < 0.1) ? -RMath.bd0(n, n * q) - n * p : n * Math.log(q);
             return DPQ.rdexp(lc, giveLog);
         }
         if (x == n) {
-            double lc = (q < 0.1) ? -GammaFunctions.bd0(n, n * p) - n * q : n * Math.log(p);
+            double lc = (q < 0.1) ? -RMath.bd0(n, n * p) - n * q : n * Math.log(p);
             return DPQ.rdexp(lc, giveLog);
         }
         if (x < 0 || x > n) {
@@ -53,7 +53,7 @@ public final class Dbinom implements StatsFunctions.Function3_1 {
          * n*p or n*q can underflow to zero if n and p or q are small. This used to occur in dbeta,
          * and gives NaN as from R 2.3.0.
          */
-        double lc = GammaFunctions.stirlerr(n) - GammaFunctions.stirlerr(x) - GammaFunctions.stirlerr(n - x) - GammaFunctions.bd0(x, n * p) - GammaFunctions.bd0(n - x, n * q);
+        double lc = RMath.stirlerr(n) - RMath.stirlerr(x) - RMath.stirlerr(n - x) - RMath.bd0(x, n * p) - RMath.bd0(n - x, n * q);
 
         /* f = (M_2PI*x*(n-x))/n; could overflow or underflow */
         /*

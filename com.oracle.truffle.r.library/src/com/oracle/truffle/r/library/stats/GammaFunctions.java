@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * based on AS 91 (C) 1979 Royal Statistical Society
  *  and  on AS 111 (C) 1977 Royal Statistical Society
@@ -21,7 +21,6 @@ package com.oracle.truffle.r.library.stats;
 import static com.oracle.truffle.r.library.stats.DPQ.rd0;
 import static com.oracle.truffle.r.library.stats.DPQ.rd1;
 import static com.oracle.truffle.r.library.stats.DPQ.rdexp;
-import static com.oracle.truffle.r.library.stats.DPQ.rdfexp;
 import static com.oracle.truffle.r.library.stats.DPQ.rdt0;
 import static com.oracle.truffle.r.library.stats.DPQ.rdt1;
 import static com.oracle.truffle.r.library.stats.DPQ.rdtclog;
@@ -30,7 +29,6 @@ import static com.oracle.truffle.r.library.stats.DPQ.rlog1exp;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.library.stats.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_1_SQRT_2PI;
-import static com.oracle.truffle.r.library.stats.MathConstants.M_2PI;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_LN2;
 import static com.oracle.truffle.r.library.stats.MathConstants.M_SQRT_32;
 import static com.oracle.truffle.r.library.stats.RMath.fmax2;
@@ -76,87 +74,6 @@ public abstract class GammaFunctions {
     // TODO Many of the functions below that are not directly supporting qgamma should eventually be
     // factored out to support those R functions they represent.
 
-    // TODO for all occurrences of ML_ERR_return_NAN;
-    // this expands to:
-    // ML_ERROR(ME_DOMAIN, ""); return ML_NAN;
-    // i.e., raise "argument out of domain" error and return NaN
-
-    //
-    // stirlerr
-    //
-
-    private static final double S0 = 0.083333333333333333333; /* 1/12 */
-    private static final double S1 = 0.00277777777777777777778; /* 1/360 */
-    private static final double S2 = 0.00079365079365079365079365; /* 1/1260 */
-    private static final double S3 = 0.000595238095238095238095238; /* 1/1680 */
-    private static final double S4 = 0.0008417508417508417508417508; /* 1/1188 */
-
-    /*
-     * error for 0, 0.5, 1.0, 1.5, ..., 14.5, 15.0.
-     */
-    @CompilationFinal private static final double[] sferr_halves = new double[]{0.0, /*
-                                                                                      * n=0 - wrong,
-                                                                                      * place holder
-                                                                                      * only
-                                                                                      */
-                    0.1534264097200273452913848, /* 0.5 */
-                    0.0810614667953272582196702, /* 1.0 */
-                    0.0548141210519176538961390, /* 1.5 */
-                    0.0413406959554092940938221, /* 2.0 */
-                    0.03316287351993628748511048, /* 2.5 */
-                    0.02767792568499833914878929, /* 3.0 */
-                    0.02374616365629749597132920, /* 3.5 */
-                    0.02079067210376509311152277, /* 4.0 */
-                    0.01848845053267318523077934, /* 4.5 */
-                    0.01664469118982119216319487, /* 5.0 */
-                    0.01513497322191737887351255, /* 5.5 */
-                    0.01387612882307074799874573, /* 6.0 */
-                    0.01281046524292022692424986, /* 6.5 */
-                    0.01189670994589177009505572, /* 7.0 */
-                    0.01110455975820691732662991, /* 7.5 */
-                    0.010411265261972096497478567, /* 8.0 */
-                    0.009799416126158803298389475, /* 8.5 */
-                    0.009255462182712732917728637, /* 9.0 */
-                    0.008768700134139385462952823, /* 9.5 */
-                    0.008330563433362871256469318, /* 10.0 */
-                    0.007934114564314020547248100, /* 10.5 */
-                    0.007573675487951840794972024, /* 11.0 */
-                    0.007244554301320383179543912, /* 11.5 */
-                    0.006942840107209529865664152, /* 12.0 */
-                    0.006665247032707682442354394, /* 12.5 */
-                    0.006408994188004207068439631, /* 13.0 */
-                    0.006171712263039457647532867, /* 13.5 */
-                    0.005951370112758847735624416, /* 14.0 */
-                    0.005746216513010115682023589, /* 14.5 */
-                    0.005554733551962801371038690 /* 15.0 */
-    };
-
-    static double stirlerr(double n) {
-
-        double nn;
-
-        if (n <= 15.0) {
-            nn = n + n;
-            if (nn == (int) nn) {
-                return (sferr_halves[(int) nn]);
-            }
-            return (lgammafn(n + 1.) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI);
-        }
-
-        nn = n * n;
-        if (n > 500) {
-            return ((S0 - S1 / nn) / n);
-        }
-        if (n > 80) {
-            return ((S0 - (S1 - S2 / nn) / nn) / n);
-        }
-        if (n > 35) {
-            return ((S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / n);
-        }
-        /* 15 < n <= 35 : */
-        return ((S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) / n);
-    }
-
     //
     // lgammacor
     //
@@ -178,8 +95,7 @@ public abstract class GammaFunctions {
         double tmp;
 
         if (x < 10) {
-            // TODO ML_ERR_return_NAN
-            return Double.NaN;
+            return RMathError.defaultError();
         } else if (x >= lgc_xmax) {
             /* allow to underflow below */
             RMathError.error(MLError.UNDERFLOW, "lgammacor");
@@ -319,7 +235,7 @@ public abstract class GammaFunctions {
                     value *= i;
                 }
             } else { /* normal case */
-                value = Math.exp((y - 0.5) * Math.log(y) - y + M_LN_SQRT_2PI + ((2 * y == (int) (2 * y)) ? stirlerr(y) : lgammacor(y)));
+                value = Math.exp((y - 0.5) * Math.log(y) - y + M_LN_SQRT_2PI + ((2 * y == (int) (2 * y)) ? RMath.stirlerr(y) : lgammacor(y)));
             }
             if (x > 0) {
                 return value;
@@ -845,12 +761,12 @@ public abstract class GammaFunctions {
             return rd0(giveLog);
         }
         if (xplus1 > 1) {
-            return dpoisRaw(xplus1 - 1, lambda, giveLog);
+            return DPois.dpoisRaw(xplus1 - 1, lambda, giveLog);
         }
         if (lambda > Math.abs(xplus1 - 1) * M_cutoff) {
             return rdexp(-lambda - lgammafn(xplus1), giveLog);
         } else {
-            double d = dpoisRaw(xplus1, lambda, giveLog);
+            double d = DPois.dpoisRaw(xplus1, lambda, giveLog);
             return giveLog ? d + Math.log(xplus1 / lambda) : d * (xplus1 / lambda);
         }
     }
@@ -880,7 +796,7 @@ public abstract class GammaFunctions {
             double f1 = logp ? RMath.log1p(sum) : 1 + sum;
             double f2;
             if (alph > 1) {
-                f2 = dpoisRaw(alph, x, logp);
+                f2 = DPois.dpoisRaw(alph, x, logp);
                 f2 = logp ? f2 + x : f2 * Math.exp(x);
             } else if (logp) {
                 f2 = alph * Math.log(x) - lgamma1p(alph);
@@ -1082,7 +998,7 @@ public abstract class GammaFunctions {
 
             return 1 / sum;
         } else {
-            double d = dnorm(localX, 0., 1., false);
+            double d = new DNorm().evaluate(localX, 0., 1., false);
             return d / Math.exp(lp);
         }
     }
@@ -1158,7 +1074,7 @@ public abstract class GammaFunctions {
             double ndOverP = dpnorm(s2pt, !lowerTail, np);
             return np + RMath.log1p(f * ndOverP);
         } else {
-            double nd = dnorm(s2pt, 0., 1., logp);
+            double nd = new DNorm().evaluate(s2pt, 0., 1., logp);
             return np + f * nd;
         }
     } /* ppois_asymp() */
@@ -1242,96 +1158,6 @@ public abstract class GammaFunctions {
     }
 
     //
-    // dpois
-    //
-
-    public static double dpoisRaw(double x, double lambda, boolean giveLog) {
-        /*
-         * x >= 0 ; integer for dpois(), but not e.g. for pgamma()! lambda >= 0
-         */
-        if (lambda == 0) {
-            return (x == 0) ? rd1(giveLog) : rd0(giveLog);
-        }
-        if (!RRuntime.isFinite(lambda)) {
-            return rd0(giveLog);
-        }
-        if (x < 0) {
-            return rd0(giveLog);
-        }
-        if (x <= lambda * DBL_MIN) {
-            return (rdexp(-lambda, giveLog));
-        }
-        if (lambda < x * DBL_MIN) {
-            return (rdexp(-lambda + x * Math.log(lambda) - lgammafn(x + 1), giveLog));
-        }
-        return rdfexp(M_2PI * x, -stirlerr(x) - bd0(x, lambda), giveLog);
-    }
-
-    //
-    // bd0
-    //
-
-    static double bd0(double x, double np) {
-        double ej;
-        double s;
-        double s1;
-        double v;
-        int j;
-
-        if (!RRuntime.isFinite(x) || !RRuntime.isFinite(np) || np == 0.0) {
-            return RMathError.defaultError();
-        }
-
-        if (Math.abs(x - np) < 0.1 * (x + np)) {
-            v = (x - np) / (x + np);
-            s = (x - np) * v; /* s using v -- change by MM */
-            ej = 2 * x * v;
-            v = v * v;
-            for (j = 1;; j++) { /* Taylor series */
-                ej *= v;
-                s1 = s + ej / ((j << 1) + 1);
-                if (s1 == s) { /* last term was effectively 0 */
-                    return s1;
-                }
-                s = s1;
-            }
-        }
-        /* else: | x - np | is not too small */
-        return x * Math.log(x / np) + np - x;
-    }
-
-    //
-    // dnorm
-    //
-
-    static double dnorm(double x, double mu, double sigma, boolean giveLog) {
-        double localX = x;
-        if (Double.isNaN(localX) || Double.isNaN(mu) || Double.isNaN(sigma)) {
-            return localX + mu + sigma;
-        }
-        if (!RRuntime.isFinite(sigma)) {
-            return rd0(giveLog);
-        }
-        if (!RRuntime.isFinite(localX) && mu == localX) {
-            return Double.NaN; /* x-mu is NaN */
-        }
-        if (sigma <= 0) {
-            if (sigma < 0) {
-                return RMathError.defaultError();
-            }
-            /* sigma == 0 */
-            return (localX == mu) ? Double.POSITIVE_INFINITY : rd0(giveLog);
-        }
-        localX = (localX - mu) / sigma;
-
-        if (!RRuntime.isFinite(localX)) {
-            return rd0(giveLog);
-        }
-        return giveLog ? -(M_LN_SQRT_2PI + 0.5 * localX * localX + Math.log(sigma)) : M_1_SQRT_2PI * Math.exp(-0.5 * localX * localX) / sigma;
-        /* M_1_SQRT_2PI = 1 / sqrt(2 * pi) */
-    }
-
-    //
     // dgamma
     //
 
@@ -1361,11 +1187,11 @@ public abstract class GammaFunctions {
         }
 
         if (shape < 1) {
-            pr = dpoisRaw(shape, x / scale, giveLog);
+            pr = DPois.dpoisRaw(shape, x / scale, giveLog);
             return giveLog ? pr + Math.log(shape / x) : pr * shape / x;
         }
         /* else shape >= 1 */
-        pr = dpoisRaw(shape - 1, x / scale, giveLog);
+        pr = DPois.dpoisRaw(shape - 1, x / scale, giveLog);
         return giveLog ? pr - Math.log(scale) : pr / scale;
     }
 
