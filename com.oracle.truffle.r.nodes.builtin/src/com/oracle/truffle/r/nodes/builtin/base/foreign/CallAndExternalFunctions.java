@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,6 +53,8 @@ import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DBeta;
 import com.oracle.truffle.r.library.stats.DHyper;
 import com.oracle.truffle.r.library.stats.DNBeta;
+import com.oracle.truffle.r.library.stats.DNBinom.DNBinomFunc;
+import com.oracle.truffle.r.library.stats.DNBinom.DNBinomMu;
 import com.oracle.truffle.r.library.stats.DNChisq;
 import com.oracle.truffle.r.library.stats.DNorm;
 import com.oracle.truffle.r.library.stats.DPois;
@@ -80,6 +82,8 @@ import com.oracle.truffle.r.library.stats.Logis.RLogis;
 import com.oracle.truffle.r.library.stats.PGamma;
 import com.oracle.truffle.r.library.stats.PHyper;
 import com.oracle.truffle.r.library.stats.PNBeta;
+import com.oracle.truffle.r.library.stats.PNBinom.PNBinomFunc;
+import com.oracle.truffle.r.library.stats.PNBinom.PNBinomMu;
 import com.oracle.truffle.r.library.stats.PNChisq;
 import com.oracle.truffle.r.library.stats.PPois;
 import com.oracle.truffle.r.library.stats.Pbeta;
@@ -91,6 +95,8 @@ import com.oracle.truffle.r.library.stats.Pt;
 import com.oracle.truffle.r.library.stats.QBeta;
 import com.oracle.truffle.r.library.stats.QHyper;
 import com.oracle.truffle.r.library.stats.QNBeta;
+import com.oracle.truffle.r.library.stats.QNBinom.QNBinomFunc;
+import com.oracle.truffle.r.library.stats.QNBinom.QNBinomMu;
 import com.oracle.truffle.r.library.stats.QNChisq;
 import com.oracle.truffle.r.library.stats.QPois;
 import com.oracle.truffle.r.library.stats.Qbinom;
@@ -102,10 +108,10 @@ import com.oracle.truffle.r.library.stats.RBeta;
 import com.oracle.truffle.r.library.stats.RGamma;
 import com.oracle.truffle.r.library.stats.RHyper;
 import com.oracle.truffle.r.library.stats.RMultinomNodeGen;
-import com.oracle.truffle.r.library.stats.RNbinomMu;
+import com.oracle.truffle.r.library.stats.RNBinom.RNBinomFunc;
+import com.oracle.truffle.r.library.stats.RNBinom.RNBinomMu;
 import com.oracle.truffle.r.library.stats.RNchisq;
 import com.oracle.truffle.r.library.stats.RPois;
-import com.oracle.truffle.r.library.stats.RWeibull;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction1Node;
 import com.oracle.truffle.r.library.stats.RandGenerationFunctions.RandFunction2Node;
@@ -123,6 +129,10 @@ import com.oracle.truffle.r.library.stats.Unif.DUnif;
 import com.oracle.truffle.r.library.stats.Unif.PUnif;
 import com.oracle.truffle.r.library.stats.Unif.QUnif;
 import com.oracle.truffle.r.library.stats.Unif.Runif;
+import com.oracle.truffle.r.library.stats.Weibull.DWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.PWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.QWeibull;
+import com.oracle.truffle.r.library.stats.Weibull.RWeibull;
 import com.oracle.truffle.r.library.stats.Wilcox.RWilcox;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
@@ -295,7 +305,7 @@ public class CallAndExternalFunctions {
                 case "rnchisq":
                     return RandFunction2Node.createDouble(new RNchisq());
                 case "rnbinom_mu":
-                    return RandFunction2Node.createDouble(new RNbinomMu());
+                    return RandFunction2Node.createDouble(new RNBinomMu());
                 case "rwilcox":
                     return RandFunction2Node.createInt(new RWilcox());
                 case "rchisq":
@@ -306,6 +316,8 @@ public class CallAndExternalFunctions {
                     return RandFunction1Node.createInt(new RGeom());
                 case "rpois":
                     return RandFunction1Node.createInt(new RPois());
+                case "rnbinom":
+                    return RandFunction2Node.createInt(new RNBinomFunc());
                 case "rt":
                     return RandFunction1Node.createDouble(new Rt());
                 case "rsignrank":
@@ -344,6 +356,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new PPois());
                 case "qpois":
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new QPois());
+                case "qweibull":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QWeibull());
+                case "pweibull":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PWeibull());
+                case "dweibull":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DWeibull());
                 case "rbinom":
                     return RandFunction2Node.createInt(new Rbinom());
                 case "pbinom":
@@ -418,6 +436,18 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsFactory.Function3_2NodeGen.create(new Logis.PLogis());
                 case "pgeom":
                     return StatsFunctionsFactory.Function2_2NodeGen.create(new Geom.PGeom());
+                case "qnbinom":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QNBinomFunc());
+                case "dnbinom":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DNBinomFunc());
+                case "pnbinom":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PNBinomFunc());
+                case "qnbinom_mu":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new QNBinomMu());
+                case "dnbinom_mu":
+                    return StatsFunctionsFactory.Function3_1NodeGen.create(new DNBinomMu());
+                case "pnbinom_mu":
+                    return StatsFunctionsFactory.Function3_2NodeGen.create(new PNBinomMu());
                 case "rmultinom":
                     return RMultinomNodeGen.create();
                 case "Approx":

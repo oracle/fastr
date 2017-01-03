@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,7 +128,22 @@ public class TestDistributions extends TestBase {
                     test("10000, 0.01", withQuantiles("1", "10", "100", "500", "900", "1000")).
                     // non-probability value is error for the second parameter
                     test("10, -0.1", withQuantiles("2")).
-                    test("10, 5", withQuantiles("2"))
+                    test("10, 5", withQuantiles("2")),
+            distr("nbinom").
+                    addErrorParamValues("-2").
+                    test("10, 0.33", withDefaultQ("5", "10", "11", "13", "20")).
+                    test("10.3, 0.4", withQuantiles("5", "10", "11", "13", "20")).
+                    test("1000, 0.5", withQuantiles("0", "10", "100", "1000", "1100", "1200")).
+                    test("1000, mu=10", withDefaultQ("5", "6", "10", "11", "20", "100")).
+                    test("10, mu=60", withQuantiles("3", "5", "6", "10", "11", "20", "100")).
+                    // non-probability value is error for the second parameter
+                    test("10, -0.1", withQuantiles("2")).
+                    test("10, 5", withQuantiles("2")),
+            distr("weibull").
+                    addErrorParamValues("-3.3", "0").
+                    test("1, 0.5", withDefaultQ("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
+                    test("0.5, 10", withQuantiles("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
+                    test("1e100, 1", withQuantiles("0.9", "0.99999999999999999", "1-1e-30", "1"))
     };
     // @formatter:on
 
