@@ -68,6 +68,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
+        // only used for toString
         private final WhileNode whileNode;
 
         WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {

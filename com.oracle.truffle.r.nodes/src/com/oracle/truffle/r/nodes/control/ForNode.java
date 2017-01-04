@@ -91,6 +91,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         @Child private ReadVariableNode readLengthNode;
         @Child private WriteVariableNode writeIndexNode;
 
+        // only used for toString
         private final ForNode forNode;
 
         ForRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String lengthName, String rangeName) {
