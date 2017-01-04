@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "isatty", kind = PRIMITIVE, parameterNames = {"con"}, behavior = PURE)
+@RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode {
 
     @Specialization
@@ -62,7 +62,6 @@ public abstract class IsATTY extends RBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected byte isATTYNonConnection(@SuppressWarnings("unused") Object con) {
-
         return RRuntime.LOGICAL_FALSE;
     }
 }
