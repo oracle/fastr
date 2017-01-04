@@ -125,8 +125,8 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
             }
             try {
                 if (conditionProfile.profile(index <= length)) {
-                    writeElementNode.execute(frame);
-                    body.execute(frame);
+                    writeElementNode.voidExecute(frame);
+                    body.voidExecute(frame);
                     return true;
                 } else {
                     return false;

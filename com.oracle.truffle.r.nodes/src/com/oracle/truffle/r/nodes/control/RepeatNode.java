@@ -73,7 +73,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
             try {
-                body.execute(frame);
+                body.voidExecute(frame);
                 normalBlock.enter();
                 return true;
             } catch (BreakException e) {

@@ -82,7 +82,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         public boolean executeRepeating(VirtualFrame frame) {
             try {
                 if (conditionProfile.profile(condition.executeByte(frame) == RRuntime.LOGICAL_TRUE)) {
-                    body.execute(frame);
+                    body.voidExecute(frame);
                     normalBlock.enter();
                     return true;
                 } else {
