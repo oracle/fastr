@@ -100,9 +100,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
-        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
-        return result;
-
+        return doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
     }
 
     private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector, GetNamesAttributeNode getNamesNode) {

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -52,6 +53,7 @@ abstract class PositionCheckNode extends Node {
     protected final int numDimensions;
     private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
     protected final BranchProfile error = BranchProfile.create();
     protected final boolean replace;
     protected final RType containerType;
@@ -275,6 +277,14 @@ abstract class PositionCheckNode extends Node {
             return RDataFactory.createDoubleVector(iv, doublePos.isComplete());
         }
 
+    }
+
+    public boolean isEmptyPosition(Object position) {
+        if (positionClass == REmpty.class) {
+            return false;
+        }
+        Object castPosition = positionClassProfile.profile(position);
+        return castPosition instanceof RAbstractContainer && ((RAbstractContainer) castPosition).getLength() == 0;
     }
 
 }

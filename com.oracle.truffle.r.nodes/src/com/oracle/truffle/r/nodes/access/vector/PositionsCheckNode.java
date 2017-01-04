@@ -194,4 +194,8 @@ final class PositionsCheckNode extends Node {
         boolean containsNA;
 
     }
+
+    public boolean isEmptyPosition(int i, Object position) {
+        return positionsCheck[i].isEmptyPosition(position);
+    }
 }
