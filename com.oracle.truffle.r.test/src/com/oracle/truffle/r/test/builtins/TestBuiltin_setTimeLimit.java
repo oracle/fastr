@@ -19,6 +19,7 @@ public class TestBuiltin_setTimeLimit extends TestBase {
 
     @Test
     public void testsetTimeLimit1() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, Inf, FALSE); .Internal(setTimeLimit(argv[[1]], argv[[2]], argv[[3]]))");
+        // TODO: this does not test actual functionality
+        assertEval("argv <- list(FALSE, Inf, FALSE); .Internal(setTimeLimit(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
