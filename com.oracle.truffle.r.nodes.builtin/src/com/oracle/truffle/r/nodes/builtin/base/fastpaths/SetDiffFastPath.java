@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -31,15 +32,17 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class SetDiffFastPath extends RFastPathNode {
 
-    @Specialization(guards = "x.getStride() == 1")
-    protected Object setdiff(RIntSequence x, RAbstractIntVector y) {
+    @Specialization(guards = {"x.getStride() == 1", "y.getClass() == yClass"})
+    protected Object setdiff(RIntSequence x, RAbstractIntVector y,
+                    @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass) {
+        RAbstractIntVector profiledY = yClass.cast(y);
         int xLength = x.getLength();
         int xStart = x.getStart();
-        int yLength = y.getLength();
+        int yLength = profiledY.getLength();
         boolean[] excluded = new boolean[xLength];
 
         for (int i = 0; i < yLength; i++) {
-            int element = y.getDataAt(i);
+            int element = profiledY.getDataAt(i);
             int index = element - xStart;
             if (index >= 0 && index < xLength) {
                 excluded[index] = true;

@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.data.RTypes;
 
+@TypeSystemReference(RTypes.class)
 public abstract class RFastPathNode extends RBaseNode {
 
     public abstract Object execute(VirtualFrame frame, Object... args);
