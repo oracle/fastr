@@ -584,8 +584,6 @@ public class RErrorHandling {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
          * destroy any visibility setting made by the calling builtin prior to this call.
-         *
-         * TODO: it's not clear whether this is still the case with the optimized visibility scheme
          */
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         RFunction f = errorHandlingState.getDotSignalSimpleWarning();

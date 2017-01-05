@@ -400,4 +400,9 @@ public class TestFunctions extends TestBase {
     public void testConversions() {
         assertEval("{ x<-quote(list(...)); l<-list(); l[[2]]<-x; names(l)<-c(\"...\"); f<-as.function(l); f(7, 42) }");
     }
+
+    @Test
+    public void testSrcref() {
+        assertEval("1\nf <- quote(function(x, y) \n a + \n foooo); as.list(f); as.list(f)[[4]]; unclass(as.list(f)[[4]]); class(as.list(f)[[4]])");
+    }
 }

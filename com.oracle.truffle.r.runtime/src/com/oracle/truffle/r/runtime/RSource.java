@@ -30,6 +30,13 @@ import java.net.URL;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
@@ -202,4 +209,44 @@ public class RSource {
         }
     }
 
+    public static Object createSrcRef(SourceSection src) {
+        if (src == null) {
+            return RNull.instance;
+        }
+        if (src == RSyntaxNode.INTERNAL || src == RSyntaxNode.LAZY_DEPARSE || src == RSyntaxNode.SOURCE_UNAVAILABLE) {
+            return RNull.instance;
+        }
+        Source source = src.getSource();
+        REnvironment env = RContext.getInstance().sourceRefEnvironments.get(source);
+        if (env == null) {
+            env = RDataFactory.createNewEnv("src");
+            env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", "srcfile"}, true));
+            try {
+                env.put("filename", source.getPath() == null ? "" : source.getPath());
+                env.put("fixedNewlines", RRuntime.LOGICAL_TRUE);
+                String[] lines = new String[source.getLineCount()];
+                for (int i = 0; i < lines.length; i++) {
+                    lines[i] = source.getCode(i + 1);
+                }
+                env.put("lines", RDataFactory.createStringVector(lines, true));
+            } catch (PutException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            RContext.getInstance().sourceRefEnvironments.put(source, env);
+        }
+        /*
+         * TODO: it's unclear what the exact format is, experimentally it is (first line, first
+         * column, last line, last column, first column, last column, first line, last line). the
+         * second pair of columns is likely bytes instead of chars, and the second pair of lines
+         * parsed as opposed to "real" lines (may be modified by #line).
+         */
+        int startLine = src.getStartLine();
+        int startColumn = src.getStartColumn();
+        int endLine = src.getEndLine();
+        int endColumn = src.getEndColumn();
+        RIntVector ref = RDataFactory.createIntVector(new int[]{startLine, startColumn, endLine, endColumn, startColumn, endColumn, startLine, endLine}, true);
+        ref.setAttr("srcfile", env);
+        ref.setClassAttr(RDataFactory.createStringVector("srcref"));
+        return ref;
+    }
 }
