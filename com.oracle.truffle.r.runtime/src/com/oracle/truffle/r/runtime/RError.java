@@ -466,7 +466,7 @@ public final class RError extends RuntimeException {
         UNUSED_ARGUMENT("unused argument (%s)"),
         UNUSED_ARGUMENTS("unused arguments (%s)"),
         INFINITE_MISSING_VALUES("infinite or missing values in '%s'"),
-        CALLOC_COULD_NOT_ALLOCATE_INF("'Calloc' could not allocate memory (18446744071562067968 of 4 bytes)"),
+        CALLOC_COULD_NOT_ALLOCATE("'Calloc' could not allocate memory (%s of %d bytes)"),
         NON_SQUARE_MATRIX("non-square matrix in '%s'"),
         LAPACK_ERROR("error code %d from Lapack routine '%s'"),
         VALUE_OUT_OF_RANGE("value out of range in '%s'"),

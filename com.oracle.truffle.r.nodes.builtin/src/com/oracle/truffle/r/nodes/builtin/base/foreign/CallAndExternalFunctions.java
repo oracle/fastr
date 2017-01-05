@@ -50,6 +50,7 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction1Node;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction2Node;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction3Node;
+import com.oracle.truffle.r.library.stats.SignrankFreeNode;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodes;
@@ -155,6 +156,9 @@ import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rf;
 import com.oracle.truffle.r.runtime.nmath.distr.Rnorm;
 import com.oracle.truffle.r.runtime.nmath.distr.Rt;
+import com.oracle.truffle.r.runtime.nmath.distr.Signrank.DSignrank;
+import com.oracle.truffle.r.runtime.nmath.distr.Signrank.PSignrank;
+import com.oracle.truffle.r.runtime.nmath.distr.Signrank.QSignrank;
 import com.oracle.truffle.r.runtime.nmath.distr.Signrank.RSignrank;
 import com.oracle.truffle.r.runtime.nmath.distr.Unif.DUnif;
 import com.oracle.truffle.r.runtime.nmath.distr.Unif.PUnif;
@@ -457,6 +461,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsNodes.Function3_2Node.create(new PWilcox());
                 case "dwilcox":
                     return StatsFunctionsNodes.Function3_1Node.create(new DWilcox());
+                case "dsignrank":
+                    return StatsFunctionsNodes.Function2_1Node.create(new DSignrank());
+                case "psignrank":
+                    return StatsFunctionsNodes.Function2_2Node.create(new PSignrank());
+                case "qsignrank":
+                    return StatsFunctionsNodes.Function2_2Node.create(new QSignrank());
                 case "rmultinom":
                     return RMultinomNode.create();
                 case "Approx":
@@ -710,6 +720,8 @@ public class CallAndExternalFunctions {
                     return RprofmemNodeGen.create();
                 case "wilcox_free":
                     return new WilcoxFreeNode();
+                case "signrank_free":
+                    return new SignrankFreeNode();
                 case "unzip":
                 case "addhistory":
                 case "loadhistory":

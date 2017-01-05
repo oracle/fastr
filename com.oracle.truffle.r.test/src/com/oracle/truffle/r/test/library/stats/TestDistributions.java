@@ -144,10 +144,14 @@ public class TestDistributions extends TestBase {
                     test("1, 0.5", withDefaultQ("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
                     test("0.5, 10", withQuantiles("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
                     test("1e100, 1", withQuantiles("0.9", "0.99999999999999999", "1-1e-30", "1")),
-            // Note: wilcox is very memory consuming, so we test only small argument values here
+            // Note: wilcox and signrank are memory consuming, so we test only small argument values here
             distr("wilcox").
                     test("10, 10", withDefaultQ("1", "3", "5", "100", "1000")).
-                    test("4, 7", withQuantiles("1", "3", "5", "100", "1000"))
+                    test("4, 7", withQuantiles("1", "3", "5", "100", "1000")),
+            distr("signrank").
+                    addErrorParamValues("-3", "0").
+                    test("10", withDefaultQ("5", "15", "20", "27", "35", "50", "54", "55", "56", "100")).
+                    test("5.5", withQuantiles("0.3", "0.6", "2", "3", "6", "15", "20"))
     };
     // @formatter:on
 

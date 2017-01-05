@@ -11,7 +11,7 @@
 
 package com.oracle.truffle.r.runtime.nmath.distr;
 
-import static com.oracle.truffle.r.runtime.RError.Message.CALLOC_COULD_NOT_ALLOCATE_INF;
+import static com.oracle.truffle.r.runtime.RError.Message.CALLOC_COULD_NOT_ALLOCATE;
 import static com.oracle.truffle.r.runtime.nmath.Choose.choose;
 import static com.oracle.truffle.r.runtime.nmath.Choose.lchoose;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
@@ -86,8 +86,7 @@ public final class Wilcox {
                 try {
                     result = new double[m + 1][n + 1][];
                 } catch (OutOfMemoryError e) {
-                    // GnuR seems to be reporting the same number regardless of the actual size
-                    throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
+                    throw couldNotAllocateError();
                 }
                 data.set(result);
             }
@@ -97,6 +96,11 @@ public final class Wilcox {
         public static void freeData() {
             data.set(null);
         }
+    }
+
+    private static RError couldNotAllocateError() {
+        // GnuR seems to be reporting the same number regardless of the actual size?
+        return RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE, "18446744071562067968", 4);
     }
 
     private static double cwilcox(double[][][] w, int kIn, int m, int n) {
@@ -318,7 +322,7 @@ public final class Wilcox {
             if (!Double.isFinite(mIn) || !Double.isFinite(nIn)) {
                 // GnuR does not check this and tries to allocate the memory, we do check this, but
                 // fail with the same error message for compatibility reasons.
-                throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
+                throw couldNotAllocateError();
             }
 
             double m = RMath.round(mIn);
@@ -343,8 +347,7 @@ public final class Wilcox {
             try {
                 x = new int[k];
             } catch (OutOfMemoryError ex) {
-                // GnuR seems to be reporting the same number regardless of 'k'
-                throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE_INF);
+                throw couldNotAllocateError();
             }
             for (int i = 0; i < k; i++) {
                 x[i] = i;
