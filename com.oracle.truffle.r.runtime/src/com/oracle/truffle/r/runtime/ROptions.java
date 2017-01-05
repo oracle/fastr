@@ -238,20 +238,15 @@ public class ROptions {
             }
 
             case "editor":
+                if (value instanceof RFunction || value instanceof RNull) {
+                    break;
+                }
+                coercedValue = coerceStringVector(value, name);
+                break;
+
             case "continue":
             case "prompt": {
-                Object valueAbs = RRuntime.asAbstractVector(value);
-                // TODO supposed to be coerced
-                if (valueAbs instanceof RStringVector) {
-                    String p = ((RStringVector) valueAbs).getDataAt(0);
-                    if (p.length() == 0 || RRuntime.isNA(p)) {
-                        throw OptionsException.createInvalid(name);
-                    } else {
-                        coercedValue = valueAbs;
-                    }
-                } else {
-                    throw OptionsException.createInvalid(name);
-                }
+                coercedValue = coerceStringVector(value, name);
                 break;
             }
 
@@ -378,5 +373,20 @@ public class ROptions {
                 throw RInternalError.shouldNotReachHere();
         }
         return coercedValue;
+    }
+
+    private static Object coerceStringVector(Object value, String name) throws OptionsException {
+        Object valueAbs = RRuntime.asAbstractVector(value);
+        // TODO supposed to be coerced
+        if (valueAbs instanceof RStringVector) {
+            String p = ((RStringVector) valueAbs).getDataAt(0);
+            if (p.length() == 0 || RRuntime.isNA(p)) {
+                throw OptionsException.createInvalid(name);
+            } else {
+                return valueAbs;
+            }
+        } else {
+            throw OptionsException.createInvalid(name);
+        }
     }
 }
