@@ -54,6 +54,7 @@ public class TestBuiltin_options extends TestBase {
         assertEval("{ f<-function(){}; options(editor=f); identical(getOption(\"editor\"), f) }");
         assertEval("{ options(editor=\"vi\"); identical(getOption(\"editor\"), \"vi\") }");
         assertEval("{ options(editor=NULL); identical(getOption(\"editor\"), NULL) }");
+        assertEval(Ignored.WrongCaller, "{ options(editor=\"\") }");
     }
 
     @Test
