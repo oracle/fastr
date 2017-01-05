@@ -30,7 +30,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_crc64 extends TestBase {
 
     @Test
-    public void testCrc64() {
+    public void testCrc64_Internal() {
 
         assertEval("crc64()");
         assertEval("crc64('a')");
@@ -65,4 +65,40 @@ public class TestBuiltin_crc64 extends TestBase {
         assertEval(".Internal(crc64(stdout()))");
     }
 
+    @Test
+    public void testCrc64_Call() {
+
+        assertEval(".Call(utils:::C_crc64, 'abc')");
+
+        assertEval(".Call(utils:::C_crc64, paste(c(letters, LETTERS, 0:9), collapse=\"\")))");
+
+        assertEval(".Call(utils:::C_crc64, c('a'))");
+
+        // // Expected output: Incorrect number of arguments (2), expecting 1 for 'crc64'
+        // // FastR output: throws com.oracle.truffle.r.runtime.RInternalError: should not reach
+        // here: mismatching number of arguments to foreign function
+        // // should be handled in .Call-s impl ?
+        assertEval(Ignored.ImplementationError, ".Call(utils:::C_crc64, 'a', 'b')");
+        assertEval(Ignored.ImplementationError, ".Call(utils:::C_crc64)");
+
+        assertEval(".Call(utils:::C_crc64, c(1, 2))");
+
+        assertEval(".Call(utils:::C_crc64, c('a', 'b'))");
+
+        assertEval(".Call(utils:::C_crc64, NA)");
+        assertEval(".Call(utils:::C_crc64, NULL)");
+        assertEval(".Call(utils:::C_crc64, list(list()))");
+        assertEval(".Call(utils:::C_crc64, list(NULL))");
+        assertEval(".Call(utils:::C_crc64, c(NULL))");
+
+        assertEval(".Call(utils:::C_crc64, integer(0))");
+        assertEval(".Call(utils:::C_crc64, double(0))");
+
+        assertEval(".Call(utils:::C_crc64, 01)");
+
+        assertEval(".Call(utils:::C_crc64, new.env())");
+        assertEval(".Call(utils:::C_crc64, environment)");
+        assertEval(".Call(utils:::C_crc64, stdout())");
+
+    }
 }

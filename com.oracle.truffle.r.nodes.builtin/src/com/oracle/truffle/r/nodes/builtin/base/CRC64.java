@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.utils.Crc64;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -47,21 +47,7 @@ public abstract class CRC64 extends RBuiltinNode {
 
     @Specialization
     protected RAbstractStringVector crc64(RAbstractStringVector x) {
-        final String string = x.getDataAt(0);
-        byte[] bytes = string.getBytes();
-        bytes = crc64(bytes);
-        long l = 0;
-        for (int i = 0; i < bytes.length; i++) {
-            l += (bytes[i] & 0xffL) << (8 * i);
-        }
-        return RDataFactory.createStringVector(Long.toHexString(l));
-    }
-
-    @TruffleBoundary
-    private static byte[] crc64(byte[] bytes) {
-        org.tukaani.xz.check.CRC64 crc = new org.tukaani.xz.check.CRC64();
-        crc.update(bytes);
-        return crc.finish();
+        return RDataFactory.createStringVector(Crc64.crc(x));
     }
 
 }
