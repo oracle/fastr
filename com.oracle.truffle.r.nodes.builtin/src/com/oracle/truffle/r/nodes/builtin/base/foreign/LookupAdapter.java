@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.library.stats.RandGenerationFunctions;
+import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -172,7 +172,7 @@ abstract class LookupAdapter extends RBuiltinNode {
     }
 
     protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
-        return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandGenerationFunctions.class, "model.R"), name);
+        return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "model.R"), name);
     }
 
     protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();

@@ -143,7 +143,11 @@ public class TestDistributions extends TestBase {
                     addErrorParamValues("-3.3", "0").
                     test("1, 0.5", withDefaultQ("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
                     test("0.5, 10", withQuantiles("1", "2", "3.3", "4", "5", "6", "6.1", "10")).
-                    test("1e100, 1", withQuantiles("0.9", "0.99999999999999999", "1-1e-30", "1"))
+                    test("1e100, 1", withQuantiles("0.9", "0.99999999999999999", "1-1e-30", "1")),
+            // Note: wilcox is very memory consuming, so we test only small argument values here
+            distr("wilcox").
+                    test("10, 10", withDefaultQ("1", "3", "5", "100", "1000")).
+                    test("4, 7", withQuantiles("1", "3", "5", "100", "1000"))
     };
     // @formatter:on
 
