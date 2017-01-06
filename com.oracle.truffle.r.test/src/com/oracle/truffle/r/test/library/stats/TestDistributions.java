@@ -44,6 +44,7 @@ public class TestDistributions extends TestBase {
     private static final String[] DEFAULT_Q = new String[]{"-Inf", "-0.42e-30", "0", "0.42e-30", "Inf", "NaN"};
     private static final String PROBABILITIES = "c(0, 42e-80, 0.1, 0.5, 0.7, 1-42e-80, 1)";
     private static final String[] ERROR_PROBABILITIES = new String[]{"Inf", "-Inf", "NaN", "-42", "-0.42e-38"};
+    private static final String[] DEFAULT_ERROR_PARAMS = {"-Inf", "Inf", "NaN"};
 
     // @formatter:off
     /**
@@ -151,7 +152,15 @@ public class TestDistributions extends TestBase {
             distr("signrank").
                     addErrorParamValues("-3", "0").
                     test("10", withDefaultQ("5", "15", "20", "27", "35", "50", "54", "55", "56", "100")).
-                    test("5.5", withQuantiles("0.3", "0.6", "2", "3", "6", "15", "20"))
+                    test("5.5", withQuantiles("0.3", "0.6", "2", "3", "6", "15", "20")),
+            // Non-central t distribution (t distr. with extra parameter ncp)
+            distr("t").
+                    clearDefaultErrorParamValues().
+                    addErrorParamValues("-Inf", "NaN").
+                    test("3e100, ncp=0.5", withDefaultQ("-30", "-20", "-4", "0.5", "1.3", "2", "3", "4", "10", "100")).
+                    test("Inf, ncp=-1", withQuantiles("-10", "-5", "-4", "-3", "-2", "-1", "0", "1.1", "2", "3", "4", "10", "100")).
+                    // negative first parameter => error
+                    test("-10, ncp=2", withQuantiles("1"))
     };
     // @formatter:on
 
@@ -249,7 +258,7 @@ public class TestDistributions extends TestBase {
 
         DistrTest(String name) {
             this.name = name;
-            addErrorParamValues("-Inf", "Inf", "NaN");
+            addErrorParamValues(DEFAULT_ERROR_PARAMS);
         }
 
         public DistrTest test(String params, String[] quantiles) {
@@ -269,7 +278,6 @@ public class TestDistributions extends TestBase {
          * but this method is here to make the API "complete". May be removed if all distributions
          * already have tests and non of them needs it.
          */
-        @SuppressWarnings("unused")
         public DistrTest clearDefaultErrorParamValues() {
             errorParamValues.clear();
             return this;

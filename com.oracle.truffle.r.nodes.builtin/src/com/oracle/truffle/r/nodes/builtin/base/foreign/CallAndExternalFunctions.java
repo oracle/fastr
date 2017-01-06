@@ -104,6 +104,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.DPois;
 import com.oracle.truffle.r.runtime.nmath.distr.Dbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Df;
 import com.oracle.truffle.r.runtime.nmath.distr.Dnf;
+import com.oracle.truffle.r.runtime.nmath.distr.Dnt;
 import com.oracle.truffle.r.runtime.nmath.distr.Dt;
 import com.oracle.truffle.r.runtime.nmath.distr.Exp.DExp;
 import com.oracle.truffle.r.runtime.nmath.distr.Exp.PExp;
@@ -131,6 +132,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.Pbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Pf;
 import com.oracle.truffle.r.runtime.nmath.distr.Pnf;
 import com.oracle.truffle.r.runtime.nmath.distr.Pnorm;
+import com.oracle.truffle.r.runtime.nmath.distr.Pnt;
 import com.oracle.truffle.r.runtime.nmath.distr.Pt;
 import com.oracle.truffle.r.runtime.nmath.distr.QBeta;
 import com.oracle.truffle.r.runtime.nmath.distr.QGamma;
@@ -144,6 +146,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.Qbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Qf;
 import com.oracle.truffle.r.runtime.nmath.distr.Qnf;
 import com.oracle.truffle.r.runtime.nmath.distr.Qnorm;
+import com.oracle.truffle.r.runtime.nmath.distr.Qnt;
 import com.oracle.truffle.r.runtime.nmath.distr.Qt;
 import com.oracle.truffle.r.runtime.nmath.distr.RBeta;
 import com.oracle.truffle.r.runtime.nmath.distr.RGamma;
@@ -465,6 +468,12 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsNodes.Function2_1Node.create(new DSignrank());
                 case "psignrank":
                     return StatsFunctionsNodes.Function2_2Node.create(new PSignrank());
+                case "dnt":
+                    return StatsFunctionsNodes.Function3_1Node.create(new Dnt());
+                case "pnt":
+                    return StatsFunctionsNodes.Function3_2Node.create(new Pnt());
+                case "qnt":
+                    return StatsFunctionsNodes.Function3_2Node.create(new Qnt());
                 case "qsignrank":
                     return StatsFunctionsNodes.Function2_2Node.create(new QSignrank());
                 case "rmultinom":

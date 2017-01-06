@@ -59,6 +59,9 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/PNBeta
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/QNBeta.java,gnu_r.core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Qnf.java,gnu_r.core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Dnf.java,gnu_r.core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Qnt.java,gnu_r.core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Pnt.java,gnu_r.core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Dnt.java,gnu_r.foundation.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/DNBeta.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/LBeta.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Pbinom.java,gnu_r_ihaka.copyright
