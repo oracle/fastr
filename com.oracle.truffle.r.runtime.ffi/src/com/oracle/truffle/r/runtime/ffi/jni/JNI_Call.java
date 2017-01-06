@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,9 @@ import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
  * they are passed as an array and the JNI code has to call back to get the args (not very
  * efficient).
  *
- * The JNI layer is not (currently) MT safe, so all calls are single threaded.
+ * The JNI layer is not (currently) MT safe, so all calls are single threaded. N.B. Since the calls
+ * take place from a {@link JNI_CallRFFINode}, and this is duplicated in separate contexts, we must
+ * synchronize on the class.
  */
 public class JNI_Call implements CallRFFI {
 
@@ -53,14 +55,15 @@ public class JNI_Call implements CallRFFI {
 
         @Override
         @TruffleBoundary
-        public synchronized Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            long address = nativeCallInfo.address.asAddress();
-            Object result = null;
-            if (traceEnabled()) {
-                traceDownCall(nativeCallInfo.name, args);
-            }
-            try {
-                switch (args.length) {
+        public Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_CallRFFINode.class) {
+                long address = nativeCallInfo.address.asAddress();
+                Object result = null;
+                if (traceEnabled()) {
+                    traceDownCall(nativeCallInfo.name, args);
+                }
+                try {
+                    switch (args.length) {
             // @formatter:off
             case 0: result = call0(address); break;
             case 1: result = call1(address, args[0]); break;
@@ -75,60 +78,67 @@ public class JNI_Call implements CallRFFI {
             default:
                 result = call(address, args); break;
                 // @formatter:on
-                }
-                return result;
-            } finally {
-                if (traceEnabled()) {
-                    traceDownCallReturn(nativeCallInfo.name, result);
+                    }
+                    return result;
+                } finally {
+                    if (traceEnabled()) {
+                        traceDownCallReturn(nativeCallInfo.name, result);
+                    }
                 }
             }
         }
 
         @Override
         @TruffleBoundary
-        public synchronized void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            if (traceEnabled()) {
-                traceDownCall(nativeCallInfo.name, args);
-            }
-            long address = nativeCallInfo.address.asAddress();
-            try {
-                switch (args.length) {
-                    case 0:
-                        callVoid0(address);
-                        break;
-                    case 1:
-                        callVoid1(address, args[0]);
-                        break;
-                    default:
-                        throw RInternalError.shouldNotReachHere();
-                }
-            } finally {
+        public void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_CallRFFINode.class) {
                 if (traceEnabled()) {
-                    traceDownCallReturn(nativeCallInfo.name, null);
+                    traceDownCall(nativeCallInfo.name, args);
+                }
+                long address = nativeCallInfo.address.asAddress();
+                try {
+                    switch (args.length) {
+                        case 0:
+                            callVoid0(address);
+                            break;
+                        case 1:
+                            callVoid1(address, args[0]);
+                            break;
+                        default:
+                            throw RInternalError.shouldNotReachHere();
+                    }
+                } finally {
+                    if (traceEnabled()) {
+                        traceDownCallReturn(nativeCallInfo.name, null);
+                    }
                 }
             }
         }
 
         @Override
-        public synchronized void setTempDir(String tempDir) {
-            if (traceEnabled()) {
-                traceDownCall("setTempDir", tempDir);
-            }
-            RFFIVariables.setTempDir(tempDir);
-            nativeSetTempDir(tempDir);
-            if (traceEnabled()) {
-                traceDownCallReturn("setTempDir", null);
+        public void setTempDir(String tempDir) {
+            synchronized (JNI_CallRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall("setTempDir", tempDir);
+                }
+                RFFIVariables.setTempDir(tempDir);
+                nativeSetTempDir(tempDir);
+                if (traceEnabled()) {
+                    traceDownCallReturn("setTempDir", null);
+                }
             }
         }
 
         @Override
-        public synchronized void setInteractive(boolean interactive) {
-            if (traceEnabled()) {
-                traceDownCall("setInteractive", interactive);
-            }
-            nativeSetInteractive(interactive);
-            if (traceEnabled()) {
-                traceDownCallReturn("setInteractive", null);
+        public void setInteractive(boolean interactive) {
+            synchronized (JNI_CallRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall("setInteractive", interactive);
+                }
+                nativeSetInteractive(interactive);
+                if (traceEnabled()) {
+                    traceDownCallReturn("setInteractive", null);
+                }
             }
         }
 
