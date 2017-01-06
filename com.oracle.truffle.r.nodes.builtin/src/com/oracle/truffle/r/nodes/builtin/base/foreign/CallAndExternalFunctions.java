@@ -127,6 +127,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.PNBinom.PNBinomFunc;
 import com.oracle.truffle.r.runtime.nmath.distr.PNBinom.PNBinomMu;
 import com.oracle.truffle.r.runtime.nmath.distr.PNChisq;
 import com.oracle.truffle.r.runtime.nmath.distr.PPois;
+import com.oracle.truffle.r.runtime.nmath.distr.PTukey;
 import com.oracle.truffle.r.runtime.nmath.distr.Pbeta;
 import com.oracle.truffle.r.runtime.nmath.distr.Pbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Pf;
@@ -142,6 +143,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.QNBinom.QNBinomFunc;
 import com.oracle.truffle.r.runtime.nmath.distr.QNBinom.QNBinomMu;
 import com.oracle.truffle.r.runtime.nmath.distr.QNChisq;
 import com.oracle.truffle.r.runtime.nmath.distr.QPois;
+import com.oracle.truffle.r.runtime.nmath.distr.QTukey;
 import com.oracle.truffle.r.runtime.nmath.distr.Qbinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Qf;
 import com.oracle.truffle.r.runtime.nmath.distr.Qnf;
@@ -476,6 +478,10 @@ public class CallAndExternalFunctions {
                     return StatsFunctionsNodes.Function3_2Node.create(new Qnt());
                 case "qsignrank":
                     return StatsFunctionsNodes.Function2_2Node.create(new QSignrank());
+                case "qtukey":
+                    return StatsFunctionsNodes.Function4_2Node.create(new QTukey());
+                case "ptukey":
+                    return StatsFunctionsNodes.Function4_2Node.create(new PTukey());
                 case "rmultinom":
                     return RMultinomNode.create();
                 case "Approx":

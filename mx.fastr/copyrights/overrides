@@ -33,6 +33,8 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/DNorm.
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RBeta.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RMultinom.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Cauchy.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/QTukey.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/PTukey.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Cdist.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/CompleteCases.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Covcor.java,gnu_r.copyright

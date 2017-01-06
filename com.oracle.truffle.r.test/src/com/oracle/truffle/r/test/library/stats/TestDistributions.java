@@ -160,13 +160,21 @@ public class TestDistributions extends TestBase {
                     test("3e100, ncp=0.5", withDefaultQ("-30", "-20", "-4", "0.5", "1.3", "2", "3", "4", "10", "100")).
                     test("Inf, ncp=-1", withQuantiles("-10", "-5", "-4", "-3", "-2", "-1", "0", "1.1", "2", "3", "4", "10", "100")).
                     // negative first parameter => error
-                    test("-10, ncp=2", withQuantiles("1"))
+                    test("-10, ncp=2", withQuantiles("1")),
+            distr("tukey").
+                    hasNoDensityFunction().
+                    addErrorParamValues("-10", "0", "1").
+                    test("10, 5, 4", withDefaultQ("-1", "1", "1.9", "3", "5", "10", "15", "20", "100"))
     };
     // @formatter:on
 
     @Test
     public void testDensityFunctions() {
         for (DistrTest testCase : testCases) {
+            if (!testCase.hasDensityFunction) {
+                continue;
+            }
+
             for (ParamsAndQuantiles paramsAndQ : testCase.paramsAndQuantiles) {
                 testDensityFunction("d" + testCase.name, paramsAndQ.params, paramsAndQ.quantiles);
             }
@@ -250,6 +258,7 @@ public class TestDistributions extends TestBase {
         public final String name;
         public final ArrayList<ParamsAndQuantiles> paramsAndQuantiles = new ArrayList<>();
         private int paramsCount = -1;
+        private boolean hasDensityFunction = true;
         /**
          * Set of single R values that are supposed to produce error when used as any of the
          * parameters.
@@ -280,6 +289,11 @@ public class TestDistributions extends TestBase {
          */
         public DistrTest clearDefaultErrorParamValues() {
             errorParamValues.clear();
+            return this;
+        }
+
+        public DistrTest hasNoDensityFunction() {
+            hasDensityFunction = false;
             return this;
         }
     }
