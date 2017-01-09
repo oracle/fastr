@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,8 +126,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             // sees two different classes
             attributes = ((RAttributeStorage) arg).getAttributes();
         } else {
-            arg = argProfile.profile(arg);
-            attributes = arg.getAttributes();
+            attributes = argProfile.profile(arg).getAttributes();
         }
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
@@ -136,7 +135,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {
-                if (withS4 && arg.isS4() && isS4Profile.profile(classHierarchy.getLength() > 0)) {
+                if (withS4 && argProfile.profile(arg).isS4() && isS4Profile.profile(classHierarchy.getLength() > 0)) {
                     if (s4Class == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         s4Class = insert(S4ClassNodeGen.create());

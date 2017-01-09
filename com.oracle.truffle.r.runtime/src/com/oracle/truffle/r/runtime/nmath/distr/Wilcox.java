@@ -336,7 +336,7 @@ public final class Wilcox {
         }
 
         @TruffleBoundary
-        private double rwilcoxRaw(RandomNumberProvider rand, double n, int kIn) {
+        private static double rwilcoxRaw(RandomNumberProvider rand, double n, int kIn) {
             double r = 0.0;
             int k = kIn;
             int[] x;

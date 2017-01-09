@@ -111,11 +111,11 @@ public final class QNChisq implements Function3_2 {
     /**
      * Is greater that changes to is lower if {@code lowerTail} is {@code false}.
      */
-    private boolean isGreater(boolean lowerTail, double raw, double p) {
+    private static boolean isGreater(boolean lowerTail, double raw, double p) {
         return (lowerTail && raw > p) || (!lowerTail && raw < p);
     }
 
-    private boolean isLower(boolean lowerTail, double raw, double p) {
+    private static boolean isLower(boolean lowerTail, double raw, double p) {
         return (lowerTail && raw < p) || (!lowerTail && raw > p);
     }
 }

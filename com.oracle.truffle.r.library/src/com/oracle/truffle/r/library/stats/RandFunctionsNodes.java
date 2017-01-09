@@ -258,7 +258,6 @@ public final class RandFunctionsNodes {
         }
 
         // Note: for completeness of the API
-        @SuppressWarnings("unused")
         public static RandFunction3Node createDouble(RandFunction3_Double function) {
             return RandFunction3NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
         }
