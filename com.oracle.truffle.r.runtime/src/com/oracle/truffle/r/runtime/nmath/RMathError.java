@@ -56,7 +56,7 @@ public final class RMathError {
      * {@link MLError#DOMAIN} a warning is reported by this method, otherwise the caller should
      * return {@code NaN}, which should be handled by the caller's caller.
      */
-    public static double error(@SuppressWarnings("unused") MLError error, @SuppressWarnings("unused") String messageArg) {
+    public static double error(MLError error, String messageArg) {
         if (error != MLError.DOMAIN) {
             error.warning(messageArg);
         }

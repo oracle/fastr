@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -330,7 +330,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     Object result;
                     if (dataAt == RNull.instance) {
                         result = RNull.instance;
-                    } else if (positions[i] instanceof RAbstractContainer && ((RAbstractContainer) positions[i]).getLength() == 0) {
+                    } else if (positionsCheckNode.isEmptyPosition(i, positions[i])) {
                         result = RNull.instance;
                     } else {
                         result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);

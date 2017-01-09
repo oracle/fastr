@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,9 +100,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
-        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
-        return result;
-
+        return doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
     }
 
     private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector, GetNamesAttributeNode getNamesNode) {

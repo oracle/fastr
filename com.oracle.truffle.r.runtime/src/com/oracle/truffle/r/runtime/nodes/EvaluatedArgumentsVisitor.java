@@ -101,7 +101,8 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                     if (builtin != null && builtin.getKind() == RBuiltinKind.INTERNAL) {
                         ArgumentsSignature signature = builtin.getSignature();
                         if (signature.getVarArgCount() == 0) {
-                            assert innerArguments.length == signature.getLength();
+                            // holds only for well-formed code, so we cannot rely on it:
+                            // assert innerArguments.length == signature.getLength();
                         } else {
                             assert signature.getVarArgCount() == 1 : signature;
                             assert innerArguments.length == signature.getLength() || signature.getVarArgIndex() == signature.getLength() - 1 : signature;

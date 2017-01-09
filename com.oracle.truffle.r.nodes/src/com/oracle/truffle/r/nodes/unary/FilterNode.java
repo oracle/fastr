@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
@@ -45,6 +46,7 @@ public abstract class FilterNode extends CastNode {
 
     private final BranchProfile warningProfile = BranchProfile.create();
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
@@ -92,7 +94,7 @@ public abstract class FilterNode extends CastNode {
 
     @Specialization
     public Object executeRest(Object x) {
-        if (!conditionProfile.profile(evalCondition(x))) {
+        if (!conditionProfile.profile(evalCondition(valueProfile.profile(x)))) {
             handleMessage(x);
         }
         return x;

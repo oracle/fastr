@@ -28,9 +28,7 @@ import static com.oracle.truffle.r.runtime.nmath.DPQ.rdtqiv;
 import static com.oracle.truffle.r.runtime.nmath.DPQ.rlog1exp;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
-import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_1_SQRT_2PI;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN2;
-import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_SQRT_32;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -97,7 +95,7 @@ public abstract class GammaFunctions {
      * Should be used in places where GnuR itself uses std libc function {@code lgamma}. Under the
      * hood it uses {@link #lgammafn(double)}.
      */
-    public static double lgamma(@SuppressWarnings("unused") double x) {
+    public static double lgamma(double x) {
         return lgammafn(x);
     }
 
@@ -1180,161 +1178,5 @@ public abstract class GammaFunctions {
         /* else shape >= 1 */
         pr = DPois.dpoisRaw(shape - 1, x / scale, giveLog);
         return giveLog ? pr - Math.log(scale) : pr / scale;
-    }
-
-    private static final double SIXTEN = 16; /* Cutoff allowing exact "*" and "/" */
-
-    @CompilationFinal private static final double[] pba = new double[]{2.2352520354606839287, 161.02823106855587881, 1067.6894854603709582, 18154.981253343561249, 0.065682337918207449113};
-    @CompilationFinal private static final double[] pbb = new double[]{47.20258190468824187, 976.09855173777669322, 10260.932208618978205, 45507.789335026729956};
-    @CompilationFinal private static final double[] pbc = new double[]{0.39894151208813466764, 8.8831497943883759412, 93.506656132177855979, 597.27027639480026226, 2494.5375852903726711,
-                    6848.1904505362823326, 11602.651437647350124, 9842.7148383839780218, 1.0765576773720192317e-8};
-    @CompilationFinal private static final double[] pbd = new double[]{22.266688044328115691, 235.38790178262499861, 1519.377599407554805, 6485.558298266760755, 18615.571640885098091,
-                    34900.952721145977266, 38912.003286093271411, 19685.429676859990727};
-    @CompilationFinal private static final double[] pbp = new double[]{0.21589853405795699, 0.1274011611602473639, 0.022235277870649807, 0.001421619193227893466, 2.9112874951168792e-5,
-                    0.02307344176494017303};
-    @CompilationFinal private static final double[] pbq = new double[]{1.28426009614491121, 0.468238212480865118, 0.0659881378689285515, 0.00378239633202758244, 7.29751555083966205e-5};
-
-    private static void doDel(double xpar, double x, double temp, double[] cum, double[] ccum, boolean logp, boolean lower, boolean upper) {
-        double xsq = (long) (xpar * SIXTEN) / SIXTEN;
-        double del = (xpar - xsq) * (xpar + xsq);
-        if (logp) {
-            cum[0] = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
-            if ((lower && x > 0.) || (upper && x <= 0.)) {
-                ccum[0] = RMath.log1p(-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
-            }
-        } else {
-            cum[0] = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
-            ccum[0] = 1.0 - cum[0];
-        }
-    }
-
-    private static void swapTail(double x, double[] cum, double[] ccum, boolean lower) {
-        if (x > 0.) { /* swap ccum <--> cum */
-            double temp;
-            temp = cum[0];
-            if (lower) {
-                cum[0] = ccum[0];
-                ccum[0] = temp;
-            }
-        }
-    }
-
-    private static void pnormBoth(double x, double[] cum, double[] ccum, int iTail, boolean logp) {
-        /*
-         * i_tail in {0,1,2} means: "lower", "upper", or "both" : if(lower) return *cum := P[X <= x]
-         * if(upper) return *ccum := P[X > x] = 1 - P[X <= x]
-         */
-        double xden;
-        double xnum;
-        double temp;
-        double eps;
-        double xsq;
-        double y;
-        int i;
-        boolean lower;
-        boolean upper;
-
-        if (Double.isNaN(x)) {
-            cum[0] = x;
-            ccum[0] = x;
-            return;
-        }
-
-        /* Consider changing these : */
-        eps = DBL_EPSILON * 0.5;
-
-        /* i_tail in {0,1,2} =^= {lower, upper, both} */
-        lower = iTail != 1;
-        upper = iTail != 0;
-
-        y = Math.abs(x);
-        if (y <= 0.67448975) { /* qnorm(3/4) = .6744.... -- earlier had 0.66291 */
-            if (y > eps) {
-                xsq = x * x;
-                xnum = pba[4] * xsq;
-                xden = xsq;
-                for (i = 0; i < 3; i++) {
-                    xnum = (xnum + pba[i]) * xsq;
-                    xden = (xden + pbb[i]) * xsq;
-                }
-            } else {
-                xnum = xden = 0.0;
-            }
-
-            temp = x * (xnum + pba[3]) / (xden + pbb[3]);
-            if (lower) {
-                cum[0] = 0.5 + temp;
-            }
-            if (upper) {
-                ccum[0] = 0.5 - temp;
-            }
-            if (logp) {
-                if (lower) {
-                    cum[0] = Math.log(cum[0]);
-                }
-                if (upper) {
-                    ccum[0] = Math.log(ccum[0]);
-                }
-            }
-        } else if (y <= M_SQRT_32) {
-            /* Evaluate pnorm for 0.674.. = qnorm(3/4) < |x| <= sqrt(32) ~= 5.657 */
-
-            xnum = pbc[8] * y;
-            xden = y;
-            for (i = 0; i < 7; i++) {
-                xnum = (xnum + pbc[i]) * y;
-                xden = (xden + pbd[i]) * y;
-            }
-            temp = (xnum + pbc[7]) / (xden + pbd[7]);
-
-            doDel(y, x, temp, cum, ccum, logp, lower, upper);
-            swapTail(x, cum, ccum, lower);
-            /*
-             * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
-             * lower=T, log=F Particularly *not* for log_p !
-             *
-             * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-             *
-             * Note that we do want symmetry(0), lower/upper -> hence use y
-             */
-        } else if ((logp && y < 1e170) /* avoid underflow below */
-        /*
-         * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make use of Abramowitz
-         * & Stegun, 26.2.13, something like
-         *
-         * xsq = x*x;
-         *
-         * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) / (xsq+2.); else
-         * del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) + log1p(-del);ccum = log1p(-exp(*cum));
-         * /.* ~ log(1) = 0 *./
-         *
-         * swap_tail;
-         *
-         * [Yes, but xsq might be infinite.]
-         */
-                        || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {
-
-            /* Evaluate pnorm for x in (-37.5, -5.657) union (5.657, 37.5) */
-            xsq = 1.0 / (x * x); /* (1./x)*(1./x) might be better */
-            xnum = pbp[5] * xsq;
-            xden = xsq;
-            for (i = 0; i < 4; i++) {
-                xnum = (xnum + pbp[i]) * xsq;
-                xden = (xden + pbq[i]) * xsq;
-            }
-            temp = xsq * (xnum + pbp[4]) / (xden + pbq[4]);
-            temp = (M_1_SQRT_2PI - temp) / y;
-
-            doDel(x, x, temp, cum, ccum, logp, lower, upper);
-            swapTail(x, cum, ccum, lower);
-        } else { /* large x such that probs are 0 or 1 */
-            if (x > 0) {
-                cum[0] = rd1(logp);
-                ccum[0] = rd0(logp);
-            } else {
-                cum[0] = rd0(logp);
-                ccum[1] = rd1(logp);
-            }
-        }
     }
 }

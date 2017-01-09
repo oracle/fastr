@@ -18,7 +18,6 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pnf implements Function4_2 {
     private final PNChisq pnchisq = new PNChisq();
-    private final PNBeta pnbeta = new PNBeta();
 
     @Override
     public double evaluate(double x, double df1, double df2, double ncp, boolean lowerTail, boolean logP) {
@@ -50,7 +49,6 @@ public final class Pnf implements Function4_2 {
         }
 
         y = (df1 / df2) * x;
-        return pnbeta.pnbeta2(y / (1. + y), 1. / (1. + y), df1 / 2., df2 / 2.,
-                        ncp, lowerTail, logP);
+        return PNBeta.pnbeta2(y / (1. + y), 1. / (1. + y), df1 / 2., df2 / 2., ncp, lowerTail, logP);
     }
 }

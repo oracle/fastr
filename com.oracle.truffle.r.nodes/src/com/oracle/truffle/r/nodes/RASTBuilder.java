@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.InternalNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
@@ -139,6 +140,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     return new BlockNode(source, lhsLookup, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
                 case "missing":
                     return new MissingNode(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
+                case ".Internal":
+                    return InternalNode.create(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
             }
         }
 

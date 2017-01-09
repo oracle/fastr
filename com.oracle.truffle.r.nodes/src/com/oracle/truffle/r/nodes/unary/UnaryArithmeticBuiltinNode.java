@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,7 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
     }
 
     protected UnaryArithmeticBuiltinNode(RType minPrecedence) {
-        unaryNode = UnaryArithmeticNodeGen.create(this, minPrecedence, RError.Message.ARGUMENTS_PASSED_0_1,
-                        new Object[]{getRBuiltin().name()});
+        unaryNode = UnaryArithmeticNodeGen.create(this, minPrecedence, RError.Message.ARGUMENTS_PASSED, new Object[]{0, "'" + getRBuiltin().name() + "'", 1});
     }
 
     @Specialization
@@ -116,5 +115,4 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
     protected double opd(double re, double im) {
         throw new UnsupportedOperationException();
     }
-
 }

@@ -89,6 +89,7 @@ import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -108,7 +109,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NodeCost.NONE)
-@NodeChild(value = "function", type = ForcePromiseNode.class)
+@NodeChild(value = "function", type = RNode.class)
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
@@ -132,7 +133,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return sourceSection;
     }
 
-    protected abstract ForcePromiseNode getFunction();
+    public abstract RNode getFunction();
 
     private final RSyntaxNode[] arguments;
     private final int[] varArgIndexes;
@@ -256,7 +257,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected RNode createDispatchArgument(int index) {
-        return new ForcePromiseNode(RASTUtils.cloneNode(arguments[index].asRNode()));
+        return RContext.getASTBuilder().process(arguments[index]).asRNode();
     }
 
     /**
@@ -530,15 +531,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         throw RError.error(RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
     }
 
-    public RNode getFunctionNode() {
-        if (getFunction() != null) {
-            // Only the very 1. RootCallNode on the top level contains the one-and-only function
-            // node
-            return getFunction().getValueNode();
-        }
-        return getParentCallNode().getFunctionNode();
-    }
-
     public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll) {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
@@ -615,7 +607,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        return RCallNodeGen.create(src, arguments, signature, new ForcePromiseNode(function));
+        return RCallNodeGen.create(src, arguments, signature, function);
     }
 
     public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
@@ -628,14 +620,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return (RBuiltinRootNode) root;
         }
         return null;
-    }
-
-    private RCallNode getParentCallNode() {
-        RNode parent = (RNode) unwrapParent();
-        if (!(parent instanceof RCallNode)) {
-            throw RInternalError.shouldNotReachHere();
-        }
-        return (RCallNode) parent;
     }
 
     static boolean needsSplitting(RootCallTarget target) {
@@ -994,8 +978,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        ForcePromiseNode func = getFunction();
-        return func == null || func.getValueNode() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
+        return getFunction() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunction().asRSyntaxNode();
     }
 
     @Override

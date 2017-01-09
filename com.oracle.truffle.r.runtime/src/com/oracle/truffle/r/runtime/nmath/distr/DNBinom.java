@@ -100,28 +100,28 @@ public final class DNBinom {
             if (x == 0 && size == 0) {
                 return DPQ.rd1(giveLog);
             }
-            x = RMath.forceint(x);
+            double xi = RMath.forceint(x);
             if (!Double.isFinite(size)) {
                 // limit case: Poisson
-                return (dpoisRaw(x, mu, giveLog));
+                return (dpoisRaw(xi, mu, giveLog));
             }
 
-            if (x == 0)/* be accurate, both for n << mu, and n >> mu : */ {
+            if (xi == 0)/* be accurate, both for n << mu, and n >> mu : */ {
                 double ans = size * (size < mu ? Math.log(size / (size + mu)) : RMath.log1p(-mu / (size + mu)));
                 return DPQ.rdexp(ans, giveLog);
             }
-            if (x < 1e-10 * size) { /* don't use dbinom_raw() but MM's formula: */
+            if (xi < 1e-10 * size) { /* don't use dbinom_raw() but MM's formula: */
                 /* GnuR fix me --- 1e-8 shows problem; rather use algdiv() from ./toms708.c */
                 double p = (size < mu ? Math.log(size / (1 + size / mu)) : Math.log(mu / (1 + mu / size)));
-                double ans = x * p - mu - lgamma(x + 1) + RMath.log1p(x * (x - 1) / (2 * size));
+                double ans = xi * p - mu - lgamma(xi + 1) + RMath.log1p(xi * (xi - 1) / (2 * size));
                 return DPQ.rdexp(ans, giveLog);
             } else {
                 /*
                  * no unnecessary cancellation inside dbinom_raw, when x_ = size and n_ = x+size are
                  * so close that n_ - x_ loses accuracy
                  */
-                double p = size / (size + x);
-                double ans = Dbinom.dbinomRaw(size, x + size, size / (size + mu), mu / (size + mu), giveLog);
+                double p = size / (size + xi);
+                double ans = Dbinom.dbinomRaw(size, xi + size, size / (size + mu), mu / (size + mu), giveLog);
                 return ((giveLog) ? Math.log(p) + ans : p * ans);
             }
         }

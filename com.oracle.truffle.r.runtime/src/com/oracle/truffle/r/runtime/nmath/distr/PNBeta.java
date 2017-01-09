@@ -34,7 +34,7 @@ public final class PNBeta implements Function4_2 {
         return pnbeta2(x, 1 - x, a, b, ncp, lowerTail, logP);
     }
 
-    double pnbeta2(double x, double oX, double a, double b, double ncp, boolean lowerTail, boolean logP) {
+    static double pnbeta2(double x, double oX, double a, double b, double ncp, boolean lowerTail, boolean logP) {
         /* LDOUBLE */
         double ans = pnbetaRaw(x, oX, a, b, ncp);
 
@@ -69,7 +69,7 @@ public final class PNBeta implements Function4_2 {
                                               * GnuR: 100 is not enough for pf(ncp=200) see PR#11277
                                               */
 
-    double pnbetaRaw(double x, double oX, double a, double b, double ncp) {
+    static double pnbetaRaw(double x, double oX, double a, double b, double ncp) {
         /* oX == 1 - x but maybe more accurate */
         if (ncp < 0. || a <= 0. || b <= 0.) {
             return RMathError.defaultError();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Map;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -85,35 +86,36 @@ public class OptionsFunctions {
         }
 
         @Specialization(guards = "isMissing(args)")
-        protected Object optionsMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        protected Object optionsMissing(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+            visibility.execute(frame, true);
             return options(RMissing.instance);
         }
 
-        private static final class InvisibleResult extends Throwable {
-            private static final long serialVersionUID = 5767688593421435507L;
-
+        private static final class ResultWithVisibility {
             private final RList value;
+            private final boolean visible;
 
-            protected InvisibleResult(RList value) {
+            protected ResultWithVisibility(RList value, boolean visible) {
                 this.value = value;
+                this.visible = visible;
             }
         }
 
         @Specialization(guards = "!isMissing(args)")
         protected Object options(VirtualFrame frame, RArgsValuesAndNames args) {
             try {
-                return optionsInternal(args);
+                ResultWithVisibility result = optionsInternal(args);
+                visibility.execute(frame, result.visible);
+                return result.value;
             } catch (OptionsException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, ex);
-            } catch (InvisibleResult ex) {
-                visibility.execute(frame, false);
-                return ex.value;
             }
         }
 
         @TruffleBoundary
-        private Object optionsInternal(RArgsValuesAndNames args) throws OptionsException, InvisibleResult {
-            boolean invisible = false;
+        private ResultWithVisibility optionsInternal(RArgsValuesAndNames args) throws OptionsException {
+            boolean visible = true;
             ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
             Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
@@ -179,15 +181,11 @@ public class OptionsFunctions {
                     names[i] = argName;
                     options.setValue(argName, value);
                     // any settings means result is invisible
-                    invisible = true;
+                    visible = false;
                 }
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            if (invisible) {
-                throw new InvisibleResult(result);
-            } else {
-                return result;
-            }
+            return new ResultWithVisibility(result, visible);
         }
 
         protected boolean isMissing(RArgsValuesAndNames args) {
