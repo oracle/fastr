@@ -120,7 +120,7 @@ public class TestOutputManager {
     /**
      * Maps inputs to expected outputs, used during generation.
      */
-    private SortedMap<String, SortedMap<String, TestInfo>> testMaps = new TreeMap<>();
+    private final SortedMap<String, SortedMap<String, TestInfo>> testMaps = new TreeMap<>();
     /**
      * A fast lookup map used at runtime to located the expected output.
      */

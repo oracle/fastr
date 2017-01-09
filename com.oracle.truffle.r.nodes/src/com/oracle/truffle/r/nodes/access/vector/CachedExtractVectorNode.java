@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedExtractVectorNode extends CachedVectorNode {
 
@@ -188,7 +188,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 writeVectorNode.enableValueNACheck(vector);
                 writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
                 extractedVector.setComplete(writeVectorNode.neverSeenNAInValue());
-                RNode.reportWork(this, extractedVectorLength);
+                RBaseNode.reportWork(this, extractedVectorLength);
             }
             if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
                 // names only need to be considered for single dimensional accesses
@@ -217,7 +217,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         } else {
             writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
-            RNode.reportWork(this, 1);
+            RBaseNode.reportWork(this, 1);
             assert extractedVectorLength == 1;
             return extractedVector.getDataAtAsObject(0);
         }

@@ -164,7 +164,7 @@ public class PTukey implements Function4_2 {
         return DPQ.rdtval(ans, lowerTail, logP);
     }
 
-    private double getULen(double df) {
+    private static double getULen(double df) {
         if (df <= dhaf) {
             return ulen1;
         } else if (df <= dquar) {

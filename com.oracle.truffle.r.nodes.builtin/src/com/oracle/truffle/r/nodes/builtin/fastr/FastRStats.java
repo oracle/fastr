@@ -420,8 +420,8 @@ public class FastRStats {
         }
 
         private static final class SortableCounter implements Comparable<SortableCounter> {
-            private boolean timing;
-            private Profiler.Counter counter;
+            private final boolean timing;
+            private final Profiler.Counter counter;
 
             private SortableCounter(Profiler.Counter counter, boolean timing) {
                 this.counter = counter;

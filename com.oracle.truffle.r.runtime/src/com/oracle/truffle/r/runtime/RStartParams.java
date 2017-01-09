@@ -88,7 +88,7 @@ public class RStartParams {
     /**
      * The original command line arguments that were parsed by {@link RCmdOptions}.
      */
-    private String[] arguments;
+    private final String[] arguments;
 
     /**
      * Indicates that FastR is running embedded.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -828,7 +828,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSet<VAL> {
-        private NonRecursiveHashMap<VAL> map;
+        private final NonRecursiveHashMap<VAL> map;
 
         public NonRecursiveHashSet(int approxCapacity) {
             map = new NonRecursiveHashMap<>(approxCapacity);
@@ -844,7 +844,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSetInt {
-        private NonRecursiveHashMapInt map;
+        private final NonRecursiveHashMapInt map;
 
         public NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
@@ -860,7 +860,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSetDouble {
-        private NonRecursiveHashMapDouble map;
+        private final NonRecursiveHashMapDouble map;
 
         public NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);

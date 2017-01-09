@@ -164,7 +164,7 @@ public class DLL {
         public final Object handle;
         private boolean dynamicLookup;
         private boolean forceSymbols;
-        private DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
+        private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
 
         private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();

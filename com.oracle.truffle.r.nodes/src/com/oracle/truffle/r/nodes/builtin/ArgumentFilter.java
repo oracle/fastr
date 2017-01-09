@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,13 +187,12 @@ public interface ArgumentFilter<T, R> {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
-                @SuppressWarnings({"cast", "unchecked"})
                 @Override
                 public boolean test(T arg) {
                     if (profile.profile(!InverseArgumentFilter.this.test(arg))) {
                         return false;
                     } else {
-                        return other.test((R) arg);
+                        return other.test(arg);
                     }
                 }
 

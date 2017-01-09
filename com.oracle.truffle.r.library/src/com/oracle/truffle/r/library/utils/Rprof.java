@@ -188,8 +188,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
      * collects the stack of functions.
      */
     private final class StatementListener implements ExecutionEventListener {
-        private ArrayList<ArrayList<RSyntaxElement>> intervalStacks = new ArrayList<>();
-        private ArrayList<RprofState.MemoryQuad> intervalMemory = new ArrayList<>();
+        private final ArrayList<ArrayList<RSyntaxElement>> intervalStacks = new ArrayList<>();
+        private final ArrayList<RprofState.MemoryQuad> intervalMemory = new ArrayList<>();
         private volatile boolean newInterval;
 
         private StatementListener() {

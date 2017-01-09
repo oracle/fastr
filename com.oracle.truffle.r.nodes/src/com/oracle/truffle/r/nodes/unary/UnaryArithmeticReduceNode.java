@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -199,7 +198,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected int doIntVector(RIntVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -226,7 +225,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected double doDoubleVector(RDoubleVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         double result = semantics.getDoubleStart();
         na.enable(operand);
@@ -253,7 +252,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -280,7 +279,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         int result = semantics.getIntStart();
         int current = operand.getStart();
         for (int i = 0; i < operand.getLength(); i++) {
@@ -295,7 +294,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
         for (int i = 0; i < operand.getLength(); i++) {
@@ -310,7 +309,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected RComplex doComplexVector(RComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, operand.getLength());
         if (semantics.supportComplex) {
             boolean profiledNaRm = naRmProfile.profile(naRm);
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());

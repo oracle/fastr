@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class UnaryMapNode extends RBaseNode {
 
@@ -157,7 +156,7 @@ public final class UnaryMapNode extends RBaseNode {
             target = createOrShareVector(operandLength, operand);
             Object store = target.getInternalStore();
             vectorNode.apply(scalarNode, store, operandCast, operandLength);
-            RNode.reportWork(this, operandLength);
+            RBaseNode.reportWork(this, operandLength);
             target.setComplete(scalarNode.isComplete());
         }
         if (mayContainMetadata) {
