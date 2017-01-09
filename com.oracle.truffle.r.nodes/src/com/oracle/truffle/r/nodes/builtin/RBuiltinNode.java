@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,10 +114,7 @@ public abstract class RBuiltinNode extends RBaseNode {
      */
     public RSyntaxElement getOriginalCall() {
         Node p = getParent();
-        while (true) {
-            if (p == null) {
-                return null;
-            }
+        while (p != null) {
             if (p instanceof RSyntaxCall) {
                 RSyntaxCall call = (RSyntaxCall) p;
                 if (call.getSyntaxArguments().length > 0 && call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals(".Internal")) {
@@ -128,6 +125,7 @@ public abstract class RBuiltinNode extends RBaseNode {
             }
             p = p.getParent();
         }
+        return null;
     }
 
     @Override

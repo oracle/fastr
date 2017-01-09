@@ -573,8 +573,6 @@ public final class RError extends RuntimeException {
         INCOMPATIBLE_METHODS("incompatible methods (\"%s\", \"%s\") for \"%s\""),
         RECURSIVE_INDEXING_FAILED("recursive indexing failed at level %d"),
         ARGUMENTS_PASSED("%d arguments passed to %s which requires %d"),
-        ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
-        ARGUMENTS_PASSED_INTERNAL_0_1("0 arguments passed to .Internal(%s) which requires 1"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
         WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),
