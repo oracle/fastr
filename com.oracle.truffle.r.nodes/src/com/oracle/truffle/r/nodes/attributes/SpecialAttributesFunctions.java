@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -312,7 +312,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setNamesInVector(RVector<?> x, RStringVector newNames,
+        protected void setNamesInVector(RAbstractVector x, RStringVector newNames,
                         @Cached("create()") BranchProfile namesTooLongProfile,
                         @Cached("createBinaryProfile()") ConditionProfile useDimNamesProfile,
                         @Cached("create()") GetDimAttributeNode getDimNode,
@@ -321,7 +321,7 @@ public final class SpecialAttributesFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
-            RVector<?> xProfiled = xTypeProfile.profile(x);
+            RAbstractVector xProfiled = xTypeProfile.profile(x);
             if (newNames.getLength() > xProfiled.getLength()) {
                 namesTooLongProfile.enter();
                 throw RError.error(this, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
@@ -348,7 +348,7 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         protected void setNamesInContainer(RAbstractContainer x, RStringVector newNames,
                         @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
@@ -388,7 +388,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorNames(RVector<?> x,
+        protected Object getVectorNames(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
@@ -405,12 +405,10 @@ public final class SpecialAttributesFunctions {
                 }
                 return null;
             }
-
             return names;
-
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
         protected Object getVectorNames(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") RAttributeProfiles attrProfiles) {
@@ -478,7 +476,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setDimsInVector(RVector<?> x, RAbstractIntVector dims,
+        protected void setDimsInVector(RAbstractVector x, RAbstractIntVector dims,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
@@ -498,7 +496,7 @@ public final class SpecialAttributesFunctions {
             super.setAttrInAttributable(x, dims, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         protected void setDimsInContainerFallback(RAbstractContainer x, RAbstractIntVector dims,
                         @Cached("create()") SetDimAttributeNode setDimNode) {
             int[] dimsArr = dims.materialize().getDataCopy();
@@ -590,6 +588,24 @@ public final class SpecialAttributesFunctions {
             }
             RIntVector dims = (RIntVector) execute(x);
             return nullDimsProfile.profile(dims == null) ? null : dims.getInternalStore();
+        }
+
+        public static boolean isArray(int[] dimensions) {
+            return dimensions != null && dimensions.length > 0;
+        }
+
+        public static boolean isMatrix(int[] dimensions) {
+            return dimensions != null && dimensions.length == 2;
+        }
+
+        public final boolean isArray(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) execute(vector);
+            return nullDimsProfile.profile(dims == null) ? false : dims.getLength() > 0;
+        }
+
+        public final boolean isMatrix(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) execute(vector);
+            return nullDimsProfile.profile(dims == null) ? false : dims.getLength() == 2;
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
@@ -786,14 +802,14 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorDimNames(RVector<?> x,
+        protected Object getVectorDimNames(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
         protected Object getVectorDimNames(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") RAttributeProfiles attrProfiles) {
@@ -829,7 +845,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setRowNamesInVector(RVector<?> x, RAbstractVector newRowNames,
+        protected void setRowNamesInVector(RAbstractVector x, RAbstractVector newRowNames,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
@@ -843,7 +859,7 @@ public final class SpecialAttributesFunctions {
             setAttrInAttributable(x, newRowNames, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setRowNames(rowNames);
@@ -926,7 +942,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected <T> void handleVectorNullClass(RVector<T> vector, @SuppressWarnings("unused") RNull classAttr,
+        protected <T> void handleVectorNullClass(RAbstractVector vector, @SuppressWarnings("unused") RNull classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                         @Cached("create()") BranchProfile nullAttrProfile,
@@ -939,7 +955,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected <T> void handleVector(RVector<T> vector, RStringVector classAttr,
+        protected <T> void handleVector(RAbstractVector vector, RStringVector classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                         @Cached("create()") BranchProfile nullAttrProfile,
@@ -989,12 +1005,12 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         protected void handleAttributable(RAttributable x, @SuppressWarnings("unused") RNull classAttr) {
             x.setClassAttr(null);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         protected void handleAttributable(RAttributable x, RStringVector classAttr) {
             x.setClassAttr(classAttr);
         }
@@ -1039,14 +1055,14 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorClass(RVector<?> x,
+        protected Object getVectorClass(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
         protected Object getVectorClass(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") RAttributeProfiles attrProfiles) {

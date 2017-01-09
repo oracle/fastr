@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,8 +55,8 @@ public abstract class APerm extends RBuiltinNode {
         casts.arg("resize").mustBe(numericValue().or(logicalValue()), Message.INVALID_LOGICAL, "resize").asLogicalVector().findFirst();
     }
 
-    private void checkErrorConditions(RAbstractVector vector) {
-        if (!vector.isArray()) {
+    private void checkErrorConditions(int[] dim) {
+        if (!GetDimAttributeNode.isArray(dim)) {
             errorProfile.enter();
             throw RError.error(RError.SHOW_CALLER, RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
@@ -66,9 +66,9 @@ public abstract class APerm extends RBuiltinNode {
     protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimNode) {
-        checkErrorConditions(vector);
 
         int[] dim = getDimsNode.getDimensions(vector);
+        checkErrorConditions(dim);
         final int diml = dim.length;
 
         RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
@@ -108,9 +108,9 @@ public abstract class APerm extends RBuiltinNode {
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode) {
-        checkErrorConditions(vector);
 
         int[] dim = getDimsNode.getDimensions(vector);
+        checkErrorConditions(dim);
         int[] perm = getPermute(dim, permVector);
 
         int[] posV = new int[dim.length];

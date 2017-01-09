@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -82,16 +82,10 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     private final LoopConditionProfile loopLength = LoopConditionProfile.createCountingProfile();
 
     public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, RBaseNode invokingNode) throws RError {
-        boolean ansmat;
-        boolean naFail;
-        boolean everything;
-        boolean sd0;
-        boolean emptyErr;
+
+        boolean ansmat = getDimsNode.isMatrix(x);
         int n;
         int ncx;
-        int ncy;
-
-        ansmat = x.isMatrix();
         if (ansmat) {
             n = nrows(x);
             ncx = ncols(x);
@@ -100,9 +94,10 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             ncx = 1;
         }
 
+        int ncy;
         if (y == null) {
             ncy = ncx;
-        } else if (y.isMatrix()) {
+        } else if (getDimsNode.isMatrix(y)) {
             if (nrows(y) != n) {
                 error.enter();
                 error("incompatible dimensions");
@@ -120,9 +115,9 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         // TODO adopt full use semantics
 
         /* "default: complete" (easier for -Wall) */
-        naFail = false;
-        everything = false;
-        emptyErr = true;
+        boolean naFail = false;
+        boolean everything = false;
+        boolean emptyErr = true;
 
         // case 4: /* "everything": NAs are propagated */
         everything = true;
@@ -136,6 +131,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         double[] answerData = new double[ncx * ncy];
 
         double[] xm = new double[ncx];
+        boolean sd0;
         if (y == null) {
             if (everything) {
                 sd0 = covNA1(n, ncx, x, xm, answerData, isCor, iskendall);
@@ -170,7 +166,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
 
         RDoubleVector ans = null;
-        if (x.isMatrix()) {
+        if (getDimsNode.isMatrix(x)) {
             ans = RDataFactory.createDoubleVector(answerData, !seenNA, new int[]{ncx, ncy});
         } else {
             ans = RDataFactory.createDoubleVector(answerData, !seenNA);
