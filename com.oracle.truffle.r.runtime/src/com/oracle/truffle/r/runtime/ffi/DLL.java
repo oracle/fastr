@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -382,7 +382,7 @@ public class DLL {
      * R_DEFAULT_PACKAGES do throw RErrors.
      */
 
-    private static DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
+    private static synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
         Object handle = RFFIFactory.getRFFI().getDLLRFFI().dlopen(absPath, local, now);
         if (handle == null) {
             String dlError = RFFIFactory.getRFFI().getDLLRFFI().dlerror();
