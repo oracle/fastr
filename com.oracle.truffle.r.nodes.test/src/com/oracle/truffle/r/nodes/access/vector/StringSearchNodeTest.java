@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.Test;
-import org.junit.experimental.theories.*;
-import org.junit.runner.*;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
-import com.oracle.truffle.r.nodes.test.*;
+import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RunWith(Theories.class)
 public class StringSearchNodeTest extends TestBase {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,23 @@
 
 package com.oracle.truffle.r.test;
 
-import org.junit.internal.*;
-import org.junit.runner.*;
-import org.junit.runner.notification.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.io.*;
-import java.util.*;
-import java.lang.reflect.*;
+import org.junit.internal.JUnitSystem;
+import org.junit.internal.RealSystem;
+import org.junit.internal.TextListener;
+import org.junit.runner.Description;
+import org.junit.runner.JUnitCore;
+import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
 
-import junit.runner.*;
+import junit.runner.Version;
 
 public class FastRJUnitWrapper {
     // CheckStyle: stop system..print check

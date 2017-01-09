@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop.ffi;
 
-import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -30,6 +29,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
+import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleUserRng implements UserRngRFFI {
     private static class TruffleUserRngRFFINode extends UserRngRFFINode {

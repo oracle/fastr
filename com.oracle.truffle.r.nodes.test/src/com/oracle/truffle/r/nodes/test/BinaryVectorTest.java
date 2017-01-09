@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static com.oracle.truffle.r.runtime.data.RDataFactory.*;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createComplexVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleSequence;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyComplexVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyDoubleVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyIntVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyLogicalVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntSequence;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createLogicalVector;
 
-import org.hamcrest.*;
-import org.junit.experimental.theories.*;
+import org.hamcrest.CustomMatcher;
+import org.hamcrest.Matcher;
+import org.junit.experimental.theories.DataPoint;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class BinaryVectorTest extends TestBase {
 

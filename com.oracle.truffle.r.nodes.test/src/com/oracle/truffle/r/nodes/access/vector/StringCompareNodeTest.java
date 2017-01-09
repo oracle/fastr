@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.junit.Assume.*;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
-import org.junit.*;
-import org.junit.experimental.theories.*;
-import org.junit.runner.*;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode;
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
-import com.oracle.truffle.r.nodes.test.*;
+import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 @RunWith(Theories.class)
 public class StringCompareNodeTest extends TestBase {

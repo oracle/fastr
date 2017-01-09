@@ -14,8 +14,8 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 
 import java.util.Arrays;
 

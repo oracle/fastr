@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class JNI_UserRng implements UserRngRFFI {
     private static class JNI_UserRngRFFINode extends UserRngRFFINode {

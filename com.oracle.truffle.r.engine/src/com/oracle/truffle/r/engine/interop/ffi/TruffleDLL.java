@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,10 +36,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.jni.JNI_DLL;
-import com.oracle.truffle.r.runtime.ffi.truffle.LLVM_IR;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.jni.JNI_DLL;
+import com.oracle.truffle.r.runtime.ffi.truffle.LLVM_IR;
 
 /**
  * The Truffle version of {@link DLLRFFI}. {@link TruffleDLL#dlopen} expects to find the LLVM IR

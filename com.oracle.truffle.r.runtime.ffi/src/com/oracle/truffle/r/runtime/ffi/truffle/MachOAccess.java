@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.truffle;
 
-import java.io.*;
-import java.nio.*;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RInternalError;

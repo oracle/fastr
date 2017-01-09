@@ -13,10 +13,10 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_IN_PROB_VECTOR;
 import static com.oracle.truffle.r.runtime.RError.Message.NEGATIVE_PROBABILITY;
 import static com.oracle.truffle.r.runtime.RError.Message.NO_POSITIVE_PROBABILITIES;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;

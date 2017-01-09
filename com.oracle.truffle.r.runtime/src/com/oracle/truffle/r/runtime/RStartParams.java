@@ -5,23 +5,23 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.RESTORE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE_DATA;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SITE_FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.RESTORE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VANILLA;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VERBOSE;
