@@ -42,7 +42,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -63,7 +62,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -114,7 +112,8 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos) {
+        protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos,
+                        @Cached("new()") GetCallerFrameNode getCallerFrame) {
             if (pos.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.INVALID_ARGUMENT, "pos");
@@ -124,32 +123,36 @@ public class EnvFunctions {
                 REnvironment env;
                 int p = pos.getDataAt(i);
                 if (p == -1) {
-                    Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-                    if (callerFrame == null) {
+                    if (RArguments.getDepth(frame) == 0) {
                         errorProfile.enter();
                         throw RError.error(this, RError.Message.NO_ENCLOSING_ENVIRONMENT);
-                    } else {
-                        env = REnvironment.frameToEnvironment(callerFrame.materialize());
                     }
+                    Frame callerFrame = getCallerFrame.execute(frame);
+                    env = REnvironment.frameToEnvironment(callerFrame.materialize());
                 } else {
-                    String[] searchPath = REnvironment.searchPath();
-                    if (p == searchPath.length + 1) {
-                        // although the empty env does not appear in the result of "search", and it
-                        // is
-                        // not accessible by name, GnuR allows it to be accessible by index
-                        env = REnvironment.emptyEnv();
-                    } else if ((p <= 0) || (p > searchPath.length + 1)) {
-                        errorProfile.enter();
-                        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
-                    } else {
-                        env = REnvironment.lookupOnSearchPath(searchPath[p - 1]);
-                    }
+                    env = fromSearchpath(p);
                 }
                 if (pos.getLength() == 1) {
                     return env;
                 }
             }
             return RDataFactory.createList(results);
+        }
+
+        @TruffleBoundary
+        private REnvironment fromSearchpath(int p) {
+            String[] searchPath = REnvironment.searchPath();
+            if (p == searchPath.length + 1) {
+                // although the empty env does not appear in the result of "search", and it
+                // is
+                // not accessible by name, GnuR allows it to be accessible by index
+                return REnvironment.emptyEnv();
+            } else if ((p <= 0) || (p > searchPath.length + 1)) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
+            } else {
+                return REnvironment.lookupOnSearchPath(searchPath[p - 1]);
+            }
         }
 
         @Specialization
