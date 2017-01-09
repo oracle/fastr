@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,12 +57,11 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     @Specialization(limit = "3", //
                     guards = {"cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
-    @SuppressWarnings("unused")
-    protected Object getAttrCached(DynamicObject attrs, String name,
-                    @Cached("name") String cachedName,
+    protected Object getAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name,
+                    @SuppressWarnings("unused") @Cached("name") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs);
+        return location == null ? null : location.get(attrs, shape);
     }
 
     @TruffleBoundary
@@ -96,5 +95,4 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
 
         return recursive.execute(attributes, name);
     }
-
 }

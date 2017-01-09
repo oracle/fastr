@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,11 +81,10 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization(limit = "3", //
                     guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
-    @SuppressWarnings("unused")
     protected Object getAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs);
+        return location == null ? null : location.get(attrs, shape);
     }
 
     @Specialization(contains = "getAttrCached")
@@ -119,5 +118,4 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
         return recursive.execute(attributes);
     }
-
 }
