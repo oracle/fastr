@@ -1203,7 +1203,7 @@ public class GrepFunctions {
                         if (perl) {
                             resultItem = splitPerl(data, pcreSplits[i % splits.length]);
                         } else {
-                            resultItem = splitIntl(data, currentSplit);
+                            resultItem = splitIntl(data, currentSplit, fixed);
                         }
                         if (resultItem.getLength() == 0) {
                             if (fixed) {
@@ -1234,9 +1234,36 @@ public class GrepFunctions {
             }
         }
 
-        private static RStringVector splitIntl(String input, String separator) {
+        private static RStringVector splitIntl(String input, String separator, boolean fixed) {
             assert !RRuntime.isNA(input);
-            return RDataFactory.createStringVector(input.split(separator), true);
+
+            if (fixed) {
+                ArrayList<String> matches = new ArrayList<>();
+                int idx = input.indexOf(separator);
+                if (idx < 0) {
+                    return RDataFactory.createStringVector(input);
+                }
+                int lastIdx = 0;
+                while (idx > -1) {
+                    matches.add(input.substring(lastIdx, idx));
+                    lastIdx = idx + separator.length();
+                    if (lastIdx > input.length()) {
+                        break;
+                    }
+                    idx = input.indexOf(separator, lastIdx);
+                }
+                String m = input.substring(lastIdx);
+                if (!m.isEmpty()) {
+                    matches.add(m);
+                }
+                return RDataFactory.createStringVector(matches.toArray(new String[matches.size()]), false);
+            } else {
+                if (input.equals(separator)) {
+                    return RDataFactory.createStringVector("");
+                } else {
+                    return RDataFactory.createStringVector(input.split(separator), true);
+                }
+            }
         }
 
         private static RStringVector emptySplitIntl(String input) {

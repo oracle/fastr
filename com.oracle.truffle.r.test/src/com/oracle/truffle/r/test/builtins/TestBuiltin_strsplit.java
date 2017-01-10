@@ -121,5 +121,30 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("strsplit('oo bar baz', '[f z]', perl=TRUE)");
         assertEval("strsplit('foo \u1010ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄbar baz ', '[f z]', perl=TRUE)");
         assertEval("strsplit('Ä Ä', '[ ]', perl=TRUE)");
+
+        assertEval("strsplit('1', '1', fixed=TRUE)");
+        assertEval("strsplit('11', '11', fixed=TRUE)");
+        assertEval("strsplit(c('1', '11'), c('1', '11'), fixed=TRUE)");
+        assertEval("strsplit('Ä', 'Ä', fixed=TRUE)");
+        assertEval("strsplit('ÄÄ', 'Ä', fixed=TRUE)");
+
+        assertEval("strsplit('1', '1', fixed=FALSE)");
+        assertEval("strsplit('11', '11', fixed=FALSE)");
+        assertEval("strsplit(c('1', '11'), c('1', '11'), fixed=FALSE)");
+        assertEval("strsplit('Ä', 'Ä', fixed=FALSE)");
+        assertEval("strsplit('ÄÄ', 'Ä', fixed=FALSE)");
+
+        assertEval("strsplit(c('111', '1'), c('111', '1'), fixed=TRUE)");
+        assertEval("strsplit(c('1', ''), c('1', ''), fixed=TRUE)");
+        assertEval("strsplit(c('1', 'b'), c('1', 'b'), fixed=TRUE)");
+        assertEval("strsplit(c('a1a', 'a1b'), c('1', '1'), fixed=TRUE)");
+        assertEval("strsplit(c('a1a', 'a1b'), '1', fixed=TRUE)");
+
+        assertEval("strsplit(c('111', '1'), c('111', '1'), fixed=FALSE)");
+        assertEval("strsplit(c('1', ''), c('1', ''), fixed=FALSE)");
+        assertEval("strsplit(c('1', 'b'), c('1', 'b'), fixed=FALSE)");
+        assertEval("strsplit(c('a1a', 'a1b'), c('1', '1'), fixed=FALSE)");
+        assertEval("strsplit(c('a1a', 'a1b'), '1', fixed=FALSE)");
+
     }
 }
