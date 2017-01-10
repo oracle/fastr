@@ -186,5 +186,12 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ .Internal(gsub(\"7\", 42, \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(gsub(\"7\", character(), \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(gsub(\"7\", \"42\", 7, F, F, F, F)) }");
+
+        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
+        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
+
+        // Expected output: [1] "xaxbx"
+        // FastR output: [1] "axxxxxb"
+        assertEval(Ignored.Unknown, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }

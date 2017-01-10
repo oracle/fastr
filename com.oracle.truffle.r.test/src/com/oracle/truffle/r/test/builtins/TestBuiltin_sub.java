@@ -148,5 +148,13 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ .Internal(sub(\"7\", character(), \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(sub(\"7\", \"42\", 7, F, F, F, F)) }");
 
+        assertEval("{ sub('\\\\s*$', '', 'Ä', perl=TRUE) }");
+
+        assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
+        assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
+
+        // Expected output: [1] "xaÄÄÄÄÄb"
+        // FastR output: [1] "axÄÄÄÄb"
+        assertEval(Ignored.Unknown, "{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }

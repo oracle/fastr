@@ -430,27 +430,52 @@ public class GrepFunctions {
                             value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
-                        int offset = 0;
+                        int lastEndOffset = 0;
+                        int lastEndIndex = 0;
                         int[] ovector = new int[30];
                         int nmatch = 0;
                         int eflag = 0;
                         int lastEnd = -1;
+                        int[] fromByteMapping = getFromByteMapping(input); // non-null if it's
+                                                                           // necessary
+
                         StringBuffer sb = new StringBuffer();
-                        while (pcreRFFINode.exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
+                        while (pcreRFFINode.exec(pcre.result, 0, input, lastEndOffset, eflag, ovector) >= 0) {
                             nmatch++;
-                            for (int j = offset; j < ovector[0]; j++) {
+
+                            // offset == byte position
+                            // index == character position
+                            int startOffset = ovector[0];
+                            int endOffset = ovector[1];
+                            int startIndex = (fromByteMapping != null) ? fromByteMapping[startOffset] : startOffset;
+                            int endIndex = (fromByteMapping != null) ? fromByteMapping[endOffset] : endOffset;
+
+                            for (int j = lastEndIndex; j < startIndex; j++) {
                                 sb.append(input.charAt(j));
                             }
-                            if (ovector[1] > lastEnd) {
-                                pcreStringAdj(sb, input, replacement, ovector);
-                                lastEnd = ovector[1];
+                            if (endOffset > lastEnd) {
+                                pcreStringAdj(sb, input, replacement, ovector, fromByteMapping);
+                                lastEnd = endOffset;
                             }
-                            offset = ovector[1];
-                            if (offset >= input.length() || !gsub) {
+                            lastEndIndex = endIndex;
+                            lastEndOffset = endOffset;
+                            if (lastEndIndex >= input.length() || !gsub) {
                                 break;
                             }
-                            if (ovector[0] == ovector[1]) {
-                                sb.append(input.charAt(offset++));
+                            if (startOffset == endOffset) {
+                                sb.append(input.charAt(lastEndIndex));
+                                if (fromByteMapping != null) {
+                                    for (int j = lastEndOffset + 1; j < fromByteMapping.length; j++) {
+                                        if (fromByteMapping[j] > 0) {
+                                            lastEndOffset = j;
+                                            lastEndIndex = fromByteMapping[lastEndOffset];
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    lastEndOffset++;
+                                    lastEndIndex++;
+                                }
                             }
                             eflag |= PCRERFFI.NOTBOL;
                         }
@@ -458,7 +483,7 @@ public class GrepFunctions {
                             value = input;
                         } else {
                             /* copy the tail */
-                            for (int j = offset; j < input.length(); j++) {
+                            for (int j = lastEndIndex; j < input.length(); j++) {
                                 sb.append(input.charAt(j));
                             }
                             value = sb.toString();
@@ -558,7 +583,7 @@ public class GrepFunctions {
             return nonEmpty;
         }
 
-        private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector) {
+        private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector, int[] fromByteMapping) {
             boolean upper = false;
             boolean lower = false;
             int px = 0;
@@ -568,7 +593,9 @@ public class GrepFunctions {
                     char p1 = repl.charAt(px++);
                     if (p1 >= '1' && p1 <= '9') {
                         int k = p1 - '0';
-                        for (int i = ovector[2 * k]; i < ovector[2 * k + 1]; i++) {
+                        int startIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k]] : ovector[2 * k];
+                        int endIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k + 1]] : ovector[2 * k + 1];
+                        for (int i = startIndex; i < endIndex; i++) {
                             char c = input.charAt(i);
                             sb.append(upper ? Character.toUpperCase(c) : (lower ? Character.toLowerCase(c) : c));
                         }
@@ -1301,56 +1328,56 @@ public class GrepFunctions {
             matches.toArray(result);
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
+    }
 
-        private static int getByteLength(String data) {
-            int byteLength = 0;
-            int pos = 0;
-            while (pos < data.length()) {
-                char c = data.charAt(pos);
-                if (c < 128) {
-                    byteLength++;
-                } else if (c < 2048) {
-                    byteLength += 2;
+    private static int getByteLength(String data) {
+        int byteLength = 0;
+        int pos = 0;
+        while (pos < data.length()) {
+            char c = data.charAt(pos);
+            if (c < 128) {
+                byteLength++;
+            } else if (c < 2048) {
+                byteLength += 2;
+            } else {
+                if (Character.isHighSurrogate(c)) {
+                    byteLength += 4;
+                    pos++;
                 } else {
-                    if (Character.isHighSurrogate(c)) {
-                        byteLength += 4;
-                        pos++;
-                    } else {
-                        byteLength += 3;
-                    }
+                    byteLength += 3;
                 }
-                pos++;
             }
-            return byteLength;
+            pos++;
         }
+        return byteLength;
+    }
 
-        private static int[] getFromByteMapping(String data) {
-            int byteLength = getByteLength(data);
-            if (byteLength == data.length()) {
-                return null;
-            }
-            int[] result = new int[byteLength + 1];
-            byteLength = 0;
-            int pos = 0;
-            while (pos < data.length()) {
-                result[byteLength] = pos;
-                char c = data.charAt(pos);
-                if (c < 128) {
-                    byteLength++;
-                } else if (c < 2048) {
-                    byteLength += 2;
-                } else {
-                    if (Character.isHighSurrogate(c)) {
-                        byteLength += 4;
-                        pos++;
-                    } else {
-                        byteLength += 3;
-                    }
-                }
-                pos++;
-            }
+    private static int[] getFromByteMapping(String data) {
+        int byteLength = getByteLength(data);
+        if (byteLength == data.length()) {
+            return null;
+        }
+        int[] result = new int[byteLength + 1];
+        byteLength = 0;
+        int pos = 0;
+        while (pos < data.length()) {
             result[byteLength] = pos;
-            return result;
+            char c = data.charAt(pos);
+            if (c < 128) {
+                byteLength++;
+            } else if (c < 2048) {
+                byteLength += 2;
+            } else {
+                if (Character.isHighSurrogate(c)) {
+                    byteLength += 4;
+                    pos++;
+                } else {
+                    byteLength += 3;
+                }
+            }
+            pos++;
         }
+        result[byteLength] = pos;
+        return result;
     }
 }
