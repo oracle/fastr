@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private ArrayList<Warning> list = new ArrayList<>();
+        private final ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -95,11 +95,11 @@ public class RErrorHandling {
         /**
          * Current list of (deferred) warnings.
          */
-        private Warnings warnings = new Warnings();
+        private final Warnings warnings = new Warnings();
         /**
          * Max warnings accumulated.
          */
-        private int maxWarnings = 50;
+        private final int maxWarnings = 50;
         /**
          * Set/get by seterrmessage/geterrmessage builtins.
          */

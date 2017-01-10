@@ -14,8 +14,8 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 
 import java.util.Arrays;
 
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -133,7 +133,7 @@ public final class RandFunctionsNodes {
         private Object evaluateWrapper(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
                         RandGenerationNodeData nodeData) {
             int length = nodeData.resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
-            RNode.reportWork(this, length);
+            RBaseNode.reportWork(this, length);
             return evaluate(length, a, b, c, nodeData, rand);
         }
 

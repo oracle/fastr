@@ -524,8 +524,9 @@ public final class QBeta implements Function3_2 {
                     w = log_p
                                     ? (y - la) * Math.exp(y + logbeta + r * Math.log(xinbta) + t * Math.log1p(-xinbta))
                                     : (y - a) * Math.exp(logbeta + r * Math.log(xinbta) + t * Math.log1p(-xinbta));
-                    if (i_pb >= n_N && w * wprev <= 0.)
+                    if (i_pb >= n_N && w * wprev <= 0.) {
                         prev = RMath.fmax2(Math.abs(adj), fpu);
+                    }
                     debugPrintf("N(i=%d): x0=%.15g, pb(x0)=%.15g, w=%.15g, %s prev=%g,",
                                     i_pb, xinbta, y, w, (w * wprev <= 0.) ? "new" : "old", prev);
                     g = 1;

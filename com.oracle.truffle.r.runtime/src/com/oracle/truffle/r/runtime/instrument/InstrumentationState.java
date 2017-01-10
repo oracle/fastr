@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,7 +137,7 @@ public final class InstrumentationState implements RContext.ContextState {
 
         private RCaller caller;
         private String lastEmptyLineCommand = "n";
-        private ArrayList<HelperState> helperStateList = new ArrayList<>();
+        private final ArrayList<HelperState> helperStateList = new ArrayList<>();
 
         public void setInBrowser(RCaller caller) {
             this.caller = caller;

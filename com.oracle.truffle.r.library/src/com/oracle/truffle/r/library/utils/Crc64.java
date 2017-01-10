@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.library.utils;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;

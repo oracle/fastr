@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -800,7 +800,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetInt {
-        private NonRecursiveHashMapInt map;
+        private final NonRecursiveHashMapInt map;
 
         NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
@@ -816,7 +816,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetDouble {
-        private NonRecursiveHashMapDouble map;
+        private final NonRecursiveHashMapDouble map;
 
         NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);
@@ -832,7 +832,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetCharacter {
-        private NonRecursiveHashMapCharacter map;
+        private final NonRecursiveHashMapCharacter map;
 
         NonRecursiveHashSetCharacter(int approxCapacity) {
             map = new NonRecursiveHashMapCharacter(approxCapacity);
@@ -848,7 +848,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetComplex {
-        private NonRecursiveHashMapComplex map;
+        private final NonRecursiveHashMapComplex map;
 
         NonRecursiveHashSetComplex(int approxCapacity) {
             map = new NonRecursiveHashMapComplex(approxCapacity);

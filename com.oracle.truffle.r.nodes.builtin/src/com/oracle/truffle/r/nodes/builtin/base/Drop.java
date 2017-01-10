@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,12 +74,11 @@ public abstract class Drop extends RBuiltinNode {
 
         // the result is single value, all dims == 1
         if (resultIsScalarProfile.profile(lastNonOneIndex == -1)) {
-            @SuppressWarnings("unused")
             RAbstractVector r = x.copy();
-            setDimsNode.setDimensions(x, null);
-            setDimsNamesNode.setDimNames(x, null);
-            setNamesNode.setNames(x, null);
-            return x;
+            setDimsNode.setDimensions(r, null);
+            setDimsNamesNode.setDimNames(r, null);
+            setNamesNode.setNames(r, null);
+            return r;
         }
 
         // the result is vector

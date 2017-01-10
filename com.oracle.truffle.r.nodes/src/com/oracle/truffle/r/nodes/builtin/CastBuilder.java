@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -665,20 +665,20 @@ public final class CastBuilder {
             return new TypeFilter<>(x -> true, Object.class);
         }
 
-        @SuppressWarnings({"rawtypes", "unchecked", "cast"})
+        @SuppressWarnings({"rawtypes", "unchecked"})
         public static Filter<Object, RAbstractVector> numericValue() {
             Filter f = integerValue().or(doubleValue()).or(logicalValue());
-            return (Filter<Object, RAbstractVector>) f;
+            return f;
         }
 
         /**
          * Checks that the argument is a list or vector/scalar of type numeric, string, complex or
          * raw.
          */
-        @SuppressWarnings({"rawtypes", "unchecked", "cast"})
+        @SuppressWarnings({"rawtypes", "unchecked"})
         public static Filter<Object, RAbstractVector> abstractVectorValue() {
             Filter f = numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
-            return (Filter<Object, RAbstractVector>) f;
+            return f;
         }
 
         public static Filter<Object, Integer> atomicIntegerValue() {

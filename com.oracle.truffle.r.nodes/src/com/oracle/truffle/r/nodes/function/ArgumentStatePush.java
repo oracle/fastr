@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
@@ -54,7 +53,7 @@ public abstract class ArgumentStatePush extends Node {
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final int index;
-    @CompilationFinal private int mask = 0;
+
     @Child private WriteLocalFrameVariableNode writeArgNode;
 
     public static final int MAX_COUNTED_ARGS = 8;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -371,7 +371,7 @@ public abstract class PromiseNode extends RNode {
                 if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];
                 } else {
-                    this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
+                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
                 }
             }
             this.signature = signature;

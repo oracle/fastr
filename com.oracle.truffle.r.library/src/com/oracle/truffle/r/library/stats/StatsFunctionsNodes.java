@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 // inspired by arithmetic.c
@@ -86,7 +86,7 @@ public final class StatsFunctionsNodes {
             return RDataFactory.createEmptyDoubleVector();
         }
         int length = profiles.resultVectorLengthProfile.profile(Math.max(aLength, Math.max(bLength, Math.max(cLength, dLength))));
-        RNode.reportWork(node, length);
+        RBaseNode.reportWork(node, length);
         double[] result = new double[length];
 
         boolean complete = true;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -982,8 +982,9 @@ public class RSerialize {
                     Object car = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
                     Object cdr = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
                     Object ans = RDataFactory.createPairList(car, cdr, tag, type);
-                    if (pos >= 0)
+                    if (pos >= 0) {
                         reps[pos] = ans;
+                    }
                     return ans;
                 }
                 default: {
@@ -1188,7 +1189,7 @@ public class RSerialize {
     }
 
     private static class XdrOutputFormat extends POutputStream {
-        private byte[] buf;
+        private final byte[] buf;
         private int offset;
 
         XdrOutputFormat(OutputStream os) {
@@ -1295,12 +1296,13 @@ public class RSerialize {
 
     private static final class Output extends Common {
 
-        private State state;
-        protected final POutputStream stream;
-        private int version;
+        private final State state;
+        private final POutputStream stream;
+        private final int version;
 
         private Output(OutputStream os, int format, int version, CallHook hook) throws IOException {
             super(hook);
+            this.state = new PLState();
             this.version = version;
             switch (format) {
                 case ASCII:
@@ -1313,8 +1315,7 @@ public class RSerialize {
             }
         }
 
-        private void serialize(State s, Object obj) throws IOException {
-            this.state = s;
+        private void serialize(Object obj) throws IOException {
             switch (version) {
                 case DEFAULT_VERSION:
                     stream.writeInt(version);
@@ -1330,22 +1331,30 @@ public class RSerialize {
         }
 
         private static SEXPTYPE saveSpecialHook(Object item) {
-            if (item == RNull.instance)
+            if (item == RNull.instance) {
                 return SEXPTYPE.NILVALUE_SXP;
-            if (item == REnvironment.emptyEnv())
+            }
+            if (item == REnvironment.emptyEnv()) {
                 return SEXPTYPE.EMPTYENV_SXP;
-            if (item == REnvironment.baseEnv())
+            }
+            if (item == REnvironment.baseEnv()) {
                 return SEXPTYPE.BASEENV_SXP;
-            if (item == REnvironment.globalEnv())
+            }
+            if (item == REnvironment.globalEnv()) {
                 return SEXPTYPE.GLOBALENV_SXP;
-            if (item == RUnboundValue.instance)
+            }
+            if (item == RUnboundValue.instance) {
                 return SEXPTYPE.UNBOUNDVALUE_SXP;
-            if (item == RMissing.instance)
+            }
+            if (item == RMissing.instance) {
                 return SEXPTYPE.MISSINGARG_SXP;
-            if (item == REmpty.instance)
+            }
+            if (item == REmpty.instance) {
                 return SEXPTYPE.MISSINGARG_SXP;
-            if (item == REnvironment.baseNamespaceEnv())
+            }
+            if (item == REnvironment.baseNamespaceEnv()) {
                 return SEXPTYPE.BASENAMESPACE_SXP;
+            }
             if (item instanceof RArgsValuesAndNames && ((RArgsValuesAndNames) item).getLength() == 0) {
                 // empty DOTSXP
                 return SEXPTYPE.NILVALUE_SXP;
@@ -1814,12 +1823,7 @@ public class RSerialize {
      */
     private abstract static class State {
 
-        @SuppressWarnings("unused") protected final Output output;
-        private Map<String, RSymbol> symbolMap = new HashMap<>();
-
-        private State(Output output) {
-            this.output = output;
-        }
+        private final Map<String, RSymbol> symbolMap = new HashMap<>();
 
         /**
          * Pushes a new virtual pairlist (no type) onto the stack. An untyped pairlist is subject to
@@ -1927,11 +1931,7 @@ public class RSerialize {
      */
     private static class PLState extends State {
         private static final RPairList NULL = RDataFactory.createPairList();
-        private Deque<RPairList> active = new LinkedList<>();
-
-        private PLState(Output output) {
-            super(output);
-        }
+        private final Deque<RPairList> active = new LinkedList<>();
 
         @Override
         public State openPairList() {
@@ -2081,8 +2081,7 @@ public class RSerialize {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             Output output = new Output(out, type, version, (CallHook) refhook);
-            State state = new PLState(output);
-            output.serialize(state, obj);
+            output.serialize(obj);
             return out.toByteArray();
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere();
@@ -2092,8 +2091,7 @@ public class RSerialize {
     @TruffleBoundary
     public static void serialize(RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
         Output output = new Output(conn.getOutputStream(), type, version, (CallHook) refhook);
-        State state = new PLState(output);
-        output.serialize(state, obj);
+        output.serialize(obj);
     }
 
     private static class Debug {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,11 +207,11 @@ public final class FilterSamplerFactory
                 return filter.getFilter().isNarrowing() ? toNegate.trueBranchType().not() : toNegate.trueBranchType();
             }
 
-            @SuppressWarnings({"unchecked", "cast"})
+            @SuppressWarnings({"unchecked"})
             @Override
             public Samples<Object> collectSamples(TypeExpr inputType) {
                 Samples thisSamples = toNegate.collectSamples(inputType);
-                return (Samples<Object>) thisSamples.swap();
+                return thisSamples.swap();
             }
 
         };

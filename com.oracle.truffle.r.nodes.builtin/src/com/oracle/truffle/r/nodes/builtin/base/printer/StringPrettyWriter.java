@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import java.io.StringWriter;
+
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import java.io.StringWriter;
 
 public class StringPrettyWriter extends StringWriter implements PrettyWriter {
 

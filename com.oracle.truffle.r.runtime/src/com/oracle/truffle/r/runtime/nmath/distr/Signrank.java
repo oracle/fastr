@@ -175,7 +175,7 @@ public final class Signrank {
          * Makes sure that the value can be reached by integer counter, this is probably just really
          * defensive, since the allocation with such number is bound to fail anyway.
          */
-        private int getUpperIntBound(double x) {
+        private static int getUpperIntBound(double x) {
             return (x + 1) > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(x);
         }
     }
