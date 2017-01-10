@@ -72,7 +72,6 @@ public final class QuantileSearch {
         z = distributionFunc.eval(initialY, true, false);
         do {
             oldIncr = incr;
-            debugPrintf("QSearch step: result=%.12g, p=%.12g, incr=%.12g\n", result, p, incr);
             result = search(result, p, incr);
             incr = RMath.fmax2(1, Math.floor(incr / incrDenominator));
         } while (oldIncr > 1 && incr > result * resultFactor);
@@ -92,18 +91,16 @@ public final class QuantileSearch {
         // are we to the left or right of the desired value -> move to the right or left to get
         // closer
         if (z >= p) {
-            debugPrintf("--- QSearch left incr=%.12g\n", incr);
             while (true) {
-                if (y == 0 || (z = distributionFuncEval(y - incr)) < p) {
+                if (y == 0 || (z = distributionFunc.eval(y - incr, true, false)) < p) {
                     return y;
                 }
                 y = RMath.fmax2(0, y - incr);
             }
         } else {
-            debugPrintf("--- QSearch right incr=%.12g\n", incr);
             while (true) {
                 y = moveRight(y, incr);
-                if ((rightSearchLimit > 0 && y == rightSearchLimit) || (z = distributionFuncEval(y)) >= p) {
+                if ((rightSearchLimit > 0 && y == rightSearchLimit) || (z = distributionFunc.eval(y, true, false)) >= p) {
                     return y;
                 }
             }
@@ -118,20 +115,8 @@ public final class QuantileSearch {
         }
     }
 
-    private double distributionFuncEval(double y) {
-        debugPrintf("distributionFunc(%.12g) = ", y);
-        double result = distributionFunc.eval(y, true, false);
-        debugPrintf("%.12g\n", result);
-        return result;
-    }
-
     @FunctionalInterface
     public interface DistributionFunc {
         double eval(double quantile, boolean lowerTail, boolean logP);
-    }
-
-    @SuppressWarnings("unused")
-    private static void debugPrintf(String fmt, Object... args) {
-        // System.out.printf(fmt, args);
     }
 }
