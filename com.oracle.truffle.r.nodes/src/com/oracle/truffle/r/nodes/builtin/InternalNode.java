@@ -28,6 +28,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -78,8 +79,18 @@ public abstract class InternalNode extends OperatorNode {
      */
     private static final class InternalUninitializedNode extends InternalNode {
 
+        // whether arguments need to be copied
+        private boolean needsCopy;
+
         InternalUninitializedNode(SourceSection src, RSyntaxLookup operator, ArgumentsSignature outerSignature, RSyntaxNode[] outerArgs) {
             super(src, operator, outerSignature, outerArgs);
+        }
+
+        @Override
+        public Node copy() {
+            InternalUninitializedNode copy = (InternalUninitializedNode) super.copy();
+            copy.needsCopy = true;
+            return copy;
         }
 
         @Override
@@ -125,6 +136,12 @@ public abstract class InternalNode extends OperatorNode {
 
             RBuiltinFactory factory = (RBuiltinFactory) function.getRBuiltin();
             RSyntaxElement[] callArgs = call.getSyntaxArguments();
+            if (needsCopy) {
+                callArgs = callArgs.clone();
+                for (int i = 0; i < callArgs.length; i++) {
+                    callArgs[i] = RContext.getASTBuilder().process(callArgs[i]);
+                }
+            }
 
             // verify the number of arguments
             if (factory.getSignature().getVarArgCount() == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,6 @@ import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -541,51 +540,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             }
         }
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature, varArgIndexes);
-    }
-
-    /**
-     * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
-     * original call.
-     *
-     * @param internalCallArg the {@link RCallNode} corresponding to the argument to the {code
-     *            .Internal}.
-     * @param function the resolved {@link RFunction}.
-     */
-    public static RNode createInternalCall(RCallNode internalCallArg, RFunction function) {
-        CompilerAsserts.neverPartOfCompilation();
-        return new InternalNode(FunctionDispatchNodeGen.create(internalCallArg, false, null), function, internalCallArg.lookupVarArgs != null);
-    }
-
-    @NodeInfo(cost = NodeCost.NONE)
-    private static final class InternalNode extends RNode {
-        @Child private FunctionDispatch rootCallNode;
-        @Child private ReadVariableNode lookupVarArgs;
-        private final RFunction function;
-
-        InternalNode(FunctionDispatch rootCallNode, RFunction function, boolean needsVarArgLookup) {
-            this.rootCallNode = rootCallNode;
-            this.function = function;
-            this.lookupVarArgs = needsVarArgLookup ? ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any) : null;
-        }
-
-        private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame) {
-            RArgsValuesAndNames varArgs;
-            if (lookupVarArgs == null) {
-                varArgs = null;
-            } else {
-                try {
-                    varArgs = lookupVarArgs.executeRArgsValuesAndNames(frame);
-                } catch (UnexpectedResultException e) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
-                }
-            }
-            return varArgs;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return rootCallNode.execute(frame, function, lookupVarArgs(frame), null, null);
-        }
     }
 
     /**
