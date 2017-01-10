@@ -85,7 +85,7 @@ public class Pnt implements Function3_2 {
         double rxb = df / (x + df); /* := (1 - x) {x below} -- but more accurately */
         x = x / (x + df); /* in [0,1) */
         debugPrintf("pnt(t=%7g, df=%7g, ncp=%7g) ==> x= %10g:", t, df, ncp, x);
-        if (x <= 0.) {
+        if (x <= 0. || Double.isNaN(x)) {
             return finish(0., del, negdel, lowerTail, logP);
         }
 

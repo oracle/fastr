@@ -60,10 +60,10 @@ public class Choose {
         }
         if (isInt(n)) {
             double nInt = RMath.forceint(n);
-            if (n < k) {
+            if (nInt < k) {
                 return 0;
-            } else if (n - k < K_SMALL_MAX) {
-                return choose(n, n - k);
+            } else if (nInt - k < K_SMALL_MAX) {
+                return choose(nInt, nInt - k);
             }
             return RMath.forceint(Math.exp(lfastchoose(n, k)));
         }
@@ -122,7 +122,7 @@ public class Choose {
     /*
      * mathematically the same: less stable typically, but useful if n-k+1 < 0 :
      */
-    static double lfastchoose2(double n, double k, int[] sChoose) {
+    private static double lfastchoose2(double n, double k, int[] sChoose) {
         double r;
         r = lgammafnSign(n - k + 1., sChoose);
         return lgammafn(n + 1.) - lgammafn(k + 1.) - r;

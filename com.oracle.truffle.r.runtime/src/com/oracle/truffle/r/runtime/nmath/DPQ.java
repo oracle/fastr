@@ -10,7 +10,6 @@
  */
 package com.oracle.truffle.r.runtime.nmath;
 
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 /**
@@ -205,7 +204,7 @@ public final class DPQ {
     // FastR helpers:
 
     public static void nointCheckWarning(double x, String varName) {
-        RError.warning(RError.SHOW_CALLER, Message.NON_INTEGER_N, varName, x);
+        RMathError.warning(Message.NON_INTEGER_N, varName, x);
     }
 
     public static void nonintCheck(double x, boolean giveLog) throws EarlyReturn {
