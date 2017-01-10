@@ -39,6 +39,8 @@
  * arbitrary attribute. If the first argument is an instance
  * {@link com.oracle.truffle.r.runtime.data.RAttributable}, the node initializes the object with the
  * empty attributes.
+ * <li>{@link com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode}: removes an arbitrary
+ * attribute, if any.
  * </ul>
  *
  * <h3>Fixed attribute nodes</h3> The nodes in this group operate on the attribute that is specified

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -72,7 +74,13 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     void setDimNames(RList newDimNames);
 
-    Object getRowNames(RAttributeProfiles attrProfiles);
+    default Object getRowNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return getAttr(RRuntime.ROWNAMES_ATTR_KEY);
+    }
 
-    void setRowNames(RAbstractVector rowNames);
+    default void setRowNames(RAbstractVector rowNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+    }
 }

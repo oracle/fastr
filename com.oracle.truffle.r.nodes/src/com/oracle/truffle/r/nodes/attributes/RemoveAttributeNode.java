@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,71 +26,53 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
-public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class RemoveAttributeNode extends AttributeAccessNode {
 
-    @Child RemoveFixedAttributeNode recursive;
+    @Child RemoveAttributeNode recursive;
 
-    protected RemoveFixedAttributeNode(String name) {
-        super(name);
+    protected RemoveAttributeNode() {
     }
 
-    public static RemoveFixedAttributeNode create(String name) {
-        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
-            return SpecialAttributesFunctions.createRemoveSpecialAttributeNode(name);
-        } else {
-            return RemoveFixedAttributeNodeGen.create(name);
-        }
+    public static RemoveAttributeNode create() {
+        return RemoveAttributeNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createNames() {
-        return RemoveNamesAttributeNode.create();
-    }
-
-    public static RemoveFixedAttributeNode createDim() {
-        return RemoveDimAttributeNode.create();
-    }
-
-    public static RemoveFixedAttributeNode createDimNames() {
-        return RemoveDimNamesAttributeNode.create();
-    }
-
-    public static RemoveFixedAttributeNode createClass() {
-        return RemoveClassAttributeNode.create();
-    }
-
-    public abstract void execute(Object attrs);
+    public abstract void execute(Object attrs, String name);
 
     @Specialization(limit = "3", //
-                    guards = {"shapeCheck(shape, attrs)", "location == null"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected void removeNonExistantAttr(@SuppressWarnings("unused") DynamicObject attrs,
-                    @SuppressWarnings("unused") @Cached("lookupShape(attrs)") Shape shape,
-                    @SuppressWarnings("unused") @Cached("lookupLocation(shape, name)") Location location) {
+                    guards = {
+                                    "cachedName.equals(name)",
+                                    "shapeCheck(shape, attrs)",
+                                    "location == null"
+                    }, //
+                    assumptions = {
+                                    "shape.getValidAssumption()"
+                    })
+    @SuppressWarnings("unused")
+    protected void removeNonExistantAttr(DynamicObject attrs, String name,
+                    @Cached("name") String cachedName,
+                    @Cached("lookupShape(attrs)") Shape shape,
+                    @Cached("lookupLocation(shape, cachedName)") Location location) {
         // do nothing
     }
 
     @Specialization
     @TruffleBoundary
-    protected void removeAttrFallback(DynamicObject attrs) {
-        attrs.delete(this.name);
+    protected void removeAttrFallback(DynamicObject attrs, String name) {
+        attrs.delete(name);
     }
 
     @Specialization
-    protected void removeAttrFromAttributable(RAttributable x,
+    protected void removeAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile) {
@@ -108,10 +90,10 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
 
         if (recursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create(name));
+            recursive = insert(create());
         }
 
-        recursive.execute(attributes);
+        recursive.execute(attributes, name);
     }
 
 }

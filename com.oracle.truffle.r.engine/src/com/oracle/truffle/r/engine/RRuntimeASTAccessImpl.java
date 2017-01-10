@@ -627,13 +627,18 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
                 }
                 if (status != 0) {
-                    sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
+                    setResultAttr(status, sresult);
                 }
                 return sresult;
             } else {
                 return result;
             }
 
+        }
+
+        @TruffleBoundary
+        private static void setResultAttr(int status, RStringVector sresult) {
+            sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
         }
     }
 

@@ -557,7 +557,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public Object getRowNames(RAttributeProfiles attrProfiles) {
+        public Object getRowNames() {
             return null;
         }
 

@@ -846,6 +846,7 @@ public class RSerialize {
          * unusable, so we don't go to the trouble of converting the {@link RIntVector}
          * representation into an {@link RConnection}.
          */
+        @TruffleBoundary
         private static Object setAttributes(final Object object, Object attr) {
             RAttributable rAttributable = (RAttributable) object;
             RPairList pl = (RPairList) attr;
@@ -1371,11 +1372,10 @@ public class RSerialize {
             }
         }
 
-        private static final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
+        @TruffleBoundary
         private static boolean isObject(Object obj) {
             if (obj instanceof RAttributable) {
-                return ((RAttributable) obj).isObject(attrProfiles);
+                return ((RAttributable) obj).isObject();
             } else {
                 return false;
             }

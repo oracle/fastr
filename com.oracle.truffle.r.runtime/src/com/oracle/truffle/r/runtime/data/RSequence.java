@@ -126,7 +126,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
+    public final Object getRowNames() {
         return RNull.instance;
     }
 
@@ -162,7 +162,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 

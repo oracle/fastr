@@ -112,7 +112,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public Object getRowNames() {
         return null;
     }
 
@@ -122,7 +122,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 

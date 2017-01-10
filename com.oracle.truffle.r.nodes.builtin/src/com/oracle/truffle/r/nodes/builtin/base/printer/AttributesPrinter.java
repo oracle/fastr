@@ -29,8 +29,6 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
 
     static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
 
-    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
-
     private final boolean useSlots;
 
     private AttributesPrinter(boolean useSlots) {
@@ -100,7 +98,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
                 // throw new UnsupportedOperationException("TODO");
             } else {
-                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject(dummyAttrProfiles)) {
+                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject()) {
                     RContext.getEngine().printResult(a.getValue());
                 } else {
                     ValuePrinters.INSTANCE.print(a.getValue(), printCtx);

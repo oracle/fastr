@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -74,11 +75,11 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             MatrixDimNames mdn = null;
 
-            Object dimAttr = vector.getAttr(RRuntime.DIM_ATTR_KEY);
+            Object dimAttr = getDims(vector);
             if (dimAttr instanceof RAbstractIntVector) {
                 dims = (RAbstractIntVector) dimAttr;
                 if (dims.getLength() == 1) {
-                    RList t = Utils.<RList> castTo(vector.getAttr(RRuntime.DIMNAMES_ATTR_KEY));
+                    RList t = Utils.<RList> castTo(getDimNames(vector));
                     if (t != null && t.getDataAt(0) != null) {
                         RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
 
@@ -108,7 +109,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 }
             } else {
                 dims = null;
-                Object namesAttr = Utils.castTo(vector.getAttr(RRuntime.NAMES_ATTR_KEY));
+                Object namesAttr = Utils.castTo(getNames(vector));
                 if (namesAttr != null) {
                     if (vector.getLength() > 0) {
                         names = Utils.castTo(RRuntime.asAbstractVector(namesAttr));
@@ -673,7 +674,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         final RAbstractStringVector axisNames;
 
         MatrixDimNames(RAbstractVector x) {
-            dimnames = Utils.<RList> castTo(x.getAttr(RRuntime.DIMNAMES_ATTR_KEY));
+            dimnames = Utils.<RList> castTo(getDimNames(x));
 
             if (dimnames == null) {
                 rl = null;
@@ -701,5 +702,20 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         RAbstractStringVector getDimNamesAt(int dimLevel) {
             return dimLevel < dimnames.getLength() ? Utils.castTo(RRuntime.asAbstractVector(dimnames.getDataAt(dimLevel))) : null;
         }
+    }
+
+    @TruffleBoundary
+    private static Object getDims(RAbstractVector v) {
+        return v.getAttr(RRuntime.DIM_ATTR_KEY);
+    }
+
+    @TruffleBoundary
+    private static Object getDimNames(RAbstractVector x) {
+        return x.getAttr(RRuntime.DIMNAMES_ATTR_KEY);
+    }
+
+    @TruffleBoundary
+    private static Object getNames(RAbstractVector vector) {
+        return vector.getAttr(RRuntime.NAMES_ATTR_KEY);
     }
 }

@@ -349,11 +349,6 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
     public void setRowNames(RAbstractVector rowNames) {
         throw RInternalError.unimplemented();
     }
@@ -364,7 +359,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 }

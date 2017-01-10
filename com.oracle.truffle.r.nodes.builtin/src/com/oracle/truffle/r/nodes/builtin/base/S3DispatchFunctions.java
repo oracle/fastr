@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -296,5 +297,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             RAbstractContainer enclosingArg = (RAbstractContainer) arg;
             return enclosingArg.getClassHierarchy();
         }
+
     }
 }

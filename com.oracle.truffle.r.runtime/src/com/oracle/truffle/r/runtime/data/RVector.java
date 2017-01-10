@@ -281,8 +281,9 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     @Override
-    public final Object getAttr(RAttributeProfiles attrProfiles, String name) {
-        if (attrProfiles.attrNullProfile(attributes == null)) {
+    public final Object getAttr(String name) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (attributes == null) {
             return null;
         } else {
             return attributes.get(name);
@@ -309,15 +310,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             }
         }
 
-    }
-
-    @Override
-    public final void removeAttr(RAttributeProfiles attrProfiles, String name) {
-        if (attrProfiles.attrNullProfile(attributes == null)) {
-            return;
-        } else {
-            removeAttrInternal(name);
-        }
     }
 
     @Override
@@ -445,10 +437,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
-        return getRowNames();
-    }
-
     public final Object getRowNames() {
         Object rn = getRowNamesFromAttrs();
         return rn == null ? RNull.instance : rn;
@@ -532,6 +520,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public RAbstractContainer setClassAttr(RStringVector classAttr) {
+        CompilerAsserts.neverPartOfCompilation();
         return setClassAttrInternal(this, classAttr);
     }
 
@@ -675,10 +664,15 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+            return this.setClassAttr(readClassAttr(vecAttributes));
         } else {
             return this;
         }
+    }
+
+    @TruffleBoundary
+    private static RStringVector readClassAttr(DynamicObject vecAttributes) {
+        return (RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY);
     }
 
     /*
@@ -689,7 +683,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+            return this.setClassAttr(readClassAttr(vecAttributes));
         } else {
             return this;
         }
@@ -800,11 +794,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 RAttributesLayout.clear(this.attributes);
             }
         }
-    }
-
-    @Override
-    public final boolean isObject(RAttributeProfiles attrProfiles) {
-        return this.getClassAttr(attrProfiles) != null ? true : false;
     }
 
     // As shape of the vector may change at run-time we need to compute

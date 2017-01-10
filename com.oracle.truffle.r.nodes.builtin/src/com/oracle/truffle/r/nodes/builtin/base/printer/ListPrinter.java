@@ -66,6 +66,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         }
     }
 
+    @TruffleBoundary
     private static void printDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
         final PrintParameters pp = printCtx.parameters();
 

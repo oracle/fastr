@@ -804,6 +804,7 @@ public class RRuntime {
      * Returns {@code true} if the given object is R object and its class attribute contains given
      * class.
      */
+    @TruffleBoundary
     public static boolean hasRClass(Object obj, String rclassName) {
         return obj instanceof RAttributable && ((RAttributable) obj).hasClass(rclassName);
     }

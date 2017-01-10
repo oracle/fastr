@@ -17,6 +17,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -37,12 +39,15 @@ public abstract class UpdateLevels extends RBuiltinNode {
         casts.arg("value").allowNull().asVector(false);
     }
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    protected RemoveFixedAttributeNode createRemoveAttrNode() {
+        return RemoveFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+    }
 
     @Specialization
-    protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
+    protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels,
+                    @Cached("createRemoveAttrNode()") RemoveFixedAttributeNode removeAttrNode) {
         RVector<?> v = (RVector<?>) vector.getNonShared();
-        v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
+        removeAttrNode.execute(v);
         return v;
     }
 

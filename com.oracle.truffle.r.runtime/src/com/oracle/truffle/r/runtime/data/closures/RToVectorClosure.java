@@ -102,8 +102,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
-        return vector.getRowNames(attrProfiles);
+    public final Object getRowNames() {
+        return vector.getRowNames();
     }
 
     @Override
@@ -174,11 +174,6 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public RStringVector getImplicitClass() {
         return vector.getImplicitClass();
-    }
-
-    @Override
-    public final boolean isObject(RAttributeProfiles attrProfiles) {
-        return vector.isObject(attrProfiles);
     }
 
     @Override

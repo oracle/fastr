@@ -31,8 +31,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -66,8 +68,10 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private SetAttributeNode setAttrNode;
+    @Child private SetClassAttributeNode setClassNode;
     @Child private SetDimAttributeNode setDimNode;
     @Child private SetRowNamesAttributeNode setRowNamesNode;
+    @Child private RemoveAttributeNode removeAttrNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -203,10 +207,14 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                 res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (setClassNode == null) {
+                    CompilerDirectives.transferToInterpreter();
+                    setClassNode = insert(SetClassAttributeNode.create());
+                }
                 if (value == RNull.instance) {
-                    res.setClassAttr(null);
+                    setClassNode.reset(res);
                 } else {
-                    res.setClassAttr(UpdateAttr.convertClassAttrFromObject(value));
+                    setClassNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
                 }
                 res = result;
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
@@ -217,7 +225,11 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 setRowNamesNode.setRowNames(res, castVector(value));
             } else {
                 if (value == RNull.instance) {
-                    res.removeAttr(attrProfiles, attrName);
+                    if (removeAttrNode == null) {
+                        CompilerDirectives.transferToInterpreter();
+                        removeAttrNode = insert(RemoveAttributeNode.create());
+                    }
+                    removeAttrNode.execute(res, attrName);
                 } else {
                     if (setAttrNode == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();

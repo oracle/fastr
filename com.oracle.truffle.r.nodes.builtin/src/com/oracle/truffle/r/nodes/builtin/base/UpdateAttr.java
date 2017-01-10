@@ -37,6 +37,7 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
@@ -140,7 +141,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value, @Cached("create()") RemoveAttributeNode removeAttrNode) {
         String internedName = intern.execute(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
@@ -168,7 +169,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             }
             setRowNamesAttrNode.setRowNames(result, null);
         } else if (result.getAttributes() != null) {
-            result.removeAttr(attrProfiles, internedName);
+            removeAttrNode.execute(result, internedName);
         }
         return result;
     }
@@ -239,6 +240,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
      * All other, non-performance centric, {@link RAttributable} types.
      */
     @Fallback
+    @TruffleBoundary
     protected Object updateAttr(Object obj, Object name, Object value) {
         assert name instanceof String : "casts should not pass anything but String";
         Object object = obj;
@@ -249,7 +251,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {
-                attributable.removeAttr(attrProfiles, internedName);
+                attributable.removeAttr(internedName);
             } else {
                 attributable.setAttr(internedName, value);
             }

@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -209,6 +210,7 @@ public class RSource {
         }
     }
 
+    @TruffleBoundary
     public static Object createSrcRef(SourceSection src) {
         if (src == null) {
             return RNull.instance;

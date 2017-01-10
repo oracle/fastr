@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -70,19 +71,21 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
     protected Object setClassCached(RAbstractContainer arg, @SuppressWarnings("unused") String className, //
                     @Cached("className") String cachedClassName, //
-                    @Cached("fromMode(className)") RType cachedMode) {
-        return setClassInternal(arg, cachedClassName, cachedMode);
+                    @Cached("fromMode(className)") RType cachedMode,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
+        return setClassInternal(arg, cachedClassName, cachedMode, getClassNode);
     }
 
     @Specialization(contains = "setClassCached")
     protected Object setClass(RAbstractContainer arg, String className, //
-                    @Cached("create()") TypeFromModeNode typeFromMode) {
+                    @Cached("create()") TypeFromModeNode typeFromMode,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
         RType mode = typeFromMode.execute(className);
-        return setClassInternal(arg, className, mode);
+        return setClassInternal(arg, className, mode, getClassNode);
     }
 
-    private Object setClassInternal(RAbstractContainer arg, String className, RType mode) {
-        if (!arg.isObject(attrProfiles)) {
+    private Object setClassInternal(RAbstractContainer arg, String className, RType mode, GetClassAttributeNode getClassNode) {
+        if (!getClassNode.isObject(arg)) {
             initTypeof();
             RType argType = typeof.execute(arg);
             if (argType.equals(className) || (mode == RType.Double && (argType == RType.Integer || argType == RType.Double))) {

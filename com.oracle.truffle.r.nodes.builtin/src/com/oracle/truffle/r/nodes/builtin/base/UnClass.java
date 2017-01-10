@@ -15,8 +15,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -32,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class UnClass extends RBuiltinNode {
     private final BranchProfile objectProfile = BranchProfile.create();
     private final BranchProfile shareableProfile = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -57,8 +59,8 @@ public abstract class UnClass extends RBuiltinNode {
     // TODO: this specialization could go away if connections were simple vectors (we wouldn't need
     // special method for setting class attributes then)
     @Specialization
-    protected Object unClass(RAbstractVector arg) {
-        if (arg.isObject(attrProfiles)) {
+    protected Object unClass(RAbstractVector arg, @Cached("create()") GetClassAttributeNode getClassNode) {
+        if (getClassNode.isObject(arg)) {
             objectProfile.enter();
             return unClassVector(arg);
         }
@@ -66,8 +68,8 @@ public abstract class UnClass extends RBuiltinNode {
     }
 
     @Specialization(guards = "notAbstractVector(arg)")
-    protected Object unClass(RAttributable arg) {
-        if (arg.getClassAttr(attrProfiles) != null) {
+    protected Object unClass(RAttributable arg, @Cached("create()") RemoveClassAttributeNode removeClassNode, @Cached("create()") GetClassAttributeNode getClassNode) {
+        if (getClassNode.getClassAttr(arg) != null) {
             objectProfile.enter();
             if (arg instanceof RShareable) {
                 shareableProfile.enter();
@@ -77,7 +79,7 @@ public abstract class UnClass extends RBuiltinNode {
                     shareable.incRefCount();
                 }
             }
-            arg.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
+            removeClassNode.execute(arg);
         }
         return arg;
     }

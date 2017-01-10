@@ -446,7 +446,7 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected Object updateEnvironment(RAttributable obj, @SuppressWarnings("unused") RNull env) {
-            obj.removeAttr(attributeProfile, RRuntime.DOT_ENVIRONMENT);
+            obj.removeAttr(RRuntime.DOT_ENVIRONMENT);
             return obj;
         }
 

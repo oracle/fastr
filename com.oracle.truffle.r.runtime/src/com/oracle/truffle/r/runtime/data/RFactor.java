@@ -44,7 +44,7 @@ public final class RFactor {
      * method should be replaced with FactorNodes.GetLevel in the future.
      */
     public static RVector<?> getLevels(RAttributeProfiles profile, RAbstractIntVector factor) {
-        return getLevelsImpl(factor.getAttr(profile, RRuntime.LEVELS_ATTR_KEY));
+        return getLevelsImpl(factor.getAttr(RRuntime.LEVELS_ATTR_KEY));
     }
 
     private static RVector<?> getLevelsImpl(Object attr) {

@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -33,7 +34,7 @@ public abstract class AsS4 extends Node {
 
     private final BranchProfile shareable = BranchProfile.create();
     private final BranchProfile error = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
     @Child private GetS4DataSlot getS4DataSlot;
 
@@ -62,7 +63,7 @@ public abstract class AsS4 extends Node {
                     return value;
                 } else if (complete == 1) {
                     error.enter();
-                    RStringVector classAttr = obj.getClassAttr(attrProfiles);
+                    RStringVector classAttr = getClassNode.getClassAttr(obj);
                     throw RError.error(this, RError.Message.CLASS_INVALID_S3, classAttr == null || classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
                 } else {
                     return obj;

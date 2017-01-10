@@ -208,7 +208,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
         RAttributable attr = list == null ? this : list;
-        return (RList) attr.getAttr(attrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
+        return (RList) attr.getAttr(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override
@@ -218,9 +218,9 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public Object getRowNames() {
         RAttributable attr = list == null ? this : list;
-        return attr.getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+        return attr.getAttr(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     @Override
@@ -247,6 +247,10 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     @Override
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
+    }
+
+    public final RPairList getPairListInternal() {
+        return this.list;
     }
 
     public RPairList getPairList() {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -845,6 +846,18 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setRowNamesInLanguage(RLanguage x, RAbstractVector newRowNames,
+                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile typeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            RPairList pl = x.getPairListInternal();
+            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
+            setAttrInAttributable(attr, newRowNames, attrNullProfile, attrStorageProfile, typeProfile, updateRefCountNode);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
         protected void setRowNamesInVector(RAbstractVector x, RAbstractVector newRowNames,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
@@ -860,6 +873,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
+        @TruffleBoundary
         protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setRowNames(rowNames);
@@ -904,8 +918,21 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RSequence x) {
+        protected Object getSequenceRowNames(@SuppressWarnings("unused") RSequence x) {
             return RNull.class;
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getLanguageRowNames(RLanguage x,
+                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile nullRowNamesProfile) {
+            RPairList pl = x.getPairListInternal();
+            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
+            Object res = super.getAttrFromAttributable(attr, attrNullProfile, attrStorageProfile, xTypeProfile);
+            return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
@@ -919,10 +946,9 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorRowNames(RAbstractContainer x,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
-                        @Cached("create()") RAttributeProfiles attrProfiles) {
-            return xTypeProfile.profile(x).getRowNames(attrProfiles);
+        @TruffleBoundary
+        protected Object getVectorRowNames(RAbstractContainer x) {
+            return x.getRowNames();
         }
 
     }
@@ -974,7 +1000,7 @@ public final class SpecialAttributesFunctions {
                 updateRefCountNode.execute(classAttr);
             }
             if (nullClassProfile.profile(attrs != null && (classAttr == null || classAttr.getLength() == 0))) {
-                removeAttributeMapping(vector, attrs, removeClassAttrNode);
+                removeClassAttrNode.execute(vector);
             } else if (notNullClassProfile.profile(classAttr != null && classAttr.getLength() != 0)) {
                 for (int i = 0; i < classAttr.getLength(); i++) {
                     String attr = classAttr.getDataAt(i);
@@ -984,7 +1010,6 @@ public final class SpecialAttributesFunctions {
                         if (!initializeAttrs) {
                             super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
                         }
-                        // setClassAttrNode.execute(attrs, classAttr);
                         if (vector.getElementClass() != RInteger.class) {
                             // N.B. there used to be conversion to integer under certain
                             // circumstances.
@@ -1006,22 +1031,9 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
-        protected void handleAttributable(RAttributable x, @SuppressWarnings("unused") RNull classAttr) {
-            x.setClassAttr(null);
-        }
-
-        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
-        protected void handleAttributable(RAttributable x, RStringVector classAttr) {
-            x.setClassAttr(classAttr);
-        }
-
-        private static void removeAttributeMapping(RAttributable x, DynamicObject attrs, RemoveFixedAttributeNode removeClassAttrNode) {
-            if (attrs != null) {
-                removeClassAttrNode.execute(attrs);
-                if (attrs.isEmpty()) {
-                    x.initAttributes(null);
-                }
-            }
+        protected void handleAttributable(RAttributable x, @SuppressWarnings("unused") RNull classAttr,
+                        @Cached("create()") RemoveClassAttributeNode removeClassNode) {
+            removeClassNode.execute(x);
         }
 
     }
@@ -1054,6 +1066,20 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen.create();
         }
 
+        public final RStringVector getClassAttr(Object x) {
+            return (RStringVector) execute(x);
+        }
+
+        public final boolean isObject(Object x) {
+            return getClassAttr(x) != null ? true : false;
+        }
+
+        public final RStringVector getClassHierarchy(RAttributable x) {
+            Object v = execute(x);
+            RStringVector result = v instanceof RStringVector ? (RStringVector) v : x.getImplicitClass();
+            return result != null ? result : RDataFactory.createEmptyStringVector();
+        }
+
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getVectorClass(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
@@ -1063,10 +1089,9 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
-        protected Object getVectorClass(RAbstractContainer x,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
-                        @Cached("create()") RAttributeProfiles attrProfiles) {
-            return xTypeProfile.profile(x).getClassAttr(attrProfiles);
+        @TruffleBoundary
+        protected Object getVectorClass(RAbstractContainer x) {
+            return x.getClassAttr();
         }
 
     }

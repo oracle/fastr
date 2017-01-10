@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -58,6 +59,7 @@ public class RSrcref {
         return createSrcfile(FileSystems.getDefault().getPath(Utils.tildeExpand(path)));
     }
 
+    @TruffleBoundary
     private static REnvironment createSrcfile(Path path) {
         // A srcref is an environment
         double mtime;
@@ -87,6 +89,7 @@ public class RSrcref {
         return createLloc(ss, createSrcfile(path));
     }
 
+    @TruffleBoundary
     public static RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
         int[] llocData = new int[8];
         int startLine = ss.getStartLine();

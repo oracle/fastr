@@ -37,6 +37,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -425,14 +426,13 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsObject extends MissingAdapter {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
         public abstract byte execute(Object value);
 
         @Specialization
-        protected byte isObject(RAttributable arg, //
-                        @Cached("createClassProfile()") ValueProfile profile) {
-            return RRuntime.asLogical(profile.profile(arg).isObject(attrProfiles));
+        protected byte isObject(RAttributable arg) {
+            return RRuntime.asLogical(getClassNode.isObject(arg));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})

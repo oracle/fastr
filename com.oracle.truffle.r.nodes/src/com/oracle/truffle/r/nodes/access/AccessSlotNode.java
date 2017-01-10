@@ -22,6 +22,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
@@ -67,7 +68,7 @@ public abstract class AccessSlotNode extends RNode {
         return GetAttributeNode.create();
     }
 
-    private Object getSlotS4Internal(RAttributable object, String name, Object value) {
+    private Object getSlotS4Internal(RAttributable object, String name, Object value, GetClassAttributeNode getClassNode) {
         if (value == null) {
             noSlot.enter();
             assert Utils.isInterned(name);
@@ -87,7 +88,7 @@ public abstract class AccessSlotNode extends RNode {
                 return RNull.instance;
             }
 
-            RStringVector classAttr = object.getClassAttr(attrProfiles);
+            RStringVector classAttr = getClassNode.getClassAttr(object);
             if (classAttr == null) {
                 if (typeofNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -115,10 +116,11 @@ public abstract class AccessSlotNode extends RNode {
     @Specialization(guards = {"slotAccessAllowed(object)"})
     protected Object getSlotS4Cached(RAttributable object, String name,
                     @Cached("createAttrAccess()") GetAttributeNode attrAccess, //
-                    @Cached("create()") InitAttributesNode initAttrNode) {
+                    @Cached("create()") InitAttributesNode initAttrNode,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
         Object value = attrAccess.execute(initAttrNode.execute(object), name);
         String internedName = Utils.intern(name);
-        return getSlotS4Internal(object, internedName, value);
+        return getSlotS4Internal(object, internedName, value, getClassNode);
     }
 
     @TruffleBoundary
@@ -140,8 +142,8 @@ public abstract class AccessSlotNode extends RNode {
     // this is really a fallback specialization but @Fallback does not work here (because of the
     // type of "object"?)
     @Specialization(guards = {"!slotAccessAllowed(object)", "!isDotData(name)"})
-    protected Object getSlot(RAttributable object, String name) {
-        RStringVector classAttr = object.getClassAttr(attrProfiles);
+    protected Object getSlot(RAttributable object, String name, @Cached("create()") GetClassAttributeNode getClassNode) {
+        RStringVector classAttr = getClassNode.getClassAttr(object);
         if (classAttr == null) {
             RStringVector implicitClassVec = object.getImplicitClass();
             assert implicitClassVec.getLength() > 0;
