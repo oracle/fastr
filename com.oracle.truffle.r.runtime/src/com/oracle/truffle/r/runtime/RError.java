@@ -265,12 +265,15 @@ public final class RError extends RuntimeException {
         NO_NONMISSING_MAX_NA("no non-missing arguments, returning NA"),
         NO_NONMISSING_MIN_NA("no non-missing arguments, returning NA"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
-        MUST_BE_POSITIVE("%s must be a non-negative number"),
+        MUST_BE_POSITIVE("'%s' must be a non-negative number"),
+        MUST_BE_POSITIVE_SD("%s must be non-negative number"),
         MUST_BE_SQUARE("'%s' (%d x %d) must be square"),
         MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%' (%d x %d)"),
-        INVALID_TFB("invalid (to - from)/by in seq(.)"),
+        INVALID_TFB_SD("invalid (to - from)/by in seq(.)"),
+        INVALID_TFB("invalid '(to - from)/by' in 'seq'"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         BY_TOO_SMALL("'by' argument is much too small"),
+        TOO_LONG_VECTOR("result would be too long a vector"),
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
@@ -772,7 +775,8 @@ public final class RError extends RuntimeException {
         BAD_FUNCTION_EXPR("badly formed function expression"),
         FIRST_ELEMENT_ONLY("only first element of '%s' argument used"),
         MUST_BE_GE_ONE("'%s' must be of length >= 1"),
-        MORE_THAN_ONE_MATCH("there is more than one match in '%s'");
+        MORE_THAN_ONE_MATCH("there is more than one match in '%s'"),
+        TOO_MANY_ARGS("too many arguments");
 
         public final String message;
         final boolean hasArgs;

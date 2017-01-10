@@ -283,13 +283,17 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
+        // Cannot dispatch on REmpty
+        if (dispatchObject == REmpty.instance) {
+            throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 1);
+        }
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
             RStringVector type = classHierarchyNode.execute(dispatchObject);
             S3Args s3Args;
             RFunction resultFunction;
             if (implicitTypeProfile.profile(type != null)) {
-                Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), null);
+                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), null);
                 if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                     s3Args = null;
                 } else {
