@@ -37,6 +37,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
@@ -82,11 +84,14 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsArray extends MissingAdapter {
 
+        private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
+        @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
+
         public abstract byte execute(Object value);
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
-            return RRuntime.asLogical(vector.isArray());
+            return RRuntime.asLogical(isArrayProfile.profile(getDim.isArray(vector)));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
@@ -335,10 +340,11 @@ public class IsTypeFunctions {
     public abstract static class IsMatrix extends MissingAdapter {
 
         private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
+        @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
-            return RRuntime.asLogical(isMatrixProfile.profile(vector.isMatrix()));
+            return RRuntime.asLogical(isMatrixProfile.profile(getDim.isMatrix(vector)));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})

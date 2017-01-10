@@ -135,7 +135,7 @@ abstract class PositionCheckNode extends Node {
             }
             int[] vectorDim = getVectorDimsNode.getDimensions(vector);
             if (nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
-                if (vector instanceof RAbstractVector && ((RAbstractVector) vector).isArray()) {
+                if (vector instanceof RAbstractVector) {
                     if (castPosition instanceof RAbstractVector) {
                         if (getVectorPosDimsNode == null) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();

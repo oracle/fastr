@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -306,24 +306,23 @@ public abstract class Bind extends RBaseNode {
     /**
      * Compute dimnames for rows (cbind) or columns (rbind) from names of elements of combined
      * vectors.
-     *
-     * @param vec
-     * @param dimLength
-     * @return dimnames
      */
     protected Object getDimResultNamesFromElements(RAbstractVector vec, int dimLength, int dimInd, GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
         Object firstDimResultNames = RNull.instance;
         Object firstDimNames = RNull.instance;
-        if (vec.isMatrix()) {
+        int[] dim = getVectorDimensions(vec);
+        if (GetDimAttributeNode.isMatrix(dim)) {
             RList vecDimNames = getDimNamesNode.getDimNames(vec);
             if (vecDimNames != null) {
                 firstDimNames = vecDimNames.getDataAt(dimInd);
             }
-        } else if (!vec.isArray() || getVectorDimensions(vec).length == 1) {
-            RStringVector names = getNamesNode.getNames(vec);
-            firstDimNames = names == null ? RNull.instance : names;
         } else {
-            RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
+            if (!GetDimAttributeNode.isArray(dim) || dim.length == 1) {
+                RStringVector names = getNamesNode.getNames(vec);
+                firstDimNames = names == null ? RNull.instance : names;
+            } else {
+                RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
+            }
         }
         if (firstDimNames != RNull.instance) {
             RStringVector names = (RStringVector) firstDimNames;
@@ -341,7 +340,8 @@ public abstract class Bind extends RBaseNode {
     protected int getDimResultNamesFromVectors(RArgsValuesAndNames promiseArgs, RAbstractVector vec, String[] argNames, int resDim, int oldInd, int vecInd, int deparseLevel,
                     String[] dimNamesArray, int dimNamesInd, GetDimNamesAttributeNode getDimNamesNode) {
         int ind = oldInd;
-        if (vec.isMatrix()) {
+        int[] rawDimensions = getVectorDimensions(vec);
+        if (GetDimAttributeNode.isMatrix(rawDimensions)) {
             RList vecDimNames = getDimNamesNode.getDimNames(vec);
             if (vecDimNames != null) {
                 Object resDimNames = vecDimNames.getDataAt(dimNamesInd);
@@ -362,33 +362,34 @@ public abstract class Bind extends RBaseNode {
                 dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
             return -ind;
-        } else if (!vec.isArray() || getVectorDimensions(vec).length == 1) {
-            if (argNames == null) {
-                if (deparseLevel == 0) {
-                    dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                    return -ind;
+        } else {
+            if (!GetDimAttributeNode.isArray(rawDimensions) || rawDimensions.length == 1) {
+                if (argNames == null) {
+                    if (deparseLevel == 0) {
+                        dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                        return -ind;
+                    } else {
+                        String deparsedName = deparseArgName(promiseArgs, deparseLevel, vecInd);
+                        dimNamesArray[ind++] = deparsedName;
+                        return deparsedName == RRuntime.NAMES_ATTR_EMPTY_VALUE ? -ind : ind;
+                    }
                 } else {
-                    String deparsedName = deparseArgName(promiseArgs, deparseLevel, vecInd);
-                    dimNamesArray[ind++] = deparsedName;
-                    return deparsedName == RRuntime.NAMES_ATTR_EMPTY_VALUE ? -ind : ind;
+                    if (argNames[vecInd] == null) {
+                        dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                        return -ind;
+                    } else {
+                        dimNamesArray[ind++] = argNames[vecInd];
+                        return ind;
+                    }
                 }
             } else {
-                if (argNames[vecInd] == null) {
-                    dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                    return -ind;
-                } else {
-                    dimNamesArray[ind++] = argNames[vecInd];
-                    return ind;
-                }
+                RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
+                return 0;
             }
-        } else {
-            RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
-            return 0;
         }
     }
 
     /**
-     *
      * @param vectors vectors to be combined
      * @param res result dims
      * @param bindDims columns dim (cbind) or rows dim (rbind)
@@ -398,14 +399,16 @@ public abstract class Bind extends RBaseNode {
         int srcDim1Ind = type == BindType.cbind ? 0 : 1;
         int srcDim2Ind = type == BindType.cbind ? 1 : 0;
         assert vectors.length > 0;
-        int[] dim = getDimensions(vectors[0]);
+        RAbstractVector v = vectorProfile.profile(vectors[0]);
+        int[] dim = getDimensions(v, getVectorDimensions(v));
         assert dim.length == 2;
         bindDims[0] = dim[srcDim2Ind];
         res[srcDim1Ind] = dim[srcDim1Ind];
         res[srcDim2Ind] = dim[srcDim2Ind];
         boolean notEqualDims = false;
         for (int i = 1; i < vectors.length; i++) {
-            int[] dims = getDimensions(vectors[i]);
+            RAbstractVector v2 = vectorProfile.profile(vectors[i]);
+            int[] dims = getDimensions(v2, getVectorDimensions(v2));
             assert dims.length == 2;
             bindDims[i] = dims[srcDim2Ind];
             if (dims[srcDim1Ind] != res[srcDim1Ind]) {
@@ -419,11 +422,9 @@ public abstract class Bind extends RBaseNode {
         return notEqualDims;
     }
 
-    protected int[] getDimensions(RAbstractVector vector) {
-        RAbstractVector vectorProfiled = vectorProfile.profile(vector);
-        int[] dimensions = getVectorDimensions(vectorProfiled);
+    protected int[] getDimensions(RAbstractVector vector, int[] dimensions) {
         if (dimensions == null || dimensions.length != 2) {
-            return type == BindType.cbind ? new int[]{vectorProfiled.getLength(), 1} : new int[]{1, vectorProfiled.getLength()};
+            return type == BindType.cbind ? new int[]{vector.getLength(), 1} : new int[]{1, vector.getLength()};
         } else {
             assert dimensions.length == 2;
             return dimensions;
@@ -491,11 +492,11 @@ public abstract class Bind extends RBaseNode {
     protected Object allOneElem(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                     @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        RAbstractVector vec = castVector(args[0]);
-        if (vec.isMatrix()) {
+        RAbstractVector vec = vectorProfile.profile(castVector(args[0]));
+        int[] rawDimensions = getVectorDimensions(vec);
+        if (GetDimAttributeNode.isMatrix(rawDimensions)) {
             return vec;
         }
-        int[] dims = getDimensions(vec);
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
         Object dimNamesA = getNamesNode.getNames(vec);
@@ -521,6 +522,7 @@ public abstract class Bind extends RBaseNode {
             dimNamesB = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
         }
 
+        int[] dims = getDimensions(vec, rawDimensions);
         RVector<?> res = (RVector<?>) vec.copyWithNewDimensions(dims);
         setDimNamesNode.execute(res, RDataFactory.createList(type == BindType.cbind ? new Object[]{dimNamesA, dimNamesB} : new Object[]{dimNamesB, dimNamesA}));
         res.copyRegAttributesFrom(vec);
