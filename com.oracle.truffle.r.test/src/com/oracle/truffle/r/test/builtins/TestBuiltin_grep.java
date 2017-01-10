@@ -87,6 +87,9 @@ public class TestBuiltin_grep extends TestBase {
         assertEval("{ .Internal(grep(character(), \"7\", F, F, F, F, F, F)) }");
         assertEval("{ .Internal(grep(\"7\", 7, F, F, F, F, F, F)) }");
 
+        // Expected output: integer(0)
+        // FastR output: [1] 1
+        assertEval(Ignored.Unknown, "{ grep('^ *$', ' \\n') }");
     }
 
     @Test
