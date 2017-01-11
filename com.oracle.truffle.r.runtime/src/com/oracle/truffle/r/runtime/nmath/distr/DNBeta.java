@@ -47,7 +47,7 @@ public final class DNBeta implements Function4_1 {
             kMax = 0;
         } else {
             capD = Math.ceil(d + Math.sqrt(capD));
-            kMax = (capD > 0) ? (int) capD : 0;
+            kMax = (Double.isFinite(capD) && capD > 0) ? (int) capD : 0;
         }
 
         /* The starting "middle term" --- first look at it's log scale: */

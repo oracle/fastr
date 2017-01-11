@@ -12,7 +12,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath;
 
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
+import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -57,7 +59,7 @@ public final class RMath {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;
         }
-        return ((y >= 0) ? TOMS708.fabs(x) : -TOMS708.fabs(x));
+        return ((y >= 0) ? fabs(x) : -fabs(x));
     }
 
     private static double fmod(double a, double b) {
@@ -317,6 +319,9 @@ public final class RMath {
         if (Math.abs(x - np) < 0.1 * (x + np)) {
             v = (x - np) / (x + np);
             s = (x - np) * v; /* s using v -- change by MM */
+            if (fabs(s) < DBL_MIN) {
+                return s;
+            }
             ej = 2 * x * v;
             v = v * v;
             for (j = 1;; j++) { /* Taylor series */

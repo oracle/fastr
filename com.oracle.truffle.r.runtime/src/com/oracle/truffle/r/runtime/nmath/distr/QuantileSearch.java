@@ -66,13 +66,13 @@ public final class QuantileSearch {
      */
     public double iterativeSearch(double initialY, double p, double initialIncr, double resultFactor, double incrDenominator) {
         assert initialIncr > 0. : "initialIncr zero or negative. Maybe result of too small initialY?";
-        double result;
+        double result = initialY;
         double oldIncr;
         double incr = initialIncr;
         z = distributionFunc.eval(initialY, true, false);
         do {
             oldIncr = incr;
-            result = search(initialY, p, incr);
+            result = search(result, p, incr);
             incr = RMath.fmax2(1, Math.floor(incr / incrDenominator));
         } while (oldIncr > 1 && incr > result * resultFactor);
         return result;
