@@ -21,16 +21,18 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.IsMissingOrNumericNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen.GetIntegralNumericNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen.IsIntegralNumericNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.control.RLengthNodeGen;
 import com.oracle.truffle.r.nodes.ffi.AsRealNode;
@@ -51,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -79,21 +82,61 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 public class SeqFunctions {
 
     public abstract static class FastPathAdapter extends RFastPathNode {
-        public static boolean isMissingOrNumeric(Object obj) {
-            return obj == RMissing.instance || obj instanceof REmpty || obj instanceof Integer || obj instanceof Double || obj instanceof RAbstractIntVector || obj instanceof RAbstractDoubleVector;
+        public static IsMissingOrNumericNode createIsMissingOrNumericNode() {
+            return IsMissingOrNumericNodeGen.create();
         }
     }
 
-    public abstract static class SeqFastPath extends FastPathAdapter {
-        @Child GetClassAttributeNode getClassAttributeNode = GetClassAttributeNodeGen.create();
+    @TypeSystemReference(RTypesFlatLayout.class)
+    @SuppressWarnings("unused")
+    public abstract static class IsMissingOrNumericNode extends Node {
+        public abstract boolean execute(Object obj);
 
+        @Specialization
+        protected boolean isMissingOrNumericNode(RMissing obj) {
+            return true;
+        }
+
+        @Specialization
+        protected boolean isMissingOrNumericNode(Integer obj) {
+            return true;
+        }
+
+        @Specialization
+        protected boolean isMissingOrNumericNode(Double obj) {
+            return true;
+        }
+
+        @Specialization
+        protected boolean isMissingOrNumericNode(RAbstractIntVector obj) {
+            return true;
+        }
+
+        @Specialization
+        protected boolean isMissingOrNumericNode(RAbstractDoubleVector obj) {
+            return true;
+        }
+
+        @Fallback
+        protected boolean isMissingOrNumericNode(Object obj) {
+            return false;
+        }
+    }
+
+    @TypeSystemReference(RTypesFlatLayout.class)
+    public abstract static class SeqFastPath extends FastPathAdapter {
         @Specialization(guards = {"!hasClass(args, getClassAttributeNode)"})
+        @SuppressWarnings("unused")
         protected Object seqNoClassAndNumeric(VirtualFrame frame, RArgsValuesAndNames args, //
                         @Cached("createSeqIntForFastPath()") SeqInt seqInt,
                         @Cached("lookupSeqInt()") RFunction seqIntFunction,
-                        @Cached("createBinaryProfile()") ConditionProfile isNumericProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile isNumericProfile,
+                        @Cached("createGetClassAttributeNode()") GetClassAttributeNode getClassAttributeNode,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode byCheck) {
             Object[] rargs = reorderedArguments(args, seqIntFunction);
-            if (isNumericProfile.profile(toFromByNumeric(rargs))) {
+            if (isNumericProfile.profile(fromCheck.execute(rargs[0]) && toCheck.execute(rargs[1]) && toCheck.execute(rargs[2]))) {
                 return seqInt.execute(frame, rargs[0], rargs[1], rargs[2], rargs[3], rargs[4]);
             } else {
                 return null;
@@ -110,9 +153,13 @@ public class SeqFunctions {
             return RContext.lookupBuiltin("seq.int");
         }
 
+        public static GetClassAttributeNode createGetClassAttributeNode() {
+            return GetClassAttributeNode.create();
+        }
+
         /**
-         * The arguments are reordered if any are named, and later will be fed into
-         * {@link #toFromByNumeric}.
+         * The arguments are reordered if any are named, and later will be checked for missing or
+         * numeric.
          */
         public static Object[] reorderedArguments(RArgsValuesAndNames argsIn, RFunction seqIntFunction) {
             RArgsValuesAndNames args = argsIn;
@@ -132,7 +179,7 @@ public class SeqFunctions {
          * This guard checks whether the first argument (before reordering) has a class (as it might
          * have an S3 {@code seq} method).
          */
-        public static boolean hasClass(RArgsValuesAndNames args, GetClassAttributeNode getClassAttributeNode) {
+        public boolean hasClass(RArgsValuesAndNames args, GetClassAttributeNode getClassAttributeNode) {
             if (args.getLength() > 0) {
                 Object arg = args.getArgument(0);
                 if (arg instanceof RAbstractVector && getClassAttributeNode.execute(arg) != null) {
@@ -142,20 +189,21 @@ public class SeqFunctions {
             return false;
         }
 
-        public static boolean toFromByNumeric(Object[] args) {
-            return isMissingOrNumeric(args[0]) && isMissingOrNumeric(args[1]) && isMissingOrNumeric(args[2]);
-        }
-
     }
 
     /**
      * Essentially the same as {@link SeqFastPath} but since the signature is explicit there is no
      * need to reorder arguments.
      */
+    @TypeSystemReference(RTypesFlatLayout.class)
     public abstract static class SeqDefaultFastPath extends FastPathAdapter {
-        @Specialization(guards = {"isMissingOrNumeric(fromObj)", "isMissingOrNumeric(toObj)", "isMissingOrNumeric(byObj)"})
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"fromCheck.execute(fromObj)", "toCheck.execute(toObj)", "byCheck.execute(byObj)"})
         protected Object seqDefaultNumeric(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, //
-                        @Cached("createSeqIntForFastPath()") SeqInt seqInt) {
+                        @Cached("createSeqIntForFastPath()") SeqInt seqInt,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
+                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode byCheck) {
             return seqInt.execute(frame, fromObj, toObj, byObj, lengthOut, alongWith);
         }
 
@@ -170,6 +218,7 @@ public class SeqFunctions {
 
     }
 
+    @TypeSystemReference(RTypesFlatLayout.class)
     @RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"}, behavior = PURE)
     public abstract static class SeqAlong extends RBuiltinNode {
 
@@ -181,6 +230,7 @@ public class SeqFunctions {
         }
     }
 
+    @TypeSystemReference(RTypesFlatLayout.class)
     @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"}, behavior = PURE)
     public abstract static class SeqLen extends RBuiltinNode {
 
@@ -219,6 +269,7 @@ public class SeqFunctions {
      *
      * N.B. javac gives error "cannot find symbol" on plain "@RBuiltin".
      */
+    @TypeSystemReference(RTypesFlatLayout.class)
     @ImportStatic(AsRealNodeGen.class)
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = "seq.int", kind = PRIMITIVE, parameterNames = {"from", "to", "by", "length.out", "along.with",
                     "..."}, dispatch = INTERNAL_GENERIC, genericName = "seq", behavior = PURE)
@@ -227,6 +278,11 @@ public class SeqFunctions {
         private final BranchProfile error = BranchProfile.create();
         private final boolean seqFastPath;
 
+        /**
+         * Used by {@link #getLength} guard. It would be good to cache this in the relevant
+         * specializations but it does not use {@link RTypesFlatLayout} and that causes an
+         * IllegalStateException (no parent).
+         */
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
         private static final double FLT_EPSILON = 1.19209290e-7;
@@ -549,6 +605,55 @@ public class SeqFunctions {
          * and often use "1" where "1L" is more appropriate).
          */
 
+        @TypeSystemReference(RTypesFlatLayout.class)
+        public abstract static class IsIntegralNumericNode extends Node {
+            private final boolean checkLength;
+
+            public abstract boolean execute(Object obj);
+
+            public IsIntegralNumericNode(boolean checkLength) {
+                this.checkLength = checkLength;
+            }
+
+            @Specialization
+            protected boolean isIntegralNumericNode(Integer obj) {
+                if (checkLength) {
+                    return obj >= 0;
+                } else {
+                    return true;
+                }
+            }
+
+            @Specialization
+            protected boolean isIntegralNumericNode(RAbstractIntVector intVec) {
+                return intVec.getLength() == 1 && (checkLength ? intVec.getDataAt(0) >= 0 : true);
+            }
+
+            @Specialization
+            protected boolean isIntegralNumericNode(Double obj) {
+                double d = obj;
+                return d == (int) d && (checkLength ? d >= 0 : true);
+            }
+
+            @Specialization
+            protected boolean isIntegralNumericNode(RAbstractDoubleVector doubleVec) {
+                if (doubleVec.getLength() == 1) {
+                    double d = doubleVec.getDataAt(0);
+                    return d == (int) d && (checkLength ? d >= 0 : true);
+                } else {
+                    return false;
+                }
+
+            }
+
+            @Fallback
+            protected boolean isIntegralNumericNode(Object obj) {
+                return false;
+            }
+
+        }
+
+        @TypeSystemReference(RTypesFlatLayout.class)
         public abstract static class GetIntegralNumericNode extends Node {
 
             public abstract int execute(Object obj);
@@ -584,10 +689,20 @@ public class SeqFunctions {
             return GetIntegralNumericNodeGen.create();
         }
 
+        public static IsIntegralNumericNode createIsIntegralNumericNodeNoLengthCheck() {
+            return IsIntegralNumericNodeGen.create(false);
+        }
+
+        public static IsIntegralNumericNode createIsIntegralNumericNodeLengthCheck() {
+            return IsIntegralNumericNodeGen.create(true);
+        }
+
         // common idiom
-        @Specialization(guards = {"isIntegralNumericNoLengthCheck(fromObj)", "isIntegralNumericLengthCheck(lengthOut)"})
+        @Specialization(guards = {"fromCheck.execute(fromObj)", "lengthCheck.execute(lengthOut)"})
         protected RAbstractVector seqWithFromLengthIntegralNumeric(VirtualFrame frame, Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, //
-                        @Cached("createGetIntegralNumericNode()") GetIntegralNumericNode getIntegralNumericNode) {
+                        @Cached("createGetIntegralNumericNode()") GetIntegralNumericNode getIntegralNumericNode,
+                        @Cached("createIsIntegralNumericNodeNoLengthCheck()") IsIntegralNumericNode fromCheck,
+                        @Cached("createIsIntegralNumericNodeLengthCheck()") IsIntegralNumericNode lengthCheck) {
             int from = getIntegralNumericNode.execute(fromObj);
             int lout = getIntegralNumericNode.execute(lengthOut);
             if (lout == 0) {
@@ -732,45 +847,6 @@ public class SeqFunctions {
 
         public static final boolean oneNotMissing(Object obj1, Object obj2) {
             return !isMissing(obj1) || !isMissing(obj2);
-        }
-
-        public static boolean isIntegralNumericNoLengthCheck(Object obj) {
-            return isIntegralNumeric(obj, false);
-        }
-
-        public static boolean isIntegralNumericLengthCheck(Object obj) {
-            return isIntegralNumeric(obj, true);
-        }
-
-        /**
-         * Guard for {@link #seqWithFromLengthIntegralNumeric}. Only accepts integrql numeric
-         * vectors of length 1 and, if {@code checkLength==true} checks that the value is
-         * non-negative.
-         */
-        public static boolean isIntegralNumeric(Object obj, boolean checkLength) {
-            if (obj instanceof Integer) {
-                if (checkLength) {
-                    return ((int) obj) >= 0;
-                } else {
-                    return true;
-                }
-            } else if (obj instanceof RAbstractIntVector) {
-                RAbstractIntVector intVec = (RAbstractIntVector) obj;
-                return intVec.getLength() == 1 && (checkLength ? intVec.getDataAt(0) >= 0 : true);
-            } else if (obj instanceof Double) {
-                double d = (Double) obj;
-                return d == (int) d && (checkLength ? d >= 0 : true);
-            } else if (obj instanceof RAbstractDoubleVector) {
-                RAbstractDoubleVector doubleVec = (RAbstractDoubleVector) obj;
-                if (doubleVec.getLength() == 1) {
-                    double d = doubleVec.getDataAt(0);
-                    return d == (int) d && (checkLength ? d >= 0 : true);
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
         }
 
         // Utility methods
