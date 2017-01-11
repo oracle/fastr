@@ -168,29 +168,11 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
     }
 
-    @Override
-    public final RStringVector getNames(RAttributeProfiles attrProfiles) {
-        if (attrProfiles.attrNullProfile(attributes == null)) {
-            return null;
-        } else {
-            RStringVector names = getNamesFromAttrs();
-            if (attrProfiles.attrNullNamesProfile(names == null)) {
-                RList dimNames = getDimNames();
-                if (dimNames != null && dimNames.getLength() == 1) {
-                    return (RStringVector) dimNames.getDataAt(0);
-                } else {
-                    return null;
-                }
-            } else {
-                return names;
-            }
-        }
-    }
-
     /*
      * Version without profiles is used by RDeparse and for internal attribute copying (both are not
      * performance-critical)
      */
+    @Override
     public final RStringVector getNames() {
         RStringVector names = getNamesFromAttrs();
         if (names == null) {
@@ -207,7 +189,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @TruffleBoundary
     public final int getElementIndexByName(RAttributeProfiles attrProfiles, String name) {
-        if (getNames(attrProfiles) == null) {
+        if (getNames() == null) {
             return -1;
         }
         RStringVector names = getNamesFromAttrs();
@@ -226,7 +208,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      */
     @TruffleBoundary
     public final int getElementIndexByNameInexact(RAttributeProfiles attrProfiles, String name) {
-        if (getNames(attrProfiles) == null) {
+        if (getNames() == null) {
             return -1;
         }
         boolean oneMatch = false;
@@ -364,10 +346,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     @Override
-    public final RList getDimNames(RAttributeProfiles attrProfiles) {
-        return getDimNames();
-    }
-
     public final RList getDimNames() {
         return getDimNamesFromAttrs();
     }
@@ -698,17 +676,19 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         // for some reason, names is copied first, then dims, then dimnames
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             // only assign name attribute if it's not represented as dimnames (as is the case for
-            // one-dimensional arrasy)
-            this.setNames(vector.getNames(attrProfiles), invokingNode);
+            // one-dimensional array)
+            this.setNames(vector.getNames(), invokingNode);
         }
         this.setDimensions(vector.getDimensions(), invokingNode);
-        this.setDimNames(vector.getDimNames(attrProfiles), invokingNode);
+        this.setDimNames(vector.getDimNames(), invokingNode);
     }
 
-    public final boolean copyNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector) {
+    public final boolean copyNamesFrom(RAbstractVector vector) {
+        CompilerAsserts.neverPartOfCompilation();
+
         int[] dimensions = getDimensionsFromAttrs();
         if (dimensions == null) {
-            RStringVector vecNames = vector.getNames(attrProfiles);
+            RStringVector vecNames = vector.getNames();
             if (vecNames != null) {
                 this.setNames(vecNames);
                 return true;
@@ -716,8 +696,8 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 return false;
             }
         } else {
-            if (vector.getDimNames(attrProfiles) != null) {
-                this.setDimNames(vector.getDimNames(attrProfiles));
+            if (vector.getDimNames() != null) {
+                this.setDimNames(vector.getDimNames());
                 return true;
             } else {
                 return false;

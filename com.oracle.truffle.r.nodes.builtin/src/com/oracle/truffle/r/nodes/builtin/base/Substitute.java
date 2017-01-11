@@ -60,9 +60,8 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doSubstitute(RPromise expr, RList list,
-                    @Cached("create()") RAttributeProfiles attrProfiles) {
-        return doSubstituteWithEnv(expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
+    protected Object doSubstitute(RPromise expr, RList list) {
+        return doSubstituteWithEnv(expr, REnvironment.createFromList(list, REnvironment.baseEnv()));
     }
 
     @Fallback

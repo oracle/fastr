@@ -240,9 +240,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
              * the primitive value from the vector. This branch has to fold to a constant because we
              * want to avoid the toggling of the return types depending on input values.
              */
-            assert extractedVector.getNames(RAttributeProfiles.create()) == null;
+            assert extractedVector.getNames() == null;
             assert extractedVector.getDimensions() == null;
-            assert extractedVector.getDimNames(null) == null;
+            assert extractedVector.getDimNames() == null;
             return extractedVector.getDataAtAsObject(0);
         }
         return extractedVector;

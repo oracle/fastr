@@ -139,7 +139,6 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "Date2POSIXlt", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
@@ -167,7 +166,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -176,7 +175,6 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "as.POSIXlt", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
@@ -210,7 +208,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }

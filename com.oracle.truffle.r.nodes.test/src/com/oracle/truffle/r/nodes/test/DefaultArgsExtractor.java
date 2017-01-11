@@ -68,7 +68,7 @@ class DefaultArgsExtractor {
 
             if (defArgVal.get() instanceof RPairList) {
                 RPairList formals = (RPairList) defArgVal.get();
-                RStringVector names = formals.getNames(null);
+                RStringVector names = formals.getNames();
 
                 for (int i = 0; i < names.getLength(); i++) {
                     String name = names.getDataAt(i);

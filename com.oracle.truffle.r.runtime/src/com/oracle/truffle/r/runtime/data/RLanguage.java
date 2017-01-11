@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -179,7 +180,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public RStringVector getNames() {
         if (list == null) {
             /*
              * "names" for a language object is a special case, that is applicable to calls and
@@ -191,7 +192,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
             RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
             return names;
         } else {
-            return list.getNames(attrProfiles);
+            return list.getNames();
         }
     }
 
@@ -201,12 +202,12 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
             /* See getNames */
             RContext.getRRuntimeASTAccess().setNames(this, newNames);
         } else {
-            list.setNames(newNames);
+            setNamesOnPairList(newNames);
         }
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         RAttributable attr = list == null ? this : list;
         return (RList) attr.getAttr(RRuntime.DIMNAMES_ATTR_KEY);
     }
@@ -264,9 +265,14 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
             RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
             list = (RPairList) obj;
             if (names != null) {
-                list.setNames(names);
+                setNamesOnPairList(names);
             }
         }
         return list;
+    }
+
+    @TruffleBoundary
+    private void setNamesOnPairList(RStringVector names) {
+        list.setNames(names);
     }
 }

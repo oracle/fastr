@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -47,7 +48,17 @@ abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstr
             String data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createStringVector(result, vector.isComplete(), getDimensions(), getNames(null));
+        return RDataFactory.createStringVector(result, vector.isComplete(), getDimensionsMaterialized(), getNamesMaterialized());
+    }
+
+    @TruffleBoundary
+    private int[] getDimensionsMaterialized() {
+        return getDimensions();
+    }
+
+    @TruffleBoundary
+    private RStringVector getNamesMaterialized() {
+        return getNames();
     }
 
     @Override

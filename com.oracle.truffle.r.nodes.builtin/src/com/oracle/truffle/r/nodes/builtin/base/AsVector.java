@@ -209,8 +209,6 @@ public abstract class AsVector extends RBuiltinNode {
 
         protected abstract static class CastPairListNode extends CastNode {
 
-            private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
             @Specialization
             @TruffleBoundary
             protected Object castPairlist(RAbstractListVector x) {
@@ -220,7 +218,7 @@ public abstract class AsVector extends RBuiltinNode {
                     return RNull.instance;
                 } else {
                     Object list = RNull.instance;
-                    RStringVector names = x.getNames(attrProfiles);
+                    RStringVector names = x.getNames();
                     for (int i = x.getLength() - 1; i >= 0; i--) {
                         Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
                         Object data = x.getDataAt(i);

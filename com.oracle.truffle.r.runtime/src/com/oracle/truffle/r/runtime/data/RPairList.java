@@ -308,7 +308,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public final RStringVector getNames() {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
@@ -339,7 +339,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         return null;
     }
 

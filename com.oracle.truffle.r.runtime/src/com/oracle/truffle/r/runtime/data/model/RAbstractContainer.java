@@ -66,13 +66,25 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
         return null;
     }
 
-    RStringVector getNames(RAttributeProfiles attrProfiles);
+    default RStringVector getNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
+    }
 
-    void setNames(RStringVector newNames);
+    default void setNames(RStringVector newNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
+    }
 
-    RList getDimNames(RAttributeProfiles attrProfiles);
+    default RList getDimNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return (RList) getAttr(RRuntime.DIMNAMES_ATTR_KEY);
+    }
 
-    void setDimNames(RList newDimNames);
+    default void setDimNames(RList newDimNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+    }
 
     default Object getRowNames() {
         CompilerAsserts.neverPartOfCompilation();

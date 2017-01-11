@@ -542,7 +542,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
     private RVector<?> resizeVector(RAbstractVector vector, int size) {
-        RStringVector oldNames = vector.getNames(vectorNamesProfile);
+        RStringVector oldNames = vector.getNames();
         RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
             res.copyAttributesFrom(vector);

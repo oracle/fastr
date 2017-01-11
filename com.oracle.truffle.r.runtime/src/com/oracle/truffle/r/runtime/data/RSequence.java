@@ -104,7 +104,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public final RStringVector getNames() {
         return null;
     }
 
@@ -115,7 +115,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RList getDimNames(RAttributeProfiles attrProfiles) {
+    public final RList getDimNames() {
         return null;
     }
 

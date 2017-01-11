@@ -68,7 +68,6 @@ public class OptionsFunctions {
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
         @TruffleBoundary
@@ -136,7 +135,7 @@ public class OptionsFunctions {
                         // setting
                         RList list = (RList) value;
                         RStringVector thisListnames = null;
-                        Object nn = list.getNames(attrProfiles);
+                        Object nn = list.getNames();
                         if (nn instanceof RStringVector) {
                             thisListnames = (RStringVector) nn;
                         } else {

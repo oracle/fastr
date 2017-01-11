@@ -50,8 +50,6 @@ public class AttachFunctions {
     @RBuiltin(name = "attach", visibility = OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"}, behavior = COMPLEX)
     public abstract static class Attach extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("what").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RAbstractListVector.class)), RError.Message.ATTACH_BAD_TYPE);
@@ -86,7 +84,7 @@ public class AttachFunctions {
         @TruffleBoundary
         protected REnvironment doAttach(RAbstractListVector what, RAbstractIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
-            RStringVector names = what.getNames(attrProfiles);
+            RStringVector names = what.getNames();
             for (int i = 0; i < names.getLength(); i++) {
                 // TODO: copy/sharing?
                 env.safePut(names.getDataAt(i), what.getDataAt(i));

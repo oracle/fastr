@@ -60,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"}, behavior = PURE)
 public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Child private UpdateNames updateNames;
@@ -154,7 +153,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @TruffleBoundary
     private void checkAttributeForEmptyValue(RList rlist) {
-        RStringVector listNames = rlist.getNames(attrProfiles);
+        RStringVector listNames = rlist.getNames();
         int length = rlist.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 1; i < length; i++) {
@@ -272,7 +271,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         Object obj = getNonShared(o);
         RAttributable attrObj = (RAttributable) obj;
         attrObj.removeAllAttributes();
-        RStringVector listNames = operand.getNames(attrProfiles);
+        RStringVector listNames = operand.getNames();
         if (listNames == null) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }

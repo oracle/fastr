@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -356,7 +355,7 @@ public final class ValuePrinterNode extends RBaseNode {
                         }
 
                         @Override
-                        public RStringVector getNames(RAttributeProfiles attrProfiles) {
+                        public RStringVector getNames() {
                             return names;
                         }
 
@@ -537,7 +536,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        public RStringVector getNames() {
             return null;
         }
 
@@ -547,7 +546,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RList getDimNames(RAttributeProfiles attrProfiles) {
+        public RList getDimNames() {
             return null;
         }
 

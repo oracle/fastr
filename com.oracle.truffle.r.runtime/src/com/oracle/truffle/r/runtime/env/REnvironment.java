@@ -663,10 +663,10 @@ public abstract class REnvironment extends RAttributeStorage {
      * e.g. {@code substitute}.
      */
     @TruffleBoundary
-    public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
+    public static REnvironment createFromList(RList list, REnvironment parent) {
         REnvironment result = RDataFactory.createNewEnv(null);
         RArguments.initializeEnclosingFrame(result.getFrame(), parent.getFrame());
-        RStringVector names = list.getNames(attrProfiles);
+        RStringVector names = list.getNames();
         for (int i = 0; i < list.getLength(); i++) {
             try {
                 result.put(names.getDataAt(i), list.getDataAt(i));

@@ -66,8 +66,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "as.function.default", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class AsFunction extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(RExpression.class)), RError.SHOW_CALLER2, RError.Message.TYPE_EXPECTED, RType.List.getName());
@@ -87,8 +85,8 @@ public abstract class AsFunction extends RBuiltinNode {
             saveArguments = SaveArgumentsNode.NO_ARGS;
             formals = FormalArguments.NO_ARGS;
         } else {
-            assert x.getNames(attrProfiles) != null;
-            RStringVector names = x.getNames(attrProfiles);
+            assert x.getNames() != null;
+            RStringVector names = x.getNames();
             String[] argumentNames = new String[x.getLength() - 1];
             RNode[] defaultValues = new RNode[x.getLength() - 1];
             AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[x.getLength() - 1];

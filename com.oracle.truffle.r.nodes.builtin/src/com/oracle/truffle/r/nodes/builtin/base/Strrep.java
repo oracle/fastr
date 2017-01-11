@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "strrep", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
 public abstract class Strrep extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -86,8 +85,12 @@ public abstract class Strrep extends RBuiltinNode {
         }
         RStringVector result = RDataFactory.createStringVector(data, naCheck.neverSeenNA());
         if (resultLen == xLen) {
-            result.copyNamesFrom(attrProfiles, xVec);
+            copyNames(xVec, result);
         }
         return result;
+    }
+
+    private void copyNames(RAbstractStringVector xVec, RStringVector result) {
+        result.copyNamesFrom(xVec);
     }
 }

@@ -179,7 +179,7 @@ public class ReplaceVectorNodeTest extends TestBase {
 
         RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, RLogical.TRUE);
 
-        RStringVector newNames = result.getNames(RAttributeProfiles.create());
+        RStringVector newNames = result.getNames();
         assertThat(newNames.getLength(), is(names.getLength()));
         assertThat(newNames.getDataAt(0), is(names.getDataAt(0)));
         assertThat(newNames.getDataAt(1), is(names.getDataAt(1)));

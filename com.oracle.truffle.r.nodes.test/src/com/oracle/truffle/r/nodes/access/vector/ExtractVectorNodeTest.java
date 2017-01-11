@@ -189,7 +189,7 @@ public class ExtractVectorNodeTest extends TestBase {
         vector.setNames(names);
         RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
 
-        RStringVector newNames = result.getNames(RAttributeProfiles.create());
+        RStringVector newNames = result.getNames();
         assertThat(newNames.getLength(), is(1));
         assertThat(newNames.getDataAt(0), is(names.getDataAt(1)));
     }

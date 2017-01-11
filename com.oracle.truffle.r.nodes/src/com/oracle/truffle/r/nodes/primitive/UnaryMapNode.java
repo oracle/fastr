@@ -64,7 +64,6 @@ public final class UnaryMapNode extends RBaseNode {
     private final VectorLengthProfile operandLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile operandIsNAProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile hasAttributesProfile;
-    private final RAttributeProfiles attrProfiles;
     private final ConditionProfile shareOperand;
 
     // compile-time optimization flags
@@ -85,7 +84,6 @@ public final class UnaryMapNode extends RBaseNode {
 
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareOperand = operandVector ? ConditionProfile.createBinaryProfile() : null;
-        this.attrProfiles = mayContainMetadata ? RAttributeProfiles.create() : null;
         this.hasAttributesProfile = mayContainMetadata ? BranchProfile.create() : null;
     }
 
@@ -211,7 +209,7 @@ public final class UnaryMapNode extends RBaseNode {
     @TruffleBoundary
     private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
-        result.copyNamesFrom(attrProfiles, attributeSource);
+        result.copyNamesFrom(attributeSource);
     }
 
     @SuppressWarnings("unused")

@@ -72,7 +72,7 @@ final class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implemen
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        return withNames ? super.getNames(attrProfiles) : null;
+    public RStringVector getNames() {
+        return withNames ? super.getNames() : null;
     }
 }

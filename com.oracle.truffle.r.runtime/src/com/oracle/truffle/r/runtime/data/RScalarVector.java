@@ -92,7 +92,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public RStringVector getNames() {
         return null;
     }
 
@@ -102,7 +102,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         return null;
     }
 

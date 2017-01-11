@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -71,7 +70,7 @@ final class RFactorToComplexVectorClosure extends RToComplexVectorClosure implem
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        return withNames ? super.getNames(attrProfiles) : null;
+    public RStringVector getNames() {
+        return withNames ? super.getNames() : null;
     }
 }

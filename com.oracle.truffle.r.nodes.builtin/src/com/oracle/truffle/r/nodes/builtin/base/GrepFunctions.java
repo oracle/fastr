@@ -67,11 +67,6 @@ public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
         @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
 
-        /**
-         * This profile is needed to satisfy API requirements.
-         */
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
         protected void castPattern(CastBuilder casts) {
             // with default error message, NO_CALLER does not work
             casts.arg("pattern").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
@@ -275,7 +270,7 @@ public class GrepFunctions {
                 return value ? RDataFactory.createEmptyStringVector() : RDataFactory.createEmptyIntVector();
             } else {
                 if (value) {
-                    RStringVector oldNames = vector.getNames(attrProfiles);
+                    RStringVector oldNames = vector.getNames();
                     String[] newNames = null;
                     if (oldNames != null) {
                         newNames = new String[nmatches];
@@ -1217,8 +1212,8 @@ public class GrepFunctions {
                 }
             }
             RList ret = RDataFactory.createList(result);
-            if (x.getNames(attrProfiles) != null) {
-                ret.copyNamesFrom(attrProfiles, x);
+            if (x.getNames() != null) {
+                ret.copyNamesFrom(x);
             }
             return ret;
         }

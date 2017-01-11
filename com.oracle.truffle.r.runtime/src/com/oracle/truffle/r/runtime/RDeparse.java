@@ -61,8 +61,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  */
 public class RDeparse {
 
-    private static final RAttributeProfiles DUMMY_ATTR_PROFILES = RAttributeProfiles.create();
-
     public static final int KEEPINTEGER = 1;
     public static final int QUOTEEXPRESSIONS = 2;
     public static final int SHOWATTRIBUTES = 4;
@@ -874,7 +872,7 @@ public class RDeparse {
         private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames(DUMMY_ATTR_PROFILES);
+            Object names = v.getNames();
             RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
             for (int i = 0; i < n; i++) {
                 if (i > 0) {

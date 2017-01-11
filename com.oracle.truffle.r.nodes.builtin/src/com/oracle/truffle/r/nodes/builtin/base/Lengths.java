@@ -33,6 +33,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -51,8 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Lengths extends RBuiltinNode {
 
     @Child private RLengthNode lengthNode;
-
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -93,8 +92,13 @@ public abstract class Lengths extends RBuiltinNode {
     private RIntVector createResult(RAbstractVector x, int[] data, boolean useNames) {
         RIntVector result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         if (useNames) {
-            result.copyNamesFrom(attrProfiles, x);
+            copyNames(x, result);
         }
         return result;
+    }
+
+    @TruffleBoundary
+    private void copyNames(RAbstractVector x, RIntVector result) {
+        result.copyNamesFrom(x);
     }
 }
