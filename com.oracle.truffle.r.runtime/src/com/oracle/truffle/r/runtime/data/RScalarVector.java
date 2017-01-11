@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -156,6 +157,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
+    @TruffleBoundary
     public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         RVector<?> result = materialize().copyResizedWithDimensions(newDimensions, fillNA);
         MemoryCopyTracer.reportCopying(this, result);

@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -89,7 +90,7 @@ public abstract class Matrix extends RBuiltinNode {
         if (empty.profile(data.getLength() == 0)) {
             if (isList.profile(data instanceof RAbstractListVector)) {
                 // matrix of NULL-s
-                res = data.copyResizedWithDimensions(dim, true);
+                res = copyResizedWithDimensions(data, dim);
                 if (byrowProfile.profile(byrow)) {
                     if (transpose == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -118,6 +119,11 @@ public abstract class Matrix extends RBuiltinNode {
             }
         }
         return res;
+    }
+
+    @TruffleBoundary
+    private static RVector<?> copyResizedWithDimensions(RAbstractVector data, int[] dim) {
+        return data.copyResizedWithDimensions(dim, true);
     }
 
     private int[] computeDimByCol(int size, int nrow, int ncol, boolean missingNr, boolean missingNc) {

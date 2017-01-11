@@ -548,9 +548,14 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             n *= newDims[i];
         }
         RAbstractVector result = (RAbstractVector) Rf_allocateVector(mode, n);
-        result.setDimensions(newDims);
+        setDims(newDims, result);
         return result;
 
+    }
+
+    @TruffleBoundary
+    private static void setDims(int[] newDims, RAbstractVector result) {
+        result.setDimensions(newDims);
     }
 
     @Override

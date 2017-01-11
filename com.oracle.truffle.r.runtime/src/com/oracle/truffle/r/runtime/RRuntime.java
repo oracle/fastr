@@ -868,8 +868,8 @@ public class RRuntime {
     public static int nrows(Object x) {
         if (x instanceof RAbstractContainer) {
             RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                return xa.getDimensions()[0];
+            if (hasDims(xa)) {
+                return getDims(xa)[0];
             } else {
                 return xa.getLength();
             }
@@ -881,8 +881,8 @@ public class RRuntime {
     public static int ncols(Object x) {
         if (x instanceof RAbstractContainer) {
             RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                int[] dims = xa.getDimensions();
+            if (hasDims(xa)) {
+                int[] dims = getDims(xa);
                 if (dims.length >= 2) {
                     return dims[1];
                 } else {
@@ -894,6 +894,16 @@ public class RRuntime {
         } else {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
         }
+    }
+
+    @TruffleBoundary
+    private static int[] getDims(RAbstractContainer xa) {
+        return xa.getDimensions();
+    }
+
+    @TruffleBoundary
+    private static boolean hasDims(RAbstractContainer xa) {
+        return xa.hasDimensions();
     }
 
 }
