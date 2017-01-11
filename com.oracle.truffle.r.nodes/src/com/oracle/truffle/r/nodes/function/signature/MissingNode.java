@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
@@ -142,6 +142,9 @@ public final class MissingNode extends OperatorNode {
                 if (isSymbolNullProfile.profile(symbol == null)) {
                     return false;
                 } else {
+                    if (promise instanceof EagerPromise && !((EagerPromise) promise).isDeoptimized()) {
+                        return false;
+                    }
                     if (recursiveDesc != null) {
                         promiseHelper.materialize(promise); // Ensure that promise holds a frame
                     }
@@ -155,16 +158,15 @@ public final class MissingNode extends OperatorNode {
                         if (recursiveDesc == null) {
                             promiseHelper.materialize(promise); // Ensure that promise holds a frame
                         }
-                        PromiseState state = promise.getState();
                         try {
-                            promise.setState(PromiseState.UnderEvaluation);
+                            promise.setUnderEvaluation();
                             if (recursive == null) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
                                 recursive = insert(MissingCheckCache.create(level + 1));
                             }
                             return recursive.execute(promise.getFrame(), symbol);
                         } finally {
-                            promise.setState(state);
+                            promise.resetUnderEvaluation();
                         }
                     }
                 }

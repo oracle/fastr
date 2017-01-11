@@ -36,6 +36,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
@@ -91,7 +92,7 @@ public class PromiseHelperNode extends RBaseNode {
         @TruffleBoundary
         public boolean deoptimizeFrame(MaterializedFrame frame) {
             boolean deoptOne = false;
-            for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+            for (FrameSlot slot : frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0])) {
                 // We're only interested in RPromises
                 if (slot.getKind() != FrameSlotKind.Object) {
                     continue;
@@ -117,7 +118,7 @@ public class PromiseHelperNode extends RBaseNode {
         }
 
         private boolean deoptimize(RPromise promise) {
-            if (!promise.getState().isDefaultOpt()) {
+            if (!PromiseState.isDefaultOpt(promise.getState())) {
                 deoptimizeProfile.enter();
                 EagerPromiseBase eager = (EagerPromiseBase) promise;
                 return eager.deoptimize();
@@ -135,7 +136,7 @@ public class PromiseHelperNode extends RBaseNode {
     @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
     private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
 
-    private final ValueProfile optStateProfile = ValueProfile.createIdentityProfile();
+    @CompilationFinal private PrimitiveValueProfile optStateProfile = PrimitiveValueProfile.createEqualityProfile();
     private final ValueProfile isValidAssumptionProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
@@ -155,9 +156,16 @@ public class PromiseHelperNode extends RBaseNode {
         }
 
         Object obj;
-        PromiseState state = optStateProfile.profile(promise.getState());
-        if (state.isDefaultOpt()) {
-            obj = generateValueDefault(frame, state, promise);
+        int state = optStateProfile.profile(promise.getState());
+        if (PromiseState.isExplicit(state)) {
+            CompilerDirectives.transferToInterpreter();
+            // reset profiles, this is very likely a one-time event
+            isEvaluatedProfile = ConditionProfile.createBinaryProfile();
+            optStateProfile = PrimitiveValueProfile.createEqualityProfile();
+            return evaluateSlowPath(frame, promise);
+        }
+        if (PromiseState.isDefaultOpt(state)) {
+            obj = generateValueDefault(frame, promise);
         } else {
             obj = generateValueEager(frame, state, (EagerPromiseBase) promise);
         }
@@ -171,7 +179,7 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
-    private Object generateValueDefault(VirtualFrame frame, PromiseState state, RPromise promise) {
+    private Object generateValueDefault(VirtualFrame frame, RPromise promise) {
         // Check for dependency cycle
         if (isUnderEvaluation(promise)) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -181,32 +189,29 @@ public class PromiseHelperNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
             }
+            promise.setUnderEvaluation();
             if (isInOriginFrame(frame, promise)) {
-                // state change must happen inside of conditional as isInOriginalFrame checks the
-                // state
-                promise.setState(PromiseState.UnderEvaluation);
                 return promiseClosureCache.execute(frame, promise.getClosure());
             } else {
-                promise.setState(PromiseState.UnderEvaluation);
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
                 return promiseClosureCache.execute(wrapPromiseFrame(frame, promiseFrame), promise.getClosure());
             }
         } finally {
-            promise.setState(state);
+            promise.resetUnderEvaluation();
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, PromiseState state, EagerPromiseBase promise) {
-        assert state.isEager() || state == PromiseState.Promised;
+    private Object generateValueEager(VirtualFrame frame, int state, EagerPromiseBase promise) {
+        assert !PromiseState.isDefaultOpt(state);
         if (!isDeoptimized(promise)) {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
             if (eagerAssumption.isValid()) {
-                if (state == PromiseState.Promised) {
+                if (!PromiseState.isEager(state)) {
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
                     return checkNextNode().evaluate(frame, nextPromise);
                 } else {
-                    assert state.isEager();
+                    assert PromiseState.isEager(state);
                     return getEagerValue(frame, (EagerPromise) promise);
                 }
             } else {
@@ -218,7 +223,7 @@ public class PromiseHelperNode extends RBaseNode {
             }
         }
         // Call
-        return generateValueDefault(frame, state, promise);
+        return generateValueDefault(frame, promise);
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
@@ -227,11 +232,21 @@ public class PromiseHelperNode extends RBaseNode {
             return promise.getValue();
         }
 
+        int state = promise.getState();
+        if (PromiseState.isExplicit(state)) {
+            synchronized (promise) {
+                if (promise.isEvaluated()) {
+                    return promise.getValue();
+                }
+                Object obj = generateValueDefaultSlowPath(frame, promise);
+                promise.setValue(obj);
+                return obj;
+            }
+        }
         Object obj;
-        PromiseState state = promise.getState();
-        if (state.isDefaultOpt()) {
+        if (PromiseState.isDefaultOpt(state)) {
             // Evaluate guarded by underEvaluation
-            obj = generateValueDefaultSlowPath(frame, state, promise);
+            obj = generateValueDefaultSlowPath(frame, promise);
         } else {
             obj = generateValueEagerSlowPath(frame, state, (EagerPromiseBase) promise);
         }
@@ -239,13 +254,13 @@ public class PromiseHelperNode extends RBaseNode {
         return obj;
     }
 
-    private static Object generateValueDefaultSlowPath(VirtualFrame frame, PromiseState state, RPromise promise) {
+    private static Object generateValueDefaultSlowPath(VirtualFrame frame, RPromise promise) {
         // Check for dependency cycle
         if (promise.isUnderEvaluation()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
         }
         try {
-            promise.setState(PromiseState.UnderEvaluation);
+            promise.setUnderEvaluation();
 
             if (promise.isInOriginFrame(frame)) {
                 return promise.getClosure().eval(frame.materialize());
@@ -257,7 +272,7 @@ public class PromiseHelperNode extends RBaseNode {
                 return promise.getClosure().eval(promiseFrame.materialize());
             }
         } finally {
-            promise.setState(state);
+            promise.resetUnderEvaluation();
         }
     }
 
@@ -266,16 +281,15 @@ public class PromiseHelperNode extends RBaseNode {
                         RCaller.createForPromise(RArguments.getCall(promiseFrame), frame));
     }
 
-    private static Object generateValueEagerSlowPath(VirtualFrame frame, PromiseState state, EagerPromiseBase promise) {
-        assert state.isEager() || state == PromiseState.Promised;
+    private static Object generateValueEagerSlowPath(VirtualFrame frame, int state, EagerPromiseBase promise) {
+        assert !PromiseState.isDefaultOpt(state);
         if (!promise.isDeoptimized()) {
             Assumption eagerAssumption = promise.getIsValidAssumption();
             if (eagerAssumption.isValid()) {
-                if (state == PromiseState.Promised) {
+                if (!PromiseState.isEager(state)) {
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
                     return evaluateSlowPath(frame, nextPromise);
                 } else {
-                    assert state.isEager();
                     Object o = promise.getEagerValue();
                     if (promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX) {
                         return ShareObjectNode.share(o);
@@ -290,7 +304,7 @@ public class PromiseHelperNode extends RBaseNode {
             }
         }
         // Call
-        return generateValueDefaultSlowPath(frame, state, promise);
+        return generateValueDefaultSlowPath(frame, promise);
     }
 
     /**
@@ -298,7 +312,7 @@ public class PromiseHelperNode extends RBaseNode {
      * <code>null</code>
      */
     public void materialize(RPromise promise) {
-        if (isOptEagerProfile.profile(promise.getState().isEager()) || isOptPromisedProfile.profile(promise.getState() == PromiseState.Promised)) {
+        if (isDefaultOptProfile.profile(!PromiseState.isDefaultOpt(promise.getState()))) {
             EagerPromiseBase eager = (EagerPromiseBase) promise;
             eager.materialize();
         }
@@ -332,7 +346,7 @@ public class PromiseHelperNode extends RBaseNode {
         return isEvaluatedProfile.profile(promise.isEvaluated());
     }
 
-    private final ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile isEvaluatedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile underEvaluationProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isNullFrameProfile = ConditionProfile.createBinaryProfile();
 
@@ -342,8 +356,7 @@ public class PromiseHelperNode extends RBaseNode {
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     // Eager
-    private final ConditionProfile isOptEagerProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isOptPromisedProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isDefaultOptProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
