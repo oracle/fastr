@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,7 +37,7 @@ public class TestBuiltin_vapply extends TestBase {
         assertEval("{ f <- function(a, ...) vapply(a, function(.) identical(a, T, ...), NA); v <- c(1,2,3); f(v) }");
         assertEval("{ f<-function(x,y) x-y; w<-c(42, 42); z<-7; vapply(w, f, as.double(NA), x=z) }");
 
-        assertEval("{ vapply(c(\"foo\", \"bar\"), 42, c(TRUE) }");
+        assertEval("{ vapply(c(\"foo\", \"bar\"), 42, c(TRUE)) }");
         assertEval(Output.IgnoreErrorContext, "{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, function() 42) }");
         assertEval(Output.IgnoreErrorContext, "{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, c(TRUE), USE.NAMES=logical()) }");
         assertEval(Output.IgnoreErrorContext, "{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, c(TRUE), USE.NAMES=\"42\") }");

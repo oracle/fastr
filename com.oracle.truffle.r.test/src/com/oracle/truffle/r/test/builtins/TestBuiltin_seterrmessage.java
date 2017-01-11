@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,7 +19,7 @@ public class TestBuiltin_seterrmessage extends TestBase {
 
     @Test
     public void testseterrmessage1() {
-        assertEval(Output.IgnoreErrorContext, "argv <- list('Error in cor(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n'); .Internal(seterrmessage(argv[[1]]))");
+        assertEval("argv <- list('Error in cor(rnorm(10), NULL) : \\n  supply both \\'x\\' and \\'y\\' or a matrix-like \\'x\\'\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test

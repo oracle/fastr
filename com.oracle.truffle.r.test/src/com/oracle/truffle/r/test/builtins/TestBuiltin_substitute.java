@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -66,7 +66,7 @@ public class TestBuiltin_substitute extends TestBase {
 
         assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
         assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
-        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
+        assertEval("{ substitute(x <- x + 1, list(x = 1)) }");
 
         assertEval("{ f <- function(y) { substitute(y) } ; f() }");
         assertEval(Output.IgnoreWhitespace, "{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -65,7 +65,7 @@ public class TestBuiltin_strsplit extends TestBase {
     @Test
     public void teststrsplit10() {
         assertEval(Ignored.Unknown,
-                        "argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+                        "argv <- list('A shell of class documentation has been written to the file \\'./myTst2/man/DocLink-class.Rd\\'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -85,8 +85,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\\'Writing R Extensions\\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(c('* Edit the help file skeletons in \\'man\\', possibly combining help files for multiple functions.', '* Edit the exports in \\'NAMESPACE\\', and add necessary imports.', '* Put any C/C++/Fortran code in \\'src\\'.', '* If you have compiled code, add a useDynLib() directive to \\'NAMESPACE\\'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\\'Writing R Extensions\\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,8 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf3() {
-        assertEval(Ignored.Unknown, "argv <- list('min 10-char string '%10s'', c('a', 'ABC', 'and an even longer one')); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('min 3-char string \\'%3s\\'', c('a', 'ABC', 'and an even longer one')); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('min 10-char string \\'%10s\\'', c('a', 'ABC', 'and an even longer one')); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
