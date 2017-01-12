@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -189,7 +188,7 @@ public class ExtractVectorNodeTest extends TestBase {
         vector.setNames(names);
         RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
 
-        RStringVector newNames = result.getNames(RAttributeProfiles.create());
+        RStringVector newNames = result.getNames();
         assertThat(newNames.getLength(), is(1));
         assertThat(newNames.getDataAt(0), is(names.getDataAt(1)));
     }

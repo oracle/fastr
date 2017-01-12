@@ -272,6 +272,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
          * The result is an {@link RList} contain the value, plus an "error" attribute if the
          * evaluation resulted in an error.
          */
+        @TruffleBoundary
         private static RList createEvalResult(PolyglotEngine.Value resultValue) {
             Object result = resultValue.get();
             Object listResult = result;
@@ -292,6 +293,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             return list;
         }
 
+        @TruffleBoundary
         public static RList createErrorResult(String errorMsg) {
             RList list = RDataFactory.createList(new Object[]{RRuntime.LOGICAL_NA});
             list.setAttr("error", errorMsg);

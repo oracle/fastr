@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -364,6 +365,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void Rf_setAttrib(Object obj, Object name, Object val) {
         if (tracer != null) {
             tracer.Rf_setAttrib(obj, name, val);
@@ -379,13 +381,18 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             }
             nameAsString = nameAsString.intern();
             if (val == RNull.instance) {
-                attrObj.removeAttr(nameAsString);
+                removeAttr(attrObj, nameAsString);
             } else if ("class" == nameAsString) {
                 attrObj.initAttributes().define(nameAsString, val);
             } else {
                 attrObj.setAttr(nameAsString, val);
             }
         }
+    }
+
+    @TruffleBoundary
+    private static void removeAttr(RAttributable a, String name) {
+        a.removeAttr(name);
     }
 
     public static RStringVector getClassHr(Object v) {
@@ -541,9 +548,14 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             n *= newDims[i];
         }
         RAbstractVector result = (RAbstractVector) Rf_allocateVector(mode, n);
-        result.setDimensions(newDims);
+        setDims(newDims, result);
         return result;
 
+    }
+
+    @TruffleBoundary
+    private static void setDims(int[] newDims, RAbstractVector result) {
+        result.setDimensions(newDims);
     }
 
     @Override
@@ -753,6 +765,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public int OBJECT(Object x) {
         if (tracer != null) {
             tracer.OBJECT(x);
@@ -1507,6 +1520,7 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public Object Rf_classgets(Object x, Object y) {
         if (tracer != null) {
             tracer.Rf_classgets(x, y);

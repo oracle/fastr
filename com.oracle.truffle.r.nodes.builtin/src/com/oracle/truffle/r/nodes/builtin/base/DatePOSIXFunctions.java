@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -139,7 +138,6 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "Date2POSIXlt", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
@@ -167,7 +165,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -176,7 +174,6 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "as.POSIXlt", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
@@ -210,7 +207,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }

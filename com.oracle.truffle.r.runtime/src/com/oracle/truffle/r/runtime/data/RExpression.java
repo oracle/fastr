@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -46,11 +47,13 @@ public class RExpression extends RListBase implements RAbstractVector {
     }
 
     @Override
+    @TruffleBoundary
     protected RExpression internalCopy() {
         return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
     }
 
     @Override
+    @TruffleBoundary
     protected RExpression internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)

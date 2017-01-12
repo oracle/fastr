@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -24,7 +25,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -37,12 +37,15 @@ public abstract class UpdateLevels extends RBuiltinNode {
         casts.arg("value").allowNull().asVector(false);
     }
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    protected RemoveFixedAttributeNode createRemoveAttrNode() {
+        return RemoveFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+    }
 
     @Specialization
-    protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
+    protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels,
+                    @Cached("createRemoveAttrNode()") RemoveFixedAttributeNode removeAttrNode) {
         RVector<?> v = (RVector<?>) vector.getNonShared();
-        v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
+        removeAttrNode.execute(v);
         return v;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,14 +37,6 @@ public final class RFactor {
      */
     public static RVector<?> getLevels(RAbstractIntVector factor) {
         return getLevelsImpl(factor.getAttr(RRuntime.LEVELS_ATTR_KEY));
-    }
-
-    /**
-     * Helper method to get 'levels' of a factor with profile. However, all the invocations of this
-     * method should be replaced with FactorNodes.GetLevel in the future.
-     */
-    public static RVector<?> getLevels(RAttributeProfiles profile, RAbstractIntVector factor) {
-        return getLevelsImpl(factor.getAttr(profile, RRuntime.LEVELS_ATTR_KEY));
     }
 
     private static RVector<?> getLevelsImpl(Object attr) {

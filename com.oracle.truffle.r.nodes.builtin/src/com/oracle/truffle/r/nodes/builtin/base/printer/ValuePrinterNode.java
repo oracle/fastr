@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -356,7 +355,7 @@ public final class ValuePrinterNode extends RBaseNode {
                         }
 
                         @Override
-                        public RStringVector getNames(RAttributeProfiles attrProfiles) {
+                        public RStringVector getNames() {
                             return names;
                         }
 
@@ -537,7 +536,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        public RStringVector getNames() {
             return null;
         }
 
@@ -547,7 +546,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public RList getDimNames(RAttributeProfiles attrProfiles) {
+        public RList getDimNames() {
             return null;
         }
 
@@ -557,7 +556,7 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public Object getRowNames(RAttributeProfiles attrProfiles) {
+        public Object getRowNames() {
             return null;
         }
 

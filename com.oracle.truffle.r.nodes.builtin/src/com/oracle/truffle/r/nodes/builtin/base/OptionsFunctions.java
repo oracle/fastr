@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -68,7 +67,6 @@ public class OptionsFunctions {
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
         @TruffleBoundary
@@ -136,7 +134,7 @@ public class OptionsFunctions {
                         // setting
                         RList list = (RList) value;
                         RStringVector thisListnames = null;
-                        Object nn = list.getNames(attrProfiles);
+                        Object nn = list.getNames();
                         if (nn instanceof RStringVector) {
                             thisListnames = (RStringVector) nn;
                         } else {

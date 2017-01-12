@@ -309,11 +309,16 @@ public class RErrorHandling {
         } else if (i == 1) {
             Object[] data = new Object[]{"abort", RNull.instance};
             RList result = RDataFactory.createList(data);
-            result.setClassAttr(RESTART_CLASS);
+            setClassAttr(result);
             return result;
         } else {
             return RNull.instance;
         }
+    }
+
+    @TruffleBoundary
+    private static void setClassAttr(RList result) {
+        result.setClassAttr(RESTART_CLASS);
     }
 
     public static Object invokeRestart(RList restart, Object args) {

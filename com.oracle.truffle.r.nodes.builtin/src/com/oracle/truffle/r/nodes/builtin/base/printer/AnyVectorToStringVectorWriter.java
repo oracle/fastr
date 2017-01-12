@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -39,8 +39,6 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     private String[] stringElements = null;
     private int levelCounter = 0;
     private boolean addSpaces;
-
-    private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
     public void begin(Object value) {
@@ -117,13 +115,14 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     }
 
     @Override
+    @TruffleBoundary
     public RStringVector getPrintReport() {
         RStringVector sv = RDataFactory.createStringVector(stringElements, vector.isComplete());
         if (vector.getDimensions() != null) {
             sv.setDimensions(vector.getDimensions());
-            sv.setDimNames(vector.getDimNames(dummyAttrProfiles));
+            sv.setDimNames(vector.getDimNames());
         } else {
-            sv.setNames(vector.getNames(dummyAttrProfiles));
+            sv.setNames(vector.getNames());
         }
         return sv;
     }

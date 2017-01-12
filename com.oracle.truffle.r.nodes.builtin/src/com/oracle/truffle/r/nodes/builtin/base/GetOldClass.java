@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -38,11 +39,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 public abstract class GetOldClass extends RBuiltinNode {
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
     @Specialization
     protected Object getOldClass(RAbstractContainer arg) {
-        if (isObjectProfile.profile(arg.isObject(attrProfiles))) {
+        if (isObjectProfile.profile(getClassNode.isObject(arg))) {
             return arg.getClassHierarchy();
         } else {
             return RNull.instance;

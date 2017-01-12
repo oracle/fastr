@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -64,15 +65,33 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
         return null;
     }
 
-    RStringVector getNames(RAttributeProfiles attrProfiles);
+    default RStringVector getNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
+    }
 
-    void setNames(RStringVector newNames);
+    default void setNames(RStringVector newNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
+    }
 
-    RList getDimNames(RAttributeProfiles attrProfiles);
+    default RList getDimNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return (RList) getAttr(RRuntime.DIMNAMES_ATTR_KEY);
+    }
 
-    void setDimNames(RList newDimNames);
+    default void setDimNames(RList newDimNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+    }
 
-    Object getRowNames(RAttributeProfiles attrProfiles);
+    default Object getRowNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        return getAttr(RRuntime.ROWNAMES_ATTR_KEY);
+    }
 
-    void setRowNames(RAbstractVector rowNames);
+    default void setRowNames(RAbstractVector rowNames) {
+        CompilerAsserts.neverPartOfCompilation();
+        setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+    }
 }

@@ -32,11 +32,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -47,7 +49,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -425,14 +426,13 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsObject extends MissingAdapter {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
         public abstract byte execute(Object value);
 
         @Specialization
-        protected byte isObject(RAttributable arg, //
-                        @Cached("createClassProfile()") ValueProfile profile) {
-            return RRuntime.asLogical(profile.profile(arg).isObject(attrProfiles));
+        protected byte isObject(RAttributable arg) {
+            return RRuntime.asLogical(getClassNode.isObject(arg));
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})

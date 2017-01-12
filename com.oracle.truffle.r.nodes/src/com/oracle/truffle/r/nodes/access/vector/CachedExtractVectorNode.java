@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -240,9 +239,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
              * the primitive value from the vector. This branch has to fold to a constant because we
              * want to avoid the toggling of the return types depending on input values.
              */
-            assert extractedVector.getNames(RAttributeProfiles.create()) == null;
+            assert extractedVector.getNames() == null;
             assert extractedVector.getDimensions() == null;
-            assert extractedVector.getDimNames(null) == null;
+            assert extractedVector.getDimNames() == null;
             return extractedVector.getDataAtAsObject(0);
         }
         return extractedVector;

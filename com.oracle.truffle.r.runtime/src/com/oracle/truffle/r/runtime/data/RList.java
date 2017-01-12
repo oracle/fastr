@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
@@ -44,14 +45,19 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     @Override
     protected RList internalCopy() {
-        return new RList(Arrays.copyOf(data, data.length), getDimensions(), null);
+        return new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null);
+    }
+
+    @TruffleBoundary
+    private int[] getDimensionsInternal() {
+        return getDimensions();
     }
 
     @Override
     protected RList internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RList listCopy = new RList(Arrays.copyOf(data, data.length), getDimensions(), null);
+        RList listCopy = new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {

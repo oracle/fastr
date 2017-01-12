@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -80,7 +79,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final VectorLengthProfile targetLengthProfile = VectorLengthProfile.create();
     private final VectorLengthProfile valueLengthProfile = VectorLengthProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
-    private final RAttributeProfiles vectorNamesProfile = RAttributeProfiles.create();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
@@ -542,7 +540,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
     private RVector<?> resizeVector(RAbstractVector vector, int size) {
-        RStringVector oldNames = vector.getNames(vectorNamesProfile);
+        RStringVector oldNames = vector.getNames();
         RVector<?> res = vector.copyResized(size, true).materialize();
         if (vector instanceof RVector) {
             res.copyAttributesFrom(vector);

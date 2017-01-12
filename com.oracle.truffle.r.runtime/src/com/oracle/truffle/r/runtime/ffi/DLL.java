@@ -217,6 +217,7 @@ public class DLL {
         /**
          * Return array of values that can be plugged directly into an {@code RList}.
          */
+        @TruffleBoundary
         public RList toRList() {
             Object[] data = new Object[NAMES.getLength()];
             data[0] = name;
@@ -331,6 +332,7 @@ public class DLL {
         return tag.getName().equals(DLLInfo.DLL_INFO_REFERENCE);
     }
 
+    @TruffleBoundary
     public static RExternalPtr createExternalPtr(SymbolHandle value, RStringVector rClass, Object externalObject) {
         CompilerAsserts.neverPartOfCompilation(); // for interning
         RExternalPtr result = RDataFactory.createExternalPtr(value, externalObject, RDataFactory.createSymbolInterned(rClass.getDataAt(0)), RNull.instance);

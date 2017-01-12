@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
@@ -54,7 +55,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -67,7 +67,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class UpdateAttr extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
@@ -140,7 +139,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value, @Cached("create()") RemoveAttributeNode removeAttrNode) {
         String internedName = intern.execute(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient
@@ -168,7 +167,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             }
             setRowNamesAttrNode.setRowNames(result, null);
         } else if (result.getAttributes() != null) {
-            result.removeAttr(attrProfiles, internedName);
+            removeAttrNode.execute(result, internedName);
         }
         return result;
     }
@@ -239,6 +238,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
      * All other, non-performance centric, {@link RAttributable} types.
      */
     @Fallback
+    @TruffleBoundary
     protected Object updateAttr(Object obj, Object name, Object value) {
         assert name instanceof String : "casts should not pass anything but String";
         Object object = obj;
@@ -249,7 +249,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (object instanceof RAttributable) {
             RAttributable attributable = (RAttributable) object;
             if (value == RNull.instance) {
-                attributable.removeAttr(attrProfiles, internedName);
+                attributable.removeAttr(internedName);
             } else {
                 attributable.setAttr(internedName, value);
             }

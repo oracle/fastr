@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -627,13 +627,18 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
                 }
                 if (status != 0) {
-                    sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
+                    setResultAttr(status, sresult);
                 }
                 return sresult;
             } else {
                 return result;
             }
 
+        }
+
+        @TruffleBoundary
+        private static void setResultAttr(int status, RStringVector sresult) {
+            sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
         }
     }
 

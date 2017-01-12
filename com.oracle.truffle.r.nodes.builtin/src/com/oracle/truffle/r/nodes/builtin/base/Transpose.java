@@ -18,6 +18,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -27,6 +28,7 @@ import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -61,6 +63,7 @@ public abstract class Transpose extends RBuiltinNode {
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private GetDimAttributeNode getDimNode;
 
     public abstract Object execute(RAbstractVector o);
 
@@ -74,8 +77,13 @@ public abstract class Transpose extends RBuiltinNode {
         int firstDim;
         int secondDim;
         if (isMatrixProfile.profile(vector.isMatrix())) {
-            firstDim = vector.getDimensions()[0];
-            secondDim = vector.getDimensions()[1];
+            if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreter();
+                getDimNode = insert(GetDimAttributeNode.create());
+            }
+            int[] dims = getDimNode.getDimensions(vector);
+            firstDim = dims[0];
+            secondDim = dims[1];
         } else {
             firstDim = length;
             secondDim = 1;

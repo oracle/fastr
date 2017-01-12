@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -60,8 +59,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * Deparsing R objects.
  */
 public class RDeparse {
-
-    private static final RAttributeProfiles DUMMY_ATTR_PROFILES = RAttributeProfiles.create();
 
     public static final int KEEPINTEGER = 1;
     public static final int QUOTEEXPRESSIONS = 2;
@@ -874,7 +871,7 @@ public class RDeparse {
         private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames(DUMMY_ATTR_PROFILES);
+            Object names = v.getNames();
             RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
             for (int i = 0; i < n; i++) {
                 if (i > 0) {

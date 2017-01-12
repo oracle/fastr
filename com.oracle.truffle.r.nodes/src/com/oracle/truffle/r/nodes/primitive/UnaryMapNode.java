@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorIn
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -64,7 +63,6 @@ public final class UnaryMapNode extends RBaseNode {
     private final VectorLengthProfile operandLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile operandIsNAProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile hasAttributesProfile;
-    private final RAttributeProfiles attrProfiles;
     private final ConditionProfile shareOperand;
 
     // compile-time optimization flags
@@ -85,7 +83,6 @@ public final class UnaryMapNode extends RBaseNode {
 
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareOperand = operandVector ? ConditionProfile.createBinaryProfile() : null;
-        this.attrProfiles = mayContainMetadata ? RAttributeProfiles.create() : null;
         this.hasAttributesProfile = mayContainMetadata ? BranchProfile.create() : null;
     }
 
@@ -211,7 +208,7 @@ public final class UnaryMapNode extends RBaseNode {
     @TruffleBoundary
     private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
-        result.copyNamesFrom(attrProfiles, attributeSource);
+        result.copyNamesFrom(attributeSource);
     }
 
     @SuppressWarnings("unused")

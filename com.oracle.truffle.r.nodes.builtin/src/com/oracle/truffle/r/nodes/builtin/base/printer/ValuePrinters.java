@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -86,7 +87,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
             x = printCtx.printerNode().boxPrimitive(x);
             ValuePrinter printer = printers.get(x.getClass());
             if (printer == null) {
-                if (x instanceof RAbstractIntVector && ((RAttributable) x).hasClass(RRuntime.CLASS_FACTOR)) {
+                if (x instanceof RAbstractIntVector && hasClass(x)) {
                     printer = FactorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractStringVector) {
                     printer = StringVectorPrinter.INSTANCE;
@@ -113,6 +114,11 @@ final class ValuePrinters implements ValuePrinter<Object> {
             }
             printer.print(x, printCtx);
         }
+    }
+
+    @TruffleBoundary
+    private static boolean hasClass(Object x) {
+        return ((RAttributable) x).hasClass(RRuntime.CLASS_FACTOR);
     }
 
     public static void printNewLine(PrintContext printCtx) {

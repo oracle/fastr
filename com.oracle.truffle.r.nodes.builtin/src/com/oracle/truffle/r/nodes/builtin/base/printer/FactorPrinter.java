@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -40,8 +39,6 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
     private FactorPrinter() {
         // singleton
     }
-
-    @SuppressWarnings("unused") private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
     @TruffleBoundary

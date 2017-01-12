@@ -472,6 +472,7 @@ public final class Utils {
         }
 
         @Override
+        @TruffleBoundary
         public Frame visitFrame(FrameInstance frameInstance) {
             Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, true));
             if (RArguments.isRFrame(f) && RArguments.getFunction(f) != null) {

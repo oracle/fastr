@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,7 +104,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public final RStringVector getNames() {
         return null;
     }
 
@@ -115,7 +115,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RList getDimNames(RAttributeProfiles attrProfiles) {
+    public final RList getDimNames() {
         return null;
     }
 
@@ -126,7 +126,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
+    public final Object getRowNames() {
         return RNull.instance;
     }
 
@@ -162,7 +162,7 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 

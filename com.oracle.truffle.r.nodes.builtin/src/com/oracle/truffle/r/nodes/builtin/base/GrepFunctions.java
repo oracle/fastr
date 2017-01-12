@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -66,11 +65,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
         @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
-
-        /**
-         * This profile is needed to satisfy API requirements.
-         */
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         protected void castPattern(CastBuilder casts) {
             // with default error message, NO_CALLER does not work
@@ -275,7 +269,7 @@ public class GrepFunctions {
                 return value ? RDataFactory.createEmptyStringVector() : RDataFactory.createEmptyIntVector();
             } else {
                 if (value) {
-                    RStringVector oldNames = vector.getNames(attrProfiles);
+                    RStringVector oldNames = vector.getNames();
                     String[] newNames = null;
                     if (oldNames != null) {
                         newNames = new String[nmatches];
@@ -1244,8 +1238,8 @@ public class GrepFunctions {
                 }
             }
             RList ret = RDataFactory.createList(result);
-            if (x.getNames(attrProfiles) != null) {
-                ret.copyNamesFrom(attrProfiles, x);
+            if (x.getNames() != null) {
+                ret.copyNamesFrom(x);
             }
             return ret;
         }

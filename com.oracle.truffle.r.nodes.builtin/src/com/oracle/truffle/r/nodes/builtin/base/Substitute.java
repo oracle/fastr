@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -36,7 +35,6 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -60,9 +58,8 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doSubstitute(RPromise expr, RList list,
-                    @Cached("create()") RAttributeProfiles attrProfiles) {
-        return doSubstituteWithEnv(expr, REnvironment.createFromList(attrProfiles, list, REnvironment.baseEnv()));
+    protected Object doSubstitute(RPromise expr, RList list) {
+        return doSubstituteWithEnv(expr, REnvironment.createFromList(list, REnvironment.baseEnv()));
     }
 
     @Fallback
