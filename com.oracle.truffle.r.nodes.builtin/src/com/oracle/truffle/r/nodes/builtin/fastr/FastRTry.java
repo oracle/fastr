@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -33,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -56,10 +56,15 @@ public abstract class FastRTry extends RBuiltinNode {
             frame.setObject(frameSlot, RArgsValuesAndNames.EMPTY);
             call.execute(frame, func);
         } catch (Throwable ex) {
-            return Utils.stringFormat("Exception %s, message: %s", ex.getClass().getSimpleName(), ex.getMessage());
+            return formatError(ex);
         } finally {
             frame.setObject(frameSlot, null);
         }
         return RRuntime.LOGICAL_TRUE;
+    }
+
+    @TruffleBoundary
+    private static String formatError(Throwable ex) {
+        return String.format("Exception %s, message: %s", ex.getClass().getSimpleName(), ex.getMessage());
     }
 }

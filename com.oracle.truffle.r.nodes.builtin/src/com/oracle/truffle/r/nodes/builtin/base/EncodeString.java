@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -92,11 +93,6 @@ public abstract class EncodeString extends RBuiltinNode {
         return sb.toString();
     }
 
-    @TruffleBoundary
-    private static String format(final String format, final String arg) {
-        return String.format(format, arg);
-    }
-
     @SuppressWarnings("unused")
     @Specialization(guards = {"leftJustify(justify)", "encodeNA"})
     protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
@@ -110,9 +106,9 @@ public abstract class EncodeString extends RBuiltinNode {
                 if (quoteEl.isEmpty()) {
                     currentEl = concat("<", currentEl, ">");
                 }
-                result[i] = format(concat("%-", maxElWidth, "s"), currentEl);
+                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), currentEl);
             } else {
-                result[i] = format(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
+                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
@@ -132,7 +128,7 @@ public abstract class EncodeString extends RBuiltinNode {
                 result[i] = currentEl;
                 seenNA = true;
             } else {
-                result[i] = format(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
+                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
         return RDataFactory.createStringVector(result, !seenNA);
@@ -151,9 +147,9 @@ public abstract class EncodeString extends RBuiltinNode {
                 if (quoteEl.isEmpty()) {
                     currentEl = concat("<", currentEl, ">");
                 }
-                result[i] = format(concat("%", maxElWidth, "s"), currentEl);
+                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), currentEl);
             } else {
-                result[i] = format(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
+                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
@@ -173,7 +169,7 @@ public abstract class EncodeString extends RBuiltinNode {
                 result[i] = currentEl;
                 seenNA = true;
             } else {
-                result[i] = format(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
+                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
         return RDataFactory.createStringVector(result, !seenNA);

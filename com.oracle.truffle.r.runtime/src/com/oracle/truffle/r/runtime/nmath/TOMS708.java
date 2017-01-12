@@ -350,7 +350,7 @@ public final class TOMS708 {
                                     ierr = 8;
                                 }
                                 if (w1 < 0) {
-                                    RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("bratio(a=%f, b=%f, x=%f): bgrat() -> w1 = %f", a, b, x, w1));
+                                    RError.warning(RError.SHOW_CALLER, Message.GENERIC, Utils.stringFormat("bratio(a=%f, b=%f, x=%f): bgrat() -> w1 = %f", a, b, x, w1));
                                 }
                                 state = States.L_end_from_w1;
                                 continue;

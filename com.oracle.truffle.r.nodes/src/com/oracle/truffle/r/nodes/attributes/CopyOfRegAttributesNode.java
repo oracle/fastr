@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.oracle.truffle.r.nodes.attributes;
+
+import java.util.List;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -111,7 +113,9 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Shape shape = orgAttributes.getShape();
-            for (Property p : shape.getProperties()) {
+            List<Property> properties = shape.getPropertyList();
+            for (int i = 0; i < properties.size(); i++) {
+                Property p = properties.get(i);
                 String name = (String) p.getKey();
                 if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
                     Object val = p.get(orgAttributes, shape);
