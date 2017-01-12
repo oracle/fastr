@@ -27,6 +27,12 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+/**
+ * An {@link RSequence} only records the "length", "start" and "stride" (the latter two fields in
+ * the subclasses {@link RIntSequence} and {@link RDoubleSequence}. The "stride" value is positive
+ * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
+ * computed and not stored.
+ */
 public abstract class RSequence implements RAbstractVector {
 
     private final int length;

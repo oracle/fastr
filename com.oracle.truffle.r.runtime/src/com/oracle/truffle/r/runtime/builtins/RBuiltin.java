@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,11 @@ public @interface RBuiltin {
      * A list of aliases for {@code name()}.
      */
     String[] aliases() default {};
+
+    /**
+     * An override for {@link #name} to use in generic dispatch.
+     */
+    String genericName() default "";
 
     /**
      * Some primitives do not evaluate one or more of their arguments. This is a list of indices for

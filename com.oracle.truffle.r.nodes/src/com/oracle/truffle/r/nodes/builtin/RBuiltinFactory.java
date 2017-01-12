@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,8 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
     private final Supplier<RBuiltinNode> constructor;
 
     RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
-        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, behavior, specialCall);
+                    boolean alwaysSplit, RDispatch dispatch, String genericName, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
+        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, genericName, behavior, specialCall);
         this.constructor = constructor;
     }
 

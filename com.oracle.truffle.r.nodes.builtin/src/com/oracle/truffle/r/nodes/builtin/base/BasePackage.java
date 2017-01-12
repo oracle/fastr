@@ -579,9 +579,9 @@ public class BasePackage extends RBuiltinPackage {
         add(Sample.class, SampleNodeGen::create);
         add(Sample2.class, Sample2NodeGen::create);
         add(Scan.class, ScanNodeGen::create);
-        add(Seq.class, SeqNodeGen::create);
-        add(SeqAlong.class, SeqAlongNodeGen::create);
-        add(SeqLen.class, SeqLenNodeGen::create);
+        add(SeqFunctions.SeqInt.class, SeqFunctionsFactory.SeqIntNodeGen::create);
+        add(SeqFunctions.SeqAlong.class, SeqFunctionsFactory.SeqAlongNodeGen::create);
+        add(SeqFunctions.SeqLen.class, SeqFunctionsFactory.SeqLenNodeGen::create);
         add(SerializeFunctions.Serialize.class, SerializeFunctionsFactory.SerializeNodeGen::create);
         add(SerializeFunctions.SerializeB.class, SerializeFunctionsFactory.SerializeBNodeGen::create);
         add(SerializeFunctions.SerializeToConn.class, SerializeFunctionsFactory.SerializeToConnNodeGen::create);
@@ -746,6 +746,8 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
+        addFastPath(baseFrame, "seq.default", SeqFunctionsFactory.SeqDefaultFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "seq", SeqFunctionsFactory.SeqFastPathNodeGen::create, RVisibility.ON);
 
         setContainsDispatch(baseFrame, "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }

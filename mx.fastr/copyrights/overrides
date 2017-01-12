@@ -216,6 +216,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/R
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowMeans.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowSums.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowsumFunctions.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/SeqFunctions.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/S3DispatchFunctions.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Sample.java,gnu_r_sample.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Sample2.java,gnu_r_gentleman_ihaka2.copyright
@@ -641,6 +642,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sca
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_scan.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sep.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_seq_len.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_seq_along.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_seq.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_seqint.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_setdiff.java,purdue.copyright
@@ -751,6 +753,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/library/base/TestSimpleV
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree2/incx.r,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree2/setx.r,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/TestBase.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/ffi/AsRealNode.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/AttributesPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/DoubleVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/PrintParameters.java,gnu_r_gentleman_ihaka2.copyright
