@@ -16,8 +16,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -47,7 +45,6 @@ import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -185,7 +182,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private CombineSignaturesNode combineSignatures;
         @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();
 
-        @CompilationFinal private RAttributeProfiles attrProfiles;
         @Child private PromiseHelperNode promiseHelper;
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -282,7 +278,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         private RStringVector getAlternateClassHr(VirtualFrame frame) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                attrProfiles = RAttributeProfiles.create();
                 promiseHelper = insert(new PromiseHelperNode());
             }
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null ||

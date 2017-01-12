@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -68,7 +67,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class UpdateAttr extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;

@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -55,7 +54,6 @@ public abstract class AccessSlotNode extends RNode {
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile noSlot = BranchProfile.create();
     private final BranchProfile symbolValue = BranchProfile.create();
     private final boolean asOperator;

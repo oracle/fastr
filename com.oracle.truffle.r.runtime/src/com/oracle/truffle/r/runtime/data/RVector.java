@@ -188,7 +188,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     @TruffleBoundary
-    public final int getElementIndexByName(RAttributeProfiles attrProfiles, String name) {
+    public final int getElementIndexByName(String name) {
         if (getNames() == null) {
             return -1;
         }
@@ -207,7 +207,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      * -1.
      */
     @TruffleBoundary
-    public final int getElementIndexByNameInexact(RAttributeProfiles attrProfiles, String name) {
+    public final int getElementIndexByNameInexact(String name) {
         if (getNames() == null) {
             return -1;
         }
@@ -259,16 +259,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
         } else {
             attributes.define(name, value);
-        }
-    }
-
-    @Override
-    public final Object getAttr(String name) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (attributes == null) {
-            return null;
-        } else {
-            return attributes.get(name);
         }
     }
 
@@ -642,15 +632,15 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));
-            return this.setClassAttr(readClassAttr(vecAttributes));
+            return copyClassAttr(vecAttributes);
         } else {
             return this;
         }
     }
 
     @TruffleBoundary
-    private static RStringVector readClassAttr(DynamicObject vecAttributes) {
-        return (RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY);
+    private RAbstractContainer copyClassAttr(DynamicObject vecAttributes) {
+        return setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
     }
 
     /*
@@ -661,13 +651,13 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));
-            return this.setClassAttr(readClassAttr(vecAttributes));
+            return copyClassAttr(vecAttributes);
         } else {
             return this;
         }
     }
 
-    public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, RBaseNode invokingNode) {
+    public final void copyNamesDimsDimNamesFrom(RAbstractVector vector, RBaseNode invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (!hasDimNames());
         assert (!hasDimNames());

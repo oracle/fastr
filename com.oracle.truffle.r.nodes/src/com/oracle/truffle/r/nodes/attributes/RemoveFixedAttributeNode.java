@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
@@ -93,7 +92,8 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     protected void removeAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                    @Cached("create()") BranchProfile emptyAttrProfile) {
         DynamicObject attributes;
         if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
             attributes = ((RAttributeStorage) x).getAttributes();
@@ -112,6 +112,12 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
         }
 
         recursive.execute(attributes);
+
+        if (attributes.isEmpty()) {
+            emptyAttrProfile.enter();
+            x.initAttributes(null);
+        }
+
     }
 
 }

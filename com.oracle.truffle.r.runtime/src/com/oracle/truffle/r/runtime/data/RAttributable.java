@@ -107,6 +107,9 @@ public interface RAttributable extends RTypedValue {
         DynamicObject attributes = getAttributes();
         if (attributes != null) {
             attributes.delete(name);
+            if (attributes.isEmpty()) {
+                initAttributes(null);
+            }
         }
     }
 

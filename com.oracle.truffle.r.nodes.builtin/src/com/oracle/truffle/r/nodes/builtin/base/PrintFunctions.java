@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -57,7 +56,7 @@ public class PrintFunctions {
     @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"}, behavior = IO)
     public abstract static class PrintDefault extends RBuiltinNode {
 
-        private final GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
+        @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
         @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 

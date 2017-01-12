@@ -1158,20 +1158,6 @@ public final class SpecialAttributesFunctions {
             return result != null ? result : RDataFactory.createEmptyStringVector();
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorClass(RAbstractVector x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            return super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
-        @TruffleBoundary
-        protected Object getVectorClass(RAbstractContainer x) {
-            return x.getClassAttr();
-        }
-
     }
 
 }

@@ -75,7 +75,8 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
     protected void removeAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                    @Cached("create()") BranchProfile emptyAttrProfile) {
         DynamicObject attributes;
         if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
             attributes = ((RAttributeStorage) x).getAttributes();
@@ -94,6 +95,12 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
         }
 
         recursive.execute(attributes, name);
+
+        if (attributes.isEmpty()) {
+            emptyAttrProfile.enter();
+            x.initAttributes(null);
+        }
+
     }
 
 }

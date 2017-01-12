@@ -65,7 +65,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -389,8 +388,6 @@ public class EnvFunctions {
 
     @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class UpdateEnvironment extends RBuiltinNode {
-
-        private final RAttributeProfiles attributeProfile = RAttributeProfiles.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {

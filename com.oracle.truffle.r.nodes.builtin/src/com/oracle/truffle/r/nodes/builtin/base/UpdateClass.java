@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -51,8 +50,6 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;
     @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
-
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
