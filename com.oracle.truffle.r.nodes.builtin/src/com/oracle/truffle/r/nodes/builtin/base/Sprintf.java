@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -558,9 +558,9 @@ public abstract class Sprintf extends RBuiltinNode {
 
     private static int number(char[] cs, int i, FormatInfo fi) {
         int j = i;
-        int num = cs[j++] - 48;
+        int num = cs[j++] - '0';
         while (isNumeric(cs[j])) {
-            num = 10 * num + cs[j++];
+            num = 10 * num + (cs[j++] - '0');
         }
         fi.nextChar = j;
         return num;

@@ -70,7 +70,7 @@ public class TestBuiltin_crc64 extends TestBase {
 
         assertEval(".Call(utils:::C_crc64, 'abc')");
 
-        assertEval(".Call(utils:::C_crc64, paste(c(letters, LETTERS, 0:9), collapse=\"\")))");
+        assertEval(".Call(utils:::C_crc64, paste(c(letters, LETTERS, 0:9), collapse=\"\"))");
 
         assertEval(".Call(utils:::C_crc64, c('a'))");
 

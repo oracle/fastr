@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,12 +36,12 @@ public class TestBuiltin_signif extends TestBase {
         assertEval("{ signif(42.1234, as.raw(2)) }");
         assertEval("{ signif(42.1234, 42+7i) }");
         assertEval(Output.IgnoreErrorMessage, "{ signif(42.1234, character()) }");
-        assertEval("{ signif(\"42.1234\", 2 }");
+        assertEval("{ signif(\"42.1234\", 2) }");
 
         assertEval("{ signif(c(42.1234, 7.1234), 1:2) }");
         assertEval("{ signif(42.1234, 1:2) }");
         assertEval("{ signif(c(42.1234, 7.1234), 1) }");
-        assertEval("{ signif(c(42.1234, 7.1234, 42.1234), c(1,2) }");
+        assertEval("{ signif(c(42.1234, 7.1234, 42.1234), c(1,2)) }");
         assertEval("{ x<-42.1234; attr(x, \"foo\")<-\"foo\"; signif(x, 2) }");
         assertEval("{ x<-FALSE; attr(x, \"foo\")<-\"foo\"; signif(x, 2) }");
         assertEval("{ signif(42.1234, matrix(1:2, nrow=1)) }");
