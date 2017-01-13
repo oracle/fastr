@@ -125,4 +125,31 @@ rffi.null.C <- function() {
 	.Call(C_null)
 }
 
+rffi.asReal <- function(x) {
+	.Call("test_asReal", x)
+}
+
+rffi.asInteger <- function(x) {
+	.Call("test_asInteger", x)
+}
+
+rffi.asLogical <- function(x) {
+	.Call("test_asLogical", x)
+}
+
+rffi.asChar <- function(x) {
+	.Call("test_asChar", x)
+}
+
+rffi.CAR <- function(x) {
+	.Call("test_CAR", x)
+}
+
+rffi.CDR <- function(x) {
+	.Call("test_CDR", x)
+}
+
+rffi.LENGTH <- function(x) {
+	.Call("test_LENGTH", x)
+}
 

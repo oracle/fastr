@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCall;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCallReturn;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
+import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -34,10 +36,8 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
-import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
-import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
@@ -176,7 +176,7 @@ public class JNI_Call implements CallRFFI {
             traceDownCall("initialize");
         }
         try {
-            initialize(UpCallsRFFIFactory.getInstance().getUpcallsRFFI(), RFFIVariables.values());
+            initialize(new UpCallsRFFIImpl(), RFFIVariables.values());
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);

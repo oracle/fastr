@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCall;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;

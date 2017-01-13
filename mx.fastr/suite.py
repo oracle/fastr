@@ -230,7 +230,7 @@ suite = {
     "com.oracle.truffle.r.runtime.ffi" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.runtime",
+        "com.oracle.truffle.r.nodes",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -253,7 +253,6 @@ suite = {
     "com.oracle.truffle.r.library" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.runtime.ffi",
       ],
       "annotationProcessors" : [

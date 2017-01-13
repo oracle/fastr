@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,3 +71,18 @@ extern SEXP preserve_object(void);
 extern SEXP release_object(SEXP x);
 
 extern SEXP findvar(SEXP x, SEXP env);
+
+extern SEXP test_asReal(SEXP x);
+
+extern SEXP test_asChar(SEXP x);
+
+extern SEXP test_asInteger(SEXP x);
+
+extern SEXP test_asLogical(SEXP x);
+
+extern SEXP test_CAR(SEXP x);
+
+extern SEXP test_CDR(SEXP x);
+
+extern SEXP test_LENGTH(SEXP x);
+
