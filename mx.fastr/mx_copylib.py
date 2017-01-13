@@ -118,7 +118,7 @@ def copylib(args):
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
-        if args[0] == 'quadmath' and platform.system() == 'SunOS':
+        if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
             return 0
         mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
