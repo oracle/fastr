@@ -29,16 +29,21 @@ After adding, removing or altering units tests (including the `TestTrait` argume
 
 The R ecosystem is heavily based on packages contributed by the user community, and the standard CRAN repository contains over 6000 such packages. Naturally, many of these serve rather obscure areas but there is a small subset that are extremely popular and widely used, for example the "top 100" most popular packages cited here.
 
-Using a package in R is actually a two step process. First a package must be "installed" and then it can be "loaded" into an R session. The installation step takes the package as a gzipped tar file from the repository, unpacks it and then does some processing before installing the result in a "library" directory. The processing may involve C or Fortran compilation if the package uses the R foreign function interface, as many do.The default installation library location is the system library, which is where the packages included with GnuR are stored, e.g. base, stats. However, additional directories can be specified through the `R_LIBS_USER` or `R_LIBS` environment variables.
+Using a package in R is actually a two step process. First a package must be "installed" and then it can be "loaded" into an R session. The installation step takes the package as a gzipped tar file from the repository, unpacks it and then does some processing before installing the result in a "library" directory. The processing may involve C or Fortran compilation if the package uses the R foreign function interface, as many do.The default installation library location is the system library, which is where the packages included with GnuR are stored, e.g. `base`, `stats`. However, additional directories can be specified through the `R_LIBS_USER` or `R_LIBS` environment variables.
 
 ### Installation
 
-A package can be installed in two ways:
+A package can be installed in three ways:
 
     using the command line tool R CMD INSTALL  package.tar.gz
     using utils::install.packages(pkgname) from within an R session
+    using the lower level tools:::.install_packages(args) from within an R session
 
-A final step in both these approaches is to test that the package can be loaded (see below). The virtue of the second approach is that it automatically handles the download of the package from the repository.
+A final step in both these approaches is to test that the package can be loaded (see below). The virtue of the second approach is that it automatically handles the download of the package from the repository. The third approach works when you have access to package tar file, vis:
+
+    tools:::.install_packages(c("-d", "digest_0.6.9.tar.gz"))
+
+The `-d` outputs additional tracing of the package installation process. The argument values are the same as for `R CMD INSTALL`.
 
 ### Loading
 
@@ -49,8 +54,6 @@ A package is loaded into an R session using `library(pkgname)` or `require(pkgna
 Package developers can provide tests in several ways. To enable the full set of tests a package must be installed with the `--install-tests` option. The `mx pkgtest` command described below always sets this option. Once installed a package can be tested with the `tools::testInstalledPackage` function. The `mx pkgtest` command provides a standard way to do this.
 
 ### Package Installation and Testing
-
-It is impractical currently to test all the CRAN packages in a single run, so we are taking an incremental approach. A rolling set of 200 packages are tested each day, with the choice being made by the day of the year. The "recommended" packages are always tested daily.
 
 Package installation and testing is partly handled by a R script `install_cran_packages.R` in the `com.oracle.truffle.r.test.cran` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install_cran_packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
 
@@ -186,10 +189,10 @@ The `mx pkgtest` command is a wrapper on `mx installpkgs` that forces the `--run
 
 #### Running/Debugging Tests Locally
 
-To debug why a test fails requires first that the package is installed locally plus some understanding about how the test process operates. The R code that performs installation and testing makes use of R sub-processes, so simply running the main process under the Java debugger will not work. To demonstrate this we will use the `digest` package as an example.The following command will install the `digest` package in the directory specified by the `R_LIBS_USER` environment variable.:
+To debug why a test fails requires first that the package is installed locally plus some understanding about how the test process operates. The R code that performs installation and testing makes use of R sub-processes, so simply running the main process under the Java debugger will not work. To demonstrate this we will use the `digest` package as an example.The following command will install the `digest` package in the directory specified by the `R_LIBS_USER` environment variable:
 
-    $ FASTR_LOGCHILD=1 mx installpkgs '^digest$'
+    $ FASTR_LOG_SYSTEM=1 mx installpkgs '^digest$'
 
-First, note that, by default,  the `installpkgs` command itself introduces an extra level on sub-process in order to avoid a failure from aborting the entire install command when installing/testing multiple packages. You can see this by setting the environment variable `FASTR_LOGCHILD` to any value. The first sub-process logged will be running the command `com.oracle.truffle.r.test.cran/r/install.package.R` and the second will be the one running `R CMD INSTALL --install-tests` of the digest package. For ease of debugging you can set the `--run-mode` option to `internal`, which executes the first phase of the install in the process running `installpkgs`. Similar considerations apply to the testing phase. By default a sub-process is used to run the `com.oracle.truffle.r.test.cran/r/test.package.R script`, which then runs the actual test using a sub-process to invoke `R CMD BATCH`. Again the first sub-process can be avoided using `--run-mode internal`. N.B. If you run the tests for `digest` you will see that there are four separate sub-processes used to run different tests. The latter three are the specific tests for digest that were made available by installing with `--install-tests`. Not all packages have such additional tests. Note that there is no way to avoid the tests being run in sub-processes so setting the `-d` option to the `installpkgs` command will have no effect on those. Instead set the environment variable `MX_R_GLOBAL_ARGS=-d` which will cause the sub-processes to run under the debugger. Note that you will not (initially) see the `Listening for transport dt_socket at address: 8000` message on the console, but activating the debug launch from the IDE will connect to the sub-process.
+First, note that, by default,  the `installpkgs` command itself introduces an extra level on sub-process in order to avoid a failure from aborting the entire install command when installing/testing multiple packages. You can see this by setting the environment variable `FASTR_LOG_SYSTEM` to any value. The first sub-process logged will be running the command `com.oracle.truffle.r.test.cran/r/install.package.R` and the second will be the one running `R CMD INSTALL --install-tests` of the digest package. For ease of debugging you can set the `--run-mode` option to `internal`, which executes the first phase of the install in the process running `installpkgs`. Similar considerations apply to the testing phase. By default a sub-process is used to run the `com.oracle.truffle.r.test.cran/r/test.package.R script`, which then runs the actual test using a sub-process to invoke `R CMD BATCH`. Again the first sub-process can be avoided using `--run-mode internal`. N.B. If you run the tests for `digest` you will see that there are four separate sub-processes used to run different tests. The latter three are the specific tests for digest that were made available by installing with `--install-tests`. Not all packages have such additional tests. Note that there is no way to avoid the tests being run in sub-processes so setting the `-d` option to the `installpkgs` command will have no effect on those. Instead set the environment variable `MX_R_GLOBAL_ARGS=-d` which will cause the sub-processes to run under the debugger. Note that you will not (initially) see the `Listening for transport dt_socket at address: 8000` message on the console, but activating the debug launch from the IDE will connect to the sub-process.
 
 
