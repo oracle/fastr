@@ -31,7 +31,6 @@ public class TestExternal_rnbinom extends TestBase {
     @Test
     public void testRbinomWithMu() {
         assertEval("set.seed(42); rnbinom(5, 1, mu=2)");
-        // TODO: maybe problem with state variables, see RNbinomMu
-        assertEval(Ignored.Unimplemented, "set.seed(42); rnbinom(100, c(-1, 0, 1, 0.8, 10, NA, NaN, 1/0, -1/0), mu=c(-1, 0, 1, 0.8, 3, 10, NA, NaN, 1/0, -1/0))");
+        assertEval(Output.IgnoreWarningContext, "set.seed(42); rnbinom(100, c(-1, 0, 1, 0.8, 10, NA, NaN, 1/0, -1/0), mu=c(-1, 0, 1, 0.8, 3, 10, NA, NaN, 1/0, -1/0))");
     }
 }

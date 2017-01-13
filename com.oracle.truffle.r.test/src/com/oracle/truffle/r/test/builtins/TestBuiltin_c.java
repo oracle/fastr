@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -535,8 +535,8 @@ public class TestBuiltin_c extends TestBase {
     @Test
     public void testRecursive() {
         assertEval("argv <- list(c(list(c(1,2),c(3,4)),c(5,6), recursive=TRUE));c(argv[[1]]);");
-        assertEval("argv <- list(c(1,2),c(3,4),c(5,6), recursive=TRUE));c(argv[[1]]);");
-        assertEval("argv <- list(list(), recursive=TRUE));c(argv[[1]]);");
+        assertEval("argv <- list(c(1,2),c(3,4),c(5,6), recursive=TRUE);c(argv[[1]]);");
+        assertEval("argv <- list(list(), recursive=TRUE);c(argv[[1]]);");
     }
 
     @Test

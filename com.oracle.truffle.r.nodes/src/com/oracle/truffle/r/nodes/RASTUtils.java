@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -96,7 +97,7 @@ public class RASTUtils {
     }
 
     @TruffleBoundary
-    public static RSyntaxNode getOriginalCall(Node node) {
+    public static RSyntaxElement getOriginalCall(Node node) {
         Node p = node.getParent();
         while (p != null) {
             if (p instanceof RBuiltinNode) {

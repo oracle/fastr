@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -179,7 +180,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public RStringVector getNames() {
         if (list == null) {
             /*
              * "names" for a language object is a special case, that is applicable to calls and
@@ -191,24 +192,24 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
             RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
             return names;
         } else {
-            return list.getNames(attrProfiles);
+            return list.getNames();
         }
     }
 
     @Override
-    public void setNames(RStringVector newNames) {
+    public final void setNames(RStringVector newNames) {
         if (list == null) {
             /* See getNames */
             RContext.getRRuntimeASTAccess().setNames(this, newNames);
         } else {
-            list.setNames(newNames);
+            setNamesOnPairList(newNames);
         }
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         RAttributable attr = list == null ? this : list;
-        return (RList) attr.getAttr(attrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
+        return (RList) attr.getAttr(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override
@@ -218,9 +219,9 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public Object getRowNames() {
         RAttributable attr = list == null ? this : list;
-        return attr.getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+        return attr.getAttr(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     @Override
@@ -249,6 +250,10 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         return String.format("RLanguage(rep=%s)", getRep());
     }
 
+    public final RPairList getPairListInternal() {
+        return this.list;
+    }
+
     public RPairList getPairList() {
         if (list == null) {
             Object obj = RNull.instance;
@@ -260,9 +265,14 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
             RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
             list = (RPairList) obj;
             if (names != null) {
-                list.setNames(names);
+                setNamesOnPairList(names);
             }
         }
         return list;
+    }
+
+    @TruffleBoundary
+    private void setNamesOnPairList(RStringVector names) {
+        list.setNames(names);
     }
 }

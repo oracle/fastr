@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,14 +36,16 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -136,7 +138,7 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "Date2POSIXlt", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Date2POSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -161,9 +163,9 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -172,7 +174,7 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "as.POSIXlt", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXlt extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -203,9 +205,9 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = builder.finish();
-            RStringVector xNames = x.getNames(attrProfiles);
+            RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(attrProfiles, x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -280,7 +282,8 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RDoubleVector posix2date(RAbstractListVector x) {
+        protected RDoubleVector posix2date(RAbstractListVector x,
+                        @Cached("create()") SetClassAttributeNode setClassAttrNode) {
             RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -314,7 +317,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RDoubleVector result = RDataFactory.createDoubleVector(data, complete);
-            result.setClassAttr(CLASS_ATTR);
+            setClassAttrNode.execute(result, CLASS_ATTR);
             return result;
         }
     }

@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.grid;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -23,25 +24,31 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * The .Call support for the grid package.
  */
 public class GridFunctions {
+
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
+
         @Specialization
         @TruffleBoundary
         protected Object initGrid(REnvironment gridEvalEnv) {
-            return RFFIFactory.getRFFI().getGridRFFI().initGrid(gridEvalEnv);
+            return gridRFFINode.initGrid(gridEvalEnv);
         }
     }
 
     public static final class KillGrid extends RExternalBuiltinNode {
+        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
+
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
-            return RFFIFactory.getRFFI().getGridRFFI().killGrid();
+            return gridRFFINode.killGrid();
         }
     }
 

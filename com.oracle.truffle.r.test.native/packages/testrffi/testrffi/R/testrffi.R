@@ -1,3 +1,6 @@
+.onUnload <- function(libpath)
+	library.dynam.unload("testrffi", libpath)
+
 rffi.dotCModifiedArguments <- function(data) {
 	.C("dotCModifiedArguments", length(data), as.integer(data), as.double(data), as.logical(data))
 }
@@ -75,16 +78,16 @@ rffi.r_home <- function() {
 	.Call("r_home", PACKAGE = "testrffi")
 }
 
+rffi.char_length <- function(x) {
+	.Call("char_length", PACKAGE = "testrffi", x)
+}
+
 rffi.mkStringFromChar <- function() {
 	.Call("mkStringFromChar", PACKAGE = "testrffi")
 }
 
 rffi.mkStringFromBytes <- function() {
 	.Call("mkStringFromBytes", PACKAGE = "testrffi")
-}
-
-rffi.null <- function() {
-	.Call("null", PACKAGE = "testrffi")
 }
 
 rffi.iterate_iarray <- function(x) {
@@ -109,4 +112,17 @@ rffi.findvar <- function(x, env) {
 	}
 	.Call("findvar", x, env, PACKAGE = "testrffi")
 }
+
+rffi.null <- function() {
+	.Call("null", PACKAGE = "testrffi")
+}
+
+rffi.null.E <- function() {
+	.Call("null", PACKAGE = "foo")
+}
+
+rffi.null.C <- function() {
+	.Call(C_null)
+}
+
 

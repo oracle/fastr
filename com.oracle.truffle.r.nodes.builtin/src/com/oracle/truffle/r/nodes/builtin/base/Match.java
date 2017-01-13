@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,12 +36,12 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -72,7 +72,6 @@ public abstract class Match extends RBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -127,22 +126,26 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RAbstractIntVector x, RAbstractIntVector table, int nomatch, Object incomparables) {
+    protected Object matchFactor(RAbstractIntVector x, RAbstractIntVector table, int nomatch, Object incomparables,
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode) {
         naCheck.enable(x);
         naCheck.enable(table);
-        return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), RClosures.createFactorToVector(table, true, attrProfiles), nomatch, incomparables);
+        return matchRecursive(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)),
+                        RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch, incomparables);
     }
 
     @Specialization(guards = {"isFactor(x)", "!isFactor(table)"})
-    protected Object matchFactor(RAbstractIntVector x, RAbstractVector table, int nomatch, Object incomparables) {
+    protected Object matchFactor(RAbstractIntVector x, RAbstractVector table, int nomatch, Object incomparables,
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode) {
         naCheck.enable(x);
-        return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), table, nomatch, incomparables);
+        return matchRecursive(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)), table, nomatch, incomparables);
     }
 
     @Specialization(guards = {"!isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RAbstractVector x, RAbstractIntVector table, int nomatch, Object incomparables) {
+    protected Object matchFactor(RAbstractVector x, RAbstractIntVector table, int nomatch, Object incomparables,
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode) {
         naCheck.enable(table);
-        return matchRecursive(x, RClosures.createFactorToVector(table, true, attrProfiles), nomatch, incomparables);
+        return matchRecursive(x, RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch, incomparables);
     }
 
     @Specialization
@@ -800,7 +803,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetInt {
-        private NonRecursiveHashMapInt map;
+        private final NonRecursiveHashMapInt map;
 
         NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
@@ -816,7 +819,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetDouble {
-        private NonRecursiveHashMapDouble map;
+        private final NonRecursiveHashMapDouble map;
 
         NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);
@@ -832,7 +835,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetCharacter {
-        private NonRecursiveHashMapCharacter map;
+        private final NonRecursiveHashMapCharacter map;
 
         NonRecursiveHashSetCharacter(int approxCapacity) {
             map = new NonRecursiveHashMapCharacter(approxCapacity);
@@ -848,7 +851,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     private static class NonRecursiveHashSetComplex {
-        private NonRecursiveHashMapComplex map;
+        private final NonRecursiveHashMapComplex map;
 
         NonRecursiveHashSetComplex(int approxCapacity) {
             map = new NonRecursiveHashMapComplex(approxCapacity);

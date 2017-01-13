@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -37,12 +36,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "copyDFattr", kind = INTERNAL, parameterNames = {"", ""}, behavior = COMPLEX)
 public abstract class CopyDFAttr extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @Specialization()
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
         RVector<?> res = out.materialize();
         res.resetAllAttributes(false);
-        return res.copyAttributesFrom(attrProfiles, in);
+        return res.copyAttributesFrom(in);
     }
 }

@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,9 +41,11 @@ public abstract class Dim extends RBuiltinNode {
 
     @Specialization
     protected Object dim(RAbstractContainer container, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimensionsProfile) {
-        if (hasDimensionsProfile.profile(container.hasDimensions())) {
-            return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimensionsProfile,
+                    @Cached("create()") GetDimAttributeNode getDimsNode) {
+        int[] dims = getDimsNode.getDimensions(container);
+        if (hasDimensionsProfile.profile(dims != null && dims.length > 0)) {
+            return RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR);
         } else {
             return RNull.instance;
         }

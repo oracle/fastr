@@ -25,8 +25,13 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -45,22 +50,30 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
  */
 @RBuiltin(name = "~", kind = PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1}, behavior = READS_FRAME)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class Tilde extends RBuiltinNode {
 
     private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
+
+    @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
 
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RMissing.instance};
     }
 
+    protected SetFixedAttributeNode createSetEnvAttrNode() {
+        return SetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT);
+    }
+
     @Specialization
-    protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model) {
+    protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model,
+                    @Cached("createSetEnvAttrNode()") SetFixedAttributeNode setEnvAttrNode) {
         RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
         RLanguage lang = RDataFactory.createLanguage(call);
-        lang.setClassAttr(FORMULA_CLASS);
+        setClassAttrNode.execute(lang, FORMULA_CLASS);
         REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-        lang.setAttr(RRuntime.DOT_ENVIRONMENT, env);
+        setEnvAttrNode.execute(lang, env);
         return lang;
     }
 }

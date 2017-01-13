@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,57 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
+/**
+ * This node is responsible for retrieving a value from the predefined (fixed) attribute. It accepts
+ * both {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the
+ * first argument is {@link RAttributable} and its attributes are initialized, the recursive
+ * instance of this class is used to get the attribute value from the attributes.
+ */
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
+
+    @Child private GetFixedAttributeNode recursive;
 
     protected GetFixedAttributeNode(String name) {
         super(name);
     }
 
     public static GetFixedAttributeNode create(String name) {
-        return GetFixedAttributeNodeGen.create(name);
+        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
+            return SpecialAttributesFunctions.createGetSpecialAttributeNode(name);
+        } else {
+            return GetFixedAttributeNodeGen.create(name);
+        }
     }
 
     public static GetFixedAttributeNode createNames() {
-        return GetFixedAttributeNode.create(RRuntime.NAMES_ATTR_KEY);
+        return GetNamesAttributeNode.create();
     }
 
-    public static GetFixedAttributeNode createDim() {
-        return GetFixedAttributeNode.create(RRuntime.DIM_ATTR_KEY);
+    public static GetDimAttributeNode createDim() {
+        return GetDimAttributeNode.create();
     }
 
-    public static GetFixedAttributeNode createClass() {
-        return GetFixedAttributeNode.create(RRuntime.CLASS_ATTR_KEY);
+    public static GetClassAttributeNode createClass() {
+        return GetClassAttributeNode.create();
     }
 
-    public abstract Object execute(DynamicObject attrs);
+    public abstract Object execute(Object attr);
 
     protected boolean hasProperty(Shape shape) {
         return shape.hasProperty(name);
@@ -62,16 +81,41 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization(limit = "3", //
                     guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
-    @SuppressWarnings("unused")
     protected Object getAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs);
+        return location == null ? null : location.get(attrs, shape);
     }
 
     @Specialization(contains = "getAttrCached")
     @TruffleBoundary
     protected Object getAttrFallback(DynamicObject attrs) {
         return attrs.get(name);
+    }
+
+    @Specialization
+    protected Object getAttrFromAttributable(RAttributable x,
+                    @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+
+        DynamicObject attributes;
+        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
+            attributes = ((RAttributeStorage) x).getAttributes();
+        } else {
+            attributes = xTypeProfile.profile(x).getAttributes();
+        }
+
+        if (attributes == null) {
+            attrNullProfile.enter();
+            return null;
+        }
+
+        if (recursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursive = insert(create(name));
+        }
+
+        return recursive.execute(attributes);
     }
 }

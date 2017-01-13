@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -61,6 +62,21 @@ public abstract class Quantifier extends RBuiltinNode {
 
     @Children private final CastNode[] argCastNodes = new CastNode[MAX_CACHED_LENGTH];
 
+    private static final class ProfileCastNode extends CastNode {
+
+        private final ValueProfile profile = ValueProfile.createClassProfile();
+        @Child private CastNode next;
+
+        ProfileCastNode(CastNode next) {
+            this.next = next;
+        }
+
+        @Override
+        public Object execute(Object value) {
+            return profile.profile(next.execute(value));
+        }
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
@@ -75,7 +91,7 @@ public abstract class Quantifier extends RBuiltinNode {
         CastBuilder argCastBuilder = new CastBuilder();
         argCastBuilder.arg(0).allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))), RError.Message.COERCING_ARGUMENT, argTypeName,
                         "logical").asLogicalVector();
-        argCastNodes[index] = insert(argCastBuilder.getCasts()[0]);
+        argCastNodes[index] = insert(new ProfileCastNode(argCastBuilder.getCasts()[0]));
     }
 
     protected boolean emptyVectorResult() {

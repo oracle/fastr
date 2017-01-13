@@ -32,8 +32,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -48,6 +50,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -65,13 +68,14 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return value != RNull.instance && !(value instanceof RList);
     }
 
-    @Specialization(guards = {"isSimpleList(list)", "!list.isShared()", "isCached(list, field)", "list.getNames() != null", "isNotRNullRList(value)"})
-    public RList doList(RList list, String field, Object value,
-                    @Cached("getIndex(list.getNames(), field)") int index) {
+    @Specialization(limit = "2", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() == cachedNames", "field == cachedField", "isNotRNullRList(value)"})
+    public Object doList(RList list, @SuppressWarnings("unused") String field, Object value,
+                    @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
+                    @SuppressWarnings("unused") @Cached("field") String cachedField,
+                    @Cached("getIndex(cachedNames, field)") int index) {
         if (index == -1) {
             throw RSpecialFactory.throwFullCallNeeded(value);
         }
-        updateCache(list, field);
         Object sharedValue = value;
         // share only when necessary:
         if (list.getDataAt(index) != value) {
@@ -83,7 +87,17 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
     @Specialization(contains = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
     public RList doListDynamic(RList list, String field, Object value) {
-        return doList(list, field, value, getIndex(list.getNames(), field));
+        int index = getIndex(getNamesNode.getNames(list), field);
+        if (index == -1) {
+            throw RSpecialFactory.throwFullCallNeeded(value);
+        }
+        Object sharedValue = value;
+        // share only when necessary:
+        if (list.getDataAt(index) != value) {
+            sharedValue = getShareObjectNode().execute(value);
+        }
+        list.setElement(index, sharedValue);
+        return list;
     }
 
     @SuppressWarnings("unused")
@@ -102,9 +116,10 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 }
 
 @RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class UpdateField extends RBuiltinNode {
 
-    @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private ReplaceVectorNode update = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
     @Child private CastListNode castList;
 
     private final ConditionProfile coerceList = ConditionProfile.createBinaryProfile();
@@ -121,7 +136,7 @@ public abstract class UpdateField extends RBuiltinNode {
     @Specialization
     protected Object update(VirtualFrame frame, Object container, String field, Object value) {
         Object list = coerceList.profile(container instanceof RAbstractListVector) ? container : coerceList(container);
-        return extract.apply(frame, list, new Object[]{field}, value);
+        return update.apply(frame, list, new Object[]{field}, value);
     }
 
     private Object coerceList(Object vector) {

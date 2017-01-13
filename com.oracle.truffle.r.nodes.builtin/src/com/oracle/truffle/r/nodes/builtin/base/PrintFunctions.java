@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
@@ -46,7 +47,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -56,7 +56,7 @@ public class PrintFunctions {
     @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"}, behavior = IO)
     public abstract static class PrintDefault extends RBuiltinNode {
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
         @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
@@ -102,7 +102,7 @@ public class PrintFunctions {
         }
 
         protected boolean isS4(Object o) {
-            return o instanceof RAttributable && ((RAttributable) o).isS4() && ((RAttributable) o).getClassAttr(attrProfiles) != null;
+            return o instanceof RAttributable && ((RAttributable) o).isS4() && getClassNode.getClassAttr(o) != null;
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,13 +42,14 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
@@ -61,11 +62,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -112,7 +111,8 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos) {
+        protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos,
+                        @Cached("new()") GetCallerFrameNode getCallerFrame) {
             if (pos.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.INVALID_ARGUMENT, "pos");
@@ -122,32 +122,36 @@ public class EnvFunctions {
                 REnvironment env;
                 int p = pos.getDataAt(i);
                 if (p == -1) {
-                    Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-                    if (callerFrame == null) {
+                    if (RArguments.getDepth(frame) == 0) {
                         errorProfile.enter();
                         throw RError.error(this, RError.Message.NO_ENCLOSING_ENVIRONMENT);
-                    } else {
-                        env = REnvironment.frameToEnvironment(callerFrame.materialize());
                     }
+                    Frame callerFrame = getCallerFrame.execute(frame);
+                    env = REnvironment.frameToEnvironment(callerFrame.materialize());
                 } else {
-                    String[] searchPath = REnvironment.searchPath();
-                    if (p == searchPath.length + 1) {
-                        // although the empty env does not appear in the result of "search", and it
-                        // is
-                        // not accessible by name, GnuR allows it to be accessible by index
-                        env = REnvironment.emptyEnv();
-                    } else if ((p <= 0) || (p > searchPath.length + 1)) {
-                        errorProfile.enter();
-                        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
-                    } else {
-                        env = REnvironment.lookupOnSearchPath(searchPath[p - 1]);
-                    }
+                    env = fromSearchpath(p);
                 }
                 if (pos.getLength() == 1) {
                     return env;
                 }
             }
             return RDataFactory.createList(results);
+        }
+
+        @TruffleBoundary
+        private REnvironment fromSearchpath(int p) {
+            String[] searchPath = REnvironment.searchPath();
+            if (p == searchPath.length + 1) {
+                // although the empty env does not appear in the result of "search", and it
+                // is
+                // not accessible by name, GnuR allows it to be accessible by index
+                return REnvironment.emptyEnv();
+            } else if ((p <= 0) || (p > searchPath.length + 1)) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
+            } else {
+                return REnvironment.lookupOnSearchPath(searchPath[p - 1]);
+            }
         }
 
         @Specialization
@@ -172,10 +176,14 @@ public class EnvFunctions {
             return list2Env.execute(list, env);
         }
 
+        protected GetFixedAttributeNode createGetXDataAttrNode() {
+            return GetFixedAttributeNode.create(RRuntime.DOT_XDATA);
+        }
+
         @Specialization
-        protected Object asEnvironment(RS4Object obj) {
+        protected Object asEnvironment(RS4Object obj, @Cached("createGetXDataAttrNode()") GetFixedAttributeNode getXDataAttrNode) {
             // generic dispatch tried already
-            Object xData = obj.getAttr(RRuntime.DOT_XDATA);
+            Object xData = getXDataAttrNode.execute(obj);
             if (xData == null || !(xData instanceof REnvironment)) {
                 throw RError.error(this, RError.Message.S4OBJECT_NX_ENVIRONMENT);
             } else {
@@ -319,8 +327,8 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class Environment extends RBuiltinNode {
 
-        private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();
         private final ConditionProfile attributable = ConditionProfile.createBinaryProfile();
+        @Child private GetFixedAttributeNode getEnvAttrNode;
 
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun,
@@ -352,16 +360,24 @@ public class EnvFunctions {
         }
 
         @Specialization(guards = "isRFormula(formula)")
-        protected Object environment(RLanguage formula,
-                        @Cached("create()") RAttributeProfiles attrProfiles) {
-            Object result = formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
+        protected Object environment(RLanguage formula) {
+            if (getEnvAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
+            }
+
+            Object result = getEnvAttrNode.execute(formula);
             return result == null ? RNull.instance : result;
         }
 
         @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
         protected Object environment(Object fun) {
             if (attributable.profile(fun instanceof RAttributable)) {
-                Object attr = ((RAttributable) fun).getAttr(attributeProfile, RRuntime.DOT_ENVIRONMENT);
+                if (getEnvAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
+                }
+                Object attr = getEnvAttrNode.execute(fun);
                 return attr == null ? RNull.instance : attr;
             } else {
                 // Not an error according to GnuR
@@ -372,8 +388,6 @@ public class EnvFunctions {
 
     @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class UpdateEnvironment extends RBuiltinNode {
-
-        private final RAttributeProfiles attributeProfile = RAttributeProfiles.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -401,16 +415,22 @@ public class EnvFunctions {
             throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected static Object updateEnvironment(RAbstractContainer obj, REnvironment env) {
-            return updateEnvironment((RAttributable) obj, env);
+        protected SetFixedAttributeNode createSetEnvAttrNode() {
+            return SetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT);
         }
 
         @Specialization
         @TruffleBoundary
-        protected static Object updateEnvironment(RAttributable obj, REnvironment env) {
-            obj.setAttr(RRuntime.DOT_ENVIRONMENT, env);
+        protected static Object updateEnvironment(RAbstractContainer obj, REnvironment env,
+                        @Cached("createSetEnvAttrNode()") SetFixedAttributeNode setEnvAttrNode) {
+            return updateEnvironment((RAttributable) obj, env, setEnvAttrNode);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static Object updateEnvironment(RAttributable obj, REnvironment env,
+                        @Cached("createSetEnvAttrNode()") SetFixedAttributeNode setEnvAttrNode) {
+            setEnvAttrNode.execute(obj, env);
             return obj;
         }
 
@@ -423,7 +443,7 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected Object updateEnvironment(RAttributable obj, @SuppressWarnings("unused") RNull env) {
-            obj.removeAttr(attributeProfile, RRuntime.DOT_ENVIRONMENT);
+            obj.removeAttr(RRuntime.DOT_ENVIRONMENT);
             return obj;
         }
 

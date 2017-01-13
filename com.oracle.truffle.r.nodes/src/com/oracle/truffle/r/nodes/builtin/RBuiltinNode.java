@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 @TypeSystemReference(RTypes.class)
 public abstract class RBuiltinNode extends RBaseNode {
@@ -74,7 +76,10 @@ public abstract class RBuiltinNode extends RBaseNode {
 
         RBuiltinNode node = builtin.getConstructor().get();
         FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
-        assert builtin.getKind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+        if (builtin.getKind() == RBuiltinKind.INTERNAL) {
+            assert node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+            assert builtin.getSignature().getVarArgCount() == 0 || builtin.getSignature().getVarArgIndex() == builtin.getSignature().getLength() - 1 : "only last argument can be vararg";
+        }
 
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor, null);
@@ -107,13 +112,20 @@ public abstract class RBuiltinNode extends RBaseNode {
      * {@code do.call("func", )} have a {@link RBuiltinRootNode} as a parent, which carries no
      * context about the original call, so we return {@code null}.
      */
-    public RSyntaxNode getOriginalCall() {
+    public RSyntaxElement getOriginalCall() {
         Node p = getParent();
-        if (p instanceof RBuiltinRootNode) {
-            return null;
-        } else {
-            return ((RBaseNode) getParent()).asRSyntaxNode();
+        while (p != null) {
+            if (p instanceof RSyntaxCall) {
+                RSyntaxCall call = (RSyntaxCall) p;
+                if (call.getSyntaxArguments().length > 0 && call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals(".Internal")) {
+                    // unwrap .Internal calls
+                    return call.getSyntaxArguments()[0];
+                }
+                return call;
+            }
+            p = p.getParent();
         }
+        return null;
     }
 
     @Override

@@ -33,12 +33,12 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.InternalNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
-import com.oracle.truffle.r.nodes.control.ParNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.control.WhileNode;
@@ -88,8 +88,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 switch (symbol) {
                     case "repeat":
                         return new RepeatNode(source, lhsLookup, args.get(0).value);
-                    case "(":
-                        return new ParNode(source, lhsLookup, args.get(0).value);
                 }
             } else if (args.size() == 2) {
                 switch (symbol) {
@@ -142,6 +140,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     return new BlockNode(source, lhsLookup, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
                 case "missing":
                     return new MissingNode(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
+                case ".Internal":
+                    return InternalNode.create(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
             }
         }
 
@@ -234,6 +234,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
+
+        if (FastROptions.ForceSources.getBooleanValue()) {
+            // forces source sections to be generated
+            rootNode.getSourceSection();
+        }
         return Truffle.getRuntime().createCallTarget(rootNode);
     }
 

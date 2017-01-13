@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,43 @@
  */
 package com.oracle.truffle.r.library.utils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0).mustNotBeNull(RError.NO_CALLER,
+                        RError.Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INPUT_MUST_BE_STRING);
+    }
+
     @Specialization
-    @TruffleBoundary
-    protected String crc64(RAbstractStringVector input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getDataAt(0).getBytes());
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < digest.length; i++) {
-                sb.append(Integer.toHexString(digest[i] & 0xFF));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
+    public String crc64(RAbstractStringVector x) {
+        return crc(x);
+    }
+
+    public static String crc(RAbstractStringVector x) {
+        final String string = x.getDataAt(0);
+        byte[] bytes = string.getBytes();
+        bytes = crc64(bytes);
+        long l = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            l += (bytes[i] & 0xffL) << (8 * i);
         }
+        return Long.toHexString(l);
+    }
+
+    @TruffleBoundary
+    private static byte[] crc64(byte[] bytes) {
+        org.tukaani.xz.check.CRC64 crc = new org.tukaani.xz.check.CRC64();
+        crc.update(bytes);
+        return crc.finish();
     }
 }

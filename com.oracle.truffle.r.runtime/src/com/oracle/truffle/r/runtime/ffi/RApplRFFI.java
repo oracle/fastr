@@ -22,17 +22,23 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * Collection of statically typed methods (from Linpack and elsewhere) that are built in to a GnuR
  * implementation and factored out into a separate library in FastR. This corresponds to the
  * {@code libappl} library in GnuR.
  */
 public interface RApplRFFI {
-    // Linpack
-    void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
+    abstract class RApplRFFINode extends Node {
+        // Linpack
+        public abstract void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
-    void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
+        public abstract void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
 
-    void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+        public abstract void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+    }
+
+    RApplRFFINode createRApplRFFINode();
 
 }

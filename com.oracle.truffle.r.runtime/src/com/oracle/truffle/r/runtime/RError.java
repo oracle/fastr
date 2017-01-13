@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -265,12 +265,15 @@ public final class RError extends RuntimeException {
         NO_NONMISSING_MAX_NA("no non-missing arguments, returning NA"),
         NO_NONMISSING_MIN_NA("no non-missing arguments, returning NA"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
-        MUST_BE_POSITIVE("%s must be a non-negative number"),
+        MUST_BE_POSITIVE("'%s' must be a non-negative number"),
+        MUST_BE_POSITIVE_SD("%s must be non-negative number"),
         MUST_BE_SQUARE("'%s' (%d x %d) must be square"),
         MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%' (%d x %d)"),
-        INVALID_TFB("invalid (to - from)/by in seq(.)"),
+        INVALID_TFB_SD("invalid (to - from)/by in seq(.)"),
+        INVALID_TFB("invalid '(to - from)/by' in 'seq'"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         BY_TOO_SMALL("'by' argument is much too small"),
+        TOO_LONG_VECTOR("result would be too long a vector"),
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
         NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
@@ -281,6 +284,12 @@ public final class RError extends RuntimeException {
         LINE_ELEMENTS("line %d did not have %d elements"),
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         TRACEMEM_NOT_NULL("cannot trace NULL"),
+        INPUT_MUST_BE_STRING("input must be a character string"),
+        // mathlib errors/warnings
+        ML_ERROR_RANGE("value out of range in '%s'"),
+        ML_ERROR_NOCONV("convergence failed in '%s'"),
+        ML_ERROR_PRECISION("full precision may not have been achieved in '%s'"),
+        ML_ERROR_UNDERFLOW("underflow occurred in '%s'"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("'%s' is not a function, character or symbol"),
         NOT_A_FUNCTION("'%s' is not a function"),
@@ -296,6 +305,7 @@ public final class RError extends RuntimeException {
         NON_CONFORMABLE_ARRAYS("non-conformable arrays"),
         UNKNOWN_UNNAMED_OBJECT("object not found"),
         CHOOSE_ROUNDING_WARNING("'k' (%g) must be integer, rounded to %d"),
+        WILCOX_TOO_MUCH_MEMORY("running wilcox with m=%g, n=%g would allocate too much memory, returning NaN instead."),
         ONLY_MATRIX_DIAGONALS("only matrix diagonals can be replaced"),
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
@@ -459,7 +469,7 @@ public final class RError extends RuntimeException {
         UNUSED_ARGUMENT("unused argument (%s)"),
         UNUSED_ARGUMENTS("unused arguments (%s)"),
         INFINITE_MISSING_VALUES("infinite or missing values in '%s'"),
-        CALLOC_COULD_NOT_ALLOCATE_INF("'Calloc' could not allocate memory (18446744071562067968 of 4 bytes)"),
+        CALLOC_COULD_NOT_ALLOCATE("'Calloc' could not allocate memory (%s of %d bytes)"),
         NON_SQUARE_MATRIX("non-square matrix in '%s'"),
         LAPACK_ERROR("error code %d from Lapack routine '%s'"),
         VALUE_OUT_OF_RANGE("value out of range in '%s'"),
@@ -526,6 +536,8 @@ public final class RError extends RuntimeException {
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("negative probability"),
         NO_POSITIVE_PROBABILITIES("no positive probabilities"),
+        QBETA_ACURACY_WARNING("qbeta(a, *) =: x0 with |pbeta(x0,*%s) - alpha| = %.5g is not accurate"),
+        PCHISQ_NOT_CONVERGED_WARNING("pnchisq(x=%g, ..): not converged in %d iter."),
         NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
@@ -563,8 +575,7 @@ public final class RError extends RuntimeException {
         SUBSCRIPT_TYPES("incompatible types (from %s to %s) in [[ assignment"),
         INCOMPATIBLE_METHODS("incompatible methods (\"%s\", \"%s\") for \"%s\""),
         RECURSIVE_INDEXING_FAILED("recursive indexing failed at level %d"),
-        ARGUMENTS_PASSED("%d arguments passed to '%s' which requires %d"),
-        ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),
+        ARGUMENTS_PASSED("%d arguments passed to %s which requires %d"),
         ARGUMENT_IGNORED("argument '%s' will be ignored"),
         NOT_CHARACTER_VECTOR("'%s' must be a character vector"),
         WRONG_WINSLASH("'winslash' must be '/' or '\\\\\\\\'"),
@@ -594,6 +605,7 @@ public final class RError extends RuntimeException {
         UNIMPLEMENTED_ARG_TYPE("unimplemented argument type (arg %d)"),
         C_SYMBOL_NOT_IN_TABLE("C symbol name \"%s\" not in load table"),
         FORTRAN_SYMBOL_NOT_IN_TABLE("Fortran symbol name \"%s\" not in load table"),
+        SYMBOL_NOT_IN_TABLE("\"%s\" not available for .%s() for package \"%s\""),
         NOT_THAT_MANY_FRAMES("not that many frames on the stack"),
         UNIMPLEMENTED_ARGUMENT_TYPE("unimplemented argument type"),
         MUST_BE_SQUARE_NUMERIC("'%s' must be a square numeric matrix"),
@@ -748,6 +760,7 @@ public final class RError extends RuntimeException {
         ATTEMPT_TO_REPLICATE_NO_VECTOR("attempt to replicate non-vector"),
         INCORRECT_ARG_TYPE("incorrect type for %s argument"),
         INVALID_ARG_OF_LENGTH("invalid %s argument of length %d"),
+        INVALID_ARG("invalid %s argument"),
         INVALID_FILENAME_PATTERN("invalid filename pattern"),
         INVALID_FILE_EXT("invalid file extension"),
         NO("no '%s'"),
@@ -760,7 +773,10 @@ public final class RError extends RuntimeException {
         GAP_MUST_BE_NON_NEGATIVE("'gap' must be non-negative integer"),
         WRONG_PCRE_INFO("'pcre_fullinfo' returned '%d' "),
         BAD_FUNCTION_EXPR("badly formed function expression"),
-        FIRST_ELEMENT_ONLY("only first element of '%s' argument used");
+        FIRST_ELEMENT_ONLY("only first element of '%s' argument used"),
+        MUST_BE_GE_ONE("'%s' must be of length >= 1"),
+        MORE_THAN_ONE_MATCH("there is more than one match in '%s'"),
+        TOO_MANY_ARGS("too many arguments");
 
         public final String message;
         final boolean hasArgs;

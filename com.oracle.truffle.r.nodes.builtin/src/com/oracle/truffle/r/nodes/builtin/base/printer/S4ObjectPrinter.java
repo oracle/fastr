@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import com.oracle.truffle.api.frame.Frame;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;

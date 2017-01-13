@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -33,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -53,7 +54,6 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
     private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private static byte not(byte value) {
         return (value == RRuntime.LOGICAL_TRUE ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE);
@@ -110,7 +110,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyAttributesFrom(attrProfiles, vector);
+        resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 
@@ -129,7 +129,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
+        copyNamesDimsDimNames(vector, resultVector);
         return resultVector;
     }
 
@@ -148,7 +148,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
+        copyNamesDimsDimNames(vector, resultVector);
         return resultVector;
     }
 
@@ -167,8 +167,13 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
+        copyNamesDimsDimNames(vector, resultVector);
         return resultVector;
+    }
+
+    @TruffleBoundary
+    private void copyNamesDimsDimNames(RAbstractVector vector, RLogicalVector resultVector) {
+        resultVector.copyNamesDimsDimNamesFrom(vector, this);
     }
 
     @Specialization
@@ -184,7 +189,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RRawVector resultVector = RDataFactory.createRawVector(result);
-        resultVector.copyAttributesFrom(attrProfiles, vector);
+        resultVector.copyAttributesFrom(vector);
         return resultVector;
     }
 

@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
 public abstract class DispatchGeneric extends RBaseNode {
 
     public abstract Object executeObject(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);

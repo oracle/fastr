@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,11 +40,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.test.TestTrait;
-import com.oracle.truffle.r.test.WhiteList;
 import com.oracle.truffle.r.test.TestBase.Context;
 import com.oracle.truffle.r.test.TestBase.Ignored;
 import com.oracle.truffle.r.test.TestBase.Output;
+import com.oracle.truffle.r.test.TestTrait;
+import com.oracle.truffle.r.test.WhiteList;
 
 /**
  * Supports the management of expected test output.
@@ -120,7 +120,7 @@ public class TestOutputManager {
     /**
      * Maps inputs to expected outputs, used during generation.
      */
-    private SortedMap<String, SortedMap<String, TestInfo>> testMaps = new TreeMap<>();
+    private final SortedMap<String, SortedMap<String, TestInfo>> testMaps = new TreeMap<>();
     /**
      * A fast lookup map used at runtime to located the expected output.
      */

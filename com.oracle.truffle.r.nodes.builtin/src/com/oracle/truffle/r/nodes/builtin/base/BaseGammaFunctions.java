@@ -6,24 +6,24 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBLEPSILON;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MANT_DIG;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MAX_EXP;
-import static com.oracle.truffle.r.library.stats.StatsUtil.DBL_MIN_EXP;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_LOG10_2;
-import static com.oracle.truffle.r.library.stats.StatsUtil.M_PI;
-import static com.oracle.truffle.r.library.stats.StatsUtil.fmax2;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MANT_DIG;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX_EXP;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN_EXP;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LOG10_2;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
+import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.library.stats.GammaFunctions;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
@@ -44,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -235,7 +236,7 @@ public class BaseGammaFunctions {
                  * use Abramowitz & Stegun 6.4.7 "Reflection Formula" psi(k, x) = (-1)^k psi(k, 1-x)
                  * - pi^{n+1} (d/dx)^n cot(x)
                  */
-                if (x == Math.round(x)) {
+                if (x == RMath.round(x)) {
                     /* non-positive integer : +Inf or NaN depends on n */
                     // for(j=0; j < m; j++) /* k = j + n : */
                     // ans[j] = ((j+n) % 2) ? ML_POSINF : ML_NAN;
@@ -300,7 +301,7 @@ public class BaseGammaFunctions {
             // mVal.nz = 0;
             xln = Math.log(x);
             if (kode == 1 /* && m == 1 */) { /* the R case --- for very large x: */
-                double lrg = 1 / (2. * DBLEPSILON);
+                double lrg = 1 / (2. * DBL_EPSILON);
                 if (n == 0 && x * xln > lrg) {
                     // ans[0] = -xln;
                     ans = -xln;
@@ -316,7 +317,7 @@ public class BaseGammaFunctions {
             nx = Math.min(-DBL_MIN_EXP, DBL_MAX_EXP);
             assert (nx == 1021);
             r1m5 = M_LOG10_2; // Rf_d1mach(5);
-            r1m4 = DBLEPSILON * 0.5; // Rf_d1mach(4) * 0.5;
+            r1m4 = DBL_EPSILON * 0.5; // Rf_d1mach(4) * 0.5;
             wdtol = fmax2(r1m4, 0.5e-18); /* 1.11e-16 */
 
             /* elim = approximate exponential over and underflow limit */

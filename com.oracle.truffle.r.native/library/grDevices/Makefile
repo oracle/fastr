@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,9 @@ GNUR_C_SOURCES := axis_scales.c chull.c colors.c devCairo.c devPS.c devPicTeX.c 
                 devices.c init.c stubs.c
 
 ifeq ($(OS_NAME), Darwin)
-GNUR_C_SOURCES := $(GNUR_C_SOURCES) qdBitmap.c qdPDF.c
+ifneq ($(shell grep HAVE_AQUA $(GNUR_HOME)/config.log),)
+  GNUR_C_SOURCES := $(GNUR_C_SOURCES) qdBitmap.c qdPDF.c
+endif
 endif
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_SOURCES:.c=.o))

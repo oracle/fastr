@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -419,8 +420,8 @@ public class FastRStats {
         }
 
         private static final class SortableCounter implements Comparable<SortableCounter> {
-            private boolean timing;
-            private Profiler.Counter counter;
+            private final boolean timing;
+            private final Profiler.Counter counter;
 
             private SortableCounter(Profiler.Counter counter, boolean timing) {
                 this.counter = counter;

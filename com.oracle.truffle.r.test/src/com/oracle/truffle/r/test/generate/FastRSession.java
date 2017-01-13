@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,13 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.TimeZone;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.debug.Debugger;
+import com.oracle.truffle.api.debug.SuspendedCallback;
+import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -133,8 +135,6 @@ public final class FastRSession implements RSession {
     private final PolyglotEngine main;
     private final RContext mainContext;
 
-    private EvalThread evalThread;
-
     public static FastRSession create() {
         if (singleton == null) {
             singleton = new FastRSession();
@@ -191,143 +191,81 @@ public final class FastRSession implements RSession {
      * {@link #eval} but also used for package installation via the {@code system2} command, where
      * the result is used to check whether the installation succeeded.
      */
-    @SuppressWarnings("deprecation")
     public Object evalAsObject(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
+        Object result = null;
+        Timer timer = null;
         consoleHandler.reset();
-        EvalThread thread = evalThread;
-        if (thread == null || !thread.isAlive() || contextInfo != thread.contextInfo) {
-            thread = new EvalThread(contextInfo);
-            thread.setName("FastR evaluation");
-            thread.start();
-            evalThread = thread;
-        }
-
-        thread.push(testClass, expression);
-
         try {
-            if (!thread.await(longTimeout ? longTimeoutValue : timeoutValue)) {
-                consoleHandler.println("<timeout>");
-                System.out.println("timeout in " + testClass.getClass() + ": " + expression);
-                for (StackTraceElement element : thread.getStackTrace()) {
-                    System.out.println(element);
-                }
-                thread.stop();
-                evalThread.ensureContextDestroyed();
-                evalThread = null;
-                throw new TimeoutException();
+            ContextInfo actualContextInfo = checkContext(contextInfo);
+            // set up some interop objects used by fastr-specific tests:
+            PolyglotEngine.Builder builder = PolyglotEngine.newBuilder();
+            if (testClass != null) {
+                testClass.addPolyglotSymbols(builder);
             }
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
-        if (thread.killedByException != null) {
-            evalThread = null;
-            throw thread.killedByException;
-        }
-        return evalThread.result;
-    }
-
-    private final class EvalThread extends RContext.ContextThread {
-
-        private volatile String expression;
-        private volatile Throwable killedByException;
-        private final Semaphore entry = new Semaphore(0);
-        private final Semaphore exit = new Semaphore(0);
-        private final ContextInfo contextInfo;
-        private TestBase testClass;
-        private Object result;
-
-        /**
-         * Create an evaluation thread (to handle timeouts).
-         *
-         * @param contextInfo {@code null} for a lightweight test context, else an existing one to
-         *            use.
-         */
-        EvalThread(ContextInfo contextInfo) {
-            super(null);
-            this.contextInfo = contextInfo;
-            setDaemon(true);
-        }
-
-        public void push(TestBase testClassArg, String exp) {
-            this.expression = exp;
-            this.testClass = testClassArg;
-            this.entry.release();
-        }
-
-        public boolean await(int millisTimeout) throws InterruptedException {
-            return exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
-        }
-
-        /**
-         * In case the vm is not disposed by the {@code finally} clause in run after a timeout,
-         * (which should not happen), we explicitly destroy the context, to avoid subsequent errors
-         * relating to multiple children of a single SHARED_RW context.
-         */
-        public void ensureContextDestroyed() {
-            context.destroy();
-        }
-
-        @Override
-        public void run() {
-            while (killedByException == null) {
-                try {
-                    entry.acquire();
-                } catch (InterruptedException e) {
-                    break;
-                }
-                try {
-                    ContextInfo actualContextInfo = checkContext(contextInfo);
-                    // set up some interop objects used by fastr-specific tests:
-                    PolyglotEngine.Builder builder = PolyglotEngine.newBuilder();
-                    if (testClass != null) {
-                        testClass.addPolyglotSymbols(builder);
-                    }
-                    PolyglotEngine vm = actualContextInfo.createVM(builder);
-                    consoleHandler.setInput(expression.split("\n"));
+            PolyglotEngine vm = actualContextInfo.createVM(builder);
+            timer = scheduleTimeBoxing(vm, longTimeout ? longTimeoutValue : timeoutValue);
+            consoleHandler.setInput(expression.split("\n"));
+            try {
+                String input = consoleHandler.readLine();
+                while (input != null) {
+                    Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                     try {
-                        String input = consoleHandler.readLine();
-                        while (input != null) {
-                            Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
-                            try {
-                                try {
-                                    result = vm.eval(source).get();
-                                    // checked exceptions are wrapped in RuntimeExceptions
-                                } catch (RuntimeException e) {
-                                    if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
-                                        throw e.getCause().getCause();
-                                    } else {
-                                        throw e;
-                                    }
-                                }
-                                input = consoleHandler.readLine();
-                            } catch (IncompleteSourceException e) {
-                                String additionalInput = consoleHandler.readLine();
-                                if (additionalInput == null) {
-                                    throw e;
-                                }
-                                input += "\n" + additionalInput;
+                        try {
+                            result = vm.eval(source).get();
+                            // checked exceptions are wrapped in RuntimeExceptions
+                        } catch (RuntimeException e) {
+                            if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
+                                throw e.getCause().getCause();
+                            } else {
+                                throw e;
                             }
                         }
-                    } finally {
-                        vm.dispose();
-                    }
-                } catch (ParseException e) {
-                    e.report(consoleHandler);
-                } catch (RError e) {
-                    // nothing to do
-                } catch (Throwable t) {
-                    if (!TestBase.ProcessFailedTests) {
-                        if (t instanceof RInternalError) {
-                            RInternalError.reportError(t);
+                        input = consoleHandler.readLine();
+                    } catch (IncompleteSourceException e) {
+                        String additionalInput = consoleHandler.readLine();
+                        if (additionalInput == null) {
+                            throw e;
                         }
-                        t.printStackTrace();
+                        input += "\n" + additionalInput;
                     }
-                    killedByException = t;
-                } finally {
-                    exit.release();
                 }
+            } finally {
+                vm.dispose();
+            }
+        } catch (ParseException e) {
+            e.report(consoleHandler);
+        } catch (RError e) {
+            // nothing to do
+        } catch (Throwable t) {
+            if (!TestBase.ProcessFailedTests) {
+                if (t instanceof RInternalError) {
+                    RInternalError.reportError(t);
+                }
+                t.printStackTrace();
+            }
+            throw t;
+        } finally {
+            if (timer != null) {
+                timer.cancel();
             }
         }
+        return result;
+    }
+
+    private static Timer scheduleTimeBoxing(PolyglotEngine engine, long timeout) {
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Debugger.find(engine).startSession(new SuspendedCallback() {
+                    @Override
+                    public void onSuspend(SuspendedEvent event) {
+                        event.prepareKill();
+                    }
+                }).suspendNextExecution();
+            }
+        }, timeout);
+        return timer;
     }
 
     @Override

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,7 +20,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 
 //Transcribed from GnuR, src/main/print.c
@@ -28,8 +27,6 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 final class AttributesPrinter implements ValuePrinter<RAttributable> {
 
     static final AttributesPrinter INSTANCE = new AttributesPrinter(false);
-
-    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     private final boolean useSlots;
 
@@ -100,7 +97,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
                 // throw new UnsupportedOperationException("TODO");
             } else {
-                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject(dummyAttrProfiles)) {
+                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject()) {
                     RContext.getEngine().printResult(a.getValue());
                 } else {
                     ValuePrinters.INSTANCE.print(a.getValue(), printCtx);

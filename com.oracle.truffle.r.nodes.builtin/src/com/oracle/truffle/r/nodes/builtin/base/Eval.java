@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -75,8 +74,6 @@ public abstract class Eval extends RBuiltinNode {
 
         public abstract REnvironment execute(VirtualFrame frame, Object env, Object enclos);
 
-        private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
-
         @Specialization
         protected REnvironment cast(@SuppressWarnings("unused") RNull env, @SuppressWarnings("unused") RNull enclos) {
             return REnvironment.baseEnv();
@@ -101,24 +98,24 @@ public abstract class Eval extends RBuiltinNode {
 
         @Specialization
         protected REnvironment cast(RList list, REnvironment enclos) {
-            return REnvironment.createFromList(attributeProfiles, list, enclos);
+            return REnvironment.createFromList(list, enclos);
         }
 
         @Specialization
         protected REnvironment cast(RPairList list, REnvironment enclos) {
-            return REnvironment.createFromList(attributeProfiles, list.toRList(), enclos);
+            return REnvironment.createFromList(list.toRList(), enclos);
         }
 
         @Specialization
         protected REnvironment cast(RList list, @SuppressWarnings("unused") RNull enclos) {
             // This can happen when envir is a list and enclos is explicitly set to NULL
-            return REnvironment.createFromList(attributeProfiles, list, REnvironment.baseEnv());
+            return REnvironment.createFromList(list, REnvironment.baseEnv());
         }
 
         @Specialization
         protected REnvironment cast(RPairList list, @SuppressWarnings("unused") RNull enclos) {
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
-            return REnvironment.createFromList(attributeProfiles, list.toRList(), REnvironment.baseEnv());
+            return REnvironment.createFromList(list.toRList(), REnvironment.baseEnv());
         }
 
         @Specialization

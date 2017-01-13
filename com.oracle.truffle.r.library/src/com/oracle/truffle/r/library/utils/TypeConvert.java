@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.TreeSet;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -36,6 +37,8 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
+
+    @Child private SetFixedAttributeNode setLevelsAttrNode = SetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         // naStrings are in addition to NA_character_
@@ -178,7 +181,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
                 }
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
-            res.setAttr(RRuntime.LEVELS_ATTR_KEY, RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
+            setLevelsAttrNode.execute(res, RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
             return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
         }
     }

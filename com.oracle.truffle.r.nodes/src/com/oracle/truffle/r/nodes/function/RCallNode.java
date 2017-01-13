@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,19 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -55,14 +58,12 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
-import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
@@ -86,8 +87,8 @@ import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -107,31 +108,31 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NodeCost.NONE)
-@NodeChild(value = "function", type = ForcePromiseNode.class)
+@NodeChild(value = "function", type = RNode.class)
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
 
-    @CompilationFinal private SourceSection sourceSectionR;
+    @CompilationFinal private SourceSection sourceSection;
 
     @Override
     public final void setSourceSection(SourceSection sourceSection) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
     }
 
     @Override
     public final SourceSection getLazySourceSection() {
-        return sourceSectionR;
+        return sourceSection;
     }
 
     @Override
     public final SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
-        return sourceSectionR;
+        return sourceSection;
     }
 
-    protected abstract ForcePromiseNode getFunction();
+    public abstract RNode getFunction();
 
     private final RSyntaxNode[] arguments;
     private final int[] varArgIndexes;
@@ -144,14 +145,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
 
-    @CompilationFinal private boolean needsCallerFrame;
+    private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
 
-    boolean setNeedsCallerFrame() {
-        try {
-            return needsCallerFrame;
-        } finally {
-            needsCallerFrame = true;
-        }
+    public boolean setNeedsCallerFrame() {
+        boolean value = !needsNoCallerFrame.isValid();
+        needsNoCallerFrame.invalidate();
+        return value;
     }
 
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
@@ -164,7 +163,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     protected RCallNode(SourceSection sourceSection, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.arguments = arguments;
         this.explicitArgs = null;
         this.varArgIndexes = getVarArgIndexes(arguments);
@@ -184,7 +183,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier) {
         assert sourceSection != null;
-        this.sourceSectionR = sourceSection;
+        this.sourceSection = sourceSection;
         this.arguments = null;
         this.explicitArgs = LocalReadVariableNode.create(explicitArgsIdentifier, false);
         this.varArgIndexes = null;
@@ -234,11 +233,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected FunctionDispatch createUninitializedCall() {
-        return FunctionDispatchNodeGen.create(this, null, explicitArgs == null ? false : true);
+        return FunctionDispatchNodeGen.create(this, explicitArgs != null, null);
     }
 
     protected FunctionDispatch createUninitializedExplicitCall() {
-        return FunctionDispatchNodeGen.create(this, null, true);
+        return FunctionDispatchNodeGen.create(this, true, null);
     }
 
     /**
@@ -257,7 +256,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected RNode createDispatchArgument(int index) {
-        return new ForcePromiseNode(RASTUtils.cloneNode(arguments[index].asRNode()));
+        return RContext.getASTBuilder().process(arguments[index]).asRNode();
     }
 
     /**
@@ -284,13 +283,17 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
-        dispatchTempSlot.initialize(frame, dispatchObject, () -> internalDispatchCall = null);
+        // Cannot dispatch on REmpty
+        if (dispatchObject == REmpty.instance) {
+            throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 1);
+        }
+        FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
             RStringVector type = classHierarchyNode.execute(dispatchObject);
             S3Args s3Args;
             RFunction resultFunction;
             if (implicitTypeProfile.profile(type != null)) {
-                Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), null);
+                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), null);
                 if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                     s3Args = null;
                 } else {
@@ -301,13 +304,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 s3Args = null;
                 resultFunction = function;
             }
-            if (internalDispatchCall == null) {
+            if (internalDispatchCall == null || internalDispatchCall.tempFrameSlot != slot) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, new Object[]{dispatchTempSlot.getIdentifier()}, false));
+                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, false, slot));
             }
             return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame), s3Args, null);
         } finally {
-            dispatchTempSlot.cleanup(frame, dispatchObject);
+            TemporarySlotNode.cleanup(frame, dispatchObject, slot);
         }
     }
 
@@ -399,21 +402,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[typeXIdx]));
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
-            try {
-                resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), null);
-            } catch (NoGenericMethodException e) {
-                // fall-through
-            }
+            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), null);
         }
         Result resultY = null;
         if (args.length > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
             RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, args[1]));
             if (implicitTypeProfileY.profile(typeY != null)) {
-                try {
-                    resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
-                } catch (NoGenericMethodException e) {
-                    // fall-through
-                }
+                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
             }
         }
 
@@ -539,70 +534,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         throw RError.error(RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
     }
 
-    public RNode getFunctionNode() {
-        if (getFunction() != null) {
-            // Only the very 1. RootCallNode on the top level contains the one-and-only function
-            // node
-            return getFunction().getValueNode();
-        }
-        return getParentCallNode().getFunctionNode();
-    }
-
-    public CallArgumentsNode createArguments(Object[] dispatchTempIdentifiers, boolean modeChange, boolean modeChangeAppliesToAll) {
+    public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll) {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            if (dispatchTempIdentifiers != null && i < dispatchTempIdentifiers.length) {
-                args[i] = new GetTempNode(dispatchTempIdentifiers[i], arguments[i]);
+            if (tempFrameSlot != null && i == 0) {
+                args[i] = new GetTempNode(tempFrameSlot, arguments[i]);
             } else {
                 args[i] = arguments[i] == null ? null : RASTUtils.cloneNode(arguments[i].asRNode());
             }
         }
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature, varArgIndexes);
-    }
-
-    /**
-     * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
-     * original call.
-     *
-     * @param internalCallArg the {@link RCallNode} corresponding to the argument to the {code
-     *            .Internal}.
-     * @param function the resolved {@link RFunction}.
-     */
-    public static RNode createInternalCall(RCallNode internalCallArg, RFunction function) {
-        CompilerAsserts.neverPartOfCompilation();
-        return new InternalNode(FunctionDispatchNodeGen.create(internalCallArg, null, false), function, internalCallArg.lookupVarArgs != null);
-    }
-
-    @NodeInfo(cost = NodeCost.NONE)
-    private static final class InternalNode extends RNode {
-        @Child private FunctionDispatch rootCallNode;
-        @Child private ReadVariableNode lookupVarArgs;
-        private final RFunction function;
-
-        InternalNode(FunctionDispatch rootCallNode, RFunction function, boolean needsVarArgLookup) {
-            this.rootCallNode = rootCallNode;
-            this.function = function;
-            this.lookupVarArgs = needsVarArgLookup ? ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any) : null;
-        }
-
-        private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame) {
-            RArgsValuesAndNames varArgs;
-            if (lookupVarArgs == null) {
-                varArgs = null;
-            } else {
-                try {
-                    varArgs = lookupVarArgs.executeRArgsValuesAndNames(frame);
-                } catch (UnexpectedResultException e) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
-                }
-            }
-            return varArgs;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return rootCallNode.execute(frame, function, lookupVarArgs(frame), null, null);
-        }
     }
 
     /**
@@ -624,7 +565,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        return RCallNodeGen.create(src, arguments, signature, new ForcePromiseNode(function));
+        return RCallNodeGen.create(src, arguments, signature, function);
     }
 
     public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
@@ -639,14 +580,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return null;
     }
 
-    private RCallNode getParentCallNode() {
-        RNode parent = (RNode) unwrapParent();
-        if (!(parent instanceof RCallNode)) {
-            throw RInternalError.shouldNotReachHere();
-        }
-        return (RCallNode) parent;
-    }
-
     static boolean needsSplitting(RootCallTarget target) {
         RRootNode root = (RRootNode) target.getRootNode();
         return root.containsDispatch() || root.needsSplitting();
@@ -654,11 +587,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     private static final class GetTempNode extends RNode {
 
-        @Child private FrameSlotNode slot;
+        private final FrameSlot slot;
         private final RSyntaxNode arg;
 
-        GetTempNode(Object identifier, RSyntaxNode arg) {
-            slot = FrameSlotNode.createTemp(identifier, false);
+        GetTempNode(FrameSlot slot, RSyntaxNode arg) {
+            this.slot = slot;
             this.arg = arg;
         }
 
@@ -670,7 +603,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return frame.getObject(slot.executeFrameSlot(frame));
+                return frame.getObject(slot);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -691,13 +624,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         protected static final int CACHE_SIZE = 4;
 
         private final RCallNode originalCall;
-        private final Object[] dispatchTempIdentifiers;
         private final boolean explicitArgs;
 
-        public FunctionDispatch(RCallNode originalCall, Object[] dispatchTempIdentifiers, boolean explicitArgs) {
+        private final FrameSlot tempFrameSlot;
+
+        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, FrameSlot tempFrameSlot) {
             this.originalCall = originalCall;
-            this.dispatchTempIdentifiers = dispatchTempIdentifiers;
             this.explicitArgs = explicitArgs;
+            this.tempFrameSlot = tempFrameSlot;
         }
 
         protected LeafCallNode createCacheNode(RootCallTarget cachedTarget) {
@@ -717,7 +651,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (explicitArgs) {
                 return PrepareArguments.createExplicit(root);
             } else {
-                CallArgumentsNode args = originalCall.createArguments(dispatchTempIdentifiers, root.getBuiltin() == null, true);
+                CallArgumentsNode args = originalCall.createArguments(tempFrameSlot, root.getBuiltin() == null, true);
                 return PrepareArguments.create(root, args, noOpt);
             }
         }
@@ -735,26 +669,36 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
         }
 
+        private static final class GenericCallEntry extends Node {
+            private final RootCallTarget cachedTarget;
+            @Child private LeafCallNode leafCall;
+            @Child private PrepareArguments prepareArguments;
+
+            GenericCallEntry(RootCallTarget cachedTarget, LeafCallNode leafCall, PrepareArguments prepareArguments) {
+                this.cachedTarget = cachedTarget;
+                this.leafCall = leafCall;
+                this.prepareArguments = prepareArguments;
+            }
+        }
+
         /*
          * Use a TruffleBoundaryNode to be able to switch child nodes without invalidating the whole
          * method.
          */
         protected final class GenericCall extends TruffleBoundaryNode {
 
-            private RootCallTarget cachedTarget;
-            @Child private LeafCallNode leafCall;
-            @Child private PrepareArguments prepareArguments;
+            @Child private GenericCallEntry entry;
 
             @TruffleBoundary
             public Object execute(MaterializedFrame materializedFrame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments) {
-                if (cachedTarget != function.getTarget()) {
-                    cachedTarget = function.getTarget();
-                    leafCall = insert(createCacheNode(cachedTarget));
-                    prepareArguments = insert(createArguments(cachedTarget));
+                GenericCallEntry e = entry;
+                RootCallTarget cachedTarget = function.getTarget();
+                if (e == null || e.cachedTarget != cachedTarget) {
+                    entry = e = insert(new GenericCallEntry(cachedTarget, createCacheNode(cachedTarget), createArguments(cachedTarget)));
                 }
                 VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
-                RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
-                return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
+                RArgsValuesAndNames orderedArguments = e.prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
+                return e.leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
             }
         }
 
@@ -957,7 +901,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
             this.visibility = fastPathFactory == null ? null : SetVisibilityNode.create();
-            originalCall.needsCallerFrame |= root.containsDispatch();
+            if (root.containsDispatch()) {
+                originalCall.setNeedsCallerFrame();
+            }
         }
 
         @Override
@@ -981,7 +927,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     call.getCallNode().cloneCallTarget();
                 }
             }
-            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsCallerFrame ? frame.materialize() : null;
+            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsNoCallerFrame.isValid() ? null : frame.materialize();
 
             return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
                             function.getEnclosingFrame(), s3Args);
@@ -990,8 +936,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Override
     public RSyntaxElement getSyntaxLHS() {
-        ForcePromiseNode func = getFunction();
-        return func == null || func.getValueNode() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunctionNode().asRSyntaxNode();
+        return getFunction() == null ? RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "FUN", true) : getFunction().asRSyntaxNode();
     }
 
     @Override

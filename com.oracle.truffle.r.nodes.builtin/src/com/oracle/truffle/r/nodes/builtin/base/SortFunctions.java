@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 

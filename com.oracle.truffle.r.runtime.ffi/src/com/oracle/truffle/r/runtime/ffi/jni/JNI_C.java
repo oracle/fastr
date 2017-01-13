@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,21 +30,29 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class JNI_C implements CRFFI {
-
-    /**
-     * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be native
-     * array types, no upcalls are possible, and no result is returned. However, the receiving
-     * function expects actual native arrays (not SEXPs), so these have to be handled on the JNI
-     * side.
-     */
-    @Override
-    @TruffleBoundary
-    public synchronized void invoke(NativeCallInfo nativeCallInfo, Object[] args) {
-        if (traceEnabled()) {
-            traceDownCall(nativeCallInfo.name, args);
+    public static class JNI_CRFFINode extends CRFFINode {
+        /**
+         * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
+         * native array types, no upcalls are possible, and no result is returned. However, the
+         * receiving function expects actual native arrays (not SEXPs), so these have to be handled
+         * on the JNI side.
+         */
+        @Override
+        @TruffleBoundary
+        public void invoke(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_CRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall(nativeCallInfo.name, args);
+                }
+                c(nativeCallInfo.address.asAddress(), args);
+            }
         }
-        c(nativeCallInfo.address.asAddress(), args);
     }
 
     private static native void c(long address, Object[] args);
+
+    @Override
+    public CRFFINode createCRFFINode() {
+        return new JNI_CRFFINode();
+    }
 }

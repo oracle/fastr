@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -62,21 +67,29 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization(guards = {"x.isMatrix()", "y.isMatrix()"})
-    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y) {
-        int xRows = x.getDimensions()[0];
-        int xCols = x.getDimensions()[1];
-        int yRows = y.getDimensions()[0];
-        int yCols = y.getDimensions()[1];
-        return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false);
+    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y,
+                    @Cached("create()") GetDimAttributeNode getXDimsNode,
+                    @Cached("create()") GetDimAttributeNode getYDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
+        int[] xDims = getXDimsNode.getDimensions(x);
+        int[] yDims = getYDimsNode.getDimensions(y);
+        int xRows = xDims[0];
+        int xCols = xDims[1];
+        int yRows = yDims[0];
+        int yCols = yDims[1];
+        return matMult.doubleMatrixMultiply(x, y, xCols, xRows, yRows, yCols, xRows, 1, 1, yRows, false, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
     }
 
-    private static RDoubleVector mirror(RDoubleVector result) {
+    private static RDoubleVector mirror(RDoubleVector result, GetDimAttributeNode getResultDimsNode) {
         /*
          * Mirroring the result is not only good for performance, but it is also required to produce
          * the same result as GNUR.
          */
-        assert result.isMatrix() && result.getDimensions()[0] == result.getDimensions()[1];
-        int size = result.getDimensions()[0];
+        int[] resultDims = getResultDimsNode.getDimensions(result);
+        assert result.isMatrix() && resultDims[0] == resultDims[1];
+        int size = resultDims[0];
         double[] data = result.getDataWithoutCopying();
         for (int row = 0; row < size; row++) {
             int destIndex = row * size + row + 1;
@@ -96,10 +109,16 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization(guards = "x.isMatrix()")
-    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-        int xRows = x.getDimensions()[0];
-        int xCols = x.getDimensions()[1];
-        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true));
+    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") GetDimAttributeNode getResultDimsNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
+                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
+        int[] xDims = getDimsNode.getDimensions(x);
+        int xRows = xDims[0];
+        int xCols = xDims[1];
+        return mirror(matMult.doubleMatrixMultiply(x, x, xCols, xRows, xRows, xCols, xRows, 1, 1, xRows, true, setDimNamesNode, getADimNamesNode, getBDimNamesNode), getResultDimsNode);
     }
 
     @Specialization

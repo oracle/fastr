@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -75,7 +78,8 @@ public abstract class Matrix extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector matrix(RAbstractVector data, int nrow, int ncol, boolean byrow, Object dimnames, boolean missingNr, boolean missingNc) {
+    protected RAbstractVector matrix(RAbstractVector data, int nrow, int ncol, boolean byrow, Object dimnames, boolean missingNr, boolean missingNc,
+                    @Cached("create()") SetDimAttributeNode setDimNode) {
         int[] dim;
         if (byrowProfile.profile(byrow)) {
             dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
@@ -86,7 +90,7 @@ public abstract class Matrix extends RBuiltinNode {
         if (empty.profile(data.getLength() == 0)) {
             if (isList.profile(data instanceof RAbstractListVector)) {
                 // matrix of NULL-s
-                res = data.copyResizedWithDimensions(dim, true);
+                res = copyResizedWithDimensions(data, dim);
                 if (byrowProfile.profile(byrow)) {
                     if (transpose == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -99,7 +103,7 @@ public abstract class Matrix extends RBuiltinNode {
                 }
             } else {
                 res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-                res.setDimensions(dim);
+                setDimNode.setDimensions(res, dim);
             }
         } else {
             res = data.copyResizedWithDimensions(dim, false);
@@ -115,6 +119,11 @@ public abstract class Matrix extends RBuiltinNode {
             }
         }
         return res;
+    }
+
+    @TruffleBoundary
+    private static RVector<?> copyResizedWithDimensions(RAbstractVector data, int[] dim) {
+        return data.copyResizedWithDimensions(dim, true);
     }
 
     private int[] computeDimByCol(int size, int nrow, int ncol, boolean missingNr, boolean missingNc) {

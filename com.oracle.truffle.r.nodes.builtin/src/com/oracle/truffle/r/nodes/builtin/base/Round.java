@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -55,7 +54,6 @@ public abstract class Round extends RBuiltinNode {
     @Child private RoundArithmetic roundOp = new RoundArithmetic();
 
     private final NACheck check = NACheck.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -124,7 +122,7 @@ public abstract class Round extends RBuiltinNode {
             result[i] = check.check(value) ? RRuntime.DOUBLE_NA : round(value, digits);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(attrProfiles, x);
+        ret.copyAttributesFrom(x);
         return ret;
     }
 
@@ -137,7 +135,7 @@ public abstract class Round extends RBuiltinNode {
             result[i] = check.check(value) ? RRuntime.DOUBLE_NA : roundDigits(value, digits);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(attrProfiles, x);
+        ret.copyAttributesFrom(x);
         return ret;
     }
 
@@ -165,7 +163,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(attrProfiles, x);
+        ret.copyAttributesFrom(x);
         return ret;
     }
 
@@ -181,7 +179,7 @@ public abstract class Round extends RBuiltinNode {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(attrProfiles, x);
+        ret.copyAttributesFrom(x);
         return ret;
     }
 

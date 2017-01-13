@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,8 @@ import java.util.List;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 
 /**
  * Abstracts the implementation of the R parser.

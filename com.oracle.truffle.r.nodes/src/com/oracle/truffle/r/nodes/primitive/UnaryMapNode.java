@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -44,19 +49,20 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class UnaryMapNode extends RBaseNode {
 
     @Child private UnaryMapFunctionNode scalarNode;
     @Child private MapUnaryVectorInternalNode vectorNode;
+    @Child private GetDimAttributeNode getDimNode;
+    @Child private SetDimAttributeNode setDimNode;
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     // profiles
     private final Class<? extends RAbstractVector> operandClass;
     private final VectorLengthProfile operandLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile operandIsNAProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile hasAttributesProfile;
-    private final RAttributeProfiles attrProfiles;
     private final ConditionProfile shareOperand;
 
     // compile-time optimization flags
@@ -77,7 +83,6 @@ public final class UnaryMapNode extends RBaseNode {
 
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareOperand = operandVector ? ConditionProfile.createBinaryProfile() : null;
-        this.attrProfiles = mayContainMetadata ? RAttributeProfiles.create() : null;
         this.hasAttributesProfile = mayContainMetadata ? BranchProfile.create() : null;
     }
 
@@ -148,7 +153,7 @@ public final class UnaryMapNode extends RBaseNode {
             target = createOrShareVector(operandLength, operand);
             Object store = target.getInternalStore();
             vectorNode.apply(scalarNode, store, operandCast, operandLength);
-            RNode.reportWork(this, operandLength);
+            RBaseNode.reportWork(this, operandLength);
             target.setComplete(scalarNode.isComplete());
         }
         if (mayContainMetadata) {
@@ -170,6 +175,19 @@ public final class UnaryMapNode extends RBaseNode {
         if (containsMetadata(operand) && operand != target) {
             hasAttributesProfile.enter();
             result = result.materialize();
+
+            if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getDimNode = insert(GetDimAttributeNode.create());
+            }
+
+            if (setDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNode = insert(SetDimAttributeNode.create());
+            }
+
+            setDimNode.setDimensions(result, getDimNode.getDimensions(operand));
+
             copyAttributesInternal((RVector<?>) result, operand);
         }
         return result;
@@ -178,17 +196,19 @@ public final class UnaryMapNode extends RBaseNode {
     private final ConditionProfile hasDimensionsProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
 
+    @Child private HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+
     private boolean containsMetadata(RAbstractVector vector) {
         return vector instanceof RVector &&
-                        (hasDimensionsProfile.profile(vector.hasDimensions()) || vector.getAttributes() != null || hasNamesProfile.profile(vector.getNames(attrProfiles) != null) ||
-                                        vector.getDimNames(attrProfiles) != null);
+                        (hasDimensionsProfile.profile(hasDimNode.execute(vector)) || vector.getAttributes() != null || hasNamesProfile.profile(getNamesNode.getNames(vector) != null) ||
+                                        getDimNamesNode.getDimNames(vector) != null);
     }
 
     @TruffleBoundary
     private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
-        result.setDimensions(attributeSource.getDimensions());
-        result.copyNamesFrom(attrProfiles, attributeSource);
+        result.copyNamesFrom(attributeSource);
     }
 
     @SuppressWarnings("unused")

@@ -49,6 +49,13 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 @ValueType
 public class RPromise implements RTypedValue {
 
+    private static final int DEFAULT_BIT = 0x1;
+    private static final int FULL_PROMISE_BIT = 0x2;
+    private static final int EAGER_BIT = 0x4;
+    private static final int EXPLICIT_BIT = 0x8;
+    private static final int UNDER_EVALUATION_BIT = 0x10;
+    private static final int UNDER_EVALUATION_MASK = 0x0f;
+
     /**
      * This enum encodes the source, optimization and current state of a promise.
      */
@@ -57,45 +64,55 @@ public class RPromise implements RTypedValue {
          * This promise is created for an argument that has been supplied to the function call and
          * thus has to be evaluated inside the caller frame.
          */
-        Supplied,
+        Supplied(FULL_PROMISE_BIT),
         /**
          * This promise is created for an argument that was 'missing' at the function call and thus
          * contains it's default value and has to be evaluated inside the _callee_ frame.
          */
-        Default,
+        Default(DEFAULT_BIT | FULL_PROMISE_BIT),
         /**
          * A supplied promise that was optimized to eagerly evaluate its value.
          */
-        EagerSupplied,
+        EagerSupplied(EAGER_BIT),
         /**
          * A default promise that was optimized to eagerly evaluate its value.
          */
-        EagerDefault,
+        EagerDefault(EAGER_BIT | DEFAULT_BIT),
         /**
          * This promise was created to wrap around a parameter value that is a promise itself.
          */
-        Promised,
+        Promised(0),
         /**
          * This promise is not a function argument at all. (Created by 'delayedAssign', for
          * example).
          */
-        Explicit,
+        Explicit(EXPLICIT_BIT | FULL_PROMISE_BIT),
         /**
          * This promise is currently being evaluated. This necessary to avoid cyclic evaluation, and
          * can by checked via {@link #isUnderEvaluation()}.
          */
-        UnderEvaluation;
+        UnderEvaluation(UNDER_EVALUATION_BIT);
 
-        public boolean isDefaultOpt() {
-            return this == PromiseState.Default || this == PromiseState.Supplied || this == PromiseState.Explicit || this == PromiseState.UnderEvaluation;
+        private final int bits;
+
+        PromiseState(int bits) {
+            this.bits = bits;
         }
 
-        public boolean isEager() {
-            return this == PromiseState.EagerDefault || this == PromiseState.EagerSupplied;
+        public static boolean isDefaultOpt(int state) {
+            return (state & FULL_PROMISE_BIT) != 0;
+        }
+
+        public static boolean isEager(int state) {
+            return (state & EAGER_BIT) != 0;
+        }
+
+        public static boolean isExplicit(int state) {
+            return (state & EXPLICIT_BIT) != 0;
         }
     }
 
-    private PromiseState state;
+    private int state;
 
     /**
      * @see #getFrame()
@@ -104,7 +121,7 @@ public class RPromise implements RTypedValue {
     @CompilationFinal protected MaterializedFrame execFrame;
 
     /**
-     * Might not be <code>null</code>.
+     * May not be <code>null</code>.
      */
     private final Closure closure;
 
@@ -117,7 +134,7 @@ public class RPromise implements RTypedValue {
      * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
     RPromise(PromiseState state, MaterializedFrame execFrame, Closure closure) {
-        this.state = state;
+        this.state = state.bits;
         this.execFrame = execFrame;
         this.closure = closure;
     }
@@ -127,7 +144,7 @@ public class RPromise implements RTypedValue {
      */
     RPromise(PromiseState state, Closure closure, Object value) {
         assert value != null;
-        this.state = state;
+        this.state = state.bits;
         this.closure = closure;
         this.value = value;
         // Not needed as already evaluated:
@@ -139,11 +156,11 @@ public class RPromise implements RTypedValue {
         return RType.Promise;
     }
 
-    public final PromiseState getState() {
+    public final int getState() {
         return state;
     }
 
-    public final void setState(PromiseState state) {
+    public final void setState(int state) {
         assert !isEvaluated();
         this.state = state;
     }
@@ -160,7 +177,7 @@ public class RPromise implements RTypedValue {
     }
 
     public final boolean isDefaultArgument() {
-        return state == PromiseState.Default || state == PromiseState.EagerDefault;
+        return (state & DEFAULT_BIT) != 0;
     }
 
     public final boolean isNullFrame() {
@@ -234,7 +251,7 @@ public class RPromise implements RTypedValue {
      */
     public final boolean isUnderEvaluation() {
         assert !isEvaluated();
-        return state == PromiseState.UnderEvaluation;
+        return (state & UNDER_EVALUATION_BIT) != 0;
     }
 
     @Override
@@ -464,7 +481,7 @@ public class RPromise implements RTypedValue {
         }
 
         private static RootCallTarget generateCallTarget(RNode expr) {
-            return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
+            return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME + System.identityHashCode(expr));
         }
 
         public RBaseNode getExpr() {
@@ -489,5 +506,15 @@ public class RPromise implements RTypedValue {
     @Override
     public boolean isS4() {
         return false;
+    }
+
+    public void setUnderEvaluation() {
+        assert (state & UNDER_EVALUATION_BIT) == 0;
+        state |= UNDER_EVALUATION_BIT;
+    }
+
+    public void resetUnderEvaluation() {
+        assert (state & UNDER_EVALUATION_BIT) != 0;
+        state &= UNDER_EVALUATION_MASK;
     }
 }

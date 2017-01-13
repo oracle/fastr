@@ -30,7 +30,7 @@
 // to ensure that a global JNI handle is created (if necessary) and returned,
 // otherwise a GC might reclaim the result.
 
-// N.B. ALL functions go via CallRFFIHelper to provide a single point of re-entry
+// N.B. ALL functions go via UpCallsRFFI to provide a single point of re-entry
 
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
@@ -102,7 +102,7 @@ static jmethodID TYPEOF_MethodID;
 static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID isS4ObjectMethodID;
-static jmethodID logObject_MethodID;
+static jmethodID logNotCharSXPWrapperMethodID;
 static jmethodID R_tryEvalMethodID;
 static jmethodID RDEBUGMethodID;
 static jmethodID SET_RDEBUGMethodID;
@@ -113,7 +113,7 @@ static jmethodID PRVALUEMethodID;
 static jmethodID R_lsInternal3MethodID;
 static jmethodID R_do_MAKE_CLASS_MethodID;
 
-static jmethodID resetAndGetHandlerStacksMethodID;
+static jmethodID R_ToplevelExecMethodID;
 static jmethodID restoreHandlerStacksMethodID;
 
 static jmethodID R_MakeExternalPtrMethodID;
@@ -136,107 +136,107 @@ static jfieldID CharSXPWrapperContentsFieldID;
 jmethodID setCompleteMethodID;
 
 void init_internals(JNIEnv *env) {
-	Rf_ScalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
-	Rf_ScalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
-	Rf_ScalarStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarString", "(Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RStringVector;", 1);
-	Rf_ScalarLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarLogical", "(I)Lcom/oracle/truffle/r/runtime/data/RLogicalVector;", 1);
-	Rf_consMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_cons", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_evalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_eval", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_findfunMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findfun", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_findVarInFrameMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_findVarInFrame3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame3", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-	Rf_getAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_setAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
-	Rf_isNullMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isNull", "(Ljava/lang/Object;)I", 1);
-	Rf_installMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_install", "(Ljava/lang/String;)Ljava/lang/Object;", 1);
-	Rf_warningMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warning", "(Ljava/lang/String;)V", 1);
-	Rf_warningcallMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/String;)V", 1);
-	Rf_errorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_error", "(Ljava/lang/String;)V", 1);
-	Rf_allocateVectorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 1);
-	Rf_allocateMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 1);
-	Rf_allocateArrayMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-	Rf_anyDuplicatedMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 1);
-	R_NewHashedEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
-	Rf_classgetsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	RprintfMethodID = checkGetMethodID(env, CallRFFIHelperClass, "printf", "(Ljava/lang/String;)V", 1);
-	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 1);
-	R_FindNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	R_BindingIsLockedID = checkGetMethodID(env, CallRFFIHelperClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 1);
-	Rf_GetOption1MethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_gsetVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	Rf_inheritsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 1);
-	Rf_lengthgetsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_lengthgets", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-//	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
-//	Rf_iPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 1);
-	CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CADDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TAG", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CDDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SET_TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SETCADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCADR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SYMVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SET_SYMVALUE_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
-	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
-	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
-	REAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "REAL", "(Ljava/lang/Object;)[D", 1);
-	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[B", 1);
-	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
-	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-	LENGTH_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LENGTH", "(Ljava/lang/Object;)I", 1);
-	Rf_asIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 1);
-//	Rf_asRealMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asReal", "(Ljava/lang/Object;)D", 1);
-	Rf_asCharMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	Rf_mkCharLenCEMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_mkCharLenCE", "([BI)Ljava/lang/Object;", 1);
-	Rf_asLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 1);
-	Rf_PairToVectorListMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	NAMED_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "NAMED", "(Ljava/lang/Object;)I", 1);
-	SET_TYPEOF_FASTR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_TYPEOF_FASTR", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
-	TYPEOF_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TYPEOF", "(Ljava/lang/Object;)I", 1);
-	OBJECT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "OBJECT", "(Ljava/lang/Object;)I", 1);
-	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	isS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
-	logObject_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "logObject", "(Ljava/lang/Object;)V", 1);
-	R_tryEvalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 1);
-	RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RDEBUG", "(Ljava/lang/Object;)I", 1);
-	SET_RDEBUGMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 1);
-	RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "RSTEP", "(Ljava/lang/Object;)I", 1);
-	SET_RSTEPMethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 1);
-	ENCLOSMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	PRVALUEMethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	R_lsInternal3MethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 1);
+	Rf_ScalarIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 0);
+	Rf_ScalarDoubleMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 0);
+	Rf_ScalarStringMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ScalarString", "(Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RStringVector;", 0);
+	Rf_ScalarLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ScalarLogical", "(I)Lcom/oracle/truffle/r/runtime/data/RLogicalVector;", 0);
+	Rf_consMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_cons", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_evalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_eval", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_findfunMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findfun", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_defineVarMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	Rf_findVarMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_findVarInFrameMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_findVarInFrame3MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVarInFrame3", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	Rf_getAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_setAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	Rf_isStringMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isString", "(Ljava/lang/Object;)I", 0);
+	Rf_isNullMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isNull", "(Ljava/lang/Object;)I", 0);
+	Rf_installMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_install", "(Ljava/lang/String;)Ljava/lang/Object;", 0);
+	Rf_warningMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warning", "(Ljava/lang/String;)V", 0);
+	Rf_warningcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/String;)V", 0);
+	Rf_errorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_error", "(Ljava/lang/String;)V", 0);
+	Rf_allocateVectorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 0);
+	Rf_allocateMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 0);
+	Rf_allocateArrayMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_duplicateMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	Rf_anyDuplicatedMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 0);
+	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
+	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/String;)V", 0);
+	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 0);
+	R_FindNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_BindingIsLockedID = checkGetMethodID(env, UpCallsRFFIClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
+	Rf_GetOption1MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_gsetVarMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	Rf_inheritsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 0);
+	Rf_lengthgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_lengthgets", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+//	Rf_rPsortMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 0);
+//	Rf_iPsortMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 0);
+	CADR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	CADDR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "CADDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	TAG_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "TAG", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	PRINTNAME_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	CAR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	CDR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	CDDR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "CDDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SET_TAG_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_TAG", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SETCAR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SETCDR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SETCADR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SETCADR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SYMVALUE_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SYMVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	SET_SYMVALUE_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_SYMVALUE", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	SET_STRING_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 0);
+	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 0);
+	RAW_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "RAW", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	REAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "REAL", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	LOGICAL_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LOGICAL", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	INTEGER_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "INTEGER", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	STRING_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	LENGTH_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LENGTH", "(Ljava/lang/Object;)I", 0);
+	Rf_asIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 0);
+//	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
+	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_mkCharLenCEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_mkCharLenCE", "([BI)Ljava/lang/Object;", 0);
+	Rf_asLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 0);
+	Rf_PairToVectorListMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	NAMED_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "NAMED", "(Ljava/lang/Object;)I", 0);
+	SET_TYPEOF_FASTR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_TYPEOF_FASTR", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	TYPEOF_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "TYPEOF", "(Ljava/lang/Object;)I", 0);
+	OBJECT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "OBJECT", "(Ljava/lang/Object;)I", 0);
+	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	isS4ObjectMethodID = checkGetMethodID(env, UpCallsRFFIClass, "isS4Object", "(Ljava/lang/Object;)I", 0);
+	logNotCharSXPWrapperMethodID = checkGetMethodID(env, UpCallsRFFIClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 0);
+	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 0);
+	RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RDEBUG", "(Ljava/lang/Object;)I", 0);
+	SET_RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 0);
+	RSTEPMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RSTEP", "(Ljava/lang/Object;)I", 0);
+	SET_RSTEPMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_RSTEP", "(Ljava/lang/Object;I)V", 0);
+	ENCLOSMethodID = checkGetMethodID(env, UpCallsRFFIClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	PRVALUEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_lsInternal3MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 0);
 
-	resetAndGetHandlerStacksMethodID = checkGetMethodID(env, CallRFFIHelperClass, "resetAndGetErrorHandlerStacks", "()Ljava/lang/Object;", 1);
-	restoreHandlerStacksMethodID = checkGetMethodID(env, CallRFFIHelperClass, "restoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 1);
+	R_ToplevelExecMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExec", "()Ljava/lang/Object;", 0);
+	restoreHandlerStacksMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 0);
 
-	R_MakeExternalPtrMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_MakeExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 1);
-	R_ExternalPtrAddrMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ExternalPtrAddr", "(Ljava/lang/Object;)J", 1);
-	R_ExternalPtrTagMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ExternalPtrTag", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	R_ExternalPtrProtMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_ExternalPtrProt", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	R_SetExternalPtrAddrMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_SetExternalPtrAddr", "(Ljava/lang/Object;J)V", 1);
-	R_SetExternalPtrTagMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_SetExternalPtrTag", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
-	R_SetExternalPtrProtMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_SetExternalPtrProt", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
+	R_MakeExternalPtrMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_MakeExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 0);
+	R_ExternalPtrAddrMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ExternalPtrAddr", "(Ljava/lang/Object;)J", 0);
+	R_ExternalPtrTagMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ExternalPtrTag", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_ExternalPtrProtMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ExternalPtrProt", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_SetExternalPtrAddrMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_SetExternalPtrAddr", "(Ljava/lang/Object;J)V", 0);
+	R_SetExternalPtrTagMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_SetExternalPtrTag", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	R_SetExternalPtrProtMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_SetExternalPtrProt", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 
-	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/CallRFFIHelper$CharSXPWrapper");
+	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/CharSXPWrapper");
 	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 
-    R_computeIdenticalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 1);
-    Rf_copyListMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
-    Rf_copyMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 1);
-    Rf_nrowsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_nrows", "(Ljava/lang/Object;)I", 1);
-    Rf_ncolsMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ncols", "(Ljava/lang/Object;)I", 1);
+    R_computeIdenticalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 0);
+    Rf_copyListMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 0);
+    Rf_copyMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 0);
+    Rf_nrowsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_nrows", "(Ljava/lang/Object;)I", 0);
+    Rf_ncolsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ncols", "(Ljava/lang/Object;)I", 0);
 
-    setCompleteMethodID = checkGetMethodID(env, CallRFFIHelperClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
+    setCompleteMethodID = checkGetMethodID(env, UpCallsRFFIClass, "setComplete", "(Ljava/lang/Object;Z)V", 0);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
@@ -244,7 +244,7 @@ static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
 	validateRef(thisenv, charsxp, "stringFromCharSXP");
 	if (!(*thisenv)->IsInstanceOf(thisenv, charsxp, CharSXPWrapperClass)) {
 
-	    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, logObject_MethodID, charsxp);
+	    (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, logNotCharSXPWrapperMethodID, charsxp);
 	    fatalError("only CharSXPWrapper expected in stringFromCharSXP");
 	}
 #endif
@@ -254,27 +254,27 @@ static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
 SEXP Rf_ScalarInteger(int value) {
 	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarIntegerMethodID, value);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_ScalarIntegerMethodID, value);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarReal(double value) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarDoubleMethodID, value);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_ScalarDoubleMethodID, value);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarString(SEXP value) {
 	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarStringMethodID, value);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_ScalarStringMethodID, value);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarLogical(int value) {
 	TRACE(TARGp, value);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarLogicalMethodID, value);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_ScalarLogicalMethodID, value);
     return checkRef(thisenv, result);
 }
 
@@ -285,14 +285,14 @@ SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
     }
     TRACE(TARGpd, t, len);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_allocateVectorMethodID, t, len);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
 	TRACE(TARGppd, t, dims);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateArrayMethodID, t, dims);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_allocateArrayMethodID, t, dims);
 	return checkRef(thisenv, result);
 }
 
@@ -303,7 +303,7 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
 	TRACE(TARGppd, mode, nrow, ncol);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateMatrixMethodID, mode, nrow, ncol);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_allocateMatrixMethodID, mode, nrow, ncol);
 	return checkRef(thisenv, result);
 }
 
@@ -319,14 +319,14 @@ SEXP Rf_allocSExp(SEXPTYPE t) {
 SEXP Rf_cons(SEXP car, SEXP cdr) {
 	TRACE(TARGpp, car, cdr);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_consMethodID, car, cdr);
     return checkRef(thisenv, result);
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
 	TRACE(TARGppp, symbol, value, rho);
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_defineVarMethodID, symbol, value, rho);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_defineVarMethodID, symbol, value, rho);
 }
 
 void Rf_setVar(SEXP x, SEXP y, SEXP z) {
@@ -345,63 +345,63 @@ SEXP Rf_eval(SEXP expr, SEXP env) {
 	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
     updateNativeArrays(thisenv);
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_evalMethodID, expr, env);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_evalMethodID, expr, env);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
 	TRACE(TARGpp, symbol, rho);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findfunMethodID, symbol, rho);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_findfunMethodID, symbol, rho);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVar(SEXP sym, SEXP rho) {
 	TRACE(TARGpp, sym, rho);
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, sym, rho);
+	SEXP result =(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_findVarMethodID, sym, rho);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
 	TRACE(TARGpp, rho, sym);
 	JNIEnv *thisenv = getEnv();
-	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, rho, sym);
+	SEXP result =(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_findVarInFrameMethodID, rho, sym);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
 	TRACE(TARGppd, rho, sym, b);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrame3MethodID, rho, sym, b);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_findVarInFrame3MethodID, rho, sym, b);
     return checkRef(thisenv, result);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 	TRACE(TARGpp, vec, name);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_getAttribMethodID, vec, name);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_getAttribMethodID, vec, name);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 	TRACE(TARGppp, vec,name, val);
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, Rf_setAttribMethodID, vec, name, val);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }
 
 SEXP Rf_duplicate(SEXP x) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_duplicateMethodID, x, 1);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_duplicateMethodID, x, 1);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_shallow_duplicate(SEXP x) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_duplicateMethodID, x, 0);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_duplicateMethodID, x, 0);
 	return checkRef(thisenv, result);
 }
 
@@ -409,7 +409,7 @@ R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
 	TRACE(TARGpd, x, from_last);
     if (!isVector(x)) error(_("'duplicated' applies only to vectors"));
 	JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_anyDuplicatedMethodID, x, from_last);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_anyDuplicatedMethodID, x, from_last);
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
@@ -437,7 +437,7 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
 	TRACE(TARGps, x, klass);
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_inheritsMethodID, x, klazz);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_inheritsMethodID, x, klazz);
 }
 
 Rboolean Rf_isReal(SEXP x) {
@@ -477,7 +477,7 @@ SEXP Rf_install(const char *name) {
 	TRACE(TARGs, name);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_installMethodID, string);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_installMethodID, string);
 	return checkRef(thisenv, result);
 }
 
@@ -485,18 +485,18 @@ SEXP Rf_installChar(SEXP charsxp) {
 	TRACE(TARGp, charsxp);
 	JNIEnv *thisenv = getEnv();
 	jstring string = stringFromCharSXP(thisenv, charsxp);
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_installMethodID, string);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_installMethodID, string);
 	return checkRef(thisenv, result);
 }
 
 Rboolean Rf_isNull(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isNullMethodID, s);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_isNullMethodID, s);
 }
 
 Rboolean Rf_isString(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_isStringMethodID, s);
 }
 
 Rboolean R_cycle_detected(SEXP s, SEXP child) {
@@ -527,7 +527,7 @@ SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	JNIEnv *thisenv = getEnv();
 	jbyteArray bytes = (*thisenv)->NewByteArray(thisenv, len);
 	(*thisenv)->SetByteArrayRegion(thisenv, bytes, 0, len, (const jbyte *) x);
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_mkCharLenCEMethodID, bytes, (int) enc);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_mkCharLenCEMethodID, bytes, (int) enc);
 	return checkRef(thisenv, result);
 }
 
@@ -543,13 +543,13 @@ SEXP Rf_mkString(const char *s) {
 int Rf_ncols(SEXP x) {
 	TRACE(TARGs, x);
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_ncolsMethodID, x);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_ncolsMethodID, x);
 }
 
 int Rf_nrows(SEXP x) {
 	TRACE(TARGs, x);
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_nrowsMethodID, x);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_nrowsMethodID, x);
 }
 
 
@@ -591,7 +591,7 @@ void Rf_error(const char *format, ...) {
 	// RError.error does quite a lot of stuff including potentially searching for R condition handlers
 	// and, if it finds any, does not return, but throws a different exception than RError.
 	// We definitely need to exit the FFI call and we certainly cannot return to our caller.
-	// So we call CallRFFIHelper.Rf_error to throw the RError exception. When the pending
+	// So we call RFFIUpCallsObject.Rf_error to throw the RError exception. When the pending
 	// exception (whatever it is) is observed by JNI, the call to Rf_error will return where we do a
 	// non-local transfer of control back to the entry point (which will cleanup).
 	char buf[8192];
@@ -602,7 +602,7 @@ void Rf_error(const char *format, ...) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
 	// This will set a pending exception
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_errorMethodID, string);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_errorMethodID, string);
 	// just transfer back which will cleanup and exit the entire JNI call
 	longjmp(*getErrorJmpBuf(), 1);
 
@@ -620,7 +620,7 @@ void Rf_warningcall(SEXP x, const char *format, ...) {
 	va_end(ap);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningcallMethodID, x, string);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_warningcallMethodID, x, string);
 }
 
 void Rf_warning(const char *format, ...) {
@@ -631,7 +631,7 @@ void Rf_warning(const char *format, ...) {
 	va_end(ap);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningMethodID, string);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_warningMethodID, string);
 }
 
 void Rprintf(const char *format, ...) {
@@ -642,7 +642,7 @@ void Rprintf(const char *format, ...) {
 	va_end(ap);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RprintfMethodID, string);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, RprintfMethodID, string);
 }
 
 /*
@@ -660,7 +660,7 @@ void REprintf(const char *format, ...)
 	va_end(ap);
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RprintfMethodID, string);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, RprintfMethodID, string);
 }
 
 void Rvprintf(const char *format, va_list args) {
@@ -681,13 +681,13 @@ void R_ProcessEvents(void) {
 // Tools package support, not in public API
 SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_NewHashedEnvMethodID, parent, size);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_NewHashedEnvMethodID, parent, size);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_classgets(SEXP vec, SEXP klass) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_classgetsMethodID, vec, klass);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_classgetsMethodID, vec, klass);
 	return checkRef(thisenv, result);
 }
 
@@ -716,7 +716,7 @@ SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	invalidateNativeArray(thisenv, x);
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_lengthgetsMethodID, x, y);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_lengthgetsMethodID, x, y);
 	return checkRef(thisenv, result);
 }
 
@@ -731,7 +731,7 @@ SEXP R_lsInternal(SEXP env, Rboolean all) {
 
 SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_lsInternal3MethodID, env, all, sorted);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_lsInternal3MethodID, env, all, sorted);
 	return checkRef(thisenv, result);
 }
 
@@ -742,7 +742,7 @@ SEXP Rf_namesgets(SEXP x, SEXP y) {
 SEXP GetOption1(SEXP tag)
 {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_GetOption1MethodID, tag);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_GetOption1MethodID, tag);
 	return checkRef(thisenv, result);
 }
 
@@ -803,34 +803,34 @@ Rboolean Rf_GetOptionDeviceAsk(void)
 void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho)
 {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_gsetVarMethodID, symbol, value, rho);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_gsetVarMethodID, symbol, value, rho);
 }
 
 SEXP TAG(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, TAG_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, TAG_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP PRINTNAME(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRINTNAME_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRINTNAME_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CAR(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CAR_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, CAR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDR(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDR_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, CDR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
@@ -847,14 +847,14 @@ SEXP CDAR(SEXP e) {
 SEXP CADR(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, CADR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDDR(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDDR_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, CDDR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
@@ -866,7 +866,7 @@ SEXP CDDDR(SEXP e) {
 SEXP CADDR(SEXP e) {
     TRACE(TARGp, e);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADDR_MethodID, e);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, CADDR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
@@ -892,27 +892,27 @@ void SET_MISSING(SEXP x, int v) {
 void SET_TAG(SEXP x, SEXP y) {
     TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TAG_MethodID, x, y);
+    (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SET_TAG_MethodID, x, y);
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
     TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SETCAR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
     TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SETCDR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
     TRACE(TARGpp, x, y);
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCADR_MethodID, x, y);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SETCADR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
@@ -945,12 +945,12 @@ SEXP CLOENV(SEXP x) {
 
 int RDEBUG(SEXP x) {
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RDEBUGMethodID, x);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, RDEBUGMethodID, x);
 }
 
 int RSTEP(SEXP x) {
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, RSTEPMethodID, x);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, RSTEPMethodID, x);
 }
 
 int RTRACE(SEXP x) {
@@ -960,12 +960,12 @@ int RTRACE(SEXP x) {
 
 void SET_RDEBUG(SEXP x, int v) {
     JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RDEBUGMethodID, x, v);
+    (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, SET_RDEBUGMethodID, x, v);
 }
 
 void SET_RSTEP(SEXP x, int v) {
     JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_RSTEPMethodID, x, v);
+    (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, SET_RSTEPMethodID, x, v);
 }
 
 void SET_RTRACE(SEXP x, int v) {
@@ -986,7 +986,7 @@ void SET_CLOENV(SEXP x, SEXP v) {
 
 SEXP SYMVALUE(SEXP x) {
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SYMVALUE_MethodID, x);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SYMVALUE_MethodID, x);
     return checkRef(thisenv, result);
 }
 
@@ -1005,7 +1005,7 @@ void SET_DDVAL(SEXP x, int v) {
 
 void SET_SYMVALUE(SEXP x, SEXP v) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_SYMVALUE_MethodID, x, v);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, SET_SYMVALUE_MethodID, x, v);
 }
 
 void SET_INTERNAL(SEXP x, SEXP v) {
@@ -1018,7 +1018,7 @@ SEXP FRAME(SEXP x) {
 
 SEXP ENCLOS(SEXP x) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, ENCLOSMethodID, x);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, ENCLOSMethodID, x);
     return checkRef(thisenv, result);
 }
 
@@ -1059,7 +1059,7 @@ SEXP PRENV(SEXP x) {
 
 SEXP PRVALUE(SEXP x) {
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRVALUEMethodID, x);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRVALUEMethodID, x);
     return checkRef(thisenv, result);
 }
 
@@ -1086,7 +1086,7 @@ void SET_PRCODE(SEXP x, SEXP v) {
 int LENGTH(SEXP x) {
     TRACE(TARGp, x);
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, LENGTH_MethodID, x);
 }
 
 int TRUELENGTH(SEXP x){
@@ -1172,7 +1172,7 @@ Rcomplex *COMPLEX(SEXP x){
 SEXP STRING_ELT(SEXP x, R_xlen_t i){
 	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, STRING_ELT_MethodID, x, i);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, STRING_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
 }
 
@@ -1180,21 +1180,21 @@ SEXP STRING_ELT(SEXP x, R_xlen_t i){
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
 	TRACE(TARGpd, x, i);
 	JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, VECTOR_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
 }
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
 	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_STRING_ELT_MethodID, x, i, v);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, SET_STRING_ELT_MethodID, x, i, v);
 }
 
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
 	TRACE("%s(%p, %d, %p)\n", x, i, v);
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_VECTOR_ELT_MethodID, x, i, v);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, SET_VECTOR_ELT_MethodID, x, i, v);
 	return v;
 }
 
@@ -1213,14 +1213,14 @@ SEXP *VECTOR_PTR(SEXP x){
 SEXP Rf_asChar(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_asCharMethodID, x);
 	return checkRef(thisenv, result);
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_PairToVectorListMethodID, x);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_PairToVectorListMethodID, x);
 	return checkRef(thisenv, result);
 }
 
@@ -1237,19 +1237,19 @@ SEXP Rf_asCharacterFactor(SEXP x){
 int Rf_asLogical(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asLogicalMethodID, x);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_asLogicalMethodID, x);
 }
 
 int Rf_asInteger(SEXP x) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asIntegerMethodID, x);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_asIntegerMethodID, x);
 }
 
 //double Rf_asReal(SEXP x) {
 //	TRACE(TARGp, x);
 //	JNIEnv *thisenv = getEnv();
-//	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, Rf_asRealMethodID, x);
+//	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_asRealMethodID, x);
 //}
 
 Rcomplex Rf_asComplex(SEXP x){
@@ -1260,7 +1260,7 @@ Rcomplex Rf_asComplex(SEXP x){
 int TYPEOF(SEXP x) {
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, TYPEOF_MethodID, x);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, TYPEOF_MethodID, x);
 }
 
 SEXP ATTRIB(SEXP x){
@@ -1270,7 +1270,7 @@ SEXP ATTRIB(SEXP x){
 
 int OBJECT(SEXP x){
 	JNIEnv *env = getEnv();
-	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, OBJECT_MethodID, x);
+	return 	(*env)->CallIntMethod(env, UpCallsRFFIObject, OBJECT_MethodID, x);
 }
 
 int MARK(SEXP x){
@@ -1280,7 +1280,7 @@ int MARK(SEXP x){
 
 int NAMED(SEXP x){
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, NAMED_MethodID, x);
+    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, NAMED_MethodID, x);
 }
 
 int REFCNT(SEXP x){
@@ -1298,7 +1298,7 @@ void SET_TYPEOF(SEXP x, int v){
 
 SEXP SET_TYPEOF_FASTR(SEXP x, int v){
     JNIEnv *thisenv = getEnv();
-    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SET_TYPEOF_FASTR_MethodID, x, v);
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, SET_TYPEOF_FASTR_MethodID, x, v);
     return checkRef(thisenv, result);
 }
 
@@ -1312,7 +1312,7 @@ void SET_ATTRIB(SEXP x, SEXP v){
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from){
     JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, DUPLICATE_ATTRIB_MethodID, to, from);
+    (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, DUPLICATE_ATTRIB_MethodID, to, from);
 }
 
 char *dgettext(const char *domainname, const char *msgid) {
@@ -1367,7 +1367,7 @@ R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 
 int IS_S4_OBJECT(SEXP x) {
 	JNIEnv *env = getEnv();
-	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, isS4ObjectMethodID, x);
+	return 	(*env)->CallIntMethod(env, UpCallsRFFIObject, isS4ObjectMethodID, x);
 }
 
 void SET_S4_OBJECT(SEXP x) {
@@ -1379,9 +1379,9 @@ void UNSET_S4_OBJECT(SEXP x) {
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
 	JNIEnv *env = getEnv();
-	jobject handlerStacks = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, resetAndGetHandlerStacksMethodID);
+	jobject handlerStacks = (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_ToplevelExecMethodID);
 	fun(data);
-	(*env)->CallStaticVoidMethod(env, CallRFFIHelperClass, restoreHandlerStacksMethodID, handlerStacks);
+	(*env)->CallVoidMethod(env, UpCallsRFFIObject, restoreHandlerStacksMethodID, handlerStacks);
 	// TODO how do we detect error
 	return TRUE;
 }
@@ -1418,7 +1418,7 @@ SEXP R_NamespaceEnvSpec(SEXP rho) {
 
 SEXP R_FindNamespace(SEXP info) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_FindNamespaceMethodID, info);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_FindNamespaceMethodID, info);
 	return checkRef(thisenv, result);
 }
 
@@ -1444,7 +1444,7 @@ void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
 
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_BindingIsLockedID, sym, env);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, R_BindingIsLockedID, sym, env);
 }
 
 Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
@@ -1467,7 +1467,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
     updateNativeArrays(thisenv);
-	jobject tryResult =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_tryEvalMethodID, x, y, silent);
+	jobject tryResult =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_tryEvalMethodID, x, y, silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
 		*ErrorOccurred = tryResult == NULL;
@@ -1507,40 +1507,40 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_MakeExternalPtrMethodID, (jlong) p, tag, prot);
+	SEXP result =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_MakeExternalPtrMethodID, (jlong) p, tag, prot);
     return checkRef(thisenv, result);
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (void *) (*thisenv)->CallStaticLongMethod(thisenv, CallRFFIHelperClass, R_ExternalPtrAddrMethodID, s);
+	return (void *) (*thisenv)->CallLongMethod(thisenv, UpCallsRFFIObject, R_ExternalPtrAddrMethodID, s);
 }
 
 SEXP R_ExternalPtrTag(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_ExternalPtrTagMethodID, s);
+	SEXP result =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_ExternalPtrTagMethodID, s);
     return checkRef(thisenv, result);
 }
 
 SEXP R_ExternalPtrProt(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_ExternalPtrProtMethodID, s);
+	SEXP result =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_ExternalPtrProtMethodID, s);
     return checkRef(thisenv, result);
 }
 
 void R_SetExternalPtrAddr(SEXP s, void *p) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, R_SetExternalPtrAddrMethodID, s, (jlong) p);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, R_SetExternalPtrAddrMethodID, s, (jlong) p);
 }
 
 void R_SetExternalPtrTag(SEXP s, SEXP tag) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, R_SetExternalPtrTagMethodID, s, tag);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, R_SetExternalPtrTagMethodID, s, tag);
 }
 
 void R_SetExternalPtrProtected(SEXP s, SEXP p) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, R_SetExternalPtrProtMethodID, s, p);
+	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, R_SetExternalPtrProtMethodID, s, p);
 }
 
 void R_ClearExternalPtr(SEXP s) {
@@ -1602,7 +1602,7 @@ int R_has_slot(SEXP obj, SEXP name) {
 SEXP R_do_MAKE_CLASS(const char *what) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, what);
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, R_do_MAKE_CLASS_MethodID, string);
+	return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_MAKE_CLASS_MethodID, string);
 }
 
 SEXP R_getClassDef (const char *what) {
@@ -1637,15 +1637,15 @@ void R_dot_Last(void) {
 
 Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, R_computeIdenticalMethodID, x, y, flags);
+	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, R_computeIdenticalMethodID, x, y, flags);
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
 	JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyListMatrixMethodID, s, t, byrow);
+    (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyListMatrixMethodID, s, t, byrow);
 }
 
 void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
 	JNIEnv *thisenv = getEnv();
-    (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_copyMatrixMethodID, s, t, byrow);
+    (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyMatrixMethodID, s, t, byrow);
 }

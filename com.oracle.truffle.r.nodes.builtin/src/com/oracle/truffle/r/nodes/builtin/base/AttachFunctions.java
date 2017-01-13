@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -49,8 +48,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
 public class AttachFunctions {
     @RBuiltin(name = "attach", visibility = OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"}, behavior = COMPLEX)
     public abstract static class Attach extends RBuiltinNode {
-
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -86,7 +83,7 @@ public class AttachFunctions {
         @TruffleBoundary
         protected REnvironment doAttach(RAbstractListVector what, RAbstractIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
-            RStringVector names = what.getNames(attrProfiles);
+            RStringVector names = what.getNames();
             for (int i = 0; i < names.getLength(); i++) {
                 // TODO: copy/sharing?
                 env.safePut(names.getDataAt(i), what.getDataAt(i));

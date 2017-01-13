@@ -19,6 +19,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
@@ -28,7 +29,6 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 // transcribed from src/main/attrib.c
@@ -42,6 +42,7 @@ public abstract class GetS4DataSlot extends Node {
     @Child private GetFixedAttributeNode dotDataAttrAccess;
     @Child private GetFixedAttributeNode dotXDataAttrAccess;
     @Child private TypeofNode typeOf = TypeofNodeGen.create();
+    @Child private SetClassAttributeNode setClassAttrNode;
 
     private final BranchProfile shareable = BranchProfile.create();
 
@@ -72,6 +73,12 @@ public abstract class GetS4DataSlot extends Node {
                 shareable.enter();
                 obj = (RAttributable) ((RShareable) obj).copy();
             }
+
+            if (setClassAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setClassAttrNode = insert(SetClassAttributeNode.create());
+            }
+
             if (s3Class != null) {
                 if (s3ClassAttrRemove == null) {
                     assert castToVector == null;
@@ -81,9 +88,9 @@ public abstract class GetS4DataSlot extends Node {
 
                 }
                 s3ClassAttrRemove.execute(obj.initAttributes());
-                obj = obj.setClassAttr((RStringVector) castToVector.execute(s3Class));
+                setClassAttrNode.execute(obj, castToVector.execute(s3Class));
             } else {
-                obj = obj.setClassAttr(null);
+                setClassAttrNode.reset(obj);
             }
             obj.unsetS4();
             if (type == RType.S4Object) {

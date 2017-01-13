@@ -31,4 +31,15 @@ public class TestBuiltin_anyNA extends TestBase {
         assertEval("anyNA(list(list(4,5,NA), 3), recursive=TRUE)");
     }
 
+    @Test
+    public void testanyNA3() {
+        assertEval("anyNA(c(1, 2, 3))");
+        assertEval("anyNA(c(1, NA, 3))");
+        assertEval("anyNA(c(1, NA, 3), recursive = TRUE)");
+        assertEval("anyNA(list(a = c(1, 2, 3), b = 'a'))");
+        assertEval("anyNA(list(a = c(1, NA, 3), b = 'a'))");
+        assertEval("anyNA(list(a = c(1, 2, 3), b = 'a'), recursive = TRUE)");
+        assertEval("anyNA(list(a = c(1, NA, 3), b = 'a'), recursive = TRUE)");
+    }
+
 }

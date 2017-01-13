@@ -31,39 +31,56 @@
 #include <rffiutils.h>
 #include <variable_defs.h>
 
-jmethodID getGlobalEnvMethodID;
-jmethodID getBaseEnvMethodID;
-jmethodID getBaseNamespaceMethodID;
-jmethodID getNamespaceRegistryMethodID;
+jmethodID R_GlobalEnvMethodID;
+jmethodID R_BaseEnvMethodID;
+jmethodID R_BaseNamespaceMethodID;
+jmethodID R_NamespaceRegistryMethodID;
 jmethodID isInteractiveMethodID;
-jmethodID getGlobalContextMethodID;
+jmethodID R_GlobalContextMethodID;
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_GlobalEnv() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalEnvMethodID);
+	return (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_GlobalEnvMethodID);
 }
 
 SEXP FASTR_BaseEnv() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseEnvMethodID);
+	return (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_BaseEnvMethodID);
 }
 
 SEXP FASTR_BaseNamespace() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseNamespaceMethodID);
+	return (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_BaseNamespaceMethodID);
 }
 
 SEXP FASTR_NamespaceRegistry() {
 	JNIEnv *env = getEnv();
-	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
+	return (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_NamespaceRegistryMethodID);
 }
 
 CTXT FASTR_GlobalContext() {
 	JNIEnv *env = getEnv();
-	CTXT res = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalContextMethodID);
+	CTXT res = (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_GlobalContextMethodID);
     return addGlobalRef(env, res, 0);
 }
+
+static const char *R_Home_local;
+static void *R_NilValue_local;
+static void *R_UnboundValue_local;
+
+char *FASTR_R_Home() {
+	return (char *)R_Home_local;
+}
+
+SEXP FASTR_R_NilValue() {
+	return R_NilValue_local;
+}
+
+SEXP FASTR_R_UnboundValue() {
+	return R_UnboundValue_local;
+}
+
 
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	// initialValues is an array of enums
@@ -77,12 +94,12 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	jmethodID doubleValueMethodID = checkGetMethodID(env, doubleClass, "doubleValue", "()D", 0);
 	jmethodID intValueMethodID = checkGetMethodID(env, intClass, "intValue", "()I", 0);
 
-	getGlobalEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getGlobalEnv", "()Ljava/lang/Object;", 1);
-	getBaseEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseEnv", "()Ljava/lang/Object;", 1);
-	getBaseNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseNamespace", "()Ljava/lang/Object;", 1);
-	getNamespaceRegistryMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getNamespaceRegistry", "()Ljava/lang/Object;", 1);
-	isInteractiveMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isInteractive", "()I", 1);
-	getGlobalContextMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getGlobalContext", "()Ljava/lang/Object;", 1);
+	R_GlobalEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_GlobalEnv", "()Ljava/lang/Object;", 0);
+	R_BaseEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_BaseEnv", "()Ljava/lang/Object;", 0);
+	R_BaseNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_BaseNamespace", "()Ljava/lang/Object;", 0);
+	R_NamespaceRegistryMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NamespaceRegistry", "()Ljava/lang/Object;", 0);
+	isInteractiveMethodID = checkGetMethodID(env, UpCallsRFFIClass, "isInteractive", "()I", 0);
+	R_GlobalContextMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_GlobalContext", "()Ljava/lang/Object;", 0);
 
 	int length = (*env)->GetArrayLength(env, initialValues);
 	int index;
@@ -93,7 +110,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 		jobject value = (*env)->CallObjectMethod(env, variable, getValueMethodID);
 		if (value != NULL) {
 			if (strcmp(nameChars, "R_Home") == 0) {
-				R_Home = (*env)->GetStringUTFChars(env, value, NULL);
+				R_Home_local = (*env)->GetStringUTFChars(env, value, NULL);
 			} else if (strcmp(nameChars, "R_NaN") == 0) {
 				R_NaN = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_PosInf") == 0) {
@@ -109,9 +126,9 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {
-					R_NilValue = ref;
+					R_NilValue_local = ref;
 				} else if (strcmp(nameChars, "R_UnboundValue") == 0) {
-					R_UnboundValue = ref;
+					R_UnboundValue_local = ref;
 				} else if (strcmp(nameChars, "R_MissingArg") == 0) {
 					R_MissingArg = ref;
 				} else if (strcmp(nameChars, "R_Bracket2Symbol") == 0) {

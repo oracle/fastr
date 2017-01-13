@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.data.RTypes;
 
+@TypeSystemReference(RTypes.class)
 public abstract class RFastPathNode extends RBaseNode {
 
     public abstract Object execute(VirtualFrame frame, Object... args);

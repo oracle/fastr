@@ -22,19 +22,45 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "(", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class ParenBuiltin extends RBuiltinNode {
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doIt(Object x) {
-        throw RInternalError.unimplemented();
+@NodeInfo(cost = NodeCost.NONE)
+final class ParensSpecial extends RNode {
+
+    @Child private RNode delegate;
+
+    protected ParensSpecial(RNode delegate) {
+        this.delegate = delegate;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return delegate.execute(frame);
+    }
+}
+
+@RBuiltin(name = "(", kind = PRIMITIVE, parameterNames = {""}, visibility = ON, behavior = PURE)
+public final class ParenBuiltin extends RBuiltinNode {
+
+    public static RNode special(ArgumentsSignature signature, RNode[] args, @SuppressWarnings("unused") boolean inReplacement) {
+        if (signature == ArgumentsSignature.empty(1)) {
+            return new ParensSpecial(args[0]);
+        }
+        return null;
+    }
+
+    @Override
+    public Object executeBuiltin(VirtualFrame frame, Object... args) {
+        return args[0];
     }
 }

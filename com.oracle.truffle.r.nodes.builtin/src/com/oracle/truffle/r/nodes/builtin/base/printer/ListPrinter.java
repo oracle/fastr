@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,6 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -49,15 +48,13 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         // singleton
     }
 
-    private static RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
-
     private static int TAGBUFLEN = 256;
 
     @Override
     @TruffleBoundary
     protected void printValue(RAbstractListVector s, PrintContext printCtx) throws IOException {
         RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
-                        s.getAttr(dummyAttrProfiles, RRuntime.DIM_ATTR_KEY));
+                        s.getAttr(RRuntime.DIM_ATTR_KEY));
 
         if (dims != null && dims.getLength() > 1) {
             printDimList(s, printCtx);
@@ -67,6 +64,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         }
     }
 
+    @TruffleBoundary
     private static void printDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
         final PrintParameters pp = printCtx.parameters();
 
@@ -151,7 +149,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         }
 
         RStringVector tt = RDataFactory.createStringVector(t, true, s.getDimensions());
-        Object dimNames = s.getAttr(dummyAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
+        Object dimNames = s.getAttr(RRuntime.DIMNAMES_ATTR_KEY);
         tt.setAttr(RRuntime.DIMNAMES_ATTR_KEY, dimNames);
 
         PrintContext cc = printCtx.cloneContext();
@@ -171,7 +169,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
 
         RAbstractStringVector names;
-        names = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(dummyAttrProfiles, RRuntime.NAMES_ATTR_KEY)));
+        names = Utils.castTo(RRuntime.asAbstractVector(s.getNames()));
 
         if (ns > 0) {
             int npr = (ns <= pp.getMax() + 1) ? ns : pp.getMax();
@@ -216,7 +214,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
                 out.println(tagbuf);
                 Object si = s.getDataAtAsObject(i);
-                if (si instanceof RAttributable && ((RAttributable) si).isObject(dummyAttrProfiles)) {
+                if (si instanceof RAttributable && ((RAttributable) si).isObject()) {
                     RContext.getEngine().printResult(si);
                 } else {
                     ValuePrinters.INSTANCE.print(si, printCtx);
@@ -236,7 +234,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             /* Formal classes are represented as empty lists */
             String className = null;
             if (printCtx.printerNode().isObject(s) && printCtx.printerNode().isMethodDispatchOn()) {
-                RAbstractStringVector klass = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(dummyAttrProfiles, RRuntime.CLASS_ATTR_KEY)));
+                RAbstractStringVector klass = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(RRuntime.CLASS_ATTR_KEY)));
                 if (klass != null && klass.getLength() == 1) {
                     String ss = klass.getDataAt(0);
                     String str = snprintf(200, ".__C__%s", ss);

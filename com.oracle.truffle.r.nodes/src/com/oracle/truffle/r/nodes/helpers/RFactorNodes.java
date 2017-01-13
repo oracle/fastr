@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,6 +73,10 @@ public final class RFactorNodes {
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();
         private final ConditionProfile stringVectorLevels = ConditionProfile.createBinaryProfile();
+
+        public static GetLevels create() {
+            return new GetLevels();
+        }
 
         /**
          * Returns the levels as a string vector. If the 'levels' attribute is not a string vector a

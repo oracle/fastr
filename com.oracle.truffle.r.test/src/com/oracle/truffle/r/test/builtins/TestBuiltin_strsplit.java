@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,8 +29,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('  \\036  isSeekable() now returns FALSE on connections       which have non-default encoding.  Although documented to       record if ‘in principle’ the connection supports seeking,       it seems safer to report FALSE when it may not work.', '[ \\t\\n]', FALSE, TRUE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -66,7 +65,7 @@ public class TestBuiltin_strsplit extends TestBase {
     @Test
     public void teststrsplit10() {
         assertEval(Ignored.Unknown,
-                        "argv <- list('A shell of class documentation has been written to the file './myTst2/man/DocLink-class.Rd'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+                        "argv <- list('A shell of class documentation has been written to the file \\'./myTst2/man/DocLink-class.Rd\\'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -86,8 +85,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.', '* Edit the exports in 'NAMESPACE', and add necessary imports.', '* Put any C/C++/Fortran code in 'src'.', '* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\\'Writing R Extensions\\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(c('* Edit the help file skeletons in \\'man\\', possibly combining help files for multiple functions.', '* Edit the exports in \\'NAMESPACE\\', and add necessary imports.', '* Put any C/C++/Fortran code in \\'src\\'.', '* If you have compiled code, add a useDynLib() directive to \\'NAMESPACE\\'.', '* Run R CMD build to build the package tarball.', '* Run R CMD check to check the package tarball.', '', 'Read \\\'Writing R Extensions\\\' for more information.'), '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -121,5 +119,31 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("strsplit('foo bar baz', '[f z]', perl=TRUE)");
         assertEval("strsplit('oo bar baz', '[f z]', perl=TRUE)");
         assertEval("strsplit('foo \u1010ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄbar baz ', '[f z]', perl=TRUE)");
+        assertEval("strsplit('Ä Ä', '[ ]', perl=TRUE)");
+
+        assertEval("strsplit('1', '1', fixed=TRUE)");
+        assertEval("strsplit('11', '11', fixed=TRUE)");
+        assertEval("strsplit(c('1', '11'), c('1', '11'), fixed=TRUE)");
+        assertEval("strsplit('Ä', 'Ä', fixed=TRUE)");
+        assertEval("strsplit('ÄÄ', 'Ä', fixed=TRUE)");
+
+        assertEval("strsplit('1', '1', fixed=FALSE)");
+        assertEval("strsplit('11', '11', fixed=FALSE)");
+        assertEval("strsplit(c('1', '11'), c('1', '11'), fixed=FALSE)");
+        assertEval("strsplit('Ä', 'Ä', fixed=FALSE)");
+        assertEval("strsplit('ÄÄ', 'Ä', fixed=FALSE)");
+
+        assertEval("strsplit(c('111', '1'), c('111', '1'), fixed=TRUE)");
+        assertEval("strsplit(c('1', ''), c('1', ''), fixed=TRUE)");
+        assertEval("strsplit(c('1', 'b'), c('1', 'b'), fixed=TRUE)");
+        assertEval("strsplit(c('a1a', 'a1b'), c('1', '1'), fixed=TRUE)");
+        assertEval("strsplit(c('a1a', 'a1b'), '1', fixed=TRUE)");
+
+        assertEval("strsplit(c('111', '1'), c('111', '1'), fixed=FALSE)");
+        assertEval("strsplit(c('1', ''), c('1', ''), fixed=FALSE)");
+        assertEval("strsplit(c('1', 'b'), c('1', 'b'), fixed=FALSE)");
+        assertEval("strsplit(c('a1a', 'a1b'), c('1', '1'), fixed=FALSE)");
+        assertEval("strsplit(c('a1a', 'a1b'), '1', fixed=FALSE)");
+
     }
 }

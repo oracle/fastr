@@ -87,6 +87,14 @@ public final class RInternalError extends Error {
         }
     }
 
+    public static <T> T guaranteeNonNull(T value) {
+        if (value == null) {
+            CompilerDirectives.transferToInterpreter();
+            throw shouldNotReachHere("should not be null");
+        }
+        return value;
+    }
+
     public static RuntimeException unimplemented() {
         CompilerDirectives.transferToInterpreter();
         throw new RInternalError("not implemented");

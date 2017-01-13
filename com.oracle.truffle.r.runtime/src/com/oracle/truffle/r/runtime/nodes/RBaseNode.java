@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
@@ -244,9 +245,14 @@ public abstract class RBaseNode extends Node {
 
     protected static boolean isRFormula(Object value) {
         if (value instanceof RLanguage) {
-            return ((RAttributable) value).hasClass(RRuntime.FORMULA_CLASS);
+            return hasFormulaClass(value);
         }
         return false;
+    }
+
+    @TruffleBoundary
+    private static boolean hasFormulaClass(Object value) {
+        return ((RAttributable) value).hasClass(RRuntime.FORMULA_CLASS);
     }
 
     protected static boolean isRExpression(Object value) {

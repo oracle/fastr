@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -82,8 +81,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        return vector.getNames(attrProfiles);
+    public RStringVector getNames() {
+        return vector.getNames();
     }
 
     @Override
@@ -92,8 +91,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final RList getDimNames(RAttributeProfiles attrProfiles) {
-        return vector.getDimNames(attrProfiles);
+    public final RList getDimNames() {
+        return vector.getDimNames();
     }
 
     @Override
@@ -102,8 +101,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
-        return vector.getRowNames(attrProfiles);
+    public final Object getRowNames() {
+        return vector.getRowNames();
     }
 
     @Override
@@ -174,11 +173,6 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public RStringVector getImplicitClass() {
         return vector.getImplicitClass();
-    }
-
-    @Override
-    public final boolean isObject(RAttributeProfiles attrProfiles) {
-        return vector.isObject(attrProfiles);
     }
 
     @Override

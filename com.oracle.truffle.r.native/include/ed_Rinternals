@@ -68,6 +68,28 @@ LibExtern SEXP FASTR_NamespaceRegistry();
 a
 #endif
 .
+/R_NilValue;/
+i
+#ifdef FASTR
+LibExtern SEXP FASTR_R_NilValue();
+#define R_NilValue FASTR_R_NilValue()
+#else
+.
++1
+a
+#endif
+.
+/R_UnboundValue;/
+i
+#ifdef FASTR
+LibExtern SEXP FASTR_R_UnboundValue();
+#define R_UnboundValue FASTR_R_UnboundValue()
+#else
+.
++1
+a
+#endif
+.
 /R_PreserveObject/
 i
 #ifdef FASTR

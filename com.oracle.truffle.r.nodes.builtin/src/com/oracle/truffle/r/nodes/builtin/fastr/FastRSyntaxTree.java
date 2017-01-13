@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * Only nodes that return {@code true} to {@link RSyntaxNode#isSyntax()} are processed. N.B. This
  * will reach nodes that implement {@link RSyntaxNode} but are used in {@link RSyntaxNode#INTERNAL}
  * mode</li>
- * <li><b<syntaxelement</b>: Use the {@link RSyntaxVisitor} to visit the "logical" syntax tree.</li>
+ * <li><b>syntaxelement</b>: Use the {@link RSyntaxVisitor} to visit the "logical" syntax tree.</li>
  * </ol>
  *
  */
@@ -71,7 +71,7 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, "rsyntaxnode", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
+        return new Object[]{RMissing.instance, "syntaxelement", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
     }
 
     @Override
@@ -110,12 +110,18 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
                     @Override
                     protected Void visit(RSyntaxCall element) {
                         printIndent(depth);
-                        writeString(element.getClass().getSimpleName(), false);
+                        RSyntaxElement lhs = element.getSyntaxLHS();
+                        if (lhs instanceof RSyntaxLookup) {
+                            writeString(element.getClass().getSimpleName() + " " + ((RSyntaxLookup) lhs).getIdentifier(), false);
+                        } else {
+                            writeString(element.getClass().getSimpleName(), false);
+                        }
                         processSourceSection(element.getSourceSection(), printSource);
                         printnl();
-                        RSyntaxElement lhs = element.getSyntaxLHS();
                         RSyntaxElement[] arguments = element.getSyntaxArguments();
-                        accept(lhs);
+                        if (!(lhs instanceof RSyntaxLookup)) {
+                            accept(lhs);
+                        }
                         for (RSyntaxElement arg : arguments) {
                             depth++;
                             accept(arg);

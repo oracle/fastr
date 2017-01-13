@@ -23,7 +23,15 @@
 package com.oracle.truffle.r.runtime.rng.user;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -66,28 +74,67 @@ public final class UserRNG implements RandomNumberGenerator {
 
     }
 
-    private UserRngRFFI userRngRFFI;
     private int nSeeds = 0;
+
+    private abstract static class UserRNGRootNodeAdapter extends RootNode {
+        @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().createUserRngRFFINode();
+
+        protected UserRNGRootNodeAdapter() {
+            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
+        }
+    }
+
+    private static final class GenericUserRNGRootNode extends UserRNGRootNodeAdapter {
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            Function function = (Function) args[0];
+            switch (function) {
+                case Init:
+                    userRngRFFINode.init((int) args[1]);
+                    return RNull.instance;
+                case NSeed:
+                    return userRngRFFINode.nSeed();
+                case Seedloc:
+                    userRngRFFINode.seeds((int[]) args[1]);
+                    return RNull.instance;
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+        }
+    }
+
+    private static final class RandUserRNGRootNode extends UserRNGRootNodeAdapter {
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return userRngRFFINode.rand();
+        }
+
+    }
+
+    private RootCallTarget callGeneric;
+    private RootCallTarget callRand;
 
     @Override
     @TruffleBoundary
     public void init(int seed) {
         DLLInfo dllInfo = DLL.findLibraryContainingSymbol(Function.Rand.symbol);
+        callGeneric = Truffle.getRuntime().createCallTarget(new GenericUserRNGRootNode());
         if (dllInfo == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, Function.Rand.symbol);
         }
         for (Function f : Function.values()) {
             f.setSymbolHandle(dllInfo);
         }
-        userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
         if (Function.Init.isDefined()) {
-            userRngRFFI.init(seed);
+            callGeneric.call(Function.Init, seed);
         }
         if (Function.Seedloc.isDefined() && !Function.NSeed.isDefined()) {
             RError.warning(RError.NO_CALLER, RError.Message.RNG_READ_SEEDS);
         }
         if (Function.NSeed.isDefined()) {
-            int ns = userRngRFFI.nSeed();
+            int ns = (int) callGeneric.call(Function.NSeed);
             if (ns < 0 || ns > 625) {
                 RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "seed length must be in 0...625; ignored");
             } else {
@@ -98,6 +145,7 @@ public final class UserRNG implements RandomNumberGenerator {
                  */
             }
         }
+        callRand = Truffle.getRuntime().createCallTarget(new RandUserRNGRootNode());
     }
 
     private static DLL.SymbolHandle findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {
@@ -125,7 +173,7 @@ public final class UserRNG implements RandomNumberGenerator {
             return null;
         }
         int[] seeds = new int[nSeeds];
-        userRngRFFI.seeds(seeds);
+        callGeneric.call(Function.Seedloc, seeds);
         int[] result = new int[nSeeds + 1];
         System.arraycopy(seeds, 0, result, 1, seeds.length);
         return result;
@@ -133,7 +181,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
     @Override
     public double genrandDouble() {
-        return userRngRFFI.rand();
+        return (double) callRand.call();
     }
 
     @Override

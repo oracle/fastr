@@ -5,13 +5,14 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -26,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -33,7 +35,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -63,11 +64,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
-
-        /**
-         * This profile is needed to satisfy API requirements.
-         */
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
 
         protected void castPattern(CastBuilder casts) {
             // with default error message, NO_CALLER does not work
@@ -205,8 +202,8 @@ public class GrepFunctions {
 
         protected PCRERFFI.Result compilePerlPattern(String pattern, boolean ignoreCase) {
             int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-            long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
-            PCRERFFI.Result pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
+            long tables = pcreRFFINode.maketables();
+            PCRERFFI.Result pcre = pcreRFFINode.compile(pattern, cflags, tables);
             if (pcre.result == 0) {
                 // TODO output warning if pcre.errorMessage not NULL
                 throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
@@ -246,7 +243,7 @@ public class GrepFunctions {
                 for (int i = 0; i < len; i++) {
                     String text = vector.getDataAt(i);
                     if (!RRuntime.isNA(text)) {
-                        if (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, 0, 0, ovector) >= 0) {
+                        if (pcreRFFINode.exec(pcre.result, 0, text, 0, 0, ovector) >= 0) {
                             matches[i] = true;
                         }
                     }
@@ -272,7 +269,7 @@ public class GrepFunctions {
                 return value ? RDataFactory.createEmptyStringVector() : RDataFactory.createEmptyIntVector();
             } else {
                 if (value) {
-                    RStringVector oldNames = vector.getNames(attrProfiles);
+                    RStringVector oldNames = vector.getNames();
                     String[] newNames = null;
                     if (oldNames != null) {
                         newNames = new String[nmatches];
@@ -427,27 +424,52 @@ public class GrepFunctions {
                             value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
-                        int offset = 0;
+                        int lastEndOffset = 0;
+                        int lastEndIndex = 0;
                         int[] ovector = new int[30];
                         int nmatch = 0;
                         int eflag = 0;
                         int lastEnd = -1;
+                        int[] fromByteMapping = getFromByteMapping(input); // non-null if it's
+                                                                           // necessary
+
                         StringBuffer sb = new StringBuffer();
-                        while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
+                        while (pcreRFFINode.exec(pcre.result, 0, input, lastEndOffset, eflag, ovector) >= 0) {
                             nmatch++;
-                            for (int j = offset; j < ovector[0]; j++) {
+
+                            // offset == byte position
+                            // index == character position
+                            int startOffset = ovector[0];
+                            int endOffset = ovector[1];
+                            int startIndex = (fromByteMapping != null) ? fromByteMapping[startOffset] : startOffset;
+                            int endIndex = (fromByteMapping != null) ? fromByteMapping[endOffset] : endOffset;
+
+                            for (int j = lastEndIndex; j < startIndex; j++) {
                                 sb.append(input.charAt(j));
                             }
-                            if (ovector[1] > lastEnd) {
-                                pcreStringAdj(sb, input, replacement, ovector);
-                                lastEnd = ovector[1];
+                            if (endOffset > lastEnd) {
+                                pcreStringAdj(sb, input, replacement, ovector, fromByteMapping);
+                                lastEnd = endOffset;
                             }
-                            offset = ovector[1];
-                            if (offset >= input.length() || !gsub) {
+                            lastEndIndex = endIndex;
+                            lastEndOffset = endOffset;
+                            if (lastEndIndex >= input.length() || !gsub) {
                                 break;
                             }
-                            if (ovector[0] == ovector[1]) {
-                                sb.append(input.charAt(offset++));
+                            if (startOffset == endOffset) {
+                                sb.append(input.charAt(lastEndIndex));
+                                if (fromByteMapping != null) {
+                                    for (int j = lastEndOffset + 1; j < fromByteMapping.length; j++) {
+                                        if (fromByteMapping[j] > 0) {
+                                            lastEndOffset = j;
+                                            lastEndIndex = fromByteMapping[lastEndOffset];
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    lastEndOffset++;
+                                    lastEndIndex++;
+                                }
                             }
                             eflag |= PCRERFFI.NOTBOL;
                         }
@@ -455,7 +477,7 @@ public class GrepFunctions {
                             value = input;
                         } else {
                             /* copy the tail */
-                            for (int j = offset; j < input.length(); j++) {
+                            for (int j = lastEndIndex; j < input.length(); j++) {
                                 sb.append(input.charAt(j));
                             }
                             value = sb.toString();
@@ -472,7 +494,7 @@ public class GrepFunctions {
                     result[i] = value;
                 }
                 RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
-                ret.copyAttributesFrom(attrProfiles, vector);
+                ret.copyAttributesFrom(vector);
                 return ret;
             } catch (PatternSyntaxException e) {
                 CompilerDirectives.transferToInterpreter();
@@ -555,7 +577,7 @@ public class GrepFunctions {
             return nonEmpty;
         }
 
-        private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector) {
+        private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector, int[] fromByteMapping) {
             boolean upper = false;
             boolean lower = false;
             int px = 0;
@@ -565,7 +587,9 @@ public class GrepFunctions {
                     char p1 = repl.charAt(px++);
                     if (p1 >= '1' && p1 <= '9') {
                         int k = p1 - '0';
-                        for (int i = ovector[2 * k]; i < ovector[2 * k + 1]; i++) {
+                        int startIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k]] : ovector[2 * k];
+                        int endIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k + 1]] : ovector[2 * k + 1];
+                        for (int i = startIndex; i < endIndex; i++) {
                             char c = input.charAt(i);
                             sb.append(upper ? Character.toUpperCase(c) : (lower ? Character.toLowerCase(c) : c));
                         }
@@ -663,6 +687,13 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexp extends CommonCodeAdapter {
 
+        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             castPattern(casts);
@@ -754,19 +785,19 @@ public class GrepFunctions {
                 }
             }
             RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
-            ret.setAttr("match.length", RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
+            setMatchLengthAttrNode.execute(ret, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
             if (useBytes) {
-                ret.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
             }
             if (hasAnyCapture) {
                 RStringVector captureNamesVec = RDataFactory.createStringVector(captureNames, RDataFactory.COMPLETE_VECTOR);
                 RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
-                captureStartVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
-                ret.setAttr("capture.start", captureStartVec);
+                setDimNamesAttrNode.execute(captureStartVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                setCaptureStartAttrNode.execute(ret, captureStartVec);
                 RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
-                captureLengthVec.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
-                ret.setAttr("capture.length", captureLengthVec);
-                ret.setAttr("capture.names", captureNamesVec);
+                setDimNamesAttrNode.execute(captureLengthVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
+                setCaptureLengthAttrNode.execute(ret, captureLengthVec);
+                setCaptureNamesAttrNode.execute(ret, captureNamesVec);
             }
             return ret;
         }
@@ -789,13 +820,13 @@ public class GrepFunctions {
                 }
             } else if (perl) {
                 PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
-                int maxCaptureCount = RFFIFactory.getRFFI().getPCRERFFI().getCaptureCount(pcre.result, 0);
+                int maxCaptureCount = pcreRFFINode.getCaptureCount(pcre.result, 0);
                 int[] ovector = new int[(maxCaptureCount + 1) * 3];
                 int offset = 0;
                 while (true) {
-                    int captureCount = RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, text, offset, 0, ovector);
+                    int captureCount = pcreRFFINode.exec(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
-                        String[] captureNames = RFFIFactory.getRFFI().getPCRERFFI().getCaptureNames(pcre.result, 0, maxCaptureCount);
+                        String[] captureNames = pcreRFFINode.getCaptureNames(pcre.result, 0, maxCaptureCount);
                         for (int i = 0; i < captureNames.length; i++) {
                             if (captureNames[i] == null) {
                                 captureNames[i] = "";
@@ -844,6 +875,13 @@ public class GrepFunctions {
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexp {
 
+        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             castPattern(casts);
@@ -854,19 +892,19 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        private static void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
+        private void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
             int len = captureNames.getLength();
             int[] captureStartData = new int[len];
             int[] captureLengthData = new int[len];
             Arrays.fill(captureStartData, -1);
             Arrays.fill(captureLengthData, -1);
             RIntVector captureStart = RDataFactory.createIntVector(captureStartData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
-            captureStart.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            setDimNamesAttrNode.execute(captureStart, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
             RIntVector captureLength = RDataFactory.createIntVector(captureLengthData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
-            captureLength.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
-            vec.setAttr("capture.start", captureStart);
-            vec.setAttr("capture.length", captureLength);
-            vec.setAttr("capture.names", captureNames);
+            setDimNamesAttrNode.execute(captureLength, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
+            setCaptureStartAttrNode.execute(vec, captureStart);
+            setCaptureLengthAttrNode.execute(vec, captureLength);
+            setCaptureNamesAttrNode.execute(vec, captureNames);
         }
 
         @Specialization
@@ -898,16 +936,16 @@ public class GrepFunctions {
                     for (int j = 0; j < txt.length(); j++) {
                         res.setDataAt(res.getDataWithoutCopying(), j, j + 1);
                     }
-                    res.setAttr("match.length", RDataFactory.createIntVector(txt.length()));
+                    setMatchLengthAttrNode.execute(res, RDataFactory.createIntVector(txt.length()));
                     if (useBytes) {
-                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                        setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                     }
                 } else {
                     List<Info> l = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed);
                     res = toIndexOrSizeVector(l, true);
-                    res.setAttr("match.length", toIndexOrSizeVector(l, false));
+                    setMatchLengthAttrNode.execute(res, toIndexOrSizeVector(l, false));
                     if (useBytes) {
-                        res.setAttr("useBytes", RRuntime.LOGICAL_TRUE);
+                        setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                     }
                     RIntVector captureStart = toCaptureStartOrLength(l, true);
                     if (captureStart != null) {
@@ -922,9 +960,9 @@ public class GrepFunctions {
                             }
                         }
                         hasAnyCapture = true;
-                        res.setAttr("capture.start", captureStart);
-                        res.setAttr("capture.length", captureLength);
-                        res.setAttr("capture.names", captureNames);
+                        setCaptureStartAttrNode.execute(res, captureStart);
+                        setCaptureLengthAttrNode.execute(res, captureLength);
+                        setCaptureNamesAttrNode.execute(res, captureNames);
                     } else if (hasAnyCapture) {
                         assert captureNames != null;
                         // it's capture names from previous iteration, so copy
@@ -946,7 +984,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
+        private RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
             assert list.size() > 0;
             Info firstInfo = list.get(0);
             if (!firstInfo.hasCapture) {
@@ -965,7 +1003,7 @@ public class GrepFunctions {
                 }
             }
             RIntVector ret = RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR, new int[]{list.size(), firstInfo.captureNames.length});
-            ret.setAttr(RRuntime.DIMNAMES_ATTR_KEY, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
+            setDimNamesAttrNode.execute(ret, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
             return ret;
         }
 
@@ -1152,7 +1190,7 @@ public class GrepFunctions {
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];
-            long pcreTables = perl ? RFFIFactory.getRFFI().getPCRERFFI().maketables() : 0;
+            long pcreTables = perl ? pcreRFFINode.maketables() : 0;
             PCRERFFI.Result[] pcreSplits = perl ? new PCRERFFI.Result[splits.length] : null;
 
             na.enable(x);
@@ -1161,7 +1199,7 @@ public class GrepFunctions {
                 splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
                 if (perl) {
                     if (!currentSplit.isEmpty()) {
-                        pcreSplits[i] = RFFIFactory.getRFFI().getPCRERFFI().compile(currentSplit, 0, pcreTables);
+                        pcreSplits[i] = pcreRFFINode.compile(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
                             throw RError.error(this, RError.Message.INVALID_REGEXP, currentSplit);
@@ -1186,7 +1224,7 @@ public class GrepFunctions {
                         if (perl) {
                             resultItem = splitPerl(data, pcreSplits[i % splits.length]);
                         } else {
-                            resultItem = splitIntl(data, currentSplit);
+                            resultItem = splitIntl(data, currentSplit, fixed);
                         }
                         if (resultItem.getLength() == 0) {
                             if (fixed) {
@@ -1200,8 +1238,8 @@ public class GrepFunctions {
                 }
             }
             RList ret = RDataFactory.createList(result);
-            if (x.getNames(attrProfiles) != null) {
-                ret.copyNamesFrom(attrProfiles, x);
+            if (x.getNames() != null) {
+                ret.copyNamesFrom(x);
             }
             return ret;
         }
@@ -1217,9 +1255,36 @@ public class GrepFunctions {
             }
         }
 
-        private static RStringVector splitIntl(String input, String separator) {
+        private static RStringVector splitIntl(String input, String separator, boolean fixed) {
             assert !RRuntime.isNA(input);
-            return RDataFactory.createStringVector(input.split(separator), true);
+
+            if (fixed) {
+                ArrayList<String> matches = new ArrayList<>();
+                int idx = input.indexOf(separator);
+                if (idx < 0) {
+                    return RDataFactory.createStringVector(input);
+                }
+                int lastIdx = 0;
+                while (idx > -1) {
+                    matches.add(input.substring(lastIdx, idx));
+                    lastIdx = idx + separator.length();
+                    if (lastIdx > input.length()) {
+                        break;
+                    }
+                    idx = input.indexOf(separator, lastIdx);
+                }
+                String m = input.substring(lastIdx);
+                if (!m.isEmpty()) {
+                    matches.add(m);
+                }
+                return RDataFactory.createStringVector(matches.toArray(new String[matches.size()]), false);
+            } else {
+                if (input.equals(separator)) {
+                    return RDataFactory.createStringVector("");
+                } else {
+                    return RDataFactory.createStringVector(input.split(separator), true);
+                }
+            }
         }
 
         private static RStringVector emptySplitIntl(String input) {
@@ -1231,14 +1296,14 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(result, true);
         }
 
-        private static RStringVector splitPerl(String data, PCRERFFI.Result pcre) {
+        private RStringVector splitPerl(String data, PCRERFFI.Result pcre) {
             ArrayList<String> matches = new ArrayList<>();
             int lastEndOffset = 0;
             int lastEndIndex = 0;
             int[] ovector = new int[30];
             int[] fromByteMapping = getFromByteMapping(data); // non-null if it's necessary
 
-            while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
+            while (pcreRFFINode.exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
                 // offset == byte position
                 // index == character position
                 int startOffset = ovector[0];
@@ -1250,63 +1315,63 @@ public class GrepFunctions {
                 lastEndIndex = endIndex;
                 matches.add(match);
             }
-            if (lastEndOffset < data.length()) {
-                matches.add(data.substring(lastEndOffset));
+            if (lastEndIndex < data.length()) {
+                matches.add(data.substring(lastEndIndex));
             }
             String[] result = new String[matches.size()];
             matches.toArray(result);
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
+    }
 
-        private static int getByteLength(String data) {
-            int byteLength = 0;
-            int pos = 0;
-            while (pos < data.length()) {
-                char c = data.charAt(pos);
-                if (c < 128) {
-                    byteLength++;
-                } else if (c < 2048) {
-                    byteLength += 2;
+    private static int getByteLength(String data) {
+        int byteLength = 0;
+        int pos = 0;
+        while (pos < data.length()) {
+            char c = data.charAt(pos);
+            if (c < 128) {
+                byteLength++;
+            } else if (c < 2048) {
+                byteLength += 2;
+            } else {
+                if (Character.isHighSurrogate(c)) {
+                    byteLength += 4;
+                    pos++;
                 } else {
-                    if (Character.isHighSurrogate(c)) {
-                        byteLength += 4;
-                        pos++;
-                    } else {
-                        byteLength += 3;
-                    }
+                    byteLength += 3;
                 }
-                pos++;
             }
-            return byteLength;
+            pos++;
         }
+        return byteLength;
+    }
 
-        private static int[] getFromByteMapping(String data) {
-            int byteLength = getByteLength(data);
-            if (byteLength == data.length()) {
-                return null;
-            }
-            int[] result = new int[byteLength + 1];
-            byteLength = 0;
-            int pos = 0;
-            while (pos < data.length()) {
-                result[byteLength] = pos;
-                char c = data.charAt(pos);
-                if (c < 128) {
-                    byteLength++;
-                } else if (c < 2048) {
-                    byteLength += 2;
-                } else {
-                    if (Character.isHighSurrogate(c)) {
-                        byteLength += 4;
-                        pos++;
-                    } else {
-                        byteLength += 3;
-                    }
-                }
-                pos++;
-            }
+    private static int[] getFromByteMapping(String data) {
+        int byteLength = getByteLength(data);
+        if (byteLength == data.length()) {
+            return null;
+        }
+        int[] result = new int[byteLength + 1];
+        byteLength = 0;
+        int pos = 0;
+        while (pos < data.length()) {
             result[byteLength] = pos;
-            return result;
+            char c = data.charAt(pos);
+            if (c < 128) {
+                byteLength++;
+            } else if (c < 2048) {
+                byteLength += 2;
+            } else {
+                if (Character.isHighSurrogate(c)) {
+                    byteLength += 4;
+                    pos++;
+                } else {
+                    byteLength += 3;
+                }
+            }
+            pos++;
         }
+        result[byteLength] = pos;
+        return result;
     }
 }

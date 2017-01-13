@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -41,7 +47,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -54,12 +59,17 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"}, behavior = PURE)
 public abstract class UpdateAttributes extends RBuiltinNode {
     private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
+    @Child private SetAttributeNode setAttrNode;
+    @Child private SetClassAttributeNode setClassNode;
+    @Child private SetDimAttributeNode setDimNode;
+    @Child private SetRowNamesAttributeNode setRowNamesNode;
+    @Child private RemoveAttributeNode removeAttrNode;
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -113,7 +123,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
-        Object listNamesObject = list.getNames(attrProfiles);
+        Object listNamesObject = getNamesNode.getNames(list);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
@@ -142,7 +152,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @TruffleBoundary
     private void checkAttributeForEmptyValue(RList rlist) {
-        RStringVector listNames = rlist.getNames(attrProfiles);
+        RStringVector listNames = rlist.getNames();
         int length = rlist.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 1; i < length; i++) {
@@ -154,28 +164,34 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     private void setDimAttribute(RAbstractContainer result, RList sourceList) {
-        RStringVector listNames = sourceList.getNames(attrProfiles);
+        RStringVector listNames = getNamesNode.getNames(sourceList);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         for (int i = 0; i < sourceList.getLength(); i++) {
             Object value = sourceList.getDataAt(i);
             String attrName = listNames.getDataAt(i);
             if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
+
+                if (setDimNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setDimNode = insert(SetDimAttributeNode.create());
+                }
+
                 if (value == RNull.instance) {
-                    result.setDimensions(null);
+                    setDimNode.setDimensions(result, null);
                 } else {
                     RAbstractIntVector dimsVector = castInteger(castVector(value));
                     if (dimsVector.getLength() == 0) {
                         throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }
-                    result.setDimensions(dimsVector.materialize().getDataCopy());
+                    setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
                 }
             }
         }
     }
 
     private RAbstractContainer setRemainingAttributes(RAbstractContainer result, RList sourceList) {
-        RStringVector listNames = sourceList.getNames(attrProfiles);
+        RStringVector listNames = getNamesNode.getNames(sourceList);
         int length = sourceList.getLength();
         assert length > 0 : "Length should be > 0 for ExplodeLoop";
         RAbstractContainer res = result;
@@ -189,18 +205,35 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                 res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
-                if (value == RNull.instance) {
-                    res = (RAbstractContainer) result.setClassAttr(null);
-                } else {
-                    res = (RAbstractContainer) result.setClassAttr(UpdateAttr.convertClassAttrFromObject(value));
+                if (setClassNode == null) {
+                    CompilerDirectives.transferToInterpreter();
+                    setClassNode = insert(SetClassAttributeNode.create());
                 }
+                if (value == RNull.instance) {
+                    setClassNode.reset(res);
+                } else {
+                    setClassNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
+                }
+                res = result;
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                res.setRowNames(castVector(value));
+                if (setRowNamesNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setRowNamesNode = insert(SetRowNamesAttributeNode.create());
+                }
+                setRowNamesNode.setRowNames(res, castVector(value));
             } else {
                 if (value == RNull.instance) {
-                    res.removeAttr(attrProfiles, attrName);
+                    if (removeAttrNode == null) {
+                        CompilerDirectives.transferToInterpreter();
+                        removeAttrNode = insert(RemoveAttributeNode.create());
+                    }
+                    removeAttrNode.execute(res, attrName);
                 } else {
-                    res.setAttr(attrName.intern(), value);
+                    if (setAttrNode == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        setAttrNode = insert(SetAttributeNode.create());
+                    }
+                    setAttrNode.execute(res, attrName.intern(), value);
                 }
             }
         }
@@ -237,7 +270,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         Object obj = getNonShared(o);
         RAttributable attrObj = (RAttributable) obj;
         attrObj.removeAllAttributes();
-        RStringVector listNames = operand.getNames(attrProfiles);
+        RStringVector listNames = operand.getNames();
         if (listNames == null) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
@@ -251,6 +284,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 if (attrValue == null) {
                     throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                 }
+
                 attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
             } else {
                 attrObj.setAttr(attrName.intern(), operand.getDataAt(i));

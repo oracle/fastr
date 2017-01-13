@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,8 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
@@ -50,14 +50,15 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -152,7 +153,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         }
     }
 
-    private static String getPath(RSyntaxNode node) {
+    private static String getPath(RSyntaxElement node) {
         Source source = node.getSourceSection().getSource();
         String path = RSource.getPath(source);
         return path;
@@ -187,8 +188,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
      * collects the stack of functions.
      */
     private final class StatementListener implements ExecutionEventListener {
-        private ArrayList<ArrayList<RSyntaxNode>> intervalStacks = new ArrayList<>();
-        private ArrayList<RprofState.MemoryQuad> intervalMemory = new ArrayList<>();
+        private final ArrayList<ArrayList<RSyntaxElement>> intervalStacks = new ArrayList<>();
+        private final ArrayList<RprofState.MemoryQuad> intervalMemory = new ArrayList<>();
         private volatile boolean newInterval;
 
         private StatementListener() {
@@ -206,8 +207,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (newInterval) {
                 /* context tells here we are now, frame provides callers. */
-                final ArrayList<RSyntaxNode> stack = new ArrayList<>();
-                stack.add((RSyntaxNode) context.getInstrumentedNode());
+                final ArrayList<RSyntaxElement> stack = new ArrayList<>();
+                stack.add((RSyntaxElement) context.getInstrumentedNode());
                 collectStack(stack);
                 intervalStacks.add(stack);
                 RprofState profState = RprofState.get();
@@ -220,7 +221,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         }
 
         @TruffleBoundary
-        private void collectStack(final ArrayList<RSyntaxNode> stack) {
+        private void collectStack(final ArrayList<RSyntaxElement> stack) {
             Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
@@ -230,7 +231,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                         while (call.isPromise()) {
                             call = call.getParent();
                         }
-                        RSyntaxNode syntaxNode = call.getSyntaxNode();
+                        RSyntaxElement syntaxNode = call.getSyntaxNode();
                         stack.add(syntaxNode);
                     }
                     return null;
@@ -317,8 +318,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 // scan stacks to find files
                 fileMap = new HashMap<>();
                 int fileIndex = 0;
-                for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
-                    for (RSyntaxNode node : intervalStack) {
+                for (ArrayList<RSyntaxElement> intervalStack : statementListener.intervalStacks) {
+                    for (RSyntaxElement node : intervalStack) {
                         String path = getPath(node);
                         if (path != null && fileMap.get(path) == null) {
                             fileMap.put(path, ++fileIndex);
@@ -328,13 +329,13 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 }
             }
             int index = 0;
-            for (ArrayList<RSyntaxNode> intervalStack : statementListener.intervalStacks) {
+            for (ArrayList<RSyntaxElement> intervalStack : statementListener.intervalStacks) {
                 if (this.memoryProfiling) {
                     RprofState.MemoryQuad mq = statementListener.intervalMemory.get(index);
                     out.printf(":%d:%d:%d:%d:", mq.largeV, mq.smallV, mq.nodes, mq.copied);
                 }
-                for (RSyntaxNode node : intervalStack) {
-                    RootNode rootNode = node.asRNode().getRootNode();
+                for (RSyntaxElement node : intervalStack) {
+                    RootNode rootNode = ((RSyntaxNode) node).asRNode().getRootNode();
                     if (rootNode instanceof FunctionDefinitionNode) {
                         String name = rootNode.getName();
                         if (this.lineProfiling) {

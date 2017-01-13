@@ -178,8 +178,8 @@ int Rf_initialize_R(int argc, char *argv[]) {
 
 char *R_HomeDir(void) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID R_HomeDirMethodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_HomeDir", "()Ljava/lang/String;", 1);
-	jstring homeDir = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, R_HomeDirMethodID);
+	jmethodID R_HomeDirMethodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_HomeDir", "()Ljava/lang/String;", 0);
+	jstring homeDir = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, R_HomeDirMethodID);
 	const char *homeDirChars = stringToChars(jniEnv, homeDir);
 	return (char *)homeDirChars;
 }
@@ -308,8 +308,8 @@ void uR_Busy(int x) {
 
 void uR_CleanUp(SA_TYPE x, int y, int z) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_CleanUp", "(III)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, CallRFFIHelperClass, methodID, x, y, z);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_CleanUp", "(III)V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, UpCallsRFFIClass, methodID, x, y, z);
 }
 
 int uR_ShowFiles(int a, const char **b, const char **c,
@@ -599,63 +599,63 @@ static char **update_environ_with_java_home(void) {
 
 CTXT R_getGlobalFunctionContext() {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getGlobalFunctionContext", "()Ljava/lang/Object;", 1);
-    CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getGlobalFunctionContext", "()Ljava/lang/Object;", 0);
+    CTXT result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID);
     SEXP new_result = checkRef(jniEnv, result);
     return new_result == R_NilValue ? NULL : addGlobalRef(jniEnv, result, 0);
 }
 
 CTXT R_getParentFunctionContext(CTXT c) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getParentFunctionContext", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    CTXT result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, c);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getParentFunctionContext", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    CTXT result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID, c);
     SEXP new_result = checkRef(jniEnv, result);
     return new_result == R_NilValue ? NULL : addGlobalRef(jniEnv, result, 0);
 }
 
 SEXP R_getContextEnv(CTXT context) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextEnv", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getContextEnv", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    SEXP result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID, context);
     return checkRef(jniEnv, result);
 }
 
 SEXP R_getContextFun(CTXT context) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextFun", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getContextFun", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    SEXP result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID, context);
     return checkRef(jniEnv, result);
 }
 
 SEXP R_getContextCall(CTXT context) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextCall", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getContextCall", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    SEXP result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID, context);
     return checkRef(jniEnv, result);
 }
 
 SEXP R_getContextSrcRef(CTXT context) {
     JNIEnv *jniEnv = getEnv();
-    jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_getContextSrcRef", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-    SEXP result = (*jniEnv)->CallStaticObjectMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+    jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_getContextSrcRef", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    SEXP result = (*jniEnv)->CallObjectMethod(jniEnv, UpCallsRFFIObject, methodID, context);
     result = checkRef(jniEnv, result);
     return result == R_NilValue ? NULL : result;
 }
 
 int R_insideBrowser() {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_insideBrowser", "()I", 1);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_insideBrowser", "()I", 0);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID);
 }
 
 int R_isGlobal(CTXT context) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_isGlobal", "(Ljava/lang/Object;)I", 1);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID, context);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_isGlobal", "(Ljava/lang/Object;)I", 0);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID, context);
 }
 
 int R_isEqual(void* x, void* y) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, CallRFFIHelperClass, "R_isEqual", "(Ljava/lang/Object;Ljava/lang/Object;)I", 1);
-    return (*jniEnv)->CallStaticIntMethod(jniEnv, CallRFFIHelperClass, methodID, x, y);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_isEqual", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
+    return (*jniEnv)->CallIntMethod(jniEnv, UpCallsRFFIObject, methodID, x, y);
 }

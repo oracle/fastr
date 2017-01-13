@@ -1,5 +1,0 @@
-The header files that are included when compiling the code of native packages in the FastR environment.
-
-The starting position is that these files are identical to those in GnuR and that the FastR implementation
-differences are entirely encapsulated in the method implementations in the fficall library. It is TBD whether
-this can be completely transparent but,if not, the goal would be for minimal changes to the standard header files.

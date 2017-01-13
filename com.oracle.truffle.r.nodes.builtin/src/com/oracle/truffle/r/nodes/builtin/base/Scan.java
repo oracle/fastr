@@ -31,18 +31,18 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -67,7 +67,7 @@ public abstract class Scan extends RBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
     @Child private CastToVectorNode castVector;
 
@@ -338,7 +338,7 @@ public abstract class Scan extends RBuiltinNode {
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
             }
         }
-        list.setNames(what.getNames(attrProfiles));
+        list.setNames(getNames.getNames(what));
 
         naCheck.enable(true);
 

@@ -23,13 +23,13 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -38,13 +38,10 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 @RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
 public abstract class FastrDqrls extends RBuiltinNode {
+    @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().createRApplRFFINode();
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
     private static RStringVector namesVector = null;
-
-    private final RAttributeProfiles coeffAttributeProfiles = RAttributeProfiles.create();
-    private final RAttributeProfiles xAttributeProfiles = RAttributeProfiles.create();
-    private final RAttributeProfiles residualsAttributesProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -82,16 +79,16 @@ public abstract class FastrDqrls extends RBuiltinNode {
             pivot[i] = i + 1;
         }
 
-        RFFIFactory.getRFFI().getRApplRFFI().dqrls(x, n, p, y, ny, tol, coeff, residuals, effects, rank, pivot, qraux, work);
+        rApplRFFINode.dqrls(x, n, p, y, ny, tol, coeff, residuals, effects, rank, pivot, qraux, work);
 
         RDoubleVector resultCoeffVect = RDataFactory.createDoubleVector(coeff, RDataFactory.COMPLETE_VECTOR);
-        resultCoeffVect.copyAttributesFrom(coeffAttributeProfiles, coeffVec);
+        resultCoeffVect.copyAttributesFrom(coeffVec);
 
         RDoubleVector resultX = RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR);
-        resultX.copyAttributesFrom(xAttributeProfiles, originalXVec);
+        resultX.copyAttributesFrom(originalXVec);
 
         RDoubleVector resultResiduals = RDataFactory.createDoubleVector(residuals, RDataFactory.COMPLETE_VECTOR);
-        resultResiduals.copyAttributesFrom(residualsAttributesProfiles, originalYVec);
+        resultResiduals.copyAttributesFrom(originalYVec);
 
         Object[] data = new Object[]{
                         resultX,

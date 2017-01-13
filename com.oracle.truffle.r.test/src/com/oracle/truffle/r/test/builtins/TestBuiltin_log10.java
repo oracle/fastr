@@ -63,7 +63,7 @@ public class TestBuiltin_log10 extends TestBase {
         assertEval("{ as.integer(log10(200)*100000) } ");
 
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
-        assertEval(Ignored.Unknown, "{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+        assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
 
         assertEval("{ log10(c(1+1i, -1-1i)) }");
     }

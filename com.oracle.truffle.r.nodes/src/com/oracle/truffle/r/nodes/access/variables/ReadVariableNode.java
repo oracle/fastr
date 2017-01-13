@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -85,7 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
-    private static final int MAX_INVALIDATION_COUNT = 3;
+    private static final int MAX_INVALIDATION_COUNT = 8;
 
     private enum ReadKind {
         Normal,
@@ -184,20 +184,22 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
         Object result;
         if (read == null) {
-            initializeRead(frame, variableFrame);
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            initializeRead(frame, variableFrame, false);
         }
         try {
             result = read.execute(frame, variableFrame);
         } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             int iterations = 0;
             while (true) {
                 iterations++;
-                initializeRead(frame, variableFrame);
+                initializeRead(frame, variableFrame, true);
                 try {
                     result = read.execute(frame, variableFrame);
                 } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
                     if (iterations > 10) {
-                        throw new RInternalError("too many iterations during RVN initialization: " + identifier);
+                        throw new RInternalError("too many iterations during RVN initialization: " + identifier + " " + e2 + " " + read + " " + getRootNode());
                     }
                     continue;
                 }
@@ -217,10 +219,13 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return result;
     }
 
-    private void initializeRead(VirtualFrame frame, Frame variableFrame) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        read = initialize(frame, variableFrame);
-        needsCopying = kind == ReadKind.Copying && !(read instanceof Match || read instanceof DescriptorStableMatch);
+    private synchronized void initializeRead(VirtualFrame frame, Frame variableFrame, boolean invalidate) {
+        CompilerAsserts.neverPartOfCompilation();
+        // do nothing if another thread initialized in the meantime
+        if (invalidate || read == null) {
+            read = initialize(frame, variableFrame);
+            needsCopying = kind == ReadKind.Copying && !(read instanceof Match || read instanceof DescriptorStableMatch);
+        }
     }
 
     private static final class LayoutChangedException extends SlowPathException {
@@ -478,26 +483,51 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     private final class LookupLevel extends DescriptorLevel {
 
         private final LookupResult lookup;
-        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ConditionProfile nullValueProfile = kind == ReadKind.Silent ? null : ConditionProfile.createBinaryProfile();
 
         private LookupLevel(LookupResult lookup) {
+            this.lookup = lookup;
+            assert !(lookup instanceof FrameAndSlotLookupResult);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
+            Object value = lookup.getValue();
+            if (kind != ReadKind.Silent && nullValueProfile.profile(value == null)) {
+                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            }
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "<LU>";
+        }
+    }
+
+    private final class FrameAndSlotLookupLevel extends DescriptorLevel {
+
+        private final FrameAndSlotLookupResult lookup;
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+
+        private FrameAndSlotLookupLevel(FrameAndSlotLookupResult lookup) {
             this.lookup = lookup;
         }
 
         @Override
         public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object value;
-            if (lookup instanceof FrameAndSlotLookupResult) {
-                FrameAndSlotLookupResult frameAndSlotLookupResult = (FrameAndSlotLookupResult) lookup;
-                value = profiledGetValue(seenValueKinds, frameProfile.profile(frameAndSlotLookupResult.getFrame()), frameAndSlotLookupResult.getSlot());
-            } else {
-                value = lookup.getValue();
-            }
-            if (kind != ReadKind.Silent && nullValueProfile.profile(value == null)) {
-                throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(lookup.getFrame()), lookup.getSlot());
+            if (!checkType(frame, value, isNullProfile)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw new LayoutChangedException();
             }
             return value;
+        }
+
+        @Override
+        public String toString() {
+            return "<FSLU>";
         }
     }
 
@@ -538,8 +568,14 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                     evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) lookup.getValue());
                 }
                 if (lookup != null) {
-                    if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
-                        return new LookupLevel(lookup);
+                    if (lookup instanceof FrameAndSlotLookupResult) {
+                        if (checkTypeSlowPath(frame, lookup.getValue())) {
+                            return new FrameAndSlotLookupLevel((FrameAndSlotLookupResult) lookup);
+                        }
+                    } else {
+                        if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
+                            return new LookupLevel(lookup);
+                        }
                     }
                 }
             } catch (InvalidAssumptionException e) {
@@ -880,7 +916,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 /*
  * This is RRuntime.checkType in the node form.
  */
-@TypeSystemReference(RTypes.class)
+@TypeSystemReference(RTypesFlatLayout.class)
 abstract class CheckTypeNode extends RBaseNode {
 
     public abstract boolean executeBoolean(Object o);

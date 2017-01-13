@@ -85,7 +85,7 @@ public class TestS4 extends TestRBase {
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
-
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); typeof(new(\"foo\", j=42)) }");
     }
 
     @Test

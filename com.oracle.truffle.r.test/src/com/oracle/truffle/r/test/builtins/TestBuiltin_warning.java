@@ -20,7 +20,7 @@ public class TestBuiltin_warning extends TestBase {
 
     @Test
     public void testwarning() {
-        assertEval("argv <- list('foo'); do.call('warning', argv)");
+        assertEval("warning('foo')");
         assertEval("f <- function() warning('foo'); f()");
         assertEval("f <- function() warning('foo'); f2 <- function() f(); f2()");
     }

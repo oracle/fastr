@@ -53,7 +53,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-// transcribed from src/main/objects.c
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
+
 @RBuiltin(name = "standardGeneric", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"}, behavior = COMPLEX)
 public abstract class StandardGeneric extends RBuiltinNode {
 

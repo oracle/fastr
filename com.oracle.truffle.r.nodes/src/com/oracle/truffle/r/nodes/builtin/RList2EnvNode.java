@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -35,14 +34,12 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public final class RList2EnvNode extends RBaseNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     @TruffleBoundary
     public REnvironment execute(RAbstractListVector list, REnvironment env) {
         if (list.getLength() == 0) {
             return env;
         }
-        RStringVector names = list.getNames(attrProfiles);
+        RStringVector names = list.getNames();
         if (names == null) {
             throw RError.error(this, RError.Message.LIST_NAMES_SAME_LENGTH);
         }

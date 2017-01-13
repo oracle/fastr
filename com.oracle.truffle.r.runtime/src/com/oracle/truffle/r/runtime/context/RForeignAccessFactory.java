@@ -28,7 +28,13 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 public interface RForeignAccessFactory {
 
-    ForeignAccess getForeignAccess(RTruffleObject value);
+    /**
+     * Return the appropriate {@link ForeignAccess} instance for {@code obj}.
+     */
+    ForeignAccess getForeignAccess(RTruffleObject obj);
 
+    /**
+     * Return the {@link TruffleLanguage} instance for R. (Project circularity workaround).
+     */
     Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionCheckNodeFactory.Mat2indsubNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -51,6 +53,7 @@ abstract class PositionCheckNode extends Node {
     protected final int numDimensions;
     private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
     protected final BranchProfile error = BranchProfile.create();
     protected final boolean replace;
     protected final RType containerType;
@@ -110,6 +113,8 @@ abstract class PositionCheckNode extends Node {
     }
 
     @Child private Mat2indsubNode mat2indsub;
+    @Child private GetDimAttributeNode getVectorDimsNode;
+    @Child private GetDimAttributeNode getVectorPosDimsNode;
 
     public final Object execute(PositionProfile profile, RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object position) {
         Object castPosition = castNode.execute(positionClass.cast(position));
@@ -124,12 +129,20 @@ abstract class PositionCheckNode extends Node {
         }
 
         if (mode.isSubset() && numDimensions == 1) {
-            int[] vectorDim = vector.getDimensions();
+            if (getVectorDimsNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getVectorDimsNode = insert(GetDimAttributeNode.create());
+            }
+            int[] vectorDim = getVectorDimsNode.getDimensions(vector);
             if (nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
-                if (vector instanceof RAbstractVector && ((RAbstractVector) vector).isArray()) {
+                if (vector instanceof RAbstractVector) {
                     if (castPosition instanceof RAbstractVector) {
+                        if (getVectorPosDimsNode == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            getVectorPosDimsNode = insert(GetDimAttributeNode.create());
+                        }
                         RAbstractVector vectorPosition = (RAbstractVector) castPosition;
-                        int[] posDim = vectorPosition.getDimensions();
+                        int[] posDim = getVectorPosDimsNode.getDimensions(vectorPosition);
                         if (posDim != null && posDim.length == 2 && posDim[1] == vectorDim.length) {
                             if (castPosition instanceof RAbstractIntVector || castPosition instanceof RAbstractDoubleVector) {
                                 if (mat2indsub == null) {
@@ -264,6 +277,14 @@ abstract class PositionCheckNode extends Node {
             return RDataFactory.createDoubleVector(iv, doublePos.isComplete());
         }
 
+    }
+
+    public boolean isEmptyPosition(Object position) {
+        if (positionClass == REmpty.class) {
+            return false;
+        }
+        Object castPosition = positionClassProfile.profile(position);
+        return castPosition instanceof RAbstractContainer && ((RAbstractContainer) castPosition).getLength() == 0;
     }
 
 }

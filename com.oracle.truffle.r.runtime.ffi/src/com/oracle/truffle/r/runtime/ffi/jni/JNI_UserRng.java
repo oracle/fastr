@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,49 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class JNI_UserRng implements UserRngRFFI {
-    @Override
-    @TruffleBoundary
-    public void init(int seed) {
-        init(Function.Init.getSymbolHandle().asAddress(), seed);
+    private static class JNI_UserRngRFFINode extends UserRngRFFINode {
+        @Override
+        @TruffleBoundary
+        public void init(int seed) {
+            nativeInit(Function.Init.getSymbolHandle().asAddress(), seed);
 
+        }
+
+        @Override
+        @TruffleBoundary
+        public double rand() {
+            return nativeRand(Function.Rand.getSymbolHandle().asAddress());
+        }
+
+        @Override
+        @TruffleBoundary
+        public int nSeed() {
+            return nativeNSeed(Function.NSeed.getSymbolHandle().asAddress());
+        }
+
+        @Override
+        @TruffleBoundary
+        public void seeds(int[] n) {
+            nativeSeeds(Function.Seedloc.getSymbolHandle().asAddress(), n);
+        }
     }
 
     @Override
-    @TruffleBoundary
-    public double rand() {
-        return rand(Function.Rand.getSymbolHandle().asAddress());
+    public UserRngRFFINode createUserRngRFFINode() {
+        return new JNI_UserRngRFFINode();
     }
 
-    @Override
-    @TruffleBoundary
-    public int nSeed() {
-        return nSeed(Function.NSeed.getSymbolHandle().asAddress());
-    }
+    private static native void nativeInit(long address, int seed);
 
-    @Override
-    @TruffleBoundary
-    public void seeds(int[] n) {
-        seeds(Function.Seedloc.getSymbolHandle().asAddress(), n);
-    }
+    private static native double nativeRand(long address);
 
-    private static native void init(long address, int seed);
+    private static native int nativeNSeed(long address);
 
-    private static native double rand(long address);
+    private static native void nativeSeeds(long address, int[] n);
 
-    private static native int nSeed(long address);
-
-    private static native void seeds(long address, int[] n);
 }

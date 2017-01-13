@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -156,8 +156,7 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
-            Object data = val.getDataAt(i);
-            precedence = Math.max(precedence, precedenceNode.executeInteger(val.getDataAtAsObject(i), recursive));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(val.getDataAt(i), recursive));
         }
         return precedence;
     }

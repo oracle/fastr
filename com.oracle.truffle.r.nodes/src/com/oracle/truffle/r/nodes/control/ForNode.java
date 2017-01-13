@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,6 +91,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         @Child private ReadVariableNode readLengthNode;
         @Child private WriteVariableNode writeIndexNode;
 
+        // only used for toString
         private final ForNode forNode;
 
         ForRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String lengthName, String rangeName) {
@@ -125,8 +126,8 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
             }
             try {
                 if (conditionProfile.profile(index <= length)) {
-                    writeElementNode.execute(frame);
-                    body.execute(frame);
+                    writeElementNode.voidExecute(frame);
+                    body.voidExecute(frame);
                     return true;
                 } else {
                     return false;

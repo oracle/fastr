@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -58,19 +59,24 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
     @Child private ExtractListElement extractListElement = ExtractListElement.create();
 
-    @Specialization(guards = {"isSimpleList(list)", "isCached(list, field)", "list.getNames() != null"})
-    public Object doList(RList list, String field,
-                    @Cached("getIndex(list.getNames(), field)") int index) {
+    @Specialization(limit = "2", guards = {"isSimpleList(list)", "list.getNames() == cachedNames", "field == cachedField"})
+    public Object doList(RList list, @SuppressWarnings("unused") String field,
+                    @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
+                    @SuppressWarnings("unused") @Cached("field") String cachedField,
+                    @Cached("getIndex(cachedNames, field)") int index) {
         if (index == -1) {
             throw RSpecialFactory.throwFullCallNeeded();
         }
-        updateCache(list, field);
         return extractListElement.execute(list, index);
     }
 
     @Specialization(contains = "doList", guards = {"isSimpleList(list)", "list.getNames() != null"})
     public Object doListDynamic(RList list, String field) {
-        return doList(list, field, getIndex(list.getNames(), field));
+        int index = getIndex(getNamesNode.getNames(list), field);
+        if (index == -1) {
+            throw RSpecialFactory.throwFullCallNeeded();
+        }
+        return extractListElement.execute(list, index);
     }
 
     @Fallback
@@ -81,6 +87,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 }
 
 @RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class AccessField extends RBuiltinNode {
 
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);

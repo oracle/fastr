@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.junit.Assume.*;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.generateInteger;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.generateVector;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
-import org.junit.*;
-import org.junit.experimental.theories.*;
-import org.junit.runner.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.theories.DataPoint;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.test.*;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RunWith(Theories.class)
 public class ExtractVectorNodeTest extends TestBase {
@@ -174,7 +188,7 @@ public class ExtractVectorNodeTest extends TestBase {
         vector.setNames(names);
         RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
 
-        RStringVector newNames = result.getNames(RAttributeProfiles.create());
+        RStringVector newNames = result.getNames();
         assertThat(newNames.getLength(), is(1));
         assertThat(newNames.getDataAt(0), is(names.getDataAt(1)));
     }

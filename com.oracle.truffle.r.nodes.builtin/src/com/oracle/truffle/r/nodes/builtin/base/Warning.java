@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -51,7 +52,6 @@ public abstract class Warning extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected String warning(boolean call, boolean immediate, boolean noBreakWarning, String message) {
-        CompilerDirectives.transferToInterpreter();
         RErrorHandling.warningcallInternal(call, message, immediate, noBreakWarning);
         return message;
     }

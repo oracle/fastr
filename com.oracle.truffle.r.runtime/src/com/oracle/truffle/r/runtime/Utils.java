@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -472,6 +472,7 @@ public final class Utils {
         }
 
         @Override
+        @TruffleBoundary
         public Frame visitFrame(FrameInstance frameInstance) {
             Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, true));
             if (RArguments.isRFrame(f) && RArguments.getFunction(f) != null) {
@@ -550,48 +551,58 @@ public final class Utils {
     }
 
     private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean printFrameSlots, boolean isVirtual) {
-        if (str.length() > 0) {
-            str.append("\n");
-        }
-        Frame unwrapped = RArguments.unwrap(frame);
-        if (!RArguments.isRFrame(unwrapped)) {
-            if (unwrapped.getArguments().length == 0) {
-                str.append("<empty frame>");
+        try {
+            CompilerAsserts.neverPartOfCompilation();
+            if (str.length() > 0) {
+                str.append("\n");
+            }
+            Frame unwrapped = RArguments.unwrap(frame);
+            if (!RArguments.isRFrame(unwrapped)) {
+                if (unwrapped.getArguments().length == 0) {
+                    str.append("<empty frame>");
+                } else {
+                    str.append("<unknown frame>");
+                }
             } else {
-                str.append("<unknown frame>");
-            }
-        } else {
-            if (callTarget.toString().equals("<promise>")) {
-                /* these have the same depth as the next frame, and add no useful info. */
-                return;
-            }
-            RCaller call = RArguments.getCall(unwrapped);
-            if (call != null) {
-                String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
-                int depth = RArguments.getDepth(unwrapped);
-                str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
-                str.append(" (called as: ").append(callSrc).append(')');
-            }
-            if (printFrameSlots) {
-                FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
-                for (FrameSlot s : frameDescriptor.getSlots()) {
-                    str.append("\n      ").append(s.getIdentifier()).append(" = ");
-                    Object value = unwrapped.getValue(s);
-                    try {
-                        if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
-                            str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
-                        } else {
-                            String text = String.valueOf(value);
-                            str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
+                if (callTarget.toString().equals("<promise>")) {
+                    /* these have the same depth as the next frame, and add no useful info. */
+                    return;
+                }
+                RCaller call = RArguments.getCall(unwrapped);
+                if (call != null) {
+                    String callSrc = call.isValidCaller() ? RContext.getRRuntimeASTAccess().getCallerSource(call) : "<invalid call>";
+                    int depth = RArguments.getDepth(unwrapped);
+                    str.append("Frame(d=").append(depth).append("): ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+                    str.append(" (called as: ").append(callSrc).append(')');
+                }
+                if (printFrameSlots) {
+                    FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
+                    for (FrameSlot s : frameDescriptor.getSlots()) {
+                        str.append("\n      ").append(s.getIdentifier()).append(" = ");
+                        Object value;
+                        try {
+                            value = unwrapped.getValue(s);
+                        } catch (Throwable t) {
+                            str.append("<exception ").append(t.getClass().getSimpleName()).append(" while acquiring slot ").append(s.getIdentifier()).append(">");
+                            continue;
                         }
-                    } catch (Throwable t) {
-                        // RLanguage values may not react kindly to getLength() calls
-                        str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(
-                                        value == null ? "null" : value.getClass().getSimpleName()).append(
-                                                        '>');
+                        try {
+                            if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
+                                str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
+                            } else {
+                                String text = String.valueOf(value);
+                                str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
+                            }
+                        } catch (Throwable t) {
+                            // RLanguage values may not react kindly to getLength() calls
+                            str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(
+                                            value == null ? "null" : value.getClass().getSimpleName()).append('>');
+                        }
                     }
                 }
             }
+        } catch (Throwable t) {
+            str.append("<exception ").append(t.getMessage()).append(" ").append(t.getClass().getSimpleName()).append("<");
         }
     }
 
@@ -818,7 +829,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSet<VAL> {
-        private NonRecursiveHashMap<VAL> map;
+        private final NonRecursiveHashMap<VAL> map;
 
         public NonRecursiveHashSet(int approxCapacity) {
             map = new NonRecursiveHashMap<>(approxCapacity);
@@ -834,7 +845,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSetInt {
-        private NonRecursiveHashMapInt map;
+        private final NonRecursiveHashMapInt map;
 
         public NonRecursiveHashSetInt(int approxCapacity) {
             map = new NonRecursiveHashMapInt(approxCapacity);
@@ -850,7 +861,7 @@ public final class Utils {
     }
 
     public static class NonRecursiveHashSetDouble {
-        private NonRecursiveHashMapDouble map;
+        private final NonRecursiveHashMapDouble map;
 
         public NonRecursiveHashSetDouble(int approxCapacity) {
             map = new NonRecursiveHashMapDouble(approxCapacity);

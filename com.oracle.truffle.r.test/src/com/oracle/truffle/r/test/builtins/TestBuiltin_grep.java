@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -87,6 +87,9 @@ public class TestBuiltin_grep extends TestBase {
         assertEval("{ .Internal(grep(character(), \"7\", F, F, F, F, F, F)) }");
         assertEval("{ .Internal(grep(\"7\", 7, F, F, F, F, F, F)) }");
 
+        // Expected output: integer(0)
+        // FastR output: [1] 1
+        assertEval(Ignored.Unknown, "{ grep('^ *$', ' \\n') }");
     }
 
     @Test

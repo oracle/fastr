@@ -37,8 +37,10 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_loadMethod function)
 abstract class LoadMethod extends RBaseNode {
 
     private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("method", "fname", "envir");
@@ -120,7 +122,7 @@ abstract class LoadMethod extends RBaseNode {
             } else {
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame(methodsFrameAccessProfile));
             }
-            RSyntaxNode originalCall = RASTUtils.getOriginalCall(this);
+            RSyntaxElement originalCall = RASTUtils.getOriginalCall(this);
             RCaller caller = originalCall == null ? RCaller.createInvalid(frame) : RCaller.create(frame, originalCall);
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 // TODO: technically, someone could override loadMethod function and access the

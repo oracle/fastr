@@ -68,7 +68,7 @@ public class TempPathName {
             } else {
                 Utils.rSuicide("cannot create 'R_TempDir'");
             }
-            RFFIFactory.getRFFI().getCallRFFI().setTempDir(tempDirPath);
+            RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode().setTempDir(tempDirPath);
         }
     }
 

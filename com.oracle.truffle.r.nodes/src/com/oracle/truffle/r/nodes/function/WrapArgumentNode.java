@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -43,8 +42,6 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
     private final int index;
 
     @Child private ArgumentStatePush argPushStateNode;
-
-    private final BranchProfile refCounted = BranchProfile.create();
 
     private WrapArgumentNode(RNode operand, boolean modeChange, int index) {
         super(operand, modeChange);
@@ -79,9 +76,6 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             if (rShareable != null) {
                 shareable.enter();
                 argPushStateNode.executeObject(frame, rShareable);
-            } else if (argPushStateNode.refCounted()) {
-                refCounted.enter();
-                argPushStateNode.executeObject(frame, RNull.instance);
             }
         }
         return result;

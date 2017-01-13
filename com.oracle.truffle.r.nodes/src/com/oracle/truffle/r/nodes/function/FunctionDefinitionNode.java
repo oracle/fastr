@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,14 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -69,9 +72,13 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
@@ -88,7 +95,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * loaded from packages, where at the point of definition any assignee variable is unknown.
      */
     private String name;
-    private boolean instrumented = false;
     private SourceSection sourceSectionR;
     private final SourceSection[] argSourceSections;
 
@@ -101,27 +107,21 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final BranchProfile breakProfile = BranchProfile.create();
     private final BranchProfile nextProfile = BranchProfile.create();
 
-    @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
-    // S3/S4 slots
-    @Child private FrameSlotNode dotGenericSlot;
-    @Child private FrameSlotNode dotMethodSlot;
-    // S3 slots
-    @Child private FrameSlotNode dotClassSlot;
-    @Child private FrameSlotNode dotGenericCallEnvSlot;
-    @Child private FrameSlotNode dotGenericCallDefSlot;
-    @Child private FrameSlotNode dotGroupSlot;
-    // S4 slots
-    @Child private FrameSlotNode dotDefinedSlot;
-    @Child private FrameSlotNode dotTargetSlot;
-    @Child private FrameSlotNode dotMethodsSlot;
-
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     @Child private PostProcessArgumentsNode argPostProcess;
 
+    @Child private SetupS3ArgsNode setupS3Args;
+    @Child private SetupS4ArgsNode setupS4Args;
+
     private final boolean needsSplitting;
 
     @CompilationFinal private boolean containsDispatch;
+
+    private final Assumption noHandlerStackSlot = Truffle.getRuntime().createAssumption();
+    private final Assumption noRestartStackSlot = Truffle.getRuntime().createAssumption();
+    @CompilationFinal private FrameSlot handlerStackSlot;
+    @CompilationFinal private FrameSlot restartStackSlot;
 
     /**
      * Profiling for catching {@link ReturnException}s.
@@ -135,7 +135,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String name, PostProcessArgumentsNode argPostProcess) {
-        super(null, formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
+        super(formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;
@@ -187,41 +187,49 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     private boolean needsAnyBuiltinSplitting() {
-        NodeCountFilter findAlwaysSplitInternal = node -> {
-            if (node instanceof RCallNode) {
-                RCallNode internalCall = (RCallNode) node;
+        RSyntaxVisitor<Boolean> visitor = new RSyntaxVisitor<Boolean>() {
 
-                if (internalCall.getFunctionNode() instanceof ReadVariableNode) {
-                    ReadVariableNode readInternal = (ReadVariableNode) internalCall.getFunctionNode();
-
+            @Override
+            protected Boolean visit(RSyntaxCall element) {
+                RSyntaxElement lhs = element.getSyntaxLHS();
+                RSyntaxElement[] arguments = element.getSyntaxArguments();
+                if (lhs instanceof RSyntaxLookup) {
+                    String function = ((RSyntaxLookup) lhs).getIdentifier();
                     /*
                      * TODO This is a hack to make sapply split lapply. We need to find better ways
                      * to do this. If a function uses lapply anywhere as name then it gets split.
                      * This could get exploited.
                      */
-                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(readInternal.getIdentifier());
+                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(function);
                     if (directBuiltin != null && directBuiltin.isSplitCaller()) {
                         return true;
                     }
 
-                    if (readInternal.getIdentifier().equals(".Internal")) {
-                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArguments().getArguments()[0]);
-                        if (internalFunctionArgument instanceof RCallNode) {
-                            RCallNode innerCall = (RCallNode) internalFunctionArgument;
-                            if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
-                                ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
-                                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(readInnerCall.getIdentifier());
-                                if (builtin != null && builtin.isSplitCaller()) {
-                                    return true;
-                                }
-                            }
-                        }
+                }
+                for (RSyntaxElement arg : arguments) {
+                    if (arg != null && accept(arg)) {
+                        return true;
                     }
                 }
+                return false;
             }
-            return false;
+
+            @Override
+            protected Boolean visit(RSyntaxConstant element) {
+                return false;
+            }
+
+            @Override
+            protected Boolean visit(RSyntaxLookup element) {
+                return false;
+            }
+
+            @Override
+            protected Boolean visit(RSyntaxFunction element) {
+                return false;
+            }
         };
-        return NodeUtil.countNodes(this, findAlwaysSplitInternal) > 0;
+        return visitor.accept(getSyntaxBody());
     }
 
     @Override
@@ -239,12 +247,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public Object execute(VirtualFrame frame) {
-        /*
-         * It might be possible to only record this iff a handler is installed, by using the
-         * RArguments array.
-         */
-        Object handlerStack = RErrorHandling.getHandlerStack();
-        Object restartStack = RErrorHandling.getRestartStack();
         boolean runOnExitHandlers = true;
         try {
             verifyEnclosingAssumptions(frame);
@@ -267,6 +269,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             throw e;
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
+            SetVisibilityNode.executeSlowPath(frame, false);
             throw e;
         } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
             /*
@@ -288,13 +291,27 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
-            visibility.executeEndOfFunction(frame);
+            visibility.executeEndOfFunction(frame, this);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
             }
             if (runOnExitHandlers) {
-                RErrorHandling.restoreStacks(handlerStack, restartStack);
+                if (!noHandlerStackSlot.isValid() && frame.isObject(handlerStackSlot)) {
+                    try {
+                        RErrorHandling.restoreHandlerStack(frame.getObject(handlerStackSlot));
+                    } catch (FrameSlotTypeException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+                if (!noRestartStackSlot.isValid() && frame.isObject(restartStackSlot)) {
+                    try {
+                        RErrorHandling.restoreRestartStack(frame.getObject(restartStackSlot));
+                    } catch (FrameSlotTypeException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+
                 if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
                     if (onExitExpressionCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -317,55 +334,88 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
+    private abstract static class SetupDispatchNode extends Node {
+        // S3/S4 slots
+        private final FrameSlot dotGenericSlot;
+        private final FrameSlot dotMethodSlot;
+
+        final BranchProfile invalidateFrameSlotProfile = BranchProfile.create();
+
+        SetupDispatchNode(FrameDescriptor frameDescriptor) {
+            dotGenericSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC, FrameSlotKind.Object);
+            dotMethodSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_METHOD, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, DispatchArgs args) {
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot, args.generic, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot, args.method, false, invalidateFrameSlotProfile);
+        }
+    }
+
+    private static final class SetupS3ArgsNode extends SetupDispatchNode {
+        // S3 slots
+        private final FrameSlot dotClassSlot;
+        private final FrameSlot dotGenericCallEnvSlot;
+        private final FrameSlot dotGenericCallDefSlot;
+        private final FrameSlot dotGroupSlot;
+
+        SetupS3ArgsNode(FrameDescriptor frameDescriptor) {
+            super(frameDescriptor);
+            dotClassSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_CLASS, FrameSlotKind.Object);
+            dotGenericCallEnvSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV, FrameSlotKind.Object);
+            dotGenericCallDefSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV, FrameSlotKind.Object);
+            dotGroupSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_GROUP, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, S3Args args) {
+            super.execute(frame, args);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot, args.clazz, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot, args.callEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot, args.defEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot, args.group, false, invalidateFrameSlotProfile);
+        }
+    }
+
+    private static final class SetupS4ArgsNode extends SetupDispatchNode {
+        // S4 slots
+        private final FrameSlot dotDefinedSlot;
+        private final FrameSlot dotTargetSlot;
+        private final FrameSlot dotMethodsSlot;
+
+        SetupS4ArgsNode(FrameDescriptor frameDescriptor) {
+            super(frameDescriptor);
+            dotDefinedSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_DEFINED, FrameSlotKind.Object);
+            dotTargetSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_TARGET, FrameSlotKind.Object);
+            dotMethodsSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, RRuntime.R_DOT_METHODS, FrameSlotKind.Object);
+        }
+
+        void execute(VirtualFrame frame, S4Args args) {
+            super.execute(frame, args);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedSlot, args.defined, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetSlot, args.target, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsSlot, args.methods, false, invalidateFrameSlotProfile);
+        }
+    }
+
     private void setupDispatchSlots(VirtualFrame frame) {
         DispatchArgs dispatchArgs = RArguments.getDispatchArgs(frame);
         if (dispatchArgs == null) {
             return;
         }
-        if (dotGenericSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert invalidateFrameSlotProfile == null && dotMethodSlot == null;
-            invalidateFrameSlotProfile = BranchProfile.create();
-            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-            dotGenericSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC, true));
-            dotMethodSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHOD, true));
-        }
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), dispatchArgs.generic, false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), dispatchArgs.method, false, invalidateFrameSlotProfile);
-
         if (dispatchArgs instanceof S3Args) {
             S3Args s3Args = (S3Args) dispatchArgs;
-            if (dotClassSlot == null) {
+            if (setupS3Args == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                assert dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
-                invalidateFrameSlotProfile = BranchProfile.create();
-                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-                dotClassSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_CLASS, true));
-                dotGenericCallEnvSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV, true));
-                dotGenericCallDefSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV, true));
-                dotGroupSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_GROUP, true));
+                setupS3Args = insert(new SetupS3ArgsNode(frame.getFrameDescriptor()));
             }
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), s3Args.clazz, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), s3Args.callEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), s3Args.defEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), s3Args.group, false, invalidateFrameSlotProfile);
+            setupS3Args.execute(frame, s3Args);
         } else {
             S4Args s4Args = (S4Args) dispatchArgs;
-            if (dotDefinedSlot == null) {
+            if (setupS4Args == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                assert dotTargetSlot == null && dotMethodsSlot == null;
-                invalidateFrameSlotProfile = BranchProfile.create();
-                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-                dotDefinedSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_DEFINED, true));
-                dotTargetSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_TARGET, true));
-                dotMethodsSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.R_DOT_METHODS, true));
+                setupS4Args = insert(new SetupS4ArgsNode(frame.getFrameDescriptor()));
             }
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedSlot.executeFrameSlot(frame), s4Args.defined, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetSlot.executeFrameSlot(frame), s4Args.target, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsSlot.executeFrameSlot(frame), s4Args.methods, false, invalidateFrameSlotProfile);
+            setupS4Args.execute(frame, s4Args);
         }
     }
 
@@ -383,17 +433,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return name == null ? "<no source>" : name;
     }
 
-    @Override
-    public String toString() {
-        return getName();
-    }
-
     public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean getInstrumented() {
-        return instrumented;
     }
 
     @Override
@@ -436,5 +477,25 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public String getSyntaxDebugName() {
         return name;
+    }
+
+    public FrameSlot getRestartFrameSlot(VirtualFrame frame) {
+        if (noRestartStackSlot.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            restartStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.RestartStack);
+            noRestartStackSlot.invalidate();
+        }
+        assert restartStackSlot != null;
+        return restartStackSlot;
+    }
+
+    public FrameSlot getHandlerFrameSlot(VirtualFrame frame) {
+        if (noHandlerStackSlot.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handlerStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.HandlerStack);
+            noHandlerStackSlot.invalidate();
+        }
+        assert handlerStackSlot != null;
+        return handlerStackSlot;
     }
 }

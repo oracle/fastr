@@ -22,7 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -32,6 +36,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -55,6 +60,8 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
     public abstract static class DynLoad extends RBuiltinNode {
+        @Child private DLL.LoadPackageDLLNode loadPackageDLLNode = DLL.LoadPackageDLLNode.create();
+
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
@@ -67,7 +74,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected RList doDynLoad(String lib, boolean local, boolean now, @SuppressWarnings("unused") String unused) {
             try {
-                DLLInfo dllInfo = DLL.loadPackageDLL(lib, local, now);
+                DLLInfo dllInfo = loadPackageDLLNode.loadPackageDLL(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
                 // This is not a recoverable error
@@ -100,6 +107,9 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
+
+        @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
+
         @Specialization
         @TruffleBoundary
         protected RList doGetLoadedDLLs() {
@@ -113,7 +123,7 @@ public class DynLoadFunctions {
                 data[i] = dllInfo.toRList();
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
+            setClassAttrNode.execute(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
             return result;
         }
     }

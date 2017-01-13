@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,17 @@ package com.oracle.truffle.r.parser;
 
 import java.util.List;
 
+import org.antlr.runtime.MismatchedTokenException;
+import org.antlr.runtime.NoViableAltException;
+import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.Token;
+
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
-
-import org.antlr.runtime.MismatchedTokenException;
-import org.antlr.runtime.NoViableAltException;
-import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
 
 public class DefaultRParserFactory extends RParserFactory {
 

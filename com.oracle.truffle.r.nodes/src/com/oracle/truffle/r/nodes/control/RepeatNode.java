@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
 
     public RepeatNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode body) {
         super(src, operator);
-        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, body.asRNode()));
+        this.loop = Truffle.getRuntime().createLoopNode(new RepeatRepeatingNode(this, body.asRNode()));
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         return RNull.instance;
     }
 
-    private static final class WhileRepeatingNode extends Node implements RepeatingNode {
+    private static final class RepeatRepeatingNode extends Node implements RepeatingNode {
 
         @Child private RNode body;
 
@@ -63,9 +63,10 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
+        // only used for toString
         private final RepeatNode whileNode;
 
-        WhileRepeatingNode(RepeatNode whileNode, RNode body) {
+        RepeatRepeatingNode(RepeatNode whileNode, RNode body) {
             this.whileNode = whileNode;
             this.body = body;
         }
@@ -73,7 +74,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
             try {
-                body.execute(frame);
+                body.voidExecute(frame);
                 normalBlock.enter();
                 return true;
             } catch (BreakException e) {
@@ -93,7 +94,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
 
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
-        return new RSyntaxElement[]{((WhileRepeatingNode) loop.getRepeatingNode()).body.asRSyntaxNode()};
+        return new RSyntaxElement[]{((RepeatRepeatingNode) loop.getRepeatingNode()).body.asRSyntaxNode()};
     }
 
     @Override

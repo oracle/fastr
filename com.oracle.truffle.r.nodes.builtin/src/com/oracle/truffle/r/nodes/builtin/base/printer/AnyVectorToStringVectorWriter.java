@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Arrays;
 
 public class AnyVectorToStringVectorWriter extends Writer implements PrettyWriter {
     private RAbstractVector vector;
@@ -38,8 +39,6 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     private String[] stringElements = null;
     private int levelCounter = 0;
     private boolean addSpaces;
-
-    private static final RAttributeProfiles dummyAttrProfiles = RAttributeProfiles.create();
 
     @Override
     public void begin(Object value) {
@@ -116,13 +115,14 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     }
 
     @Override
+    @TruffleBoundary
     public RStringVector getPrintReport() {
         RStringVector sv = RDataFactory.createStringVector(stringElements, vector.isComplete());
         if (vector.getDimensions() != null) {
             sv.setDimensions(vector.getDimensions());
-            sv.setDimNames(vector.getDimNames(dummyAttrProfiles));
+            sv.setDimNames(vector.getDimNames());
         } else {
-            sv.setNames(vector.getNames(dummyAttrProfiles));
+            sv.setNames(vector.getNames());
         }
         return sv;
     }

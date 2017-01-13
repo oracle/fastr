@@ -28,27 +28,26 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.UpdateSharedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.UpdateAttr.InternStringNode;
+import com.oracle.truffle.r.nodes.builtin.base.UpdateAttrNodeGen.InternStringNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
@@ -62,12 +61,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @CompilationFinal private String cachedName = "";
-    @CompilationFinal private String cachedInternedName = "";
-    @Child private UpdateSharedAttributeNode sharedAttrUpdate = UpdateSharedAttributeNode.create();
+    @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
+    @Child private InternStringNode intern = InternStringNodeGen.create();
+
     @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
     @Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
 
@@ -82,28 +80,6 @@ public abstract class Attr extends RBuiltinNode {
         // casts.arg("x").mustBe(RAttributable.class, Message.UNIMPLEMENTED_ARGUMENT_TYPE);
         casts.arg("which").mustBe(stringValue(), Message.MUST_BE_CHARACTER, "which").asStringVector().mustBe(singleElement(), RError.Message.EXACTLY_ONE_WHICH).findFirst();
         casts.arg("exact").asLogicalVector().findFirst().map(toBoolean());
-    }
-
-    private String intern(String name) {
-        if (cachedName == null) {
-            // unoptimized case
-            return Utils.intern(name);
-        }
-        if (cachedName == name) {
-            // cached case
-            return cachedInternedName;
-        }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        // Checkstyle: stop StringLiteralEquality
-        if (cachedName == "") {
-            // Checkstyle: resume StringLiteralEquality
-            cachedName = name;
-            cachedInternedName = Utils.intern(name);
-        } else {
-            cachedName = null;
-            cachedInternedName = null;
-        }
-        return Utils.intern(name);
     }
 
     private Object searchKeyPartial(DynamicObject attributes, String name) {
@@ -142,17 +118,18 @@ public abstract class Attr extends RBuiltinNode {
 
     @Specialization(guards = "!isRowNamesAttr(name)")
     protected Object attr(RAbstractContainer container, String name, boolean exact) {
-        return attrRA(container, intern(name), exact);
+        return attrRA(container, intern.execute(name), exact);
     }
 
     @Specialization(guards = "isRowNamesAttr(name)")
-    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact) {
+    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact,
+                    @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
         // TODO: if exact == false, check for partial match (there is an ignored tests for it)
         DynamicObject attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
-            return getFullRowNames(container.getRowNames(attrProfiles));
+            return getFullRowNames(getRowNamesNode.getRowNames(container));
         }
     }
 
@@ -163,7 +140,7 @@ public abstract class Attr extends RBuiltinNode {
     @TruffleBoundary
     protected Object attr(Object object, Object name, Object exact) {
         if (object instanceof RAttributable) {
-            return attrRA((RAttributable) object, intern((String) name), (boolean) exact);
+            return attrRA((RAttributable) object, intern.execute((String) name), (boolean) exact);
         } else {
             errorProfile.enter();
             throw RError.nyi(this, "object cannot be attributed");

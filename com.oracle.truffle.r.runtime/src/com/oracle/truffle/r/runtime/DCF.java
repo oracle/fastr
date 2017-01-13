@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ public class DCF {
 
     public static class Fields {
         // A map because field may repeat and last one wins
-        private LinkedHashMap<String, String> fieldMap = new LinkedHashMap<>();
+        private final LinkedHashMap<String, String> fieldMap = new LinkedHashMap<>();
 
         private void add(String name, String content) {
             fieldMap.put(name, content);
@@ -47,7 +47,7 @@ public class DCF {
         }
     }
 
-    private ArrayList<Fields> paragraphs = new ArrayList<>();
+    private final ArrayList<Fields> paragraphs = new ArrayList<>();
 
     public static DCF read(String[] lines, Set<String> keepWhiteSet) {
         DCF result = new DCF();

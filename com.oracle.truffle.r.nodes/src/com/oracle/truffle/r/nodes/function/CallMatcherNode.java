@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 public abstract class CallMatcherNode extends RBaseNode {
 
@@ -60,7 +60,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     private static final int MAX_CACHE_DEPTH = 3;
 
     public static CallMatcherNode create(boolean argsAreEvaluated) {
-        return new CallMatcherUninitializedNode(argsAreEvaluated);
+        return new CallMatcherUninitializedNode(argsAreEvaluated, 0);
     }
 
     public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs);
@@ -151,19 +151,20 @@ public abstract class CallMatcherNode extends RBaseNode {
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class CallMatcherUninitializedNode extends CallMatcherNode {
-        CallMatcherUninitializedNode(boolean argsAreEvaluated) {
+        CallMatcherUninitializedNode(boolean argsAreEvaluated, int depth) {
             super(argsAreEvaluated);
+            this.depth = depth;
         }
 
-        private int depth;
+        private final int depth;
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (++depth > MAX_CACHE_DEPTH) {
+            if (depth > MAX_CACHE_DEPTH) {
                 return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             } else {
-                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, this));
+                CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
                     cachedNode.call.getCallNode().cloneCallTarget();
@@ -237,7 +238,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 if (call != null) {
                     RCaller parent = RArguments.getCall(frame).getParent();
                     String genFunctionName = functionName == null ? function.getName() : functionName;
-                    Supplier<RSyntaxNode> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
+                    Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
                     try {
                         return call.execute(frame, cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);

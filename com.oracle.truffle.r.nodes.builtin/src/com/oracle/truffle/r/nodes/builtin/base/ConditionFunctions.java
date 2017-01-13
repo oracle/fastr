@@ -21,9 +21,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
@@ -67,15 +72,31 @@ public class ConditionFunctions {
             return getHandlerStack();
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object addCondHands(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
-            if (classes.getLength() != handlers.getLength()) {
-                throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
-            }
-            return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
+        protected FrameSlot createHandlerFrameSlot(VirtualFrame frame) {
+            return ((FunctionDefinitionNode) getRootNode()).getHandlerFrameSlot(frame);
         }
 
+        @Specialization
+        protected Object addCondHands(VirtualFrame frame, RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling,
+                        @Cached("createHandlerFrameSlot(frame)") FrameSlot handlerFrameSlot) {
+            if (classes.getLength() != handlers.getLength()) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
+            }
+            try {
+                if (!frame.isObject(handlerFrameSlot) || frame.getObject(handlerFrameSlot) == null) {
+                    frame.setObject(handlerFrameSlot, RErrorHandling.getHandlerStack());
+                }
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+            return createHandlers(classes, handlers, parentEnv, target, calling);
+        }
+
+        @TruffleBoundary
+        private static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+            return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
+        }
     }
 
     @RBuiltin(name = ".resetCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"stack"}, behavior = COMPLEX)
@@ -108,9 +129,21 @@ public class ConditionFunctions {
             restart(casts);
         }
 
+        protected FrameSlot createRestartFrameSlot(VirtualFrame frame) {
+            return ((FunctionDefinitionNode) getRootNode()).getRestartFrameSlot(frame);
+        }
+
         @Specialization
-        protected Object addRestart(RList restart) {
+        protected Object addRestart(VirtualFrame frame, RList restart,
+                        @Cached("createRestartFrameSlot(frame)") FrameSlot restartFrameSlot) {
             checkLength(restart);
+            try {
+                if (!frame.isObject(restartFrameSlot) || frame.getObject(restartFrameSlot) == null) {
+                    frame.setObject(restartFrameSlot, RErrorHandling.getRestartStack());
+                }
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
             RErrorHandling.addRestart(restart);
             return RNull.instance;
         }

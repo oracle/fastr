@@ -26,8 +26,8 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.FFIRootNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * A placeholder to keep {@code REngine} limited to calling the {@link #initialize} method. Two
@@ -64,7 +64,7 @@ public class RGraphics {
                 DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
                 DLL.SymbolHandle func = DLL.findSymbol("InitGraphics", null, rns);
                 assert func != DLL.SYMBOL_NOT_FOUND;
-                RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(new NativeCallInfo("InitGraphics", func, DLL.findLibrary("graphics")), new Object[0]);
+                FFIRootNode.createCallTarget().call(new NativeCallInfo("InitGraphics", func, DLL.findLibrary("graphics")), true, new Object[0]);
             }
         }
     }

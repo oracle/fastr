@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -92,7 +93,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public RStringVector getNames() {
         return null;
     }
 
@@ -102,7 +103,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         return null;
     }
 
@@ -112,7 +113,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public Object getRowNames() {
         return null;
     }
 
@@ -122,7 +123,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 
@@ -156,6 +157,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
+    @TruffleBoundary
     public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         RVector<?> result = materialize().copyResizedWithDimensions(newDimensions, fillNA);
         MemoryCopyTracer.reportCopying(this, result);

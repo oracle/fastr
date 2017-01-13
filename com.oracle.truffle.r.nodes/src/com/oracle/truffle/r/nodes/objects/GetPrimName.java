@@ -17,7 +17,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
-// transcribed from src/library/methods/utils.c
+// transcribed from src/library/methods/src/utils.c
 public abstract class GetPrimName extends RExternalBuiltinNode.Arg1 {
 
     @Specialization(guards = "f.isBuiltin()")

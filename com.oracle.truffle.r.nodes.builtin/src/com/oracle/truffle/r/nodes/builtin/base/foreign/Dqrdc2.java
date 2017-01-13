@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -20,12 +21,16 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public final class Dqrdc2 extends RExternalBuiltinNode {
+    @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().createRApplRFFINode();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
+
+    @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
     @Override
     public RList call(RArgsValuesAndNames args) {
@@ -44,10 +49,10 @@ public final class Dqrdc2 extends RExternalBuiltinNode {
             int[] rank = rankVec.materialize().getDataTemp();
             double[] qraux = qrauxVec.materialize().getDataTemp();
             int[] pivot = pivotVec.materialize().getDataTemp();
-            RFFIFactory.getRFFI().getRApplRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
+            rApplRFFINode.dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
             // @formatter:off
             Object[] data = new Object[]{
-                        RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
+                        RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, getDimNode.getDimensions(xVec)),
                         argValues[1], argValues[2], argValues[3], argValues[4],
                         RDataFactory.createIntVector(rank, RDataFactory.COMPLETE_VECTOR),
                         RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),

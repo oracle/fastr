@@ -126,7 +126,7 @@ public interface Engine {
      * return a {@link CallTarget} which may be cached for future use, and the
      * {@link PolyglotEngine} is responsible for actually invoking the call target.
      */
-    CallTarget parseToCallTarget(Source source) throws ParseException;
+    CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException;
 
     /**
      * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result

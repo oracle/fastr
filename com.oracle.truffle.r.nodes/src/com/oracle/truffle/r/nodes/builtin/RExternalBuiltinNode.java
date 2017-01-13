@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -74,7 +73,6 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
     @Child private CastToVectorNode castVector;
     @Children private final CastNode[] argumentCasts;
 
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     protected final BranchProfile errorProfile = BranchProfile.create();
 
     public RExternalBuiltinNode() {

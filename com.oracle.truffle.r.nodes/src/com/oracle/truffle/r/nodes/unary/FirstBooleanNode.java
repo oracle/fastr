@@ -58,7 +58,7 @@ public abstract class FirstBooleanNode extends CastNode {
     protected boolean firstScalar(byte argument) {
         if (RRuntime.isNA(argument)) {
             CompilerDirectives.transferToInterpreter();
-            RError.error(this, invalidValueName == null ? Message.NA_UNEXP : Message.INVALID_VALUE, invalidValueName);
+            throw RError.error(this, invalidValueName == null ? Message.NA_UNEXP : Message.INVALID_VALUE, invalidValueName);
         }
         return RRuntime.fromLogical(argument);
     }

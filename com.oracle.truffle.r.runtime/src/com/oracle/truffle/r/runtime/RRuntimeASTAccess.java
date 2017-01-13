@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -89,6 +90,12 @@ public interface RRuntimeASTAccess {
      * associated with the node stored with {@code rl}.
      */
     RLanguage getSyntaxCaller(RCaller rl);
+
+    /**
+     * Gets {@code TruffleRLanguage} avoiding project circularity.
+     */
+    @SuppressWarnings("rawtypes")
+    Class<? extends TruffleLanguage> getTruffleRLanguage();
 
     /**
      * Returns a string for a call as represented by {@code rl}, returned originally by

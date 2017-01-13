@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class RErrorHandling {
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
 
     private static class Warnings {
-        private ArrayList<Warning> list = new ArrayList<>();
+        private final ArrayList<Warning> list = new ArrayList<>();
 
         int size() {
             return list.size();
@@ -95,11 +95,11 @@ public class RErrorHandling {
         /**
          * Current list of (deferred) warnings.
          */
-        private Warnings warnings = new Warnings();
+        private final Warnings warnings = new Warnings();
         /**
          * Max warnings accumulated.
          */
-        private int maxWarnings = 50;
+        private final int maxWarnings = 50;
         /**
          * Set/get by seterrmessage/geterrmessage builtins.
          */
@@ -215,6 +215,16 @@ public class RErrorHandling {
         errorHandlingState.restartStack = savedRestartStack;
     }
 
+    public static void restoreHandlerStack(Object savedHandlerStack) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = savedHandlerStack;
+    }
+
+    public static void restoreRestartStack(Object savedRestartStack) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.restartStack = savedRestartStack;
+    }
+
     public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
         CompilerAsserts.neverPartOfCompilation();
         Object oldStack = getRestartStack();
@@ -299,11 +309,16 @@ public class RErrorHandling {
         } else if (i == 1) {
             Object[] data = new Object[]{"abort", RNull.instance};
             RList result = RDataFactory.createList(data);
-            result.setClassAttr(RESTART_CLASS);
+            setClassAttr(result);
             return result;
         } else {
             return RNull.instance;
         }
+    }
+
+    @TruffleBoundary
+    private static void setClassAttr(RList result) {
+        result.setClassAttr(RESTART_CLASS);
     }
 
     public static Object invokeRestart(RList restart, Object args) {
@@ -574,8 +589,6 @@ public class RErrorHandling {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
          * destroy any visibility setting made by the calling builtin prior to this call.
-         *
-         * TODO: it's not clear whether this is still the case with the optimized visibility scheme
          */
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         RFunction f = errorHandlingState.getDotSignalSimpleWarning();
@@ -624,7 +637,7 @@ public class RErrorHandling {
                 throw RInternalError.unimplemented();
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
-            } else if (w == 0) {
+            } else if (w == 0 && errorHandlingState.warnings.size() < errorHandlingState.maxWarnings) {
                 errorHandlingState.warnings.add(new Warning(fmsg, call));
             }
         } finally {
@@ -685,7 +698,8 @@ public class RErrorHandling {
                 if (nWarnings < errorHandlingState.maxWarnings) {
                     Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, errorHandlingState.maxWarnings), true);
+                    assert nWarnings == errorHandlingState.maxWarnings : "warnings above the limit should not have been added";
+                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, nWarnings), true);
                 }
             }
             Object[] wData = new Object[nWarnings];

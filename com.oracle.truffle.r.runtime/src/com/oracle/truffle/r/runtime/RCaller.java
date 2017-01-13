@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
@@ -35,13 +35,12 @@ public final class RCaller {
 
     public static final RCaller topLevel = RCaller.createInvalid(null);
 
-    private static final Object PROMISE_MARKER = new Object();
-
     private final int depth;
     private boolean visibility;
     private final RCaller parent;
     /**
-     * payload can be an RSyntaxNode, a {@link Supplier}, or an PROMISE_MARKER.
+     * The payload can be an RSyntaxNode, a {@link Supplier}, or an {@link RCaller} (which marks
+     * promise evaluation frames).
      */
     private final Object payload;
 
@@ -73,9 +72,9 @@ public final class RCaller {
         return parent;
     }
 
-    public RSyntaxNode getSyntaxNode() {
-        assert payload != null && payload != PROMISE_MARKER : payload == null ? "null RCaller" : "promise RCaller";
-        return payload instanceof RSyntaxNode ? (RSyntaxNode) payload : (RSyntaxNode) ((Supplier<?>) payload).get();
+    public RSyntaxElement getSyntaxNode() {
+        assert payload != null && !(payload instanceof RCaller) : payload == null ? "null RCaller" : "promise RCaller";
+        return payload instanceof RSyntaxElement ? (RSyntaxElement) payload : (RSyntaxElement) ((Supplier<?>) payload).get();
     }
 
     public boolean isValidCaller() {
@@ -83,7 +82,11 @@ public final class RCaller {
     }
 
     public boolean isPromise() {
-        return payload == PROMISE_MARKER;
+        return payload instanceof RCaller;
+    }
+
+    public RCaller getPromiseOriginalCall() {
+        return (RCaller) payload;
     }
 
     public static RCaller createInvalid(Frame callingFrame) {
@@ -94,28 +97,30 @@ public final class RCaller {
         return new RCaller(depthFromFrame(callingFrame), parent, null);
     }
 
-    public static RCaller create(Frame callingFrame, RSyntaxNode node) {
+    public static RCaller create(Frame callingFrame, RSyntaxElement node) {
         assert node != null;
         return new RCaller(callingFrame, node);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxNode node) {
+    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxElement node) {
         assert node != null;
         return new RCaller(depthFromFrame(callingFrame), parent, node);
     }
 
-    public static RCaller create(Frame callingFrame, Supplier<RSyntaxNode> supplier) {
+    public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
         return new RCaller(callingFrame, supplier);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxNode> supplier) {
+    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
         return new RCaller(depthFromFrame(callingFrame), parent, supplier);
     }
 
-    public static RCaller createForPromise(RCaller original, int newDepth) {
-        return new RCaller(newDepth, original, PROMISE_MARKER);
+    public static RCaller createForPromise(RCaller originalCaller, Frame frame) {
+        int newDepth = frame == null ? 0 : RArguments.getDepth(frame);
+        RCaller originalCall = frame == null ? null : RArguments.getCall(frame);
+        return new RCaller(newDepth, originalCaller, originalCall);
     }
 
     public boolean getVisibility() {

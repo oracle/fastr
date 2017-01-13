@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -35,6 +36,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -284,7 +286,8 @@ public class HiddenInternalFunctions {
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
-        protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
+        protected RList getRegisteredRoutines(RExternalPtr externalPtr,
+                        @Cached("create()") SetClassAttributeNode setClassAttrNode) {
             Object[] data = new Object[NAMES.getLength()];
             DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             RInternalError.guarantee(dllInfo != null);
@@ -301,7 +304,7 @@ public class HiddenInternalFunctions {
                     symbolData[i] = symbolInfo.createRSymbolObject(rnt, true);
                 }
                 RList symbolDataList = RDataFactory.createList(symbolData);
-                symbolDataList.setClassAttr(NATIVE_ROUTINE_LIST);
+                setClassAttrNode.execute(symbolDataList, NATIVE_ROUTINE_LIST);
                 data[nst.ordinal()] = symbolDataList;
             }
             return RDataFactory.createList(data, NAMES);
@@ -396,7 +399,7 @@ public class HiddenInternalFunctions {
                         throw RError.error(this, Message.GENERIC, "zlib compress error");
                     }
                 } else if (compression == 3) {
-                    ctype = RCompression.Type.LZMA;
+                    ctype = RCompression.Type.XZ;
                     offset = 5;
                     outLen = data.length;
                     cdata = new byte[outLen];
@@ -443,8 +446,8 @@ public class HiddenInternalFunctions {
                 byte[] ulenData = new byte[4];
                 dataLengthBuf.get(ulenData);
                 out.write(ulenData);
-                if (type == RCompression.Type.LZMA) {
-                    out.write(RCompression.Type.LZMA.typeByte);
+                if (type == RCompression.Type.XZ) {
+                    out.write(RCompression.Type.XZ.typeByte);
                 }
                 out.write(cdata);
                 return result;

@@ -43,6 +43,8 @@ public abstract class PMatch extends RBuiltinNode {
 
     private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();
 
+    public abstract RIntVector execute(RAbstractStringVector x, RAbstractStringVector table, int nomatch, boolean duplicatesOk);
+
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("x").asStringVector();

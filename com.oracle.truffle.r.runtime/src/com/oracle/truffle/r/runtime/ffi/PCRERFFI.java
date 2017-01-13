@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * An interface to the <a href="http://www.pcre.org/original/doc/html/index.html">PCRE</a> library
  * for Perl regular expressions.
@@ -47,16 +49,21 @@ public interface PCRERFFI {
         }
     }
 
-    long maketables();
+    abstract class PCRERFFINode extends Node {
 
-    Result compile(String pattern, int options, long tables);
+        public abstract long maketables();
 
-    int getCaptureCount(long code, long extra);
+        public abstract Result compile(String pattern, int options, long tables);
 
-    String[] getCaptureNames(long code, long extra, int captureCount);
+        public abstract int getCaptureCount(long code, long extra);
 
-    Result study(long code, int options);
+        public abstract String[] getCaptureNames(long code, long extra, int captureCount);
 
-    int exec(long code, long extra, String subject, int offset, int options, int[] ovector);
+        public abstract Result study(long code, int options);
+
+        public abstract int exec(long code, long extra, String subject, int offset, int options, int[] ovector);
+    }
+
+    PCRERFFINode createPCRERFFINode();
 
 }

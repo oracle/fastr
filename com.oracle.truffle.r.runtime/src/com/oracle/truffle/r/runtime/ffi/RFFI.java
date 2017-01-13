@@ -42,6 +42,9 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link DLLRFFI}: interface to dll functions, e.g., {@code dlopen}</li>
  * <li>{@link REmbedRFFI}: interface to embedded support</li>
  * <li>{@link MiscRFFI}: interface to miscellaneous native functions</li>
+ * <li>{@link UpCallsRFFI}: interface that defines the set of upcalls from native code (resulting
+ * from {@link CallRFFI}). There is no public access to this interface as it should never be called
+ * from FastR Java code and is always implemented by a specific FFI factory.
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR

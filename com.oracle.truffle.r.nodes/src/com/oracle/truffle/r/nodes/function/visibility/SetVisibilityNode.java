@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function.visibility;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
@@ -32,6 +33,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -86,12 +88,19 @@ public final class SetVisibilityNode extends Node {
      * Needs to be called at the end of each function, so that the visibility is transferred from
      * the current frame into the {@link RCaller}.
      */
-    public void executeEndOfFunction(VirtualFrame frame) {
+    public void executeEndOfFunction(VirtualFrame frame, RootNode root) {
         ensureFrameSlot(frame);
         try {
-            Object visibility = frame.getBoolean(frameSlot);
-            if (visibility != null) {
-                RArguments.getCall(frame).setVisibility(visibility == Boolean.TRUE);
+            if (frame.isBoolean(frameSlot)) {
+                RArguments.getCall(frame).setVisibility(frame.getBoolean(frameSlot) == Boolean.TRUE);
+            } else {
+                CompilerDirectives.transferToInterpreter();
+                /*
+                 * Most likely the (only) builtin call in the function was configured to
+                 * RVisibility.CUSTOM and didn't actually set the visibility. Another possible
+                 * problem is a node that is created by RASTBuilder that does not set visibility.
+                 */
+                throw RInternalError.shouldNotReachHere("visibility not set at the end of " + root.getName());
             }
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
@@ -102,6 +111,15 @@ public final class SetVisibilityNode extends Node {
      * Slow-path version of {@link #executeAfterCall(VirtualFrame, RCaller)}.
      */
     public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
+        CompilerAsserts.neverPartOfCompilation();
         frame.setBoolean(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean), caller.getVisibility());
+    }
+
+    /**
+     * Slow-path version of {@link #execute(Frame, boolean)}.
+     */
+    public static void executeSlowPath(Frame frame, boolean visibility) {
+        CompilerAsserts.neverPartOfCompilation();
+        frame.setBoolean(frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean), visibility);
     }
 }

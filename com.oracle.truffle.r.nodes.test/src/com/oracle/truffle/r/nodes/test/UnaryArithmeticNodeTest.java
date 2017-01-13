@@ -56,7 +56,6 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;

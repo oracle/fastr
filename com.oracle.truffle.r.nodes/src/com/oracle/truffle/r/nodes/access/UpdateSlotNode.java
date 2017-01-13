@@ -18,7 +18,6 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -30,6 +29,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+
+// Transcribed from src/main/attrib.c file (R_do_slot_assign function)
 
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "name", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
 public abstract class UpdateSlotNode extends RNode {
@@ -61,7 +62,7 @@ public abstract class UpdateSlotNode extends RNode {
         String identifier = "setDataPart";
         Object f = methodsNamespace.findFunction(identifier);
         RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(identifier, f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(Utils.getActualCurrentFrame(), RASTUtils.getOriginalCall(this)), null, object,
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), null, object,
                         prepareValue(value),
                         RRuntime.LOGICAL_TRUE);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,30 +23,37 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 /**
  * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ArgumentStatePush extends Node {
 
     public abstract void executeObject(VirtualFrame frame, Object shareable);
 
+    @Child private WriteLocalFrameVariableNode write;
+
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final int index;
-    @CompilationFinal private int mask = 0;
+
     @Child private WriteLocalFrameVariableNode writeArgNode;
 
     public static final int MAX_COUNTED_ARGS = 8;
@@ -57,76 +64,59 @@ public abstract class ArgumentStatePush extends Node {
         this.index = index;
     }
 
-    public boolean refCounted() {
-        return mask > 0;
+    protected int createWriteArgMask(VirtualFrame frame, RShareable shareable) {
+        if (shareable instanceof RAbstractContainer) {
+            if (shareable instanceof RLanguage || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
+                // don't decrement ref count for small objects or language objects- this
+                // is pretty conservative and can be further finessed
+                return -1;
+            }
+        }
+        RFunction fun = RArguments.getFunction(frame);
+        if (fun == null) {
+            return -1;
+        }
+        Object root = fun.getRootNode();
+        if (!(root instanceof FunctionDefinitionNode)) {
+            // root is RBuiltinRootNode
+            return -1;
+        }
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) root;
+        PostProcessArgumentsNode postProcessNode = fdn.getArgPostProcess();
+        if (postProcessNode == null) {
+            // arguments to this function are not to be reference counted
+            return -1;
+        }
+        if (!postProcessNode.updateBits(index)) {
+            // this will fail if the index is too big
+            return -1;
+        }
+        return 1 << index;
     }
 
     @Specialization
-    public void transitionState(VirtualFrame frame, RShareable shareable) {
+    public void transitionState(VirtualFrame frame, RSharingAttributeStorage shareable,
+                    @Cached("createWriteArgMask(frame, shareable)") int writeArgMask) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
-            if (!FastROptions.RefCountIncrementOnly.getBooleanValue()) {
-                if (mask == 0) {
+            if (writeArgMask != -1 && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+                if (write == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    if (shareable instanceof RAbstractContainer) {
-                        if (shareable instanceof RLanguage || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
-                            // don't decrement ref count for small objects or language objects- this
-                            // is
-                            // pretty conservative and can be further finessed
-                            mask = -1;
-                            return;
-                        }
-                    }
-                    RFunction fun = RArguments.getFunction(frame);
-                    if (fun == null) {
-                        mask = -1;
-                        return;
-                    }
-                    Object root = fun.getRootNode();
-                    if (!(root instanceof FunctionDefinitionNode)) {
-                        // root is RBuiltinRootNode
-                        mask = -1;
-                        return;
-                    }
-                    FunctionDefinitionNode fdn = (FunctionDefinitionNode) root;
-                    PostProcessArgumentsNode postProcessNode = fdn.getArgPostProcess();
-                    if (postProcessNode == null) {
-                        // arguments to this function are not to be reference counted
-                        mask = -1;
-                        return;
-                    }
-                    // this is needed for when FunctionDefinitionNode is split by the Truffle
-                    // runtime
-                    postProcessNode = postProcessNode.getActualNode();
-                    if (index >= Math.min(postProcessNode.getLength(), MAX_COUNTED_ARGS)) {
-                        mask = -1;
-                        return;
-                    }
-                    mask = 1 << index;
-                    int transArgsBitSet = postProcessNode.transArgsBitSet;
-                    postProcessNode.transArgsBitSet = transArgsBitSet | mask;
-                    writeArgNode = insert(WriteLocalFrameVariableNode.createForRefCount(Integer.valueOf(mask)));
+                    write = insert(WriteLocalFrameVariableNode.createForRefCount(Integer.valueOf(writeArgMask)));
                 }
-                if (mask != -1) {
-                    writeArgNode.execute(frame, shareable);
-                }
+                write.execute(frame, shareable);
             }
         }
     }
 
+    @Specialization
+    public void transitionState(RShareable shareable) {
+        throw RInternalError.shouldNotReachHere("unexpected RShareable that is not RSharingAttributeStorage: " + shareable.getClass());
+    }
+
     @Specialization(guards = "!isShareable(o)")
-    public void transitionStateNonShareable(VirtualFrame frame, @SuppressWarnings("unused") Object o) {
-        if (mask > 0) {
-            // this argument used to be reference counted but is no longer
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            RFunction fun = RArguments.getFunction(frame);
-            assert fun != null;
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) fun.getRootNode();
-            assert fdn != null;
-            int transArgsBitSet = fdn.getArgPostProcess().transArgsBitSet;
-            fdn.getArgPostProcess().transArgsBitSet = transArgsBitSet & (~mask);
-            mask = -1;
-        }
+    public void transitionStateNonShareable(@SuppressWarnings("unused") Object o) {
+        // do nothing
     }
 
     protected boolean isShareable(Object o) {

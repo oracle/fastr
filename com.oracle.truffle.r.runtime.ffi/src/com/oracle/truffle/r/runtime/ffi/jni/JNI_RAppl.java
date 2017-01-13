@@ -26,24 +26,30 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 public class JNI_RAppl implements RApplRFFI {
-    @Override
-    @TruffleBoundary
-    public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
-        native_dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, work);
+    private static class JNI_RApplRFFINode extends RApplRFFINode {
+        @Override
+        @TruffleBoundary
+        public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
+            native_dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, work);
+        }
+
+        @Override
+        @TruffleBoundary
+        public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
+            native_dqrcf(x, n, k, qraux, y, ny, b, info);
+        }
+
+        @Override
+        @TruffleBoundary
+        public void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
+            native_dqrls(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
+        }
     }
 
     @Override
-    @TruffleBoundary
-    public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
-        native_dqrcf(x, n, k, qraux, y, ny, b, info);
+    public RApplRFFINode createRApplRFFINode() {
+        return new JNI_RApplRFFINode();
     }
-
-    @Override
-    @TruffleBoundary
-    public void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
-        native_dqrls(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
-    }
-
     // Checkstyle: stop method name
 
     private static native void native_dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);

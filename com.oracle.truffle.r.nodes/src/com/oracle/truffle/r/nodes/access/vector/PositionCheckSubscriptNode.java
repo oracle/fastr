@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -46,8 +47,6 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
     private final boolean recursive;
 
-    private final RAttributeProfiles attributeProfile = RAttributeProfiles.create();
-
     PositionCheckSubscriptNode(ElementAccessMode mode, RType containerType, Object positionValue, int dimensionIndex, int numDimensions, boolean exact, boolean assignment, boolean recursive) {
         super(mode, containerType, positionValue, dimensionIndex, numDimensions, exact, assignment);
         this.recursive = recursive;
@@ -61,7 +60,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     }
 
     @Specialization
-    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength) {
+    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         positionNACheck.enable(position);
         byte value = position.getDataAt(0);
         if (positionLength != 1) {
@@ -77,11 +77,12 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             }
         }
 
-        return doIntegerImpl(statistics, dimSize, positionNACheck.convertLogicalToInt(value), position);
+        return doIntegerImpl(statistics, dimSize, positionNACheck.convertLogicalToInt(value), position, getNamesNode);
     }
 
     @Specialization
-    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength) {
+    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         if (positionLength != 1) {
             error.enter();
             Message message;
@@ -99,12 +100,10 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
-        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position);
-        return result;
-
+        return doIntegerImpl(profile, dimSize, position.getDataAt(0), position, getNamesNode);
     }
 
-    private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector) {
+    private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector, GetNamesAttributeNode getNamesNode) {
         int result;
         if (greaterZero.profile(value > 0)) {
             // fast path
@@ -121,7 +120,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         }
         profile.selectedPositionsCount = 1;
 
-        RStringVector names = originalVector.getNames(attributeProfile);
+        RStringVector names = getNamesNode.getNames(originalVector);
         if (names != null) {
             return RDataFactory.createIntVector(new int[]{result}, !profile.containsNA, names);
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.dsl.Cached;
+import java.util.List;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
@@ -30,7 +31,6 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -112,20 +112,16 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     protected void copyGeneric(RAbstractVector source, RVector<?> target) {
         DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
-            Object newRowNames = null;
-
             Shape shape = orgAttributes.getShape();
-            for (Property p : shape.getProperties()) {
+            List<Property> properties = shape.getPropertyList();
+            for (int i = 0; i < properties.size(); i++) {
+                Property p = properties.get(i);
                 String name = (String) p.getKey();
                 if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
                     Object val = p.get(orgAttributes, shape);
                     target.initAttributes().define(name, val);
-                    if (name == RRuntime.ROWNAMES_ATTR_KEY) {
-                        newRowNames = val;
-                    }
                 }
             }
-            target.setInternalRowNames(newRowNames == null ? RNull.instance : newRowNames);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine.shell;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.INTERACTIVE;
+
 import java.io.Console;
 import java.io.EOFException;
 import java.io.File;
@@ -44,10 +45,10 @@ import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;

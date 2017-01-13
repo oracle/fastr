@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -308,7 +308,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+    public final RStringVector getNames() {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
@@ -329,7 +329,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public void setNames(RStringVector newNames) {
+    public final void setNames(RStringVector newNames) {
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;
@@ -339,17 +339,12 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public RList getDimNames() {
         return null;
     }
 
     @Override
     public void setDimNames(RList newDimNames) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
         throw RInternalError.unimplemented();
     }
 
@@ -364,7 +359,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject() {
         return false;
     }
 }

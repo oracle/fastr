@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998--2012  The R Core Team
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -48,7 +47,7 @@ public class SplineFunctions {
         @TruffleBoundary
         protected Object splineEval(RAbstractDoubleVector xout, RList z) {
             // This is called with the result of SplineCoef, so it is surely an RList
-            return SplineFunctions.splineEval(attrProfiles, xout.materialize(), z);
+            return SplineFunctions.splineEval(xout.materialize(), z);
         }
     }
 
@@ -90,7 +89,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     * 
+     *
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -207,7 +206,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     * 
+     *
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */
@@ -361,16 +360,16 @@ public class SplineFunctions {
         return;
     }
 
-    private static RDoubleVector splineEval(RAttributeProfiles attrProfiles, RDoubleVector xout, RList z) {
+    private static RDoubleVector splineEval(RDoubleVector xout, RList z) {
         int nu = xout.getLength();
         double[] yout = new double[nu];
-        int method = (int) z.getDataAt(z.getElementIndexByName(attrProfiles, "method"));
-        int nx = (int) z.getDataAt(z.getElementIndexByName(attrProfiles, "n"));
-        RDoubleVector x = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "x"));
-        RDoubleVector y = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "y"));
-        RDoubleVector b = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "b"));
-        RDoubleVector c = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "c"));
-        RDoubleVector d = (RDoubleVector) z.getDataAt(z.getElementIndexByName(attrProfiles, "d"));
+        int method = (int) z.getDataAt(z.getElementIndexByName("method"));
+        int nx = (int) z.getDataAt(z.getElementIndexByName("n"));
+        RDoubleVector x = (RDoubleVector) z.getDataAt(z.getElementIndexByName("x"));
+        RDoubleVector y = (RDoubleVector) z.getDataAt(z.getElementIndexByName("y"));
+        RDoubleVector b = (RDoubleVector) z.getDataAt(z.getElementIndexByName("b"));
+        RDoubleVector c = (RDoubleVector) z.getDataAt(z.getElementIndexByName("c"));
+        RDoubleVector d = (RDoubleVector) z.getDataAt(z.getElementIndexByName("d"));
 
         splineEval(method, nu, xout.getDataWithoutCopying(), yout, nx, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b.getDataWithoutCopying(), c.getDataWithoutCopying(),
                         d.getDataWithoutCopying());

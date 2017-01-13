@@ -6,19 +6,22 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetAttributeNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -33,6 +36,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     private static final NACheck naCheck = NACheck.create();
 
+    @Child private GetFixedAttributeNode getNamesAttrNode = GetFixedAttributeNode.createNames();
+
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg(0).asDoubleVector();
@@ -44,21 +49,24 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     @Specialization(guards = "method == cachedMethod")
     protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
                     @Cached("getMethod(method)") Method methodObj,
-                    @Cached("create()") SetAttributeNode setAttrNode) {
-        int nr = RRuntime.nrows(x);
-        int nc = RRuntime.ncols(x);
+                    @Cached("create()") SetAttributeNode setAttrNode,
+                    @Cached("create()") SetClassAttributeNode setClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
+        int nr = getDimNode.nrows(x);
+        int nc = getDimNode.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
         RDoubleVector xm = x.materialize();
         rdistance(xm.getDataWithoutCopying(), nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
         DynamicObject resultAttrs = result.initAttributes();
-        RStringVector names = (RStringVector) list.getAttr(RRuntime.NAMES_ATTR_KEY);
+
+        RStringVector names = (RStringVector) getNamesAttrNode.execute(list);
         for (int i = 0; i < names.getLength(); i++) {
             String name = names.getDataAt(i);
             Object listValue = list.getDataAt(i);
             if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                result.setClassAttr(listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
+                setClassAttrNode.execute(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
             } else {
                 setAttrNode.execute(resultAttrs, name, listValue);
             }
@@ -222,7 +230,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     if (bothNonNAN(x[i1], x[i2])) {
                         sum = Math.abs(x[i1] + x[i2]);
                         diff = Math.abs(x[i1] - x[i2]);
-                        if (sum > Double.MIN_VALUE || diff > Double.MIN_VALUE) {
+                        if (sum > DBL_MIN || diff > DBL_MIN) {
                             dev = diff / sum;
                             if (!RRuntime.isNAorNaN(dev) ||
                                             (!RRuntime.isFinite(diff) && diff == sum &&

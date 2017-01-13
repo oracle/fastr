@@ -23,16 +23,19 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * The base class for the nodes that get/set/remove attributes. It encapsulates the common methods
  * used in guards and for caching.
  */
+@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class AttributeAccessNode extends RBaseNode {
 
     protected AttributeAccessNode() {
@@ -65,4 +68,24 @@ public abstract class AttributeAccessNode extends RBaseNode {
         return shape != null && shape.check(attrs);
     }
 
+    protected static Shape defineProperty(Shape oldShape, Object name, Object value) {
+        return oldShape.defineProperty(name, value, 0);
+    }
+
+    /**
+     * There is a subtle difference between {@link Location#canSet} and {@link Location#canStore}.
+     * We need {@link Location#canSet} for the guard of {@code setExistingAttrCached} because there
+     * we call {@link Location#set}. We use the more relaxed {@link Location#canStore} for the guard
+     * of {@code setNewAttrCached} because there we perform a shape transition, i.e., we are not
+     * actually setting the value of the new location - we only transition to this location as part
+     * of the shape change.
+     */
+    protected static boolean canSet(Location location, Object value) {
+        return location.canSet(value);
+    }
+
+    /** See {@link #canSet} for the difference between the two methods. */
+    protected static boolean canStore(Location location, Object value) {
+        return location.canStore(value);
+    }
 }

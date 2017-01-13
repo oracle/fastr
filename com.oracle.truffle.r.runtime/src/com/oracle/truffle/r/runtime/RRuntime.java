@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -512,13 +512,17 @@ public class RRuntime {
         return isNA(i) ? createComplexNA() : int2complexNoCheck(i);
     }
 
-    @TruffleBoundary
     public static String intToStringNoCheck(int operand) {
         if (operand >= MIN_CACHED_NUMBER && operand <= MAX_CACHED_NUMBER) {
             return numberStringCache[operand - MIN_CACHED_NUMBER];
         } else {
-            return String.valueOf(operand);
+            return intToStringInternal(operand);
         }
+    }
+
+    @TruffleBoundary
+    private static String intToStringInternal(int operand) {
+        return String.valueOf(operand);
     }
 
     public static boolean isCachedNumberString(int value) {
@@ -800,6 +804,7 @@ public class RRuntime {
      * Returns {@code true} if the given object is R object and its class attribute contains given
      * class.
      */
+    @TruffleBoundary
     public static boolean hasRClass(Object obj, String rclassName) {
         return obj instanceof RAttributable && ((RAttributable) obj).hasClass(rclassName);
     }
@@ -863,8 +868,8 @@ public class RRuntime {
     public static int nrows(Object x) {
         if (x instanceof RAbstractContainer) {
             RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                return xa.getDimensions()[0];
+            if (hasDims(xa)) {
+                return getDims(xa)[0];
             } else {
                 return xa.getLength();
             }
@@ -876,8 +881,8 @@ public class RRuntime {
     public static int ncols(Object x) {
         if (x instanceof RAbstractContainer) {
             RAbstractContainer xa = (RAbstractContainer) x;
-            if (xa.hasDimensions()) {
-                int[] dims = xa.getDimensions();
+            if (hasDims(xa)) {
+                int[] dims = getDims(xa);
                 if (dims.length >= 2) {
                     return dims[1];
                 } else {
@@ -889,6 +894,16 @@ public class RRuntime {
         } else {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
         }
+    }
+
+    @TruffleBoundary
+    private static int[] getDims(RAbstractContainer xa) {
+        return xa.getDimensions();
+    }
+
+    @TruffleBoundary
+    private static boolean hasDims(RAbstractContainer xa) {
+        return xa.hasDimensions();
     }
 
 }

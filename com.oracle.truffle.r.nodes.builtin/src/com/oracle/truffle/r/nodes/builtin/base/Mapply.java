@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
@@ -49,7 +50,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -124,7 +124,7 @@ public abstract class Mapply extends RBuiltinNode {
             }
         }
 
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
@@ -215,13 +215,13 @@ public abstract class Mapply extends RBuiltinNode {
             }
             Object[] values = new Object[dotsLength + moreArgsLength];
             String[] names = new String[dotsLength + moreArgsLength];
-            RStringVector dotsNames = dots.getNames(attrProfiles);
+            RStringVector dotsNames = getNames.getNames(dots);
             if (dotsNames != null) {
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
                     names[listIndex] = dotsNames.getDataAt(listIndex).isEmpty() ? null : dotsNames.getDataAt(listIndex);
                 }
             }
-            RStringVector moreArgsNames = moreArgs.getNames(attrProfiles);
+            RStringVector moreArgsNames = getNames.getNames(moreArgs);
             for (int listIndex = dotsLength; listIndex < dotsLength + moreArgsLength; listIndex++) {
                 values[listIndex] = moreArgs.getDataAt(listIndex - dotsLength);
                 names[listIndex] = moreArgsNames == null ? null : (moreArgsNames.getDataAt(listIndex - dotsLength).isEmpty() ? null : moreArgsNames.getDataAt(listIndex - dotsLength));
@@ -260,11 +260,11 @@ public abstract class Mapply extends RBuiltinNode {
         protected ElementNode[] createElementNodeArray(RAbstractListVector dots, RAbstractListVector moreArgs) {
             int length = dots.getLength() + moreArgs.getLength();
             ElementNode[] elementNodes = new ElementNode[length];
-            RStringVector dotsNames = dots.getNames(attrProfiles);
+            RStringVector dotsNames = getNames.getNames(dots);
             for (int i = 0; i < dots.getLength(); i++) {
                 elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1), dotsNames == null ? null : (dotsNames.getDataAt(i).isEmpty() ? null : dotsNames.getDataAt(i))));
             }
-            RStringVector moreArgsNames = moreArgs.getNames(attrProfiles);
+            RStringVector moreArgsNames = getNames.getNames(moreArgs);
             for (int i = dots.getLength(); i < dots.getLength() + moreArgs.getLength(); i++) {
                 elementNodes[i] = insert(new ElementNode(VECTOR_ELEMENT_PREFIX + (i + 1),
                                 moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength()).isEmpty() ? null : moreArgsNames.getDataAt(i - dots.getLength())));
@@ -289,14 +289,17 @@ public abstract class Mapply extends RBuiltinNode {
         }
 
         protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {
-            if (list.getNames(attrProfiles) == null && cachedList.getNames(attrProfiles) == null) {
+            RStringVector listNames = getNames.getNames(list);
+            RStringVector cachedListNames = getNames.getNames(cachedList);
+            if (listNames == null && cachedListNames == null) {
                 return true;
-            } else if (list.getNames(attrProfiles) == null || cachedList.getNames(attrProfiles) == null) {
+            } else if (listNames == null || cachedListNames == null) {
                 return false;
             } else {
+
                 for (int i = 0; i < list.getLength(); i++) {
-                    String name = list.getNames(attrProfiles).getDataAt(i);
-                    String cachedName = cachedList.getNames(attrProfiles).getDataAt(i);
+                    String name = listNames.getDataAt(i);
+                    String cachedName = cachedListNames.getDataAt(i);
 
                     if (name == cachedName) {
                         continue;

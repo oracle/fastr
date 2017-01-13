@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFIFactory;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
@@ -43,62 +45,25 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
  * they are passed as an array and the JNI code has to call back to get the args (not very
  * efficient).
  *
- * The JNI layer is not (currently) MT safe, so all calls are single threaded.
+ * The JNI layer is not (currently) MT safe, so all calls are single threaded. N.B. Since the calls
+ * take place from a {@link JNI_CallRFFINode}, and this is duplicated in separate contexts, we must
+ * synchronize on the class.
  */
 public class JNI_Call implements CallRFFI {
 
-    protected JNI_Call() {
-        loadLibrary();
-    }
+    public static class JNI_CallRFFINode extends CallRFFINode {
 
-    private static final boolean ForceRTLDGlobal = false;
-
-    /**
-     * Load the {@code libR} library. N.B. this library defines some non-JNI global symbols that are
-     * referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
-     * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
-     * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
-     * so we have to do an additional {@code System.load} to achieve that.
-     *
-     * Before we do that we must load {@code libjniboot} because the implementation of
-     * {@link DLLRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
-     */
-    @TruffleBoundary
-    private static void loadLibrary() {
-        String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
-        System.load(libjnibootPath);
-
-        String librffiPath = LibPaths.getBuiltinLibPath("R");
-        try {
-            DLL.load(librffiPath, ForceRTLDGlobal, false);
-        } catch (DLLException ex) {
-            throw new RInternalError(ex, "error while loading " + librffiPath);
-        }
-        System.load(librffiPath);
-        RFFIUtils.initialize();
-        if (traceEnabled()) {
-            traceDownCall("initialize");
-        }
-        try {
-            initialize(RFFIVariables.values());
-        } finally {
-            if (traceEnabled()) {
-                traceDownCallReturn("initialize", null);
-            }
-
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public synchronized Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
-        long address = nativeCallInfo.address.asAddress();
-        Object result = null;
-        if (traceEnabled()) {
-            traceDownCall(nativeCallInfo.name, args);
-        }
-        try {
-            switch (args.length) {
+        @Override
+        @TruffleBoundary
+        public Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_CallRFFINode.class) {
+                long address = nativeCallInfo.address.asAddress();
+                Object result = null;
+                if (traceEnabled()) {
+                    traceDownCall(nativeCallInfo.name, args);
+                }
+                try {
+                    switch (args.length) {
             // @formatter:off
             case 0: result = call0(address); break;
             case 1: result = call1(address, args[0]); break;
@@ -113,16 +78,115 @@ public class JNI_Call implements CallRFFI {
             default:
                 result = call(address, args); break;
                 // @formatter:on
+                    }
+                    return result;
+                } finally {
+                    if (traceEnabled()) {
+                        traceDownCallReturn(nativeCallInfo.name, result);
+                    }
+                }
             }
-            return result;
+        }
+
+        @Override
+        @TruffleBoundary
+        public void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_CallRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall(nativeCallInfo.name, args);
+                }
+                long address = nativeCallInfo.address.asAddress();
+                try {
+                    switch (args.length) {
+                        case 0:
+                            callVoid0(address);
+                            break;
+                        case 1:
+                            callVoid1(address, args[0]);
+                            break;
+                        default:
+                            throw RInternalError.shouldNotReachHere();
+                    }
+                } finally {
+                    if (traceEnabled()) {
+                        traceDownCallReturn(nativeCallInfo.name, null);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void setTempDir(String tempDir) {
+            synchronized (JNI_CallRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall("setTempDir", tempDir);
+                }
+                RFFIVariables.setTempDir(tempDir);
+                nativeSetTempDir(tempDir);
+                if (traceEnabled()) {
+                    traceDownCallReturn("setTempDir", null);
+                }
+            }
+        }
+
+        @Override
+        public void setInteractive(boolean interactive) {
+            synchronized (JNI_CallRFFINode.class) {
+                if (traceEnabled()) {
+                    traceDownCall("setInteractive", interactive);
+                }
+                nativeSetInteractive(interactive);
+                if (traceEnabled()) {
+                    traceDownCallReturn("setInteractive", null);
+                }
+            }
+        }
+
+    }
+
+    private static final boolean ForceRTLDGlobal = false;
+
+    public JNI_Call() {
+        loadLibRLibrary();
+    }
+
+    /**
+     * Load the {@code libR} library. N.B. this library defines some non-JNI global symbols that are
+     * referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
+     * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
+     * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
+     * so we have to do an additional {@code System.load} to achieve that.
+     *
+     * Before we do that we must load {@code libjniboot} because the implementation of
+     * {@link DLLRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
+     */
+    @TruffleBoundary
+    private static void loadLibRLibrary() {
+        String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
+        System.load(libjnibootPath);
+
+        String librffiPath = LibPaths.getBuiltinLibPath("R");
+        try {
+            DLL.loadLibR(librffiPath, ForceRTLDGlobal, false);
+        } catch (DLLException ex) {
+            throw new RInternalError(ex, "error while loading " + librffiPath);
+        }
+        System.load(librffiPath);
+        RFFIUtils.initialize();
+        if (traceEnabled()) {
+            traceDownCall("initialize");
+        }
+        try {
+            initialize(UpCallsRFFIFactory.getInstance().getUpcallsRFFI(), RFFIVariables.values());
         } finally {
             if (traceEnabled()) {
-                traceDownCallReturn(nativeCallInfo.name, result);
+                traceDownCallReturn("initialize", null);
             }
+
         }
     }
 
-    private static native void initialize(RFFIVariables[] variables);
+    private static native void initialize(UpCallsRFFI upCallRFFI, RFFIVariables[] variables);
 
     private static native void nativeSetTempDir(String tempDir);
 
@@ -150,56 +214,13 @@ public class JNI_Call implements CallRFFI {
 
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
-    @Override
-    @TruffleBoundary
-    public synchronized void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
-        if (traceEnabled()) {
-            traceDownCall(nativeCallInfo.name, args);
-        }
-        long address = nativeCallInfo.address.asAddress();
-        try {
-            switch (args.length) {
-                case 0:
-                    callVoid0(address);
-                    break;
-                case 1:
-                    callVoid1(address, args[0]);
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
-        } finally {
-            if (traceEnabled()) {
-                traceDownCallReturn(nativeCallInfo.name, null);
-            }
-        }
-    }
-
     private static native void callVoid0(long address);
 
     private static native void callVoid1(long address, Object arg1);
 
     @Override
-    public synchronized void setTempDir(String tempDir) {
-        if (traceEnabled()) {
-            traceDownCall("setTempDir", tempDir);
-        }
-        RFFIVariables.setTempDir(tempDir);
-        nativeSetTempDir(tempDir);
-        if (traceEnabled()) {
-            traceDownCallReturn("setTempDir", null);
-        }
-    }
-
-    @Override
-    public synchronized void setInteractive(boolean interactive) {
-        if (traceEnabled()) {
-            traceDownCall("setInteractive", interactive);
-        }
-        nativeSetInteractive(interactive);
-        if (traceEnabled()) {
-            traceDownCallReturn("setInteractive", null);
-        }
+    public CallRFFINode createCallRFFINode() {
+        return new JNI_CallRFFINode();
     }
 
 }

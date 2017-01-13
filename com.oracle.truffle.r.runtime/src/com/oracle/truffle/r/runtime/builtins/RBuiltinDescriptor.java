@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ public abstract class RBuiltinDescriptor {
     private final boolean splitCaller;
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
+    private final String genericName;
     private final RBehavior behavior;
     private final RSpecialFactory specialCall;
 
@@ -51,7 +52,7 @@ public abstract class RBuiltinDescriptor {
     @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
-                    boolean alwaysSplit, RDispatch dispatch, RBehavior behavior, RSpecialFactory specialCall) {
+                    boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
         this.specialCall = specialCall;
         this.name = name.intern();
         this.builtinNodeClass = builtinNodeClass;
@@ -63,6 +64,7 @@ public abstract class RBuiltinDescriptor {
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
         this.dispatch = dispatch;
+        this.genericName = genericName.intern();
         this.behavior = behavior;
 
         evaluatesArgument = new boolean[signature.getLength()];
@@ -84,6 +86,14 @@ public abstract class RBuiltinDescriptor {
 
     public String getName() {
         return name;
+    }
+
+    public String getGenericName() {
+        if (genericName.isEmpty()) {
+            return name;
+        } else {
+            return genericName;
+        }
     }
 
     public String[] getAliases() {

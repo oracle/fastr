@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,6 +18,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -25,14 +26,15 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -45,12 +47,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "t.default", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Transpose extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile hasDimNamesProfile = BranchProfile.create();
     private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
 
@@ -61,6 +62,8 @@ public abstract class Transpose extends RBuiltinNode {
     @Child private InitAttributesNode initAttributes = InitAttributesNode.create();
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private GetDimAttributeNode getDimNode;
 
     public abstract Object execute(RAbstractVector o);
 
@@ -74,13 +77,18 @@ public abstract class Transpose extends RBuiltinNode {
         int firstDim;
         int secondDim;
         if (isMatrixProfile.profile(vector.isMatrix())) {
-            firstDim = vector.getDimensions()[0];
-            secondDim = vector.getDimensions()[1];
+            if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreter();
+                getDimNode = insert(GetDimAttributeNode.create());
+            }
+            int[] dims = getDimNode.getDimensions(vector);
+            firstDim = dims[0];
+            secondDim = dims[1];
         } else {
             firstDim = length;
             secondDim = 1;
         }
-        RNode.reportWork(this, length);
+        RBaseNode.reportWork(this, length);
 
         A array = createArray.apply(length);
         int j = 0;
@@ -96,15 +104,13 @@ public abstract class Transpose extends RBuiltinNode {
         copyRegAttributes.execute(vector, r);
         // set new dimensions
         int[] newDim = new int[]{secondDim, firstDim};
-        r.setInternalDimensions(newDim);
         putDimensions.execute(initAttributes.execute(r), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         // set new dim names
-        RList dimNames = vector.getDimNames(attrProfiles);
+        RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames != null) {
             hasDimNamesProfile.enter();
             assert dimNames.getLength() == 2;
             RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)});
-            r.setInternalDimNames(newDimNames);
             putDimNames.execute(r.getAttributes(), newDimNames);
         }
         return r;
