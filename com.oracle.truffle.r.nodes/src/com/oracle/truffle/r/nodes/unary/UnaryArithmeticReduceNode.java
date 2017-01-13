@@ -88,6 +88,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
+    private void naResultWarning() {
+        if (semantics.getNAResultWarning() != null) {
+            warningProfile.enter();
+            RError.warning(this, semantics.getNAResultWarning());
+        }
+    }
+
     @SuppressWarnings("unused")
     @Specialization(guards = "semantics.isNullInt()")
     protected int doInt(RNull operand, boolean naRm, boolean finite) {
@@ -214,6 +221,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                 }
             } else {
                 result = arithmetic.op(result, d);
+                if (RRuntime.isNA(result)) {
+                    naResultWarning();
+                    return RRuntime.INT_NA;
+                }
             }
             opCount++;
         }
@@ -268,6 +279,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                 }
             } else {
                 result = arithmetic.op(result, d);
+                if (RRuntime.isNA(result)) {
+                    naResultWarning();
+                    return RRuntime.INT_NA;
+                }
             }
             opCount++;
         }
@@ -284,6 +299,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         int current = operand.getStart();
         for (int i = 0; i < operand.getLength(); i++) {
             result = arithmetic.op(result, current);
+            if (RRuntime.isNA(result)) {
+                naResultWarning();
+                return RRuntime.INT_NA;
+            }
             current += operand.getStride();
         }
         if (operand.getLength() == 0) {
@@ -404,17 +423,24 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         private final boolean nullInt;
         private final RError.Message emptyWarning;
         private final RError.Message emptyWarningCharacter;
+        private final RError.Message naResultWarning;
         private final boolean supportComplex;
         private final boolean supportString;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, RError.Message naResultWarning,
+                        boolean supportComplex, boolean supportString) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
             this.emptyWarning = emptyWarning;
             this.emptyWarningCharacter = emptyWarningCharacter;
+            this.naResultWarning = naResultWarning;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
+        }
+
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
+            this(intStart, doubleStart, nullInt, emptyWarning, emptyWarningCharacter, null, supportComplex, supportString);
         }
 
         public int getIntStart() {
@@ -439,6 +465,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
         public RError.Message getEmptyWarningCharacter() {
             return emptyWarningCharacter;
+        }
+
+        public RError.Message getNAResultWarning() {
+            return naResultWarning;
         }
     }
 

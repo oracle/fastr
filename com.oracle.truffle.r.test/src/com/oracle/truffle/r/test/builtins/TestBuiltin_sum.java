@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -178,5 +178,22 @@ public class TestBuiltin_sum extends TestBase {
         assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
 
         assertEval("sum(v <- 42)");
+    }
+
+    @Test
+    public void testOveflow() {
+        assertEval("sum(1:100000)");
+        assertEval("sum(seq.int(1, 100000))");
+        assertEval(Output.IgnoreWarningContext, "sum(seq.int(from=1, by=1, length.out=100000))");
+        assertEval("sum(-1:-100000)");
+        assertEval("sum(seq.int(-1, -100000))");
+        assertEval(Output.IgnoreWarningContext, "sum(seq.int(from=-1, by=-1, length.out=100000))");
+
+        assertEval("sum(c(2147483647L, 1L))");
+        assertEval("sum(c(-2147483647L, -1L))");
+        assertEval(Output.IgnoreCase, "sum(c(-2147483647L), c(-1L))");
+        assertEval(Output.IgnoreCase, "sum(c(2147483647L), TRUE)");
+        assertEval("sum(c(2147483647L), 1)");
+        assertEval("sum(c(-2147483647L), -1)");
     }
 }

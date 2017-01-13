@@ -243,6 +243,7 @@ public final class RError extends RuntimeException {
         NA_UNEXP("missing value where TRUE/FALSE needed"),
         LENGTH_NOT_MULTI("longer object length is not a multiple of shorter object length"),
         INTEGER_OVERFLOW("NAs produced by integer overflow"),
+        INTEGER_OVERFLOW_USE_SUM_NUMERIC("integer overflow - use sum(as.numeric(.))"),
         NA_OR_NAN("NA/NaN argument"),
         SUBSCRIPT_BOUNDS("subscript out of bounds"),
         SUBSCRIPT_BOUNDS_SUB("[[ ]] subscript out of bounds"),
