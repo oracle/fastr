@@ -161,6 +161,16 @@ public abstract class PrecedenceNode extends RBaseNode {
         return precedence;
     }
 
+    @Specialization(guards = "recursive")
+    protected int doPairListRecursive(RPairList list, boolean recursive, //
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode) {
+        int precedence = -1;
+        for (RPairList item : list) {
+            precedence = Math.max(precedence, precedenceNode.executeInteger(item.car(), recursive));
+        }
+        return precedence;
+    }
+
     protected static PrecedenceNode createRecursive() {
         return PrecedenceNodeGen.create();
     }

@@ -336,4 +336,13 @@ public class TestBuiltin_unlist extends TestBase {
 
         assertEval("{ x<-quote(f(1,2)); y<-function(z) 42; l<-list(x, y, NULL); y<-unlist(l); c(length(y), typeof(y)) }");
     }
+
+    @Test
+    public void testPairlists() {
+        assertEval("unlist(pairlist(1,2,3))");
+        assertEval("unlist(pairlist(1,pairlist(2,3), list(11,22,333)))");
+        assertEval(Ignored.Unimplemented, "unlist(pairlist(1,pairlist(2,3)), recursive=FALSE)");
+        assertEval("unlist(pairlist(a=1,b=pairlist(c=2,d=3)))");
+        assertEval("unlist(list(pairlist(1, list(pairlist(2), 3))))");
+    }
 }

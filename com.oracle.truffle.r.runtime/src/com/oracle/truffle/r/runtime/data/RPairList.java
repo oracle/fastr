@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
  *
  * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
  */
-public class RPairList extends RSharingAttributeStorage implements RAbstractContainer {
+public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
     private Object car = RNull.instance;
     private Object cdr = RNull.instance;
     /**
@@ -116,22 +116,17 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     // TODO (chumer) too complex for a non truffle boundary
     @TruffleBoundary
     public RList toRList() {
-        int len = 1;
+        int len = 0;
         boolean named = false;
-        RPairList plt = this;
-        while (true) {
-            named = named || !plt.isNullTag();
-            if (isNull(plt.cdr)) {
-                break;
-            }
-            plt = (RPairList) plt.cdr;
+        for (RPairList item : this) {
+            named = named || !item.isNullTag();
             len++;
         }
         Object[] data = new Object[len];
         String[] names = named ? new String[len] : null;
-        plt = this;
-        for (int i = 0; i < len; i++) {
-            data[i] = plt.car();
+        int i = 0;
+        for (RPairList plt : this) {
+            data[i] = plt.car;
             if (named) {
                 Object ptag = plt.tag;
                 if (isNull(ptag)) {
@@ -143,9 +138,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
                     assert names[i] != null : "unexpected type of tag in RPairList";
                 }
             }
-            if (i < len - 1) {
-                plt = (RPairList) plt.cdr();
-            }
+            i++;
         }
         RList result = named ? RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)) : RDataFactory.createList(data);
         DynamicObject attrs = getAttributes();
@@ -308,7 +301,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public final RStringVector getNames() {
+    public RStringVector getNames() {
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
@@ -329,7 +322,7 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public final void setNames(RStringVector newNames) {
+    public void setNames(RStringVector newNames) {
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;
@@ -354,12 +347,32 @@ public class RPairList extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public final RStringVector getImplicitClass() {
+    public RStringVector getImplicitClass() {
         return RDataFactory.createStringVector(RType.PairList.getName());
     }
 
     @Override
-    public final boolean isObject() {
+    public boolean isObject() {
         return false;
+    }
+
+    @Override
+    public Iterator<RPairList> iterator() {
+        return new Iterator<RPairList>() {
+            private Object plt = RPairList.this;
+
+            @Override
+            public boolean hasNext() {
+                return !isNull(plt);
+            }
+
+            @Override
+            public RPairList next() {
+                assert plt instanceof RPairList;
+                RPairList curr = (RPairList) plt;
+                plt = curr.cdr;
+                return curr;
+            }
+        };
     }
 }
