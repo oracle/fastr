@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,9 +38,11 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "unlist", kind = INTERNAL, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
@@ -110,6 +112,15 @@ public abstract class Unlist extends RBuiltinNode {
             return totalSize;
         }
 
+        @Specialization
+        protected int getLengthPairList(VirtualFrame frame, RPairList list) {
+            int totalSize = 0;
+            for (RPairList item : list) {
+                totalSize += getRecursiveLength(frame, item.car());
+            }
+            return totalSize;
+        }
+
         protected boolean isVectorList(RAbstractVector vector) {
             return vector instanceof RList;
         }
@@ -151,6 +162,12 @@ public abstract class Unlist extends RBuiltinNode {
         return RNull.instance;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isEmpty(list)")
+    protected RNull unlistEmptyList(RPairList list, boolean recursive, boolean useNames) {
+        return RNull.instance;
+    }
+
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
@@ -172,6 +189,14 @@ public abstract class Unlist extends RBuiltinNode {
         } else {
             return unlistHelper(list, recursive, useNames, precedence, totalSize);
         }
+    }
+
+    @Specialization(guards = "!isEmpty(list)")
+    protected Object unlistPairList(VirtualFrame frame, RPairList list, boolean recursive, boolean useNames) {
+        // TODO: unlist((pairlist(pairlist(1)), recursive=FALSE), see unit tests
+        // Note: currently, we convert to list any pair-list that we encounter along the way, this
+        // is sub-optimal, but the assumption is that pair-lists do not show up a lot
+        return unlistList(frame, list.toRList(), recursive, useNames);
     }
 
     @SuppressWarnings("unused")
@@ -327,7 +352,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -341,6 +366,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -364,7 +390,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -378,6 +404,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -401,7 +428,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -415,6 +442,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -438,7 +466,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -452,6 +480,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -475,7 +504,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -489,6 +518,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -517,7 +547,7 @@ public abstract class Unlist extends RBuiltinNode {
 
     @TruffleBoundary
     private int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
-        Object o = obj;
+        Object o = handlePairList(obj);
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -554,7 +584,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    private int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -568,6 +598,7 @@ public abstract class Unlist extends RBuiltinNode {
             namesInfo.reset();
         }
 
+        Object o = handlePairList(oIn);
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector ln = getNames.getNames(v);
@@ -728,11 +759,15 @@ public abstract class Unlist extends RBuiltinNode {
         return ((RRaw) dataAtAsObject).getValue();
     }
 
-    protected static boolean isEmpty(RAbstractVector vector) {
+    protected static boolean isEmpty(RAbstractContainer vector) {
         return vector.getLength() == 0;
     }
 
     protected static boolean isOneNull(RList list) {
         return list.getLength() == 1 && list.getDataAt(0) == RNull.instance;
+    }
+
+    private Object handlePairList(Object o) {
+        return o instanceof RPairList ? ((RPairList) o).toRList() : o;
     }
 }

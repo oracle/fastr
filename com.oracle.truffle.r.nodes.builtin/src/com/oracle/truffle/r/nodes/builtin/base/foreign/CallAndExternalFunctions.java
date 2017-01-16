@@ -40,6 +40,7 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.BinDist;
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
@@ -494,6 +495,8 @@ public class CallAndExternalFunctions {
                     return DoubleCentreNodeGen.create();
                 case "cutree":
                     return CutreeNodeGen.create();
+                case "BinDist":
+                    return BinDist.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":
@@ -536,7 +539,6 @@ public class CallAndExternalFunctions {
                 case "cfilter":
                 case "rfilter":
                 case "lowess":
-                case "BinDist":
                 case "Rsm":
                 case "tukeyline":
                 case "runmed":
