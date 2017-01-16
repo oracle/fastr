@@ -35,6 +35,7 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
@@ -51,8 +52,12 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -145,6 +150,37 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         // Instead we are responsible for proper printing of the resulting value based on
         // Source.isInteractive() flag (evaluated in REngine.PolyglotEngineRootNode).
         return false;
+    }
+
+    @Override
+    protected Object findMetaObject(RContext context, Object value) {
+        String ret = "Object";
+        if (value instanceof RPromise) {
+            RPromise promise = (RPromise) value;
+            if (promise.isEvaluated()) {
+                value = promise.getValue();
+            }
+        }
+        value = RRuntime.asAbstractVector(value); // Wrap scalars "Integer", "Double" etc.
+        if (value instanceof RTypedValue) {
+            ret = ((RTypedValue) value).getRType().getName();
+        }
+        return ret;
+    }
+
+    @Override
+    protected SourceSection findSourceLocation(RContext context, Object value) {
+        if (value instanceof RPromise) {
+            RPromise promise = (RPromise) value;
+            RBaseNode expr = promise.getClosure().getExpr();
+            return expr.getEncapsulatingSourceSection();
+        }
+
+        if (value instanceof RFunction) {
+            RFunction f = (RFunction) value;
+            return f.getTarget().getRootNode().getSourceSection();
+        }
+        return null;
     }
 
     @SuppressWarnings("try")
