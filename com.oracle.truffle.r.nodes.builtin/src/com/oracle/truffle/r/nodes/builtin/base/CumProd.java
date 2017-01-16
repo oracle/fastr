@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -67,6 +68,11 @@ public abstract class CumProd extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(RAbstractVector emptyVec) {
+        return emptyVec;
     }
 
     @Specialization

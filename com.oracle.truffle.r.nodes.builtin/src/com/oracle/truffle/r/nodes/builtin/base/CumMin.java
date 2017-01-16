@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cummin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -64,6 +65,11 @@ public abstract class CumMin extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(RAbstractVector emptyVec) {
+        return emptyVec;
     }
 
     @Specialization

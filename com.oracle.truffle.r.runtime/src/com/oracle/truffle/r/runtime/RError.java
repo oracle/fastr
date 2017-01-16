@@ -777,7 +777,8 @@ public final class RError extends RuntimeException {
         FIRST_ELEMENT_ONLY("only first element of '%s' argument used"),
         MUST_BE_GE_ONE("'%s' must be of length >= 1"),
         MORE_THAN_ONE_MATCH("there is more than one match in '%s'"),
-        TOO_MANY_ARGS("too many arguments");
+        TOO_MANY_ARGS("too many arguments"),
+        ARG_MUST_BE_CHARACTER("argument '%s' must be character");
 
         public final String message;
         final boolean hasArgs;
