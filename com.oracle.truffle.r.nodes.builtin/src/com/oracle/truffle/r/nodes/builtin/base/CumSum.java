@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,8 +84,8 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractVector emptyVec) {
-        return emptyVec;
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractVector emptyVec) {
+        return RDataFactory.createEmptyDoubleVector();
     }
 
     @Specialization

@@ -637,7 +637,7 @@ public final class CastBuilder {
             return new TypeFilter<>(x -> cls.isInstance(x), cls);
         }
 
-        public static <R> TypeFilter<Object, R> builtin() {
+        public static TypeFilter<Object, RFunction> builtin() {
             return new TypeFilter<>(x -> RFunction.class.isInstance(x) && ((RFunction) x).isBuiltin(), RFunction.class);
         }
 
