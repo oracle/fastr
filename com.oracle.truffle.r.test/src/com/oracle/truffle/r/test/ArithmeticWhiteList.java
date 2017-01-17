@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,5 +92,4 @@ public class ArithmeticWhiteList {
         WHITELIST.add("c(1i,1i,1i)/FALSE", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
         WHITELIST.add("c(1i,1i,1i)/c(FALSE,FALSE,FALSE)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
     }
-
 }

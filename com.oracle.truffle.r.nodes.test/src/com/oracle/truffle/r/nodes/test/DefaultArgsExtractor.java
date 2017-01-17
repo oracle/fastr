@@ -101,16 +101,13 @@ class DefaultArgsExtractor {
                         } else {
                             samplesMap.put(name, Samples.anything(defVal));
                         }
-
                     } else if (defVal instanceof RSymbol) {
                         continue;
                     } else {
                         samplesMap.put(name, Samples.anything(defVal));
                     }
                 }
-
             }
-
         } catch (Throwable t) {
             printer.accept("Warning: Unable to evaluate formal arguments of function " + functionName);
         } finally {

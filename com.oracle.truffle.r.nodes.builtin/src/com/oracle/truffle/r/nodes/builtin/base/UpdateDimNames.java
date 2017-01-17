@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list, //
+    protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list,
                     @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         remove.execute(result);
@@ -97,13 +97,13 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     }
 
     @Specialization(guards = "list.getLength() == 0")
-    protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list, //
+    protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list,
                     @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
         return updateDimnamesNull(container, RNull.instance, remove);
     }
 
     @Specialization(guards = "list.getLength() > 0")
-    protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list, //
+    protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         setDimNamesNode.setDimNames(result, convertToListOfStrings(list));
@@ -115,5 +115,4 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
-
 }

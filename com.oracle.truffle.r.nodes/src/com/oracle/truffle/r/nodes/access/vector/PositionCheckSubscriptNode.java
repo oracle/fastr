@@ -158,7 +158,6 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             } else {
                 throw RError.error(this, RError.Message.SELECT_MORE_1);
             }
-
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,16 +199,16 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left) || containsMetadata(right)"})
-    protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
-                    @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
-                    @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile, //
-                    @Cached("create()") BranchProfile leftHasDimensions, //
-                    @Cached("create()") BranchProfile rightHasDimensions, //
-                    @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") SetFixedAttributeNode putNames, //
-                    @Cached("createDim()") SetFixedAttributeNode putDim, //
-                    @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNames, //
+    protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
+                    @Cached("create()") CopyOfRegAttributesNode copyOfReg,
+                    @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile,
+                    @Cached("create()") BranchProfile leftHasDimensions,
+                    @Cached("create()") BranchProfile rightHasDimensions,
+                    @Cached("create()") BranchProfile noDimensions,
+                    @Cached("createNames()") SetFixedAttributeNode putNames,
+                    @Cached("createDim()") SetFixedAttributeNode putDim,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNames,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
@@ -256,15 +256,15 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left) || containsMetadata(right)"})
-    protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
-                    @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
-                    @Cached("create()") BranchProfile leftHasDimensions, //
-                    @Cached("create()") BranchProfile rightHasDimensions, //
-                    @Cached("create()") BranchProfile noDimensions, //
-                    @Cached("createNames()") SetFixedAttributeNode putNames, //
-                    @Cached("createDim()") SetFixedAttributeNode putDim, //
-                    @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNames, //
+    protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
+                    @Cached("create()") CopyOfRegAttributesNode copyOfReg,
+                    @Cached("create()") BranchProfile leftHasDimensions,
+                    @Cached("create()") BranchProfile rightHasDimensions,
+                    @Cached("create()") BranchProfile noDimensions,
+                    @Cached("createNames()") SetFixedAttributeNode putNames,
+                    @Cached("createDim()") SetFixedAttributeNode putDim,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNames,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,

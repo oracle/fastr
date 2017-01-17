@@ -92,7 +92,6 @@ public class RChannel {
                     if (keys[i] == 0 && freeSlot == -1) {
                         freeSlot = i;
                     }
-
                 }
                 if (freeSlot != -1) {
                     keys[freeSlot] = key;
@@ -290,7 +289,6 @@ public class RChannel {
             public RSyntaxElement getSerializedExpr() {
                 return serializedExpr;
             }
-
         }
 
         protected static class SerializedFunction {
@@ -334,7 +332,6 @@ public class RChannel {
             public byte[] getSerializedAttributable() {
                 return serializedAttributable;
             }
-
         }
     }
 
@@ -422,7 +419,6 @@ public class RChannel {
                 REnvironment env = p.getFrame() == null ? REnvironment.globalEnv() : REnvironment.frameToEnvironment(p.getFrame());
                 return new SerializedPromise(convertPrivate(env), RUnboundValue.instance, p.getClosure().getExpr().asRSyntaxNode());
             }
-
         }
 
         private SerializedFunction convertPrivateFunction(Object msg) throws IOException {
@@ -563,7 +559,6 @@ public class RChannel {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error serializing message for channel transmission");
             }
         }
-
     }
 
     private static class Input extends TransmitterCommon {
@@ -700,6 +695,5 @@ public class RChannel {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error unserializing msg from the channel");
             }
         }
-
     }
 }

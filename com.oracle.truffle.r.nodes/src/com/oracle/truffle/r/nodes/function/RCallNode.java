@@ -250,7 +250,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(guards = "isDefaultDispatch(function)")
-    public Object call(VirtualFrame frame, RFunction function, //
+    public Object call(VirtualFrame frame, RFunction function,
                     @Cached("createUninitializedCall()") FunctionDispatch call) {
         return call.execute(frame, function, lookupVarArgs(frame), null, null);
     }
@@ -273,13 +273,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(guards = {"explicitArgs == null", "isInternalGenericDispatch(function)"})
-    public Object callInternalGeneric(VirtualFrame frame, RFunction function, //
-                    @Cached("createDispatchArgument(0)") RNode dispatchArgument, //
-                    @Cached("new()") TemporarySlotNode dispatchTempSlot, //
-                    @Cached("create()") ClassHierarchyNode classHierarchyNode, //
-                    @Cached("createWithError()") S3FunctionLookupNode dispatchLookup, //
-                    @Cached("createIdentityProfile()") ValueProfile builtinProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile, //
+    public Object callInternalGeneric(VirtualFrame frame, RFunction function,
+                    @Cached("createDispatchArgument(0)") RNode dispatchArgument,
+                    @Cached("new()") TemporarySlotNode dispatchTempSlot,
+                    @Cached("create()") ClassHierarchyNode classHierarchyNode,
+                    @Cached("createWithError()") S3FunctionLookupNode dispatchLookup,
+                    @Cached("createIdentityProfile()") ValueProfile builtinProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
@@ -315,13 +315,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(guards = {"explicitArgs != null", "isInternalGenericDispatch(function)"})
-    public Object callInternalGenericExplicit(VirtualFrame frame, RFunction function, //
-                    @Cached("create()") ClassHierarchyNode classHierarchyNode, //
-                    @Cached("createWithError()") S3FunctionLookupNode dispatchLookup, //
-                    @Cached("createIdentityProfile()") ValueProfile builtinProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile, //
-                    @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode, //
+    public Object callInternalGenericExplicit(VirtualFrame frame, RFunction function,
+                    @Cached("create()") ClassHierarchyNode classHierarchyNode,
+                    @Cached("createWithError()") S3FunctionLookupNode dispatchLookup,
+                    @Cached("createIdentityProfile()") ValueProfile builtinProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
+                    @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
@@ -368,20 +368,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @CompilationFinal private boolean summaryGroupHasNaRmCached;
 
     @Specialization(guards = "isGroupGenericDispatch(function)")
-    public Object callGroupGeneric(VirtualFrame frame, RFunction function, //
-                    @Cached("createArguments()") CallArgumentsNode callArguments, //
-                    @Cached("create()") ClassHierarchyNode classHierarchyNodeX, //
-                    @Cached("createWithException()") S3FunctionLookupNode dispatchLookupX, //
-                    @Cached("create()") ClassHierarchyNode classHierarchyNodeY, //
-                    @Cached("createWithException()") S3FunctionLookupNode dispatchLookupY, //
-                    @Cached("createIdentityProfile()") ValueProfile builtinProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileX, //
-                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileY, //
-                    @Cached("createBinaryProfile()") ConditionProfile mismatchProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile summaryGroupNaRmProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile, //
-                    @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode, //
+    public Object callGroupGeneric(VirtualFrame frame, RFunction function,
+                    @Cached("createArguments()") CallArgumentsNode callArguments,
+                    @Cached("create()") ClassHierarchyNode classHierarchyNodeX,
+                    @Cached("createWithException()") S3FunctionLookupNode dispatchLookupX,
+                    @Cached("create()") ClassHierarchyNode classHierarchyNodeY,
+                    @Cached("createWithException()") S3FunctionLookupNode dispatchLookupY,
+                    @Cached("createIdentityProfile()") ValueProfile builtinProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileX,
+                    @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileY,
+                    @Cached("createBinaryProfile()") ConditionProfile mismatchProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile summaryGroupNaRmProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile,
+                    @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
 
         Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
@@ -523,7 +523,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization(guards = "!isRTypedValue(function)")
-    public Object call(VirtualFrame frame, TruffleObject function, //
+    public Object call(VirtualFrame frame, TruffleObject function,
                     @Cached("createForeignCall()") ForeignCall foreignCall) {
         return foreignCall.execute(frame, function);
     }
@@ -661,9 +661,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Specialization(limit = "CACHE_SIZE", guards = "function.getTarget() == cachedTarget")
-        protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments, //
-                        @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget, //
-                        @Cached("createCacheNode(cachedTarget)") LeafCallNode leafCall, //
+        protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments,
+                        @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget,
+                        @Cached("createCacheNode(cachedTarget)") LeafCallNode leafCall,
                         @Cached("createArguments(cachedTarget)") PrepareArguments prepareArguments) {
             RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
             return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
@@ -707,7 +707,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Specialization
-        protected Object dispatchFallback(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments, //
+        protected Object dispatchFallback(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments,
                         @Cached("createGenericCall()") GenericCall generic) {
             return generic.execute(frame.materialize(), function, varArgs, s3Args, s3DefaultArguments);
         }

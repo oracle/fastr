@@ -152,7 +152,7 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization(guards = "recursive")
-    protected int doListRecursive(RList val, boolean recursive, //
+    protected int doListRecursive(RList val, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
@@ -162,7 +162,7 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization(guards = "recursive")
-    protected int doPairListRecursive(RPairList list, boolean recursive, //
+    protected int doPairListRecursive(RPairList list, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
         for (RPairList item : list) {

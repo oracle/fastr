@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     }
 
     @Specialization
-    protected double doString(String operand, //
+    protected double doString(String operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             return RRuntime.DOUBLE_NA;

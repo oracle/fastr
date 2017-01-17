@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,7 +132,6 @@ public class FastRContext {
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = ".fastr.context.join", visibility = OFF, kind = PRIMITIVE, parameterNames = {"handle"}, behavior = COMPLEX)
@@ -161,7 +160,6 @@ public class FastRContext {
             }
             return RNull.instance;
         }
-
     }
 
     /**
@@ -224,7 +222,6 @@ public class FastRContext {
             }
             return RDataFactory.createList(results);
         }
-
     }
 
     @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
@@ -295,7 +292,6 @@ public class FastRContext {
         protected Object rscript(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
             return rscript(RDataFactory.createEmptyStringVector(), env, intern);
         }
-
     }
 
     private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
@@ -317,7 +313,6 @@ public class FastRContext {
         protected int createChannel(int key) {
             return RChannel.createChannel(key);
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
@@ -332,7 +327,6 @@ public class FastRContext {
         protected int getChannel(int key) {
             return RChannel.getChannel(key);
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
@@ -348,7 +342,6 @@ public class FastRContext {
             RChannel.closeChannel(id);
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
@@ -364,7 +357,6 @@ public class FastRContext {
             RChannel.send(id, data);
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
@@ -379,7 +371,6 @@ public class FastRContext {
         protected Object receive(int id) {
             return RChannel.receive(id);
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
@@ -394,7 +385,6 @@ public class FastRContext {
         protected Object poll(int id) {
             return RChannel.poll(id);
         }
-
     }
 
     @RBuiltin(name = ".fastr.channel.select", kind = PRIMITIVE, parameterNames = {"ids"}, behavior = COMPLEX)
@@ -425,5 +415,4 @@ public class FastRContext {
             }
         }
     }
-
 }

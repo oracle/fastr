@@ -83,7 +83,6 @@ public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements
             public RComplex op(double re, double im) {
                 return UnaryArithmeticBuiltinNode.this.op(re, im);
             }
-
         };
     }
 

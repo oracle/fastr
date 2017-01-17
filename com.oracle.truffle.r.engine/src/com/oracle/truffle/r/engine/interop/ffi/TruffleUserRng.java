@@ -104,5 +104,4 @@ public class TruffleUserRng implements UserRngRFFI {
     public UserRngRFFINode createUserRngRFFINode() {
         return new TruffleUserRngRFFINode();
     }
-
 }

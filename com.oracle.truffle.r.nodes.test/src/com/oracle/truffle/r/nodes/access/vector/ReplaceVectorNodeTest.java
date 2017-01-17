@@ -83,28 +83,28 @@ public class ReplaceVectorNodeTest extends TestBase {
         // replace rectangle with rectangle indices
         vector = generateInteger(20, true);
         vector.setDimensions(new int[]{5, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
         assertIndicies(vector, 0, 1, 2, 3, 4, 5, -1, -1, -1, 9, 10, -1, -1, -1, 14, 15, 16, 17, 18, 19);
 
         // replace box with box indices
         vector = generateInteger(9, true);
         vector.setDimensions(new int[]{3, 3});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
         assertIndicies(vector, 0, 1, 2, 3, -1, -1, 6, -1, -1);
 
         // replace three dimensions
         vector = generateInteger(24, true);
         vector.setDimensions(new int[]{2, 3, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
         assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
 
         // replace three dimensions
         vector = generateInteger(24, true);
         vector.setDimensions(new int[]{2, 3, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
         assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, -1, 12, 13, 14, -1, 16, -1, 18, 19, 20, -1, 22, -1);
     }
@@ -139,19 +139,19 @@ public class ReplaceVectorNodeTest extends TestBase {
 
         // replace scalar with logical scalar
         vector = generateInteger(3, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
         assertIndicies(vector, -1, -1, -1);
 
         // replace scalar with logical vector
         vector = generateInteger(4, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
         assertIndicies(vector, -1, 1, -1, 3);
 
         // replace vector indexed by logical vector
         vector = generateInteger(4, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(new int[]{-1, -2}, true), //
+        executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(new int[]{-1, -2}, true),
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
         assertIndicies(vector, -1, 1, -2, 3);
 
@@ -297,7 +297,7 @@ public class ReplaceVectorNodeTest extends TestBase {
     }
 
     private static NodeHandle<ReplaceVectorNode> create(ElementAccessMode mode) {
-        return createHandle(ReplaceVectorNode.create(mode, false), //
+        return createHandle(ReplaceVectorNode.create(mode, false),
                         (node, args) -> node.apply(null, args[0], (Object[]) args[1], args[2]));
     }
 }

@@ -70,5 +70,4 @@ public interface TypeAndInstanceCheck {
 
         return positiveCoverage.transpose(positiveFromCls, positiveToCls, fromPositive, toPositive);
     }
-
 }

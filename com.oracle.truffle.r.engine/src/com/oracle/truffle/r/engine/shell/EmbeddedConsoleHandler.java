@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,6 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         } else {
             delegate.println(s);
         }
-
     }
 
     @Override
@@ -89,7 +88,6 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         } else {
             delegate.print(s);
         }
-
     }
 
     @Override
@@ -102,7 +100,6 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         } else {
             delegate.printErrorln(s);
         }
-
     }
 
     @Override
@@ -114,7 +111,6 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         } else {
             delegate.printError(s);
         }
-
     }
 
     @Override
@@ -145,12 +141,10 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
         if (delegate != null) {
             delegate.setPrompt(prompt);
         }
-
     }
 
     @Override
     public String getInputDescription() {
         return "<embedded input>";
     }
-
 }

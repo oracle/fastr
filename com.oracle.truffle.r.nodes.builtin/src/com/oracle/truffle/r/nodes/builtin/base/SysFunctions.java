@@ -125,7 +125,6 @@ public class SysFunctions {
                 return RDataFactory.createStringVector(data, complete);
             }
         }
-
     }
 
     /**
@@ -156,7 +155,6 @@ public class SysFunctions {
                     RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
                 }
             }
-
         }
     }
 
@@ -283,7 +281,6 @@ public class SysFunctions {
             }
             return s;
         }
-
     }
 
     @RBuiltin(name = "Sys.chmod", visibility = OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"}, behavior = IO)

@@ -66,7 +66,6 @@ public final class Geom {
             /* add a fuzz to ensure left continuity, but value must be >= 0 */
             return RMath.fmax2(0, Math.ceil(DPQ.rdtclog(p, lowerTail, logP) / RMath.log1p(-prob) - 1 - 1e-12));
         }
-
     }
 
     public static final class DGeom implements Function2_1 {

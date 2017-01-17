@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,8 +126,8 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRaw doString(String operand, //
-                    @Cached("create()") NAProfile naProfile, //
+    protected RRaw doString(String operand,
+                    @Cached("create()") NAProfile naProfile,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         int intValue;
         if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
@@ -198,8 +198,8 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doStringVector(RStringVector operand, //
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile, //
+    protected RRawVector doStringVector(RStringVector operand,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
                     @Cached("create()") NAProfile naProfile) {
         naCheck.enable(operand);
         byte[] bdata = new byte[operand.getLength()];

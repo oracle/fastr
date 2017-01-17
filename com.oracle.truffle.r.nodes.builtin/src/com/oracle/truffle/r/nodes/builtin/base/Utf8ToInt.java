@@ -62,5 +62,4 @@ public abstract class Utf8ToInt extends RBuiltinNode {
         }
         return ret;
     }
-
 }

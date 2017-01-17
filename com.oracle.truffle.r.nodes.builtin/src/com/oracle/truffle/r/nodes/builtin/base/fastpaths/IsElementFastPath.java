@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class IsElementFastPath extends RFastPathNode {
 
     @Specialization(guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractStringVector el, RAbstractStringVector set, //
-                    @Cached("create()") BranchProfile trueProfile, //
+    protected Byte iselementOne(RAbstractStringVector el, RAbstractStringVector set,
+                    @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
         String element = el.getDataAt(0);
         int length = set.getLength();
@@ -59,8 +59,8 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractDoubleVector set, //
-                    @Cached("create()") BranchProfile trueProfile, //
+    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractDoubleVector set,
+                    @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
         double element = el.getDataAt(0);
         int length = set.getLength();
@@ -75,16 +75,16 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(guards = "el.getLength() == 1")
-    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set, //
+    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         double element = el.getDataAt(0);
         return RRuntime.asLogical(profile.profile(element >= set.getStart() && element <= set.getEnd()));
     }
 
     @Specialization(contains = "isElementOneSequence", guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set, //
-                    @Cached("create()") NACheck na, //
-                    @Cached("create()") BranchProfile trueProfile, //
+    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set,
+                    @Cached("create()") NACheck na,
+                    @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
         double element = el.getDataAt(0);
         int length = set.getLength();

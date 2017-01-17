@@ -210,7 +210,6 @@ public class GrepFunctions {
             }
             return pcre;
         }
-
     }
 
     private abstract static class GrepAdapter extends CommonCodeAdapter {
@@ -593,7 +592,6 @@ public class GrepFunctions {
                             char c = input.charAt(i);
                             sb.append(upper ? Character.toUpperCase(c) : (lower ? Character.toLowerCase(c) : c));
                         }
-
                     } else if (p1 == 'U') {
                         upper = true;
                         lower = false;
@@ -1016,7 +1014,6 @@ public class GrepFunctions {
             assert firstInfo.captureNames.length > 0;
             return RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
@@ -1114,7 +1111,6 @@ public class GrepFunctions {
                     d[i][j] = min3(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
 
                 }
-
             }
 
             // Step 7

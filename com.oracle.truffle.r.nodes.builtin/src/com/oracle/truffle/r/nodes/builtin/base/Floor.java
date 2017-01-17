@@ -81,5 +81,4 @@ public abstract class Floor extends UnaryArithmeticBuiltinNode {
     public Object calculateUnboxed(Object op) {
         return super.calculateUnboxed(op);
     }
-
 }

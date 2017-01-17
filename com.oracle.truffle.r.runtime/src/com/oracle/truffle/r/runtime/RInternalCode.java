@@ -106,7 +106,5 @@ public final class RInternalCode {
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
-
     }
-
 }

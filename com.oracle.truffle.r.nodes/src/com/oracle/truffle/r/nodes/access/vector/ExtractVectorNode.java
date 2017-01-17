@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,11 +105,11 @@ public abstract class ExtractVectorNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
-    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object exact, Object dropDimensions, //
-                    @Cached("createForeignRead(positions)") Node foreignRead, //
-                    @Cached("positions.length") int cachedLength, //
-                    @Cached("create()") CastStringNode castNode, //
-                    @Cached("createFirstString()") FirstStringNode firstString, //
+    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object exact, Object dropDimensions,
+                    @Cached("createForeignRead(positions)") Node foreignRead,
+                    @Cached("positions.length") int cachedLength,
+                    @Cached("create()") CastStringNode castNode,
+                    @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("createClassProfile()") ValueProfile positionProfile) {
         Object position = positionProfile.profile(positions[0]);
         try {

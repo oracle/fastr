@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -335,7 +335,6 @@ public class FrameFunctions {
                         nodes.add(ConstantNode.create(head));
                         names.add(ArgumentsSignature.VARARG_NAME);
                     }
-
                 } else if (arg instanceof PromiseNode) {
                     nodes.add(((PromiseNode) arg).getPromiseExpr().asRNode());
                     names.add(sig.getName(i));
@@ -678,7 +677,7 @@ public class FrameFunctions {
         }
 
         @Specialization(guards = "n == 1")
-        protected REnvironment parentFrameDirect(VirtualFrame frame, @SuppressWarnings("unused") int n, //
+        protected REnvironment parentFrameDirect(VirtualFrame frame, @SuppressWarnings("unused") int n,
                         @Cached("new()") GetCallerFrameNode getCaller) {
             return REnvironment.frameToEnvironment(getCaller.execute(frame));
         }

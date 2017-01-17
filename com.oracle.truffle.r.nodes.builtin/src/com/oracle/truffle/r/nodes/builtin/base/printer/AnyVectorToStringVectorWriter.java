@@ -126,5 +126,4 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
         }
         return sv;
     }
-
 }

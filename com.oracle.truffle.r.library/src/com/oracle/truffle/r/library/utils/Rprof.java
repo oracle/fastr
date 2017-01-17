@@ -136,7 +136,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         } else {
             profState.memoryQuad.nodes += size;
         }
-
     }
 
     @Override
@@ -180,7 +179,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 }
             }
         }
-
     }
 
     /**
@@ -236,7 +234,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                     }
                     return null;
                 }
-
             });
         }
 
@@ -247,7 +244,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
-
     }
 
     /**
@@ -356,8 +352,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 RDataFactory.setTracingState(false);
                 MemoryCopyTracer.setTracingState(false);
             }
-
         }
-
     }
 }

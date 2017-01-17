@@ -201,7 +201,6 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                             tagbuf.append(String.format("$`%s`", ss));
                         }
                     }
-
                 } else {
                     if (taglen + indexWidth(i) > TAGBUFLEN) {
                         if (taglen <= TAGBUFLEN) {
@@ -227,7 +226,6 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 out.printf("\n [ reached getOption(\"max.print\") -- omitted %d entries ]",
                                 ns - npr);
             }
-
         } else {
             /* ns = length(s) == 0 */
 

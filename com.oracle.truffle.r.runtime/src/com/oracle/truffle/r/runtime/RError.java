@@ -786,6 +786,5 @@ public final class RError extends RuntimeException {
             this.message = message;
             hasArgs = message.indexOf('%') >= 0;
         }
-
     }
 }

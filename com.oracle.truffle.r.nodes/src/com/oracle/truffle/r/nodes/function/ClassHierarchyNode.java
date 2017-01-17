@@ -114,8 +114,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHrAttributable(RAttributable arg, //
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile, //
+    protected RStringVector getClassHrAttributable(RAttributable arg,
+                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
         DynamicObject attributes;

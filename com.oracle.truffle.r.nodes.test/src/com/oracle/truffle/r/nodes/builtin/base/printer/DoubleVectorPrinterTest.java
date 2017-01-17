@@ -32,5 +32,4 @@ public class DoubleVectorPrinterTest {
     public void testEncodeReal() {
         assertEquals("3.14159265358979e-06", DoubleVectorPrinter.encodeReal(Math.PI / 1000000));
     }
-
 }

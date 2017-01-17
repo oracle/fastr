@@ -213,7 +213,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 default:
                     return trySubsetPrimitive(extractedVector);
             }
-
         } else {
             writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
             RBaseNode.reportWork(this, 1);
@@ -427,7 +426,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                         foundNames = (RAbstractStringVector) newNames;
                     }
                 }
-
             }
         }
         return foundNames;

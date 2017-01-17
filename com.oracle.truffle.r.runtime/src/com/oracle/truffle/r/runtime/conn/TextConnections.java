@@ -232,7 +232,6 @@ public class TextConnections {
                 appendedLines.toArray(appendedData);
                 appendData(appendedData);
             }
-
         }
 
         void appendData(String[] appendedData) {
@@ -315,7 +314,6 @@ public class TextConnections {
             public void write(int b) {
                 throw RInternalError.unimplemented();
             }
-
         }
     }
 

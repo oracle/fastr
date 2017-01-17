@@ -142,7 +142,6 @@ final class MachOAccess implements AutoCloseable {
             flags = readInt();
             reserved = readInt();
         }
-
     }
 
     private enum LC_TYPE {
@@ -283,7 +282,6 @@ final class MachOAccess implements AutoCloseable {
                 sections[i] = new Section64(this);
             }
         }
-
     }
 
     private final class Section64 {
@@ -386,7 +384,6 @@ final class MachOAccess implements AutoCloseable {
             }
             return symbol;
         }
-
     }
 
     private class NList64 {
@@ -449,5 +446,4 @@ final class MachOAccess implements AutoCloseable {
         final long hw = readInt();
         return hw << 32 | (lw & 0xFFFFFFFFL);
     }
-
 }

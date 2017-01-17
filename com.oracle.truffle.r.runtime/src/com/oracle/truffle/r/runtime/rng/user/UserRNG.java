@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,6 @@ public final class UserRNG implements RandomNumberGenerator {
         private void setSymbolHandle(DLLInfo dllInfo) {
             this.symbolHandle = findSymbol(symbol, dllInfo, optional);
         }
-
     }
 
     private int nSeeds = 0;
@@ -110,7 +109,6 @@ public final class UserRNG implements RandomNumberGenerator {
         public Object execute(VirtualFrame frame) {
             return userRngRFFINode.rand();
         }
-
     }
 
     private RootCallTarget callGeneric;
@@ -198,5 +196,4 @@ public final class UserRNG implements RandomNumberGenerator {
     public void setISeed(int[] seeds) {
         // TODO: userRNG seems to be not using iseed?
     }
-
 }

@@ -92,7 +92,6 @@ public class RSource {
         Internal(String text) {
             this.string = text;
         }
-
     }
 
     /**

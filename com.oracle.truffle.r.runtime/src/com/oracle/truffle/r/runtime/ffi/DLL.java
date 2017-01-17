@@ -92,7 +92,6 @@ public class DLL {
             }
             list = null;
         }
-
     }
 
     /**
@@ -127,7 +126,6 @@ public class DLL {
             this.fun = fun;
             this.numArgs = numArgs;
         }
-
     }
 
     public static class RegisteredNativeSymbol {
@@ -148,7 +146,6 @@ public class DLL {
         public static RegisteredNativeSymbol any() {
             return new RegisteredNativeSymbol(NativeSymbolType.Any, null, null);
         }
-
     }
 
     public static final class DLLInfo implements RTruffleObject {
@@ -239,7 +236,6 @@ public class DLL {
         public String toString() {
             return String.format("name: %s, path: %s, dynamicLookup: %b, forceSymbols %b", name, path, dynamicLookup, forceSymbols);
         }
-
     }
 
     public static class SymbolInfo {

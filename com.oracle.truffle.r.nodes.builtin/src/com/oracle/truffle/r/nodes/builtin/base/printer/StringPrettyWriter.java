@@ -65,5 +65,4 @@ public class StringPrettyWriter extends StringWriter implements PrettyWriter {
     public String getPrintReport() {
         return toString();
     }
-
 }

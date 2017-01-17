@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -98,8 +98,8 @@ public class MethodsListDispatch {
 
         @Specialization
         @TruffleBoundary
-        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table, //
-                        @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess, //
+        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table,
+                        @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
@@ -334,7 +334,6 @@ public class MethodsListDispatch {
                                 String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
                                 ok = pckg.equals(gpckg);
                             }
-
                         } else {
                             ok = true;
                         }

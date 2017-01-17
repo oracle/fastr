@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -67,8 +67,8 @@ abstract class LoadMethod extends RBaseNode {
     private final BranchProfile noSourceAttr = BranchProfile.create();
 
     @Specialization
-    protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname, //
-                    @Cached("createClassProfile()") ValueProfile regFrameAccessProfile, //
+    protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname,
+                    @Cached("createClassProfile()") ValueProfile regFrameAccessProfile,
                     @Cached("createClassProfile()") ValueProfile methodsFrameAccessProfile) {
         DynamicObject attributes = fdef.getAttributes();
         assert attributes != null; // should have at least class attribute
@@ -133,11 +133,9 @@ abstract class LoadMethod extends RBaseNode {
                 // slow path
                 ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), caller, null, fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
             }
-
         } else {
             ret = fdef;
         }
         return ret;
     }
-
 }

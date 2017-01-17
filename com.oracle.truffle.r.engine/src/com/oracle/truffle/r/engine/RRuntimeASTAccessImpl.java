@@ -633,7 +633,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             } else {
                 return result;
             }
-
         }
 
         @TruffleBoundary

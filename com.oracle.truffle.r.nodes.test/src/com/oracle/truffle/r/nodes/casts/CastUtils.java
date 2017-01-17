@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,7 +101,6 @@ public class CastUtils {
                             return none;
                     }
                 }
-
             },
             partial {
                 @Override
@@ -151,7 +150,6 @@ public class CastUtils {
                             return none;
                     }
                 }
-
             },
             none {
                 @Override
@@ -197,7 +195,6 @@ public class CastUtils {
                             return none;
                     }
                 }
-
             },
             full {
                 @Override
@@ -285,7 +282,6 @@ public class CastUtils {
         public Coverage coverage() {
             return coverage;
         }
-
     }
 
     public static class Casts {
@@ -413,7 +409,6 @@ public class CastUtils {
         public static TypeExpr inputsAsTypeExpr(Set<Cast> casts) {
             return casts.stream().map(c -> TypeExpr.atom(c.inputType())).reduce((res, t) -> t.or(res)).orElse(TypeExpr.NOTHING);
         }
-
     }
 
     public static Set<List<Type>> argumentProductSet(List<TypeExpr> argTypeSets) {
@@ -639,7 +634,6 @@ public class CastUtils {
         } else {
             return Optional.of((T) vectorOrScalar);
         }
-
     }
 
     public static Optional<Class<?>> vectorElementType(Object vector) {
@@ -663,7 +657,6 @@ public class CastUtils {
         } else {
             return Optional.empty();
         }
-
     }
 
     public static Set<?> sampleValuesForTypeExpr(TypeExpr te) {
@@ -834,6 +827,5 @@ public class CastUtils {
         } else {
             return predicate;
         }
-
     }
 }

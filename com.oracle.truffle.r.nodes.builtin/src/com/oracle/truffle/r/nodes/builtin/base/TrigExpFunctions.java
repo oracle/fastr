@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,7 +170,6 @@ public class TrigExpFunctions {
             }
             return Math.sin(norm * Math.PI);
         }
-
     }
 
     @RBuiltin(name = "cos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -541,7 +540,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector atan2(double y, RAbstractDoubleVector x, //
+        protected RDoubleVector atan2(double y, RAbstractDoubleVector x,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
             xNACheck.enable(x);
             yNACheck.enable(y);
@@ -549,7 +548,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector atan2(RAbstractDoubleVector y, double x, //
+        protected RDoubleVector atan2(RAbstractDoubleVector y, double x,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
             xNACheck.enable(x);
             yNACheck.enable(y);
@@ -557,7 +556,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x, //
+        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
             int xLength = x.getLength();
             int yLength = y.getLength();

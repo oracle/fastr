@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,15 +88,15 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
-    protected Object doNumericVectorCached(Object left, Object right, //
+    protected Object doNumericVectorCached(Object left, Object right,
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
     @Specialization(contains = "doNumericVectorCached", guards = "isSupported(left, right)")
     @TruffleBoundary
-    protected Object doNumericVectorGeneric(Object left, Object right, //
-                    @Cached("factory.createOperation()") BooleanOperation operation, //
+    protected Object doNumericVectorGeneric(Object left, Object right,
+                    @Cached("factory.createOperation()") BooleanOperation operation,
                     @Cached("new(createCached(operation, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
@@ -130,7 +130,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isSymbolOrLang(left) || isSymbolOrLang(right)"})
-    protected Object doSymbol(VirtualFrame frame, Object left, Object right, //
+    protected Object doSymbol(VirtualFrame frame, Object left, Object right,
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (isSymbolOrLang(left)) {

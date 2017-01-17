@@ -121,12 +121,12 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization(contains = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
-    protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive, //
-                    @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
-                    @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence, //
-                    @Cached("createCast(cachedPrecedence)") CastNode cast, //
-                    @Cached("create()") BranchProfile naNameBranch, //
-                    @Cached("create()") NACheck naNameCheck, //
+    protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
+                    @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
+                    @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence,
+                    @Cached("createCast(cachedPrecedence)") CastNode cast,
+                    @Cached("create()") BranchProfile naNameBranch,
+                    @Cached("create()") NACheck naNameCheck,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode) {
         CompilerAsserts.partialEvaluationConstant(cachedSignature);
@@ -156,11 +156,11 @@ public abstract class Combine extends RBuiltinNode {
 
     @TruffleBoundary
     @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
-    protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive, //
-                    @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
-                    @Cached("createCast(cachedPrecedence)") CastNode cast, //
-                    @Cached("create()") BranchProfile naNameBranch, //
-                    @Cached("create()") NACheck naNameCheck, //
+    protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
+                    @Cached("precedence(args, args.getLength())") int cachedPrecedence,
+                    @Cached("createCast(cachedPrecedence)") CastNode cast,
+                    @Cached("create()") BranchProfile naNameBranch,
+                    @Cached("create()") NACheck naNameCheck,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode) {
         return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, naNameCheck, hasNamesProfile, getNamesNode);
@@ -168,7 +168,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = "recursive")
     protected Object combineRecursive(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
-                    @Cached("create()") Combine recursiveCombine, //
+                    @Cached("create()") Combine recursiveCombine,
                     @Cached("createBinaryProfile()") ConditionProfile useNewArgsProfile) {
         return combineRecursive(args, recursiveCombine, useNewArgsProfile);
     }
@@ -473,8 +473,8 @@ public abstract class Combine extends RBuiltinNode {
         }
 
         @Specialization(guards = "needsCopy(vector)")
-        protected RAbstractVector noCopy(RAbstractVector vector, //
-                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile, //
+        protected RAbstractVector noCopy(RAbstractVector vector,
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasDimNamesProfile) {
             RVector<?> materialized = vector.materialize();
             RVector<?> result = materialized.copyDropAttributes();

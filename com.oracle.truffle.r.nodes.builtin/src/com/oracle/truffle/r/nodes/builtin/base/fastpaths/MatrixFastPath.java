@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,14 +47,14 @@ public abstract class MatrixFastPath extends RFastPathNode {
     }
 
     @Specialization
-    protected Object matrix(RAbstractVector data, Object nrow, Object ncol, @SuppressWarnings("unused") RMissing byrow, Object dimnames, //
-                    @Cached("create()") CastIntegerNode castRow, //
-                    @Cached("create()") CastIntegerNode castCol, //
-                    @Cached("createFirst()") FirstIntNode firstRow, //
-                    @Cached("createFirst()") FirstIntNode firstCol, //
-                    @Cached("createBinaryProfile()") ConditionProfile rowMissingProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile colMissingProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile dimMissingProfile, //
+    protected Object matrix(RAbstractVector data, Object nrow, Object ncol, @SuppressWarnings("unused") RMissing byrow, Object dimnames,
+                    @Cached("create()") CastIntegerNode castRow,
+                    @Cached("create()") CastIntegerNode castCol,
+                    @Cached("createFirst()") FirstIntNode firstRow,
+                    @Cached("createFirst()") FirstIntNode firstCol,
+                    @Cached("createBinaryProfile()") ConditionProfile rowMissingProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile colMissingProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile dimMissingProfile,
                     @Cached("createMatrix()") Matrix matrix) {
         boolean rowMissing = rowMissingProfile.profile(nrow == RMissing.instance);
         boolean colMissing = colMissingProfile.profile(ncol == RMissing.instance);

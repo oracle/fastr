@@ -183,7 +183,6 @@ public class FortranAndCFunctions {
             }
             return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     /**
@@ -208,8 +207,8 @@ public class FortranAndCFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
-                        @Cached("symbol") RList cached, //
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
+                        @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
@@ -222,7 +221,7 @@ public class FortranAndCFunctions {
         }
 
         @Specialization
-        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding, //
+        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
@@ -259,7 +258,7 @@ public class FortranAndCFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, //
+        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
@@ -277,6 +276,5 @@ public class FortranAndCFunctions {
             }
             return dispatch(this, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
         }
-
     }
 }

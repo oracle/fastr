@@ -111,5 +111,4 @@ public class StartsEndsWithFunctions {
             return doIt(x, prefix, false);
         }
     }
-
 }

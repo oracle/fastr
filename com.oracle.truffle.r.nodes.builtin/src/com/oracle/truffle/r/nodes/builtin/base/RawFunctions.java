@@ -70,7 +70,6 @@ public class RawFunctions {
             }
             return RDataFactory.createRawVector(data);
         }
-
     }
 
     @RBuiltin(name = "rawToChar", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
@@ -104,7 +103,6 @@ public class RawFunctions {
             }
             return result;
         }
-
     }
 
     @RBuiltin(name = "rawShift", kind = INTERNAL, parameterNames = {"x", "n"}, behavior = PURE)
@@ -116,7 +114,7 @@ public class RawFunctions {
         }
 
         @Specialization
-        protected RRawVector rawShift(RAbstractRawVector x, int n, //
+        protected RRawVector rawShift(RAbstractRawVector x, int n,
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile) {
             byte[] data = new byte[x.getLength()];
             if (negativeShiftProfile.profile(n < 0)) {
@@ -130,7 +128,6 @@ public class RawFunctions {
             }
             return RDataFactory.createRawVector(data);
         }
-
     }
 
     // TODO the rest of the functions

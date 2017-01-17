@@ -145,7 +145,8 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor) {
+    protected void add(Class<?> builtinClass,
+                    Supplier<RBuiltinNode> constructor) {
         add(builtinClass, constructor, null);
     }
 

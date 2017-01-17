@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2000--2015, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -45,7 +45,7 @@ public abstract class IsListFactor extends RBuiltinNode {
         }
 
         @Specialization(guards = "list.getLength() > 0")
-        protected boolean islistfactor(RAbstractListVector list, //
+        protected boolean islistfactor(RAbstractListVector list,
                         @Cached("new()") IsFactorNode isFactor) {
             for (int i = 0; i < list.getLength(); i++) {
                 Object value = list.getDataAt(i);
@@ -80,7 +80,7 @@ public abstract class IsListFactor extends RBuiltinNode {
     }
 
     @Specialization(guards = "recursive == node.recursive")
-    protected byte isListFactor(Object value, @SuppressWarnings("unused") boolean recursive, //
+    protected byte isListFactor(Object value, @SuppressWarnings("unused") boolean recursive,
                     @Cached("createNode(recursive)") IsListFactorInternal node) {
         return RRuntime.asLogical(node.execute(value));
     }

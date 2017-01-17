@@ -66,15 +66,15 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
-    protected Object setClassCached(RAbstractContainer arg, @SuppressWarnings("unused") String className, //
-                    @Cached("className") String cachedClassName, //
+    protected Object setClassCached(RAbstractContainer arg, @SuppressWarnings("unused") String className,
+                    @Cached("className") String cachedClassName,
                     @Cached("fromMode(className)") RType cachedMode,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         return setClassInternal(arg, cachedClassName, cachedMode, getClassNode);
     }
 
     @Specialization(contains = "setClassCached")
-    protected Object setClass(RAbstractContainer arg, String className, //
+    protected Object setClass(RAbstractContainer arg, String className,
                     @Cached("create()") TypeFromModeNode typeFromMode,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         RType mode = typeFromMode.execute(className);

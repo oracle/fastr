@@ -222,12 +222,12 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() ==2"})
-    protected RDoubleVector pMinMaxTwoDouble(boolean naRm, RArgsValuesAndNames args, //
-                    @Cached("create()") NACheck naCheckX, //
-                    @Cached("create()") NACheck naCheckY, //
-                    @Cached("create()") CastDoubleNode castX, //
-                    @Cached("create()") CastDoubleNode castY, //
-                    @Cached("create()") CastToVectorNode castVectorX, //
+    protected RDoubleVector pMinMaxTwoDouble(boolean naRm, RArgsValuesAndNames args,
+                    @Cached("create()") NACheck naCheckX,
+                    @Cached("create()") NACheck naCheckY,
+                    @Cached("create()") CastDoubleNode castX,
+                    @Cached("create()") CastDoubleNode castY,
+                    @Cached("create()") CastToVectorNode castVectorX,
                     @Cached("create()") CastToVectorNode castVectorY) {
         Object[] argValues = args.getArguments();
         RAbstractDoubleVector x = (RAbstractDoubleVector) castVectorX.execute(castX.execute(argValues[0]));

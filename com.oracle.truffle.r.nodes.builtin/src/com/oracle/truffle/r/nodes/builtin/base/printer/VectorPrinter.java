@@ -282,7 +282,6 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             if (rpr < r) {
                 out.printf("\n [ reached getOption(\"max.print\") -- omitted %d rows ]", r - rpr);
             }
-
         }
 
         private void printMatrix(int offset, int rpr, int r, int c,
@@ -696,7 +695,6 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 }
                 hasDimNames = true;
             }
-
         }
 
         RAbstractStringVector getDimNamesAt(int dimLevel) {

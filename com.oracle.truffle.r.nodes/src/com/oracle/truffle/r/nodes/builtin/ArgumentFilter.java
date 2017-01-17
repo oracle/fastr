@@ -43,10 +43,8 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
-
     }
 
     interface ArgumentValueFilter<T> extends NarrowingArgumentFilter<T, T> {
@@ -65,7 +63,6 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
 
@@ -83,7 +80,6 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
 
@@ -101,7 +97,6 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
 
@@ -112,10 +107,8 @@ public interface ArgumentFilter<T, R> {
                 public boolean test(T arg) {
                     return !ArgumentValueFilter.this.test(arg);
                 }
-
             };
         }
-
     }
 
     interface ArgumentTypeFilter<T, R extends T> extends NarrowingArgumentFilter<T, R> {
@@ -135,7 +128,6 @@ public interface ArgumentFilter<T, R> {
                         return other.test((R) arg);
                     }
                 }
-
             };
         }
 
@@ -154,14 +146,12 @@ public interface ArgumentFilter<T, R> {
                         return other.test((R) arg);
                     }
                 }
-
             };
         }
 
         default InverseArgumentFilter<T, R> not() {
             return new InverseArgumentFilter<>(this);
         }
-
     }
 
     class InverseArgumentFilter<T, R extends T> implements ArgumentFilter<T, Object> {
@@ -195,7 +185,6 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
 
@@ -213,14 +202,11 @@ public interface ArgumentFilter<T, R> {
                         return other.test(arg);
                     }
                 }
-
             };
         }
 
         public <S extends T> InverseArgumentFilter<T, T> and(InverseArgumentFilter<T, S> other) {
             return new InverseArgumentFilter<>(other.orig.or(this.orig));
         }
-
     }
-
 }

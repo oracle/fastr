@@ -204,7 +204,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     if (directBuiltin != null && directBuiltin.isSplitCaller()) {
                         return true;
                     }
-
                 }
                 for (RSyntaxElement arg : arguments) {
                     if (arg != null && accept(arg)) {

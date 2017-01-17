@@ -422,7 +422,6 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             }
             isOriginal = false;
         }
-
     }
 
     private void evalArgsWithSampleCombinations(List<List<Object>> argSampleCombinations) {
@@ -502,7 +501,6 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             } else {
                 System.out.print('!');
             }
-
         } catch (Throwable e) {
             if (!printedErrors.contains(e.getMessage())) {
                 String call = ".Internal(" + builtinName + "(" + sb + "))";
@@ -574,7 +572,6 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
                 }
             }).collect(Collectors.toList());
         }
-
     }
 
     static List<List<Object>> mergeValidAndSampleArgs(RList validArgs, List<List<Object>> sampleArgsList) {

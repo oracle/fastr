@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -553,8 +553,8 @@ public class ConnectionSupport {
         /**
          * {@code gzfile} can open other connection classes, and this isn't known initially.
          */
-        public final void updateConnectionClass(ConnectionClass conClass) {
-            this.conClass = conClass;
+        public final void updateConnectionClass(ConnectionClass newConClass) {
+            this.conClass = newConClass;
         }
 
         protected void openNonLazyConnection() throws IOException {

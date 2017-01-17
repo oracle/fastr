@@ -50,7 +50,6 @@ public class EncodingFunctions {
             // TODO implement properly
             return RDataFactory.createStringVectorFromScalar("unknown");
         }
-
     }
 
     @RBuiltin(name = "setEncoding", kind = INTERNAL, parameterNames = {"x", "value"}, behavior = PURE)
@@ -68,6 +67,5 @@ public class EncodingFunctions {
             // TODO implement properly
             return x;
         }
-
     }
 }

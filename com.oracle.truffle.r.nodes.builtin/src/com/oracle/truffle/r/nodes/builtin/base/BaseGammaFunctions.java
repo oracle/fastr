@@ -99,7 +99,6 @@ public class BaseGammaFunctions {
         protected RDoubleVector lgamma(RAbstractLogicalVector x) {
             return lgamma(RClosures.createLogicalToDoubleVector(x));
         }
-
     }
 
     @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -156,7 +155,6 @@ public class BaseGammaFunctions {
         protected RDoubleVector digamma(RAbstractLogicalVector x) {
             return digamma(RClosures.createLogicalToDoubleVector(x));
         }
-
     }
 
     @NodeChildren({@NodeChild(value = "x"), @NodeChild(value = "n"), @NodeChild(value = "kode"), @NodeChild(value = "ans")})

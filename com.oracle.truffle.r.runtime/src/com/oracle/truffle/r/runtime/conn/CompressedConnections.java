@@ -277,5 +277,4 @@ public class CompressedConnections {
             RCompression.bzipCompressToFile(data, ((BasePathRConnection) base).path, append);
         }
     }
-
 }

@@ -222,7 +222,6 @@ public abstract class ConnectionFunctions {
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
-
     }
 
     /*
@@ -266,7 +265,6 @@ public abstract class ConnectionFunctions {
         protected GZFile() {
             super(RCompression.Type.GZIP);
         }
-
     }
 
     @RBuiltin(name = "bzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
@@ -274,7 +272,6 @@ public abstract class ConnectionFunctions {
         protected BZFile() {
             super(RCompression.Type.BZIP2);
         }
-
     }
 
     @RBuiltin(name = "xzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
@@ -282,7 +279,6 @@ public abstract class ConnectionFunctions {
         protected XZFile() {
             super(RCompression.Type.XZ);
         }
-
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)
@@ -330,7 +326,6 @@ public abstract class ConnectionFunctions {
                 throw RInternalError.shouldNotReachHere();
             }
         }
-
     }
 
     @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
@@ -461,7 +456,6 @@ public abstract class ConnectionFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"}, behavior = IO)
@@ -491,7 +485,6 @@ public abstract class ConnectionFunctions {
             }
             return RDataFactory.createLogicalVectorFromScalar(result);
         }
-
     }
 
     @RBuiltin(name = "close", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "type"}, behavior = IO)
@@ -542,7 +535,6 @@ public abstract class ConnectionFunctions {
                 throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
-
     }
 
     @RBuiltin(name = "writeLines", visibility = OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"}, behavior = IO)
@@ -565,7 +557,6 @@ public abstract class ConnectionFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "flush", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
@@ -604,7 +595,6 @@ public abstract class ConnectionFunctions {
             RConnection.fromIndex(connection).pushBack(data, newLine);
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
@@ -618,7 +608,6 @@ public abstract class ConnectionFunctions {
         protected int pushBackLength(int connection) {
             return RConnection.fromIndex(connection).pushBackLength();
         }
-
     }
 
     @RBuiltin(name = "clearPushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
@@ -634,7 +623,6 @@ public abstract class ConnectionFunctions {
             RConnection.fromIndex(connection).pushBackClear();
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"}, behavior = IO)
@@ -670,7 +658,6 @@ public abstract class ConnectionFunctions {
         boolean ncharsEmpty(RAbstractIntVector nchars) {
             return nchars.getLength() == 0;
         }
-
     }
 
     @RBuiltin(name = "writeChar", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "sep", "useBytes"}, behavior = IO)
@@ -1011,7 +998,6 @@ public abstract class ConnectionFunctions {
             }
             return buffer;
         }
-
     }
 
     @RBuiltin(name = "writeBin", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)

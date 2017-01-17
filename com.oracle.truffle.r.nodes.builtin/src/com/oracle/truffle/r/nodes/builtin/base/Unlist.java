@@ -767,7 +767,7 @@ public abstract class Unlist extends RBuiltinNode {
         return list.getLength() == 1 && list.getDataAt(0) == RNull.instance;
     }
 
-    private Object handlePairList(Object o) {
+    private static Object handlePairList(Object o) {
         return o instanceof RPairList ? ((RPairList) o).toRList() : o;
     }
 }

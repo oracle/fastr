@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,5 +60,4 @@ public class TestVanillaPackage extends TestRPackages {
     public void testQualifiedReplacement() {
         assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r<-42; vanilla::foo(r)<-7; detach(\"package:vanilla\"); r }", new String[]{TestRPackages.libLoc()}));
     }
-
 }

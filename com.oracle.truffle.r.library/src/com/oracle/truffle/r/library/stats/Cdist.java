@@ -143,7 +143,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 return Math.sqrt(dist);
 
             }
-
         },
         MAXIMUM {
             @Override
@@ -176,7 +175,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 return dist;
 
             }
-
         },
         MANHATTAN {
             @Override
@@ -210,7 +208,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 return dist;
 
             }
-
         },
         CANBERRA {
             @Override
@@ -252,7 +249,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 return dist;
 
             }
-
         },
         BINARY {
             @Override
@@ -295,7 +291,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 return (double) dist / count;
 
             }
-
         },
         MINKOWSKI {
             @Override
@@ -328,10 +323,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 }
                 return Math.pow(dist, 1.0 / p);
             }
-
         };
 
         public abstract double dist(double[] x, int nr, int nc, int i1, int i2, double p);
     }
-
 }

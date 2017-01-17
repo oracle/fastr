@@ -102,5 +102,4 @@ public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
             return null;
         }
     }
-
 }

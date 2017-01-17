@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,7 +115,7 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RComplex doCharacter(String operand, //
+    protected RComplex doCharacter(String operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
         if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
@@ -164,7 +164,7 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RComplexVector doStringVector(RStringVector operand, //
+    protected RComplexVector doStringVector(RStringVector operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength() << 1];

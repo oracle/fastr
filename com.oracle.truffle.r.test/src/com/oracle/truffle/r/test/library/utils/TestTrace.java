@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,5 +50,4 @@ public class TestTrace extends TestBase {
     public void testCondTrace() {
         assertEval(template("f <- function(x) {}; %0(f, tracer=quote(if (x == 3 || x == 7) print(x))); g <- function() for (i in 1:10) f(i); g()", TRACE_VARIANTS));
     }
-
 }

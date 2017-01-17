@@ -206,7 +206,7 @@ public final class UnaryMapNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    private void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
+    private static void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
         result.copyNamesFrom(attributeSource);
     }

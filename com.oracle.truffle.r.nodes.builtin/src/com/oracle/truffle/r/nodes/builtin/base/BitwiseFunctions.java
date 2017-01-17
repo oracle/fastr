@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -141,7 +141,6 @@ public class BitwiseFunctions {
         protected Function<Object, String> getArgType() {
             return x -> typeofA.execute(x).getName();
         }
-
     }
 
     @RBuiltin(name = "bitwiseAnd", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
@@ -163,7 +162,6 @@ public class BitwiseFunctions {
         protected Object differentTypes(Object a, Object b) {
             throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
         }
-
     }
 
     @RBuiltin(name = "bitwiseOr", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
@@ -233,7 +231,6 @@ public class BitwiseFunctions {
         protected Object bitwShiftRChar(RAbstractIntVector a, RAbstractStringVector n) {
             return makeNA(a.getLength());
         }
-
     }
 
     @RBuiltin(name = "bitwiseShiftL", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
@@ -263,7 +260,6 @@ public class BitwiseFunctions {
         protected Object bitwShiftLChar(RAbstractVector a, RAbstractStringVector n) {
             return makeNA(a.getLength());
         }
-
     }
 
     @RBuiltin(name = "bitwiseNot", kind = INTERNAL, parameterNames = {"a"}, behavior = PURE)
@@ -278,6 +274,5 @@ public class BitwiseFunctions {
         protected Object bitwNot(RAbstractIntVector a) {
             return bitNot(a);
         }
-
     }
 }

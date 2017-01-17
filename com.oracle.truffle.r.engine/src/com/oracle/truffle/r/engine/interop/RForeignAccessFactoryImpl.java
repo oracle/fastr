@@ -239,7 +239,6 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             }
             return foreignAccess;
         }
-
     }
 
     /**
@@ -286,5 +285,4 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
     public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
         return TruffleRLanguage.class;
     }
-
 }

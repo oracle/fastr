@@ -61,5 +61,4 @@ public abstract class RegFinalizer extends RBuiltinNode {
         // TODO the actual work
         return RNull.instance;
     }
-
 }

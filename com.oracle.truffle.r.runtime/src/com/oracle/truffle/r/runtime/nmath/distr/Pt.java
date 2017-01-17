@@ -80,6 +80,5 @@ public final class Pt implements Function2_2 {
             val /= 2.;
             return DPQ.rdcval(val, newLowerTail);
         }
-
     }
 }
