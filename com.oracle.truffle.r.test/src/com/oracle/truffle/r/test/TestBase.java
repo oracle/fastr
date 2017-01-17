@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -75,7 +75,8 @@ public class TestBase {
         MayIgnoreErrorContext, // like IgnoreErrorContext, but no warning if the messages match
         MayIgnoreWarningContext,
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
-        IgnoreWhitespace; // removes all whitespace from the whole output
+        IgnoreWhitespace, // removes all whitespace from the whole output
+        IgnoreCase; // ignores upper/lower case differences
 
         @Override
         public String getName() {
@@ -601,6 +602,9 @@ public class TestBase {
         String preprocessOutput(String out) {
             if (output.contains(Output.IgnoreWhitespace)) {
                 return out.replaceAll("\\s+", "");
+            }
+            if (output.contains(Output.IgnoreCase)) {
+                return out.toLowerCase();
             }
             if (output.contains(Output.ContainsReferences)) {
                 return convertReferencesInOutput(out);
