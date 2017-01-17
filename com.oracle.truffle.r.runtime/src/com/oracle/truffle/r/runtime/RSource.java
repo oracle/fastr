@@ -117,7 +117,7 @@ public class RSource {
      */
 
     public static Source fromTextInternal(String text, Internal description, String mimeType) {
-        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
+        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().interactive().build();
     }
 
     /**

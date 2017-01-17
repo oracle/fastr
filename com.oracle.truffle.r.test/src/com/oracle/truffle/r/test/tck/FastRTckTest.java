@@ -470,4 +470,15 @@ public class FastRTckTest extends TruffleTCK {
     public String multiplyCode(String firstName, String secondName) {
         return firstName + '*' + secondName;
     }
+
+    @Override
+    protected String[] metaObjects() {
+        return null; // TBD add proper impl here.
+    }
+
+    @Override
+    protected String valueWithSource() {
+        return null; // TBD add proper impl here.
+    }
+
 }
