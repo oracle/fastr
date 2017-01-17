@@ -57,7 +57,6 @@ public final class PNBeta implements Function4_2 {
             /* include standalone case */
             return (logP ? RMath.log1p(-ans) : (1. - ans));
         }
-
     }
 
     /*

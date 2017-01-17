@@ -73,5 +73,4 @@ public abstract class Quit extends RBuiltinNode {
         RCleanUp.cleanUp(ask, status, RRuntime.fromLogical(runLast));
         throw RInternalError.shouldNotReachHere("cleanup returned");
     }
-
 }

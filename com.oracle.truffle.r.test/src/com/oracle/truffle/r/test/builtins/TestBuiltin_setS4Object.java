@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -108,5 +108,4 @@ public class TestBuiltin_setS4Object extends TestBase {
         assertEval("{ x<-42; asS4(x, TRUE, logical()) }");
         assertEval("{ x<-42; asS4(x, TRUE, c(1,2)) }");
     }
-
 }

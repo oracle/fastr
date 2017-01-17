@@ -283,7 +283,6 @@ public final class SpecialAttributesFunctions {
                 x.initAttributes(null);
             }
         }
-
     }
 
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
@@ -585,7 +584,6 @@ public final class SpecialAttributesFunctions {
                 throw RError.error(this, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
             }
         }
-
     }
 
     public abstract static class RemoveDimAttributeNode extends RemoveSpecialAttributeNode {
@@ -603,7 +601,6 @@ public final class SpecialAttributesFunctions {
         protected void removeAttrFallback(DynamicObject attrs) {
             super.removeAttrFallback(attrs);
         }
-
     }
 
     public abstract static class GetDimAttributeNode extends GetFixedAttributeNode {
@@ -713,7 +710,6 @@ public final class SpecialAttributesFunctions {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
             }
         }
-
     }
 
     public abstract static class SetDimNamesAttributeNode extends SetSpecialAttributeNode {
@@ -828,7 +824,6 @@ public final class SpecialAttributesFunctions {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setDimNames(dimNames);
         }
-
     }
 
     public abstract static class RemoveDimNamesAttributeNode extends RemoveSpecialAttributeNode {
@@ -894,7 +889,6 @@ public final class SpecialAttributesFunctions {
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return xTypeProfile.profile(x).getDimNames();
         }
-
     }
 
     public abstract static class SetRowNamesAttributeNode extends SetSpecialAttributeNode {
@@ -956,7 +950,6 @@ public final class SpecialAttributesFunctions {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setRowNames(rowNames);
         }
-
     }
 
     public abstract static class RemoveRowNamesAttributeNode extends RemoveSpecialAttributeNode {
@@ -1028,7 +1021,6 @@ public final class SpecialAttributesFunctions {
         protected Object getVectorRowNames(RAbstractContainer x) {
             return x.getRowNames();
         }
-
     }
 
     public abstract static class SetClassAttributeNode extends SetSpecialAttributeNode {
@@ -1113,7 +1105,6 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") RemoveClassAttributeNode removeClassNode) {
             removeClassNode.execute(x);
         }
-
     }
 
     public abstract static class RemoveClassAttributeNode extends RemoveSpecialAttributeNode {
@@ -1131,7 +1122,6 @@ public final class SpecialAttributesFunctions {
         protected void removeAttrFallback(DynamicObject attrs) {
             super.removeAttrFallback(attrs);
         }
-
     }
 
     public abstract static class GetClassAttributeNode extends GetFixedAttributeNode {
@@ -1157,7 +1147,5 @@ public final class SpecialAttributesFunctions {
             RStringVector result = v instanceof RStringVector ? (RStringVector) v : x.getImplicitClass();
             return result != null ? result : RDataFactory.createEmptyStringVector();
         }
-
     }
-
 }

@@ -905,5 +905,4 @@ public class RRuntime {
     private static boolean hasDims(RAbstractContainer xa) {
         return xa.hasDimensions();
     }
-
 }

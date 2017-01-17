@@ -1013,7 +1013,6 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
                 result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, argsList.getNames(),
                                 argsList.getDataNonShared());
             }
-
         } else {
             // just return value
             result = expr;
@@ -1239,7 +1238,6 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             // TODO incomplete
             return new ParseResult(ParseStatus.PARSE_ERROR.ordinal(), RNull.instance);
         }
-
     }
 
     @Override
@@ -1490,7 +1488,6 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             // TODO: is it OK to pass "" if path is null?
             return RSrcref.createLloc(ss, path == null ? "" : path);
         }
-
     }
 
     @Override
@@ -1622,5 +1619,4 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
         System.out.println("object " + x);
         System.out.println("class " + x.getClass());
     }
-
 }

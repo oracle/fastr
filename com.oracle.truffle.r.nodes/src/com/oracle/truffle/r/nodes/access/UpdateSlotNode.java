@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -46,8 +46,8 @@ public abstract class UpdateSlotNode extends RNode {
     }
 
     @Specialization(guards = {"!isData(name)"})
-    protected Object updateSlotS4Cached(RAttributable object, String name, Object value, //
-                    @Cached("createAttrUpdate()") SetAttributeNode attributeUpdate, //
+    protected Object updateSlotS4Cached(RAttributable object, String name, Object value,
+                    @Cached("createAttrUpdate()") SetAttributeNode attributeUpdate,
                     @Cached("create()") InitAttributesNode initAttributes) {
         assert Utils.isInterned(name);
         attributeUpdate.execute(initAttributes.execute(object), name, prepareValue(value));

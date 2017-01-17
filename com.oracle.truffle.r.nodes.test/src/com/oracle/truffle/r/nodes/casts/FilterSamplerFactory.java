@@ -143,7 +143,6 @@ public final class FilterSamplerFactory
 
                 return thisSamples.and(otherSamples);
             }
-
         };
     }
 
@@ -181,7 +180,6 @@ public final class FilterSamplerFactory
                 Samples otherSamples = rightFilter.collectSamples(inputType);
                 return Samples.<Object> anything().and(thisSamples).or(otherSamples);
             }
-
         };
     }
 
@@ -213,7 +211,6 @@ public final class FilterSamplerFactory
                 Samples thisSamples = toNegate.collectSamples(inputType);
                 return thisSamples.swap();
             }
-
         };
     }
 
@@ -464,5 +461,4 @@ public final class FilterSamplerFactory
                 throw RInternalError.unimplemented("TODO: more operations here");
         }
     }
-
 }

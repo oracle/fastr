@@ -49,5 +49,4 @@ public abstract class Tabulate extends RBuiltinNode {
         }
         return RDataFactory.createIntVector(ans, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

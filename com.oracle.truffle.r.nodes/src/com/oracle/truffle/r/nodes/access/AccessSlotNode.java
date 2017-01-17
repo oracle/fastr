@@ -113,7 +113,7 @@ public abstract class AccessSlotNode extends RNode {
 
     @Specialization(guards = {"slotAccessAllowed(object)"})
     protected Object getSlotS4Cached(RAttributable object, String name,
-                    @Cached("createAttrAccess()") GetAttributeNode attrAccess, //
+                    @Cached("createAttrAccess()") GetAttributeNode attrAccess,
                     @Cached("create()") InitAttributesNode initAttrNode,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         Object value = attrAccess.execute(initAttrNode.execute(object), name);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,8 +45,8 @@ public abstract class ReuseNonSharedNode extends Node {
     public abstract Object execute(Object value);
 
     @Specialization
-    protected RShareable getStorage(RSharingAttributeStorage value, //
-                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile, //
+    protected RShareable getStorage(RSharingAttributeStorage value,
+                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile,
                     @Cached("createClassProfile()") ValueProfile copyProfile) {
         if (isSharedProfile.profile(value.isShared())) {
             RShareable res = copyProfile.profile(value).copy();
@@ -57,7 +57,7 @@ public abstract class ReuseNonSharedNode extends Node {
     }
 
     @Specialization(contains = "getStorage")
-    protected static RShareable getRShareable(RShareable value, //
+    protected static RShareable getRShareable(RShareable value,
                     @Cached("createBinaryProfile()") ConditionProfile isSharedProfile) {
         if (isSharedProfile.profile(value.isShared())) {
             RShareable res = value.copy();

@@ -34,5 +34,4 @@ public class ComplexVectorPrinterTest {
     public void testEncodeComplex() {
         assertEquals("3.14159265358979e-05+3.1415926535898e-06i", ComplexVectorPrinter.encodeComplex(RDataFactory.createComplex(Math.PI / 100000, Math.PI / 1000000)));
     }
-
 }

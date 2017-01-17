@@ -149,7 +149,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object matchList(RAbstractListVector x, Object table, Object nomatchObj, Object incomparables, //
+    protected Object matchList(RAbstractListVector x, Object table, Object nomatchObj, Object incomparables,
                     @Cached("create()") CastStringNode cast) {
         return matchRecursive(cast.execute(x), table, nomatchObj, incomparables);
     }
@@ -333,9 +333,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization(guards = "x.getLength() == 1")
-    protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, int nomatch, @SuppressWarnings("unused") Object incomparables, //
-                    @Cached("create()") NAProfile naProfile, //
-                    @Cached("create()") BranchProfile foundProfile, //
+    protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
+                    @Cached("create()") NAProfile naProfile,
+                    @Cached("create()") BranchProfile foundProfile,
                     @Cached("create()") BranchProfile notFoundProfile) {
         String element = x.getDataAt(0);
         int length = table.getLength();

@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -83,9 +83,9 @@ public abstract class DispatchGeneric extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "equalClasses(classes, cachedClasses)")
     protected Object dispatchCached(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
-                    @Cached("classes") RStringVector cachedClasses, //
-                    @Cached("createDispatchString(cachedClasses)") String dispatchString, //
-                    @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead, //
+                    @Cached("classes") RStringVector cachedClasses,
+                    @Cached("createDispatchString(cachedClasses)") String dispatchString,
+                    @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead,
                     @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
         RFunction method = (RFunction) tableRead.execute(frame, mtable.getFrame(frameAccessProfile));
         return dispatchInternal(frame, mtable, classes, fdef, fname, method);

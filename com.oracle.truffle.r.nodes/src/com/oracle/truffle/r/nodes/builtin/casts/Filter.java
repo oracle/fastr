@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,7 +167,6 @@ public abstract class Filter<T, R extends T> {
             public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
                 return visitor.visit(this, operation);
             }
-
         }
 
         public static final class NATest implements Subject {
@@ -181,7 +180,6 @@ public abstract class Filter<T, R extends T> {
             public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
                 return visitor.visit(this, operation);
             }
-
         }
 
         public static final class StringLength implements Subject {

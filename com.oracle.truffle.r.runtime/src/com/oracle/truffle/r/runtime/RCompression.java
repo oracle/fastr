@@ -245,5 +245,4 @@ public class RCompression {
         }
         throw new IOException();
     }
-
 }

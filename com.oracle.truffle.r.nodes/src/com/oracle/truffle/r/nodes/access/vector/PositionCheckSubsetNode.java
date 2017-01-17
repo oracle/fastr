@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
-    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength, //
+    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         assert positionLength > 0;
         positionNACheck.enable(position);
@@ -93,7 +93,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(contains = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
-                    int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile, //
+                    int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int positionIndex = 0;
@@ -130,12 +130,12 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(/* contains = "doSequence" */)
-    protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength, //
-                    @Cached("create()") BranchProfile seenZeroProfile, //
-                    @Cached("create()") BranchProfile seenPositiveProfile, //
-                    @Cached("create()") BranchProfile seenNegativeProfile, //
-                    @Cached("create()") BranchProfile seenOutOfBounds, //
-                    @Cached("create()") NullProfile hasNamesProfile, //
+    protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength,
+                    @Cached("create()") BranchProfile seenZeroProfile,
+                    @Cached("create()") BranchProfile seenPositiveProfile,
+                    @Cached("create()") BranchProfile seenNegativeProfile,
+                    @Cached("create()") BranchProfile seenOutOfBounds,
+                    @Cached("create()") NullProfile hasNamesProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
                     @Cached("create()") SetNamesAttributeNode setNamesNode) {
@@ -203,14 +203,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(/* contains = "doSequence" */)
-    protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RAbstractIntVector position, int positionLength, //
-                    @Cached("create()") BranchProfile seenZeroProfile, //
-                    @Cached("create()") BranchProfile seenPositiveProfile, //
-                    @Cached("create()") BranchProfile seenNegativeProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile seenNAFlagProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile, //
-                    @Cached("create()") BranchProfile seenOutOfBounds, //
+    protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RAbstractIntVector position, int positionLength,
+                    @Cached("create()") BranchProfile seenZeroProfile,
+                    @Cached("create()") BranchProfile seenPositiveProfile,
+                    @Cached("create()") BranchProfile seenNegativeProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenNAFlagProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
+                    @Cached("create()") BranchProfile seenOutOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
 
         positionNACheck.enable(position);

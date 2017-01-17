@@ -783,7 +783,6 @@ public final class TOMS708 {
                     } else {
                         ans *= c * (b / apb);
                     }
-
                 } else { /* ------ a0 < 1 < b0 < 8 ------ */
 
                     double u = gamln1(a0);
@@ -815,7 +814,6 @@ public final class TOMS708 {
                         ans = exp(z) * (a0 / a) * (gam1(b0) + 1.0) / t;
                     }
                 }
-
             } else { /* ------ a0 < 1 < 8 <= b0 ------ */
 
                 double u = gamln1(a0) + algdiv(a0, b0);
@@ -1374,13 +1372,11 @@ public final class TOMS708 {
                     debugPrintf(" => q_r=%.15f\n", q * exp(-logR));
                     return q * exp(-logR);
                 }
-
             } else {
                 double p = exp(z) * g * (0.5 - j + 0.5);
                 debugPrintf(" => q_r=%.15f\n", (0.5 - p + 0.5) * exp(-logR));
                 return /* q/r = */(0.5 - p + 0.5) * exp(-logR);
             }
-
         } else {
             /* L50: ---- (x >= 1.1) ---- Continued Fraction Expansion */
 
@@ -2153,7 +2149,6 @@ public final class TOMS708 {
                 }
                 return log(w) - n * log(b) + (gamln(a) + algdiv(a, b));
             }
-
         } else {
             /* ----------------------------------------------------------------------- */
             // L60: A >= 8

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
 
     @Specialization(contains = "doDefault")
     @SuppressWarnings("unused")
-    protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions, //
+    protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object currentVector = vector;

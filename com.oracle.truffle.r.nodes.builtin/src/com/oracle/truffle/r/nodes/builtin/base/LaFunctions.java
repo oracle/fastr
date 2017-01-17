@@ -92,7 +92,6 @@ public class LaFunctions {
             casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
             casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
-
     }
 
     @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
@@ -189,7 +188,6 @@ public class LaFunctions {
             }
             return RDataFactory.createComplexVector(s, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
         }
-
     }
 
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
@@ -246,7 +244,6 @@ public class LaFunctions {
             return RDataFactory.createList(data, names);
 
         }
-
     }
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)
@@ -649,6 +646,5 @@ public class LaFunctions {
             }
             return b;
         }
-
     }
 }

@@ -64,7 +64,6 @@ public class JNI_Stats implements StatsRFFI {
             assert fftAddress != DLL.SYMBOL_NOT_FOUND;
             return fftAddress;
         }
-
     }
 
     @Override

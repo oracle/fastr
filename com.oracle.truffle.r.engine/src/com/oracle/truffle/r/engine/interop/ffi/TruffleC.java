@@ -79,5 +79,4 @@ class TruffleC implements CRFFI {
     public CRFFINode createCRFFINode() {
         return new TruffleCRFFINode();
     }
-
 }

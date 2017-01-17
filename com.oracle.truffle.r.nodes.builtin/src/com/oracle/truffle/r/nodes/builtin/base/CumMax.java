@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -67,7 +67,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractIntVector cummaxIntSequence(RIntSequence v, //
+    protected RAbstractIntVector cummaxIntSequence(RIntSequence v,
                     @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
         if (negativeStrideProfile.profile(v.getStride() < 0)) {
             // all numbers are smaller than the first one
@@ -120,5 +120,4 @@ public abstract class CumMax extends RBuiltinNode {
         }
         return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
-
 }

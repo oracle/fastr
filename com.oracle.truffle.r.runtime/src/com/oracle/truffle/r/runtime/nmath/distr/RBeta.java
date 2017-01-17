@@ -145,5 +145,4 @@ public final class RBeta extends RandFunction2_Double {
             return Double.MAX_VALUE;
         }
     }
-
 }

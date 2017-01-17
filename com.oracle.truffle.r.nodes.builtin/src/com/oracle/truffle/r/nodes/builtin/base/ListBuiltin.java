@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,14 +82,14 @@ public abstract class ListBuiltin extends RBuiltinNode {
      * This specialization unrolls the loop that shares the list elements, uses a different
      * {@link ShareObjectNode} for each element, and keeps a cached version of the name vector.
      */
-    @Specialization(limit = "CACHE_LIMIT", guards = {"!args.isEmpty()", //
-                    "args.getLength() <= MAX_SHARE_OBJECT_NODES", //
-                    "cachedLength == args.getLength()", //
+    @Specialization(limit = "CACHE_LIMIT", guards = {"!args.isEmpty()",
+                    "args.getLength() <= MAX_SHARE_OBJECT_NODES",
+                    "cachedLength == args.getLength()",
                     "cachedSignature == args.getSignature()"})
     @ExplodeLoop
-    protected RList listCached(RArgsValuesAndNames args, //
-                    @Cached("args.getLength()") int cachedLength, //
-                    @SuppressWarnings("unused") @Cached("args.getSignature()") ArgumentsSignature cachedSignature, //
+    protected RList listCached(RArgsValuesAndNames args,
+                    @Cached("args.getLength()") int cachedLength,
+                    @SuppressWarnings("unused") @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
                     @Cached("cachedArgNameVector(cachedSignature)") RStringVector cachedArgNames) {
         Object[] argArray = args.getArguments();
         for (int i = 0; i < cachedLength; i++) {

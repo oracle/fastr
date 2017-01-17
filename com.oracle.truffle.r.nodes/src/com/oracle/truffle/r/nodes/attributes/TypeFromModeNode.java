@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,8 @@ public abstract class TypeFromModeNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(limit = "CACHE_LIMIT", guards = "mode == cachedMode")
-    protected RType getTypeCAched(String mode, //
-                    @Cached("mode") String cachedMode, //
+    protected RType getTypeCAched(String mode,
+                    @Cached("mode") String cachedMode,
                     @Cached("fromMode(mode)") RType type) {
         return type;
     }

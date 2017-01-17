@@ -79,7 +79,6 @@ public class IsTypeFunctions {
         protected void createCasts(CastBuilder casts) {
             casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
         }
-
     }
 
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,8 +43,8 @@ public abstract class CastTypeNode extends BinaryNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"typeof.execute(value) != type", "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
-    protected static Object doCast(RAbstractVector value, RType type, //
-                    @Cached("type") RType cachedType, //
+    protected static Object doCast(RAbstractVector value, RType type,
+                    @Cached("type") RType cachedType,
                     @Cached("createCast(cachedType)") CastNode cast) {
         return cast.execute(value);
     }

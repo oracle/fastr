@@ -269,7 +269,6 @@ public class RSerialize {
         protected static IOException formatError(byte format, boolean ok) throws IOException {
             throw new IOException("serialized stream format " + (ok ? "not implemented" : "not recognized") + ": " + format);
         }
-
     }
 
     public static final int DEFAULT_VERSION = 2;
@@ -2236,7 +2235,6 @@ public class RSerialize {
                     if (i != arguments.length - 1) {
                         state.openPairList();
                     }
-
                 }
                 state.linkPairList(arguments.length);
             }

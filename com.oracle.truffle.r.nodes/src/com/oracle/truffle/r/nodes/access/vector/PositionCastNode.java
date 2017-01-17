@@ -103,8 +103,8 @@ abstract class PositionCastNode extends Node {
     }
 
     @Specialization
-    protected RAbstractVector doDouble(RAbstractDoubleVector position, //
-                    @Cached("createIntegerCast()") CastIntegerNode cast, //
+    protected RAbstractVector doDouble(RAbstractDoubleVector position,
+                    @Cached("createIntegerCast()") CastIntegerNode cast,
                     @Cached("create()") BoxPrimitiveNode box) {
         if (mode.isSubscript()) {
             // double gets casted to integer for subscript

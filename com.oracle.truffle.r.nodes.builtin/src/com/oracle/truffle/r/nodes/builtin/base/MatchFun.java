@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,8 +71,8 @@ public abstract class MatchFun extends RBuiltinNode {
     }
 
     @Specialization
-    protected static RFunction matchFun(VirtualFrame frame, RPromise funPromise, boolean descend, //
-                    @Cached("new()") PromiseHelperNode promiseHelper, //
+    protected static RFunction matchFun(VirtualFrame frame, RPromise funPromise, boolean descend,
+                    @Cached("new()") PromiseHelperNode promiseHelper,
                     @Cached("createInternal()") MatchFunInternal internal) {
         Object funValue = promiseHelper.evaluate(frame, funPromise);
         return internal.execute(frame, funPromise, funValue, descend);
@@ -125,8 +125,8 @@ public abstract class MatchFun extends RBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "LIMIT", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName"})
-        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend, //
-                        @Cached("firstString(funValue)") String cachedName, //
+        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend,
+                        @Cached("firstString(funValue)") String cachedName,
                         @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
@@ -138,8 +138,8 @@ public abstract class MatchFun extends RBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "LIMIT", guards = {"funValue.getName() == cachedName"})
-        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend, //
-                        @Cached("firstString(funValue)") String cachedName, //
+        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
+                        @Cached("firstString(funValue)") String cachedName,
                         @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }

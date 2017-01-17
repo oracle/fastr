@@ -276,7 +276,6 @@ abstract class PositionCheckNode extends Node {
             }
             return RDataFactory.createDoubleVector(iv, doublePos.isComplete());
         }
-
     }
 
     public boolean isEmptyPosition(Object position) {
@@ -286,5 +285,4 @@ abstract class PositionCheckNode extends Node {
         Object castPosition = positionClassProfile.profile(position);
         return castPosition instanceof RAbstractContainer && ((RAbstractContainer) castPosition).getLength() == 0;
     }
-
 }

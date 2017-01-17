@@ -212,7 +212,6 @@ public class TestBase {
             } catch (Throwable ex) {
                 throw new AssertionError("R initialization failure", ex);
             }
-
         }
 
         @Override
@@ -237,7 +236,6 @@ public class TestBase {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
-
         }
 
         @Override

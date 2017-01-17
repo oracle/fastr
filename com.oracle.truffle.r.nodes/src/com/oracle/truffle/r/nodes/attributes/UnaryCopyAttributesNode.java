@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,16 +81,16 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source)"})
-    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source, //
-                    @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
-                    @Cached("createDim()") RemoveFixedAttributeNode removeDim, //
-                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames, //
-                    @Cached("create()") InitAttributesNode initAttributes, //
-                    @Cached("createNames()") SetFixedAttributeNode putNames, //
-                    @Cached("createDim()") SetFixedAttributeNode putDim, //
-                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames, //
-                    @Cached("createBinaryProfile()") ConditionProfile noDimensions, //
-                    @Cached("createBinaryProfile()") ConditionProfile hasNamesSource, //
+    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source,
+                    @Cached("create()") CopyOfRegAttributesNode copyOfReg,
+                    @Cached("createDim()") RemoveFixedAttributeNode removeDim,
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
+                    @Cached("create()") InitAttributesNode initAttributes,
+                    @Cached("createNames()") SetFixedAttributeNode putNames,
+                    @Cached("createDim()") SetFixedAttributeNode putDim,
+                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames,
+                    @Cached("createBinaryProfile()") ConditionProfile noDimensions,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesSource,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getDimsNode) {
         RVector<?> result = target.materialize();

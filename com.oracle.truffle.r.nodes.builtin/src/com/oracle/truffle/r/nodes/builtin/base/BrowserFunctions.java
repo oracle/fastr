@@ -124,7 +124,6 @@ public class BrowserFunctions {
         protected Object browserText(int n) {
             return getHelperState(n).text;
         }
-
     }
 
     @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
@@ -135,7 +134,6 @@ public class BrowserFunctions {
         protected Object browserCondition(int n) {
             return getHelperState(n).condition;
         }
-
     }
 
     @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)

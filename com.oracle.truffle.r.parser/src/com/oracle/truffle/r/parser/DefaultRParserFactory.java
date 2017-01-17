@@ -97,12 +97,10 @@ public class DefaultRParserFactory extends RParserFactory {
                 throw new ParseException(e, source, token, substring, e.line);
             }
         }
-
     }
 
     @Override
     protected <T> Parser<T> createParser() {
         return new DefaultParser<>();
     }
-
 }

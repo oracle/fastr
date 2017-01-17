@@ -110,7 +110,6 @@ public class FastRStats {
                 } catch (IOException ex) {
                     throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
-
             }
             return RNull.instance;
         }
@@ -155,9 +154,7 @@ public class FastRStats {
                 AttributeTracer.setTracingState(false);
                 closeAndResetOut();
             }
-
         }
-
     }
 
     @RBuiltin(name = ".fastr.stats.typecounts", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append"}, behavior = COMPLEX)
@@ -198,7 +195,6 @@ public class FastRStats {
                 } catch (IOException ex) {
                     throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
-
             }
             return RNull.instance;
         }
@@ -253,7 +249,6 @@ public class FastRStats {
                 public String toString() {
                     return Integer.toString(count);
                 }
-
             }
 
             private Map<Class<? extends RTypedValue>, SortedMap<Integer, Counter>> typecountsMap;
@@ -291,7 +286,6 @@ public class FastRStats {
                 closeAndResetOut();
             }
         }
-
     }
 
     @RBuiltin(name = ".fastr.stats.funcounts", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append", "timing", "threshold", "histograms"}, behavior = COMPLEX)
@@ -336,7 +330,6 @@ public class FastRStats {
                 } catch (IOException ex) {
                     throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
-
             }
             return RNull.instance;
         }
@@ -416,7 +409,6 @@ public class FastRStats {
             private static double percent(long a, long b) {
                 return ((double) a * 100) / b;
             }
-
         }
 
         private static final class SortableCounter implements Comparable<SortableCounter> {
@@ -440,8 +432,6 @@ public class FastRStats {
                     return myInvocations < otherInvocations ? 1 : (myInvocations > otherInvocations ? -1 : 0);
                 }
             }
-
         }
-
     }
 }

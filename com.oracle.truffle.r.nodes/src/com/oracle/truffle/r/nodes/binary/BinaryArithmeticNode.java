@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,15 +78,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
-    protected Object doNumericVectorCached(Object left, Object right, //
+    protected Object doNumericVectorCached(Object left, Object right,
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
     @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
     @TruffleBoundary
-    protected Object doNumericVectorGeneric(Object left, Object right, //
-                    @Cached("binary.createOperation()") BinaryArithmetic arithmetic, //
+    protected Object doNumericVectorGeneric(Object left, Object right,
+                    @Cached("binary.createOperation()") BinaryArithmetic arithmetic,
                     @Cached("new(createCached(arithmetic, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
@@ -106,7 +106,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object doUnary(Object left, RMissing right, //
+    protected Object doUnary(Object left, RMissing right,
                     @Cached("createUnaryArithmeticNode()") UnaryArithmeticNode unaryNode) {
         return unaryNode.execute(left);
     }
@@ -127,7 +127,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isNumericVector(right)"})
-    protected static Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right, //
+    protected static Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         if (((RAbstractVector) classProfile.profile(right)).getRType() == RType.Complex) {
             return RDataFactory.createEmptyComplexVector();
@@ -137,7 +137,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isNumericVector(left)"})
-    protected static Object doRightNull(Object left, RNull right, //
+    protected static Object doRightNull(Object left, RNull right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         return doLeftNull(right, left, classProfile);
     }

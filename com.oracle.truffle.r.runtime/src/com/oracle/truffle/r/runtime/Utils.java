@@ -502,7 +502,6 @@ public final class Utils {
             }
             return null;
         }
-
     }
 
     /**
@@ -940,5 +939,4 @@ public final class Utils {
     public static String stringFormat(String format, Object... objects) {
         return String.format(format, objects);
     }
-
 }

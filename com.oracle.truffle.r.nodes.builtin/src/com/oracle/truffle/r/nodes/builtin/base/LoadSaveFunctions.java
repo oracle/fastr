@@ -149,7 +149,6 @@ public class LoadSaveFunctions {
                     default:
 
                 }
-
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.FILE_OPEN_ERROR);
             }

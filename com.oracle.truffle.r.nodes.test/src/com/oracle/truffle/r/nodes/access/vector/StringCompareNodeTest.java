@@ -87,13 +87,13 @@ public class StringCompareNodeTest extends TestBase {
     }
 
     private static boolean executeCompare(boolean exact, String a, String b) {
-        NodeHandle<CompareStringNode> handle = createHandle(exact ? CompareStringNode.createEquals() : CompareStringNode.createStartsWith(), //
+        NodeHandle<CompareStringNode> handle = createHandle(exact ? CompareStringNode.createEquals() : CompareStringNode.createStartsWith(),
                         (node, args) -> node.executeCompare((String) args[0], (String) args[1]));
         return (Boolean) handle.call(a, b);
     }
 
     private static boolean executeHashCompare(String a, String b) {
-        NodeHandle<StringEqualsNode> handle = createHandle(CompareStringNode.createEquals(), //
+        NodeHandle<StringEqualsNode> handle = createHandle(CompareStringNode.createEquals(),
                         (node, args) -> node.executeCompare((String) args[0], ((String) args[0]).hashCode(), (String) args[1]));
         return (Boolean) handle.call(a, b);
     }

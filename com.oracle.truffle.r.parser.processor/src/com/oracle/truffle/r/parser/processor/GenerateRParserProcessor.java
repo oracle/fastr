@@ -87,7 +87,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
                     int rc = new ProcessBuilder(command).directory(parserSrcDir).redirectError(tempFile).start().waitFor();
                     if (rc != 0) {
                         String out = new String(Files.readAllBytes(tempFile.toPath()));
-                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, //
+                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
                                         String.format("Parser failed to execute command %s. Return code %s.%nOutput:%s", Arrays.toString(command), rc, out), element);
                         return false;
                     }

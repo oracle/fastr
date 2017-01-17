@@ -90,7 +90,5 @@ public abstract class AsRealNode extends Node {
         } else {
             return false;
         }
-
     }
-
 }

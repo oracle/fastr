@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,8 +95,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Specialization(contains = "doCached", guards = {"isNumericVector(operand)"})
     @TruffleBoundary
-    protected Object doGeneric(Object operand, //
-                    @Cached("unary.createOperation()") UnaryArithmetic arithmetic, //
+    protected Object doGeneric(Object operand,
+                    @Cached("unary.createOperation()") UnaryArithmetic arithmetic,
                     @Cached("new(createCached(arithmetic, operand, minPrecedence), minPrecedence)") GenericNumericVectorNode generic) {
         RAbstractVector operandVector = (RAbstractVector) operand;
         return generic.get(arithmetic, operandVector).apply(operandVector);

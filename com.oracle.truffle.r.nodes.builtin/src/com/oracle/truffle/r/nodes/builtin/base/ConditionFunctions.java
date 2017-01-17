@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -119,7 +119,6 @@ public class ConditionFunctions {
         protected void restart(CastBuilder casts) {
             casts.arg("restart").mustBe(instanceOf(RList.class), RError.Message.BAD_RESTART);
         }
-
     }
 
     @RBuiltin(name = ".addRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
@@ -147,7 +146,6 @@ public class ConditionFunctions {
             RErrorHandling.addRestart(restart);
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = ".getRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
@@ -181,7 +179,6 @@ public class ConditionFunctions {
                 return RNull.instance; // not reached
             }
         }
-
     }
 
     @RBuiltin(name = ".signalCondition", kind = INTERNAL, parameterNames = {"condition", "msg", "call"}, behavior = COMPLEX)

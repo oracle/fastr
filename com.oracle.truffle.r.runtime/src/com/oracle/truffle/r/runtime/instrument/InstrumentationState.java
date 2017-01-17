@@ -177,7 +177,6 @@ public final class InstrumentationState implements RContext.ContextState {
             }
             return helperStateList.get(nn - 1);
         }
-
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,6 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                     Samples<S> otherSamples = other.collectSamples(inputType);
                     return Samples.<T> anything().and(thisSamples).or(otherSamples);
                 }
-
             };
         }
     }
@@ -99,7 +98,6 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
                     Samples<T> otherSamples = other.collectSamples(inputType);
                     return Samples.<T> anything().and(thisSamples).or(otherSamples);
                 }
-
             };
         }
 
@@ -246,7 +244,6 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
         default InverseArgumentFilterSampler<T, R> not() {
             return new InverseArgumentFilterSampler<>(this);
         }
-
     }
 
     class InverseArgumentFilterSampler<T, R extends T> extends InverseArgumentFilter<T, R> implements ArgumentFilterSampler<T, Object> {
@@ -338,7 +335,5 @@ public interface ArgumentFilterSampler<T, R> extends ArgumentFilter<T, R> {
             InverseArgumentFilterSampler<T, S> other = (InverseArgumentFilterSampler<T, S>) o;
             return new InverseArgumentFilterSampler<>(other.orig.or(this.orig));
         }
-
     }
-
 }

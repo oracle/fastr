@@ -62,7 +62,7 @@ public abstract class ForceAndCall extends RBuiltinNode {
     }
 
     @Specialization(guards = "cachedN == n")
-    protected Object forceAndCall(VirtualFrame frame, @SuppressWarnings("unused") int n, RFunction fun, RArgsValuesAndNames args, //
+    protected Object forceAndCall(VirtualFrame frame, @SuppressWarnings("unused") int n, RFunction fun, RArgsValuesAndNames args,
                     @Cached("n") int cachedN) {
         if (!fun.isBuiltin()) {
             flattenFirstArgs(frame, cachedN, args);
@@ -106,5 +106,4 @@ public abstract class ForceAndCall extends RBuiltinNode {
         CompilerDirectives.transferToInterpreter();
         throw RError.nyi(this, "generic case of forceAndCall");
     }
-
 }

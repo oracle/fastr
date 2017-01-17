@@ -74,7 +74,6 @@ class TruffleCall implements CallRFFI {
         @Override
         public void beforeDestroy(RContext contextA) {
         }
-
     }
 
     static ContextStateImpl newContextState() {
@@ -136,7 +135,6 @@ class TruffleCall implements CallRFFI {
             jniCall.invokeVoidCall(nativeCallInfo, args);
             return RNull.instance;
         }
-
     }
 
     /**
@@ -151,7 +149,7 @@ class TruffleCall implements CallRFFI {
         public abstract Object execute(NativeCallInfo nativeCallInfo, Object[] args, RContext context);
 
         @Specialization(guards = {"context == cachedContext"})
-        protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") RContext context, //
+        protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") RContext context,
                         @SuppressWarnings("unused") @Cached("getInstance()") RContext cachedContext,
                         @Cached("createExecute(0).createNode()") Node messageNode,
                         @SuppressWarnings("unused") @Cached("ensureReady(nativeCallInfo)") boolean ready) {
@@ -185,7 +183,6 @@ class TruffleCall implements CallRFFI {
         public static InvokeTruffle create() {
             return InvokeTruffleNodeGen.create();
         }
-
     }
 
     /**
@@ -195,21 +192,21 @@ class TruffleCall implements CallRFFI {
         public abstract Object execute(NativeCallInfo nativeCallInfo, Object[] args, boolean voidCall);
 
         @Specialization(guards = {"isJNICall(nativeCallInfo)", "!voidCall"})
-        protected Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall, //
+        protected Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall,
                         @Cached("new()") InvokeJNI invokeJNI) {
             return invokeJNI.invokeCall(nativeCallInfo, args);
 
         }
 
         @Specialization(guards = {"isJNICall(nativeCallInfo)", "voidCall"})
-        protected Object invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall, //
+        protected Object invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall,
                         @Cached("new()") InvokeJNI invokeJNI) {
             return invokeJNI.invokeVoidCall(nativeCallInfo, args);
 
         }
 
         @Specialization(guards = "!isJNICall(nativeCallInfo)")
-        protected Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall, //
+        protected Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall,
                         @Cached("create()") InvokeTruffle invokeTruffle) {
             return invokeTruffle.execute(nativeCallInfo, args, RContext.getInstance());
         }
@@ -217,7 +214,6 @@ class TruffleCall implements CallRFFI {
         public static boolean isJNICall(NativeCallInfo nativeCallInfo) {
             return nativeCallInfo.address.value instanceof Long;
         }
-
     }
 
     private static class TruffleCallRFFINode extends CallRFFINode {
@@ -245,7 +241,6 @@ class TruffleCall implements CallRFFI {
             // TODO Truffleize
             new JNI_CallRFFINode().setInteractive(interactive);
         }
-
     }
 
     /**
@@ -261,5 +256,4 @@ class TruffleCall implements CallRFFI {
     public CallRFFINode createCallRFFINode() {
         return new TruffleCallRFFINode();
     }
-
 }

@@ -190,7 +190,6 @@ public final class PNChisq implements Function3_2 {
                                     term / ans, (isR ? "<= reltol" : ""));
                     break; /* out completely */
                 }
-
             }
 
             /* evaluate the next term of the */
@@ -224,7 +223,6 @@ public final class PNChisq implements Function3_2 {
                 term = v * t;
                 ans += term;
             }
-
         } /* for(n ...) */
 
         if (isIt) {

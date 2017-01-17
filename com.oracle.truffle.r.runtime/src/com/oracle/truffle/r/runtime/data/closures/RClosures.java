@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -137,7 +136,6 @@ public class RClosures {
                 assert levels.getElementClass() == RRaw.class;
                 return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels), withNames);
             }
-
         }
     }
 }

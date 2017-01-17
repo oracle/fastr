@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -199,7 +199,6 @@ public abstract class Scan extends RBuiltinNode {
             } else {
                 return scanVector(what, nmax, nlines, flush, strip == RRuntime.LOGICAL_TRUE, blSkip, data);
             }
-
         } catch (IOException x) {
             throw RError.error(this, RError.Message.CANNOT_READ_CONNECTION);
         }
@@ -415,7 +414,6 @@ public abstract class Scan extends RBuiltinNode {
             if (lines == maxLines) {
                 break;
             }
-
         }
 
         if (n > 0 && n < nc) {
@@ -482,7 +480,6 @@ public abstract class Scan extends RBuiltinNode {
             if (lines == maxLines) {
                 break;
             }
-
         }
         if (!data.quiet) {
             String s = String.format("Read %d item%s", n, (n == 1) ? "" : "s");

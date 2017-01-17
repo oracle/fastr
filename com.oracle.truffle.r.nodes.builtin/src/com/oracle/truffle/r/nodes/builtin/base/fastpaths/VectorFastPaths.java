@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractIntVector get(int length, //
+        protected RAbstractIntVector get(int length,
                         @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
             if (emptyProfile.profile(length == 0)) {
                 return RDataFactory.createIntVector(0);
@@ -53,7 +53,7 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractIntVector get(double length, //
+        protected RAbstractIntVector get(double length,
                         @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
             if (!Double.isNaN(length)) {
                 return get((int) length, emptyProfile);
@@ -76,7 +76,7 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractDoubleVector get(int length, //
+        protected RAbstractDoubleVector get(int length,
                         @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
             if (emptyProfile.profile(length == 0)) {
                 return RDataFactory.createDoubleVector(0);
@@ -87,7 +87,7 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractDoubleVector get(double length, //
+        protected RAbstractDoubleVector get(double length,
                         @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
             if (!Double.isNaN(length)) {
                 return get((int) length, emptyProfile);

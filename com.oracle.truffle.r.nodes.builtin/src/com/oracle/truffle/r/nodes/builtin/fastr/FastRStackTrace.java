@@ -56,5 +56,4 @@ public abstract class FastRStackTrace extends RBuiltinNode {
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameContents));
         return RNull.instance;
     }
-
 }

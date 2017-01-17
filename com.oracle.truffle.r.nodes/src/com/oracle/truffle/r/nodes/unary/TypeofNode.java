@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public abstract class TypeofNode extends UnaryNode {
     }
 
     @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "NUMBER_OF_CACHED_CLASSES")
-    protected static RType doCachedTyped(Object operand, //
+    protected static RType doCachedTyped(Object operand,
                     @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {
         return cachedClass.cast(operand).getRType();
     }

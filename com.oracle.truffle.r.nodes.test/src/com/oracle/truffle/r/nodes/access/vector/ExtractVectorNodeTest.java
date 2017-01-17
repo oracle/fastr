@@ -82,28 +82,28 @@ public class ExtractVectorNodeTest extends TestBase {
         // replace rectangle with rectangle indices
         vector = generateInteger(20, true);
         vector.setDimensions(new int[]{5, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
         assertIndicies(vector, 6, 7, 8, 11, 12, 13);
 
         // replace box with box indices
         vector = generateInteger(9, true);
         vector.setDimensions(new int[]{3, 3});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
         assertIndicies(vector, 4, 5, 7, 8);
 
         // replace three dimensions
         vector = generateInteger(24, true);
         vector.setDimensions(new int[]{2, 3, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
         assertIndicies(vector, 9);
 
         // replace three dimensions
         vector = generateInteger(24, true);
         vector.setDimensions(new int[]{2, 3, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
         assertIndicies(vector, 9, 11, 15, 17, 21, 23);
 
@@ -125,7 +125,7 @@ public class ExtractVectorNodeTest extends TestBase {
 
         // extract scalar with logical vector with NA
         vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, false)});
         assertIndicies(vector, 0, RRuntime.INT_NA, 2, RRuntime.INT_NA);
 
@@ -146,25 +146,25 @@ public class ExtractVectorNodeTest extends TestBase {
 
         // extract scalar with logical scalar
         vector = generateInteger(3, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
         assertIndicies(vector, 0, 1, 2);
 
         // extract scalar with integer vector with NA
         vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         new Object[]{RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, false)});
         assertIndicies(vector, 0, RRuntime.INT_NA);
 
         // extract scalar with logical vector
         vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
         assertIndicies(vector, 0, 2);
 
         // extract vector indexed by logical vector
         vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, //
+        vector = executeExtract(ElementAccessMode.SUBSET, vector,
                         new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
         assertIndicies(vector, 0, 2);
 
@@ -301,7 +301,7 @@ public class ExtractVectorNodeTest extends TestBase {
     }
 
     private static NodeHandle<ExtractVectorNode> create(ElementAccessMode mode, boolean exact, boolean dropDimension) {
-        return createHandle(ExtractVectorNode.create(mode, false), //
+        return createHandle(ExtractVectorNode.create(mode, false),
                         (node, args) -> node.apply(null, args[0], (Object[]) args[1], RLogical.valueOf(exact), RLogical.valueOf(dropDimension)));
     }
 }

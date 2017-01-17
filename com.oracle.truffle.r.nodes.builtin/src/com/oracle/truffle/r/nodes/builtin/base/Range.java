@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ public abstract class Range extends RBuiltinNode {
     }
 
     @Specialization(contains = "rangeLengthOne")
-    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite, //
+    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
                     @Cached("create()") Combine combine) {
         Object combined = combine.executeCombine(args, false);
         Object min = minReduce.executeReduce(combined, naRm, finite);

@@ -166,7 +166,6 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
         } catch (Throwable t) {
             throw RInternalError.shouldNotReachHere(t);
         }
-
     }
 
     private static boolean isNa(Object elem) {
@@ -224,5 +223,4 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
     public void registerTypeCustomizer(Class<?> klass, TypeCustomizer typeCustomizer) {
         customizerMap.put(klass, typeCustomizer);
     }
-
 }

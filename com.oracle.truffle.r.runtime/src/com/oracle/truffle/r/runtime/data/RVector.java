@@ -281,7 +281,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 attributes = null;
             }
         }
-
     }
 
     @Override

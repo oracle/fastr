@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -214,7 +214,6 @@ public class FileFunctions {
                     return false;
                 }
             }
-
         }
     }
 
@@ -249,7 +248,6 @@ public class FileFunctions {
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn", "extra_cols"}, behavior = IO)
@@ -474,7 +472,6 @@ public class FileFunctions {
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             return doFileLink(vecFrom, vecTo, false);
         }
-
     }
 
     @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
@@ -484,7 +481,6 @@ public class FileFunctions {
         protected Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             return doFileLink(vecFrom, vecTo, true);
         }
-
     }
 
     @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
@@ -514,7 +510,6 @@ public class FileFunctions {
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
@@ -550,7 +545,6 @@ public class FileFunctions {
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
@@ -577,7 +571,6 @@ public class FileFunctions {
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
-
     }
 
     // TODO Implement all the options
@@ -687,7 +680,6 @@ public class FileFunctions {
                 Arrays.sort(data);
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
-
         }
 
         private boolean check(boolean value, String argName) {
@@ -855,7 +847,6 @@ public class FileFunctions {
                     if (j != inputs.length - 1) {
                         path += fsep;
                     }
-
                 }
                 result[i] = path;
             }
@@ -1177,9 +1168,7 @@ public class FileFunctions {
             } catch (IOException ex) {
                 return 0;
             }
-
         }
-
     }
 
     @RBuiltin(name = "dir.create", visibility = OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"}, behavior = IO)

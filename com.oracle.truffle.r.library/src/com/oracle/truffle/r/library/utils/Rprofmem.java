@@ -102,7 +102,6 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
                 }
             }
         }
-
     }
 
     static final RObjectSize.IgnoreObjectHandler myIgnoreObjectHandler = new MyIgnoreObjectHandler();
@@ -139,7 +138,6 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
                 profmemState.pageCount = (int) pcs;
             }
         }
-
     }
 
     private static final class RprofmemState extends RprofState {
@@ -166,5 +164,4 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
             closeAndResetOut();
         }
     }
-
 }

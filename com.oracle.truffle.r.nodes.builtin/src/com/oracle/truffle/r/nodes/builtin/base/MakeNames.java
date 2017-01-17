@@ -171,5 +171,4 @@ public abstract class MakeNames extends RBuiltinNode {
             return newNames != null ? newNames : names;
         }
     }
-
 }

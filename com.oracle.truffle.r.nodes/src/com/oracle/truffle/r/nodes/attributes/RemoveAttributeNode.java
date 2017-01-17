@@ -100,7 +100,5 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
             emptyAttrProfile.enter();
             x.initAttributes(null);
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,9 +97,9 @@ public abstract class ReplaceVectorNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
-    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object value, //
-                    @Cached("createForeignWrite(positions)") Node foreignRead, //
-                    @Cached("positions.length") int cachedLength, //
+    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object value,
+                    @Cached("createForeignWrite(positions)") Node foreignRead,
+                    @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode, @Cached("createFirstString()") FirstStringNode firstString) {
 
         Object writtenValue = value;

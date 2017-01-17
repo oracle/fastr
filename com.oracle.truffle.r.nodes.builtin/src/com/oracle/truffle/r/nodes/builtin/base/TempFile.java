@@ -65,5 +65,4 @@ public abstract class TempFile extends RBuiltinNode {
         }
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

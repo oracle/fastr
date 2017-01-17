@@ -156,5 +156,4 @@ public class TestBuiltin_seqint extends TestBase {
     public void testseqint29() {
         assertEval(Output.IgnoreErrorContext, "argv <- list(NaN);do.call('seq.int', argv)");
     }
-
 }

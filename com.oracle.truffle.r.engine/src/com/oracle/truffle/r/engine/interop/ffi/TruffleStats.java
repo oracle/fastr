@@ -104,7 +104,7 @@ public class TruffleStats implements StatsRFFI {
         public abstract int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, RContext context);
 
         @Specialization(guards = "context == cachedContext")
-        protected int executeWorkCached(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, @SuppressWarnings("unused") RContext context, //
+        protected int executeWorkCached(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, @SuppressWarnings("unused") RContext context,
                         @SuppressWarnings("unused") @Cached("getInstance()") RContext cachedContext,
                         @Cached("createMessageNode()") Node messageNode,
                         @Cached("lookupWork()") SymbolHandle fftWork) {
@@ -146,7 +146,7 @@ public class TruffleStats implements StatsRFFI {
         protected abstract void execute(int n, int[] pmaxf, int[] pmaxp, RContext context);
 
         @Specialization(guards = "context == cachedContext")
-        protected void executeFactorCached(int n, int[] pmaxf, int[] pmaxp, @SuppressWarnings("unused") RContext context, //
+        protected void executeFactorCached(int n, int[] pmaxf, int[] pmaxp, @SuppressWarnings("unused") RContext context,
                         @SuppressWarnings("unused") @Cached("getInstance()") RContext cachedContext,
                         @Cached("createMessageNode()") Node messageNode,
                         @Cached("lookupFactor()") SymbolHandle fftFactor) {
@@ -196,12 +196,10 @@ public class TruffleStats implements StatsRFFI {
         public void executeFactor(int n, int[] pmaxf, int[] pmaxp) {
             executeFactor.execute(n, pmaxf, pmaxp, RContext.getInstance());
         }
-
     }
 
     @Override
     public FFTNode createFFTNode() {
         return new Truffle_FFTNode();
     }
-
 }

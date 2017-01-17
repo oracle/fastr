@@ -110,7 +110,7 @@ public abstract class Quantifier extends RBuiltinNode {
 
     @Specialization(limit = "1", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
     @ExplodeLoop
-    protected byte opCachedLength(RArgsValuesAndNames args, boolean naRm, //
+    protected byte opCachedLength(RArgsValuesAndNames args, boolean naRm,
                     @Cached("args.getLength()") int cachedLength) {
         Object[] arguments = args.getArguments();
 
@@ -177,5 +177,4 @@ public abstract class Quantifier extends RBuiltinNode {
         falseBranch.enter();
         return result;
     }
-
 }

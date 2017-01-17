@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,7 +106,7 @@ public abstract class Assign extends RBuiltinNode {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
+    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits,
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
                     @Cached("create()") ShareObjectNode share) {
         String x = checkVariable(xVec);

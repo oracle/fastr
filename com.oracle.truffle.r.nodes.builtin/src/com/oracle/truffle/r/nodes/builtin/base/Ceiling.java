@@ -81,5 +81,4 @@ public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
     public Object calculateUnboxed(Object op) {
         return super.calculateUnboxed(op);
     }
-
 }

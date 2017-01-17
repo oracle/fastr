@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,8 +90,8 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
-    protected int doCachedContainer(Object operand, //
-                    @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass, //
+    protected int doCachedContainer(Object operand,
+                    @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass,
                     @Cached("create()") VectorLengthProfile lengthProfile) {
         return lengthProfile.profile(cachedClass.cast(operand).getLength());
     }
@@ -135,8 +135,8 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization(guards = "isForeignObject(object)")
-    protected int getForeignSize(VirtualFrame frame, TruffleObject object, //
-                    @Cached("createHasSize()") Node hasSizeNode, //
+    protected int getForeignSize(VirtualFrame frame, TruffleObject object,
+                    @Cached("createHasSize()") Node hasSizeNode,
                     @Cached("createGetSize()") Node getSizeNode) {
         try {
             if (!(boolean) ForeignAccess.send(hasSizeNode, frame, object)) {

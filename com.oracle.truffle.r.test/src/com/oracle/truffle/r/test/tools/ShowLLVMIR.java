@@ -122,12 +122,10 @@ public class ShowLLVMIR {
         } catch (Exception e) {
             System.err.println(e);
         }
-
     }
 
     private static void usage() {
         System.err.print("usage: -o objfile");
         System.exit(1);
     }
-
 }

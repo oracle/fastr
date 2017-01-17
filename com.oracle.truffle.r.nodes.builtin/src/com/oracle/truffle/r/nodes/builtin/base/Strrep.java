@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -89,7 +90,8 @@ public abstract class Strrep extends RBuiltinNode {
         return result;
     }
 
-    private void copyNames(RAbstractStringVector xVec, RStringVector result) {
+    @TruffleBoundary
+    private static void copyNames(RAbstractStringVector xVec, RStringVector result) {
         result.copyNamesFrom(xVec);
     }
 }

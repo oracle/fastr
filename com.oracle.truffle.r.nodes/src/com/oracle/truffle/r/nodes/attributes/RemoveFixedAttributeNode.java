@@ -117,7 +117,5 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
             emptyAttrProfile.enter();
             x.initAttributes(null);
         }
-
     }
-
 }

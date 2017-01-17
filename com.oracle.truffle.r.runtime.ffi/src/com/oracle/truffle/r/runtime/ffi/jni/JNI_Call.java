@@ -141,7 +141,6 @@ public class JNI_Call implements CallRFFI {
                 }
             }
         }
-
     }
 
     private static final boolean ForceRTLDGlobal = false;
@@ -182,7 +181,6 @@ public class JNI_Call implements CallRFFI {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
             }
-
         }
     }
 
@@ -222,5 +220,4 @@ public class JNI_Call implements CallRFFI {
     public CallRFFINode createCallRFFINode() {
         return new JNI_CallRFFINode();
     }
-
 }

@@ -292,6 +292,5 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             RAbstractContainer enclosingArg = (RAbstractContainer) arg;
             return enclosingArg.getClassHierarchy();
         }
-
     }
 }

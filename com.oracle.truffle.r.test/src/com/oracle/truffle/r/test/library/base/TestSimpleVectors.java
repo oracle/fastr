@@ -2380,5 +2380,4 @@ public class TestSimpleVectors extends TestBase {
         assertEval("v <- 1:8; dim(v) <- c(2,2,2); dimnames(v) <- list(foo=c('a','b'), bar=c('x','y'), baz=c('u','v')); v[,,2,drop=FALSE]");
         assertEval("v <- 1:8; dim(v) <- c(2,2,2); dimnames(v) <- list(foo=c('a','b'), bar=c('x','y'), baz=c('u','v')); v[,,1,drop=TRUE]");
     }
-
 }

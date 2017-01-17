@@ -182,5 +182,4 @@ public abstract class FastRPkgSource extends RBuiltinNode {
     private static Path dirPath() {
         return FileSystems.getDefault().getPath(REnvVars.rHome(), PKGSOURCE_PROJECT);
     }
-
 }

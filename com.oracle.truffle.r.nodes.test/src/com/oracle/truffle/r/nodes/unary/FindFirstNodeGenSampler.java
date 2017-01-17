@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,6 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
 
             return new Samples<>("findFirst-withDef", defaultPositiveSamples, defaultNegativeSamples, posMembership);
         }
-
     }
 
     private boolean testVectorForNoDefaultValCase(Object x) {
@@ -129,5 +128,4 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
 
         return rt;
     }
-
 }

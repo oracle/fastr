@@ -141,5 +141,4 @@ public abstract class Signif extends RBuiltinNode {
         BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_UP));
         return bigDecimalVal.doubleValue();
     }
-
 }

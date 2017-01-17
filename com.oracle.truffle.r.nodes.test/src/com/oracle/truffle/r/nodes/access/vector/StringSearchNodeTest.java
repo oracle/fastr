@@ -115,7 +115,7 @@ public class StringSearchNodeTest extends TestBase {
     private NodeHandle<SearchFirstStringNode> handle;
 
     private void create() {
-        handle = createHandle(SearchFirstStringNode.createNode(true, false), //
+        handle = createHandle(SearchFirstStringNode.createNode(true, false),
                         (node, args) -> {
                             RAbstractStringVector target = (RAbstractStringVector) args[0];
                             return node.apply(target, (RAbstractStringVector) args[1], target.getLength(), null);

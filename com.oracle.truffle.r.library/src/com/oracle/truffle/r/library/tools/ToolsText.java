@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -100,7 +100,6 @@ public class ToolsText {
                             RError.warning(this, RError.Message.GENERIC, "IO error during file append");
                             // shouldn't happen, just continue with false result
                         }
-
                     }
                 } catch (IOException ex) {
                     // just return logical false

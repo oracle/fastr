@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -257,7 +257,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
-    Object orderMulti(byte naLast, boolean decreasing, RArgsValuesAndNames args, //
+    Object orderMulti(byte naLast, boolean decreasing, RArgsValuesAndNames args,
                     @Cached("createEqualityProfile()") ValueProfile lengthProfile) {
         int n = preprocessVectors(args, lengthProfile);
 
@@ -506,7 +506,6 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                             if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
                                 break;
                             }
-
                         }
                         indx[j] = indx[j - h];
                         j -= h;
@@ -535,7 +534,6 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                             if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
                                 break;
                             }
-
                         }
                         indx[j] = indx[j - h];
                         j -= h;
@@ -642,7 +640,6 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                             if (!(gt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
                                 break;
                             }
-
                         }
                         indx[j] = indx[j - h];
                         j -= h;

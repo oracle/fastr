@@ -169,7 +169,7 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected REnvironment asEnvironment(RList list, //
+        protected REnvironment asEnvironment(RList list,
                         @Cached("new()") RList2EnvNode list2Env) {
             REnvironment env = RDataFactory.createNewEnv(null);
             env.setParent(REnvironment.emptyEnv());

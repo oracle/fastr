@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -140,12 +140,12 @@ public abstract class Lapply extends RBuiltinNode {
         }
 
         @Specialization
-        protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function, //
-                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot, //
-                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot, //
-                        @Cached("create()") RLengthNode lengthNode, //
-                        @Cached("createCountingProfile()") LoopConditionProfile loop, //
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode firstCallNode, //
+        protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function,
+                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
+                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
+                        @Cached("create()") RLengthNode lengthNode,
+                        @Cached("createCountingProfile()") LoopConditionProfile loop,
+                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode firstCallNode,
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
             frame.setObject(vectorSlot, vector);

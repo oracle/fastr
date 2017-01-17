@@ -140,7 +140,6 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
                 parseStatusMap = null;
             }
         }
-
     }
 
     private static TruffleDLL truffleDLL;
@@ -346,5 +345,4 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
             return super.dlclose(handle);
         }
     }
-
 }

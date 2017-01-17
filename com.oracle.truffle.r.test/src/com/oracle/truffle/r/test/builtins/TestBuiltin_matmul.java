@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,5 +34,4 @@ public class TestBuiltin_matmul extends TestBase {
         assertEval("m1 <- matrix(1:6,3,2,dimnames=list(c('a','b','c'),c('c1','c2')));m2 <- matrix(c(3,4),2,1,dimnames=list(c('a2','b2'),c('col'))); m1 %*% m2; ");
         assertEval("vec <- c(1,2); names(vec) <- c('a','b'); mat <- matrix(c(8,3),1,2,dimnames=list('row',c('c1','c2'))); vec %*% mat; ");
     }
-
 }

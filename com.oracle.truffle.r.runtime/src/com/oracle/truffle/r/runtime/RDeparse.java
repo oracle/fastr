@@ -595,7 +595,6 @@ public class RDeparse {
                                 needsParens = true;
                                 break;
                             }
-
                         }
                         needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && isLeft == mainOp.rightassoc);
                         break;
@@ -940,7 +939,6 @@ public class RDeparse {
                                         append(attrName);
                                     }
                                 }
-
                             }
                             if (dotName != null) {
                                 append(dotName);

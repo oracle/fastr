@@ -53,7 +53,6 @@ public class NumericalFunctions {
         protected Object dummySpec(@SuppressWarnings("unused") Object value) {
             return null;
         }
-
     }
 
     @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -287,7 +286,6 @@ public class NumericalFunctions {
         public double op(double op) {
             return Math.signum(op);
         }
-
     }
 
     @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)

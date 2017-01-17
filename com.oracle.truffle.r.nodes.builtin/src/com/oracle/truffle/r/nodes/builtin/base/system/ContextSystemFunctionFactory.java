@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,6 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 contextRNode = insert(FastRContextFactory.RNodeGen.create());
             }
-
         }
 
         @Specialization
@@ -73,7 +72,6 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 contextRscriptNode = insert(FastRContextFactory.RscriptNodeGen.create());
             }
-
         }
 
         @Specialization
@@ -102,5 +100,4 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, command + " cannot be executed in a context");
     }
-
 }

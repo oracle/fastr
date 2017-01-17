@@ -47,7 +47,6 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
                 return false;
             }
         }
-
     }
 
     private static final MyIgnoreObjectHandler ignoreObjectHandler = new MyIgnoreObjectHandler();
