@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,8 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -125,10 +126,14 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         }
     }
 
-    private static void checkLength(RArgsValuesAndNames args, int expectedLength) {
+    protected void checkLength(RArgsValuesAndNames args, int expectedLength) {
         if (args.getLength() != expectedLength) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("mismatching number of arguments to foreign function");
+            String name = this.getClass().getSimpleName();
+            if (name.endsWith("NodeGen")) {
+                name = name.substring(0, name.length() - 7);
+            }
+            throw RError.error(this, Message.INCORRECT_NOF_ARGS, args.getLength(), expectedLength, name.toLowerCase());
         }
     }
 

@@ -104,7 +104,7 @@ public class TestBuiltin_sum extends TestBase {
 
     @Test
     public void testsum18() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1073741824L, 1073741824L));sum(argv[[1]]);");
+        assertEval("argv <- list(c(1073741824L, 1073741824L));sum(argv[[1]]);");
     }
 
     @Test

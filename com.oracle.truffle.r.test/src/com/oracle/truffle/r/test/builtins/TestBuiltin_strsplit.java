@@ -64,8 +64,7 @@ public class TestBuiltin_strsplit extends TestBase {
 
     @Test
     public void teststrsplit10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('A shell of class documentation has been written to the file \\'./myTst2/man/DocLink-class.Rd\\'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('A shell of class documentation has been written to the file \\'./myTst2/man/DocLink-class.Rd\\'.\\n', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
