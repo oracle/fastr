@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -1983,5 +1983,21 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("8.2:c(9,8)");
         assertEval("new.env():new.env()");
         assertEval("numeric(0):numeric(0)");
+    }
+
+    private static final String[] INT_MAX_VALUES = new String[]{"2147483647L", "2147483648"};
+    // note that java's Integer.MIN_VALUE -2147483648 isn't an integer in GNUR
+    private static final String[] INT_MIN_VALUES = new String[]{"-2147483647L", "-2147483648", "-2147483649"};
+
+    // borderline cases between integer and double
+    @Test
+    public void testColonIntAndDouble() {
+        assertColon(INT_MAX_VALUES);
+        assertColon(INT_MIN_VALUES);
+    }
+
+    private void assertColon(String[] parameters) {
+        assertEval(template("%0:%1", parameters, parameters));
+        assertEval(template("typeof(%0:%1)", parameters, parameters));
     }
 }
