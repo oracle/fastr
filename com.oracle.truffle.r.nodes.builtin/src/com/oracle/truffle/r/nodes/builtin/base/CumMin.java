@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -48,8 +49,8 @@ public abstract class CumMin extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(),
-                        asDoubleVector());
+        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(true, false, false),
+                        asDoubleVector(true, false, false));
     }
 
     @Specialization
@@ -68,7 +69,17 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractVector emptyVec) {
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractComplexVector emptyVec) {
+        return RDataFactory.createEmptyComplexVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractIntVector emptyVec) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractDoubleVector emptyVec) {
         return RDataFactory.createEmptyDoubleVector();
     }
 

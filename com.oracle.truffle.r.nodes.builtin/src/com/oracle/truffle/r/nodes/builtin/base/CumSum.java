@@ -65,7 +65,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().mapIf(integerValue().or(logicalValue()), asIntegerVector(), chain(mapIf(complexValue().not(), asDoubleVector())).end());
+        casts.arg("x").allowNull().mapIf(integerValue().or(logicalValue()), asIntegerVector(true, false, false), chain(mapIf(complexValue().not(), asDoubleVector(true, false, false))).end());
     }
 
     @Specialization
@@ -84,7 +84,17 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractVector emptyVec) {
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractComplexVector emptyVec) {
+        return RDataFactory.createEmptyComplexVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractIntVector emptyVec) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractDoubleVector emptyVec) {
         return RDataFactory.createEmptyDoubleVector();
     }
 

@@ -11,12 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -52,7 +47,7 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().mapIf(integerValue().or(logicalValue()), asIntegerVector(), chain(mapIf(complexValue().not(), asDoubleVector())).end());
+        casts.arg("x").allowNull().mapIf(complexValue().not(), asDoubleVector(true, false, false));
     }
 
     @Specialization
@@ -71,7 +66,12 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractVector emptyVec) {
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractComplexVector emptyVec) {
+        return RDataFactory.createEmptyComplexVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractDoubleVector emptyVec) {
         return RDataFactory.createEmptyDoubleVector();
     }
 
