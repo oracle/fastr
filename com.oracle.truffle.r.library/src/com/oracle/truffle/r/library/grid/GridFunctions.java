@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -22,6 +23,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
@@ -39,6 +41,11 @@ public class GridFunctions {
         @TruffleBoundary
         protected Object initGrid(REnvironment gridEvalEnv) {
             return gridRFFINode.initGrid(gridEvalEnv);
+        }
+
+        @Fallback
+        protected Object initGridFallback(@SuppressWarnings("unused") Object x) {
+            return RNull.instance;
         }
     }
 

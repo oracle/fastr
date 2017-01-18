@@ -24,6 +24,7 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -56,6 +57,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
 public class MethodsListDispatch {
@@ -69,6 +72,12 @@ public class MethodsListDispatch {
             // TBD what should we actually do here
             return env;
         }
+
+        @Fallback
+        protected Object initMethodFallback(@SuppressWarnings("unused") Object x) {
+            return RNull.instance;
+        }
+
     }
 
     public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
@@ -136,11 +145,15 @@ public class MethodsListDispatch {
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(0).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected Object callSetMethodDispatch(RAbstractLogicalVector onOffVector) {
+        protected Object callSetMethodDispatch(byte onOff) {
             boolean prev = RContext.getInstance().isMethodTableDispatchOn();
-            byte onOff = castLogical(onOffVector);
 
             if (onOff == RRuntime.LOGICAL_NA) {
                 return RRuntime.asLogical(prev);

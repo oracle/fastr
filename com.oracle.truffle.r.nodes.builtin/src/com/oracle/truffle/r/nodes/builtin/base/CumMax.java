@@ -35,8 +35,10 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cummax", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -47,8 +49,8 @@ public abstract class CumMax extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(),
-                        asDoubleVector());
+        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(true, false, false),
+                        asDoubleVector(true, false, false));
     }
 
     @Specialization
@@ -64,6 +66,21 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(RAbstractComplexVector emptyVec) {
+        return RDataFactory.createComplexVector(new double[0], true, emptyVec.getNames());
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec) {
+        return RDataFactory.createDoubleVector(new double[0], true, emptyVec.getNames());
+    }
+
+    @Specialization(guards = "emptyVec.getLength()==0")
+    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec) {
+        return RDataFactory.createIntVector(new int[0], true, emptyVec.getNames());
     }
 
     @Specialization

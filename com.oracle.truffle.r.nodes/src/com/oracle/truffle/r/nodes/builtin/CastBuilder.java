@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -221,9 +222,8 @@ public final class CastBuilder {
      * @see #arg(String)
      */
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
-        assert builtin != null : "arg(int, String) is only supported for builtins cast pipelines";
-        assert argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
-        assert argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
+        assert argumentNames == null || argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
+        assert argumentNames == null || argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
         return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, argumentName));
     }
 
@@ -635,6 +635,10 @@ public final class CastBuilder {
 
         public static <R> TypeFilter<Object, R> instanceOf(Class<R> cls) {
             return new TypeFilter<>(x -> cls.isInstance(x), cls);
+        }
+
+        public static TypeFilter<Object, RFunction> builtin() {
+            return new TypeFilter<>(x -> RFunction.class.isInstance(x) && ((RFunction) x).isBuiltin(), RFunction.class);
         }
 
         public static <R extends RAbstractIntVector> Filter<Object, R> integerValue() {

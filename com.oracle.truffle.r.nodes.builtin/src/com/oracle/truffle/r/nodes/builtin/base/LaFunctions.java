@@ -159,7 +159,7 @@ public class LaFunctions {
                     for (int i = 0; i < n * n; i++) {
                         val[i] = right[i];
                     }
-                    vectorValues = RDataFactory.createComplexVector(val, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
+                    vectorValues = RDataFactory.createDoubleVector(val, RDataFactory.COMPLETE_VECTOR, new int[]{n, n});
                 }
             }
             RStringVector names = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
