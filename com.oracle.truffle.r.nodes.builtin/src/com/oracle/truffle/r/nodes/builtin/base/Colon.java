@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -100,17 +101,27 @@ public abstract class Colon extends RBuiltinNode {
         }
 
         @Specialization(guards = "asDouble(left) <= right")
-        protected RIntSequence colonAscending(int left, double right) {
+        protected RSequence colonAscending(int left, double right,
+                        @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
-            return RDataFactory.createAscendingRange(left, (int) right);
+            if (isDouble.profile(right > Integer.MAX_VALUE)) {
+                return RDataFactory.createAscendingRange(left, right);
+            } else {
+                return RDataFactory.createAscendingRange(left, (int) right);
+            }
         }
 
         @Specialization(guards = "asDouble(left) > right")
-        protected RIntSequence colonDescending(int left, double right) {
+        protected RSequence colonDescending(int left, double right,
+                        @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
-            return RDataFactory.createDescendingRange(left, (int) right);
+            if (isDouble.profile(right <= Integer.MIN_VALUE)) {
+                return RDataFactory.createDescendingRange(left, right);
+            } else {
+                return RDataFactory.createDescendingRange(left, (int) right);
+            }
         }
 
         @Specialization(guards = "left <= asDouble(right)")
@@ -215,7 +226,7 @@ public abstract class Colon extends RBuiltinNode {
         }
 
         protected static boolean isIntValue(double d) {
-            return (((int) d)) == d;
+            return (((int) d)) == d && !RRuntime.isNA((int) d);
         }
 
         protected static boolean isFirstIntValue(RAbstractDoubleVector d) {
