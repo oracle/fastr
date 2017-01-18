@@ -66,13 +66,13 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractComplexVector emptyVec) {
-        return RDataFactory.createEmptyComplexVector();
+    protected RAbstractVector cumEmpty(RAbstractComplexVector emptyVec) {
+        return RDataFactory.createComplexVector(new double[0], true, emptyVec.getNames());
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractDoubleVector emptyVec) {
-        return RDataFactory.createEmptyDoubleVector();
+    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec) {
+        return RDataFactory.createDoubleVector(new double[0], true, emptyVec.getNames());
     }
 
     @Specialization

@@ -69,18 +69,18 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractComplexVector emptyVec) {
-        return RDataFactory.createEmptyComplexVector();
+    protected RAbstractVector cumEmpty(RAbstractComplexVector emptyVec) {
+        return RDataFactory.createComplexVector(new double[0], true, emptyVec.getNames());
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractIntVector emptyVec) {
-        return RDataFactory.createEmptyIntVector();
+    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec) {
+        return RDataFactory.createDoubleVector(new double[0], true, emptyVec.getNames());
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(@SuppressWarnings("unused") RAbstractDoubleVector emptyVec) {
-        return RDataFactory.createEmptyDoubleVector();
+    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec) {
+        return RDataFactory.createIntVector(new int[0], true, emptyVec.getNames());
     }
 
     @Specialization
