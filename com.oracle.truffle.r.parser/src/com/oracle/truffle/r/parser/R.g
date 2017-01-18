@@ -421,7 +421,7 @@ number returns [T v]
             $v = builder.constant(src($i), (int) value);
         } else {
             if ($i.text.indexOf('.') != -1) {
-                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIAML, $i.text + "L");
+                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, $i.text + "L");
             } else {
                 RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text + "L");
             }
