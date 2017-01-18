@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,5 +38,24 @@ public class TestTypeConvert extends TestBase {
         assertEval("type.convert(c(NA, '44.5'))");  // string NA
         // looks like integer, but is double (because it would be INT_NA)
         assertEval("type.convert('-2147483648')");
+    }
+
+    private static final String[] LIT_VALUES = new String[]{"0xFFF", "0xFFFFFFFFFFF", "123", "2147483648"};
+
+    @Test
+    public void testConvertLiterals() {
+        for (String suf : new String[]{"", "L"}) {
+            for (String sign : new String[]{"", "-", "+"}) {
+                String l = sign + "%0" + suf;
+                assertEval(template("type.convert('" + l + "')", LIT_VALUES));
+                assertEval(template("typeof(type.convert('" + l + "'))", LIT_VALUES));
+            }
+        }
+    }
+
+    @Test
+    public void testFirstTypeMustBeOfModeTest() {
+        // UnsupportedSpecializationException: Unexpected values provided for ...
+        assertEval(Ignored.Unimplemented, "type.convert('NA', 1)");
     }
 }
