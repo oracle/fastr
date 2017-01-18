@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -422,6 +422,8 @@ number returns [T v]
         } else {
             if ($i.text.indexOf('.') != -1) {
                 RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, $i.text + "L");
+            } else if ($i.text.startsWith("0x")) {
+                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text);
             } else {
                 RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text + "L");
             }
