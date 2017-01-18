@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,27 @@ public class TestParser extends TestBase {
         assertEval("0x1.aP2");
         assertEval("0xa.p2");
         assertEval("0xa.bp1i");
+    }
+
+    private static final String[] HEX_VALUES = new String[]{"0xFFF", "0xFFFFFFFFFFF"};
+
+    @Test
+    public void testHexLiterals() {
+        for (String sign : new String[]{"", "-", "+"}) {
+            for (String suffix : new String[]{"", "L"}) {
+                String l = sign + "%0" + suffix;
+                assertEval(template(l, HEX_VALUES));
+                assertEval(template("typeof(" + l + ")", HEX_VALUES));
+            }
+        }
+    }
+
+    @Test
+    public void testNonIntegerQualifiedWithLWarning() {
+        assertEval(Ignored.OutputFormatting, "12345678909876543212L; 12345678909876543212L; 12345678909876543212L");
+        assertEval(Ignored.OutputFormatting, "123456789098765432121L\n123456789098765432121L");
+        assertEval(Ignored.OutputFormatting, "0xFFFFFFFFFFFL; 0xFFFFFFFFFFFL; 0xFFFFFFFFFFFL");
+        assertEval(Ignored.OutputFormatting, "0xFFFFFFFFFFFL\n0xFFFFFFFFFFFL");
     }
 
     @Test
