@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
-@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME})
+@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
@@ -131,9 +131,20 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected String toString(RContext context, Object value) {
-        // TODO This is a hack because R is still printing its own results
-        // every use of PolyglotEngine should return a value instead of printing the result.
-        return null;
+        // Btw debugger passes result of TruffleRLanguage.findMetaObject() to this method too
+        if (value instanceof String) {
+            return (String) value;
+        }
+        return RRuntime.toString(value);
+    }
+
+    @Override
+    protected boolean isVisible(RContext context, Object value) {
+        // Always returning false means that PolyglotEngine.eval() will not call our impl of
+        // TruffleRLanguage.toString(RContext,Object).
+        // Instead we are responsible for proper printing of the resulting value based on
+        // Source.isInteractive() flag (evaluated in REngine.PolyglotEngineRootNode).
+        return false;
     }
 
     @SuppressWarnings("try")

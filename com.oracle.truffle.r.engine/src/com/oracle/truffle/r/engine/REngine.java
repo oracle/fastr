@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -320,7 +320,7 @@ final class REngine implements Engine, Engine.Timings {
         PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
             super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
             // can't print if initializing the system in embedded mode (no builtins yet)
-            this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string);
+            this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string) && sourceSection.getSource().isInteractive();
             this.statements = statements;
             this.executionFrame = executionFrame;
             this.calls = new DirectCallNode[statements.size()];
