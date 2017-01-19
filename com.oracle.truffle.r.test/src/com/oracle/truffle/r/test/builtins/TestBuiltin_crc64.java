@@ -39,11 +39,7 @@ public class TestBuiltin_crc64 extends TestBase {
         assertEval(".Internal(crc64(paste(c(letters, LETTERS, 0:9), collapse=\"\")))");
         assertEval(".Internal(crc64(c('a')))");
 
-        // Expression: .Internal(crc64('a', 'b'))
-        // Expected output: Error: 2 arguments passed to .Internal(crc64) which requires 1
-        // FastR output: Error in crc64("a", "b") : unused argument ('b')
-        // should be handled in .Internal-s impl ?
-        assertEval(Ignored.ImplementationError, ".Internal(crc64('a', 'b'))");
+        assertEval(".Internal(crc64('a', 'b'))");
 
         assertEval(".Internal(crc64(c(1, 2)))");
 
@@ -74,12 +70,8 @@ public class TestBuiltin_crc64 extends TestBase {
 
         assertEval(".Call(utils:::C_crc64, c('a'))");
 
-        // // Expected output: Incorrect number of arguments (2), expecting 1 for 'crc64'
-        // // FastR output: throws com.oracle.truffle.r.runtime.RInternalError: should not reach
-        // here: mismatching number of arguments to foreign function
-        // // should be handled in .Call-s impl ?
-        assertEval(Ignored.ImplementationError, ".Call(utils:::C_crc64, 'a', 'b')");
-        assertEval(Ignored.ImplementationError, ".Call(utils:::C_crc64)");
+        assertEval(".Call(utils:::C_crc64, 'a', 'b')");
+        assertEval(".Call(utils:::C_crc64)");
 
         assertEval(".Call(utils:::C_crc64, c(1, 2))");
 

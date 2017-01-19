@@ -57,10 +57,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class OptionsFunctions {
-    /*
-     * This could be refactored using a recursive child node to handle simple cases, but it's
-     * unlikely to be the fast path.
-     */
+
     @RBuiltin(name = "options", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, behavior = MODIFIES_STATE)
     public abstract static class Options extends RBuiltinNode {
 
@@ -107,7 +104,7 @@ public class OptionsFunctions {
                 return result.value;
             } catch (OptionsException ex) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, ex);
+                throw RError.error(RError.SHOW_CALLER, ex);
             }
         }
 
@@ -167,7 +164,7 @@ public class OptionsFunctions {
                             names = newNames;
                         }
                     } else {
-                        throw RError.error(this, Message.INVALID_UNNAMED_ARGUMENT);
+                        throw RError.error(RError.SHOW_CALLER, Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = options.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;
@@ -203,7 +200,7 @@ public class OptionsFunctions {
         @Specialization
         protected Object getOption(RAbstractStringVector x) {
             if (x.getLength() != 1) {
-                throw RError.error(this, RError.Message.MUST_BE_STRING);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING);
             }
             ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
             return options.getValue(x.getDataAt(0));
@@ -211,7 +208,7 @@ public class OptionsFunctions {
 
         @Fallback
         protected Object getOption(@SuppressWarnings("unused") Object x) {
-            throw RError.error(this, RError.Message.MUST_BE_STRING);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING);
         }
     }
 }
