@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,7 +26,8 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs, @Cached("create()") GetDimAttributeNode getDimNode) {
+    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         RDoubleVector aVec = aVecAbs.materialize();
         int n = getDimNode.nrows(aVec);
         double[] a = aVec.getDataWithoutCopying(); // does not copy

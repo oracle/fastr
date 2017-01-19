@@ -100,7 +100,8 @@ public class LaFunctions {
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
         @Specialization
-        protected Object doRg(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+        protected Object doRg(RDoubleVector matrix, boolean onlyValues,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
@@ -193,7 +194,8 @@ public class LaFunctions {
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
     public abstract static class Rs extends RsgAdapter {
         @Specialization
-        protected Object doRs(RDoubleVector matrix, boolean onlyValues, @Cached("create()") GetDimAttributeNode getDimsNode) {
+        protected Object doRs(RDoubleVector matrix, boolean onlyValues,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             int n = dims[0];
             char jobv = onlyValues ? 'N' : 'V';

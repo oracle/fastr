@@ -206,7 +206,8 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization(guards = {"!recursive", "args.getLength() == 1"})
-    protected int doArgsValuesAndNames(RArgsValuesAndNames args, boolean recursive, @Cached("createRecursive()") PrecedenceNode precedenceNode) {
+    protected int doArgsValuesAndNames(RArgsValuesAndNames args, boolean recursive,
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
 }

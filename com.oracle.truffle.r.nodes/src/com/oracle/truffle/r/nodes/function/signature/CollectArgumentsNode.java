@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,9 @@ public abstract class CollectArgumentsNode extends RBaseNode {
     @SuppressWarnings("unused")
     @ExplodeLoop
     @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
-    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature, @Cached("signature") ArgumentsSignature cachedSignature, @Cached("createArgs(signature, frame)") Node[] reads) {
+    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature,
+                    @Cached("signature") ArgumentsSignature cachedSignature,
+                    @Cached("createArgs(signature, frame)") Node[] reads) {
         Object[] result = new Object[reads.length];
         for (int i = 0; i < reads.length; i++) {
             Object value = reads[i] instanceof ConstantNode ? ((ConstantNode) reads[i]).getValue() : ((LocalReadVariableNode) reads[i]).execute(frame);

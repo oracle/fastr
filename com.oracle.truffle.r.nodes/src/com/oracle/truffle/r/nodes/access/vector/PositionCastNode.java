@@ -93,7 +93,8 @@ abstract class PositionCastNode extends Node {
     }
 
     @Specialization
-    protected RAbstractVector doDouble(double position, @Cached("create()") NACheck check) {
+    protected RAbstractVector doDouble(double position,
+                    @Cached("create()") NACheck check) {
         if (mode.isSubscript()) {
             check.enable(position);
             return RInteger.valueOf(check.convertDoubleToInt(position));

@@ -140,7 +140,8 @@ public abstract class AccessSlotNode extends RNode {
     // this is really a fallback specialization but @Fallback does not work here (because of the
     // type of "object"?)
     @Specialization(guards = {"!slotAccessAllowed(object)", "!isDotData(name)"})
-    protected Object getSlot(RAttributable object, String name, @Cached("create()") GetClassAttributeNode getClassNode) {
+    protected Object getSlot(RAttributable object, String name,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
         RStringVector classAttr = getClassNode.getClassAttr(object);
         if (classAttr == null) {
             RStringVector implicitClassVec = object.getImplicitClass();

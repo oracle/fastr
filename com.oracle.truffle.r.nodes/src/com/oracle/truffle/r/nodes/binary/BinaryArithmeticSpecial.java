@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,8 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         }
 
         @Specialization
-        public int doIntegers(int left, int right, @Cached("createBinaryProfile()") ConditionProfile naProfile) {
+        public int doIntegers(int left, int right,
+                        @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
                 checkFullCallNeededOnNA();
                 return RRuntime.INT_NA;
@@ -117,7 +118,8 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         }
 
         @Specialization
-        public double doIntDouble(int left, double right, @Cached("createBinaryProfile()") ConditionProfile naProfile) {
+        public double doIntDouble(int left, double right,
+                        @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
                 checkFullCallNeededOnNA();
                 return RRuntime.DOUBLE_NA;
@@ -126,7 +128,8 @@ public abstract class BinaryArithmeticSpecial extends RNode {
         }
 
         @Specialization
-        public double doDoubleInt(double left, int right, @Cached("createBinaryProfile()") ConditionProfile naProfile) {
+        public double doDoubleInt(double left, int right,
+                        @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
                 checkFullCallNeededOnNA();
                 return isNaN(left) ? Double.NaN : RRuntime.DOUBLE_NA;

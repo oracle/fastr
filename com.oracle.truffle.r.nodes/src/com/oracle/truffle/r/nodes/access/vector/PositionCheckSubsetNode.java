@@ -94,7 +94,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(contains = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
-                    int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile,
+                    int dimensionLength, RAbstractLogicalVector position, int positionLength,
+                    @Cached("create()") BranchProfile outOfBoundsProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
         positionNACheck.enable(position);

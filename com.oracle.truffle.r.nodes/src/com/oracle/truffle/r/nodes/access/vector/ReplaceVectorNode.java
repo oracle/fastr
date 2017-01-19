@@ -100,7 +100,8 @@ public abstract class ReplaceVectorNode extends Node {
     protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object value,
                     @Cached("createForeignWrite(positions)") Node foreignRead,
                     @Cached("positions.length") int cachedLength,
-                    @Cached("create()") CastStringNode castNode, @Cached("createFirstString()") FirstStringNode firstString) {
+                    @Cached("create()") CastStringNode castNode,
+                    @Cached("createFirstString()") FirstStringNode firstString) {
 
         Object writtenValue = value;
         if (writtenValue instanceof RInteger) {

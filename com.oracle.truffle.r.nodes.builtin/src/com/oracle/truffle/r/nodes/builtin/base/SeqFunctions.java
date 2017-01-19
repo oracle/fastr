@@ -525,7 +525,9 @@ public class SeqFunctions {
          */
         @Specialization(guards = {"!isMissing(toObj)"})
         protected RAbstractVector seqLengthByMissing(VirtualFrame frame, Object fromObj, Object toObj, RMissing by, RMissing lengthOut, RMissing alongWith,
-                        @Cached("create()") AsRealNode asRealFrom, @Cached("create()") AsRealNode asRealTo, @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
+                        @Cached("create()") AsRealNode asRealFrom,
+                        @Cached("create()") AsRealNode asRealTo,
+                        @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             double from;
             if (isMissing(fromObj)) {
                 from = 1.0;
@@ -586,7 +588,9 @@ public class SeqFunctions {
          */
         @Specialization(guards = {"!isMissing(byObj)"})
         protected Object seqLengthMissing(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, RMissing lengthOut, RMissing alongWith,
-                        @Cached("create()") AsRealNode asRealFrom, @Cached("create()") AsRealNode asRealTo, @Cached("create()") AsRealNode asRealby) {
+                        @Cached("create()") AsRealNode asRealFrom,
+                        @Cached("create()") AsRealNode asRealTo,
+                        @Cached("create()") AsRealNode asRealby) {
             double from;
             boolean allInt = true;
             if (isMissing(fromObj)) {
@@ -778,7 +782,9 @@ public class SeqFunctions {
         // "by" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, toObj)"})
         protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, Object toObj, RMissing byObj, Object lengthOut, Object alongWith,
-                        @Cached("create()") AsRealNode asRealFrom, @Cached("create()") AsRealNode asRealTo, @Cached("create()") AsRealNode asRealLen) {
+                        @Cached("create()") AsRealNode asRealFrom,
+                        @Cached("create()") AsRealNode asRealTo,
+                        @Cached("create()") AsRealNode asRealLen) {
             int lout = checkLengthAlongWith(frame, lengthOut, alongWith, asRealLen);
             if (lout == 0) {
                 return RDataFactory.createEmptyIntVector();
@@ -830,7 +836,9 @@ public class SeqFunctions {
         // "to" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, byObj)"})
         protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, RMissing toObj, Object byObj, Object lengthOut, Object alongWith,
-                        @Cached("create()") AsRealNode asRealFrom, @Cached("create()") AsRealNode asRealby, @Cached("create()") AsRealNode asRealLen) {
+                        @Cached("create()") AsRealNode asRealFrom,
+                        @Cached("create()") AsRealNode asRealby,
+                        @Cached("create()") AsRealNode asRealLen) {
             int lout = checkLengthAlongWith(frame, lengthOut, alongWith, asRealLen);
             if (lout == 0) {
                 return RDataFactory.createEmptyIntVector();
@@ -855,7 +863,9 @@ public class SeqFunctions {
         // "from" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(toObj, byObj)"})
         protected RAbstractVector seqWithLength(VirtualFrame frame, RMissing fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith,
-                        @Cached("create()") AsRealNode asRealTo, @Cached("create()") AsRealNode asRealby, @Cached("create()") AsRealNode asRealLen) {
+                        @Cached("create()") AsRealNode asRealTo,
+                        @Cached("create()") AsRealNode asRealby,
+                        @Cached("create()") AsRealNode asRealLen) {
             int lout = checkLengthAlongWith(frame, lengthOut, alongWith, asRealLen);
             if (lout == 0) {
                 return RDataFactory.createEmptyIntVector();

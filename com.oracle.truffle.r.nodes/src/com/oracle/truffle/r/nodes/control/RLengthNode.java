@@ -97,7 +97,8 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization(contains = "doCachedContainer")
-    protected int doContainer(RAbstractContainer operand, @Cached("create()") VectorLengthProfile lengthProfile) {
+    protected int doContainer(RAbstractContainer operand,
+                    @Cached("create()") VectorLengthProfile lengthProfile) {
         return lengthProfile.profile(operand.getLength());
     }
 
@@ -109,7 +110,8 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization
-    protected int getLength(REnvironment env, @Cached("create()") VectorLengthProfile lengthProfile) {
+    protected int getLength(REnvironment env,
+                    @Cached("create()") VectorLengthProfile lengthProfile) {
         /*
          * This is a bit wasteful but only in the creation of the RStringVector; all the logic to
          * decide whether to include a name is still necessary

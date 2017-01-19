@@ -820,7 +820,8 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "setAttrInAttributable")
         @TruffleBoundary
-        protected void setDimNamesInContainer(RAbstractContainer x, RList dimNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
+        protected void setDimNamesInContainer(RAbstractContainer x, RList dimNames,
+                        @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setDimNames(dimNames);
         }
@@ -946,7 +947,8 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         @TruffleBoundary
-        protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames, @Cached("createClassProfile()") ValueProfile contClassProfile) {
+        protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames,
+                        @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
             xProfiled.setRowNames(rowNames);
         }

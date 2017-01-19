@@ -57,7 +57,8 @@ public abstract class UnClass extends RBuiltinNode {
     // TODO: this specialization could go away if connections were simple vectors (we wouldn't need
     // special method for setting class attributes then)
     @Specialization
-    protected Object unClass(RAbstractVector arg, @Cached("create()") GetClassAttributeNode getClassNode) {
+    protected Object unClass(RAbstractVector arg,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
         if (getClassNode.isObject(arg)) {
             objectProfile.enter();
             return unClassVector(arg);
@@ -66,7 +67,9 @@ public abstract class UnClass extends RBuiltinNode {
     }
 
     @Specialization(guards = "notAbstractVector(arg)")
-    protected Object unClass(RAttributable arg, @Cached("create()") RemoveClassAttributeNode removeClassNode, @Cached("create()") GetClassAttributeNode getClassNode) {
+    protected Object unClass(RAttributable arg,
+                    @Cached("create()") RemoveClassAttributeNode removeClassNode,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
         if (getClassNode.getClassAttr(arg) != null) {
             objectProfile.enter();
             if (arg instanceof RShareable) {

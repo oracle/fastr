@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,8 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = {"cachedClass != null", "operand.getClass() == cachedClass"})
-        protected byte doCached(Object operand, @Cached("getNumericVectorClass(operand)") Class<? extends RAbstractVector> cachedClass) {
+        protected byte doCached(Object operand,
+                        @Cached("getNumericVectorClass(operand)") Class<? extends RAbstractVector> cachedClass) {
             return castImpl(cachedClass.cast(operand));
         }
 
