@@ -5,11 +5,15 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.tools;
+
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -22,13 +26,12 @@ import java.util.stream.Stream;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
@@ -38,15 +41,15 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     private static final int FILE_MASK = 0644;
     private static final int DIR_MASK = 0755;
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0, "dir").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+    }
+
     @Specialization
     @TruffleBoundary
-    protected RNull dirChmod(RAbstractStringVector dir, Object gws) {
-        if (dir.getLength() != 1) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "dir");
-        }
-        String pathName = ((RStringVector) dir).getDataAt(0);
-        boolean setGroupWrite = RRuntime.fromLogical(castLogical(castVector(gws)));
-
+    protected RNull dirChmod(String pathName, boolean setGroupWrite) {
         Path path = FileSystems.getDefault().getPath(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;

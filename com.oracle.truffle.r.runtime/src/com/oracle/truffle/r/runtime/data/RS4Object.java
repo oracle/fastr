@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.RType;
  * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
  * is needed as such objects are generated when unserializing the "methods" package.
  */
-public class RS4Object extends RSharingAttributeStorage {
+public final class RS4Object extends RSharingAttributeStorage {
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar("S4");
 
@@ -37,7 +37,7 @@ public class RS4Object extends RSharingAttributeStorage {
     }
 
     @Override
-    public final RStringVector getImplicitClass() {
+    public RStringVector getImplicitClass() {
         return implicitClass;
     }
 

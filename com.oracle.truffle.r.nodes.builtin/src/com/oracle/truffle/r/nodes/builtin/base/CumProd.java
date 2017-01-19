@@ -76,28 +76,6 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cumprod(RAbstractIntVector arg) {
-        int[] array = new int[arg.getLength()];
-        na.enable(arg);
-        int prev = 1;
-        int i;
-        for (i = 0; i < arg.getLength(); i++) {
-            if (na.check(arg.getDataAt(i))) {
-                break;
-            }
-            prev = mul.op(prev, arg.getDataAt(i));
-            if (na.check(prev)) {
-                break;
-            }
-            array[i] = prev;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(array, i, array.length, RRuntime.INT_NA);
-        }
-        return RDataFactory.createIntVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
-    }
-
-    @Specialization
     protected RDoubleVector cumprod(RAbstractDoubleVector arg) {
         double[] array = new double[arg.getLength()];
         na.enable(arg);

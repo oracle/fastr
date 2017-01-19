@@ -779,7 +779,8 @@ public final class RError extends RuntimeException {
         MORE_THAN_ONE_MATCH("there is more than one match in '%s'"),
         TOO_MANY_ARGS("too many arguments"),
         ARG_MUST_BE_CHARACTER("argument '%s' must be character"),
-        INCORRECT_NOF_ARGS("Incorrect number of arguments (%d), expecting %d for '%s'");
+        INCORRECT_NOF_ARGS("Incorrect number of arguments (%d), expecting %d for '%s'"),
+        MACRO_CAN_BE_APPLIED_TO("%s can only be applied to a '%s', not a '%s'");
 
         public final String message;
         final boolean hasArgs;

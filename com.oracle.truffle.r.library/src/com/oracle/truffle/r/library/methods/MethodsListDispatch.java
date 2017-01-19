@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.library.methods;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -48,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -56,8 +58,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
@@ -101,6 +101,17 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            //@formatter:off
+            casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").
+                mustNotBeNull().
+                mustBe(stringValue().or(instanceOf(RS4Object.class)));
+
+            casts.arg(1, "table").mustNotBeNull(RError.NO_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            //@formatter:on
+        }
+
         protected GetFixedAttributeNode createPckgAttrAccess() {
             return GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
         }
@@ -111,6 +122,10 @@ public class MethodsListDispatch {
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
+
+            if (klassString.length() == 0) {
+                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+            }
 
             Object value = table.get(klassString);
             if (value == null) {
@@ -136,11 +151,6 @@ public class MethodsListDispatch {
             return klass;
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object callGetClassFromCache(Object klass, Object table) {
-            throw RError.error(this, RError.Message.GENERIC, "class should be either a character-string name or a class definition");
-        }
     }
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {

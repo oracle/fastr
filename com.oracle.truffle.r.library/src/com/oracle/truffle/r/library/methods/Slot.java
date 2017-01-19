@@ -5,25 +5,28 @@
  *
  * Copyright (c) 1995-2013, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.methods;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // Transcribed from src/library/methods/src/slot.c
 
@@ -34,25 +37,26 @@ public class Slot {
         @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(false, null, null);
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        protected static String getInternedName(RAbstractStringVector nameVec) {
-            return Utils.intern(nameVec.getDataAt(0));
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(
+                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
-        @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
-        protected Object getSlotCached(Object object, @SuppressWarnings("unused") RAbstractStringVector nameVec, @Cached("getInternedName(nameVec)") String cachedInternedName) {
+        protected static String getInternedName(String name) {
+            return Utils.intern(name);
+        }
+
+        @Specialization(guards = {"name.equals(cachedInternedName)"})
+        protected Object getSlotCached(Object object, @SuppressWarnings("unused") String name, @Cached("getInternedName(name)") String cachedInternedName) {
             return accessSlotNode.executeAccess(castAttributable.executeObject(object), cachedInternedName);
         }
 
-        @Specialization(contains = "getSlotCached", guards = "nameVec.getLength() == 1")
-        protected Object getSlot(Object object, RAbstractStringVector nameVec) {
-            return accessSlotNode.executeAccess(castAttributable.executeObject(object), getInternedName(nameVec));
+        @Specialization(contains = "getSlotCached")
+        protected Object getSlot(Object object, String name) {
+            return accessSlotNode.executeAccess(castAttributable.executeObject(object), getInternedName(name));
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object getSlot(Object object, Object nameVec) {
-            throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
-        }
     }
 
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
@@ -60,24 +64,25 @@ public class Slot {
         @Child private UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        protected static String getInternedName(RAbstractStringVector nameVec) {
-            return Utils.intern(nameVec.getDataAt(0));
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(
+                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
-        @Specialization(guards = {"nameVec.getLength() == 1", "nameVec.getDataAt(0).equals(cachedInternedName)"})
-        protected Object setSlotCached(Object object, @SuppressWarnings("unused") RAbstractStringVector nameVec, Object value, @Cached("getInternedName(nameVec)") String cachedInternedName) {
+        protected static String getInternedName(String name) {
+            return Utils.intern(name);
+        }
+
+        @Specialization(guards = {"name.equals(cachedInternedName)"})
+        protected Object setSlotCached(Object object, @SuppressWarnings("unused") String name, Object value, @Cached("getInternedName(name)") String cachedInternedName) {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), cachedInternedName, value);
         }
 
-        @Specialization(contains = "setSlotCached", guards = "nameVec.getLength() == 1")
-        protected Object setSlot(Object object, RAbstractStringVector nameVec, Object value) {
-            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(nameVec), value);
+        @Specialization(contains = "setSlotCached")
+        protected Object setSlot(Object object, String name, Object value) {
+            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(name), value);
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object setSlot(Object object, Object name, Object value) {
-            throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
-        }
     }
 }
