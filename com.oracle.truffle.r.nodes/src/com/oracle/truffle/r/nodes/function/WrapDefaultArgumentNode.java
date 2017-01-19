@@ -22,10 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -36,29 +40,34 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
-    private final ConditionProfile isShared = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile isShared;
+    @CompilationFinal private ValueProfile copyProfile;
 
     private WrapDefaultArgumentNode(RNode operand) {
-        super(operand, true);
+        super(operand);
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        Object result = operand.execute(frame);
-        RShareable rShareable = getShareable(result);
-        if (rShareable != null) {
-            shareable.enter();
-            if (isShared.profile(rShareable.isShared())) {
-                return rShareable.copy();
-            } else {
-                ((RShareable) result).incRefCount();
-            }
+    protected Object handleShareable(VirtualFrame frame, RSharingAttributeStorage shareable) {
+        if (isShared == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isShared = ConditionProfile.createBinaryProfile();
         }
-        return result;
+        if (isShared.profile(shareable.isShared())) {
+            if (copyProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copyProfile = ValueProfile.createClassProfile();
+            }
+            return copyProfile.profile(shareable).copy();
+        } else {
+            shareable.incRefCount();
+            return shareable;
+        }
     }
 
     public static RNode create(RNode operand) {
-        if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
+        assert !(operand instanceof WrapArgumentNode);
+        if (operand instanceof ConstantNode) {
             return operand;
         } else {
             return new WrapDefaultArgumentNode(operand);

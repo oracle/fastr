@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,7 +104,7 @@ public abstract class PromiseNode extends RNode {
         RNode arg = (RNode) factory.getExpr();
         RNode expr = (RNode) RASTUtils.unwrap(arg);
         int wrapIndex = ArgumentStatePush.INVALID_INDEX;
-        if (arg instanceof WrapArgumentNode && ((WrapArgumentNode) arg).modeChange()) {
+        if (arg instanceof WrapArgumentNode) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
         if (forcedEager && EvaluatedArgumentsVisitor.isSimpleArgument(expr.asRSyntaxNode())) {

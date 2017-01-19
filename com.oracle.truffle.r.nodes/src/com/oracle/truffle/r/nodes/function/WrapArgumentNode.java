@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -38,20 +38,13 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class WrapArgumentNode extends WrapArgumentBaseNode {
 
-    private final boolean modeChange;
     private final int index;
 
     @Child private ArgumentStatePush argPushStateNode;
 
-    private WrapArgumentNode(RNode operand, boolean modeChange, int index) {
-        super(operand, modeChange);
-        this.modeChange = modeChange;
+    private WrapArgumentNode(RNode operand, int index) {
+        super(operand);
         this.index = index;
-        this.argPushStateNode = modeChange ? ArgumentStatePushNodeGen.create(index) : null;
-    }
-
-    public boolean modeChange() {
-        return modeChange;
     }
 
     public int getIndex() {
@@ -59,63 +52,70 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
     }
 
     @Override
-    public NodeCost getCost() {
-        return modeChange ? NodeCost.MONOMORPHIC : NodeCost.NONE;
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        assert operand != null;
-        Object result = operand.execute(frame);
-        return execute(frame, result);
-    }
-
-    public Object execute(VirtualFrame frame, Object result) {
-        if (modeChange) {
-            RShareable rShareable = getShareable(result);
-            if (rShareable != null) {
-                shareable.enter();
-                argPushStateNode.executeObject(frame, rShareable);
-            }
+    protected Object handleShareable(VirtualFrame frame, RSharingAttributeStorage shareable) {
+        if (argPushStateNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            argPushStateNode = insert(ArgumentStatePushNodeGen.create(index));
         }
-        return result;
+        argPushStateNode.executeObject(frame, shareable);
+        return shareable;
     }
 
     @Override
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
-        return operand.executeByte(frame);
+        try {
+            return operand.executeByte(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnexpectedResultException(execute(frame, e.getResult()));
+        }
     }
 
     @Override
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-        return operand.executeInteger(frame);
+        try {
+            return operand.executeInteger(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnexpectedResultException(execute(frame, e.getResult()));
+        }
     }
 
     @Override
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-        return operand.executeDouble(frame);
+        try {
+            return operand.executeDouble(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnexpectedResultException(execute(frame, e.getResult()));
+        }
     }
 
     @Override
     public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
-        return operand.executeMissing(frame);
+        try {
+            return operand.executeMissing(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnexpectedResultException(execute(frame, e.getResult()));
+        }
     }
 
     @Override
     public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-        return operand.executeNull(frame);
+        try {
+            return operand.executeNull(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnexpectedResultException(execute(frame, e.getResult()));
+        }
     }
 
     static WrapArgumentNode create(int index) {
-        return new WrapArgumentNode(null, true, index);
+        return new WrapArgumentNode(null, index);
     }
 
-    static RNode create(RNode operand, boolean modeChange, int index) {
-        if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
+    static RNode create(RNode operand, int index) {
+        assert !(operand instanceof WrapArgumentNode);
+        if (operand instanceof ConstantNode) {
             return operand;
         } else {
-            WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
-            return wan;
+            return new WrapArgumentNode(operand, index);
         }
     }
 }
