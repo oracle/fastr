@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -44,6 +42,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -84,6 +83,7 @@ abstract class WriteIndexedVectorNode extends Node {
     private final VectorLengthProfile dimensionValueProfile = VectorLengthProfile.create();
     private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
     private final NACheck positionNACheck = NACheck.create();
+    private final ConditionProfile resetIndexProfile = ConditionProfile.createBinaryProfile();
 
     @Child private WriteIndexedScalarNode<RAbstractVector, RTypedValue> scalarNode;
     @Child private WriteIndexedVectorNode innerVectorNode;
@@ -196,8 +196,6 @@ abstract class WriteIndexedVectorNode extends Node {
                     Object[] positions, RMissing position, int positionOffset, int positionLength,
                     RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
-        initRightIndexCheck(rightBase, targetDimension, leftLength, rightLength);
-
         int rightIndex = rightBase;
         profile.profileCounted(targetDimension);
         for (int positionValue = 0; profile.inject(positionValue < targetDimension); positionValue += 1) {
@@ -214,7 +212,8 @@ abstract class WriteIndexedVectorNode extends Node {
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") BranchProfile wasTrue, @Cached("create()") AlwaysOnBranchProfile outOfBounds,
-                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile,
+                    @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
         positionNACheck.enable(!skipNA && !position.isComplete());
 
         int length = targetDimension;
@@ -225,8 +224,6 @@ abstract class WriteIndexedVectorNode extends Node {
 
         int rightIndex = rightBase;
         if (positionLength > 0) {
-
-            initRightIndexCheck(rightBase, length, leftLength, rightLength);
 
             int positionIndex = 0;
             profile.profileCounted(length);
@@ -243,13 +240,11 @@ abstract class WriteIndexedVectorNode extends Node {
                                     positions, positionOffset, i,
                                     right, rightStore, rightLength, rightIndex, isNA || parentNA);
                 }
-                positionIndex = Utils.incMod(positionIndex, positionLength);
+                positionIndex = Utils.incMod(positionIndex, positionLength, incModProfile);
             }
         }
         return rightIndex;
     }
-
-    @CompilationFinal private boolean needsRightIndexCheck = false;
 
     /**
      * For integer sequences we need to make sure that start and stride is profiled.
@@ -274,8 +269,6 @@ abstract class WriteIndexedVectorNode extends Node {
             throw new SlowPathException("rewrite to doIntegerPosition");
         }
 
-        initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
-
         boolean ascending = conditionProfile.profile(start < end);
         profile.profileCounted(positionLength);
         for (int positionValue = start; profile.inject(ascending ? positionValue < end : positionValue > end); positionValue += stride) {
@@ -285,20 +278,6 @@ abstract class WriteIndexedVectorNode extends Node {
                             right, rightStore, rightLength, rightIndex, parentNA);
         }
         return rightIndex;
-    }
-
-    private void initRightIndexCheck(int rightBase, int positionLength, int leftLength, int rightLength) {
-        if (!needsRightIndexCheck) {
-            int actionRightMod = positionsApplyToRight ? leftLength : rightLength;
-            if (rightBase + positionLength > actionRightMod) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                WriteIndexedVectorNode writeVector = this;
-                while (writeVector != null) {
-                    writeVector.needsRightIndexCheck = true;
-                    writeVector = writeVector.innerVectorNode;
-                }
-            }
-        }
     }
 
     /**
@@ -313,8 +292,6 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
-
-        initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
 
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
@@ -337,7 +314,7 @@ abstract class WriteIndexedVectorNode extends Node {
     private int applyInner(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions,
                     Object[] positions, int positionOffset, int positionValue,
-                    RTypedValue right, Object rightStore, int rightLength, int rightIndex, boolean isNA) {
+                    RTypedValue right, Object rightStore, int rightLength, int actionIndex, boolean isNA) {
         int newTargetIndex = leftBase + positionValue * positionOffset;
         if (dimensionIndex == 0) {
             // for-loops leaf for innermost dimension
@@ -346,34 +323,30 @@ abstract class WriteIndexedVectorNode extends Node {
             int actionLeftIndex;
             int actionRightIndex;
             if (positionsApplyToRight) {
-                if (needsRightIndexCheck && rightIndex == leftLength) {
-                    rightIndex = 0;
-                }
-                actionLeftIndex = rightIndex;
+                actionLeftIndex = actionIndex;
                 actionRightIndex = newTargetIndex;
             } else {
-                if (needsRightIndexCheck && rightIndex == rightLength) {
-                    rightIndex = 0;
-                }
                 actionLeftIndex = newTargetIndex;
-                actionRightIndex = rightIndex;
+                actionRightIndex = actionIndex;
             }
 
             if (isNA) {
-                left.setNA(leftStore, actionLeftIndex);
-                getValueNACheck().seenNA();
+                scalarNode.applyNA(left, leftStore, actionLeftIndex);
             } else {
                 scalarNode.apply(left, leftStore, actionLeftIndex, right, rightStore, actionRightIndex);
             }
 
-            return rightIndex + 1;
+            if (resetIndexProfile.profile((actionIndex + 1) == (positionsApplyToRight ? leftLength : rightLength))) {
+                return 0;
+            }
+            return actionIndex + 1;
         } else {
             // generate another for-loop for other dimensions
             int nextTargetDimension = innerVectorNode.dimensionValueProfile.profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
             return innerVectorNode.applyImpl(//
                             left, leftStore, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
                             positions, positionOffset,
-                            right, rightStore, rightIndex, rightLength, isNA);
+                            right, rightStore, actionIndex, rightLength, isNA);
         }
     }
 
@@ -407,6 +380,8 @@ abstract class WriteIndexedVectorNode extends Node {
 
         abstract void apply(A leftAccess, Object leftStore, int leftIndex, V rightAccess, Object rightStore, int rightIndex);
 
+        abstract void applyNA(A leftAccess, Object leftStore, int leftIndex);
+
     }
 
     private static final class WriteLogicalAction extends WriteIndexedScalarNode<RAbstractLogicalVector, RAbstractLogicalVector> {
@@ -416,6 +391,12 @@ abstract class WriteIndexedVectorNode extends Node {
             byte value = rightAccess.getDataAt(rightStore, rightIndex);
             leftAccess.setDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
+        }
+
+        @Override
+        void applyNA(RAbstractLogicalVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.LOGICAL_NA);
+            valueNACheck.seenNA();
         }
     }
 
@@ -427,6 +408,12 @@ abstract class WriteIndexedVectorNode extends Node {
             leftAccess.setDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
         }
+
+        @Override
+        void applyNA(RAbstractIntVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.INT_NA);
+            valueNACheck.seenNA();
+        }
     }
 
     private static final class WriteDoubleAction extends WriteIndexedScalarNode<RAbstractDoubleVector, RAbstractDoubleVector> {
@@ -436,6 +423,12 @@ abstract class WriteIndexedVectorNode extends Node {
             double value = rightAccess.getDataAt(rightStore, rightIndex);
             leftAccess.setDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
+        }
+
+        @Override
+        void applyNA(RAbstractDoubleVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.DOUBLE_NA);
+            valueNACheck.seenNA();
         }
     }
 
@@ -447,6 +440,12 @@ abstract class WriteIndexedVectorNode extends Node {
             leftAccess.setDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
         }
+
+        @Override
+        void applyNA(RAbstractComplexVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RComplex.createNA());
+            valueNACheck.seenNA();
+        }
     }
 
     private static final class WriteCharacterAction extends WriteIndexedScalarNode<RAbstractStringVector, RAbstractStringVector> {
@@ -457,6 +456,12 @@ abstract class WriteIndexedVectorNode extends Node {
             leftAccess.setDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
         }
+
+        @Override
+        void applyNA(RAbstractStringVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.STRING_NA);
+            valueNACheck.seenNA();
+        }
     }
 
     private static final class WriteRawAction extends WriteIndexedScalarNode<RAbstractRawVector, RAbstractRawVector> {
@@ -466,6 +471,11 @@ abstract class WriteIndexedVectorNode extends Node {
             byte value = rightAccess.getRawDataAt(rightStore, rightIndex);
             leftAccess.setRawDataAt(leftStore, leftIndex, value);
             valueNACheck.check(value);
+        }
+
+        @Override
+        void applyNA(RAbstractRawVector leftAccess, Object leftStore, int leftIndex) {
+            // nothing to do
         }
     }
 
@@ -511,6 +521,12 @@ abstract class WriteIndexedVectorNode extends Node {
 
             leftAccess.setDataAt(leftStore, leftIndex, rightValue);
             valueNACheck.checkListElement(rightValue);
+        }
+
+        @Override
+        void applyNA(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex) {
+            leftAccess.setDataAt(leftStore, leftIndex, RNull.instance);
+            valueNACheck.seenNA();
         }
     }
 }

@@ -47,6 +47,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.GraphPrintVisitor;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
@@ -94,6 +95,14 @@ public final class Utils {
     public static int incMod(int value, int mod) {
         int result = (value + 1);
         if (result == mod) {
+            return 0;
+        }
+        return result;
+    }
+
+    public static int incMod(int value, int mod, ConditionProfile profile) {
+        int result = (value + 1);
+        if (profile.profile(result == mod)) {
             return 0;
         }
         return result;
