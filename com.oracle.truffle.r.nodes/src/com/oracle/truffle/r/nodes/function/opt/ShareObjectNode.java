@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -39,6 +38,9 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
  * Internal node that should be used whenever you need to increment reference count of some object.
  * If the object is not instance of {@link RShareable} or if it is shared permanent, then does
  * nothing.
+ *
+ * This class relies (and asserts) that all RShareable objects are subclasses of
+ * RSharingAttributeStorage.
  */
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NONE)
@@ -58,29 +60,20 @@ public abstract class ShareObjectNode extends Node {
         return obj;
     }
 
-    @Specialization
-    protected Object doShareable(RShareable obj,
-                    @Cached("createBinaryProfile()") ConditionProfile sharedPermanent,
-                    @Cached("createClassProfile()") ValueProfile typeProfile) {
-        RShareable objProfiled = typeProfile.profile(obj);
-        if (sharedPermanent.profile(!objProfiled.isSharedPermanent())) {
-            objProfiled.incRefCount();
-        }
-        return obj;
-    }
-
     @Specialization(guards = "!isRShareable(obj)")
     protected Object doNonShareable(Object obj) {
         return obj;
     }
 
     protected static boolean isRShareable(Object value) {
-        return value instanceof RShareable;
+        verify(value);
+        return value instanceof RSharingAttributeStorage;
     }
 
     public static <T> T share(T value) {
-        if (value instanceof RShareable) {
-            RShareable shareable = (RShareable) value;
+        verify(value);
+        if (value instanceof RSharingAttributeStorage) {
+            RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
                 shareable.incRefCount();
             }
@@ -89,18 +82,24 @@ public abstract class ShareObjectNode extends Node {
     }
 
     public static <T> T sharePermanent(T value) {
-        if (value instanceof RShareable) {
-            ((RShareable) value).makeSharedPermanent();
+        verify(value);
+        if (value instanceof RSharingAttributeStorage) {
+            ((RSharingAttributeStorage) value).makeSharedPermanent();
         }
         return value;
     }
 
     public static void unshare(Object value) {
-        if (value instanceof RShareable) {
-            RShareable shareable = (RShareable) value;
+        verify(value);
+        if (value instanceof RSharingAttributeStorage) {
+            RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
                 shareable.decRefCount();
             }
         }
+    }
+
+    private static void verify(Object value) {
+        assert (value instanceof RShareable) == (value instanceof RSharingAttributeStorage) : "unexpected RShareable that is not RSharingAttributeStorage: " + value;
     }
 }
