@@ -475,31 +475,36 @@ public final class Utils {
         @TruffleBoundary
         public Frame visitFrame(FrameInstance frameInstance) {
             Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, true));
-            if (RArguments.isRFrame(f) && RArguments.getFunction(f) != null) {
-                if (skip > 0) {
-                    skip--;
-                } else {
-                    RCaller call = RArguments.getCall(f);
-                    assert call != null;
-                    RLanguage rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
-                    RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-                    SourceSection ss = sn != null ? sn.getSourceSection() : null;
-                    // fabricate a srcref attribute from ss
-                    Source source = ss != null ? ss.getSource() : null;
-                    String path = RSource.getPath(source);
-                    RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
-                    if (path != null) {
-                        callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
-                    }
-                    RPairList pl = RDataFactory.createPairList(callerSource);
-                    if (prev != null) {
-                        prev.setCdr(pl);
-                    } else {
-                        head = pl;
-                    }
-                    prev = pl;
-                }
+            if (!RArguments.isRFrame(f) || RArguments.getFunction(f) == null) {
+                return null;
             }
+            RCaller call = RArguments.getCall(f);
+            assert call != null;
+            if (!call.isValidCaller()) {
+                // this is extra robustness. In ideal world we should not encounter invalid ones
+                return null;
+            }
+            if (skip > 0) {
+                skip--;
+                return null;
+            }
+            RLanguage rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+            RSyntaxNode sn = (RSyntaxNode) rl.getRep();
+            SourceSection ss = sn != null ? sn.getSourceSection() : null;
+            // fabricate a srcref attribute from ss
+            Source source = ss != null ? ss.getSource() : null;
+            String path = RSource.getPath(source);
+            RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
+            if (path != null) {
+                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
+            }
+            RPairList pl = RDataFactory.createPairList(callerSource);
+            if (prev != null) {
+                prev.setCdr(pl);
+            } else {
+                head = pl;
+            }
+            prev = pl;
             return null;
         }
     }
@@ -888,7 +893,7 @@ public final class Utils {
     }
 
     public static String toHexString(byte[] data) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (byte b : data) {
             int ub = Byte.toUnsignedInt(b);
             if (ub > 15) {
