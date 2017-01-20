@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.nmath.distr.DNorm;
 import com.oracle.truffle.r.runtime.nmath.distr.DPois;
 import com.oracle.truffle.r.runtime.nmath.distr.Pnorm;
 import com.oracle.truffle.r.runtime.nmath.distr.Qnorm;
-import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 /**
  * Java implementation of the qgamma and related functions. The logic was derived from GNU R (see
@@ -270,7 +269,7 @@ public abstract class GammaFunctions {
             return x;
         }
 
-        if (x < 0 && BinaryArithmetic.fmod(Math.floor(-x), 2.) == 0) {
+        if (x < 0 && RMath.fmod(Math.floor(-x), 2.) == 0) {
             if (sgn[0] != 0) {
                 sgn[0] = 1;
             }

@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /*
  * Logic derived from GNU-R, Purdue FastR and gcc.
@@ -108,22 +109,6 @@ public abstract class BinaryArithmetic extends Operation {
     public abstract RComplex op(double leftReal, double leftImag, double rightReal, double rightImag);
 
     public abstract String op(String left, String right);
-
-    public static double fmod(double a, double b) {
-        // TODO: this is duplicated in RMath, once RMath is moved to runtime, this should be
-        // replaced
-        double q = a / b;
-        if (b != 0) {
-            double tmp = a - Math.floor(q) * b;
-            if (RRuntime.isFinite(q) && Math.abs(q) > 1 / RRuntime.EPSILON) {
-                // TODO support warning here
-                throw new UnsupportedOperationException();
-            }
-            return tmp - Math.floor(tmp / b) * b;
-        } else {
-            return Double.NaN;
-        }
-    }
 
     private static double convertInf(double d) {
         // This code is transcribed from Purdue FastR.
@@ -459,6 +444,12 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static final class Mod extends BinaryArithmetic {
 
+        @CompilationFinal private boolean tryInt = true;
+        private final BranchProfile isNaProfile = BranchProfile.create();
+        private final BranchProfile isZeroProfile = BranchProfile.create();
+        private final ConditionProfile resultZeroProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile simpleProfile = ConditionProfile.createBinaryProfile();
+
         public Mod() {
             super(false, false, true);
         }
@@ -476,20 +467,42 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public int op(int left, int right) {
             // LICENSE: transcribed code from GNU R, which is licensed under GPL
-            if (right != 0) {
-                if (left >= 0 && right > 0) {
-                    return left % right;
-                } else {
-                    return (int) fmod(left, right);
-                }
-            } else {
+            if (right == 0) {
+                isNaProfile.enter();
                 return RRuntime.INT_NA;
+            }
+            if (left == 0) {
+                isZeroProfile.enter();
+                return 0;
+            }
+            int result = left % right;
+            if (resultZeroProfile.profile(result == 0)) {
+                return 0;
+            }
+            if (simpleProfile.profile((right > 0) == (result > 0))) {
+                return result;
+            } else {
+                // in R, the result always has the same sign as the divisor
+                return result + right;
             }
         }
 
         @Override
         public double op(double left, double right) {
-            return fmod(left, right);
+            if (right == 0) {
+                isNaProfile.enter();
+                return Double.NaN;
+            }
+            if (tryInt) {
+                int leftInt = (int) left;
+                int rightInt = (int) right;
+                if (left == leftInt && right == rightInt) {
+                    return op(leftInt, rightInt);
+                }
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                tryInt = false;
+            }
+            return RMath.fmod(left, right);
         }
 
         @Override
@@ -919,7 +932,7 @@ public abstract class BinaryArithmetic extends Operation {
                     if (b < 0) {
                         return 0;
                     }
-                    return fmod(b, 2) != 0 ? a : -a;
+                    return RMath.fmod(b, 2) != 0 ? a : -a;
                 }
             }
             if (infiniteB.profile(!isFinite(b))) {
