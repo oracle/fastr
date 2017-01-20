@@ -36,9 +36,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSet;
+import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -94,7 +95,7 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     protected RStringVector doUnique(RAbstractStringVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            Utils.NonRecursiveHashSet<String> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            NonRecursiveHashSet<String> set = new NonRecursiveHashSet<>(vec.getLength());
             String[] data = new String[vec.getLength()];
             int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {
@@ -375,7 +376,7 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     protected RDoubleVector doUnique(RAbstractDoubleVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            Utils.NonRecursiveHashSetDouble set = new Utils.NonRecursiveHashSetDouble(vec.getLength());
+            NonRecursiveHashSetDouble set = new NonRecursiveHashSetDouble(vec.getLength());
             double[] data = new double[vec.getLength()];
             int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {
@@ -414,7 +415,7 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     protected RComplexVector doUnique(RAbstractComplexVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            Utils.NonRecursiveHashSet<RComplex> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            NonRecursiveHashSet<RComplex> set = new NonRecursiveHashSet<>(vec.getLength());
             double[] data = new double[vec.getLength() * 2];
             int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {
@@ -441,7 +442,7 @@ public abstract class Unique extends RBuiltinNode {
     @Specialization
     protected RRawVector doUnique(RAbstractRawVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            Utils.NonRecursiveHashSet<RRaw> set = new Utils.NonRecursiveHashSet<>(vec.getLength());
+            NonRecursiveHashSet<RRaw> set = new NonRecursiveHashSet<>(vec.getLength());
             byte[] data = new byte[vec.getLength()];
             int ind = 0;
             for (int i = 0; i < vec.getLength(); i++) {

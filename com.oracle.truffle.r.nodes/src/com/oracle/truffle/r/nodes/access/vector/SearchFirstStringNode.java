@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashMapCharacter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -170,17 +171,43 @@ final class SearchFirstStringNode extends Node {
     }
 
     private final BranchProfile notFoundProfile = BranchProfile.create();
+    private final ConditionProfile hashingProfile = ConditionProfile.createBinaryProfile();
 
     private RAbstractIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
                     RStringVector names) {
-        int notFoundIndex = notFoundStartIndex;
         int[] indices = new int[elementsLength];
         boolean resultComplete = true;
+
+        long hashingCost = targetLength * 10L + 10 /* constant overhead */;
+        long lookupCost = elementsLength * 2L;
+        long nestedLoopCost = targetLength * (long) elementsLength;
+        NonRecursiveHashMapCharacter map;
+        if (hashingProfile.profile(nestedLoopCost > hashingCost + lookupCost)) {
+            map = new NonRecursiveHashMapCharacter(targetLength);
+            for (int i = 0; i < targetLength; i++) {
+                String name = target.getDataAt(i);
+                if (!targetNACheck.check(name)) {
+                    map.put(name, i);
+                }
+            }
+        } else {
+            map = null;
+        }
+        int notFoundIndex = notFoundStartIndex;
         for (int i = 0; i < elementsLength; i++) {
             String element = elements.getDataAt(i);
             boolean isElementNA = elementsNACheck.check(element) || element.length() == 0;
             if (!isElementNA) {
-                int index = findIndex(target, targetLength, element);
+                int index;
+                if (map != null) {
+                    index = map.get(element);
+                    if (!exactMatch && index < 0) {
+                        // the map is only good for exact matches
+                        index = findNonExactIndex(target, targetLength, element);
+                    }
+                } else {
+                    index = findIndex(target, targetLength, element);
+                }
                 if (index >= 0) {
                     indices[i] = index + 1;
                     continue;
@@ -208,8 +235,25 @@ final class SearchFirstStringNode extends Node {
                 indices[i] = nextIndex;
             }
         }
-
         return RDataFactory.createIntVector(indices, resultComplete && elements.isComplete(), names);
+    }
+
+    private int findNonExactIndex(RAbstractStringVector target, int targetLength, String element) {
+        assert !exactMatch;
+        int nonExactIndex = -1;
+        for (int j = 0; j < targetLength; j++) {
+            String targetValue = target.getDataAt(j);
+            if (!targetNACheck.check(targetValue)) {
+                if (stringStartsWith.executeCompare(targetValue, element)) {
+                    if (nonExactIndex == -1) {
+                        nonExactIndex = j;
+                    } else {
+                        return -1;
+                    }
+                }
+            }
+        }
+        return nonExactIndex;
     }
 
     private int findIndex(RAbstractStringVector target, int targetLength, String element) {
