@@ -97,21 +97,24 @@ public abstract class CumMin extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cummin(RAbstractDoubleVector v) {
         double[] cminV = new double[v.getLength()];
-        double min = v.getDataAt(0);
-        cminV[0] = min;
         na.enable(v);
-        int i;
-        for (i = 1; i < v.getLength(); i++) {
-            if (v.getDataAt(i) < min) {
-                min = v.getDataAt(i);
-            }
-            if (na.check(v.getDataAt(i))) {
+        double min = v.getDataAt(0);
+        na.check(min);
+        cminV[0] = min;
+        for (int i = 1; i < v.getLength(); i++) {
+            double value = v.getDataAt(i);
+            if (na.check(value)) {
+                Arrays.fill(cminV, i, cminV.length, RRuntime.DOUBLE_NA);
                 break;
             }
+            if (na.checkNAorNaN(value)) {
+                Arrays.fill(cminV, i, cminV.length, Double.NaN);
+                break;
+            }
+            if (value < min) {
+                min = value;
+            }
             cminV[i] = min;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(cminV, i, cminV.length, RRuntime.DOUBLE_NA);
         }
         return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
@@ -119,21 +122,20 @@ public abstract class CumMin extends RBuiltinNode {
     @Specialization(contains = "cumminIntSequence")
     protected RIntVector cummin(RAbstractIntVector v) {
         int[] cminV = new int[v.getLength()];
-        int min = v.getDataAt(0);
-        cminV[0] = min;
         na.enable(v);
-        int i;
-        for (i = 1; i < v.getLength(); i++) {
-            if (v.getDataAt(i) < min) {
-                min = v.getDataAt(i);
-            }
-            if (na.check(v.getDataAt(i))) {
+        int min = v.getDataAt(0);
+        na.check(min);
+        cminV[0] = min;
+        for (int i = 1; i < v.getLength(); i++) {
+            int value = v.getDataAt(i);
+            if (na.check(value)) {
+                Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
                 break;
             }
+            if (value < min) {
+                min = value;
+            }
             cminV[i] = min;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(cminV, i, cminV.length, RRuntime.INT_NA);
         }
         return RDataFactory.createIntVector(cminV, na.neverSeenNA(), getNamesNode.getNames(v));
     }

@@ -195,7 +195,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
                 }
             }
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA);
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
         if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
