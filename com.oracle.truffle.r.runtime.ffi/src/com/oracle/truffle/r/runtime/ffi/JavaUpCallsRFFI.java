@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -783,12 +784,12 @@ public class JavaUpCallsRFFI implements UpCallsRFFI {
             tracer.Rf_duplicate(x, deep);
         }
         guarantee(x != null, "unexpected type: null instead of " + x.getClass().getSimpleName());
-        guarantee(x instanceof RShareable || x instanceof RIntSequence || x instanceof RExternalPtr,
+        guarantee(x instanceof RShareable || x instanceof RSequence || x instanceof RExternalPtr,
                         "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
         if (x instanceof RShareable) {
             return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
-        } else if (x instanceof RIntSequence) {
-            return ((RIntSequence) x).materialize();
+        } else if (x instanceof RSequence) {
+            return ((RSequence) x).materializeToShareable();
         } else {
             return ((RExternalPtr) x).copy();
         }
