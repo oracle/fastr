@@ -285,6 +285,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         Object dispatchObject = dispatchArgument.execute(frame);
         // Cannot dispatch on REmpty
         if (dispatchObject == REmpty.instance) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 1);
         }
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
