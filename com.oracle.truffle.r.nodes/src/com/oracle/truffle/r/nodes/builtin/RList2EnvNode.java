@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * Abstracted for use by {@code List2Env}, {@code AsEnvironment}, {@code SubsituteDirect}.
+ * Abstracted for use by other nodes that need to convert a list into an environment.
  */
 public final class RList2EnvNode extends RBaseNode {
 
