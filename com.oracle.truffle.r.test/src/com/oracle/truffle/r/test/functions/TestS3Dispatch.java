@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -132,6 +132,14 @@ public class TestS3Dispatch extends TestRBase {
     @Test
     public void testDispatchWithPartialNameMatching() {
         assertEval("f.default<-function(abc, bbb, ...)list(abc, bbb, ...); f<-function(x,...)UseMethod('f'); f(13, ab=42, b=1, c=5);");
+    }
+
+    @Test
+    public void testGenericDispatchThroughMethodsTable() {
+        // Note: `[.term` is "private" in stats, but it has entry in __S3MethodsTable__
+        assertEval("terms(x~z)[1];");
+        assertEval("{ assign('Ops.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; x+x; }");
+        assertEval("{ assign('[[.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; x[[99]]; }");
     }
 
     @Override
