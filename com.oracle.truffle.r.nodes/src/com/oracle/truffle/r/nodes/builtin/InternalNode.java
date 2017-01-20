@@ -353,7 +353,7 @@ public abstract class InternalNode extends OperatorNode {
                     "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta", "rbinom",
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
                     "format.info", "grepRaw", "regexec", "adist", "aregexec", "chartr", "packBits", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo", "gctorture", "gctorture2",
-                    "memory.profile", "recordGraphics", "sys.on.exit", "builtins", "bodyCode", "rapply", "inspect",
+                    "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply", "inspect",
                     "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose", "polyroot", "mkCode", "bcClose", "is.builtin.internal", "disassemble", "bcVersion", "load.from.file", "save.to.file",
                     "growconst", "putconst", "getconst", "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
                     "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound", "env.profile", "setSessionTimeLimit", "icuSetCollate", "findInterval", "rowsum_df",

@@ -657,10 +657,21 @@ public class CallAndExternalFunctions {
          * package)
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol"})
+        @Specialization(limit = "2", guards = {"cached == symbol"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
+            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
+        }
+
+        /**
+         * For some reason, the list instance may change, although it carries the same info. For
+         * such cases there is this generic version.
+         */
+        @SuppressWarnings("unused")
+        @Specialization(contains = "callNamedFunction")
+        protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
+            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
         }
 

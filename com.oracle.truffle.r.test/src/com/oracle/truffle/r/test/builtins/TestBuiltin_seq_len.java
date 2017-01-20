@@ -48,5 +48,7 @@ public class TestBuiltin_seq_len extends TestBase {
         assertEval("{ seq_len(-1) }");
         assertEval("{ seq_len(NULL) }");
         assertEval(Output.IgnoreWarningContext, "{ seq_len(\"foo\") }");
+        // Note: tests conversion of empty integer sequence to empty double sequence
+        assertEval("{ seq_len(0) + 1.1; }");
     }
 }

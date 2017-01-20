@@ -337,7 +337,11 @@ public abstract class Sprintf extends RBuiltinNode {
                 }
                 conversions[fi.numArg - 1] = fi.conversion;
             }
-            sb.append(fi.conversion);
+            char conversion = fi.conversion;
+            if (conversion == 'g' && args[fi.numArg - 1] instanceof Integer) {
+                conversion = 'd';
+            }
+            sb.append(conversion);
             i = fi.nextChar;
         }
 

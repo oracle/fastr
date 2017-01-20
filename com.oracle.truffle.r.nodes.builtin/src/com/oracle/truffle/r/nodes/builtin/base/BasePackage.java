@@ -334,6 +334,7 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.SetParentEnv.class, EnvFunctionsFactory.SetParentEnvNodeGen::create);
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
         add(Eval.class, EvalNodeGen::create);
+        add(RecordGraphics.class, RecordGraphics::create);
         add(WithVisible.class, WithVisibleNodeGen::create);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
