@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
@@ -123,31 +124,41 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         }
 
         String s = x.getDataAt(i);
-        try {
-            int intVal = RRuntime.string2intNoCheck(s, true);
-            return readIntVector(x, i, intVal, naStrings);
-        } catch (NumberFormatException ix) {
+        if (RRuntime.hasHexPrefix(s)) {
+            // this is a mess
+            // double takes precedense even if s is a hexadecimal integer
             try {
                 double doubleVal = RRuntime.string2doubleNoCheck(s, true);
+                return readDoubleVector(x, i, doubleVal, naStrings);
+            } catch (NumberFormatException ix) {
+                // fall through
+            }
+        } else {
+            try {
+                int intVal = RRuntime.string2intNoCheck(s, true);
+                return readIntVector(x, i, intVal, naStrings);
+            } catch (NumberFormatException ix) {
                 try {
-                    return readDoubleVector(x, i, doubleVal, naStrings);
-                } catch (NumberFormatException lx) {
-                    // fall through
-                }
-            } catch (NumberFormatException dx) {
-                try {
-                    byte logicalVal = RRuntime.string2logicalNoCheck(s, true);
+                    double doubleVal = RRuntime.string2doubleNoCheck(s, true);
                     try {
-                        return readLogicalVector(x, i, logicalVal, naStrings);
+                        return readDoubleVector(x, i, doubleVal, naStrings);
                     } catch (NumberFormatException lx) {
                         // fall through
                     }
-                } catch (NumberFormatException lx) {
-                    // fall through
+                } catch (NumberFormatException dx) {
+                    try {
+                        byte logicalVal = RRuntime.string2logicalNoCheck(s, true);
+                        try {
+                            return readLogicalVector(x, i, logicalVal, naStrings);
+                        } catch (NumberFormatException lx) {
+                            // fall through
+                        }
+                    } catch (NumberFormatException lx) {
+                        // fall through
+                    }
                 }
             }
         }
-
         // fall through target - conversion to int, double or logical failed
 
         if (asIs == RRuntime.LOGICAL_TRUE) {

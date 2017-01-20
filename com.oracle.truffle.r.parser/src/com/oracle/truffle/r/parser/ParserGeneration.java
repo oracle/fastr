@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,5 +88,6 @@ public class ParserGeneration {
         "support ? for help",
         "support for hex float literals",
         "support for hex float literals without decimal point: 0x0p0",
+        "different warning for hex and dec integer literals"
     };
 }

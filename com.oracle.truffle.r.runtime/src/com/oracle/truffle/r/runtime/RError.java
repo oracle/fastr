@@ -725,7 +725,7 @@ public final class RError extends RuntimeException {
         PRIM_GENERIC_NOT_FUNCTION("the formal definition of a primitive generic must be a function object (got type '%s')"),
         NON_INTEGER_VALUE("non-integer value %s qualified with L; using numeric value"),
         NON_INTEGER_N("non-integer %s = %f"),
-        INTEGER_VALUE_DECIAML("integer literal %s contains decimal; using numeric value"),
+        INTEGER_VALUE_DECIMAL("integer literal %s contains decimal; using numeric value"),
         INTEGER_VALUE_UNNECESARY_DECIMAL("integer literal %s contains unnecessary decimal point"),
         NON_LANG_ASSIGNMENT_TARGET("target of assignment expands to non-language object"),
         INVALID_LARGE_NA_VALUE("invalid '%s' value (too large or NA)"),

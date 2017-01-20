@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import java.math.BigInteger;
 
 public class RRuntime {
 
@@ -387,10 +388,15 @@ public class RRuntime {
         try {
             return Double.parseDouble(v);
         } catch (NumberFormatException e) {
-            if (v.startsWith("0x")) {
-                try {
-                    return int2double(Integer.decode(v));
-                } catch (NumberFormatException ein) {
+            if (hasHexPrefix(v)) {
+                switch (v.charAt(0)) {
+                    case '-':
+                        return -1 * new BigInteger(v.substring(3, v.length()), 16).doubleValue();
+                    case '+':
+                        return new BigInteger(v.substring(3, v.length()), 16).doubleValue();
+                    default:
+                        assert v.charAt(0) == '0';
+                        return new BigInteger(v.substring(2, v.length()), 16).doubleValue();
                 }
             }
             if (exceptionOnFail) {
@@ -398,6 +404,10 @@ public class RRuntime {
             }
         }
         return DOUBLE_NA;
+    }
+
+    public static boolean hasHexPrefix(String s) {
+        return s.startsWith("0x") || s.startsWith("-0x") || s.startsWith("+0x");
     }
 
     @TruffleBoundary
