@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -35,6 +35,8 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -42,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 public abstract class CallMatcherNode extends RBaseNode {
@@ -198,6 +201,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         @CompilationFinal private final long[] preparePermutation;
         private final MatchPermutation permutation;
         private final FormalArguments formals;
+        @Child private RFastPathNode fastPath;
+        private final RVisibility fastPathVisibility;
 
         CallMatcherCachedNode(ArgumentsSignature suppliedSignature, ArgumentsSignature[] varArgSignatures, RFunction function, long[] preparePermutation, MatchPermutation permutation,
                         boolean argsAreEvaluated, CallMatcherNode next) {
@@ -208,15 +213,21 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.preparePermutation = preparePermutation;
             this.permutation = permutation;
             this.next = next;
-            this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
+            RRootNode root = (RRootNode) cachedFunction.getRootNode();
+            this.formals = root.getFormalArguments();
             if (function.isBuiltin()) {
                 this.builtinDescriptor = function.getRBuiltin();
                 this.builtin = RBuiltinNode.inline(builtinDescriptor);
                 this.builtinArgumentCasts = builtin.getCasts();
+                this.fastPath = null;
+                this.fastPathVisibility = null;
             } else {
                 this.call = CallRFunctionNode.create(function.getTarget());
                 this.builtinArgumentCasts = null;
                 this.builtinDescriptor = null;
+                FastPathFactory fastPathFactory = root.getFastPath();
+                this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
+                this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
             }
         }
 
@@ -236,6 +247,17 @@ public abstract class CallMatcherNode extends RBaseNode {
                 Object[] reorderedArgs = matchedArgs.getArguments();
                 evaluatePromises(frame, cachedFunction, reorderedArgs, formals.getSignature().getVarArgIndex());
                 if (call != null) {
+                    if (fastPath != null) {
+                        Object result = fastPath.execute(frame, reorderedArgs);
+                        if (result != null) {
+                            assert fastPathVisibility != null;
+                            visibility.execute(frame, fastPathVisibility);
+                            return result;
+                        }
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        fastPath = null;
+                    }
+
                     RCaller parent = RArguments.getCall(frame).getParent();
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
