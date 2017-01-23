@@ -181,7 +181,8 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected Object asEnvironment(RS4Object obj, @Cached("createGetXDataAttrNode()") GetFixedAttributeNode getXDataAttrNode) {
+        protected Object asEnvironment(RS4Object obj,
+                        @Cached("createGetXDataAttrNode()") GetFixedAttributeNode getXDataAttrNode) {
             // generic dispatch tried already
             Object xData = getXDataAttrNode.execute(obj);
             if (xData == null || !(xData instanceof REnvironment)) {

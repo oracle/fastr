@@ -65,7 +65,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     }
 
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
-    protected Object doCached(Object operand, @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {
+    protected Object doCached(Object operand,
+                    @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {
         return cachedNode.apply(operand);
     }
 

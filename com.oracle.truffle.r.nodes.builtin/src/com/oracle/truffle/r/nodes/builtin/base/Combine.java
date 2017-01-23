@@ -335,7 +335,8 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isArguments(args)")
-    protected Object nonArguments(Object args, boolean recursive, @Cached("create()") Combine combine) {
+    protected Object nonArguments(Object args, boolean recursive,
+                    @Cached("create()") Combine combine) {
         return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE), recursive);
     }
 

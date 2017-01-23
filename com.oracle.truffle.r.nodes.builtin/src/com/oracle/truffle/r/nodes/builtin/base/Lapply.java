@@ -80,7 +80,8 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, @Cached("create()") GetNamesAttributeNode getNamesNode) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
         return RDataFactory.createList(result, getNamesNode.getNames(vec));

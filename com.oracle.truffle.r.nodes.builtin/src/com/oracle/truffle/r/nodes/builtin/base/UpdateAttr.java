@@ -139,7 +139,8 @@ public abstract class UpdateAttr extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value, @Cached("create()") RemoveAttributeNode removeAttrNode) {
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value,
+                    @Cached("create()") RemoveAttributeNode removeAttrNode) {
         String internedName = intern.execute(name);
         RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         // the name is interned, so identity comparison is sufficient

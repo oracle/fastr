@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,7 +30,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector cutree(RAbstractIntVector mergeIn, RAbstractIntVector whichIn, @Cached("create()") GetDimAttributeNode getDimNode) {
+    protected RIntVector cutree(RAbstractIntVector mergeIn, RAbstractIntVector whichIn,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         RIntVector merge = mergeIn.materialize();
         RIntVector which = whichIn.materialize();
         int whichLen = which.getLength();

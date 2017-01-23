@@ -211,7 +211,8 @@ abstract class WriteIndexedVectorNode extends Node {
     protected int doLogicalPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
-                    @Cached("create()") BranchProfile wasTrue, @Cached("create()") AlwaysOnBranchProfile outOfBounds,
+                    @Cached("create()") BranchProfile wasTrue,
+                    @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
                     @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
         positionNACheck.enable(!skipNA && !position.isComplete());

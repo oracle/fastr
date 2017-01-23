@@ -48,7 +48,8 @@ public class Slot {
         }
 
         @Specialization(guards = {"name.equals(cachedInternedName)"})
-        protected Object getSlotCached(Object object, @SuppressWarnings("unused") String name, @Cached("getInternedName(name)") String cachedInternedName) {
+        protected Object getSlotCached(Object object, @SuppressWarnings("unused") String name,
+                        @Cached("getInternedName(name)") String cachedInternedName) {
             return accessSlotNode.executeAccess(castAttributable.executeObject(object), cachedInternedName);
         }
 
@@ -75,7 +76,8 @@ public class Slot {
         }
 
         @Specialization(guards = {"name.equals(cachedInternedName)"})
-        protected Object setSlotCached(Object object, @SuppressWarnings("unused") String name, Object value, @Cached("getInternedName(name)") String cachedInternedName) {
+        protected Object setSlotCached(Object object, @SuppressWarnings("unused") String name, Object value,
+                        @Cached("getInternedName(name)") String cachedInternedName) {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), cachedInternedName, value);
         }
 

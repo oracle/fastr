@@ -141,7 +141,8 @@ public abstract class IsUnsorted extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractComplexVector x, boolean strictly, @Cached("createCmpNode()") CmpNode cmpNode) {
+    protected byte isUnsorted(RAbstractComplexVector x, boolean strictly,
+                    @Cached("createCmpNode()") CmpNode cmpNode) {
         int last = 0;
         for (int k = 1; k < x.getLength(); k++) {
             if (strictlyProfile.profile(strictly)) {

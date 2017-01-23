@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,7 +38,8 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Specialization
-    public Object execute(RAbstractComplexVector zVec, boolean inverse, @Cached("create()") GetDimAttributeNode getDimNode) {
+    public Object execute(RAbstractComplexVector zVec, boolean inverse,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         double[] z = zVec.materialize().getDataTemp();
         int inv = inverse ? 2 : -2;
         int[] d = getDimNode.getDimensions(zVec);
