@@ -103,18 +103,15 @@ public abstract class CumSum extends RBuiltinNode {
         int[] res = new int[arg.getLength()];
         int current = arg.getStart();
         int prev = 0;
-        int i;
         na.enable(true);
-        for (i = 0; i < arg.getLength(); i++) {
+        for (int i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev, current);
             if (na.check(prev)) {
+                Arrays.fill(res, i, res.length, RRuntime.INT_NA);
                 break;
             }
             current += arg.getStride();
             res[i] = prev;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
         return RDataFactory.createIntVector(res, na.neverSeenNA(), getNamesNode.getNames(arg));
     }
@@ -124,16 +121,15 @@ public abstract class CumSum extends RBuiltinNode {
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
         na.enable(true);
-        int i;
-        for (i = 0; i < arg.getLength(); i++) {
-            prev = add.op(prev, arg.getDataAt(i));
-            if (na.check(arg.getDataAt(i))) {
+        for (int i = 0; i < arg.getLength(); i++) {
+            double value = arg.getDataAt(i);
+            // cumsum behaves different than cumprod for NaNs:
+            if (na.checkNAorNaN(value)) {
+                Arrays.fill(res, i, res.length, RRuntime.DOUBLE_NA);
                 break;
             }
+            prev = add.op(prev, value);
             res[i] = prev;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(res, i, res.length, RRuntime.DOUBLE_NA);
         }
         return RDataFactory.createDoubleVector(res, na.neverSeenNA(), getNamesNode.getNames(arg));
     }
@@ -164,18 +160,15 @@ public abstract class CumSum extends RBuiltinNode {
     protected RComplexVector cumsum(RAbstractComplexVector arg) {
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
-        int i;
         na.enable(true);
-        for (i = 0; i < arg.getLength(); i++) {
+        for (int i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), arg.getDataAt(i).getRealPart(), arg.getDataAt(i).getImaginaryPart());
             if (na.check(arg.getDataAt(i))) {
+                Arrays.fill(res, 2 * i, res.length, RRuntime.DOUBLE_NA);
                 break;
             }
             res[2 * i] = prev.getRealPart();
             res[2 * i + 1] = prev.getImaginaryPart();
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(res, 2 * i, res.length, RRuntime.DOUBLE_NA);
         }
         return RDataFactory.createComplexVector(res, na.neverSeenNA(), getNamesNode.getNames(arg));
     }

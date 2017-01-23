@@ -97,21 +97,24 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cummax(RAbstractDoubleVector v) {
         double[] cmaxV = new double[v.getLength()];
+        na.enable(v);
         double max = v.getDataAt(0);
         cmaxV[0] = max;
-        na.enable(v);
-        int i;
-        for (i = 1; i < v.getLength(); i++) {
-            if (v.getDataAt(i) > max) {
-                max = v.getDataAt(i);
-            }
-            if (na.check(v.getDataAt(i))) {
+        na.check(max);
+        for (int i = 1; i < v.getLength(); i++) {
+            double value = v.getDataAt(i);
+            if (na.check(value)) {
+                Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.DOUBLE_NA);
                 break;
             }
+            if (na.checkNAorNaN(value)) {
+                Arrays.fill(cmaxV, i, cmaxV.length, Double.NaN);
+                break;
+            }
+            if (value > max) {
+                max = value;
+            }
             cmaxV[i] = max;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.DOUBLE_NA);
         }
         return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
@@ -119,21 +122,20 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization(contains = "cummaxIntSequence")
     protected RIntVector cummax(RAbstractIntVector v) {
         int[] cmaxV = new int[v.getLength()];
-        int max = v.getDataAt(0);
-        cmaxV[0] = max;
         na.enable(v);
-        int i;
-        for (i = 1; i < v.getLength(); i++) {
-            if (v.getDataAt(i) > max) {
-                max = v.getDataAt(i);
-            }
-            if (na.check(v.getDataAt(i))) {
+        int max = v.getDataAt(0);
+        na.check(max);
+        cmaxV[0] = max;
+        for (int i = 1; i < v.getLength(); i++) {
+            int value = v.getDataAt(i);
+            if (na.check(value)) {
+                Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.INT_NA);
                 break;
             }
+            if (value > max) {
+                max = value;
+            }
             cmaxV[i] = max;
-        }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(cmaxV, i, cmaxV.length, RRuntime.INT_NA);
         }
         return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }

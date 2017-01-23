@@ -28,11 +28,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -82,19 +80,19 @@ public abstract class CumProd extends RBuiltinNode {
         double prev = 1;
         int i;
         for (i = 0; i < arg.getLength(); i++) {
-            if (na.check(arg.getDataAt(i))) {
+            double value = arg.getDataAt(i);
+            if (na.check(value)) {
+                Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
                 break;
             }
-            prev = mul.op(prev, arg.getDataAt(i));
-            if (na.check(prev)) {
+            if (na.checkNAorNaN(value)) {
+                Arrays.fill(array, i, array.length, Double.NaN);
                 break;
             }
+            prev = mul.op(prev, value);
             array[i] = prev;
         }
-        if (!na.neverSeenNA()) {
-            Arrays.fill(array, i, array.length, RRuntime.DOUBLE_NA);
-        }
-        return RDataFactory.createDoubleVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
+        return RDataFactory.createDoubleVector(array, na.neverSeenNA(), getNamesNode.getNames(arg));
     }
 
     @Specialization
@@ -104,10 +102,11 @@ public abstract class CumProd extends RBuiltinNode {
         RComplex prev = RDataFactory.createComplex(1, 0);
         int i;
         for (i = 0; i < arg.getLength(); i++) {
-            if (na.check(arg.getDataAt(i))) {
+            RComplex value = arg.getDataAt(i);
+            if (na.check(value)) {
                 break;
             }
-            prev = mul.op(prev.getRealPart(), prev.getImaginaryPart(), arg.getDataAt(i).getRealPart(), arg.getDataAt(i).getImaginaryPart());
+            prev = mul.op(prev.getRealPart(), prev.getImaginaryPart(), value.getRealPart(), value.getImaginaryPart());
             if (na.check(prev)) {
                 break;
             }
@@ -117,6 +116,6 @@ public abstract class CumProd extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(array, 2 * i, array.length, RRuntime.DOUBLE_NA);
         }
-        return RDataFactory.createComplexVector(array, !na.neverSeenNA(), getNamesNode.getNames(arg));
+        return RDataFactory.createComplexVector(array, na.neverSeenNA(), getNamesNode.getNames(arg));
     }
 }

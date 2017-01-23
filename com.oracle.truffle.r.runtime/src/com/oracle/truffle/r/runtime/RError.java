@@ -635,8 +635,8 @@ public final class RError extends RuntimeException {
         RNG_NOT_IMPL_KIND("unimplemented RNG kind %d"),
         RNG_READ_SEEDS("cannot read seeds unless 'user_unif_nseed' is supplied"),
         RNG_SYMBOL("%s not found in user rng library"),
-        CUMMAX_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
-        CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
+        CUMMAX_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
+        CUMMIN_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
         QUOTE_G_ONE("only the first character of 'quote' will be used"),
@@ -780,7 +780,8 @@ public final class RError extends RuntimeException {
         TOO_MANY_ARGS("too many arguments"),
         ARG_MUST_BE_CHARACTER("argument '%s' must be character"),
         INCORRECT_NOF_ARGS("Incorrect number of arguments (%d), expecting %d for '%s'"),
-        MACRO_CAN_BE_APPLIED_TO("%s can only be applied to a '%s', not a '%s'");
+        MACRO_CAN_BE_APPLIED_TO("%s can only be applied to a '%s', not a '%s'"),
+        LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus");
 
         public final String message;
         final boolean hasArgs;

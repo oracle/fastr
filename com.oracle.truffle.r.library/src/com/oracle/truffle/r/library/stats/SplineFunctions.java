@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /**
  * Internal functions for the spline function in the stats package. These are originally called
@@ -393,7 +393,7 @@ public class SplineFunctions {
         if (method == 1 && n > 1) { /* periodic */
             dx = x[nm1] - x[0];
             for (l = 0; l < nu; l++) {
-                v[l] = BinaryArithmetic.fmod(u[l] - x[0], dx);
+                v[l] = RMath.fmod(u[l] - x[0], dx);
                 if (v[l] < 0.0) {
                     v[l] += dx;
                 }

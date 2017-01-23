@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,8 +24,7 @@ public class TestBuiltin_cummin extends TestBase {
 
     @Test
     public void testcummin2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cummin(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cummin(argv[[1]]);");
     }
 
     @Test
@@ -35,17 +34,17 @@ public class TestBuiltin_cummin extends TestBase {
 
     @Test
     public void testcummin4() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));cummin(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));cummin(argv[[1]]);");
     }
 
     @Test
     public void testcummin5() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0));cummin(argv[[1]]);");
+        assertEval("argv <- list(logical(0));cummin(argv[[1]]);");
     }
 
     @Test
     public void testcummin6() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0));cummin(argv[[1]]);");
+        assertEval("argv <- list(character(0));cummin(argv[[1]]);");
     }
 
     @Test
@@ -67,9 +66,10 @@ public class TestBuiltin_cummin extends TestBase {
         assertEval("{ cummin(c(TRUE,FALSE,TRUE)) }");
         assertEval("{ cummin(c(TRUE,FALSE,NA,TRUE)) }");
         assertEval("{ cummin(as.logical(-2:2)) }");
+        assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
 
-        // Error message mismatch.
-        assertEval(Ignored.Unknown, "{ cummin(c(1+1i,2-3i,4+5i)) }");
-        assertEval(Ignored.Unknown, "{ cummin(c(1+1i, NA, 2+3i)) }");
+        assertEval("values <- c(1,2,NaN,1, NA); cummin(values); cummin(as.integer(values))");
+        assertEval("values <- c(1,2,NA,1, NaN); cummin(values); cummin(as.integer(values))");
     }
 }

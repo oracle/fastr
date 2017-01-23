@@ -203,7 +203,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
                 }
             }
         }
-        RIntVector ret = RDataFactory.createIntVector(result, !seenNA);
+        RIntVector ret = RDataFactory.createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
         if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }

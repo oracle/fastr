@@ -16,7 +16,10 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 
@@ -62,18 +65,17 @@ public final class RMath {
         return ((y >= 0) ? fabs(x) : -fabs(x));
     }
 
-    private static double fmod(double a, double b) {
-        double q = a / b;
-        if (b != 0) {
-            double tmp = a - Math.floor(q) * b;
-            if (RRuntime.isFinite(q) && Math.abs(q) > 1 / RRuntime.EPSILON) {
-                // TODO support warning here
-                throw new UnsupportedOperationException();
-            }
-            return tmp - Math.floor(tmp / b) * b;
-        } else {
+    public static double fmod(double a, double b) {
+        if (b == 0) {
             return Double.NaN;
         }
+        double q = a / b;
+        if (RRuntime.isFinite(q) && Math.abs(q) > 1 / RRuntime.EPSILON) {
+            CompilerDirectives.transferToInterpreter();
+            RError.warning(RError.SHOW_CALLER, Message.LOSS_OF_ACCURACY_MOD);
+        }
+        double tmp = a - Math.floor(q) * b;
+        return tmp - Math.floor(tmp / b) * b;
     }
 
     public static double tanpi(double x) {

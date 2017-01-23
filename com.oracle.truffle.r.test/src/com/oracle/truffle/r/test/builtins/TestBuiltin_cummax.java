@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,7 @@ public class TestBuiltin_cummax extends TestBase {
 
     @Test
     public void testcummax3() {
-        assertEval(Ignored.Unknown, "argv <- list(list());cummax(argv[[1]]);");
+        assertEval("argv <- list(list());cummax(argv[[1]]);");
     }
 
     @Test
@@ -39,8 +39,7 @@ public class TestBuiltin_cummax extends TestBase {
 
     @Test
     public void testcummax5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cummax(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cummax(argv[[1]]);");
     }
 
     @Test
@@ -50,12 +49,12 @@ public class TestBuiltin_cummax extends TestBase {
 
     @Test
     public void testcummax7() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0));cummax(argv[[1]]);");
+        assertEval("argv <- list(character(0));cummax(argv[[1]]);");
     }
 
     @Test
     public void testcummax8() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));cummax(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));cummax(argv[[1]]);");
     }
 
     @Test
@@ -68,7 +67,10 @@ public class TestBuiltin_cummax extends TestBase {
         assertEval("{ cummax(c(TRUE,FALSE,NA,TRUE)) }");
         assertEval("{ cummax(as.logical(-2:2)) }");
 
-        assertEval(Ignored.Unknown, "{ cummax(c(1+1i,2-3i,4+5i)) }");
-        assertEval(Ignored.Unknown, "{ cummax(c(1+1i, NA, 2+3i)) }");
+        assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
+
+        assertEval("values <- c(1,2,NaN,1, NA); cummax(values); cummax(as.integer(values))");
+        assertEval("values <- c(1,2,NA,1, NaN); cummax(values); cummax(as.integer(values))");
     }
 }

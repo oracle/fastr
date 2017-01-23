@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,8 +49,7 @@ public class TestBuiltin_cumsum extends TestBase {
 
     @Test
     public void testcumsum7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cumsum(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cumsum(argv[[1]]);");
     }
 
     @Test
@@ -106,7 +105,7 @@ public class TestBuiltin_cumsum extends TestBase {
         assertEval("{ cumsum(as.logical(-2:2)) }");
         assertEval("{ cumsum((1:6)*(1+1i)) }");
 
-        assertEval(Ignored.Unknown, "{ cumsum(c(1,2,3,0/0,5)) }");
+        assertEval("{ cumsum(c(1,2,3,0/0,5)) }");
         assertEval("{ cumsum(c(1,0/0,5+1i)) }");
         assertEval("{ cumsum(as.raw(1:6)) }");
         assertEval("{ cumsum(rep(1e308, 3) ) }");
@@ -115,5 +114,8 @@ public class TestBuiltin_cumsum extends TestBase {
         assertEval(Ignored.Unknown, "{ cumsum(c(2000000000L, 2000000000L)) }");
         // FIXME missing warning
         assertEval(Ignored.Unknown, "{ cumsum(c(-2147483647L, -1L)) }");
+
+        assertEval("values <- c(1,2,NaN,1, NA); cumsum(values); cumsum(as.integer(values))");
+        assertEval("values <- c(1,2,NA,1, NaN); cumsum(values); cumsum(as.integer(values))");
     }
 }

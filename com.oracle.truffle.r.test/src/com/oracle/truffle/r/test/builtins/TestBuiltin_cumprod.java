@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,8 +39,7 @@ public class TestBuiltin_cumprod extends TestBase {
 
     @Test
     public void testcumprod5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cumprod(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')));cumprod(argv[[1]]);");
     }
 
     @Test
@@ -50,7 +49,7 @@ public class TestBuiltin_cumprod extends TestBase {
 
     @Test
     public void testcumprod7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(), .Names = character(0)));cumprod(argv[[1]]);");
+        assertEval("argv <- list(structure(list(), .Names = character(0)));cumprod(argv[[1]]);");
     }
 
     @Test
@@ -66,5 +65,11 @@ public class TestBuiltin_cumprod extends TestBase {
     @Test
     public void testcumprod10() {
         assertEval("argv <- list(c(0.982149602642989, 0.91866776738084, 0.859369083800704, 0.921182928974104));cumprod(argv[[1]]);");
+    }
+
+    @Test
+    public void testCumProd() {
+        assertEval("values <- c(1,2,NaN,1, NA); cumprod(values); cumprod(as.integer(values))");
+        assertEval("values <- c(1,2,NA,1, NaN); cumprod(values); cumprod(as.integer(values))");
     }
 }
