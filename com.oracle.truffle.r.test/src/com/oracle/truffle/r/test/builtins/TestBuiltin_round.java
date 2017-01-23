@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -52,5 +52,7 @@ public class TestBuiltin_round extends TestBase {
 
         assertEval("{ typeof(round(42L)); }");
         assertEval("{ typeof(round(TRUE)); }");
+
+        assertEval(Ignored.Unimplemented, "{ round(1.1234+1i, 3.1+1i); }");
     }
 }

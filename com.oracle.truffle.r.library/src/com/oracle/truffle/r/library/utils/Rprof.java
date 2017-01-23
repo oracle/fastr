@@ -40,6 +40,7 @@ import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -61,6 +62,8 @@ import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
+
 /**
  * Implements the {@code Rprof} external.
  *
@@ -79,13 +82,24 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryCopyTracer.Listener {
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.arg(0, "filename").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg(1, "append_mode").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(2, "dinterval").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
+        casts.arg(3, "mem_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(4, "gc_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(5, "line_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(6, "numfiles").asIntegerVector().findFirst().mustBe(gte(0));
+        casts.arg(7, "bufsize").asIntegerVector().findFirst().mustBe(gte(0));
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    public Object doRprof(RAbstractStringVector filenameVec, byte appendL, double intervalD, byte memProfilingL,
-                    byte gcProfilingL, byte lineProfilingL, int numFiles, int bufSize) {
+    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling,
+                    boolean gcProfiling, boolean lineProfiling, int numFiles, int bufSize) {
         RprofState profState = RprofState.get();
-        String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
             endProfiling();
@@ -94,9 +108,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
             if (profState != null && profState.out() != null) {
                 endProfiling();
             }
-            boolean append = RRuntime.fromLogical(appendL);
-            boolean memProfiling = RRuntime.fromLogical(memProfilingL);
-            boolean gcProfiling = RRuntime.fromLogical(gcProfilingL);
             try {
                 PrintStream out = new PrintStream(new FileOutputStream(filename, append));
                 if (gcProfiling) {
@@ -113,7 +124,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 StatementListener statementListener = new StatementListener();
                 ProfileThread profileThread = new ProfileThread(intervalInMillis, statementListener);
                 profileThread.setDaemon(true);
-                profState.initialize(out, profileThread, statementListener, intervalInMillis, RRuntime.fromLogical(lineProfilingL), memProfiling);
+                profState.initialize(out, profileThread, statementListener, intervalInMillis, lineProfiling, memProfiling);
                 profileThread.start();
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, String.format("Rprof: cannot open profile file '%s'", filename));

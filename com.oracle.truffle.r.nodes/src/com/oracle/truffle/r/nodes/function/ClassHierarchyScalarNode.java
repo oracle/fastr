@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.unary.UnaryNode;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public abstract class ClassHierarchyScalarNode extends UnaryNode {
 
@@ -34,5 +40,20 @@ public abstract class ClassHierarchyScalarNode extends UnaryNode {
     @Specialization
     protected String getClassHr(Object arg) {
         return classHierarchyNode.execute(arg).getDataAt(0);
+    }
+
+    public static String get(Object arg) {
+        CompilerAsserts.neverPartOfCompilation();
+
+        Object v = RRuntime.asAbstractVector(arg);
+        if (v instanceof RAttributable) {
+            RStringVector classHierarchy = ((RAttributable) v).getClassHierarchy();
+            return classHierarchy.getLength() == 0 ? "" : classHierarchy.getDataAt(0);
+        } else if (arg == RNull.instance) {
+            return "NULL";
+        } else {
+            assert arg instanceof TruffleObject;
+            return "";
+        }
     }
 }

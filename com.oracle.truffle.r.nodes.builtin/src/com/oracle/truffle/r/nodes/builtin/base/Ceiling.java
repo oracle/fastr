@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -43,12 +44,19 @@ public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
     public static final UnaryArithmeticFactory CEILING = FloorNodeGen.create();
 
     public Ceiling() {
-        super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
+        super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
     }
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").mustNotBeNull(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).asDoubleVector();
+        //@formatter:off
+        casts.arg("x").
+            defaultError(this, RError.Message.NON_NUMERIC_MATH).
+            mustNotBeNull().
+            mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).
+            mustBe(numericValue()).
+            asDoubleVector(true, true, true);
+        //@formatter:on
     }
 
     @Override

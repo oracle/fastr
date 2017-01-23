@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -30,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -62,9 +65,22 @@ public abstract class Round extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
+        //@formatter:off
+        casts.arg("x").
+            defaultError(this, RError.Message.NON_NUMERIC_MATH).
+            mustNotBeNull().
+            mustBe(numericValue().or(complexValue()));
+
         // TODO: this should also accept vectors
         // TODO: digits argument is rounded, not simply stripped off the decimal part
-        casts.arg("digits").asIntegerVector().findFirst();
+        casts.arg("digits").
+            defaultError(this, RError.Message.NON_NUMERIC_MATH).
+            mustNotBeNull().
+            mustBe(numericValue().or(complexValue())).
+            asIntegerVector().
+            findFirst();
+
+        //@formatter:on
     }
 
     @Specialization
