@@ -508,15 +508,17 @@ public final class BinaryMapNode extends RBaseNode {
 
         @Specialization(guards = {"!multiples(leftLength, rightLength)"})
         protected void doNoMultiples(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
-                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile,
+                        @Cached("createBinaryProfile()") ConditionProfile leftIncModProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile rightIncModProfile) {
             int j = 0;
             int k = 0;
             int max = Math.max(leftLength, rightLength);
             profile.profileCounted(max);
             for (int i = 0; profile.inject(i < max); ++i) {
                 indexedAction.perform(node, store, i, left, j, right, k);
-                j = Utils.incMod(j, leftLength);
-                k = Utils.incMod(k, rightLength);
+                j = Utils.incMod(j, leftLength, leftIncModProfile);
+                k = Utils.incMod(k, rightLength, rightIncModProfile);
             }
             RError.warning(this, RError.Message.LENGTH_NOT_MULTI);
         }

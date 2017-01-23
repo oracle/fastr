@@ -87,9 +87,4 @@ public class RExpression extends RListBase implements RAbstractVector {
     public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader);
     }
-
-    @Override
-    public void setNA(Object store, int index) {
-        setDataAt(store, index, RNull.instance);
-    }
 }

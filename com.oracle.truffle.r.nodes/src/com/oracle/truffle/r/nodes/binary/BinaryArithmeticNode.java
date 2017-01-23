@@ -105,8 +105,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected Object doUnary(Object left, RMissing right,
+    protected Object doUnary(Object left, @SuppressWarnings("unused") RMissing right,
                     @Cached("createUnaryArithmeticNode()") UnaryArithmeticNode unaryNode) {
         return unaryNode.execute(left);
     }
@@ -121,8 +120,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected static Object doBothNull(RNull left, RNull right) {
+    protected static Object doBothNull(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") RNull right) {
         return RType.Double.getEmpty();
     }
 
@@ -142,9 +140,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return doLeftNull(right, left, classProfile);
     }
 
-    @SuppressWarnings("unused")
     @Fallback
-    protected Object doInvalidType(Object left, Object right) {
+    protected Object doInvalidType(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
         throw RError.error(this, Message.NON_NUMERIC_BINARY);
     }
 

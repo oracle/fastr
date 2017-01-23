@@ -486,11 +486,6 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public void setNA(Object store, int index) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
         public boolean isComplete() {
             return false;
         }

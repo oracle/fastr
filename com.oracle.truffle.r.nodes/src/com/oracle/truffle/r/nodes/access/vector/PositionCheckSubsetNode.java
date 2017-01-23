@@ -65,7 +65,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
     protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile equalsProfile) {
         assert positionLength > 0;
         positionNACheck.enable(position);
         int elementCount = 0;
@@ -83,7 +84,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         }
         statistics.containsNA = hasSeenNA;
         statistics.maxOutOfBoundsIndex = positionLength;
-        statistics.selectedPositionsCount = elementCount * (dimensionLength / positionLength);
+        statistics.selectedPositionsCount = elementCount * (equalsProfile.profile(dimensionLength == positionLength) ? 1 : dimensionLength / positionLength);
         return position;
     }
 
@@ -94,7 +95,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     @Specialization(contains = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
                     int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
         positionNACheck.enable(position);
         int positionIndex = 0;
         int elementCount = 0;
@@ -120,7 +122,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 if (positionValue == RRuntime.LOGICAL_TRUE) {
                     elementCount++;
                 }
-                positionIndex = Utils.incMod(positionIndex, positionLength);
+                positionIndex = Utils.incMod(positionIndex, positionLength, incModProfile);
             }
         }
         statistics.containsNA = hasSeenNA;
@@ -134,6 +136,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenZeroProfile,
                     @Cached("create()") BranchProfile seenPositiveProfile,
                     @Cached("create()") BranchProfile seenNegativeProfile,
+                    @Cached("create()") BranchProfile seenNegativeZeroProfile,
                     @Cached("create()") BranchProfile seenOutOfBounds,
                     @Cached("create()") NullProfile hasNamesProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
@@ -158,34 +161,36 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             double positionValue = position.getDataAt(i);
-            if (positionValue >= 1) {
+            int intPositionValue = RRuntime.double2intNoCheck(positionValue);
+
+            if (intPositionValue > 0) {
                 seenPositiveProfile.enter();
                 hasSeenPositive = true;
-                int intPositionValue = RRuntime.double2intNoCheck(positionValue);
-                if (positionValue > dimensionLength) {
+                if (intPositionValue > dimensionLength) {
                     seenOutOfBounds.enter();
                     outOfBoundsCount++;
                     maxOutOfBoundsIndex = Math.max(maxOutOfBoundsIndex, intPositionValue);
                 }
-                intPosition.setDataAt(convertedStore, i, intPositionValue);
-            } else if (positionValue >= 0 && positionValue < 1) {
+            } else if (intPositionValue == 0) {
                 seenZeroProfile.enter();
-                zeroCount++;
-            } else if (positionNACheck.checkNAorNaN(positionValue)) {
-                hasSeenNA = true;
-                intPosition.setNA(convertedStore, i);
-            } else {
-                seenNegativeProfile.enter();
-                assert positionValue < 0;
-                hasSeenNegative = true;
-                int intPositionValue = RRuntime.double2intNoCheck(positionValue);
-                if (intPositionValue == 0) {
+                if (positionValue < 0) {
+                    seenNegativeZeroProfile.enter();
                     /*
                      * It seems that the range ]-2:0[ is all translated to -1. So much for
                      * continuous math properties.
                      */
+                    hasSeenNegative = true;
                     intPositionValue = -1;
+                } else if (positionNACheck.checkNAorNaN(positionValue)) {
+                    hasSeenNA = true;
+                    intPositionValue = RRuntime.INT_NA;
+                } else {
+                    zeroCount++;
                 }
+            } else {
+                seenNegativeProfile.enter();
+                assert positionValue < 0;
+                hasSeenNegative = true;
                 if (-positionValue > dimensionLength) {
                     seenOutOfBounds.enter();
                     outOfBoundsCount++;
@@ -195,8 +200,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                      */
                     intPositionValue--;
                 }
-                intPosition.setDataAt(convertedStore, i, intPositionValue);
             }
+            intPosition.setDataAt(convertedStore, i, intPositionValue);
         }
         return doIntegerProfiled(profile, dimensionLength, intPosition, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
 
