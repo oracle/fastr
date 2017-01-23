@@ -131,4 +131,17 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval("argv <- list(structure(list(num = 1:4, fac = structure(11:14,     .Label = c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',         'k', 'l', 'm', 'n', 'o'), class = 'factor'), date = structure(c(15065,     15066, 15067, 15068), class = 'Date'), pv = structure(list(1:3,     4:5, 6:7, 8:10), class = c('package_version', 'numeric_version'))),     .Names = c('num', 'fac', 'date', 'pv'), row.names = c(NA,         -4L), class = 'data.frame'));" +
                         "do.call('seq_along', argv)");
     }
+
+    @Test
+    public void testWithNonStandardLength() {
+        assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 42; seq_along(x) }");
+        assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) c(100, 200); seq_along(x) }");
+        assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) '48'; seq_along(x) }");
+        assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) numeric(0); seq_along(x) }");
+        assertEval(Output.IgnoreWarningContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
+        // length defined in global env should not get us confused:
+        assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
+        // length in __S3MethodsTable__ should work too, N.B.: needs complete S3 dispatch support
+        assertEval(Ignored.Unimplemented, "{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; seq_along(x); }");
+    }
 }

@@ -52,6 +52,10 @@ public abstract class FindFirstNode extends CastNode {
         this(elementClass, null, null, null, defaultValue);
     }
 
+    public static FindFirstNode create(Class<?> elementClass, RBaseNode callObj, RError.Message message, Object... args) {
+        return FindFirstNodeGen.create(elementClass, callObj, message, args, null);
+    }
+
     public Class<?> getElementClass() {
         return elementClass;
     }
