@@ -41,6 +41,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
+/**
+ * Gets length of given container. Does not actually dispatch to the 'length' function, which may be
+ * overridden for some S3/S4 classes. Check if you need to get actual length, or what the 'length'
+ * function returns, like in {@code seq_along}.
+ */
 @NodeChild("operand")
 public abstract class RLengthNode extends RNode {
 

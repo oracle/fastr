@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -22,10 +23,13 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -36,11 +40,17 @@ import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.IsNumericNode
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen.IsIntegralNumericNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
-import com.oracle.truffle.r.nodes.control.RLengthNodeGen;
 import com.oracle.truffle.r.nodes.ffi.AsRealNode;
 import com.oracle.truffle.r.nodes.ffi.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.FindFirstNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -55,10 +65,12 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
@@ -81,7 +93,7 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  * {@link SeqInt} node for the fast paths.
  *
  */
-public class SeqFunctions {
+public final class SeqFunctions {
 
     public abstract static class FastPathAdapter extends RFastPathNode {
         public static IsMissingOrNumericNode createIsMissingOrNumericNode() {
@@ -246,7 +258,7 @@ public class SeqFunctions {
         public static Object[] reorderedArguments(RArgsValuesAndNames argsIn, RFunction seqIntFunction) {
             RArgsValuesAndNames args = argsIn;
             if (args.getSignature().getNonNullCount() != 0) {
-                return CallMatcherGenericNode.reorderArguments(args.getArguments(), seqIntFunction, args.getSignature(), RError.NO_CALLER).getArguments();
+                return CallMatcherGenericNode.reorderArguments(args.getArguments(), seqIntFunction, args.getSignature(), NO_CALLER).getArguments();
             } else {
                 int len = argsIn.getLength();
                 Object[] xArgs = new Object[5];
@@ -321,12 +333,61 @@ public class SeqFunctions {
     @TypeSystemReference(RTypesFlatLayout.class)
     @RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"}, behavior = PURE)
     public abstract static class SeqAlong extends RBuiltinNode {
+        @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
 
-        @Child private RLengthNode length = RLengthNodeGen.create();
-
-        @Specialization
-        protected RIntSequence seq(VirtualFrame frame, Object value) {
+        @Specialization(guards = "!hasClass(value)")
+        protected RIntSequence seq(VirtualFrame frame, Object value,
+                        @Cached("create()") RLengthNode length) {
             return RDataFactory.createIntSequence(1, 1, length.executeInteger(frame, value));
+        }
+
+        @Specialization(guards = "hasClass(value)")
+        protected RIntSequence seq(VirtualFrame frame, Object value,
+                        @Cached("create()") LengthDispatcher dispatcher) {
+            return RDataFactory.createIntSequence(1, 1, dispatcher.execute(frame, value));
+        }
+
+        boolean hasClass(Object obj) {
+            final RStringVector classVec = classHierarchyNode.execute(obj);
+            return classVec != null && classVec.getLength() != 0;
+        }
+
+        /**
+         * Invokes the 'length' function, which may dispatch to some other function than default
+         * length depending on the class of the argument.
+         */
+        static final class LengthDispatcher extends Node {
+            private final Object argsIdentifier = new Object();
+            private final BranchProfile errorProfile = BranchProfile.create();
+            @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
+            @Child private FrameSlotNode argumentsSlot = FrameSlotNode.createTemp(argsIdentifier, true);
+            @Child private LocalReadVariableNode readLength = LocalReadVariableNode.create("length", true);
+            @Child private CastIntegerNode castInteger = CastIntegerNode.createNonPreserving();
+            @Child private FindFirstNode findFirst = FindFirstNode.create(Integer.class, NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+
+            public static LengthDispatcher create() {
+                return new LengthDispatcher();
+            }
+
+            public int execute(VirtualFrame frame, Object target) {
+                FrameSlot argsFrameSlot = argumentsSlot.executeFrameSlot(frame);
+                try {
+                    frame.setObject(argsFrameSlot, new RArgsValuesAndNames(new Object[]{target}, ArgumentsSignature.empty(1)));
+                    Object lengthFunction = readLength.execute(frame, REnvironment.baseEnv().getFrame());
+                    int result = castResult(call.execute(frame, lengthFunction));
+                    if (result < 0 || RRuntime.isNA(result)) {
+                        errorProfile.enter();
+                        throw RError.error(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+                    }
+                    return result;
+                } finally {
+                    frame.setObject(argsFrameSlot, null);
+                }
+            }
+
+            private int castResult(Object result) {
+                return (Integer) findFirst.execute(castInteger.execute(result));
+            }
         }
     }
 
