@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,19 +32,25 @@ public abstract class ConditionalMapNode extends CastNode {
 
     private final ArgumentFilter<?, ?> argFilter;
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+    private final boolean resultForNull;
+    private final boolean resultForMissing;
 
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
-    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch) {
+    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch, boolean resultForNull,
+                    boolean resultForMissing) {
         this.argFilter = argFilter;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
+        this.resultForNull = resultForNull;
+        this.resultForMissing = resultForMissing;
     }
 
     public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch,
-                    CastNode falseBranch) {
-        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch);
+                    CastNode falseBranch, boolean resultForNull,
+                    boolean resultForMissing) {
+        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch, resultForNull, resultForMissing);
     }
 
     public ArgumentFilter<?, ?> getFilter() {
@@ -60,17 +66,29 @@ public abstract class ConditionalMapNode extends CastNode {
     }
 
     @Specialization
-    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
-        return RNull.instance;
+    protected Object executeNull(RNull x) {
+        if (resultForNull) {
+            return trueBranch == null ? x : trueBranch.execute(x);
+        } else {
+            return falseBranch == null ? x : falseBranch.execute(x);
+        }
     }
 
     @Specialization
-    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
-        return RMissing.instance;
+    protected Object executeMissing(RMissing x) {
+        if (resultForMissing) {
+            return trueBranch == null ? x : trueBranch.execute(x);
+        } else {
+            return falseBranch == null ? x : falseBranch.execute(x);
+        }
     }
 
+    protected static boolean isNotNullOrMissing(Object x) {
+        return x != RNull.instance && x != RMissing.instance;
+    }
+
+    @Specialization(guards = "isNotNullOrMissing(x)")
     @SuppressWarnings("unchecked")
-    @Specialization
     protected Object executeRest(Object x) {
         if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
             return trueBranch == null ? x : trueBranch.execute(x);

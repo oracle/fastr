@@ -31,7 +31,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.MissingFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
@@ -423,6 +425,14 @@ public final class CastBuilder {
 
         public static <T> PipelineStep<T, T> notNA() {
             return new NotNAStep<>(null, null);
+        }
+
+        public static NullFilter nullValue() {
+            return NullFilter.INSTANCE;
+        }
+
+        public static MissingFilter missingValue() {
+            return MissingFilter.INSTANCE;
         }
 
         public static <T> CompareFilter<T> sameAs(T x) {
