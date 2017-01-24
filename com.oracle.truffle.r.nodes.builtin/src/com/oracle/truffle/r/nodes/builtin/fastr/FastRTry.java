@@ -27,12 +27,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -45,20 +42,14 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  */
 @RBuiltin(name = ".fastr.try", kind = PRIMITIVE, parameterNames = {""}, behavior = COMPLEX)
 public abstract class FastRTry extends RBuiltinNode {
-    private final Object argsIdentifier = new Object();
-    @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
-    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
+    @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
     @Specialization
     public Object tryFunc(VirtualFrame frame, RFunction func) {
-        FrameSlot frameSlot = slot.executeFrameSlot(frame);
         try {
-            frame.setObject(frameSlot, RArgsValuesAndNames.EMPTY);
-            call.execute(frame, func);
+            call.execute(frame, func, RArgsValuesAndNames.EMPTY);
         } catch (Throwable ex) {
             return formatError(ex);
-        } finally {
-            frame.setObject(frameSlot, null);
         }
         return RRuntime.LOGICAL_TRUE;
     }

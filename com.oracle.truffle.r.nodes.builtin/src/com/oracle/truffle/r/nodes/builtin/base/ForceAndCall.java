@@ -29,15 +29,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -47,10 +44,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 @RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2, behavior = COMPLEX)
 public abstract class ForceAndCall extends RBuiltinNode {
 
-    private final Object argsIdentifier = new Object();
-
-    @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
-    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
+    @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
     @Child private PromiseHelperNode promiseHelper;
 
@@ -67,14 +61,7 @@ public abstract class ForceAndCall extends RBuiltinNode {
         if (!fun.isBuiltin()) {
             flattenFirstArgs(frame, cachedN, args);
         }
-
-        FrameSlot frameSlot = slot.executeFrameSlot(frame);
-        try {
-            frame.setObject(frameSlot, args);
-            return call.execute(frame, fun);
-        } finally {
-            frame.setObject(frameSlot, null);
-        }
+        return call.execute(frame, fun, args);
     }
 
     @ExplodeLoop

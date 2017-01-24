@@ -30,10 +30,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -45,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.Subscript;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SubscriptNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -197,11 +196,9 @@ public abstract class Mapply extends RBuiltinNode {
 
         @Specialization(contains = "cachedMApply")
         protected Object[] mApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
-                        @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
-                        @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode slotNode,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createIndexedLoadNode()") Subscript indexedLoadNode,
-                        @Cached("createExplicitCallNode(argsIdentifier)") RCallNode callNode) {
+                        @Cached("create()") RExplicitCallNode callNode) {
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
             int[] lengths = new int[dotsLength];
@@ -235,9 +232,7 @@ public abstract class Mapply extends RBuiltinNode {
                     values[listIndex] = vecElement;
                 }
                 /* Now call the function */
-                FrameSlot frameSlot = slotNode.executeFrameSlot(frame);
-                frame.setObject(frameSlot, new RArgsValuesAndNames(values, signature));
-                result[i] = callNode.execute(frame, function);
+                result[i] = callNode.execute(frame, function, new RArgsValuesAndNames(values, signature));
             }
             return result;
         }
@@ -270,18 +265,6 @@ public abstract class Mapply extends RBuiltinNode {
                                 moreArgsNames == null ? null : moreArgsNames.getDataAt(i - dots.getLength()).isEmpty() ? null : moreArgsNames.getDataAt(i - dots.getLength())));
             }
             return elementNodes;
-        }
-
-        protected Object createArgsIdentifier() {
-            return new Object();
-        }
-
-        protected FrameSlotNode createFrameSlotNode(Object argsIdentifier) {
-            return FrameSlotNode.createTemp(argsIdentifier, true);
-        }
-
-        protected RCallNode createExplicitCallNode(Object argsIdentifier) {
-            return RCallNode.createExplicitCall(argsIdentifier);
         }
 
         protected Subscript createIndexedLoadNode() {
