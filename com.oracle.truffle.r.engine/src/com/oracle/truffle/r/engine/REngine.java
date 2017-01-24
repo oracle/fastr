@@ -152,11 +152,11 @@ final class REngine implements Engine, Engine.Timings {
         this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
-            initializeShared();
+            initializeNonShared();
         }
     }
 
-    private void initializeShared() {
+    private void initializeNonShared() {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);

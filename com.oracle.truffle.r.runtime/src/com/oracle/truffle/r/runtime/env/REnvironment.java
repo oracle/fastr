@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -112,24 +113,14 @@ public abstract class REnvironment extends RAttributeStorage {
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
-        private SearchPath searchPath;
         private final MaterializedFrame globalFrame;
-        private Base baseEnv;
-        private REnvironment namespaceRegistry;
-        private MaterializedFrame parentGlobalFrame; // SHARED_PARENT_RW only
+        @CompilationFinal private Base baseEnv;
+        @CompilationFinal private REnvironment namespaceRegistry;
+        @CompilationFinal private SearchPath searchPath;
+        @CompilationFinal private MaterializedFrame parentGlobalFrame; // SHARED_PARENT_RW only
 
         private ContextStateImpl(MaterializedFrame globalFrame) {
             this.globalFrame = globalFrame;
-        }
-
-        private void initialize(SearchPath searchPathA) {
-            this.searchPath = searchPathA;
-        }
-
-        private void initialize(SearchPath searchPathA, Base baseEnvA, REnvironment namespaceRegistryA) {
-            this.searchPath = searchPathA;
-            this.baseEnv = baseEnvA;
-            this.namespaceRegistry = namespaceRegistryA;
         }
 
         public REnvironment getGlobalEnv() {
@@ -156,18 +147,6 @@ public abstract class REnvironment extends RAttributeStorage {
             return namespaceRegistry;
         }
 
-        private void setSearchPath(SearchPath searchPath) {
-            this.searchPath = searchPath;
-        }
-
-        private void setBaseEnv(Base baseEnv) {
-            this.baseEnv = baseEnv;
-        }
-
-        private void setNamespaceRegistry(REnvironment namespaceRegistry) {
-            this.namespaceRegistry = namespaceRegistry;
-        }
-
         @Override
         public RContext.ContextState initialize(RContext context) {
             setupContext(this, context, globalFrame);
@@ -182,6 +161,15 @@ public abstract class REnvironment extends RAttributeStorage {
 
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl(RRuntime.createNonFunctionFrame("global"));
+        }
+
+        public void initialize(Base newBaseEnv, REnvironment newNamespaceRegistry, SearchPath newSearchPath) {
+            assert baseEnv == null;
+            assert namespaceRegistry == null;
+            assert searchPath == null;
+            this.baseEnv = newBaseEnv;
+            this.namespaceRegistry = newNamespaceRegistry;
+            this.searchPath = newSearchPath;
         }
     }
 
@@ -301,14 +289,12 @@ public abstract class REnvironment extends RAttributeStorage {
         // TODO if namespaceRegistry is ever used in an eval an internal env won't suffice.
         REnvironment namespaceRegistry = RDataFactory.createInternalEnv();
         ContextStateImpl state = RContext.getInstance().stateREnvironment;
-        state.setNamespaceRegistry(namespaceRegistry);
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
 
         Global globalEnv = new Global(initialGlobalFrame);
         RArguments.initializeEnclosingFrame(initialGlobalFrame, baseFrame);
-        state.setBaseEnv(baseEnv);
-        state.setSearchPath(initSearchList(globalEnv));
+        state.initialize(baseEnv, namespaceRegistry, initSearchList(globalEnv));
     }
 
     /**
@@ -341,7 +327,7 @@ public abstract class REnvironment extends RAttributeStorage {
                 SearchPath searchPath = initSearchList(prevGlobalEnv);
                 searchPath.updateGlobal(newGlobalEnv);
                 parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
-                contextState.initialize(searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
+                contextState.initialize(parentBaseEnv, parentState.getNamespaceRegistry(), searchPath);
                 contextState.parentGlobalFrame = prevGlobalFrame;
                 break;
             }
@@ -369,13 +355,12 @@ public abstract class REnvironment extends RAttributeStorage {
                 newNamespaceRegistry.safePut("base", newBaseEnv.namespaceEnv);
                 newBaseEnv.safePut(".GlobalEnv", newGlobalEnv);
                 SearchPath newSearchPath = initSearchList(newGlobalEnv);
-                contextState.initialize(newSearchPath, newBaseEnv, newNamespaceRegistry);
+                contextState.initialize(newBaseEnv, newNamespaceRegistry, newSearchPath);
                 break;
             }
 
             case SHARE_NOTHING: {
                 // SHARE_NOTHING: baseInitialize takes care of everything
-                contextState.initialize(new SearchPath());
                 break;
             }
 

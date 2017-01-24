@@ -98,6 +98,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -294,7 +295,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             S3Args s3Args;
             RFunction resultFunction;
             if (implicitTypeProfile.profile(type != null)) {
-                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), null);
+                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), REnvironment.baseEnv().getFrame());
                 if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                     s3Args = null;
                 } else {
@@ -331,7 +332,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         S3Args s3Args;
         RFunction resultFunction;
         if (implicitTypeProfile.profile(type != null)) {
-            Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), null);
+            Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), REnvironment.baseEnv().getFrame());
             if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                 s3Args = null;
             } else {
@@ -403,13 +404,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[typeXIdx]));
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
-            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), null);
+            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), REnvironment.baseEnv().getFrame());
         }
         Result resultY = null;
         if (args.length > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
             RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, args[1]));
             if (implicitTypeProfileY.profile(typeY != null)) {
-                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), null);
+                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), REnvironment.baseEnv().getFrame());
             }
         }
 
