@@ -12,7 +12,12 @@
 package com.oracle.truffle.r.library.methods;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -50,9 +55,9 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -285,39 +290,56 @@ public class MethodsListDispatch {
         }
     }
 
-    private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
-        if (o instanceof RAbstractStringVector) {
-            RAbstractStringVector vec = (RAbstractStringVector) o;
-            if (vec.getLength() != 1) {
-                throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
-            }
-            String s = vec.getDataAt(0);
-            if (nonEmpty && s.length() == 0) {
-                throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
-            }
-            return s;
-        } else {
-            throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
-        }
-    }
-
     public abstract static class R_getGeneric extends RExternalBuiltinNode.Arg4 {
 
-        @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
         @Child private GetGenericInternal getGenericInternal = GetGenericInternalNodeGen.create();
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
+
+            //@formatter:off
+            Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
+
+            String msg0 = "The argument \"f\" to getGeneric";
+            casts.arg(0, "f").
+                defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg0, clsHierFn).
+                mustNotBeNull().
+                mustBe(stringValue()).
+                asStringVector().
+                mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg0, vecLenFn).
+                findFirst().
+                mustBe(lengthGt(0), RError.NO_CALLER, RError.Message.NON_EMPTY_STRING, msg0);
+
+            casts.arg(1, "mustFind").
+                asLogicalVector().
+                findFirst(RRuntime.LOGICAL_NA).
+                map(toBoolean());
+
+            casts.arg(2, "env").
+                mustNotBeNull().
+                mustBe(instanceOf(REnvironment.class));
+
+            String msg1 = "The argument \"package\" to getGeneric";
+            casts.arg(3, "package").
+                defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg1, clsHierFn).
+                mustNotBeNull().
+                mustBe(stringValue()).
+                asStringVector().
+                mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg1, vecLenFn).
+                findFirst();
+            //@formatter:on
+        }
+
         @Specialization
-        protected Object getGeneric(RAbstractVector nameVec, RAbstractVector mustFindVec, REnvironment env, RAbstractVector packageVec) {
-            String name = checkSingleString(nameVec, true, "The argument \"f\" to getGeneric", this, classHierarchyNode);
-            byte mustFind = castLogical(mustFindVec);
-            String pckg = checkSingleString(packageVec, false, "The argument \"package\" to getGeneric", this, classHierarchyNode);
+        protected Object getGeneric(String name, boolean mustFind, REnvironment env, String pckg) {
             Object value = getGenericInternal.executeObject(name, env, pckg);
             if (value == RNull.instance) {
-                if (mustFind == RRuntime.LOGICAL_TRUE) {
+                if (mustFind) {
                     if (env == RContext.getInstance().stateREnvironment.getGlobalEnv()) {
-                        throw RError.error(this, RError.Message.NO_GENERIC_FUN, name);
+                        throw RError.error(RError.NO_CALLER, RError.Message.NO_GENERIC_FUN, name);
                     } else {
-                        throw RError.error(this, RError.Message.NO_GENERIC_FUN_IN_ENV, name);
+                        throw RError.error(RError.NO_CALLER, RError.Message.NO_GENERIC_FUN_IN_ENV, name);
                     }
                 }
             }
@@ -373,6 +395,22 @@ public class MethodsListDispatch {
             // being a symbol but at this point this case is not handled (even possible?) in
             // FastR
             return generic == null ? RNull.instance : generic;
+        }
+
+        private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
+            if (o instanceof RAbstractStringVector) {
+                RAbstractStringVector vec = (RAbstractStringVector) o;
+                if (vec.getLength() != 1) {
+                    throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
+                }
+                String s = vec.getDataAt(0);
+                if (nonEmpty && s.length() == 0) {
+                    throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
+                }
+                return s;
+            } else {
+                throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
+            }
         }
 
         @TruffleBoundary

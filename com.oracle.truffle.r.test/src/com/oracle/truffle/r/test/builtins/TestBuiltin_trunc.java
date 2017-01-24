@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,5 +41,7 @@ public class TestBuiltin_trunc extends TestBase {
     public void testTrunc() {
         assertEval("{ typeof(trunc(42L)); }");
         assertEval("{ typeof(trunc(TRUE)); }");
+        assertEval("{ trunc(1+1i); }");
+        assertEval("{ trunc(\"aaa\"); }");
     }
 }
