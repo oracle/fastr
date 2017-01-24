@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -177,6 +177,21 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         }
     }
 
+    /**
+     * Searches for the correct S3 method for given function name and vector of class names.
+     *
+     * @param frame
+     * @param genericName The name of the generic function to look for, e.g. 'length'.
+     * @param type Vector of classes, if it is e.g. 'myclass', then this will search for
+     *            'length.myclass'.
+     * @param group See {@link RDispatch} and R documentation on "group" dispatch.
+     * @param callerFrame The frame of the caller will be starting point of the search.
+     * @param genericDefFrame This frame will be searched for special variables influencing the
+     *            lookup, e.g. .__S3MethodsTable__. Any other caller than {@code UseMethod} or
+     *            {@code NextMethod}, should supply base environment's frame using
+     *            {@link GetBaseEnvFrameNode}.
+     * @return Information about the lookup result.
+     */
     public abstract S3FunctionLookupNode.Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame);
 
     private static UseMethodFunctionLookupCachedNode specialize(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame,
