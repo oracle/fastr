@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,21 +32,17 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
-import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -77,15 +73,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "do.call", visibility = CUSTOM, kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
 public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
-    @Child private GetCallerFrameNode getCallerFrame;
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
     private final BranchProfile containsRSymbolProfile = BranchProfile.create();
 
-    private final Object argsIdentifier = new Object();
-    @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
-    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
+    @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -171,13 +164,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 }
             }
         }
-        FrameSlot frameSlot = slot.executeFrameSlot(frame);
-        try {
-            frame.setObject(frameSlot, new RArgsValuesAndNames(argValues, signature));
-            return call.execute(frame, func);
-        } finally {
-            frame.setObject(frameSlot, null);
-        }
+        return call.execute(frame, func, new RArgsValuesAndNames(argValues, signature));
     }
 
     @TruffleBoundary

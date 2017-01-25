@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,11 +30,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -54,9 +53,7 @@ public abstract class Recall extends RBuiltinNode {
 
     @Child private GetCallerFrameNode callerFrame = new GetCallerFrameNode();
 
-    private final Object argsIdentifier = new Object();
-    @Child private RCallNode call = RCallNode.createExplicitCall(argsIdentifier);
-    @Child private FrameSlotNode slot = FrameSlotNode.createTemp(argsIdentifier, true);
+    @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
     @Specialization
     protected Object recall(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
@@ -71,7 +68,6 @@ public abstract class Recall extends RBuiltinNode {
          * builtin looks at the arguments passed to the surrounding function.
          */
         RArgsValuesAndNames actualArgs = (RArgsValuesAndNames) readArgs.execute(frame);
-        frame.setObject(slot.executeFrameSlot(frame), actualArgs);
-        return call.execute(frame, function);
+        return call.execute(frame, function, actualArgs);
     }
 }

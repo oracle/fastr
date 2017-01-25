@@ -23,12 +23,10 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -44,11 +42,9 @@ import com.oracle.truffle.r.nodes.ffi.AsRealNode;
 import com.oracle.truffle.r.nodes.ffi.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -357,11 +353,9 @@ public final class SeqFunctions {
          * length depending on the class of the argument.
          */
         static final class LengthDispatcher extends Node {
-            private final Object argsIdentifier = new Object();
             private final BranchProfile errorProfile = BranchProfile.create();
-            @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
-            @Child private FrameSlotNode argumentsSlot = FrameSlotNode.createTemp(argsIdentifier, true);
             @Child private LocalReadVariableNode readLength = LocalReadVariableNode.create("length", true);
+            @Child RExplicitCallNode callNode = RExplicitCallNode.create();
             @Child private CastIntegerNode castInteger = CastIntegerNode.createNonPreserving();
             @Child private FindFirstNode findFirst = FindFirstNode.create(Integer.class, NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
 
@@ -370,19 +364,14 @@ public final class SeqFunctions {
             }
 
             public int execute(VirtualFrame frame, Object target) {
-                FrameSlot argsFrameSlot = argumentsSlot.executeFrameSlot(frame);
-                try {
-                    frame.setObject(argsFrameSlot, new RArgsValuesAndNames(new Object[]{target}, ArgumentsSignature.empty(1)));
-                    Object lengthFunction = readLength.execute(frame, REnvironment.baseEnv().getFrame());
-                    int result = castResult(call.execute(frame, lengthFunction));
-                    if (result < 0 || RRuntime.isNA(result)) {
-                        errorProfile.enter();
-                        throw RError.error(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
-                    }
-                    return result;
-                } finally {
-                    frame.setObject(argsFrameSlot, null);
+                Object lengthFunction = readLength.execute(frame, REnvironment.baseEnv().getFrame());
+                assert lengthFunction instanceof RFunction : "unexpected that 'length' in base environment is not a function";
+                int result = castResult(callNode.call(frame, (RFunction) lengthFunction, target));
+                if (result < 0 || RRuntime.isNA(result)) {
+                    errorProfile.enter();
+                    throw RError.error(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
                 }
+                return result;
             }
 
             private int castResult(Object result) {
@@ -955,11 +944,11 @@ public final class SeqFunctions {
             return from.getLength() == 1 && to.getLength() == 1 && isFinite(from.getDataAt(0)) && isFinite(to.getDataAt(0));
         }
 
-        public static final boolean validIntParams(RAbstractIntVector from, RAbstractIntVector to) {
+        public static boolean validIntParams(RAbstractIntVector from, RAbstractIntVector to) {
             return validIntParam(from) && validIntParam(to);
         }
 
-        public static final boolean validIntParam(RAbstractIntVector vec) {
+        public static boolean validIntParam(RAbstractIntVector vec) {
             return vec.getLength() == 1 && vec.getDataAt(0) != RRuntime.INT_NA;
         }
 
@@ -967,23 +956,23 @@ public final class SeqFunctions {
             return lengthNode.executeInteger(frame, obj);
         }
 
-        public static final boolean isNumeric(Object obj) {
+        public static boolean isNumeric(Object obj) {
             return obj instanceof Double || obj instanceof Integer || obj instanceof RAbstractDoubleVector || obj instanceof RAbstractIntVector;
         }
 
-        public static final boolean isInt(Object obj) {
+        public static boolean isInt(Object obj) {
             return obj instanceof Integer || obj instanceof RAbstractIntVector;
         }
 
-        public static final boolean isMissing(Object obj) {
+        public static boolean isMissing(Object obj) {
             return obj == RMissing.instance || obj == REmpty.instance;
         }
 
-        public static final boolean oneNotMissing(Object obj1, Object obj2) {
+        public static boolean oneNotMissing(Object obj1, Object obj2) {
             return !isMissing(obj1) || !isMissing(obj2);
         }
 
-        public static final boolean isPositiveIntegralDouble(double d) {
+        public static boolean isPositiveIntegralDouble(double d) {
             int id = (int) d;
             return id == d && id > 0;
         }

@@ -48,7 +48,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -350,10 +349,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return signature == null ? null : createArguments(null, false, false);
     }
 
-    protected ReadVariableNode createVarArgRead(CallArgumentsNode callArguments) {
-        return callArguments.containsVarArgsSymbol() ? ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any) : null;
-    }
-
     protected boolean isGroupGenericDispatch(RFunction function) {
         if (signature != null && signature.isEmpty()) {
             return false;
@@ -570,16 +565,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return RCallNodeGen.create(src, arguments, signature, function);
     }
 
+    /**
+     * Creates a call that reads its explicit arguments from the frame under given identifier. This
+     * allows to invoke a function with argument(s) supplied by hand. Consider using
+     * {@link com.oracle.truffle.r.nodes.function.call.RExplicitCallNode} instead.
+     */
     public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
         return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, null);
-    }
-
-    static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
-        RootNode root = callTarget.getRootNode();
-        if (root instanceof RBuiltinRootNode) {
-            return (RBuiltinRootNode) root;
-        }
-        return null;
     }
 
     static boolean needsSplitting(RootCallTarget target) {
