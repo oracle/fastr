@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.library.tools;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
@@ -25,7 +26,6 @@ import java.nio.file.Path;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -39,9 +39,8 @@ public class ToolsText {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustNotBeNull().mustBe(stringValue());
-            casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustNotBeNull().mustBe(
-                            Predef.integerValue()).asIntegerVector();
+            casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustBe(stringValue());
+            casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustBe(integerValue()).asIntegerVector();
         }
 
         @Specialization
@@ -82,8 +81,8 @@ public class ToolsText {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(0, "file1").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.arg(1, "file2").mustNotBeNull().mustBe(stringValue()).asStringVector();
+            casts.arg(0, "file1").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg(1, "file2").mustBe(stringValue()).asStringVector();
         }
 
         @Specialization

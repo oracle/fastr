@@ -61,13 +61,13 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         // rnames
         casts.arg(4).allowNull().mustBe(stringValue()).asStringVector();
         // sep
-        casts.arg(5).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg(5).mustBe(stringValue()).asStringVector().findFirst();
         // eol
-        casts.arg(6).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg(6).mustBe(stringValue()).asStringVector().findFirst();
         // na
-        casts.arg(7).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg(7).mustBe(stringValue()).asStringVector().findFirst();
         // dec
-        casts.arg(8).mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst().mustBe(Predef.length(1), RError.Message.GENERIC, "'dec' must be a single character");
+        casts.arg(8).mustBe(stringValue()).asStringVector().findFirst().mustBe(Predef.length(1), RError.Message.GENERIC, "'dec' must be a single character");
         // quote
         casts.arg(9).mustNotBeNull().asIntegerVector();
         // qmethod

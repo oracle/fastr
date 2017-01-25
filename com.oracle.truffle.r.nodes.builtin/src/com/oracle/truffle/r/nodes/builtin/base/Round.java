@@ -68,14 +68,12 @@ public abstract class Round extends RBuiltinNode {
         //@formatter:off
         casts.arg("x").
             defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustNotBeNull().
             mustBe(numericValue().or(complexValue()));
 
         // TODO: this should also accept vectors
         // TODO: digits argument is rounded, not simply stripped off the decimal part
         casts.arg("digits").
             defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustNotBeNull().
             mustBe(numericValue().or(complexValue())).
             asIntegerVector().
             findFirst();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public abstract class Array extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         Function<Object, Object> argType = this::argType;
-        casts.arg("data").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data", argType).mustNotBeNull().mustBe(abstractVectorValue());
+        casts.arg("data").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data", argType).mustBe(abstractVectorValue());
         casts.arg("dim").defaultError(RError.SHOW_CALLER, RError.Message.CANNOT_BE_LENGTH, "dims", 0).mustNotBeNull().asIntegerVector().mustBe(notEmpty());
         casts.arg("dimnames").defaultError(RError.SHOW_CALLER, RError.Message.DIMNAMES_LIST).allowNull().mustBe(instanceOf(RList.class));
     }

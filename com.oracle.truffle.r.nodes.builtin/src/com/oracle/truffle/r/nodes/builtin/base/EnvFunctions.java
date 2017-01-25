@@ -482,7 +482,7 @@ public class EnvFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("hash").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-            casts.arg("parent").mustNotBeNull().mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
+            casts.arg("parent").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
             casts.arg("size").mustNotBeNull().asIntegerVector().findFirst(0);
         }
 
@@ -508,9 +508,9 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
             // TODO: the actual interpretation of this parameter remains dubious
-            casts.arg("bindings").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+            casts.arg("bindings").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         @Specialization
@@ -525,7 +525,7 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -539,8 +539,8 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("sym").mustNotBeNull().mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -555,8 +555,8 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("sym").mustNotBeNull().mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -571,8 +571,8 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("sym").mustNotBeNull().mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -586,9 +586,9 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("sym").mustNotBeNull().mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("fun").mustNotBeNull().mustBe(RFunction.class, RError.SHOW_CALLER, Message.NOT_A_FUNCTION);
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
+            casts.arg("fun").mustBe(RFunction.class, RError.SHOW_CALLER, Message.NOT_A_FUNCTION);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @SuppressWarnings("unused")
@@ -604,8 +604,8 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("sym").mustNotBeNull().mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
         @SuppressWarnings("unused")
@@ -623,7 +623,7 @@ public class EnvFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").mustNotBeNull().mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("x").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
             casts.arg("all.names").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("sorted").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }

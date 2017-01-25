@@ -43,7 +43,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0, "dir").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg(0, "dir").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         casts.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
     }
 

@@ -332,7 +332,7 @@ public abstract class ConnectionFunctions {
     public abstract static class TextConnectionValue extends RBuiltinNode {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("con").defaultError(Message.NOT_A_TEXT_CONNECTION).mustNotBeNull().mustBe(integerValue()).asIntegerVector().findFirst();
+            casts.arg("con").defaultError(Message.NOT_A_TEXT_CONNECTION).mustBe(integerValue()).asIntegerVector().findFirst();
         }
 
         @Specialization
@@ -665,7 +665,7 @@ public abstract class ConnectionFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("object").asStringVector();
-            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
+            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
                             asIntegerVector().setNext(findFirst().integerElement()));
             Casts.nchars(casts);
             casts.arg("sep").allowNull().mustBe(stringValue());

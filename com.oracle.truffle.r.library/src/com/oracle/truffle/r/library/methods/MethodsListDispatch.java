@@ -110,7 +110,6 @@ public class MethodsListDispatch {
         protected void createCasts(CastBuilder casts) {
             //@formatter:off
             casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").
-                mustNotBeNull().
                 mustBe(stringValue().or(instanceOf(RS4Object.class)));
 
             casts.arg(1, "table").mustNotBeNull(RError.NO_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
@@ -304,7 +303,6 @@ public class MethodsListDispatch {
             String msg0 = "The argument \"f\" to getGeneric";
             casts.arg(0, "f").
                 defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg0, clsHierFn).
-                mustNotBeNull().
                 mustBe(stringValue()).
                 asStringVector().
                 mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg0, vecLenFn).
@@ -317,13 +315,11 @@ public class MethodsListDispatch {
                 map(toBoolean());
 
             casts.arg(2, "env").
-                mustNotBeNull().
                 mustBe(instanceOf(REnvironment.class));
 
             String msg1 = "The argument \"package\" to getGeneric";
             casts.arg(3, "package").
                 defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg1, clsHierFn).
-                mustNotBeNull().
                 mustBe(stringValue()).
                 asStringVector().
                 mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg1, vecLenFn).
