@@ -68,6 +68,7 @@ all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
+	ed $(GNUR_HOME)/configure < edconfigure # to fix the zlib version check (fixed in GNUR in the meantime)
 
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
