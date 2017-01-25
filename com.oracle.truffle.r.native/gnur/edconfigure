@@ -1,0 +1,9 @@
+35510,35513c
+#ifdef ZLIB_VERNUM
+  if (ZLIB_VERNUM < 0x1250) {
+    exit(1);
+  }
+  exit(0);
+.
+w
+q
