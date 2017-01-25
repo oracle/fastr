@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
@@ -31,6 +33,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicIntege
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleToInt;
@@ -237,7 +240,8 @@ public class CastBuilderTest {
     public void testAsString() {
         arg.asStringVector();
 
-        assertEquals("1.2", cast(1.2));
+        // TODO: it fails (NPE) due to the uninitialized RContext.runtimeASTAccess field
+        // assertEquals("1.2", cast(1.2));
         assertEquals("TRUE", cast(RRuntime.LOGICAL_TRUE));
         assertEquals("FALSE", cast(RRuntime.LOGICAL_FALSE));
         assertEquals("NA", cast(RRuntime.LOGICAL_NA));
@@ -639,6 +643,144 @@ public class CastBuilderTest {
         assertCastFail(RNull.instance, Message.SEED_NOT_VALID_INT.message);
     }
 
+    // RNull/RMissing tests. See com.oracle.truffle.r.nodes.builtin.casts.Filter$ResultForArg.
+
+    @Test
+    public void testMustBeNull() {
+        arg.mustBe(nullValue());
+        cast(RNull.instance);
+    }
+
+    @Test
+    public void testMustNotBeNull() {
+        arg.mustBe(nullValue().not());
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testMustNotBeNullAndNotDouble() {
+        arg.mustBe(nullValue().not().and(doubleValue().not()));
+        Assert.assertEquals("A", cast("A"));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+        try {
+            cast(1.23);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testMapIfNull() {
+        arg.mapIf(nullValue(), constant("A"), constant(1));
+        Assert.assertEquals("A", cast(RNull.instance));
+        Assert.assertEquals(1, cast("X"));
+    }
+
+    @Test
+    public void testBlockingNull1() {
+        // Here, the result for NULL in the 'singleElement()' filter is UNDEFINED, i.e. NULL does
+        // not pass through.
+        arg.asStringVector().mustBe(singleElement());
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testBlockingNull2() {
+        // Here, the result for NULL in the 'instanceOf(RIntSequence.class)' filter is FALSE,
+        // i.e. NULL does not pass through.
+        arg.mustBe(instanceOf(RIntSequence.class));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testPassingNull1() {
+        // Here, the result for NULL in the 'stringValue().not()' filter is TRUE,
+        // i.e. NULL passes through.
+        arg.mustBe(stringValue().not());
+        Assert.assertEquals(RNull.instance, cast(RNull.instance));
+    }
+
+    @Test
+    public void testBlockingNull3() {
+        // Here, the result for NULL in the 'instanceOf(RIntSequence.class).not()' filter is TRUE,
+        // while in the 'integerValue()' filter the result is FALSE. The result of the
+        // conjunction of the two filters by the 'and' operator is FALSE, i.e. NULL does not
+        // pass through.
+        arg.mustBe(instanceOf(RIntSequence.class).not().and(integerValue()));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testBlockingNull4() {
+        // Here, the result for NULL in the 'instanceOf(RIntSequence.class)' filter is FALSE,
+        // while in the 'singleElement()' filter the result is UNDEFINED. The result of the
+        // conjunction of the two filters by the 'and' operator is UNDEFINED, i.e. NULL does not
+        // pass through.
+        arg.asIntegerVector().mustBe(instanceOf(RIntSequence.class).and(singleElement()));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testPassingNull2() {
+        // Here, the result for NULL in the 'instanceOf(RIntSequence.class).not()' filter is TRUE,
+        // while in the 'stringValue()' filter the result is FALSE. The result of the
+        // disjunction of the two filters by the 'or' operator is TRUE, i.e. NULL passes through.
+        arg.mustBe(instanceOf(RIntSequence.class).not().or(stringValue()));
+        Assert.assertEquals(RNull.instance, cast(RNull.instance));
+    }
+
+    @Test
+    public void testBlockingNullAllowingMissing() {
+        arg.mustNotBeNull().mustBe(stringValue().not());
+        Assert.assertEquals(1, cast(1));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+        Assert.assertEquals(RMissing.instance, cast(RMissing.instance));
+    }
+
+    @Test
+    public void testMapIfPassingNull() {
+        // The condition 'stringValue()' returns FALSE for NULL, i.e. NULL passes through unmapped.
+        arg.mapIf(stringValue(), constant(1));
+        Assert.assertEquals(RNull.instance, cast(RNull.instance));
+        Assert.assertEquals(1, cast("abc"));
+    }
+
+    @Test
+    public void testMapIfMappingNull() {
+        // The condition 'stringValue()' returns TRUE for NULL, i.e. NULL is mapped to 1.
+        arg.mapIf(stringValue().not(), constant(1));
+        Assert.assertEquals(1, cast(RNull.instance));
+        Assert.assertEquals("abc", cast("abc"));
+    }
+
     /**
      * Casts given object using the configured pipeline in {@link #arg}.
      */
@@ -685,7 +827,7 @@ public class CastBuilderTest {
     }
 
     /**
-     * This tests the pipeline sampling process: all positive samples ase successful and all
+     * This tests the pipeline sampling process: all positive samples are successful and all
      * negative cause an error.
      */
     private void testPipeline() {

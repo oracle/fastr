@@ -26,6 +26,8 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -40,6 +42,14 @@ public abstract class Filter<T, R extends T> {
      * @return true if this filter narrows the input type to a sub-type
      */
     public abstract boolean isNarrowing();
+
+    public ResultForArg resultForNull() {
+        return ResultForArg.UNDEFINED;
+    }
+
+    public ResultForArg resultForMissing() {
+        return ResultForArg.UNDEFINED;
+    }
 
     public abstract <D> D accept(FilterVisitor<D> visitor);
 
@@ -71,6 +81,10 @@ public abstract class Filter<T, R extends T> {
         D visit(MatrixFilter<?> filter);
 
         D visit(DoubleFilter filter);
+
+        D visit(NullFilter filter);
+
+        D visit(MissingFilter filter);
     }
 
     /**
@@ -102,6 +116,16 @@ public abstract class Filter<T, R extends T> {
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
         }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return ResultForArg.FALSE;
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return ResultForArg.FALSE;
+        }
     }
 
     /**
@@ -127,6 +151,72 @@ public abstract class Filter<T, R extends T> {
         @Override
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
+        }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return ResultForArg.FALSE;
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return ResultForArg.FALSE;
+        }
+    }
+
+    public static final class NullFilter extends Filter<Object, RNull> {
+
+        public static final NullFilter INSTANCE = new NullFilter();
+
+        private NullFilter() {
+        }
+
+        @Override
+        public boolean isNarrowing() {
+            return true;
+        }
+
+        @Override
+        public <D> D accept(FilterVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return ResultForArg.TRUE;
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return ResultForArg.FALSE;
+        }
+    }
+
+    public static final class MissingFilter extends Filter<Object, RMissing> {
+
+        public static final MissingFilter INSTANCE = new MissingFilter();
+
+        private MissingFilter() {
+        }
+
+        @Override
+        public boolean isNarrowing() {
+            return true;
+        }
+
+        @Override
+        public <D> D accept(FilterVisitor<D> visitor) {
+            return visitor.visit(this);
+        }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return ResultForArg.FALSE;
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return ResultForArg.TRUE;
         }
     }
 
@@ -388,6 +478,16 @@ public abstract class Filter<T, R extends T> {
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
         }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return left.resultForNull().and(right.resultForNull());
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return left.resultForMissing().and(right.resultForMissing());
+        }
     }
 
     public static final class OrFilter<T> extends Filter<T, T> {
@@ -416,6 +516,16 @@ public abstract class Filter<T, R extends T> {
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
         }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return left.resultForNull().or(right.resultForNull());
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return left.resultForMissing().or(right.resultForMissing());
+        }
     }
 
     public static final class NotFilter<T> extends Filter<T, T> {
@@ -438,5 +548,92 @@ public abstract class Filter<T, R extends T> {
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
         }
+
+        @Override
+        public ResultForArg resultForNull() {
+            return filter.resultForNull().not();
+        }
+
+        @Override
+        public ResultForArg resultForMissing() {
+            return filter.resultForMissing().not();
+        }
     }
+
+    /**
+     * This is an enumeration of possible fixed outcomes of a filter's test method for a given input
+     * value. It is used now only in connection with {@link RNull} and {@link RMissing} as input
+     * values.
+     * <P>
+     * The <code>FALSE</code>, resp. <code>TRUE</code>, indicates that the filter will always return
+     * <code>false</code>, resp. <code>true</code>, for the given input value.
+     * <p>
+     * The <code>UNSUPPORTED</code> indicates that the the given input value is out of the filter's
+     * domain.
+     *
+     * @see Filter#resultForNull()
+     * @see Filter#resultForMissing()
+     */
+    public enum ResultForArg {
+        TRUE {
+
+            @Override
+            public ResultForArg not() {
+                return FALSE;
+            }
+
+            @Override
+            public ResultForArg and(ResultForArg other) {
+                return other;
+            }
+
+            @Override
+            public ResultForArg or(ResultForArg other) {
+                return TRUE;
+            }
+
+        },
+        FALSE {
+
+            @Override
+            public ResultForArg not() {
+                return TRUE;
+            }
+
+            @Override
+            public ResultForArg and(ResultForArg other) {
+                return FALSE;
+            }
+
+            @Override
+            public ResultForArg or(ResultForArg other) {
+                return other;
+            }
+
+        },
+        UNDEFINED {
+
+            @Override
+            public ResultForArg not() {
+                return UNDEFINED;
+            }
+
+            @Override
+            public ResultForArg and(ResultForArg other) {
+                return UNDEFINED;
+            }
+
+            @Override
+            public ResultForArg or(ResultForArg other) {
+                return other;
+            }
+        };
+
+        public abstract ResultForArg not();
+
+        public abstract ResultForArg and(ResultForArg other);
+
+        public abstract ResultForArg or(ResultForArg other);
+    }
+
 }

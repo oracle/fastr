@@ -27,8 +27,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-
-import java.util.function.Function;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -37,9 +36,9 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -56,8 +55,6 @@ public abstract class Quantifier extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile trueBranch = BranchProfile.create();
     private final BranchProfile falseBranch = BranchProfile.create();
-
-    @Child private TypeofNode typeofNode = com.oracle.truffle.r.nodes.unary.TypeofNodeGen.create();
 
     @Children private final CastNode[] argCastNodes = new CastNode[MAX_CACHED_LENGTH];
 
@@ -88,8 +85,7 @@ public abstract class Quantifier extends RBuiltinNode {
 
     private void createArgCast(int index) {
         CastBuilder argCastBuilder = new CastBuilder();
-        Function<Object, String> argTypeName = arg -> typeofNode.execute(arg).getName();
-        argCastBuilder.arg(0).allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))), RError.Message.COERCING_ARGUMENT, argTypeName,
+        argCastBuilder.arg(0).allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))), RError.Message.COERCING_ARGUMENT, typeName(),
                         "logical").asLogicalVector();
         argCastNodes[index] = insert(new ProfileCastNode(argCastBuilder.getCasts()[0]));
     }

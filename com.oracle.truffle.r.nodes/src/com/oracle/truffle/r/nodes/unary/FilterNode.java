@@ -43,6 +43,8 @@ public abstract class FilterNode extends CastNode {
     private final Object[] messageArgs;
     private final boolean boxPrimitives;
     private final boolean isWarning;
+    private final boolean resultForNull;
+    private final boolean resultForMissing;
 
     private final BranchProfile warningProfile = BranchProfile.create();
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
@@ -50,17 +52,21 @@ public abstract class FilterNode extends CastNode {
 
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
 
-    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
+    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives, boolean resultForNull,
+                    boolean resultForMissing) {
         this.filter = filter;
         this.isWarning = isWarning;
         this.callObj = callObj == null ? this : callObj;
         this.message = message;
         this.messageArgs = messageArgs;
         this.boxPrimitives = boxPrimitives;
+        this.resultForNull = resultForNull;
+        this.resultForMissing = resultForMissing;
     }
 
-    public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives) {
-        return FilterNodeGen.create(filter, isWarning, callObj, message, messageArgs, boxPrimitives);
+    public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives, boolean resultForNull,
+                    boolean resultForMissing) {
+        return FilterNodeGen.create(filter, isWarning, callObj, message, messageArgs, boxPrimitives, resultForNull, resultForMissing);
     }
 
     public ArgumentFilter getFilter() {
@@ -83,16 +89,26 @@ public abstract class FilterNode extends CastNode {
     }
 
     @Specialization
-    protected RNull executeNull(@SuppressWarnings("unused") RNull x) {
-        return RNull.instance;
+    protected Object executeNull(RNull x) {
+        if (!resultForNull) {
+            handleMessage(x);
+        }
+        return x;
     }
 
     @Specialization
-    protected RMissing executeMissing(@SuppressWarnings("unused") RMissing x) {
-        return RMissing.instance;
+    protected Object executeMissing(RMissing x) {
+        if (!resultForMissing) {
+            handleMessage(x);
+        }
+        return x;
     }
 
-    @Specialization
+    protected static boolean isNotNullOrMissing(Object x) {
+        return x != RNull.instance && x != RMissing.instance;
+    }
+
+    @Specialization(guards = "isNotNullOrMissing(x)")
     public Object executeRest(Object x) {
         if (!conditionProfile.profile(evalCondition(valueProfile.profile(x)))) {
             handleMessage(x);

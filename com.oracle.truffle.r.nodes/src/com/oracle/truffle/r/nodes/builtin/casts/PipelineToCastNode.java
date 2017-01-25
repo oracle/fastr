@@ -38,9 +38,12 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.VectorSize;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.FilterVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.MissingFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.ResultForArg;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
@@ -373,7 +376,8 @@ public final class PipelineToCastNode {
         public CastNode visit(FilterStep<?, ?> step) {
             ArgumentFilter<?, ?> filter = filterFactory.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
-            return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives);
+            return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives, ResultForArg.TRUE.equals(step.getFilter().resultForNull()),
+                            ResultForArg.TRUE.equals(step.getFilter().resultForMissing()));
         }
 
         @Override
@@ -435,7 +439,8 @@ public final class PipelineToCastNode {
             ArgumentFilter<?, ?> condition = filterFactory.createFilter(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
-            return ConditionalMapNode.create(condition, trueCastNode, falseCastNode);
+            return ConditionalMapNode.create(condition, trueCastNode, falseCastNode, ResultForArg.TRUE.equals(step.getFilter().resultForNull()),
+                            ResultForArg.TRUE.equals(step.getFilter().resultForMissing()));
         }
 
         private MessageData getDefaultErrorIfNull(MessageData message) {
@@ -532,6 +537,16 @@ public final class PipelineToCastNode {
         public ArgumentFilter<?, ?> visit(NotFilter<?> filter) {
             ArgumentFilter toNegate = filter.getFilter().accept(this);
             return (ArgumentFilter<Object, Object>) arg -> !toNegate.test(arg);
+        }
+
+        @Override
+        public ArgumentFilter<?, ?> visit(NullFilter filter) {
+            return (ArgumentFilter<Object, Object>) arg -> false;
+        }
+
+        @Override
+        public ArgumentFilter<?, ?> visit(MissingFilter filter) {
+            return (ArgumentFilter<Object, Object>) arg -> false;
         }
 
         @Override

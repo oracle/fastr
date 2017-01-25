@@ -27,6 +27,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -151,6 +152,11 @@ public abstract class NonNANode extends CastNode {
 
     @Specialization
     protected Object onNull(RNull x) {
+        return x;
+    }
+
+    @Specialization
+    protected Object onMissing(RMissing x) {
         return x;
     }
 

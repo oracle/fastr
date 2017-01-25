@@ -41,7 +41,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.VectorSize;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.FilterVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MatrixFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.MissingFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
@@ -212,6 +214,16 @@ public final class FilterSamplerFactory
                 return thisSamples.swap();
             }
         };
+    }
+
+    @Override
+    public ArgumentFilterSampler<?, ?> visit(NullFilter filter) {
+        return new VectorPredicateArgumentFilterSampler<>("nullValue", x -> false);
+    }
+
+    @Override
+    public ArgumentFilterSampler<?, ?> visit(MissingFilter filter) {
+        return new VectorPredicateArgumentFilterSampler<>("missingValue", x -> false);
     }
 
     @Override

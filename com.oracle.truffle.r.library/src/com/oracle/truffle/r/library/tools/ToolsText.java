@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.tools;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -20,14 +21,11 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -39,14 +37,10 @@ public class ToolsText {
 
     public abstract static class DoTabExpand extends RExternalBuiltinNode.Arg2 {
 
-        @Child private TypeofNode typeofNode = com.oracle.truffle.r.nodes.unary.TypeofNodeGen.create();
-
         @Override
         protected void createCasts(CastBuilder casts) {
-            Function<Object, String> argTypeName = arg -> typeofNode.execute(arg).getName();
-
-            casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", argTypeName).mustNotBeNull().mustBe(stringValue());
-            casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", argTypeName).mustNotBeNull().mustBe(
+            casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustNotBeNull().mustBe(stringValue());
+            casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustNotBeNull().mustBe(
                             Predef.integerValue()).asIntegerVector();
         }
 
