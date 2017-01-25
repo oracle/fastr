@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.utils;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
@@ -37,7 +38,6 @@ import java.nio.file.StandardCopyOption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -50,11 +50,11 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
-        casts.arg(1).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
-        casts.arg(2).mustNotBeNull().mustBe(Predef.logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
-        casts.arg(3).mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
-        casts.arg(4).mustNotBeNull().mustBe(Predef.logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+        casts.arg(0).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(1).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(2).mustBe(logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+        casts.arg(3).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+        casts.arg(4).mustBe(logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
 
     }
 

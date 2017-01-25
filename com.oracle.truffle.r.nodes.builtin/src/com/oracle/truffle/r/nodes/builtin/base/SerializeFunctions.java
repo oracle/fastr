@@ -87,7 +87,7 @@ public class SerializeFunctions {
         }
 
         protected void connection(CastBuilder casts) {
-            casts.arg("con").mustNotBeNull().mustBe(integerValue()).asIntegerVector().findFirst();
+            casts.arg("con").mustBe(integerValue()).asIntegerVector().findFirst();
         }
     }
 
@@ -137,7 +137,7 @@ public class SerializeFunctions {
     public abstract static class Unserialize extends Adapter {
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
+            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
                             asIntegerVector().setNext(findFirst().integerElement()));
         }
 

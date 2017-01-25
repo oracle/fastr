@@ -39,7 +39,7 @@ public class Slot {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(
+            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
                             singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
@@ -67,7 +67,7 @@ public class Slot {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustNotBeNull().mustBe(stringValue()).asStringVector().mustBe(
+            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
                             singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 

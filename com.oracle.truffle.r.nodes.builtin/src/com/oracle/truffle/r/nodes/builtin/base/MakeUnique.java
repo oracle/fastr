@@ -47,7 +47,7 @@ public abstract class MakeUnique extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("names").defaultError(RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names").mustNotBeNull().mustBe(stringValue());
+        casts.arg("names").defaultError(RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names").mustBe(stringValue());
         casts.arg("sep").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
 
     }

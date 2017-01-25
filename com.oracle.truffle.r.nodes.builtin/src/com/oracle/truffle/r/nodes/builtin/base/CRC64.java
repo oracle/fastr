@@ -41,7 +41,7 @@ public abstract class CRC64 extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").defaultError(RError.NO_CALLER, Message.INPUT_MUST_BE_STRING).mustNotBeNull().mustBe(stringValue());
+        casts.arg("x").defaultError(RError.NO_CALLER, Message.INPUT_MUST_BE_STRING).mustBe(stringValue());
     }
 
     @Specialization
