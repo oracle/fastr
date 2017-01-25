@@ -37,8 +37,10 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLLRFFINode;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
@@ -85,11 +87,13 @@ public class TruffleStats implements StatsRFFI {
     }
 
     public abstract static class LookupAdapter extends Node {
+        @Child DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+
         public SymbolHandle lookup(String name) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
             // cannot go through DLL because stats does not allow dynamic lookup
             // and these symbols are not registered (only fft)
-            SymbolHandle result = TruffleDLL.getInstance().dlsym(dllInfo.handle, name);
+            SymbolHandle result = dllRFFINode.dlsym(dllInfo.handle, name);
             if (result == DLL.SYMBOL_NOT_FOUND) {
                 @SuppressWarnings("unused")
                 TruffleRFFIContextState cs = TruffleRFFIContextState.getContextState();

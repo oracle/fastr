@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,61 +22,49 @@
  */
 package com.oracle.truffle.r.runtime.ffi.generic;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class Generic_Grid implements GridRFFI {
     private static class Generic_GridRFFINode extends GridRFFINode {
+        private static final String L_InitGrid = "L_initGrid";
+        private static final String L_KillGrid = "L_killGrid";
+        private static final String GRID = "grid";
         @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
+        @Child DLL.FindSymbolNode findSymbolNode = DLL.FindSymbolNode.create();
 
-        private static final class GridProvider {
-            private static GridProvider grid;
-            private static DLL.SymbolHandle initGrid;
-            private static DLL.SymbolHandle killGrid;
-
-            @TruffleBoundary
-            private GridProvider() {
-                System.load(LibPaths.getPackageLibPath("grid"));
-                initGrid = DLL.findSymbol("L_initGrid", "grid", DLL.RegisteredNativeSymbol.any());
-                killGrid = DLL.findSymbol("L_killGrid", "grid", DLL.RegisteredNativeSymbol.any());
-                assert initGrid != DLL.SYMBOL_NOT_FOUND && killGrid != DLL.SYMBOL_NOT_FOUND;
-            }
-
-            static GridProvider gridProvider() {
-                if (grid == null) {
-                    grid = new GridProvider();
-                }
-                return grid;
-            }
-
-            @SuppressWarnings("static-method")
-            long getInitGrid() {
-                return initGrid.asAddress();
-            }
-
-            @SuppressWarnings("static-method")
-            long getKillGrid() {
-                return killGrid.asAddress();
-            }
-        }
+        @CompilationFinal private NativeCallInfo initNativeCallInfo;
+        @CompilationFinal private NativeCallInfo killNativeCallInfo;
 
         @Override
         public Object initGrid(REnvironment gridEvalEnv) {
-            long initGrid = GridProvider.gridProvider().getInitGrid();
-            return callRFFINode.invokeCall(new NativeCallInfo("L_initGrid", new SymbolHandle(initGrid), DLL.findLibrary("grid")), new Object[]{gridEvalEnv});
+            if (initNativeCallInfo == null) {
+                initNativeCallInfo = createNativeCallInfo(L_InitGrid);
+            }
+            return callRFFINode.invokeCall(initNativeCallInfo, new Object[]{gridEvalEnv});
         }
 
         @Override
         public Object killGrid() {
-            long killGrid = GridProvider.gridProvider().getKillGrid();
-            return callRFFINode.invokeCall(new NativeCallInfo("L_killGrid", new SymbolHandle(killGrid), DLL.findLibrary("grid")), new Object[0]);
+            if (killNativeCallInfo == null) {
+                killNativeCallInfo = createNativeCallInfo(L_KillGrid);
+            }
+            return callRFFINode.invokeCall(killNativeCallInfo, new Object[0]);
+        }
+
+        private NativeCallInfo createNativeCallInfo(String call) {
+            DLLInfo dllInfo = DLL.findLibrary(GRID);
+            assert dllInfo != null;
+            SymbolHandle symbolHandle = findSymbolNode.execute(call, GRID, DLL.RegisteredNativeSymbol.any());
+            assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+            return new NativeCallInfo(call, symbolHandle, dllInfo);
         }
     }
 

@@ -26,12 +26,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLLRFFINode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class JNI_Stats implements StatsRFFI {
 
     public static class JNI_FFTNode extends FFTNode {
+        @Child DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+
         private SymbolHandle fftWorkAddress;
         private SymbolHandle fftFactorAddress;
 
@@ -57,10 +60,11 @@ public class JNI_Stats implements StatsRFFI {
             }
         }
 
-        private static SymbolHandle fftAddress(String symbol) {
+        private SymbolHandle fftAddress(String symbol) {
             SymbolHandle fftAddress;
             DLLInfo dllInfo = DLL.findLibrary("stats");
-            fftAddress = RFFIFactory.getRFFI().getDLLRFFI().dlsym(dllInfo.handle, symbol);
+            assert dllInfo != null;
+            fftAddress = dllRFFINode.dlsym(dllInfo.handle, symbol);
             assert fftAddress != DLL.SYMBOL_NOT_FOUND;
             return fftAddress;
         }

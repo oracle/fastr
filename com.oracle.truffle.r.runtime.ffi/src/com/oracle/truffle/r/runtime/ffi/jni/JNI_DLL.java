@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,42 +23,49 @@
 package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
 public class JNI_DLL implements DLLRFFI {
 
-    @Override
-    public Object dlopen(String path, boolean local, boolean now) {
-        long handle = native_dlopen(path, local, now);
-        if (handle == 0) {
-            return null;
-        } else {
-            return new Long(handle);
-        }
-    }
-
-    @Override
-    public SymbolHandle dlsym(Object handle, String symbol) {
-        long nativeHandle = (Long) handle;
-        long symv = native_dlsym(nativeHandle, symbol);
-        if (symv == 0) {
-            // symbol might actually be zero
-            if (dlerror() != null) {
+    public static class JNI_DLLRFFINode extends DLLRFFINode {
+        @Override
+        @TruffleBoundary
+        public Object dlopen(String path, boolean local, boolean now) {
+            long handle = native_dlopen(path, local, now);
+            if (handle == 0) {
                 return null;
+            } else {
+                return new Long(handle);
             }
         }
-        return new SymbolHandle(symv);
-    }
 
-    @Override
-    public int dlclose(Object handle) {
-        long nativeHandle = (Long) handle;
-        return native_dlclose(nativeHandle);
-    }
+        @Override
+        @TruffleBoundary
+        public SymbolHandle dlsym(Object handle, String symbol) {
+            long nativeHandle = (Long) handle;
+            long symv = native_dlsym(nativeHandle, symbol);
+            if (symv == 0) {
+                // symbol might actually be zero
+                if (dlerror() != null) {
+                    return null;
+                }
+            }
+            return new SymbolHandle(symv);
+        }
 
-    @Override
-    public String dlerror() {
-        return native_dlerror();
+        @Override
+        @TruffleBoundary
+        public int dlclose(Object handle) {
+            long nativeHandle = (Long) handle;
+            return native_dlclose(nativeHandle);
+        }
+
+        @Override
+        @TruffleBoundary
+        public String dlerror() {
+            return native_dlerror();
+        }
     }
 
     // Checkstyle: stop method name check
@@ -70,5 +77,10 @@ public class JNI_DLL implements DLLRFFI {
     private static native String native_dlerror();
 
     private static native long native_dlsym(long handle, String symbol);
+
+    @Override
+    public DLLRFFINode createDLLRFFINode() {
+        return new JNI_DLLRFFINode();
+    }
 
 }

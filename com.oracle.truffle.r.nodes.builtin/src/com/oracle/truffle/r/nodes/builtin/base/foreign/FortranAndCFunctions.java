@@ -222,10 +222,11 @@ public class FortranAndCFunctions {
 
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("create()") DLL.FindSymbolNode findSymbolNode,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(symbol.getDataAt(0), libName, rns);
+            DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
@@ -259,6 +260,7 @@ public class FortranAndCFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
+                        @Cached("create()") DLL.FindSymbolNode findSymbolNode,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
@@ -269,7 +271,7 @@ public class FortranAndCFunctions {
                 }
             }
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.C, null, null);
-            DLL.SymbolHandle func = DLL.findSymbol(symbol.getDataAt(0), libName, rns);
+            DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);

@@ -147,7 +147,7 @@ public final class UserRNG implements RandomNumberGenerator {
     }
 
     private static DLL.SymbolHandle findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {
-        DLL.SymbolHandle func = DLL.findSymbol(symbol, dllInfo.name, DLL.RegisteredNativeSymbol.any());
+        DLL.SymbolHandle func = DLL.findSymbol(symbol, dllInfo);
         if (func == DLL.SYMBOL_NOT_FOUND) {
             if (!optional) {
                 throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, symbol);

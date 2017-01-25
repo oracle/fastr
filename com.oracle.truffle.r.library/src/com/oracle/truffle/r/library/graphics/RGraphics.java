@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.FFIRootNode;
+import com.oracle.truffle.r.runtime.ffi.CallRFFIRootNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 /**
@@ -61,10 +61,10 @@ public class RGraphics {
                 baseEnv.safePut(DOT_DEVICES, devices);
                 registerBaseGraphicsSystem();
             } else {
-                DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
-                DLL.SymbolHandle func = DLL.findSymbol("InitGraphics", null, rns);
-                assert func != DLL.SYMBOL_NOT_FOUND;
-                FFIRootNode.createCallTarget().call(new NativeCallInfo("InitGraphics", func, DLL.findLibrary("graphics")), true, new Object[0]);
+                DLL.DLLInfo dllInfo = DLL.findLibrary("graphics");
+                DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
+                assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+                CallRFFIRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), true, new Object[0]);
             }
         }
     }

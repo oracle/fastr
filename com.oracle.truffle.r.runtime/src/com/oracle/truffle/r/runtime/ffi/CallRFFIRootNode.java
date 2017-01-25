@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -30,10 +29,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public final class FFIRootNode extends RootNode {
+public final class CallRFFIRootNode extends RootNode {
+    private static CallRFFIRootNode callRFFIRootNode;
     @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
 
-    public FFIRootNode() {
+    public CallRFFIRootNode() {
         super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
 
     }
@@ -52,7 +52,11 @@ public final class FFIRootNode extends RootNode {
         }
     }
 
-    public static RootCallTarget createCallTarget() {
-        return Truffle.getRuntime().createCallTarget(new FFIRootNode());
+    public static CallRFFIRootNode create() {
+        if (callRFFIRootNode == null) {
+            callRFFIRootNode = new CallRFFIRootNode();
+            Truffle.getRuntime().createCallTarget(callRFFIRootNode);
+        }
+        return callRFFIRootNode;
     }
 }
