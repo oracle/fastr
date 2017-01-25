@@ -97,7 +97,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -280,7 +279,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createWithError()") S3FunctionLookupNode dispatchLookup,
                     @Cached("createIdentityProfile()") ValueProfile builtinProfile,
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
+                    @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
         // Cannot dispatch on REmpty
@@ -294,7 +294,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             S3Args s3Args;
             RFunction resultFunction;
             if (implicitTypeProfile.profile(type != null)) {
-                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), REnvironment.baseEnv().getFrame());
+                Result result = dispatchLookup.execute(frame, builtin.getGenericName(), type, null, frame.materialize(), getBaseEnvFrameNode.execute());
                 if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                     s3Args = null;
                 } else {
@@ -323,7 +323,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
-                    @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
+                    @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
+                    @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
 
@@ -331,7 +332,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         S3Args s3Args;
         RFunction resultFunction;
         if (implicitTypeProfile.profile(type != null)) {
-            Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), REnvironment.baseEnv().getFrame());
+            Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), getBaseEnvFrameNode.execute());
             if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                 s3Args = null;
             } else {
@@ -379,7 +380,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupNaRmProfile,
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
-                    @Cached("createUninitializedExplicitCall()") FunctionDispatch call) {
+                    @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
+                    @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
 
         Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
         ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
@@ -399,13 +401,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[typeXIdx]));
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
-            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), REnvironment.baseEnv().getFrame());
+            resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), getBaseEnvFrameNode.execute());
         }
         Result resultY = null;
         if (args.length > 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
             RStringVector typeY = classHierarchyNodeY.execute(promiseHelperNode.checkEvaluate(frame, args[1]));
             if (implicitTypeProfileY.profile(typeY != null)) {
-                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), REnvironment.baseEnv().getFrame());
+                resultY = dispatchLookupY.execute(frame, builtin.getName(), typeY, dispatch.getGroupGenericName(), frame.materialize(), getBaseEnvFrameNode.execute());
             }
         }
 
