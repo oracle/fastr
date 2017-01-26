@@ -23,13 +23,11 @@
 package com.oracle.truffle.r.engine.interop.ffi;
 
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * Access to primitive C operations.
  */
 public class TruffleCAccess {
-    private static final TruffleDLL.TruffleHandle handle = new TruffleDLL.TruffleHandle("libR");
 
     public enum Function {
         READ_POINTER_INT,
@@ -41,7 +39,7 @@ public class TruffleCAccess {
 
         public DLL.SymbolHandle getSymbolHandle() {
             if (symbolHandle == null) {
-                symbolHandle = RFFIFactory.getRFFI().getDLLRFFI().dlsym(handle, cName());
+                symbolHandle = DLL.findSymbol(cName(), null);
             }
             return symbolHandle;
         }

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -157,7 +156,7 @@ public class JNI_Call implements CallRFFI {
      * so we have to do an additional {@code System.load} to achieve that.
      *
      * Before we do that we must load {@code libjniboot} because the implementation of
-     * {@link DLLRFFI#dlopen} is called by {@link DLL#load} which uses JNI!
+     * {@link DLLRFFI.DLLRFFINode#dlopen} is called by {@link DLL#loadLibR} which uses JNI!
      */
     @TruffleBoundary
     private static void loadLibRLibrary() {
@@ -165,11 +164,7 @@ public class JNI_Call implements CallRFFI {
         System.load(libjnibootPath);
 
         String librffiPath = LibPaths.getBuiltinLibPath("R");
-        try {
-            DLL.loadLibR(librffiPath, ForceRTLDGlobal, false);
-        } catch (DLLException ex) {
-            throw new RInternalError(ex, "error while loading " + librffiPath);
-        }
+        DLL.loadLibR(librffiPath);
         System.load(librffiPath);
         RFFIUtils.initialize();
         if (traceEnabled()) {

@@ -42,9 +42,9 @@ import com.oracle.truffle.r.runtime.ffi.jni.JNI_DLL;
 import com.oracle.truffle.r.runtime.ffi.truffle.LLVM_IR;
 
 /**
- * The Truffle version of {@link DLLRFFI}. {@link TruffleDLL#dlopen} expects to find the LLVM IR
- * embedded in the shared library. If it exists it is used, unless the library is blacklisted.
- * Otherwise we fall back to the standard JNI implementation.
+ * The Truffle version of {@link DLLRFFI}. {@code dlopen} expects to find the LLVM IR embedded in
+ * the shared library. If it exists it is used, unless the library is blacklisted. Otherwise we fall
+ * back to the standard JNI implementation.
  *
  * The LLVM bitcode is stored (opaquely) in the shared library file, and access through the
  * {@link LLVM_IR} class. The {@link LLVM_IR#getLLVMIR(String)} method will return an array of
@@ -149,11 +149,6 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
         truffleDLL = this;
     }
 
-    static TruffleDLL getInstance() {
-        assert truffleDLL != null;
-        return truffleDLL;
-    }
-
     static ContextStateImpl newContextState() {
         return truffleDLL.new ContextStateImpl();
     }
@@ -186,35 +181,74 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
         boolean match(String name);
     }
 
-    /**
-     * If a library is enabled for LLVM,the IR for all the modules is retrieved and analyzed. Every
-     * exported symbol in the module added to the parseStatus map for the current {@link RContext}.
-     * This allows {@link #dlsym} to definitively locate any symbol, even if the IR has not been
-     * parsed yet.
-     */
-    @Override
-    public Object dlopen(String path, boolean local, boolean now) {
-        try {
-            LLVM_IR[] irs = LLVM_IR.getLLVMIR(path);
-            String libName = getLibName(path);
-            // even if libR is not all LLVM executed, some parts have to be
-            // but they can't be parsed now
-            if (libName.equals("libR")) {
-                libRModules = irs;
-            }
-            if (irs == null || isBlacklisted(libName)) {
-                return super.dlopen(path, local, now);
-            } else {
-                ContextStateImpl contextState = getContextState();
-                for (int i = 0; i < irs.length; i++) {
-                    LLVM_IR ir = irs[i];
-                    addExportsToMap(contextState, libName, ir, (name) -> true);
+    private static class TruffleLLVM_DLLRFFINode extends JNI_DLLRFFINode {
+
+        /**
+         * If a library is enabled for LLVM, the IR for all the modules is retrieved and analyzed.
+         * Every exported symbol in the module added to the parseStatus map for the current
+         * {@link RContext}. This allows {@link #dlsym} to definitively locate any symbol, even if
+         * the IR has not been parsed yet.
+         */
+        @Override
+        public Object dlopen(String path, boolean local, boolean now) {
+            try {
+                LLVM_IR[] irs = LLVM_IR.getLLVMIR(path);
+                String libName = getLibName(path);
+                // even if libR is not all LLVM executed, some parts have to be
+                // but they can't be parsed now
+                if (libName.equals("libR")) {
+                    truffleDLL.libRModules = irs;
                 }
-                return new TruffleHandle(libName);
+                if (irs == null || isBlacklisted(libName)) {
+                    return super.dlopen(path, local, now);
+                } else {
+                    ContextStateImpl contextState = getContextState();
+                    for (int i = 0; i < irs.length; i++) {
+                        LLVM_IR ir = irs[i];
+                        addExportsToMap(contextState, libName, ir, (name) -> true);
+                    }
+                    return new TruffleHandle(libName);
+                }
+            } catch (Exception ex) {
+                return null;
             }
-        } catch (Exception ex) {
-            return null;
         }
+
+        @Override
+        public SymbolHandle dlsym(Object handle, String symbol) {
+            if (handle instanceof TruffleHandle) {
+                // If the symbol exists it will be in the map
+                ParseStatus parseStatus = getContextState().parseStatusMap.get(symbol);
+                if (parseStatus != null && parseStatus.libName.equals(((TruffleHandle) handle).libName)) {
+                    // force a parse so we have a "value"
+                    if (!parseStatus.parsed) {
+                        ensureParsed(parseStatus.libName, symbol, true);
+                    }
+                    Object symValue = RContext.getInstance().getEnv().importSymbol("@" + symbol);
+                    assert symValue != null;
+                    return new SymbolHandle(symValue);
+                } else {
+                    // symbol not found (or not in requested library)
+                    return null;
+                }
+            } else {
+                return super.dlsym(handle, symbol);
+            }
+        }
+
+        @Override
+        public int dlclose(Object handle) {
+            if (handle instanceof TruffleHandle) {
+                return 0;
+            } else {
+                return super.dlclose(handle);
+            }
+        }
+    }
+
+    @Override
+    public DLLRFFINode createDLLRFFINode() {
+        return new TruffleLLVM_DLLRFFINode();
     }
 
     private static void addExportsToMap(ContextStateImpl contextState, String libName, LLVM_IR ir, ModuleNameMatch moduleNameMatch) {
@@ -244,9 +278,9 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
 
     /**
      * About to invoke the (external) function denoted by {@code nativeCallInfo}. Therefore, it must
-     * have been parsed (in {@link #dlsym(Object, String)}) AND all dependent modules, recursively,
-     * must also be parsed. Evidently since the dependencies are expressed at a module level, this
-     * may parse more than strictly necessary.
+     * have been parsed (in {code dlsym}) AND all dependent modules, recursively, must also be
+     * parsed. Evidently since the dependencies are expressed at a module level, this may parse more
+     * than strictly necessary.
      *
      * @param nativeCallInfo
      */
@@ -257,8 +291,6 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
     /**
      * Similar to {@link #ensureParsed(NativeCallInfo)} but with a function specified as a string
      * (for internal use) and an optional check whether the function must exist.
-     *
-     * @param libName TODO
      */
     @TruffleBoundary
     static void ensureParsed(String libName, String name, boolean fatalIfMissing) {
@@ -315,34 +347,4 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
         return result;
     }
 
-    @Override
-    public SymbolHandle dlsym(Object handle, String symbol) {
-        if (handle instanceof TruffleHandle) {
-            // If the symbol exists it will be in the map
-            ParseStatus parseStatus = getContextState().parseStatusMap.get(symbol);
-            if (parseStatus != null && parseStatus.libName.equals(((TruffleHandle) handle).libName)) {
-                // force a parse so we have a "value"
-                if (!parseStatus.parsed) {
-                    ensureParsed(parseStatus.libName, symbol, true);
-                }
-                Object symValue = RContext.getInstance().getEnv().importSymbol("@" + symbol);
-                assert symValue != null;
-                return new SymbolHandle(symValue);
-            } else {
-                // symbol not found (or not in requested library)
-                return null;
-            }
-        } else {
-            return super.dlsym(handle, symbol);
-        }
-    }
-
-    @Override
-    public int dlclose(Object handle) {
-        if (handle instanceof TruffleHandle) {
-            return 0;
-        } else {
-            return super.dlclose(handle);
-        }
-    }
 }

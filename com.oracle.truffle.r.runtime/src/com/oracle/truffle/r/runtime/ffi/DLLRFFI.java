@@ -22,40 +22,44 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * Caller should not assume that this interface is implemented in a thread-safe manner. In
- * particular, pairs of {@link #dlopen}/{@link #dlerror} and {@link #dlsym}/{@link #dlerror} should
- * be atomic in the caller.
+ * particular, pairs of {@link DLLRFFINode#dlopen}/{@link DLLRFFINode#dlerror} and
+ * {@link DLLRFFINode#dlsym}/{@link DLLRFFINode#dlerror} should be atomic in the caller.
  *
  */
 public interface DLLRFFI {
-    /**
-     * Open a DLL.
-     *
-     * @return {@code null} on error, opaque handle for following calls otherwise.
-     */
-    Object dlopen(String path, boolean local, boolean now);
+    abstract class DLLRFFINode extends Node {
+        /**
+         * Open a DLL.
+         *
+         * @return {@code null} on error, opaque handle for following calls otherwise.
+         */
+        public abstract Object dlopen(String path, boolean local, boolean now);
 
-    /**
-     * Search for {@code symbol} in DLL specified by {@code handle}. To accommodate differing
-     * implementations of this interface the result is {@link SymbolHandle}. For the standard OS
-     * implementation this will encapsulate a {@link Long} or {@code null} if an error occurred.
-     *
-     */
-    SymbolHandle dlsym(Object handle, String symbol);
+        /**
+         * Search for {@code symbol} in DLL specified by {@code handle}. To accommodate differing
+         * implementations of this interface the result is {@link SymbolHandle}. For the standard OS
+         * implementation this will encapsulate a {@link Long} or {@code null} if an error occurred.
+         *
+         */
+        public abstract SymbolHandle dlsym(Object handle, String symbol);
 
-    /**
-     * Close DLL specified by {@code handle}.
-     */
-    int dlclose(Object handle);
+        /**
+         * Close DLL specified by {@code handle}.
+         */
+        public abstract int dlclose(Object handle);
 
-    /**
-     * Get any error message.
-     *
-     * @return {@code null} if no error, message otherwise.
-     */
-    String dlerror();
+        /**
+         * Get any error message.
+         *
+         * @return {@code null} if no error, message otherwise.
+         */
+        public abstract String dlerror();
+    }
 
+    DLLRFFINode createDLLRFFINode();
 }
