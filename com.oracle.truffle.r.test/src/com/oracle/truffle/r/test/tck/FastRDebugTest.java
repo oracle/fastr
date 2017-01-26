@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import com.oracle.truffle.api.debug.DebugStackFrame;
+import com.oracle.truffle.api.debug.DebugValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -41,6 +43,7 @@ import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.runtime.RSource;
@@ -185,6 +188,7 @@ public class FastRDebugTest {
         assertLocation(11, "res = n * nMOFact",
                         "n", 2.0, "nMinusOne", 1.0,
                         "nMOFact", 1.0);
+        assertMetaObjects(factorial, "n", "double", "nMOFact", "double", "nMinusOne", "double");
         stepOver(1);
         assertLocation(12, "res",
                         "n", 2.0,
@@ -204,6 +208,39 @@ public class FastRDebugTest {
         final Number n = value.as(Number.class);
         assertNotNull(n);
         assertEquals("Factorial computed OK", 2, n.intValue());
+    }
+
+    @Test
+    public void testFindMetaObjectAndSourceLocation() throws Throwable {
+        final Source source = RSource.fromTextInternal("main <- function() {\n" +
+                        "  i = 3L\n" +
+                        "  n = 15\n" +
+                        "  str = 'hello'\n" +
+                        "  i <- i + 1L\n" +
+                        "  i\n" +
+                        "}\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(new Runnable() {
+            @Override
+            public void run() {
+                assertNull(suspendedEvent);
+                assertNotNull(executionEvent);
+                executionEvent.prepareStepInto();
+            }
+        });
+
+        stepInto(1);
+        stepOver(3);
+        assertLocation(6, "i", "i", 4, "n", 15.0, "str", "hello");
+        assertMetaObjects(source, "i", "integer", "n", "double", "str", "character");
+        stepOut();
+
+        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+        assertExecutedOK();
     }
 
     private void performWork() {
@@ -308,4 +345,35 @@ public class FastRDebugTest {
         }
         assertTrue("Assuming all requests processed: " + run, run.isEmpty());
     }
+
+    private void assertMetaObjects(final Source expectedSource, final String... nameAndMetaObjectPairs) {
+        run.addLast((Runnable) () -> {
+            DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+            for (int i = 0; i < nameAndMetaObjectPairs.length;) {
+                String name = nameAndMetaObjectPairs[i++];
+                String expectedMO = nameAndMetaObjectPairs[i++];
+                boolean found = false;
+                for (DebugValue value : frame) {
+                    if (name.equals(value.getName())) {
+                        DebugValue moDV = value.getMetaObject();
+                        if (moDV != null || expectedMO != null) {
+                            String mo = moDV.as(String.class);
+                            Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedMO, mo);
+                        }
+                        found = true;
+                        // Trigger findSourceLocation() call
+                        SourceSection sourceLocation = value.getSourceLocation();
+                        if (sourceLocation != null) {
+                            Assert.assertSame("Sources differ", expectedSource, sourceLocation.getSource());
+                        }
+                    }
+                }
+                if (!found) {
+                    Assert.fail("DebugValue named '" + name + "' not found.");
+                }
+            }
+            run.removeFirst().run();
+        });
+    }
+
 }
