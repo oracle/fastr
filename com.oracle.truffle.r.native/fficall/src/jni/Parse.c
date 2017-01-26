@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ static jfieldID parseExprFieldID;
 
 void init_parse(JNIEnv *env) {
 	parseMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 0);
-	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/ParseResult");
+	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/nodes/ffi/ParseResult");
 	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
 	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
 }

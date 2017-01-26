@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,13 @@ static const R_CallMethodDef CallEntries[] = {
 	    CALLDEF(preserve_object, 0),
 	    CALLDEF(release_object, 1),
 	    CALLDEF(findvar, 2),
+	    CALLDEF(test_asReal, 1),
+	    CALLDEF(test_asChar, 1),
+	    CALLDEF(test_asInteger, 1),
+	    CALLDEF(test_asLogical, 1),
+		CALLDEF(test_CAR, 1),
+		CALLDEF(test_CDR, 1),
+		CALLDEF(test_LENGTH, 1),
 	    {NULL, NULL, 0}
 };
 

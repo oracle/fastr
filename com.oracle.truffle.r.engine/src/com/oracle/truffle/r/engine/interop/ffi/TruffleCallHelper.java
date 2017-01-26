@@ -31,6 +31,8 @@ import com.oracle.truffle.r.engine.interop.NativeDoubleArray;
 import com.oracle.truffle.r.engine.interop.NativeIntegerArray;
 import com.oracle.truffle.r.engine.interop.NativeLogicalArray;
 import com.oracle.truffle.r.engine.interop.NativeRawArray;
+import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
+import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -42,14 +44,13 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.ffi.JavaUpCallsRFFI;
 
 /**
  * A wrapper class that can be instantiated and export for method lookup. For now just delegates to
- * {@link JavaUpCallsRFFI}.
+ * {@link UpCallsRFFIImpl}.
  *
  */
-public class TruffleCallHelper extends JavaUpCallsRFFI {
+public class TruffleCallHelper extends UpCallsRFFIImpl {
     private static TruffleCallHelper singleton;
     private static TruffleObject singletonTruffleObject;
 
@@ -62,7 +63,7 @@ public class TruffleCallHelper extends JavaUpCallsRFFI {
     }
 
     public Object charSXPToNativeCharArray(Object x) {
-        CharSXPWrapper chars = guaranteeInstanceOf(x, CharSXPWrapper.class);
+        CharSXPWrapper chars = RFFIUtils.guaranteeInstanceOf(x, CharSXPWrapper.class);
         return new NativeCharArray(chars.getContents().getBytes());
     }
 

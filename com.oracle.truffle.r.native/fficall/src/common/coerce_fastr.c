@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -425,38 +425,3 @@ SEXP Rf_coerceVector(SEXP v, SEXPTYPE type)
 #undef COERCE_ERROR
 
 
-double Rf_asReal(SEXP x)
-{
-    int warn = 0;
-    double res;
-
-    if (isVectorAtomic(x) && XLENGTH(x) >= 1) {
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    res = RealFromLogical(LOGICAL(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case INTSXP:
-	    res = RealFromInteger(INTEGER(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case REALSXP:
-	    return REAL(x)[0];
-	case CPLXSXP:
-	    res = RealFromComplex(COMPLEX(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case STRSXP:
-	    res = RealFromString(STRING_ELT(x, 0), &warn);
-	    CoercionWarning(warn);
-	    return res;
-	default:
-	    UNIMPLEMENTED_TYPE("asReal", x);
-	}
-    } else if(TYPEOF(x) == CHARSXP) {
-	res = RealFromString(x, &warn);
-	CoercionWarning(warn);
-	return res;
-    }
-    return NA_REAL;
-}

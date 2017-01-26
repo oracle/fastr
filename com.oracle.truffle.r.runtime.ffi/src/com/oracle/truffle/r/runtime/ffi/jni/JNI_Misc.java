@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceEnabled;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCall;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCallReturn;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 

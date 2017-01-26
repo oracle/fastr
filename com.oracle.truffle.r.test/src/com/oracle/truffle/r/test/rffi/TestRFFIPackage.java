@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestTrait;
 import com.oracle.truffle.r.test.rpackages.TestRPackages;
 
 public class TestRFFIPackage extends TestRPackages {
@@ -48,12 +49,22 @@ public class TestRFFIPackage extends TestRPackages {
      * micro-tests in one big test. It might be that this should be switched to an R file-based
      * approach as the number of tests increase.
      */
-    private void assertEvalWithLibWithSetup(String setup, String test) {
-        assertEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); " + setup + "x <- " + test + "; detach(\"package:testrffi\", unload=T); x }", new String[]{TestRPackages.libLoc()}));
+    private void assertEvalWithLibWithSetupAndTrait(TestTrait trait, String setup, String test) {
+        String[] tests = TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); " + setup + "x <- " + test + "; detach(\"package:testrffi\", unload=T); x }",
+                        new String[]{TestRPackages.libLoc()});
+        if (trait == null) {
+            assertEval(tests);
+        } else {
+            assertEval(trait, tests);
+        }
     }
 
     private void assertEvalWithLib(String test) {
-        assertEvalWithLibWithSetup("", test);
+        assertEvalWithLibWithSetupAndTrait(null, "", test);
+    }
+
+    private void assertEvalWithLibWithSetup(String setup, String test) {
+        assertEvalWithLibWithSetupAndTrait(null, setup, test);
     }
 
     @Test
@@ -165,4 +176,44 @@ public class TestRFFIPackage extends TestRPackages {
     public void testRFFI20() {
         assertEvalWithLibWithSetup("x <- \"12345\"; ", "rffi.char_length(x)");
     }
+
+    private static final String[] AS_VALUES = new String[]{"1L", "2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)", "c(T, F)",
+                    "as.symbol(\"sym\")", "list()"};
+
+    private static final String[] AS_FUNS = new String[]{"Char", "Integer", "Real", "Logical"};
+
+    @Test
+    public void testAsFunctions() {
+        String[] asCalls = template("x <- append(x, rffi.as%0(%1)); ", AS_FUNS, AS_VALUES);
+        assertEvalWithLibWithSetupAndTrait(Output.MayIgnoreWarningContext, "x <- list(); ", flatten(asCalls));
+    }
+
+    private static final String[] LIST_FUNS = new String[]{"CAR", "CDR"};
+
+    private static final String[] LIST_VALUES = new String[]{"pairlist(1,2)", "pairlist(x=1L, y=2L)"};
+
+    @Test
+    public void testListFunctions() {
+        String[] calls = template("x <- append(x, rffi.%0(%1)); ", LIST_FUNS, LIST_VALUES);
+        assertEvalWithLibWithSetupAndTrait(Output.MayIgnoreErrorContext, "x <- list(); ", flatten(calls));
+
+    }
+
+    private static String flatten(String[] tests) {
+        StringBuilder sb = new StringBuilder();
+        for (String test : tests) {
+            sb.append(test);
+        }
+        return sb.toString();
+    }
+
+    private static final String[] LENGTH_VALUES = new String[]{"1", "c(1,2,3)", "list(1,2,3)", "expression(1,2)"};
+
+    // Checkstyle: stop method name check
+    @Test
+    public void TestLENGTH() {
+        String[] calls = template("x <- append(x, rffi.LENGTH(%0)); ", LENGTH_VALUES);
+        assertEvalWithLibWithSetupAndTrait(Output.MayIgnoreErrorContext, "x <- list(); ", flatten(calls));
+    }
+
 }

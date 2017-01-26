@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,7 +90,7 @@ static jmethodID STRING_ELT_MethodID;
 static jmethodID VECTOR_ELT_MethodID;
 static jmethodID LENGTH_MethodID;
 static jmethodID Rf_asIntegerMethodID;
-//static jmethodID Rf_asRealMethodID;
+static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
 static jmethodID Rf_mkCharLenCEMethodID;
 static jmethodID Rf_asLogicalMethodID;
@@ -195,7 +195,7 @@ void init_internals(JNIEnv *env) {
 	VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	LENGTH_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LENGTH", "(Ljava/lang/Object;)I", 0);
 	Rf_asIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 0);
-//	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
+	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
 	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_mkCharLenCEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_mkCharLenCE", "([BI)Ljava/lang/Object;", 0);
 	Rf_asLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 0);
@@ -1246,11 +1246,11 @@ int Rf_asInteger(SEXP x) {
 	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_asIntegerMethodID, x);
 }
 
-//double Rf_asReal(SEXP x) {
-//	TRACE(TARGp, x);
-//	JNIEnv *thisenv = getEnv();
-//	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_asRealMethodID, x);
-//}
+double Rf_asReal(SEXP x) {
+	TRACE(TARGp, x);
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_asRealMethodID, x);
+}
 
 Rcomplex Rf_asComplex(SEXP x){
 	unimplemented("Rf_asLogical");

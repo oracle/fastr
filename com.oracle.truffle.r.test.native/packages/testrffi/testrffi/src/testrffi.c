@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -290,3 +290,30 @@ SEXP findvar(SEXP x, SEXP env) {
 	}
 }
 
+SEXP test_asReal(SEXP x) {
+	return Rf_ScalarReal(Rf_asReal(x));
+}
+
+SEXP test_asInteger(SEXP x) {
+	return Rf_ScalarInteger(Rf_asInteger(x));
+}
+
+SEXP test_asLogical(SEXP x) {
+	return Rf_ScalarLogical(Rf_asLogical(x));
+}
+
+SEXP test_asChar(SEXP x) {
+	return Rf_ScalarString(Rf_asChar(x));
+}
+
+SEXP test_CAR(SEXP x) {
+	return CAR(x);
+}
+
+SEXP test_CDR(SEXP x) {
+	return CDR(x);
+}
+
+SEXP test_LENGTH(SEXP x) {
+	return ScalarInteger(LENGTH(x));
+}

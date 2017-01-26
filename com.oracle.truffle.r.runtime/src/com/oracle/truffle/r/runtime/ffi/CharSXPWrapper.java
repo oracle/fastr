@@ -48,7 +48,7 @@ public final class CharSXPWrapper {
         return "CHARSXP(" + contents + ")";
     }
 
-    public static Object create(String contents) {
+    public static CharSXPWrapper create(String contents) {
         return new CharSXPWrapper(contents);
     }
 }

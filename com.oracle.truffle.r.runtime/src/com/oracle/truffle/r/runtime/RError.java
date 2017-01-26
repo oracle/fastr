@@ -777,11 +777,12 @@ public final class RError extends RuntimeException {
         FIRST_ELEMENT_ONLY("only first element of '%s' argument used"),
         MUST_BE_GE_ONE("'%s' must be of length >= 1"),
         MORE_THAN_ONE_MATCH("there is more than one match in '%s'"),
-        TOO_MANY_ARGS("too many arguments"),
         ARG_MUST_BE_CHARACTER("argument '%s' must be character"),
         INCORRECT_NOF_ARGS("Incorrect number of arguments (%d), expecting %d for '%s'"),
         MACRO_CAN_BE_APPLIED_TO("%s can only be applied to a '%s', not a '%s'"),
-        LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus");
+        LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus"),
+        LENGTH_MISAPPLIED("LENGTH or similar applied to %s object"),
+        TOO_MANY_ARGS("too many arguments");
 
         public final String message;
         final boolean hasArgs;
