@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -92,5 +92,41 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("cbind(character(0), 'f')");
         assertEval("cbind(55, character(0))");
         assertEval("cbind(a=55, character(0))");
+
+        assertEval("v <- 1; attr(v, 'a') <- 'a'; cbind(v); cbind(v, v)");
+        assertEval("v <- 1; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; cbind(v); cbind(v, v)");
+        assertEval("v <- 1:3; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; cbind(v); cbind(v, v)");
+        assertEval("v <- 1:3; v1<-1:3; attr(v, 'a') <- 'a'; attr(v1, 'a1') <- 'a1'; cbind(v, v1)");
     }
+
+    @Test
+    public void testGenericDispatch() {
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(...) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(...) 'foo'; v2 <- 1; class(v2) <- 'foo'; cbind(v2) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; assign('cbind.foo', function(x) {'foo'}, envir=.__S3MethodsTable__.); cbind(v) ; rm('cbind.foo', envir=.__S3MethodsTable__.)}");
+
+        // segfault in gnur
+        assertEval(Ignored.ReferenceError, "{ v <- 1; class(v) <- 'foo'; cbind.foo <- length; cbind(v) }");
+        assertEval(Ignored.WrongCaller, "{ v <- 1; class(v) <- 'foo'; cbind.foo <- rawToBits; cbind(v) }");
+
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; cbind.foo <- function(...) 'foo'; cbind(v) }");
+
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(deparse.level, ...) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(deparse.level, x) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(deparse.level, x1, x2) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(x0, deparse.level, x1, x2) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(x0, x1, x2) 'foo'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(x) 'foo'; cbind(v) }");
+        assertEval(Ignored.WrongCaller, "{ v <- 1; class(v) <- 'foo'; cbind.foo <- function() 'foo'; cbind(v) }");
+
+        assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); cbind.foo1 <- function(...) 'foo1'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); cbind.foo2 <- function(...) 'foo2'; cbind(v) }");
+        assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); cbind.foo1 <- function(...) 'foo1'; cbind.foo2 <- function(...) 'foo2'; cbind(v) }");
+
+        assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
+        assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind(v1, v2) }");
+        assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
+    }
+
 }
