@@ -140,6 +140,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         if (value instanceof String) {
             return (String) value;
         }
+        if (value instanceof RPromise) {
+            RPromise promise = (RPromise) value;
+            if (promise.isEvaluated()) {
+                value = promise.getValue();
+            }
+        }
         return RRuntime.toString(value);
     }
 
