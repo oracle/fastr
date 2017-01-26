@@ -24,18 +24,19 @@ package com.oracle.truffle.r.nodes.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 @TypeSystemReference(RTypesFlatLayout.class)
-@ImportStatic(IsVectorAtomicNodeLG0.class)
 public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
+
+    public abstract int execute(Object obj);
 
     @Specialization
     protected int asLogical(byte b) {
@@ -50,10 +51,9 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
         return obj.getDataAt(0);
     }
 
-    @Specialization(guards = "isVectorAtomicNodeLG0.execute(obj)")
-    protected int asLogical(Object obj,
-                    @Cached("createNonPreserving()") CastLogicalNode castLogicalNode,
-                    @SuppressWarnings("unused") @Cached("create()") IsVectorAtomicNodeLG0 isVectorAtomicNodeLG0) {
+    @Specialization(guards = "obj.getLength() > 0")
+    protected int asLogical(RAbstractAtomicVector obj,
+                    @Cached("createNonPreserving()") CastLogicalNode castLogicalNode) {
         Object castObj = castLogicalNode.execute(obj);
         if (castObj instanceof Byte) {
             return (byte) castObj;
@@ -67,6 +67,10 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
     @Fallback
     protected int asLogicalFallback(@SuppressWarnings("unused") Object obj) {
         return RRuntime.INT_NA;
+    }
+
+    public static AsLogicalNode create() {
+        return AsLogicalNodeGen.create();
     }
 
 }

@@ -31,12 +31,15 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
 @TypeSystemReference(RTypesFlatLayout.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     private static final CharSXPWrapper CharSXPWrapper_NA = CharSXPWrapper.create(RRuntime.STRING_NA);
+
+    public abstract CharSXPWrapper execute(Object obj);
 
     @Specialization
     protected CharSXPWrapper asChar(CharSXPWrapper obj) {
@@ -57,10 +60,9 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
         return CharSXPWrapper.create(obj.getName());
     }
 
-    @Specialization(guards = "isVectorAtomicNodeLG0.execute(obj)")
-    protected CharSXPWrapper asChar(Object obj,
-                    @Cached("createNonPreserving()") CastStringNode castStringNode,
-                    @SuppressWarnings("unused") @Cached("create()") IsVectorAtomicNodeLG0 isVectorAtomicNodeLG0) {
+    @Specialization(guards = "obj.getLength() > 0")
+    protected CharSXPWrapper asChar(RAbstractAtomicVector obj, //
+                    @Cached("createNonPreserving()") CastStringNode castStringNode) {
         Object castObj = castStringNode.executeString(obj);
         if (castObj instanceof String) {
             return CharSXPWrapper.create((String) castObj);
@@ -76,4 +78,7 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
         return CharSXPWrapper_NA;
     }
 
+    public static AsCharNode create() {
+        return AsCharNodeGen.create();
+    }
 }
