@@ -59,6 +59,10 @@ public abstract class TestRPackages extends TestBase {
 
     private static final String SYSTEM2_COMMAND = "system2('%s', c('CMD', 'INSTALL', '%s'), env='R_LIBS=%s', stdout=T, stderr=T)";
 
+    private static String[] installedPackages;
+    private static Resolver resolver;
+    private static boolean needsInstall;
+
     private static final class PackagePath {
         /**
          * The path containing the package distributions as tar files.
@@ -124,10 +128,6 @@ public abstract class TestRPackages extends TestBase {
         return result;
     }
 
-    protected static void setupInstallTestPackages(String[] testPackages) {
-        setupInstallTestPackages(testPackages, new Resolver());
-    }
-
     private static boolean installPackage(PackagePath packagePath) {
         String cmd;
         Path binBase;
@@ -164,12 +164,28 @@ public abstract class TestRPackages extends TestBase {
         }
     }
 
+    protected static void setupInstallTestPackages(String[] testPackages) {
+        setupInstallTestPackages(testPackages, new Resolver());
+    }
+
     protected static void setupInstallTestPackages(String[] testPackages, Resolver resolver) {
         if (!checkOnly()) {
+            assert installedPackages == null && TestRPackages.resolver == null : "inconsistent calls to setupInstallTestPackages / tearDownUninstallTestPackages " + installedPackages + " " + resolver;
+            TestRPackages.installedPackages = testPackages;
+            TestRPackages.resolver = resolver;
+            TestRPackages.needsInstall = true;
+        }
+    }
+
+    @Override
+    public void beforeEval() {
+        if (needsInstall) {
+            needsInstall = false;
+
             TestBase.deleteDir(installDir());
             installDir().toFile().mkdirs();
             System.out.printf(".begin install.");
-            for (String p : testPackages) {
+            for (String p : installedPackages) {
                 // Takes time, provide user feedback
                 System.out.printf(".pkg: %s.", p);
                 PackagePath packagePath = getPackagePaths(p, resolver.getPath(p));
@@ -181,13 +197,18 @@ public abstract class TestRPackages extends TestBase {
         }
     }
 
-    protected static void tearDownUninstallTestPackages(String[] testPackages) {
+    protected static void tearDownUninstallTestPackages() {
         if (!checkOnly()) {
-            for (String p : testPackages) {
-                if (!uninstallPackage(p)) {
-                    System.err.println("WARNING: error deleting package: " + p);
+            assert installedPackages != null && resolver != null : "inconsistent calls to setupInstallTestPackages / tearDownUninstallTestPackages";
+            if (!needsInstall) {
+                for (String p : installedPackages) {
+                    if (!uninstallPackage(p)) {
+                        System.err.println("WARNING: error deleting package: " + p);
+                    }
                 }
             }
+            installedPackages = null;
+            resolver = null;
         }
     }
 }

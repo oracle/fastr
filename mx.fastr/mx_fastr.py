@@ -405,8 +405,11 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
+def _simple_generated_unit_tests():
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'S4', 'rng', 'runtime.data']))
+
 def _simple_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'tck', 'parser', 'S4', 'rng', 'runtime.data']))
+    return ','.join([_simple_generated_unit_tests(), _test_subpackage('tck')])
 
 def _package_unit_tests():
     return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
@@ -426,10 +429,13 @@ def _gate_unit_tests():
 def _all_unit_tests():
     return _gate_unit_tests()
 
+def _all_generated_unit_tests():
+    return ','.join([_simple_generated_unit_tests(), _package_unit_tests()])
+
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
     parser = ArgumentParser(prog='r testgen')
-    parser.add_argument('--tests', action='store', default=_all_unit_tests(), help='pattern to match test classes')
+    parser.add_argument('--tests', action='store', default=_all_generated_unit_tests(), help='pattern to match test classes')
     args = parser.parse_args(args)
     # check we are in the home directory
     if os.getcwd() != _fastr_suite.dir:
