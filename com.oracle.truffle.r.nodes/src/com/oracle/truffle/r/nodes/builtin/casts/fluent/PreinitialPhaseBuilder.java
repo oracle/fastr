@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public final class PreinitialPhaseBuilder<T> extends InitialPhaseBuilder<T> {
 
-    public PreinitialPhaseBuilder(PipelineBuilder pipelineBuilder) {
+    PreinitialPhaseBuilder(PipelineBuilder pipelineBuilder) {
         super(pipelineBuilder);
     }
 

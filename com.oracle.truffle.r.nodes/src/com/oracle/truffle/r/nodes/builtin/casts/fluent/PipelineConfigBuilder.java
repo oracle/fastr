@@ -46,10 +46,7 @@ public final class PipelineConfigBuilder {
     private MessageData missingMsg;
     private MessageData nullMsg;
 
-    // TODO: to be removed with legacy API
-    private boolean wasLegacyAsVectorCall = false;
-
-    public PipelineConfigBuilder(String argumentName) {
+    PipelineConfigBuilder(String argumentName) {
         this.argumentName = argumentName;
         defaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
         defaultWarning = defaultError;
@@ -57,14 +54,6 @@ public final class PipelineConfigBuilder {
 
     public PipelineConfig build() {
         return new PipelineConfig(argumentName, defaultError, defaultWarning, missingMapper, nullMapper, missingMsg, nullMsg);
-    }
-
-    public void setWasLegacyAsVectorCall() {
-        wasLegacyAsVectorCall = true;
-    }
-
-    public boolean wasLegacyAsVectorCall() {
-        return wasLegacyAsVectorCall;
     }
 
     void setDefaultError(MessageData defaultError) {

@@ -35,6 +35,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -49,25 +51,16 @@ public final class PipelineBuilder {
     private final PipelineConfigBuilder pcb;
     private ChainBuilder<?> chainBuilder;
 
-    public PipelineBuilder(PipelineConfigBuilder pcb) {
-        this.pcb = pcb;
+    public PipelineBuilder(String argumentName) {
+        this.pcb = new PipelineConfigBuilder(argumentName);
     }
 
-    // TODO: can be package private once the legacy API is removed
-    public void append(PipelineStep<?, ?> step) {
-        if (chainBuilder == null) {
-            chainBuilder = new ChainBuilder<>(step);
-        } else {
-            chainBuilder.addStep(step);
-        }
+    public CastNode buildNode() {
+        return PipelineToCastNode.convert(pcb.build(), getFirstStep());
     }
 
-    public PipelineConfigBuilder getPipelineConfig() {
-        return pcb;
-    }
-
-    public PipelineStep<?, ?> getFirstStep() {
-        return chainBuilder != null ? chainBuilder.getFirstStep() : null;
+    public PreinitialPhaseBuilder<Object> fluent() {
+        return new PreinitialPhaseBuilder<>(this);
     }
 
     public void appendBoxPrimitive() {
@@ -137,5 +130,21 @@ public final class PipelineBuilder {
 
     private static MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
         return message == null ? null : new MessageData(callObj, message, messageArgs);
+    }
+
+    PipelineConfigBuilder getPipelineConfig() {
+        return pcb;
+    }
+
+    private PipelineStep<?, ?> getFirstStep() {
+        return chainBuilder != null ? chainBuilder.getFirstStep() : null;
+    }
+
+    private void append(PipelineStep<?, ?> step) {
+        if (chainBuilder == null) {
+            chainBuilder = new ChainBuilder<>(step);
+        } else {
+            chainBuilder.addStep(step);
+        }
     }
 }
