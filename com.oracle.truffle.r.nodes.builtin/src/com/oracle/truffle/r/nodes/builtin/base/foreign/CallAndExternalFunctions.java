@@ -724,7 +724,7 @@ public class CallAndExternalFunctions {
                     case "PDF":
                         return new DevicesCCalls.C_PDF();
                     case "devoff":
-                        return new DevicesCCalls.C_DevOff();
+                        return DevicesCCalls.C_DevOff.create();
                     case "devcur":
                         return new DevicesCCalls.C_DevCur();
                 }
