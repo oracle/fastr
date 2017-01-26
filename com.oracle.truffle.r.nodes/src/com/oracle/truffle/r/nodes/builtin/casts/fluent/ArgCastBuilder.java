@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -77,5 +78,9 @@ public class ArgCastBuilder<T, THIS> {
 
     public <R, THAT extends ArgCastBuilder<R, THAT>> THAT alias(Function<THIS, THAT> aliaser) {
         return aliaser.apply((THIS) this);
+    }
+
+    public CastNode buildCastNode() {
+        return builder.buildNode();
     }
 }

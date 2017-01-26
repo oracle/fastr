@@ -51,12 +51,10 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.ChainBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.FindFirstNodeBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -132,7 +130,7 @@ public final class CastBuilder {
             for (int i = 0; i < argumentBuilders.length; i++) {
                 PipelineBuilder arg = argumentBuilders[i];
                 if (arg != null) {
-                    castsCache[i] = PipelineToCastNode.convert(arg.getPipelineConfig().build(), arg.getFirstStep());
+                    castsCache[i] = arg.buildNode();
                 }
             }
         }
@@ -220,7 +218,7 @@ public final class CastBuilder {
      */
     public PreinitialPhaseBuilder<Object> arg(String argumentName) {
         assert builtin != null : "arg(String) is only supported for builtins cast pipelines";
-        return new PreinitialPhaseBuilder<>(getBuilder(getArgumentIndex(argumentName), argumentName));
+        return getBuilder(getArgumentIndex(argumentName), argumentName).fluent();
     }
 
     /**
@@ -229,7 +227,7 @@ public final class CastBuilder {
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
         assert argumentNames == null || argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
         assert argumentNames == null || argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
-        return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, argumentName));
+        return getBuilder(argumentIndex, argumentName).fluent();
     }
 
     /**
@@ -238,7 +236,7 @@ public final class CastBuilder {
     public PreinitialPhaseBuilder<Object> arg(int argumentIndex) {
         boolean existingIndex = argumentNames != null && argumentIndex >= 0 && argumentIndex < argumentNames.length;
         String name = existingIndex ? argumentNames[argumentIndex] : null;
-        return new PreinitialPhaseBuilder<>(getBuilder(argumentIndex, name));
+        return getBuilder(argumentIndex, name).fluent();
     }
 
     private PipelineBuilder getBuilder(int argumentIndex, String argumentName) {
@@ -248,7 +246,7 @@ public final class CastBuilder {
             argumentBuilders = Arrays.copyOf(argumentBuilders, argumentIndex + 1);
         }
         if (argumentBuilders[argumentIndex] == null) {
-            argumentBuilders[argumentIndex] = new PipelineBuilder(new PipelineConfigBuilder(argumentName));
+            argumentBuilders[argumentIndex] = new PipelineBuilder(argumentName);
         }
         return argumentBuilders[argumentIndex];
     }

@@ -8,11 +8,15 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.library.graphics;
+
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.graphics.core.DrawingParameters;
@@ -22,21 +26,25 @@ import com.oracle.truffle.r.library.graphics.core.GraphicsEngineImpl;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.library.graphics.core.geometry.CoordinatesFactory;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public class GraphicsCCalls {
     public static final class C_PlotXY extends RExternalBuiltinNode {
+        @Child private CastNode castXYNode;
+
+        public C_PlotXY() {
+            castXYNode = newCastBuilder().mustBe(doubleValue().and(size(2))).asDoubleVector().buildCastNode();
+        }
 
         @Override
         @TruffleBoundary
         public RNull call(RArgsValuesAndNames args) {
-            RDoubleVector xyVector = ((RAbstractDoubleVector) args.getArgument(0)).materialize();
-            assert xyVector.getLength() % 2 == 0 : "wrong size of vector";
+            RDoubleVector xyVector = (RDoubleVector) castXYNode.execute(args.getArgument(0));
             getGraphicsEngine().setCurrentGraphicsDeviceMode(GraphicsDevice.Mode.GRAPHICS_ON);
             drawWithLines(xyVector);
             return RNull.instance;
@@ -91,6 +99,11 @@ public class GraphicsCCalls {
         private double cex = RRuntime.DOUBLE_NA;
         private double col = RRuntime.DOUBLE_NA;
         private double font = RRuntime.DOUBLE_NA;
+        @Child private CastNode firstDoubleCast;
+
+        public C_mtext() {
+            firstDoubleCast = newCastBuilder().asDoubleVector().findFirst().buildCastNode();
+        }
 
         @Override
         @TruffleBoundary
@@ -113,7 +126,7 @@ public class GraphicsCCalls {
         }
 
         private double extractFirstDoubleValueFrom(Object arg) {
-            return castDouble(castVector(arg)).getDataAt(0);
+            return (Double) firstDoubleCast.execute(arg);
         }
     }
 }

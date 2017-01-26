@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,9 +46,6 @@ public final class PipelineConfigBuilder {
     private MessageData missingMsg;
     private MessageData nullMsg;
 
-    // TODO: to be removed with legacy API
-    private boolean wasLegacyAsVectorCall = false;
-
     public PipelineConfigBuilder(String argumentName) {
         this.argumentName = argumentName;
         defaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
@@ -57,14 +54,6 @@ public final class PipelineConfigBuilder {
 
     public PipelineConfig build() {
         return new PipelineConfig(argumentName, defaultError, defaultWarning, missingMapper, nullMapper, missingMsg, nullMsg);
-    }
-
-    public void setWasLegacyAsVectorCall() {
-        wasLegacyAsVectorCall = true;
-    }
-
-    public boolean wasLegacyAsVectorCall() {
-        return wasLegacyAsVectorCall;
     }
 
     void setDefaultError(MessageData defaultError) {
