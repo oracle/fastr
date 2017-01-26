@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,8 @@ public final class ChainedCastNodeSampler extends CastNodeSampler<ChainedCastNod
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputTypes) {
-        return secondCast.resultTypes(firstCast.resultTypes(inputTypes));
+    public TypeExpr resultTypes(TypeExpr inputTypes, SamplingContext ctx) {
+        return secondCast.resultTypes(firstCast.resultTypes(inputTypes, ctx), ctx);
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class ChainedCastNodeSampler extends CastNodeSampler<ChainedCastNod
 
     @Override
     public Samples<?> collectSamples(TypeExpr inputTypes, Samples<?> downStreamSamples) {
-        TypeExpr rt1 = firstCast.resultTypes(inputTypes);
+        TypeExpr rt1 = firstCast.resultTypes(inputTypes, new SamplingContext());
         return firstCast.collectSamples(inputTypes, secondCast.collectSamples(rt1, downStreamSamples));
     }
 }

@@ -44,7 +44,7 @@ public class CastToVectorNodeGenSampler extends CastNodeSampler<CastToVectorNode
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
+    public TypeExpr resultTypes(TypeExpr inputType, SamplingContext ctx) {
         List<Cast> castList;
         if (castNode.isPreserveNonVector()) {
             castList = Arrays.asList(new Cast(RNull.class, RNull.class),

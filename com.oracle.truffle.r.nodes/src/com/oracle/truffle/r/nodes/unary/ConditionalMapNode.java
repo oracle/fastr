@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -34,23 +35,29 @@ public abstract class ConditionalMapNode extends CastNode {
     private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
     private final boolean resultForNull;
     private final boolean resultForMissing;
+    private final boolean returns;
 
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
     protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch, boolean resultForNull,
-                    boolean resultForMissing) {
+                    boolean resultForMissing, boolean returns) {
         this.argFilter = argFilter;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
         this.resultForNull = resultForNull;
         this.resultForMissing = resultForMissing;
+        this.returns = returns;
     }
 
     public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch,
                     CastNode falseBranch, boolean resultForNull,
-                    boolean resultForMissing) {
-        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch, resultForNull, resultForMissing);
+                    boolean resultForMissing, boolean returns) {
+        return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch, resultForNull, resultForMissing, returns);
+    }
+
+    public boolean isReturns() {
+        return returns;
     }
 
     public ArgumentFilter<?, ?> getFilter() {
@@ -68,7 +75,12 @@ public abstract class ConditionalMapNode extends CastNode {
     @Specialization
     protected Object executeNull(RNull x) {
         if (resultForNull) {
-            return trueBranch == null ? x : trueBranch.execute(x);
+            Object result = trueBranch == null ? x : trueBranch.execute(x);
+            if (returns) {
+                throw new PipelineReturnException(result);
+            } else {
+                return result;
+            }
         } else {
             return falseBranch == null ? x : falseBranch.execute(x);
         }
@@ -77,7 +89,12 @@ public abstract class ConditionalMapNode extends CastNode {
     @Specialization
     protected Object executeMissing(RMissing x) {
         if (resultForMissing) {
-            return trueBranch == null ? x : trueBranch.execute(x);
+            Object result = trueBranch == null ? x : trueBranch.execute(x);
+            if (returns) {
+                throw new PipelineReturnException(result);
+            } else {
+                return result;
+            }
         } else {
             return falseBranch == null ? x : falseBranch.execute(x);
         }
@@ -91,9 +108,28 @@ public abstract class ConditionalMapNode extends CastNode {
     @SuppressWarnings("unchecked")
     protected Object executeRest(Object x) {
         if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
-            return trueBranch == null ? x : trueBranch.execute(x);
+            Object result = trueBranch == null ? x : trueBranch.execute(x);
+            if (returns) {
+                throw new PipelineReturnException(result);
+            } else {
+                return result;
+            }
         } else {
             return falseBranch == null ? x : falseBranch.execute(x);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public final class PipelineReturnException extends ControlFlowException {
+
+        private final Object result;
+
+        public PipelineReturnException(Object result) {
+            this.result = result;
+        }
+
+        public Object getResult() {
+            return result;
         }
     }
 }

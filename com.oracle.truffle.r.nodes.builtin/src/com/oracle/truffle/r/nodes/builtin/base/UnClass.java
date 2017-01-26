@@ -36,7 +36,7 @@ public abstract class UnClass extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().asAttributable(true, true, true);
+        casts.arg("x").asAttributable(true, true, true);
     }
 
     @Specialization

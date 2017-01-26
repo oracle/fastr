@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,14 +48,17 @@ public class PipelineConfig {
     private final Mapper<? super RNull, ?> nullMapper;
     private final MessageData missingMsg;
     private final MessageData nullMsg;
+    private boolean valueForwarding;
 
     public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, Mapper<? super RMissing, ?> missingMapper, Mapper<? super RNull, ?> nullMapper,
+                    boolean valueForwarding,
                     MessageData missingMsg,
                     MessageData nullMsg) {
         this.defaultError = defaultError;
         this.defaultWarning = defaultWarning;
         this.missingMapper = missingMapper;
         this.nullMapper = nullMapper;
+        this.valueForwarding = valueForwarding;
         this.missingMsg = missingMsg;
         this.nullMsg = nullMsg;
         this.argumentName = argumentName;
@@ -91,6 +94,10 @@ public class PipelineConfig {
 
     public MessageData getNullMessage() {
         return nullMsg;
+    }
+
+    public boolean getValueForwarding() {
+        return valueForwarding;
     }
 
     public static ArgumentFilterFactory getFilterFactory() {

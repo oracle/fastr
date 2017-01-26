@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -86,6 +87,11 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
     public HeadPhaseBuilder<S> findFirst(S defaultValue) {
         assert defaultValue != null : "defaultValue cannot be null";
         pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, null, null);
+        return new HeadPhaseBuilder<>(pipelineBuilder());
+    }
+
+    public HeadPhaseBuilder<S> findFirstOrNull() {
+        pipelineBuilder().appendFindFirst(RNull.instance, elementClass, null, null, null);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 

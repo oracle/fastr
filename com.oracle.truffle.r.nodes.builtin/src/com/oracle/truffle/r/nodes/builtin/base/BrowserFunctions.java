@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -64,7 +64,7 @@ public class BrowserFunctions {
         @Override
         protected void createCasts(CastBuilder casts) {
             // TODO: add support for conditions conditions
-            casts.arg("condition").allowNull().mustBe(anyValue().not(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
+            casts.arg("condition").mustBe(nullValue(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
             casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("skipCalls").asIntegerVector().findFirst(0);
         }

@@ -7,7 +7,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,7 +70,7 @@ public abstract class Sample extends RBuiltinNode {
                 notNA().mustBe(gte0());
         casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).
                 asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
-        casts.arg("prob").allowNull().asDoubleVector();
+        casts.arg("prob").asDoubleVector();
         // @formatter:on
     }
 

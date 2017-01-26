@@ -48,8 +48,8 @@ public class BypassNodeGenSampler extends CastNodeSampler<BypassNodeGen> {
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputTypes) {
-        TypeExpr rt = wrappedHeadSampler == null ? TypeExpr.ANYTHING : wrappedHeadSampler.resultTypes(inputTypes);
+    public TypeExpr resultTypes(TypeExpr inputTypes, SamplingContext ctx) {
+        TypeExpr rt = wrappedHeadSampler == null ? TypeExpr.ANYTHING : wrappedHeadSampler.resultTypes(inputTypes, ctx);
         if (nullMapper != null) {
             rt = rt.or(nullMapper.resultTypes(inputTypes));
         } else {

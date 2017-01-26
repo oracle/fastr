@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
@@ -61,6 +63,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.PipelineStepVisitor;
+import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
+import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
@@ -116,11 +120,26 @@ public final class PipelineToCastNode {
     public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
         if (firstStep == null) {
             return BypassNode.create(config, null, mapperFactory, null);
-        } else {
+        }
+
+        Supplier<CastNode> originalPipelineFactory = () -> {
             CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage());
             SinglePrimitiveOptimization singleOptVisitor = new SinglePrimitiveOptimization(nodeFactory);
             CastNode headNode = convert(firstStep, singleOptVisitor);
             return singleOptVisitor.createBypassNode(config, headNode, mapperFactory);
+        };
+
+        if (!config.getValueForwarding()) {
+            return originalPipelineFactory.get();
+        }
+
+        // TODO: the result of this analysis should be cached
+        ForwardedValuesAnalyser fwdAnalyser = new ForwardedValuesAnalyser();
+        ForwardingAnalysisResult fwdAnalytics = fwdAnalyser.analyse(firstStep);
+        if (fwdAnalytics.isAnythingForwarded()) {
+            return ValueForwardingNodeGen.create(fwdAnalytics, originalPipelineFactory);
+        } else {
+            return originalPipelineFactory.get();
         }
     }
 
@@ -440,7 +459,7 @@ public final class PipelineToCastNode {
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
             return ConditionalMapNode.create(condition, trueCastNode, falseCastNode, ResultForArg.TRUE.equals(step.getFilter().resultForNull()),
-                            ResultForArg.TRUE.equals(step.getFilter().resultForMissing()));
+                            ResultForArg.TRUE.equals(step.getFilter().resultForMissing()), step.isReturns());
         }
 
         private MessageData getDefaultErrorIfNull(MessageData message) {

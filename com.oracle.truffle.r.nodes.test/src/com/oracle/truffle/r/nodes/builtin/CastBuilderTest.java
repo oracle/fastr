@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
@@ -37,6 +36,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleToInt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
@@ -44,17 +44,20 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFractional;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalTrue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
@@ -82,6 +85,7 @@ import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
 import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
 import com.oracle.truffle.r.nodes.casts.MapperSamplerFactory;
 import com.oracle.truffle.r.nodes.casts.Samples;
+import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -117,7 +121,7 @@ public class CastBuilderTest {
     private static final boolean TEST_SAMPLING = false;
 
     private CastBuilder cb;
-    private PreinitialPhaseBuilder<Object> arg;
+    private PreinitialPhaseBuilder arg;
 
     static {
         if (TEST_SAMPLING) {
@@ -396,6 +400,9 @@ public class CastBuilderTest {
     @Test
     public void testLogicalToBooleanPipeline() {
         arg.asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        assertEquals(Boolean.TRUE, cast(RRuntime.LOGICAL_TRUE));
+        assertEquals(Boolean.FALSE, cast(RRuntime.LOGICAL_FALSE));
+        assertEquals(Boolean.FALSE, cast(RRuntime.LOGICAL_NA));
         assertEquals(Boolean.TRUE, cast(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)));
         assertEquals(Boolean.FALSE, cast(RDataFactory.createLogicalVector(0)));
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);
@@ -521,9 +528,9 @@ public class CastBuilderTest {
     @Test
     public void testMessageArgumentAsLambda() {
         Function<Object, Object> argMsg = name -> "something";
-        arg.conf(c -> c.allowNull().mustNotBeMissing(SHOW_CALLER, RError.Message.GENERIC, argMsg)).mustBe(stringValue(), RError.Message.GENERIC, argMsg);
+        arg.mustNotBeMissing(SHOW_CALLER, RError.Message.GENERIC, argMsg).mustBe(stringValue(), RError.Message.GENERIC, argMsg);
 
-        assertCastPreserves(RNull.instance);
+        assertCastPreserves("abc");
         assertCastFail(RMissing.instance, "something");
         assertCastFail(42, "something");
     }
@@ -594,7 +601,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSample22() {
-        arg.conf(c -> c.mapMissing(emptyStringVector()).mapNull(emptyStringVector())).mustBe(stringValue());
+        arg.mapIf(nullValue().or(missingValue()), emptyStringVector()).mustBe(stringValue());
         arg.mapNull(emptyStringVector()).mustBe(stringValue());
         Object res = cast(RNull.instance);
         assertTrue(res instanceof RAbstractStringVector);
@@ -604,6 +611,21 @@ public class CastBuilderTest {
         assertEquals(0, ((RAbstractStringVector) res).getLength());
         res = cast("abc");
         assertEquals("abc", res);
+    }
+
+    @Test
+    public void testSample23() {
+        //@formatter:off
+        arg.defaultError(RError.Message.INVALID_UNNAMED_ARGUMENTS).
+            mustBe(abstractVectorValue()).
+            asIntegerVector().
+            findFirst(RRuntime.INT_NA).
+            mustBe(intNA().not().and(gte(0)));
+        //@formatter:on
+        assertEquals(1, cast(1));
+        assertEquals(1, cast(1));
+        assertEquals(1, cast("1"));
+        assertCastFail(RError.Message.INVALID_UNNAMED_ARGUMENTS.message, RRuntime.INT_NA, -1, RNull.instance);
     }
 
     @Test
@@ -624,7 +646,7 @@ public class CastBuilderTest {
 
     @Test
     public void testPreserveNonVectorFlag() {
-        arg.allowNull().asVector(true);
+        arg.asVector(true);
         assertEquals(RNull.instance, cast(RNull.instance));
     }
 
@@ -781,6 +803,43 @@ public class CastBuilderTest {
         Assert.assertEquals("abc", cast("abc"));
     }
 
+    @Test
+    public void testComplexFilterWithForwardedNull() {
+        arg.mustBe(nullValue().or(numericValue()).or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVector());
+        Assert.assertEquals(RNull.instance, cast(RNull.instance));
+        Assert.assertEquals("abc", cast("abc"));
+    }
+
+    @Test
+    public void testFindFirstOrNull() {
+        arg.mustBe(nullValue().or(integerValue())).asIntegerVector().findFirstOrNull();
+        Assert.assertEquals(RNull.instance, cast(RNull.instance));
+        Assert.assertEquals(1, cast(1));
+    }
+
+    @Test
+    public void testReturnIf() {
+        arg.returnIf(nullValue(), constant(1.1)).mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
+        Assert.assertEquals(1.1, cast(RNull.instance));
+        Assert.assertEquals(true, cast(RRuntime.LOGICAL_TRUE));
+    }
+
+    @Test
+    public void testNotNullAndNotMissing() {
+        arg.mustBe(nullValue().not().and(missingValue().not()));
+        try {
+            cast(RNull.instance);
+            fail();
+        } catch (Exception e) {
+        }
+        try {
+            cast(RMissing.instance);
+            fail();
+        } catch (Exception e) {
+        }
+        Assert.assertEquals("abc", cast("abc"));
+    }
+
     /**
      * Casts given object using the configured pipeline in {@link #arg}.
      */
@@ -813,6 +872,12 @@ public class CastBuilderTest {
         assertEquals("Expected warning message", expectedMessage, CastNode.getLastWarning());
     }
 
+    private void assertCastFail(String expectedMessage, Object... values) {
+        for (Object value : values) {
+            assertCastFail(value, expectedMessage);
+        }
+    }
+
     private void assertCastFail(Object value) {
         assertCastFail(value, String.format(RError.Message.INVALID_ARGUMENT.message, "x"));
     }
@@ -832,6 +897,11 @@ public class CastBuilderTest {
      */
     private void testPipeline() {
         testPipeline(false);
+    }
+
+    private TypeExpr resultTypes() {
+        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
+        return sampler.resultTypes();
     }
 
     private void testPipeline(boolean emptyPositiveSamplesAllowed) {

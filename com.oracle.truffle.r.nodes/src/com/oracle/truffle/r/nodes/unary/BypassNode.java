@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactory;
+import com.oracle.truffle.r.nodes.unary.ConditionalMapNode.PipelineReturnException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -102,7 +103,11 @@ public abstract class BypassNode extends CastNode {
 
     protected final Object executeAfterFindFirst(Object value) {
         if (afterFindFirst != null) {
-            return afterFindFirst.execute(value);
+            try {
+                return afterFindFirst.execute(value);
+            } catch (PipelineReturnException ret) {
+                return ret.getResult();
+            }
         } else {
             return value;
         }
@@ -160,7 +165,11 @@ public abstract class BypassNode extends CastNode {
 
     @Specialization(guards = "isNotHandled(x)")
     public Object handleOthers(Object x) {
-        return noHead ? x : wrappedHead.execute(x);
+        try {
+            return noHead ? x : wrappedHead.execute(x);
+        } catch (PipelineReturnException ret) {
+            return ret.getResult();
+        }
     }
 
     protected boolean isNotHandled(Object x) {

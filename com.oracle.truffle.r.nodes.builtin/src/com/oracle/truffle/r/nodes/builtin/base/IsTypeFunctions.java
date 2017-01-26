@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Handles all builtin functions of the form {@code is.xxx}, where is {@code xxx} is a "type".
@@ -77,7 +78,7 @@ public class IsTypeFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
+            casts.arg("x").mustNotBeMissing((RBaseNode) null, RError.Message.ARGUMENT_MISSING, "x");
         }
     }
 
@@ -487,7 +488,7 @@ public class IsTypeFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("x").conf(c -> c.allowNull().mustNotBeMissing(null, RError.Message.ARGUMENT_MISSING, "x"));
+            casts.arg("x").mustNotBeMissing((RBaseNode) null, RError.Message.ARGUMENT_MISSING, "x");
             casts.arg("mode").defaultError(this, RError.Message.INVALID_ARGUMENT, "mode").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
 

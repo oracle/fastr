@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.casts;
 
 import java.lang.reflect.Constructor;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.r.nodes.unary.CastNode;
 
@@ -39,10 +41,15 @@ public class CastNodeSampler<T extends CastNode> {
     }
 
     public final TypeExpr resultTypes() {
-        return resultTypes(TypeExpr.ANYTHING);
+        SamplingContext ctx = new SamplingContext();
+        TypeExpr resTypes = resultTypes(TypeExpr.ANYTHING, ctx);
+        for (TypeExpr altResType : ctx.altResultTypes) {
+            resTypes = resTypes.or(altResType);
+        }
+        return resTypes;
     }
 
-    public TypeExpr resultTypes(TypeExpr inputType) {
+    public TypeExpr resultTypes(TypeExpr inputType, SamplingContext ctx) {
         return CastUtils.Casts.createCastNodeCasts(castNode.getClass().getSuperclass()).narrow(inputType);
     }
 
@@ -84,6 +91,14 @@ public class CastNodeSampler<T extends CastNode> {
             return (CastNodeSampler<T>) analyzerConstr.newInstance(castNode);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static final class SamplingContext {
+        private List<TypeExpr> altResultTypes = new LinkedList<>();
+
+        public void addAltResultType(TypeExpr altResType) {
+            altResultTypes.add(altResType);
         }
     }
 }

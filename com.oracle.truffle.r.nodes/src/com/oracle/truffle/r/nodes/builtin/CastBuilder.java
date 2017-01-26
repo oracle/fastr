@@ -216,7 +216,7 @@ public final class CastBuilder {
      *
      * Analogous methods exist for {@code RMissing}.
      */
-    public PreinitialPhaseBuilder<Object> arg(String argumentName) {
+    public PreinitialPhaseBuilder arg(String argumentName) {
         assert builtin != null : "arg(String) is only supported for builtins cast pipelines";
         return getBuilder(getArgumentIndex(argumentName), argumentName).fluent();
     }
@@ -224,7 +224,7 @@ public final class CastBuilder {
     /**
      * @see #arg(String)
      */
-    public PreinitialPhaseBuilder<Object> arg(int argumentIndex, String argumentName) {
+    public PreinitialPhaseBuilder arg(int argumentIndex, String argumentName) {
         assert argumentNames == null || argumentIndex >= 0 && argumentIndex < argumentBuilders.length : "argument index out of range";
         assert argumentNames == null || argumentNames[argumentIndex].equals(argumentName) : "wrong argument name " + argumentName;
         return getBuilder(argumentIndex, argumentName).fluent();
@@ -233,7 +233,7 @@ public final class CastBuilder {
     /**
      * @see #arg(String)
      */
-    public PreinitialPhaseBuilder<Object> arg(int argumentIndex) {
+    public PreinitialPhaseBuilder arg(int argumentIndex) {
         boolean existingIndex = argumentNames != null && argumentIndex >= 0 && argumentIndex < argumentNames.length;
         String name = existingIndex ? argumentNames[argumentIndex] : null;
         return getBuilder(argumentIndex, name).fluent();
@@ -301,11 +301,19 @@ public final class CastBuilder {
         }
 
         public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
-            return new MapIfStep<>(filter, trueBranch, falseBranch);
+            return new MapIfStep<>(filter, trueBranch, falseBranch, false);
+        }
+
+        public static <T, S extends T, R> PipelineStep<T, R> returnIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
+            return new MapIfStep<>(filter, trueBranch, falseBranch, true);
         }
 
         public static <T, S extends T, R> PipelineStep<T, R> mapIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch) {
             return mapIf(filter, trueBranch, null);
+        }
+
+        public static <T, S extends T, R> PipelineStep<T, R> returnIf(Filter<? super T, S> filter, PipelineStep<?, ?> trueBranch) {
+            return returnIf(filter, trueBranch, null);
         }
 
         public static <T> ChainBuilder<T> chain(PipelineStep<T, ?> firstStep) {
@@ -645,11 +653,11 @@ public final class CastBuilder {
         }
 
         public static <R> TypeFilter<Object, R> instanceOf(Class<R> cls) {
-            return new TypeFilter<>(x -> cls.isInstance(x), cls);
+            return new TypeFilter<>(cls);
         }
 
         public static TypeFilter<Object, RFunction> builtin() {
-            return new TypeFilter<>(x -> RFunction.class.isInstance(x) && ((RFunction) x).isBuiltin(), RFunction.class);
+            return new TypeFilter<>(RFunction.class, x -> x.isBuiltin());
         }
 
         public static <R extends RAbstractIntVector> Filter<Object, R> integerValue() {
@@ -676,8 +684,8 @@ public final class CastBuilder {
             return new RTypeFilter<>(RType.Raw);
         }
 
-        public static <R> TypeFilter<Object, R> anyValue() {
-            return new TypeFilter<>(x -> true, Object.class);
+        public static TypeFilter<Object, Object> anyValue() {
+            return new TypeFilter<>(Object.class);
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})
@@ -697,11 +705,11 @@ public final class CastBuilder {
         }
 
         public static Filter<Object, Integer> atomicIntegerValue() {
-            return new TypeFilter<>(x -> x instanceof String, String.class);
+            return new TypeFilter<>(Integer.class);
         }
 
         public static Filter<Object, Byte> atomicLogicalValue() {
-            return new TypeFilter<>(x -> x instanceof Byte, Byte.class);
+            return new TypeFilter<>(Byte.class);
         }
 
         public static MapByteToBoolean toBoolean() {

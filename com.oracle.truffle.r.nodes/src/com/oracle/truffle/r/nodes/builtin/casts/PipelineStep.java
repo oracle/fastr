@@ -49,6 +49,16 @@ public abstract class PipelineStep<T, R> {
 
     public abstract <D> D accept(PipelineStepVisitor<D> visitor);
 
+    public <D> D acceptPipeline(PipelineStepVisitor<D> visitor) {
+        PipelineStep<?, ?> curStep = this;
+        D result = null;
+        while (curStep != null) {
+            result = curStep.accept(visitor);
+            curStep = curStep.getNext();
+        }
+        return result;
+    }
+
     public interface PipelineStepVisitor<T> {
         T visit(FindFirstStep<?, ?> step);
 
@@ -277,11 +287,13 @@ public abstract class PipelineStep<T, R> {
         private final Filter<?, ?> filter;
         private final PipelineStep<?, ?> trueBranch;
         private final PipelineStep<?, ?> falseBranch;
+        private final boolean returns;
 
-        public MapIfStep(Filter<?, ?> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
+        public MapIfStep(Filter<?, ?> filter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch, boolean returns) {
             this.filter = filter;
             this.trueBranch = trueBranch;
             this.falseBranch = falseBranch;
+            this.returns = returns;
         }
 
         public Filter<?, ?> getFilter() {
@@ -294,6 +306,10 @@ public abstract class PipelineStep<T, R> {
 
         public PipelineStep<?, ?> getFalseBranch() {
             return falseBranch;
+        }
+
+        public boolean isReturns() {
+            return returns;
         }
 
         @Override
