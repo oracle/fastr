@@ -134,6 +134,19 @@ public class FastRTckTest extends TruffleTCK {
         "isExecutableOfForeign <- function(o) {\n" +
         "  .fastr.interop.toBoolean(.fastr.interop.isExecutable(o))\n" +
         "}\n" +
+        "intValue <- function() 42L\n" +
+        "intVectorValue <- function() c(42L, 40L)\n" +
+        "intSequenceValue <- function() 42:50\n" +
+        "intType <- function() 'integer'\n" +
+        "doubleValue <- function() 42.1\n" +
+        "doubleVectorValue <- function() c(42.1, 40)\n" +
+        "doubleSequenceValue <- function() 42.1:50\n" +
+        "doubleType <- function() 'double'\n" +
+        "functionValue <- function() { function(x) 1 }\n" +
+        "functionType <- function() 'closure'\n" +
+        "builtinFunctionValue <- function() `+`\n" +
+        "builtinFunctionType <- function() 'builtin'\n" +
+        "valueWithSource <- function() intValue\n" +
         "for (name in ls()) .fastr.interop.export(name, get(name))\n",
         RSource.Internal.TCK_INIT
     );
@@ -473,12 +486,16 @@ public class FastRTckTest extends TruffleTCK {
 
     @Override
     protected String[] metaObjects() {
-        return null; // TBD add proper impl here.
+        return new String[]{
+                        "intValue", "intType", "intVectorValue", "intType", "intSequenceValue", "intType",
+                        "doubleValue", "doubleType", "doubleVectorValue", "doubleType", "doubleSequenceValue", "doubleType",
+                        "functionValue", "functionType",
+                        "builtinFunctionValue", "builtinFunctionType"};
     }
 
     @Override
     protected String valueWithSource() {
-        return null; // TBD add proper impl here.
+        return "valueWithSource";
     }
 
 }
