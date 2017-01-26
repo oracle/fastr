@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -99,7 +99,7 @@ public final class SeqFunctions {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class IsNumericNode extends Node {
         public abstract boolean execute(Object obj);
 
@@ -129,7 +129,7 @@ public final class SeqFunctions {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class IsMissingOrNumericNode extends IsNumericNode {
 
         @Specialization
@@ -138,7 +138,7 @@ public final class SeqFunctions {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class GetIntegralNumericNode extends Node {
 
         public abstract int execute(Object obj);
@@ -182,7 +182,7 @@ public final class SeqFunctions {
         return IsIntegralNumericNodeGen.create(true);
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     @ImportStatic(SeqFunctions.class)
     public abstract static class SeqFastPath extends FastPathAdapter {
         @Specialization(guards = {"!hasClass(args, getClassAttributeNode)", "lengthSpecials(args)"})
@@ -298,7 +298,7 @@ public final class SeqFunctions {
      * Essentially the same as {@link SeqFastPath} but since the signature is explicit there is no
      * need to reorder arguments.
      */
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class SeqDefaultFastPath extends FastPathAdapter {
         @SuppressWarnings("unused")
         @Specialization(guards = {"fromCheck.execute(fromObj)", "toCheck.execute(toObj)", "byCheck.execute(byObj)"})
@@ -320,7 +320,7 @@ public final class SeqFunctions {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     @RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"}, behavior = PURE)
     public abstract static class SeqAlong extends RBuiltinNode {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
@@ -367,7 +367,7 @@ public final class SeqFunctions {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"}, behavior = PURE)
     public abstract static class SeqLen extends RBuiltinNode {
 
@@ -406,7 +406,7 @@ public final class SeqFunctions {
      *
      * N.B. javac gives error "cannot find symbol" on plain "@RBuiltin".
      */
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     @ImportStatic({AsRealNodeGen.class, SeqFunctions.class})
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = "seq.int", kind = PRIMITIVE, parameterNames = {"from", "to", "by", "length.out", "along.with",
                     "..."}, dispatch = INTERNAL_GENERIC, genericName = "seq", behavior = PURE)
@@ -417,7 +417,7 @@ public final class SeqFunctions {
 
         /**
          * Used by {@link #getLength} guard. It would be good to cache this in the relevant
-         * specializations but it does not use {@link RTypesFlatLayout} and that causes an
+         * specializations but it does not use {@link RTypes} and that causes an
          * IllegalStateException (no parent).
          */
         @Child private RLengthNode lengthNode = RLengthNode.create();
@@ -759,7 +759,7 @@ public final class SeqFunctions {
          * and often use "1" where "1L" is more appropriate).
          */
 
-        @TypeSystemReference(RTypesFlatLayout.class)
+        @TypeSystemReference(RTypes.class)
         public abstract static class IsIntegralNumericNode extends Node {
             private final boolean checkLength;
 

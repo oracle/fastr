@@ -97,7 +97,7 @@ public abstract class MatMult extends RBuiltinNode {
         return MatMultNodeGen.create(true);
     }
 
-    @Specialization(guards = "bothZeroDim(a, b, getADimsNode, getBDimsNode)")
+    @Specialization(guards = "bothZeroDim(a, b)")
     protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         int r = getBDimsNode.getDimensions(b)[1];
         int c = getADimsNode.getDimensions(a)[0];
@@ -697,11 +697,11 @@ public abstract class MatMult extends RBuiltinNode {
 
     // guards
 
-    protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b, GetDimAttributeNode getADimsNode, GetDimAttributeNode getBDimsNode) {
+    protected boolean bothZeroDim(RAbstractVector a, RAbstractVector b) {
         return hasZeroDim(a, getADimsNode) && hasZeroDim(b, getBDimsNode);
     }
 
-    protected static boolean hasZeroDim(RAbstractVector v, GetDimAttributeNode getDimsNode) {
+    protected boolean hasZeroDim(RAbstractVector v, GetDimAttributeNode getDimsNode) {
         int[] dims = getDimsNode.getDimensions(v);
         if (dims == null || dims.length == 0) {
             return false;

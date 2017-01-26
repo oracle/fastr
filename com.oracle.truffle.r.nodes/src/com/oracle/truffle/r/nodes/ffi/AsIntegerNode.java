@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
  * Implements the {@code Rf_asInteger} GNU R function . The behavior is subtly different (more
  * permissive error-wise) that {@link CastIntegerNode}. Non-castable values return {@code NA}.
  */
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
 
     public abstract int execute(Object obj);
@@ -90,5 +90,4 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
     public static AsIntegerNode create() {
         return AsIntegerNodeGen.create();
     }
-
 }

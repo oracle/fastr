@@ -803,7 +803,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object readBin(int con, String what, int n, int size, boolean signed, boolean swap) {
+        protected Object readBin(int con, String what, int n, int sizeInput, boolean signed, boolean swap) {
             RVector<?> result = null;
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
@@ -813,6 +813,7 @@ public abstract class ConnectionFunctions {
                 switch (what) {
                     case "int":
                     case "integer":
+                        int size = sizeInput;
                         if (size == RRuntime.INT_NA) {
                             size = 4;
                         }

@@ -29,11 +29,11 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
 
     public abstract int execute(Object obj);
@@ -72,5 +72,4 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
     public static AsLogicalNode create() {
         return AsLogicalNodeGen.create();
     }
-
 }

@@ -139,9 +139,7 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) '48'; seq_along(x) }");
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) numeric(0); seq_along(x) }");
         assertEval(Output.IgnoreWarningContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
-        // length defined in global env should not get us confused:
         assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
-        // length in __S3MethodsTable__ should work too
         assertEval("{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; res <- seq_along(x); rm('length.myclass', envir=.__S3MethodsTable__.); res }");
     }
 }

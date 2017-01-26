@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 
 /**
  * Nodes that implement {@code CAR}, {@code CDR}, etc. N.B. GNU R does not error check the
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
  */
 public final class ListAccessNodes {
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class CARNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object car(RPairList pl) {
@@ -56,7 +56,7 @@ public final class ListAccessNodes {
 
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class CDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object cdr(RPairList pl) {
@@ -76,7 +76,7 @@ public final class ListAccessNodes {
         }
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class CADRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object cadr(RPairList pl) {
@@ -95,7 +95,7 @@ public final class ListAccessNodes {
 
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class CADDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object caddr(RPairList pl) {
@@ -114,7 +114,7 @@ public final class ListAccessNodes {
 
     }
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class CDDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object cddr(RPairList pl) {
@@ -133,5 +133,4 @@ public final class ListAccessNodes {
 
         }
     }
-
 }

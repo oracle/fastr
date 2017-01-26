@@ -49,8 +49,6 @@ import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
@@ -185,18 +183,6 @@ public abstract class Identical extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(RAbstractLogicalVector x, REnvironment y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected byte doInternalIdentical(REnvironment x, RAbstractLogicalVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
     protected byte doInternalIdentical(REnvironment x, REnvironment y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         // reference equality for environments
         return RRuntime.asLogical(x == y);
@@ -288,24 +274,6 @@ public abstract class Identical extends RBuiltinNode {
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected byte doInternalIdenticalGeneric(RFunction x, RAbstractContainer y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected byte doInternalIdenticalGeneric(RLanguage x, RAbstractContainer y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected byte doInternalIdenticalGeneric(RAbstractContainer x, RFunction y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
     @Specialization
     protected byte doInternalIdenticalGeneric(RS4Object x, RS4Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         if (x.isS4() != y.isS4()) {
@@ -368,11 +336,8 @@ public abstract class Identical extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected byte doInternalIdenticalWrongTypes(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
-        if (x.getClass() != y.getClass()) {
-            return RRuntime.LOGICAL_FALSE;
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        assert x.getClass() != y.getClass();
+        return RRuntime.LOGICAL_FALSE;
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {

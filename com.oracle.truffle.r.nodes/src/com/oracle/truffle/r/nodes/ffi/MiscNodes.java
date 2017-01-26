@@ -28,14 +28,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public final class MiscNodes {
 
-    @TypeSystemReference(RTypesFlatLayout.class)
+    @TypeSystemReference(RTypes.class)
     public abstract static class LENGTHNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
