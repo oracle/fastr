@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -29,25 +29,25 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state. This may get merged into a single instance eventually.
  */
-class TruffleRFFIContextState implements ContextState {
-    TruffleDLL.ContextStateImpl dllState;
-    TrufflePkgInit.ContextStateImpl pkgInitState;
-    TruffleCall.ContextStateImpl callState;
-    TruffleStats.ContextStateImpl statsState;
+class TruffleLLVM_RFFIContextState implements ContextState {
+    TruffleLLVM_DLL.ContextStateImpl dllState;
+    TruffleLLVM_PkgInit.ContextStateImpl pkgInitState;
+    TruffleLLVM_Call.ContextStateImpl callState;
+    TruffleLLVM_Stats.ContextStateImpl statsState;
 
-    TruffleRFFIContextState() {
-        dllState = TruffleDLL.newContextState();
-        pkgInitState = TrufflePkgInit.newContextState();
-        callState = TruffleCall.newContextState();
-        statsState = TruffleStats.newContextState();
+    TruffleLLVM_RFFIContextState() {
+        dllState = TruffleLLVM_DLL.newContextState();
+        pkgInitState = TruffleLLVM_PkgInit.newContextState();
+        callState = TruffleLLVM_Call.newContextState();
+        statsState = TruffleLLVM_Stats.newContextState();
     }
 
-    static TruffleRFFIContextState getContextState() {
-        return (TruffleRFFIContextState) RContext.getInstance().getStateRFFI();
+    static TruffleLLVM_RFFIContextState getContextState() {
+        return (TruffleLLVM_RFFIContextState) RContext.getInstance().getStateRFFI();
     }
 
-    static TruffleRFFIContextState getContextState(RContext context) {
-        return (TruffleRFFIContextState) context.getStateRFFI();
+    static TruffleLLVM_RFFIContextState getContextState(RContext context) {
+        return (TruffleLLVM_RFFIContextState) context.getStateRFFI();
     }
 
     @Override

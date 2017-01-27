@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -31,8 +31,8 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.engine.interop.NativeDoubleArray;
 import com.oracle.truffle.r.engine.interop.NativeIntegerArray;
-import com.oracle.truffle.r.engine.interop.ffi.TruffleStatsFactory.ExecuteFactorNodeGen;
-import com.oracle.truffle.r.engine.interop.ffi.TruffleStatsFactory.ExecuteWorkNodeGen;
+import com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_StatsFactory.ExecuteFactorNodeGen;
+import com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_StatsFactory.ExecuteWorkNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLLRFFINode;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
-public class TruffleStats implements StatsRFFI {
+public class TruffleLLVM_Stats implements StatsRFFI {
 
     public enum FFT_FUN {
         fft_work,
@@ -60,15 +60,15 @@ public class TruffleStats implements StatsRFFI {
              * it here.
              */
             if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
-                TruffleDLL.ContextStateImpl contextState = TruffleRFFIContextState.getContextState().dllState;
-                TruffleDLL.ContextStateImpl parentDLLContextState = TruffleRFFIContextState.getContextState(context.getParent()).dllState;
-                TruffleDLL.ParseStatus parseStatus = null;
+                TruffleLLVM_DLL.ContextStateImpl contextState = TruffleLLVM_RFFIContextState.getContextState().dllState;
+                TruffleLLVM_DLL.ContextStateImpl parentDLLContextState = TruffleLLVM_RFFIContextState.getContextState(context.getParent()).dllState;
+                TruffleLLVM_DLL.ParseStatus parseStatus = null;
                 for (FFT_FUN f : FFT_FUN.values()) {
                     String funName = f.name();
-                    TruffleDLL.ParseStatus parentParseStatus = parentDLLContextState.parseStatusMap.get(funName);
+                    TruffleLLVM_DLL.ParseStatus parentParseStatus = parentDLLContextState.parseStatusMap.get(funName);
                     if (parentParseStatus != null) {
                         if (parseStatus == null) {
-                            parseStatus = new TruffleDLL.ParseStatus("stats", parentParseStatus.ir, false);
+                            parseStatus = new TruffleLLVM_DLL.ParseStatus("stats", parentParseStatus.ir, false);
                         }
                         contextState.parseStatusMap.put(f.name(), parseStatus);
                     }
@@ -96,7 +96,7 @@ public class TruffleStats implements StatsRFFI {
             SymbolHandle result = dllRFFINode.dlsym(dllInfo.handle, name);
             if (result == DLL.SYMBOL_NOT_FOUND) {
                 @SuppressWarnings("unused")
-                TruffleRFFIContextState cs = TruffleRFFIContextState.getContextState();
+                TruffleLLVM_RFFIContextState cs = TruffleLLVM_RFFIContextState.getContextState();
                 throw RInternalError.shouldNotReachHere();
             }
             return result;

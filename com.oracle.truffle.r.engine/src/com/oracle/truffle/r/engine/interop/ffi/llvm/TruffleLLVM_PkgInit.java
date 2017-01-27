@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -37,9 +37,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
-class TrufflePkgInit {
+class TruffleLLVM_PkgInit {
 
-    private static TrufflePkgInit trufflePkgInit;
+    private static TruffleLLVM_PkgInit trufflePkgInit;
     private static TruffleObject trufflePkgInitTruffleObject;
 
     static class ContextStateImpl implements RContext.ContextState {
@@ -58,9 +58,9 @@ class TrufflePkgInit {
         return new ContextStateImpl();
     }
 
-    static TrufflePkgInit initialize() {
+    static TruffleLLVM_PkgInit initialize() {
         if (trufflePkgInit == null) {
-            trufflePkgInit = new TrufflePkgInit();
+            trufflePkgInit = new TruffleLLVM_PkgInit();
             trufflePkgInitTruffleObject = JavaInterop.asTruffleObject(trufflePkgInit);
         }
         return trufflePkgInit;

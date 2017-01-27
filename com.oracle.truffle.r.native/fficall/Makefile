@@ -72,7 +72,7 @@ jni.done:
 	$(MAKE) -C src/common all
 	$(MAKE) -C src/jni all
 ifeq ($(HAVE_SULONG),yes)
-	$(MAKE) -C src/truffle all
+	$(MAKE) -C src/truffle_llvm all
 endif
 	touch jni.done
 
@@ -90,7 +90,7 @@ clean:
 	$(MAKE) -C src/common clean
 	$(MAKE) -C src/jni clean
 ifeq ($(HAVE_SULONG),yes)
-	$(MAKE) -C src/truffle clean
+	$(MAKE) -C src/truffle_llvm clean
 endif
 	rm -rf $(R_LIB)
 	rm -rf $(JNIBOOT_LIB)

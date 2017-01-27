@@ -20,14 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.jni.JNI_DLL;
+import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
 /**
- * Access to primitive C operations.
+ * Access to some primitive C operations. This is required by the {@link UserRNG} API which works
+ * with {@code double *}.
+ *
+ * N.B. When {@code libR} is not completely in LLVM mode (as now), we have to look up the symbols
+ * using an explicitly created {@link TruffleLLVM_DLL.LLVM_Handle}and not go via generic lookup in
+ * {@link DLL} as that would use a {@link JNI_DLL} handle.
  */
-public class TruffleCAccess {
+public class TruffleLLVM_CAccess {
+    private static final TruffleLLVM_DLL.LLVM_Handle handle = new TruffleLLVM_DLL.LLVM_Handle("libR");
 
     public enum Function {
         READ_POINTER_INT,
@@ -39,7 +47,10 @@ public class TruffleCAccess {
 
         public DLL.SymbolHandle getSymbolHandle() {
             if (symbolHandle == null) {
-                symbolHandle = DLL.findSymbol(cName(), null);
+                // This would be the generic path
+                // symbolHandle = DLL.findSymbol(cName(), null);
+                symbolHandle = (DLL.SymbolHandle) DLL.DLLFFIRootNode.create().getCallTarget().call(DLL.DLLFFIRootNode.DLSYM, handle, cName());
+                assert symbolHandle != null;
             }
             return symbolHandle;
         }

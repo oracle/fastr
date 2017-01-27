@@ -49,6 +49,6 @@ dependent. In order to support a JNI and a non-JNI implementation, the file is s
 ## The `jni` directory
 `jni` contains the implementation that is based on and has explicit dependencies on Java JNI. It is described in more detail [here](jni_ffi.md)
 
-## The `truffle` directory
+## The `truffle_llvm` directory
 
-`truffle` contains the native side of the variant that is based on the Truffle LLVM implementation. It is described in more detail [here](truffle_ffi.md)
+`truffle` contains the native side of the variant that is based on the Truffle LLVM implementation. It is described in more detail [here](truffle_llvm_ffi.md)

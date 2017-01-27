@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_C;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
-class TruffleC implements CRFFI {
+class TruffleLLVM_C implements CRFFI {
     private static class TruffleCRFFINode extends JNI_C.JNI_CRFFINode {
 
         @Override
@@ -44,7 +44,7 @@ class TruffleC implements CRFFI {
                 super.invoke(nativeCallInfo, args);
             } else {
                 VirtualFrame frame = TruffleRFFIFrameHelper.create();
-                TruffleDLL.ensureParsed(nativeCallInfo);
+                TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
                 Object[] wargs = wrap(args);
                 try {
                     Node messageNode = Message.createExecute(0).createNode();

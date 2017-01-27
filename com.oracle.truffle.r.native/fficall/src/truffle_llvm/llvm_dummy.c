@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,5 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-int caccess_read_pointer_int(int *address) {
-	return *address;
-}
-
-double caccess_read_pointer_double(double *address) {
-	return *address;
-}
-
-int caccess_read_array_int(int *address, int index) {
-	return address[index];
-}
-
-double caccess_read_array_double(double *address, int index) {
-	return address[index];
-}
+// A dummy file that is compiled (by fastr-cc) in place of any actual .c file in this directory.
+// This allows the IR for the actual .c file to be merged with the empty .o for llvm_dummy.
