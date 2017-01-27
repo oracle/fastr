@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -212,7 +212,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     break;
                 case 3:
                     // srcref
-                    return RSource.createSrcRef(s.getLazySourceSection());
+                    return RSrcref.createLloc(s.getLazySourceSection());
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
