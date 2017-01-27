@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
-public interface RAbstractLogicalVector extends RAbstractVector {
+public interface RAbstractLogicalVector extends RAbstractAtomicVector {
 
     @Override
     default Object getDataAtAsObject(int index) {

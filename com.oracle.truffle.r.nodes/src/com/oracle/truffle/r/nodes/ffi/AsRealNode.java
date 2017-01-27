@@ -14,13 +14,13 @@ package com.oracle.truffle.r.nodes.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
  * return {@code NA}.
  */
 @TypeSystemReference(RTypesFlatLayout.class)
-@ImportStatic(IsVectorAtomicNodeLG0.class)
 public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
 
     public abstract double execute(Object obj);
@@ -61,10 +60,9 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
         return obj.getDataAt(0);
     }
 
-    @Specialization(guards = "isVectorAtomicNodeLG0.execute(obj)")
-    protected double asReal(Object obj,
-                    @Cached("createNonPreserving()") CastDoubleNode castDoubleNode,
-                    @SuppressWarnings("unused") @Cached("create()") IsVectorAtomicNodeLG0 isVectorAtomicNodeLG0) {
+    @Specialization(guards = "obj.getLength() > 0")
+    protected double asReal(RAbstractAtomicVector obj,
+                    @Cached("createNonPreserving()") CastDoubleNode castDoubleNode) {
         Object castObj = castDoubleNode.executeDouble(obj);
         if (castObj instanceof Double) {
             return (double) castObj;
@@ -80,4 +78,7 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
         return RRuntime.DOUBLE_NA;
     }
 
+    public static AsRealNode create() {
+        return AsRealNodeGen.create();
+    }
 }

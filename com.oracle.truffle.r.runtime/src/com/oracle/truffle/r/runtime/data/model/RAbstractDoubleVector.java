@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
-public interface RAbstractDoubleVector extends RAbstractVector {
+public interface RAbstractDoubleVector extends RAbstractAtomicVector {
 
     @Override
     default Object getDataAtAsObject(int index) {

@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 
-public interface RAbstractComplexVector extends RAbstractVector {
+public interface RAbstractComplexVector extends RAbstractAtomicVector {
 
     @Override
     default Object getDataAtAsObject(int index) {
