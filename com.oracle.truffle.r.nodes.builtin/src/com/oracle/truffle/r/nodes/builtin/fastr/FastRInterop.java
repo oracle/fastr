@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,11 +89,11 @@ public class FastRInterop {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(VirtualFrame frame, String mimeType, String source,
+        protected Object evalCached(String mimeType, String source,
                         @Cached("mimeType") String cachedMimeType,
                         @Cached("source") String cachedSource,
                         @Cached("createCall(mimeType, source)") DirectCallNode call) {
-            return call.call(frame, EMPTY_OBJECT_ARRAY);
+            return call.call(EMPTY_OBJECT_ARRAY);
         }
 
         @Specialization(contains = "evalCached")

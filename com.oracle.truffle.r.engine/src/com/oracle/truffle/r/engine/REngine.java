@@ -345,7 +345,7 @@ final class REngine implements Engine, Engine.Timings {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
                     }
-                    lastValue = calls[i].call(frame, new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
+                    lastValue = calls[i].call(new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
                 }
                 return lastValue;
             } catch (ReturnException ex) {

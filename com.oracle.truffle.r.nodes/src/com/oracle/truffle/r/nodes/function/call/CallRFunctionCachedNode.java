@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public abstract class CallRFunctionCachedNode extends Node {
     protected Object call(VirtualFrame frame, @SuppressWarnings("unused") CallTarget target, Object[] arguments, RCaller caller,
                     @Cached("createDirectCallNode(target)") DirectCallNode callNode) {
         try {
-            return callNode.call(frame, arguments);
+            return callNode.call(arguments);
         } finally {
             visibility.executeAfterCall(frame, caller);
         }
@@ -86,7 +86,7 @@ public abstract class CallRFunctionCachedNode extends Node {
     protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, RCaller caller,
                     @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
         try {
-            return callNode.call(frame, target, arguments);
+            return callNode.call(target, arguments);
         } finally {
             visibility.executeAfterCall(frame, caller);
         }
