@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import java.nio.file.FileSystems;
 import java.util.HashMap;
@@ -80,7 +80,7 @@ import com.oracle.truffle.r.runtime.ffi.truffle.LLVM_IR;
  * native code is used by non-LLVM packages (libraries) and the LLVM code is used by the LLVM
  * packages (libraries).
  */
-class TruffleDLL extends JNI_DLL implements DLLRFFI {
+class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
     /**
      * Supports lazy parsing of LLVM modules.
      */
@@ -142,9 +142,9 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
         }
     }
 
-    private static TruffleDLL truffleDLL;
+    private static TruffleLLVM_DLL truffleDLL;
 
-    TruffleDLL() {
+    TruffleLLVM_DLL() {
         assert truffleDLL == null;
         truffleDLL = this;
     }
@@ -168,10 +168,10 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
         return true;
     }
 
-    static class TruffleHandle {
+    static class LLVM_Handle {
         private final String libName;
 
-        TruffleHandle(String libName) {
+        LLVM_Handle(String libName) {
             this.libName = libName;
         }
     }
@@ -207,7 +207,7 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
                         LLVM_IR ir = irs[i];
                         addExportsToMap(contextState, libName, ir, (name) -> true);
                     }
-                    return new TruffleHandle(libName);
+                    return new LLVM_Handle(libName);
                 }
             } catch (Exception ex) {
                 return null;
@@ -216,10 +216,10 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
 
         @Override
         public SymbolHandle dlsym(Object handle, String symbol) {
-            if (handle instanceof TruffleHandle) {
+            if (handle instanceof LLVM_Handle) {
                 // If the symbol exists it will be in the map
                 ParseStatus parseStatus = getContextState().parseStatusMap.get(symbol);
-                if (parseStatus != null && parseStatus.libName.equals(((TruffleHandle) handle).libName)) {
+                if (parseStatus != null && parseStatus.libName.equals(((LLVM_Handle) handle).libName)) {
                     // force a parse so we have a "value"
                     if (!parseStatus.parsed) {
                         ensureParsed(parseStatus.libName, symbol, true);
@@ -238,7 +238,7 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
 
         @Override
         public int dlclose(Object handle) {
-            if (handle instanceof TruffleHandle) {
+            if (handle instanceof LLVM_Handle) {
                 return 0;
             } else {
                 return super.dlclose(handle);
@@ -273,7 +273,7 @@ class TruffleDLL extends JNI_DLL implements DLLRFFI {
     private LLVM_IR[] libRModules;
 
     private static ContextStateImpl getContextState() {
-        return TruffleRFFIContextState.getContextState().dllState;
+        return TruffleLLVM_RFFIContextState.getContextState().dllState;
     }
 
     /**

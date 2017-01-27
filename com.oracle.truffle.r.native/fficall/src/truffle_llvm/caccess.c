@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef RFFIUTILS_H
-#define RFFIUTILS_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <Rinternals.h>
-#include <truffle.h>
+int caccess_read_pointer_int(int *address) {
+	return *address;
+}
 
-#define IMPORT_CALLHELPER() void *obj = truffle_import_cached("_fastr_rffi_callhelper")
+double caccess_read_pointer_double(double *address) {
+	return *address;
+}
 
-SEXP unimplemented(char *name);
+int caccess_read_array_int(int *address, int index) {
+	return address[index];
+}
 
-#endif /* RFFIUTILS_H */
+double caccess_read_array_double(double *address, int index) {
+	return address[index];
+}

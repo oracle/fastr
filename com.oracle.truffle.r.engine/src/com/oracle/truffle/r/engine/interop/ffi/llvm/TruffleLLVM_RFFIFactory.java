@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory;
  * Incremental approach to using Truffle, defaults to the JNI factory.
  *
  */
-public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
+public class TruffleLLVM_RFFIFactory extends JNI_RFFIFactory implements RFFI {
 
     @Override
     protected void initialize(boolean runtime) {
@@ -44,7 +44,7 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
 
     @Override
     public ContextState newContextState() {
-        return new TruffleRFFIContextState();
+        return new TruffleLLVM_RFFIContextState();
     }
 
     private CRFFI cRFFI;
@@ -52,7 +52,7 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
     @Override
     public CRFFI getCRFFI() {
         if (cRFFI == null) {
-            cRFFI = new TruffleC();
+            cRFFI = new TruffleLLVM_C();
         }
         return cRFFI;
     }
@@ -62,7 +62,7 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
     @Override
     public DLLRFFI getDLLRFFI() {
         if (dllRFFI == null) {
-            dllRFFI = new TruffleDLL();
+            dllRFFI = new TruffleLLVM_DLL();
         }
         return dllRFFI;
     }
@@ -72,7 +72,7 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
     @Override
     public UserRngRFFI getUserRngRFFI() {
         if (truffleUserRngRFFI == null) {
-            truffleUserRngRFFI = new TruffleUserRng();
+            truffleUserRngRFFI = new TruffleLLVM_UserRng();
         }
         return truffleUserRngRFFI;
     }
@@ -82,7 +82,7 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
     @Override
     public CallRFFI getCallRFFI() {
         if (truffleCallRFFI == null) {
-            truffleCallRFFI = new TruffleCall();
+            truffleCallRFFI = new TruffleLLVM_Call();
         }
         return truffleCallRFFI;
     }
@@ -91,11 +91,11 @@ public class Truffle_RFFIFactory extends JNI_RFFIFactory implements RFFI {
 
     @Override
     public StatsRFFI getStatsRFFI() {
-        if (TruffleDLL.isBlacklisted("stats")) {
+        if (TruffleLLVM_DLL.isBlacklisted("stats")) {
             return super.getStatsRFFI();
         }
         if (truffleStatsRFFI == null) {
-            truffleStatsRFFI = new TruffleStats();
+            truffleStatsRFFI = new TruffleLLVM_Stats();
         }
         return truffleStatsRFFI;
     }

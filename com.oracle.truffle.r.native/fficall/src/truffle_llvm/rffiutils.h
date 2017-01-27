@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <rffiutils.h>
+#ifndef RFFIUTILS_H
+#define RFFIUTILS_H
 
-SEXP unimplemented(char *name) {
-	printf("unimplemented %s\n", name);
-	void *nameString = truffle_read_string(name);
-	void *obj = truffle_import_cached("_fastr_rffi_call");
-	void *result = truffle_invoke(obj, "unimplemented", nameString);
-	return result;
-}
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <Rinternals.h>
+#include <truffle.h>
 
+#define IMPORT_CALLHELPER() void *obj = truffle_import_cached("_fastr_rffi_callhelper")
+
+SEXP unimplemented(char *name);
+
+#endif /* RFFIUTILS_H */

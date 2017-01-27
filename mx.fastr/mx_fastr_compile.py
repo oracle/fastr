@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ class AnalyzedArgs:
 
 
 def _c_dummy_file():
-    return os.path.join(mx_fastr._fastr_suite.dir, 'com.oracle.truffle.r.native', 'fficall', 'src', 'truffle', 'llvm_dummy.c')
+    return os.path.join(mx_fastr._fastr_suite.dir, 'com.oracle.truffle.r.native', 'fficall', 'src', 'truffle_llvm', 'llvm_dummy.c')
 
 def _analyze_args(args, dragonEgg=False):
     '''

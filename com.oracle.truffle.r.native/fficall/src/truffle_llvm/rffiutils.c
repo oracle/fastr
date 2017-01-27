@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,5 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-// A dummy file that is compiled (by fastr-cc) in place of any actual .c file in this directory.
-// This allows the IR for the actual .c file to be merged with the empty .o for llvm_dummy.
+#include <rffiutils.h>
+
+SEXP unimplemented(char *name) {
+	printf("unimplemented %s\n", name);
+	void *nameString = truffle_read_string(name);
+	void *obj = truffle_import_cached("_fastr_rffi_call");
+	void *result = truffle_invoke(obj, "unimplemented", nameString);
+	return result;
+}
+

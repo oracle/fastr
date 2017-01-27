@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import java.nio.charset.StandardCharsets;
 
@@ -46,17 +46,16 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
 /**
- * A wrapper class that can be instantiated and export for method lookup. For now just delegates to
- * {@link UpCallsRFFIImpl}.
+ * (Incomplete) Variant of {@link UpCallsRFFIImpl} for Truffle LLVM.
  *
  */
-public class TruffleCallHelper extends UpCallsRFFIImpl {
-    private static TruffleCallHelper singleton;
+public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl {
+    private static TruffleLLVM_UpCallsRFFIImpl singleton;
     private static TruffleObject singletonTruffleObject;
 
     public static TruffleObject initialize() {
         if (singleton == null) {
-            singleton = new TruffleCallHelper();
+            singleton = new TruffleLLVM_UpCallsRFFIImpl();
             singletonTruffleObject = JavaInterop.asTruffleObject(singleton);
         }
         return singletonTruffleObject;

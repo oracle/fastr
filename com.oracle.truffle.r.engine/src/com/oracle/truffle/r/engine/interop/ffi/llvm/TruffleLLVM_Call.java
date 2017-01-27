@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop.ffi;
+package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -31,8 +31,8 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.interop.ffi.TruffleCallFactory.InvokeTruffleNodeGen;
-import com.oracle.truffle.r.engine.interop.ffi.TruffleCallFactory.SplitTruffleCallRFFINodeGen;
+import com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_CallFactory.InvokeTruffleNodeGen;
+import com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_CallFactory.SplitTruffleCallRFFINodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -45,18 +45,18 @@ import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call.JNI_CallRFFINode;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
-class TruffleCall implements CallRFFI {
-    private static TruffleCall truffleCall;
+class TruffleLLVM_Call implements CallRFFI {
+    private static TruffleLLVM_Call truffleCall;
     private static TruffleObject truffleCallTruffleObject;
     private static TruffleObject truffleCallHelper;
 
     @SuppressWarnings("unused")
-    TruffleCall() {
+    TruffleLLVM_Call() {
         new JNI_Call();
         truffleCall = this;
         truffleCallTruffleObject = JavaInterop.asTruffleObject(truffleCall);
-        TrufflePkgInit.initialize();
-        truffleCallHelper = TruffleCallHelper.initialize();
+        TruffleLLVM_PkgInit.initialize();
+        truffleCallHelper = TruffleLLVM_UpCallsRFFIImpl.initialize();
     }
 
     static class ContextStateImpl implements RContext.ContextState {
@@ -96,7 +96,7 @@ class TruffleCall implements CallRFFI {
     private static void initVariables(RContext context) {
         // must have parsed the variables module in libR
         for (INIT_VAR_FUN initVarFun : INIT_VAR_FUN.values()) {
-            TruffleDLL.ensureParsed("libR", initVarFun.funName, true);
+            TruffleLLVM_DLL.ensureParsed("libR", initVarFun.funName, true);
             initVarFun.symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + initVarFun.funName));
         }
         VirtualFrame frame = TruffleRFFIFrameHelper.create();
@@ -171,8 +171,8 @@ class TruffleCall implements CallRFFI {
         }
 
         public static boolean ensureReady(NativeCallInfo nativeCallInfo) {
-            TruffleDLL.ensureParsed(nativeCallInfo);
-            ContextStateImpl contextState = TruffleRFFIContextState.getContextState().callState;
+            TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
+            ContextStateImpl contextState = TruffleLLVM_RFFIContextState.getContextState().callState;
             if (!contextState.initVariablesDone) {
                 initVariables(contextState.context);
                 contextState.initVariablesDone = true;
