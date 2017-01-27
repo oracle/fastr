@@ -131,7 +131,7 @@ public abstract class MatchFun extends RBuiltinNode {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
 
-        @Specialization(contains = "matchfunCached", guards = {"funValue.getLength() == 1"})
+        @Specialization(replaces = "matchfunCached", guards = {"funValue.getLength() == 1"})
         protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RAbstractStringVector funValue, boolean descend) {
             return checkResult(slowPathLookup(funValue.getDataAt(0), getCallerFrame.execute(frame), descend));
         }
@@ -144,7 +144,7 @@ public abstract class MatchFun extends RBuiltinNode {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
 
-        @Specialization(contains = "matchfunCached")
+        @Specialization(replaces = "matchfunCached")
         protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RSymbol funValue, boolean descend) {
             return checkResult(slowPathLookup(funValue.getName(), getCallerFrame.execute(frame), descend));
         }

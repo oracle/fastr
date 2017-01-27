@@ -123,7 +123,7 @@ public abstract class Quantifier extends RBuiltinNode {
         return result;
     }
 
-    @Specialization(contains = "opCachedLength")
+    @Specialization(replaces = "opCachedLength")
     protected byte op(RArgsValuesAndNames args, boolean naRm) {
         boolean profiledNaRm = naRm;
 

@@ -194,7 +194,7 @@ public abstract class Mapply extends RBuiltinNode {
             return result;
         }
 
-        @Specialization(contains = "cachedMApply")
+        @Specialization(replaces = "cachedMApply")
         protected Object[] mApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createIndexedLoadNode()") Subscript indexedLoadNode,

@@ -94,7 +94,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
     }
 
-    @Specialization(contains = "doCached", guards = {"isNumericVector(operand)"})
+    @Specialization(replaces = "doCached", guards = {"isNumericVector(operand)"})
     @TruffleBoundary
     protected Object doGeneric(Object operand,
                     @Cached("unary.createOperation()") UnaryArithmetic arithmetic,

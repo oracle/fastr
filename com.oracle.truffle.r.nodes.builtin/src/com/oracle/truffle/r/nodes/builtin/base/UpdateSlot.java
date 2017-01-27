@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -121,7 +121,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
         return updateSlotNode.executeUpdate(object, name, value);
     }
 
-    @Specialization(contains = "updateSlotCached")
+    @Specialization(replaces = "updateSlotCached")
     protected Object updateSlot(VirtualFrame frame, Object object, Object nameObj, Object value) {
         String name = getName(nameObj);
         checkSlotAssign(frame, object, name, value);

@@ -53,7 +53,7 @@ public class Slot {
             return accessSlotNode.executeAccess(castAttributable.executeObject(object), cachedInternedName);
         }
 
-        @Specialization(contains = "getSlotCached")
+        @Specialization(replaces = "getSlotCached")
         protected Object getSlot(Object object, String name) {
             return accessSlotNode.executeAccess(castAttributable.executeObject(object), getInternedName(name));
         }
@@ -81,7 +81,7 @@ public class Slot {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), cachedInternedName, value);
         }
 
-        @Specialization(contains = "setSlotCached")
+        @Specialization(replaces = "setSlotCached")
         protected Object setSlot(Object object, String name, Object value) {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(name), value);
         }

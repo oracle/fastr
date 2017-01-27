@@ -64,7 +64,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         }
     }
 
-    @Specialization(contains = "doDefault")
+    @Specialization(replaces = "doDefault")
     @SuppressWarnings("unused")
     protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {

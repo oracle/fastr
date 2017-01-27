@@ -91,7 +91,7 @@ public abstract class DispatchGeneric extends RBaseNode {
         return dispatchInternal(frame, mtable, classes, fdef, fname, method);
     }
 
-    @Specialization(contains = "dispatchCached")
+    @Specialization(replaces = "dispatchCached")
     protected Object dispatch(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname) {
         String dispatchString = createDispatchString(classes);
         RFunction method = (RFunction) mtable.get(dispatchString);

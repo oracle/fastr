@@ -51,7 +51,7 @@ public abstract class Formals extends RBuiltinNode {
         return formals;
     }
 
-    @Specialization(contains = "formalsCached")
+    @Specialization(replaces = "formalsCached")
     protected Object formals(RFunction fun) {
         return createFormals(fun);
     }

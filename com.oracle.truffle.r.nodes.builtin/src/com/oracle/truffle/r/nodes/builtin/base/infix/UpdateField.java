@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return list;
     }
 
-    @Specialization(contains = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
+    @Specialization(replaces = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
     public RList doListDynamic(RList list, String field, Object value) {
         int index = getIndex(getNamesNode.getNames(list), field);
         if (index == -1) {

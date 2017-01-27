@@ -92,7 +92,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return b != 0 && (a == b || a % b == 0);
     }
 
-    @Specialization(contains = "doLogicalMultiplesInBounds")
+    @Specialization(replaces = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
                     int dimensionLength, RAbstractLogicalVector position, int positionLength,
                     @Cached("create()") BranchProfile outOfBoundsProfile,

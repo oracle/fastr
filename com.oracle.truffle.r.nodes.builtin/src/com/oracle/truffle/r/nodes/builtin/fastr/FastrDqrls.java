@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public abstract class FastrDqrls extends RBuiltinNode {
         return call(xVec, xVec.materialize(), n, p, yVec, yVec.materialize(), ny, tol, coeffVec);
     }
 
-    @Specialization(contains = "doDouble")
+    @Specialization(replaces = "doDouble")
     public RList doOther(RAbstractVector xVec, int n, int p, RAbstractVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec, @Cached(value = "create()") CastDoubleNode castNode) {
         return call(xVec, ((RAbstractDoubleVector) castNode.execute(xVec)).materialize(), n, p, yVec, ((RAbstractDoubleVector) castNode.execute(yVec)).materialize(), ny, tol, coeffVec);
     }

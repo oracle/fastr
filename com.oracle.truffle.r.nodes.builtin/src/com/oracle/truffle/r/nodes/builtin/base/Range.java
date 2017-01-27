@@ -79,7 +79,7 @@ public abstract class Range extends RBuiltinNode {
         }
     }
 
-    @Specialization(contains = "rangeLengthOne")
+    @Specialization(replaces = "rangeLengthOne")
     protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
                     @Cached("create()") Combine combine) {
         Object combined = combine.executeCombine(args, false);

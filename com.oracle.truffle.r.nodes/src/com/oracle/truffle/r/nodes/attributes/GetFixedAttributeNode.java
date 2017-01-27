@@ -87,7 +87,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         return location == null ? null : location.get(attrs, shape);
     }
 
-    @Specialization(contains = "getAttrCached")
+    @Specialization(replaces = "getAttrCached")
     @TruffleBoundary
     protected Object getAttrFallback(DynamicObject attrs) {
         return attrs.get(name);

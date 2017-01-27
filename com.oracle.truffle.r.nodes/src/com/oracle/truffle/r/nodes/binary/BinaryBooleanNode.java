@@ -93,7 +93,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return cached.apply(left, right);
     }
 
-    @Specialization(contains = "doNumericVectorCached", guards = "isSupported(left, right)")
+    @Specialization(replaces = "doNumericVectorCached", guards = "isSupported(left, right)")
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right,
                     @Cached("factory.createOperation()") BooleanOperation operation,

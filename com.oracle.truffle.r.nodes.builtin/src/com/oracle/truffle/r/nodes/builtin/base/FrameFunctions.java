@@ -682,7 +682,7 @@ public class FrameFunctions {
             return REnvironment.frameToEnvironment(getCaller.execute(frame));
         }
 
-        @Specialization(contains = "parentFrameDirect")
+        @Specialization(replaces = "parentFrameDirect")
         protected REnvironment parentFrame(VirtualFrame frame, int n) {
             if (n <= 0) {
                 errorProfile.enter();

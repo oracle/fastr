@@ -507,7 +507,7 @@ public class IsTypeFunctions {
             }
         }
 
-        @Specialization(contains = "isVectorCached")
+        @Specialization(replaces = "isVectorCached")
         protected byte isVector(RAbstractVector x, String mode) {
             return isVectorCached(x, mode, mode, typeFromMode(mode));
         }

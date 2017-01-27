@@ -78,7 +78,7 @@ public abstract class InlineCacheNode extends RBaseNode {
         return RASTUtils.cloneNode(reify.apply(value));
     }
 
-    @Specialization(contains = "doCached")
+    @Specialization(replaces = "doCached")
     protected Object doGeneric(Frame frame, Object value) {
         return generic.apply(frame, value);
     }

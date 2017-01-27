@@ -73,7 +73,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         return setClassInternal(arg, cachedClassName, cachedMode, getClassNode);
     }
 
-    @Specialization(contains = "setClassCached")
+    @Specialization(replaces = "setClassCached")
     protected Object setClass(RAbstractContainer arg, String className,
                     @Cached("create()") TypeFromModeNode typeFromMode,
                     @Cached("create()") GetClassAttributeNode getClassNode) {

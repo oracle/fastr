@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,7 +114,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
      * polymorphic inline cache.
      */
     @TruffleBoundary
-    @Specialization(contains = {"setExistingAttrCached", "setNewAttrCached"})
+    @Specialization(replaces = {"setExistingAttrCached", "setNewAttrCached"})
     protected static void setAttrFallback(DynamicObject receiver, String name, Object value) {
         receiver.define(name, value);
     }
@@ -136,7 +136,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         setSpecAttrNode.execute(x, value);
     }
 
-    @Specialization(contains = "setSpecAttrInAttributable", //
+    @Specialization(replaces = "setSpecAttrInAttributable", //
                     guards = "isSpecialAttributeNode.execute(name)")
     @SuppressWarnings("unused")
     protected void setSpecAttrInAttributable(RAttributable x, String name, Object value,

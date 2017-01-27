@@ -74,7 +74,7 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
         return location != null;
     }
 
-    @Specialization(contains = "hasAttrCached")
+    @Specialization(replaces = "hasAttrCached")
     @TruffleBoundary
     protected boolean hasAttrFallback(DynamicObject attrs) {
         return attrs.containsKey(name);

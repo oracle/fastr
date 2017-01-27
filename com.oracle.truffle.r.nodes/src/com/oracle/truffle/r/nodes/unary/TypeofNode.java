@@ -77,7 +77,7 @@ public abstract class TypeofNode extends UnaryNode {
         }
     }
 
-    @Specialization(contains = {"doCachedTyped"})
+    @Specialization(replaces = {"doCachedTyped"})
     protected static RType doGenericTyped(RTypedValue operand) {
         return operand.getRType();
     }
