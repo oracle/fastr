@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -43,10 +44,12 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.function.GetBaseEnvFrameNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
-import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -68,6 +71,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -101,9 +105,6 @@ public abstract class Bind extends RBaseNode {
     @Child private CastLogicalNode castLogical;
     @Child private GetDimAttributeNode getDimsNode;
 
-    @Child private S3FunctionLookupNode lookup;
-    @Child private CallMatcherNode callMatcher;
-
     private final BindType type;
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
@@ -113,17 +114,6 @@ public abstract class Bind extends RBaseNode {
     private final NACheck naCheck = NACheck.create();
     protected final ValueProfile resultProfile = ValueProfile.createClassProfile();
     protected final ValueProfile vectorProfile = ValueProfile.createClassProfile();
-
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
-
-    protected int precedence(RArgsValuesAndNames args) {
-        int precedence = -1;
-        Object[] array = args.getArguments();
-        for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], false));
-        }
-        return precedence;
-    }
 
     protected Bind(BindType type) {
         this.type = type;
@@ -154,30 +144,9 @@ public abstract class Bind extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "precedence == NO_PRECEDENCE")
+    @Specialization(guards = {"precedence == NO_PRECEDENCE"})
     protected RNull allNull(VirtualFrame frame, int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, int precedence) {
         return RNull.instance;
-    }
-
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("deparse.level", "...");
-
-    private static final RStringVector DATA_FRAME_CLASS = RDataFactory.createStringVectorFromScalar("data.frame");
-
-    @Specialization(guards = {"args.length > 0", "isDataFrame(args)"})
-    protected Object allDataFrame(VirtualFrame frame, int deparseLevel, @SuppressWarnings("unused") Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence) {
-        if (lookup == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookup = insert(S3FunctionLookupNode.create(false, false));
-        }
-        Result lookupResult = lookup.execute(frame, type.toString(), DATA_FRAME_CLASS, null, frame.materialize(), null);
-        if (lookupResult == null) {
-            throw RInternalError.shouldNotReachHere();
-        }
-        if (callMatcher == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callMatcher = insert(CallMatcherNode.create(false));
-        }
-        return callMatcher.execute(frame, SIGNATURE, new Object[]{deparseLevel, promiseArgs}, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
     }
 
     private Object bindInternal(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, CastNode castNode, boolean needsVectorCast, SetDimAttributeNode setDimNode,
@@ -243,8 +212,8 @@ public abstract class Bind extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"precedence == LOGICAL_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
-    protected Object allLogical(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == LOGICAL_PRECEDENCE", "args.length > 1"})
+    protected Object allLogical(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,  //
                     @Cached("create()") CastLogicalNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -253,8 +222,8 @@ public abstract class Bind extends RBaseNode {
         return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, setDimNamesNode, getDimNamesNode, getNamesNode);
     }
 
-    @Specialization(guards = {"precedence == INT_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
-    protected Object allInt(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == INT_PRECEDENCE", "args.length > 1"})
+    protected Object allInt(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastIntegerNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -263,8 +232,8 @@ public abstract class Bind extends RBaseNode {
         return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, setDimNamesNode, getDimNamesNode, getNamesNode);
     }
 
-    @Specialization(guards = {"precedence == DOUBLE_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
-    protected Object allDouble(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == DOUBLE_PRECEDENCE", "args.length > 1"})
+    protected Object allDouble(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastDoubleNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -273,8 +242,8 @@ public abstract class Bind extends RBaseNode {
         return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, setDimNamesNode, getDimNamesNode, getNamesNode);
     }
 
-    @Specialization(guards = {"precedence == STRING_PRECEDENCE", "args.length> 1", "!isDataFrame(args)"})
-    protected Object allString(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == STRING_PRECEDENCE", "args.length> 1"})
+    protected Object allString(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastStringNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -283,8 +252,8 @@ public abstract class Bind extends RBaseNode {
         return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, setDimNamesNode, getDimNamesNode, getNamesNode);
     }
 
-    @Specialization(guards = {"precedence == COMPLEX_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
-    protected Object allComplex(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == COMPLEX_PRECEDENCE", "args.length > 1"})
+    protected Object allComplex(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastComplexNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -293,8 +262,8 @@ public abstract class Bind extends RBaseNode {
         return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, setDimNamesNode, getDimNamesNode, getNamesNode);
     }
 
-    @Specialization(guards = {"precedence == LIST_PRECEDENCE", "args.length > 1", "!isDataFrame(args)"})
-    protected Object allList(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
+    @Specialization(guards = {"precedence == LIST_PRECEDENCE", "args.length > 1"})
+    protected Object allList(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence, //
                     @Cached("create()") CastListNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -448,43 +417,6 @@ public abstract class Bind extends RBaseNode {
         return RRuntime.NAMES_ATTR_EMPTY_VALUE;
     }
 
-    @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_DATA_FRAME);
-
-    protected boolean isDataFrame(Object[] args) {
-        for (int i = 0; i < args.length; i++) {
-            if (inheritsCheck.execute(args[i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
-    public abstract static class CbindInternal extends RBuiltinNode {
-
-        @Child private Bind bind = BindNodeGen.create(BindType.cbind);
-        @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
-
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("deparse.level").asIntegerVector().findFirst(0);
-        }
-
-        private int precedence(Object[] args) {
-            int precedence = -1;
-            for (int i = 0; i < args.length; i++) {
-                precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], false));
-            }
-            return precedence;
-        }
-
-        @Specialization
-        protected Object bind(VirtualFrame frame, int deparseLevel, RArgsValuesAndNames args) {
-            return bind.execute(frame, deparseLevel, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
-        }
-    }
-
     private final BranchProfile everSeenNotEqualRows = BranchProfile.create();
     private final BranchProfile everSeenNotEqualColumns = BranchProfile.create();
 
@@ -525,7 +457,6 @@ public abstract class Bind extends RBaseNode {
         int[] dims = getDimensions(vec, rawDimensions);
         RVector<?> res = (RVector<?>) vec.copyWithNewDimensions(dims);
         setDimNamesNode.execute(res, RDataFactory.createList(type == BindType.cbind ? new Object[]{dimNamesA, dimNamesB} : new Object[]{dimNamesB, dimNamesA}));
-        res.copyRegAttributesFrom(vec);
         return res;
     }
 
@@ -585,28 +516,94 @@ public abstract class Bind extends RBaseNode {
         return result;
     }
 
-    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
-    public abstract static class RbindInternal extends RBuiltinNode {
+    @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
+    public abstract static class CbindInternal extends AbstractBind {
+        public CbindInternal() {
+            super(BindType.cbind);
+        }
+    }
 
-        @Child private Bind bind = BindNodeGen.create(BindType.rbind);
-        @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
+    @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
+    public abstract static class RbindInternal extends AbstractBind {
+        public RbindInternal() {
+            super(BindType.rbind);
+        }
+    }
+
+    protected abstract static class AbstractBind extends RBuiltinNode {
+        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+        private final ConditionProfile hasClassProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile hasDispatchFunction = ConditionProfile.createBinaryProfile();
+
+        @Child private Bind bind;
+        @Child private RExplicitCallNode dispatchCallNode;
+        @Child private PrecedenceNode precedenceNode;
+
+        @Child private S3FunctionLookupNode lookup;
+        @Child private GetBaseEnvFrameNode getBaseEnv;
+
+        private final BindType type;
+
+        public AbstractBind(BindType type) {
+            this.type = type;
+        }
 
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.arg("deparse.level").asIntegerVector().findFirst(0);
         }
 
-        private int precedence(Object[] args) {
+        @Specialization
+        protected Object bind(VirtualFrame frame, int deparseLevel, RArgsValuesAndNames args) {
+            RFunction dispatchFunction = createDispatchFunction(frame, args.getArguments());
+            if (hasDispatchFunction.profile(dispatchFunction != null)) {
+                if (dispatchCallNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    dispatchCallNode = insert(RExplicitCallNode.create());
+                }
+                return dispatchCallNode.execute(frame, dispatchFunction, (RArgsValuesAndNames) RArguments.getArgument(frame, 0));
+            } else {
+                if (bind == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    bind = insert(BindNodeGen.create(type));
+                }
+                return bind.execute(frame, deparseLevel, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
+            }
+        }
+
+        protected int precedence(Object[] args) {
             int precedence = -1;
+            if (precedenceNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                precedenceNode = insert(PrecedenceNodeGen.create());
+            }
             for (int i = 0; i < args.length; i++) {
                 precedence = Math.max(precedence, precedenceNode.executeInteger(args[i], false));
             }
             return precedence;
         }
 
-        @Specialization
-        protected Object bind(VirtualFrame frame, int deparseLevel, RArgsValuesAndNames args) {
-            return bind.execute(frame, deparseLevel, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
+        private RFunction createDispatchFunction(VirtualFrame frame, Object[] args) {
+            Result result = null;
+            for (Object arg : args) {
+                RStringVector clazz = classHierarchy.execute(arg);
+                if (hasClassProfile.profile(clazz != null)) {
+                    if (lookup == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        lookup = insert(S3FunctionLookupNode.create(false, false));
+                        getBaseEnv = insert(GetBaseEnvFrameNode.create());
+                    }
+                    Result r = lookup.execute(frame, type.toString(), clazz, null, frame.materialize(), getBaseEnv.execute());
+                    if (r != null) {
+                        if (result == null) {
+                            result = r;
+                        } else if (!result.targetFunctionName.equals(r.targetFunctionName)) {
+                            return null;
+                        }
+                    }
+                }
+            }
+            return result != null ? result.function : null;
         }
     }
 
