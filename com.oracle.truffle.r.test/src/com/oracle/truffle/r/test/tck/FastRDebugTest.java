@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.test.tck;
 
-import com.oracle.truffle.api.debug.DebugStackFrame;
-import com.oracle.truffle.api.debug.DebugValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -31,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.LinkedList;
 
 import org.junit.After;
@@ -38,10 +37,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.api.debug.Breakpoint;
+import com.oracle.truffle.api.debug.DebugStackFrame;
+import com.oracle.truffle.api.debug.DebugValue;
 import com.oracle.truffle.api.debug.Debugger;
+import com.oracle.truffle.api.debug.DebuggerSession;
 import com.oracle.truffle.api.debug.SuspendedEvent;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -49,13 +50,12 @@ import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 
-@SuppressWarnings("deprecation")
 public class FastRDebugTest {
     private Debugger debugger;
+    private DebuggerSession debuggerSession;
     private final LinkedList<Runnable> run = new LinkedList<>();
     private SuspendedEvent suspendedEvent;
     private Throwable ex;
-    private com.oracle.truffle.api.debug.ExecutionEvent executionEvent;
     protected PolyglotEngine engine;
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected final ByteArrayOutputStream err = new ByteArrayOutputStream();
@@ -63,29 +63,21 @@ public class FastRDebugTest {
     @Before
     public void before() {
         suspendedEvent = null;
-        executionEvent = null;
-        engine = PolyglotEngine.newBuilder().setOut(out).setErr(err).onEvent(
-                        new com.oracle.truffle.api.vm.EventConsumer<com.oracle.truffle.api.debug.ExecutionEvent>(com.oracle.truffle.api.debug.ExecutionEvent.class) {
-                            @Override
-                            protected void on(com.oracle.truffle.api.debug.ExecutionEvent event) {
-                                executionEvent = event;
-                                debugger = executionEvent.getDebugger();
-                                performWork();
-                                executionEvent = null;
-                            }
-                        }).onEvent(new com.oracle.truffle.api.vm.EventConsumer<SuspendedEvent>(SuspendedEvent.class) {
-                            @Override
-                            protected void on(SuspendedEvent event) {
-                                suspendedEvent = event;
-                                performWork();
-                                suspendedEvent = null;
-                            }
-                        }).build();
+
+        engine = PolyglotEngine.newBuilder().setOut(out).setErr(err).build();
+        debugger = Debugger.find(engine);
+        debuggerSession = debugger.startSession(event -> {
+            suspendedEvent = event;
+            performWork();
+            suspendedEvent = null;
+        });
+
         run.clear();
     }
 
     @After
     public void dispose() {
+        debuggerSession.close();
         if (engine != null) {
             engine.dispose();
         }
@@ -125,31 +117,19 @@ public class FastRDebugTest {
     public void testBreakpoint() throws Throwable {
         final Source factorial = createFactorial();
 
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    assertNull(suspendedEvent);
-                    assertNotNull(executionEvent);
-                    com.oracle.truffle.api.source.LineLocation nMinusOne = factorial.createLineLocation(9);
-                    debugger.setLineBreakpoint(0, nMinusOne, false);
-                    executionEvent.prepareContinue();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            Breakpoint breakpoint = Breakpoint.newBuilder(factorial).lineIs(9).build();
+            debuggerSession.install(breakpoint);
         });
+        // Init before eval:
+        performWork();
         engine.eval(factorial);
         assertExecutedOK();
 
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                // the breakpoint should hit instead
-            }
-        });
         assertLocation(9, "nMinusOne = n - 1",
-                        "n", 2.0);
+                        "n", "2.0");
         continueExecution();
 
         final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
@@ -167,13 +147,10 @@ public class FastRDebugTest {
         engine.eval(factorial);
 
         // @formatter:on
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                assertNull(suspendedEvent);
-                assertNotNull(executionEvent);
-                executionEvent.prepareStepInto();
-            }
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
         });
 
         assertLocation(2, "res = fac(2)");
@@ -201,6 +178,8 @@ public class FastRDebugTest {
         assertLocation(3, "res", "res", 2.0);
         stepOut();
 
+        // Init before eval:
+        performWork();
         final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
         final Value value = engine.eval(evalSource);
         assertExecutedOK();
@@ -223,13 +202,10 @@ public class FastRDebugTest {
         engine.eval(source);
 
         // @formatter:on
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                assertNull(suspendedEvent);
-                assertNotNull(executionEvent);
-                executionEvent.prepareStepInto();
-            }
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
         });
 
         stepInto(1);
@@ -237,9 +213,11 @@ public class FastRDebugTest {
         assertLocation(6, "i", "i", 4, "n", 15.0, "str", "hello");
         assertMetaObjects(source, "i", "integer", "n", "double", "str", "character");
         stepOut();
+        performWork();
 
         final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
         engine.eval(evalSource);
+
         assertExecutedOK();
     }
 
@@ -255,74 +233,48 @@ public class FastRDebugTest {
     }
 
     private void stepOver(final int size) {
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                suspendedEvent.prepareStepOver(size);
-            }
-        });
+        run.addLast(() -> suspendedEvent.prepareStepOver(size));
     }
 
     private void stepOut() {
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                suspendedEvent.prepareStepOut();
-            }
-        });
+        run.addLast(() -> suspendedEvent.prepareStepOut());
     }
 
     private void continueExecution() {
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                suspendedEvent.prepareContinue();
-            }
-        });
+        run.addLast(() -> suspendedEvent.prepareContinue());
     }
 
     private void stepInto(final int size) {
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                suspendedEvent.prepareStepInto(size);
-            }
-        });
+        run.addLast(() -> suspendedEvent.prepareStepInto(size));
     }
 
     private void assertLocation(final int line, final String code, final Object... expectedFrame) {
-        run.addLast(new Runnable() {
-            @Override
-            public void run() {
-                assertNotNull(suspendedEvent);
-                final int actualLine = suspendedEvent.getNode().getSourceSection().getLineLocation().getLineNumber();
-                Assert.assertEquals(line, actualLine);
-                final String actualCode = suspendedEvent.getNode().getSourceSection().getCode();
-                Assert.assertEquals(code, actualCode);
-                final MaterializedFrame frame = suspendedEvent.getFrame();
+        run.addLast(() -> {
+            assertNotNull(suspendedEvent);
+            final int currentLine = suspendedEvent.getSourceSection().getStartLine();
+            assertEquals(line, currentLine);
+            final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
+            assertEquals(code, currentCode);
+            final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
 
-                Assert.assertEquals(expectedFrame.length / 2, frameSize(frame));
+            final AtomicInteger numFrameVars = new AtomicInteger(0);
+            frame.forEach(var -> {
+                numFrameVars.incrementAndGet();
+            });
+            // There is (self) among the variables, hence substract 1:
+            assertEquals(expectedFrame.length / 2, numFrameVars.get() - 1);
 
-                for (int i = 0; i < expectedFrame.length; i = i + 2) {
-                    final String expectedIdentifier = (String) expectedFrame[i];
-                    final FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(expectedIdentifier);
-                    Assert.assertNotNull(slot);
-                    final Object expectedValue = expectedFrame[i + 1];
-                    final Object actualValue = getRValue(frame.getValue(slot));
-                    Assert.assertEquals(expectedValue, actualValue);
-                }
-                run.removeFirst().run();
+            for (int i = 0; i < expectedFrame.length; i = i + 2) {
+                String expectedIdentifier = (String) expectedFrame[i];
+                Object expectedValue = expectedFrame[i + 1];
+                String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
+                DebugValue value = frame.getValue(expectedIdentifier);
+                assertNotNull(value);
+                String valueStr = value.as(String.class);
+                assertEquals(expectedValueStr, valueStr);
             }
 
-            private int frameSize(MaterializedFrame frame) {
-                int cnt = 0;
-                for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
-                    if (slot.getIdentifier() instanceof String) {
-                        cnt++;
-                    }
-                }
-                return cnt;
-            }
+            run.removeFirst().run();
         });
     }
 
