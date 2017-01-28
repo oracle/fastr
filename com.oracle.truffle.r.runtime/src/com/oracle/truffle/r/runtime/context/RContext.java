@@ -517,6 +517,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         attachThread();
         state.add(State.ATTACHED);
 
+        stateDLL.initialize(this);
+        stateRFFI = RFFIContextStateFactory.newContextState();
+        // separate in case initialize calls getStateRFFI()!
+        stateRFFI.initialize(this);
+
         if (!embedded) {
             doEnvOptionsProfileInitialization();
         }
@@ -526,14 +531,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRConnection.initialize(this);
         stateStdConnections.initialize(this);
         stateRNG.initialize(this);
-        stateRFFI = RFFIContextStateFactory.newContextState();
-        // separate in case initialize calls getStateRFFI()!
-        stateRFFI.initialize(this);
         stateRSerialize.initialize(this);
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
-        stateDLL.initialize(this);
         state.add(State.INITIALIZED);
 
         if (!embedded) {

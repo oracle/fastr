@@ -145,27 +145,11 @@ public class JNI_Call implements CallRFFI {
     private static final boolean ForceRTLDGlobal = false;
 
     public JNI_Call() {
-        loadLibRLibrary();
+        initialize();
     }
 
-    /**
-     * Load the {@code libR} library. N.B. this library defines some non-JNI global symbols that are
-     * referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
-     * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
-     * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
-     * so we have to do an additional {@code System.load} to achieve that.
-     *
-     * Before we do that we must load {@code libjniboot} because the implementation of
-     * {@link DLLRFFI.DLLRFFINode#dlopen} is called by {@link DLL#loadLibR} which uses JNI!
-     */
     @TruffleBoundary
-    private static void loadLibRLibrary() {
-        String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
-        System.load(libjnibootPath);
-
-        String librffiPath = LibPaths.getBuiltinLibPath("R");
-        DLL.loadLibR(librffiPath);
-        System.load(librffiPath);
+    private static void initialize() {
         RFFIUtils.initialize();
         if (traceEnabled()) {
             traceDownCall("initialize");

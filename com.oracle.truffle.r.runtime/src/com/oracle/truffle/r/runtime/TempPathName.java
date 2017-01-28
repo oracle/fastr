@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,14 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Random;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  *
- * As per the GnuR spec, the tempdir() directory is identified on startup.
+ * As per the GnuR spec, the tempdir() directory is identified on startup. It <b>must</b>be
+ * initialized before the first RFFI call as the value is available in the R FFI.
  *
  */
 public class TempPathName {
@@ -43,9 +45,9 @@ public class TempPathName {
     private static String tempDirPath;
     private static final Random rand = new Random();
 
-    public static void initialize() {
+    private static void initialize() {
         if (tempDirPath == null) {
-            //
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
             String startingTempDir = null;
             for (String envVar : envVars) {
@@ -78,11 +80,13 @@ public class TempPathName {
     }
 
     public static String tempDirPath() {
+        initialize();
         return tempDirPath;
     }
 
     @TruffleBoundary
     public static String createNonExistingFilePath(String pattern, String tempDir, String fileExt) {
+        initialize();
         while (true) {
             StringBuilder sb = new StringBuilder(tempDir);
             sb.append(File.separatorChar);
