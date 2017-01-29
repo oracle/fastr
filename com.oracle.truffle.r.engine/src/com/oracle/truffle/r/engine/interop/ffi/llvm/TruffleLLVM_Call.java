@@ -101,7 +101,7 @@ class TruffleLLVM_Call implements CallRFFI {
         }
         VirtualFrame frame = TruffleRFFIFrameHelper.create();
         Node executeNode = Message.createExecute(2).createNode();
-        RFFIVariables[] variables = RFFIVariables.values();
+        RFFIVariables[] variables = RFFIVariables.initialize();
         for (int i = 0; i < variables.length; i++) {
             RFFIVariables var = variables[i];
             Object value = var.getValue();
@@ -230,17 +230,6 @@ class TruffleLLVM_Call implements CallRFFI {
             splitTruffleCallRFFINode.execute(nativeCallInfo, args, true);
         }
 
-        @Override
-        public void setTempDir(String tempDir) {
-            // TODO Truffleize
-            new JNI_CallRFFINode().setTempDir(tempDir);
-        }
-
-        @Override
-        public void setInteractive(boolean interactive) {
-            // TODO Truffleize
-            new JNI_CallRFFINode().setInteractive(interactive);
-        }
     }
 
     /**

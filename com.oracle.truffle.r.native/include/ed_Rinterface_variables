@@ -1,7 +1,7 @@
 /R_Interactive/
 i
 #ifdef FASTR
-LibExtern Rboolean FASTR_Interactive();
+extern Rboolean FASTR_Interactive();
 #define R_Interactive FASTR_Interactive()
 #else
 .
@@ -12,7 +12,7 @@ a
 /R_Home;/
 i
 #ifdef FASTR
-LibExtern char* FASTR_R_Home();
+extern char* FASTR_R_Home();
 #define R_Home FASTR_R_Home()
 #else
 .

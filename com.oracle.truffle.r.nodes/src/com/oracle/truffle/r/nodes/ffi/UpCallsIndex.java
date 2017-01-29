@@ -146,7 +146,7 @@ final class UpCallsIndex {
     static final int TAG = 104;
     static final int TYPEOF = 105;
     static final int VECTOR_ELT = 106;
-    static final int isInteractive = 107;
+    static final int R_Interactive = 107;
     static final int isS4Object = 108;
     static final int unif_rand = 109;
 

@@ -31,9 +31,6 @@ import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
 import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
-import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
@@ -114,35 +111,7 @@ public class JNI_Call implements CallRFFI {
             }
         }
 
-        @Override
-        public void setTempDir(String tempDir) {
-            synchronized (JNI_CallRFFINode.class) {
-                if (traceEnabled()) {
-                    traceDownCall("setTempDir", tempDir);
-                }
-                RFFIVariables.setTempDir(tempDir);
-                nativeSetTempDir(tempDir);
-                if (traceEnabled()) {
-                    traceDownCallReturn("setTempDir", null);
-                }
-            }
-        }
-
-        @Override
-        public void setInteractive(boolean interactive) {
-            synchronized (JNI_CallRFFINode.class) {
-                if (traceEnabled()) {
-                    traceDownCall("setInteractive", interactive);
-                }
-                nativeSetInteractive(interactive);
-                if (traceEnabled()) {
-                    traceDownCallReturn("setInteractive", null);
-                }
-            }
-        }
     }
-
-    private static final boolean ForceRTLDGlobal = false;
 
     public JNI_Call() {
         initialize();
@@ -151,11 +120,12 @@ public class JNI_Call implements CallRFFI {
     @TruffleBoundary
     private static void initialize() {
         RFFIUtils.initialize();
+
         if (traceEnabled()) {
             traceDownCall("initialize");
         }
         try {
-            initialize(new UpCallsRFFIImpl(), RFFIVariables.values());
+            initialize(new UpCallsRFFIImpl(), RFFIVariables.initialize());
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);

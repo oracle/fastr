@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -190,6 +190,7 @@ void R_SaveGlobalEnvToFile(const char *f) {
 
 void R_Suicide(const char *s) { ptr_R_Suicide(s); }
 
+#undef R_Interactive
 
 void R_DefParams(Rstart rs) {
     // These are the GnuR defaults and correspond to the settings in RStartParams
@@ -235,7 +236,7 @@ void R_set_command_line_arguments(int argc, char **argv) {
 
 int Rf_initEmbeddedR(int argc, char *argv[]) {
 	Rf_initialize_R(argc, argv);
-	R_Interactive = TRUE;
+//	R_Interactive = TRUE;
     setup_Rmainloop();
     return 1;
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,10 +48,12 @@ void Rf_checkArityCall(SEXP, SEXP, SEXP);
 
 extern SEXP R_DeviceSymbol;
 extern SEXP R_DevicesSymbol;
-extern Rboolean R_Interactive;
+extern Rboolean FASTR_Interactive();
+#define R_Interactive FASTR_Interactive()
 extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
-extern const char *R_Home;
+extern const char *FASTR_R_Home();
+#define R_Home FASTR_R_Home()
 extern const char *R_TempDir;
 
 //#define HAVE_MBSTATE_T 1 // actually from config.h

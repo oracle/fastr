@@ -22,27 +22,23 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
-
 /**
- * Support for the {.Call} and {.External} calls.
+ * The following functions are global variables in the standard R FFI. However, owing to the support
+ * for virtual R sessions (see .fastr.context) in FastR they are remapped as functions.
  */
-public interface CallRFFI {
-    abstract class CallRFFINode extends Node {
-        /**
-         * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
-         * {@code args}. The values in {@code args} can be any of the types used to represent
-         * {@code R} values in the implementation.
-         */
-        public abstract Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args);
 
-        /**
-         * Variant that does not return a result (primarily for library "init" methods).
-         */
-        public abstract void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args);
+public interface RContextUpCallsRFFI {
+    // Checkstyle: stop method name check
+    Object R_GlobalContext();
 
-    }
+    Object R_GlobalEnv();
 
-    CallRFFINode createCallRFFINode();
+    Object R_BaseEnv();
+
+    Object R_BaseNamespace();
+
+    Object R_NamespaceRegistry();
+
+    int R_Interactive();
 
 }

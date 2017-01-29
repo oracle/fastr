@@ -705,7 +705,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public int isInteractive() {
+    public int R_Interactive() {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("isInteractive");
         }
@@ -713,7 +713,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public int isS4Object(Object x) {
+    public int IS_S4_OBJECT(Object x) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("isS4Object");
         }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,13 +44,14 @@ R_HEADERS_TO_LINK := $(filter-out $(notdir $(R_HEADERS_LOCAL)),$(R_HEADERS_FILEN
 
 all: linked
 
-linked: ed_Rinternals ed_Rinterface_gcntx ed_Rinterface_interactive ed_GraphicsEngine
+linked: ed_Rinternals ed_Rinterface_gcntx ed_Rinterface_variables ed_GraphicsEngine
 	mkdir -p R_ext
 	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/$(file) $(file);)
 	ln -sf src/libintl.h
 	ed $(GNUR_HOME)/include/Rinternals.h < ed_Rinternals
 	ed $(GNUR_HOME)/include/Rinterface.h < ed_Rinterface_gcntx
-#	ed $(GNUR_HOME)/include/Rinterface.h < ed_Rinterface_interactive
+# previous ed wrote to local file
+	ed Rinterface.h < ed_Rinterface_variables
 	ed $(GNUR_HOME)/include/R_ext/GraphicsEngine.h < ed_GraphicsEngine
 	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/R_ext/$(file) R_ext/$(file);)
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext
