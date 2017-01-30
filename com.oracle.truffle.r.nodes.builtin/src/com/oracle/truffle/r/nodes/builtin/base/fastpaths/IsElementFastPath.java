@@ -81,7 +81,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.asLogical(profile.profile(element >= set.getStart() && element <= set.getEnd()));
     }
 
-    @Specialization(contains = "isElementOneSequence", guards = "el.getLength() == 1")
+    @Specialization(replaces = "isElementOneSequence", guards = "el.getLength() == 1")
     protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set,
                     @Cached("create()") NACheck na,
                     @Cached("create()") BranchProfile trueProfile,

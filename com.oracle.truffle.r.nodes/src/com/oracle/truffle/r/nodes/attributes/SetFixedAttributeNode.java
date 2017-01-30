@@ -117,7 +117,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return oldShape.defineProperty(name, value, 0);
     }
 
-    @Specialization(contains = "setAttrCached")
+    @Specialization(replaces = "setAttrCached")
     @TruffleBoundary
     protected void setFallback(DynamicObject attrs, Object value) {
         attrs.define(name, value);

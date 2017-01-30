@@ -66,7 +66,7 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
         return result;
     }
 
-    @Specialization(contains = "getArrayFromConstantLayouts")
+    @Specialization(replaces = "getArrayFromConstantLayouts")
     protected RAttribute[] getArrayFallback(DynamicObject attrs) {
         Shape shape = attrs.getShape();
         List<Property> props = shape.getPropertyList();

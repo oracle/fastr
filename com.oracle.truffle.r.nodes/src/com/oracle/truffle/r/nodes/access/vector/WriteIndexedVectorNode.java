@@ -286,7 +286,12 @@ abstract class WriteIndexedVectorNode extends Node {
      * positions in an integer vector is significantly lower than the number of elements in the
      * store. This might not be always true and could benefit from more investigation.
      */
-    @Specialization(contains = "doIntegerSequencePosition")
+    /**
+     * Integer vectors iterate over the number of positions because we assume that the number of
+     * positions in an integer vector is significantly lower than the number of elements in the
+     * store. This might not be always true and could benefit from more investigation.
+     */
+    @Specialization(replaces = "doIntegerSequencePosition")
     protected int doIntegerPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,

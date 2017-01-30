@@ -118,7 +118,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         return doCall(frame, func, argsAsList, quote, env);
     }
 
-    @Specialization(contains = "doCallCached")
+    @Specialization(replaces = "doCallCached")
     protected Object doCall(VirtualFrame frame, RAbstractStringVector what, RList argsAsList, boolean quote, RMissing env) {
         if (what.getLength() != 1) {
             CompilerDirectives.transferToInterpreter();

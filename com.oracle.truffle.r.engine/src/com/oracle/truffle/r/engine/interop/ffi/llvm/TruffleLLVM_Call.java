@@ -156,7 +156,7 @@ class TruffleLLVM_Call implements CallRFFI {
             return doInvoke(messageNode, nativeCallInfo, args);
         }
 
-        @Specialization(contains = "invokeCallCached")
+        @Specialization(replaces = "invokeCallCached")
         protected Object invokeCallNormal(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") RContext context) {
             return doInvoke(Message.createExecute(0).createNode(), nativeCallInfo, args);
         }

@@ -65,7 +65,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     }
 
     @TruffleBoundary
-    @Specialization(contains = {"getAttrCached"})
+    @Specialization(replaces = {"getAttrCached"})
     protected Object getAttrFallback(DynamicObject attrs, String name) {
         return attrs.get(name);
     }

@@ -669,7 +669,7 @@ public class CallAndExternalFunctions {
          * such cases there is this generic version.
          */
         @SuppressWarnings("unused")
-        @Specialization(contains = "callNamedFunction")
+        @Specialization(replaces = "callNamedFunction")
         protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());

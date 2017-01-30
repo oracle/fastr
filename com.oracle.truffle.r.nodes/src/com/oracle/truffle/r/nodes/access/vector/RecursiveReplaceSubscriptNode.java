@@ -71,7 +71,18 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
      * a[[2]] <- tmp1
      * </code>
      */
-    @Specialization(contains = "doDefault")
+    /**
+     * Exemplary expansion. <code>
+     * a <- list(1,list(1,list(1))); a[[c(2,2,2)]] <- 2
+     * Gets desugared into:
+     * tmp1 <- a[[2]]
+     * tmp2 <- tmp1[[2]]
+     * tmp2[[2]] <- 2
+     * tmp1[[2]] <- tmp2
+     * a[[2]] <- tmp1
+     * </code>
+     */
+    @Specialization(replaces = "doDefault")
     @SuppressWarnings("unused")
     protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object value,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {

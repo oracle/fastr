@@ -119,7 +119,7 @@ public abstract class CumMax extends RBuiltinNode {
         return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
-    @Specialization(contains = "cummaxIntSequence")
+    @Specialization(replaces = "cummaxIntSequence")
     protected RIntVector cummax(RAbstractIntVector v) {
         int[] cmaxV = new int[v.getLength()];
         na.enable(v);

@@ -83,7 +83,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return cached.apply(left, right);
     }
 
-    @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
+    @Specialization(replaces = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right,
                     @Cached("binary.createOperation()") BinaryArithmetic arithmetic,

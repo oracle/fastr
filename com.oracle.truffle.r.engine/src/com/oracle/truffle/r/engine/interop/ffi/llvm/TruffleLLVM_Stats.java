@@ -115,7 +115,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
             return doWork(a, nseg, n, nspn, isn, work, iwork, messageNode, fftWork);
         }
 
-        @Specialization(contains = "executeWorkCached")
+        @Specialization(replaces = "executeWorkCached")
         protected int executeWorkNormal(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, @SuppressWarnings("unused") RContext context) {
             return doWork(a, nseg, n, nspn, isn, work, iwork, createMessageNode(), lookup("fft_work"));
         }
@@ -157,7 +157,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
             doFactor(n, pmaxf, pmaxp, messageNode, fftFactor);
         }
 
-        @Specialization(contains = "executeFactorCached")
+        @Specialization(replaces = "executeFactorCached")
         protected void executeFactorNormal(int n, int[] pmaxf, int[] pmaxp, @SuppressWarnings("unused") RContext context) {
             doFactor(n, pmaxf, pmaxp, createMessageNode(), lookup("fft_factor"));
         }

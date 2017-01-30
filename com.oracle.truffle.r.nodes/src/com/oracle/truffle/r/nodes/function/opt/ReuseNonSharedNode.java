@@ -56,7 +56,7 @@ public abstract class ReuseNonSharedNode extends Node {
         return value;
     }
 
-    @Specialization(contains = "getStorage")
+    @Specialization(replaces = "getStorage")
     protected static RShareable getRShareable(RShareable value,
                     @Cached("createBinaryProfile()") ConditionProfile isSharedProfile) {
         if (isSharedProfile.profile(value.isShared())) {

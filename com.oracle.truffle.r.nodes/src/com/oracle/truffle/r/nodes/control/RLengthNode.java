@@ -101,7 +101,7 @@ public abstract class RLengthNode extends RNode {
         return lengthProfile.profile(cachedClass.cast(operand).getLength());
     }
 
-    @Specialization(contains = "doCachedContainer")
+    @Specialization(replaces = "doCachedContainer")
     protected int doContainer(RAbstractContainer operand,
                     @Cached("create()") VectorLengthProfile lengthProfile) {
         return lengthProfile.profile(operand.getLength());

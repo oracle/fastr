@@ -105,7 +105,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
             return castImpl(cachedClass.cast(operand));
         }
 
-        @Specialization(contains = "doCached", guards = {"operand.getRType().isNumeric()"})
+        @Specialization(replaces = "doCached", guards = {"operand.getRType().isNumeric()"})
         @TruffleBoundary
         protected byte doGeneric(RAbstractVector operand) {
             return castImpl(operand);

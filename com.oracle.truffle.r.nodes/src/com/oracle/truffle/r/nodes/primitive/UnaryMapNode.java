@@ -337,7 +337,7 @@ public final class UnaryMapNode extends RBaseNode {
             indexedAction.perform(node, store, 0, operand, 0);
         }
 
-        @Specialization(contains = "doScalar")
+        @Specialization(replaces = "doScalar")
         protected void doScalarVector(UnaryMapFunctionNode node, Object store, RAbstractVector operand, int operandLength,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
             profile.profileCounted(operandLength);

@@ -205,14 +205,14 @@ abstract class S4Class extends RBaseNode {
      * but we probably cannot rely on this 100% of time and should use equals() method as backup.
      */
     @SuppressWarnings("unused")
-    @Specialization(contains = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
+    @Specialization(replaces = "getS4ClassCachedEqOp", guards = "classAttr.equals(cachedClassAttr)")
     protected RStringVector getS4ClassCachedEqMethod(String classAttr,
                     @Cached("classAttr") String cachedClassAttr,
                     @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
         return s4Classes;
     }
 
-    @Specialization(contains = "getS4ClassCachedEqMethod")
+    @Specialization(replaces = "getS4ClassCachedEqMethod")
     protected RStringVector getS4Class(String classAttr) {
         return getS4ClassInternal(classAttr);
     }

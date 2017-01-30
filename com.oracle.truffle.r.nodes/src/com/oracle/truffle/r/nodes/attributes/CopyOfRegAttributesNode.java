@@ -70,7 +70,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyAttributes(source)", contains = "copyNoAttributes")
+    @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
     protected void copyEmptyAttributes(RAbstractVector source, RVector<?> target) {
         // nothing to do
     }

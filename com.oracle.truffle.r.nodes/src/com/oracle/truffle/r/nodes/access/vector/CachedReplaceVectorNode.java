@@ -494,7 +494,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             return cachedValue;
         }
 
-        @Specialization(contains = "profile")
+        @Specialization(replaces = "profile")
         protected static boolean generic(boolean value) {
             return value;
         }

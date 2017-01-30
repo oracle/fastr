@@ -120,7 +120,7 @@ public abstract class Combine extends RBuiltinNode {
         return args.getArgument(0);
     }
 
-    @Specialization(contains = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
+    @Specialization(replaces = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
     protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
                     @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence,
@@ -155,7 +155,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    @Specialization(limit = "COMBINE_CACHED_LIMIT", contains = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
+    @Specialization(limit = "COMBINE_CACHED_LIMIT", replaces = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
     protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence,
                     @Cached("createCast(cachedPrecedence)") CastNode cast,

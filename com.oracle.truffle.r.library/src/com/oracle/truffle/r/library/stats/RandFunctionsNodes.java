@@ -124,7 +124,7 @@ public final class RandFunctionsNodes {
             return evaluateWrapper(lengthVec, a, b, c, randCached, nodeData);
         }
 
-        @Specialization(contains = "evaluateWithCached")
+        @Specialization(replaces = "evaluateWithCached")
         protected final Object evaluateFallback(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
                         @Cached("create()") RandGenerationNodeData nodeData) {
             return evaluateWrapper(lengthVec, a, b, c, rand, nodeData);

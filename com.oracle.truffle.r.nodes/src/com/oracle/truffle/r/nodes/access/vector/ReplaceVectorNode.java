@@ -164,7 +164,7 @@ public abstract class ReplaceVectorNode extends Node {
         return mode;
     }
 
-    @Specialization(contains = "doReplaceCached")
+    @Specialization(replaces = "doReplaceCached")
     @TruffleBoundary
     protected Object doReplaceDefaultGeneric(Object vector, Object[] positions, Object value,  //
                     @Cached("new(createDefaultCached(getThis(), vector, positions, value))") GenericVectorReplaceNode generic) {

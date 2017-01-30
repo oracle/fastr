@@ -92,7 +92,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             return interned;
         }
 
-        @Specialization(contains = "internCached")
+        @Specialization(replaces = "internCached")
         protected static String intern(String value) {
             return Utils.intern(value);
         }

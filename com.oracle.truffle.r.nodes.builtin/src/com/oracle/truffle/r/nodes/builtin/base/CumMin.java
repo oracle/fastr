@@ -119,7 +119,7 @@ public abstract class CumMin extends RBuiltinNode {
         return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), getNamesNode.getNames(v));
     }
 
-    @Specialization(contains = "cumminIntSequence")
+    @Specialization(replaces = "cumminIntSequence")
     protected RIntVector cummin(RAbstractIntVector v) {
         int[] cminV = new int[v.getLength()];
         na.enable(v);

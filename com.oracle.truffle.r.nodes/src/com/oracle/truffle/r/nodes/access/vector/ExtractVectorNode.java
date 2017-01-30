@@ -168,7 +168,7 @@ public abstract class ExtractVectorNode extends Node {
         return new CachedExtractVectorNode(node.getMode(), (RTypedValue) vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
     }
 
-    @Specialization(contains = "doExtractDefaultCached")
+    @Specialization(replaces = "doExtractDefaultCached")
     @TruffleBoundary
     protected Object doExtractDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {

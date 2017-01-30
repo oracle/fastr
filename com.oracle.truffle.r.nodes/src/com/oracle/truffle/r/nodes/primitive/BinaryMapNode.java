@@ -429,7 +429,7 @@ public final class BinaryMapNode extends RBaseNode {
             indexedAction.perform(node, store, 0, left, 0, right, 0);
         }
 
-        @Specialization(contains = "doScalarScalar", guards = {"leftLength == 1"})
+        @Specialization(replaces = "doScalarScalar", guards = {"leftLength == 1"})
         @SuppressWarnings("unused")
         protected void doScalarVector(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
@@ -439,7 +439,7 @@ public final class BinaryMapNode extends RBaseNode {
             }
         }
 
-        @Specialization(contains = "doScalarScalar", guards = {"rightLength == 1"})
+        @Specialization(replaces = "doScalarScalar", guards = {"rightLength == 1"})
         @SuppressWarnings("unused")
         protected void doVectorScalar(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
@@ -463,7 +463,7 @@ public final class BinaryMapNode extends RBaseNode {
             return max % min == 0;
         }
 
-        @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(leftLength, rightLength)"})
+        @Specialization(replaces = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(leftLength, rightLength)"})
         protected void doMultiplesLeft(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
                         @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile rightProfile) {
@@ -478,7 +478,7 @@ public final class BinaryMapNode extends RBaseNode {
             }
         }
 
-        @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(rightLength, leftLength)"})
+        @Specialization(replaces = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(rightLength, leftLength)"})
         protected void doMultiplesRight(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
                         @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile rightProfile) {

@@ -103,12 +103,12 @@ public abstract class Sum extends RBuiltinNode {
         }
     }
 
-    @Specialization(contains = "sumLengthOneRDoubleVector", guards = "args.getLength() == 1")
+    @Specialization(replaces = "sumLengthOneRDoubleVector", guards = "args.getLength() == 1")
     protected Object sumLengthOne(RArgsValuesAndNames args, boolean naRm) {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(contains = {"sumLengthOneRDoubleVector", "sumLengthOne"})
+    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOne"})
     protected Object sum(RArgsValuesAndNames args, boolean naRm,
                     @Cached("create()") Combine combine) {
         return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);

@@ -74,7 +74,7 @@ public abstract class BoxPrimitiveNode extends CastNode {
         return cachedClass.cast(vector);
     }
 
-    @Specialization(contains = "doCached", guards = "!isPrimitive(vector)")
+    @Specialization(replaces = "doCached", guards = "!isPrimitive(vector)")
     protected static Object doGeneric(Object vector) {
         return vector;
     }
