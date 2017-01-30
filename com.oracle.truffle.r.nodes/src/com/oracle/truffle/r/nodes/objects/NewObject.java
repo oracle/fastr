@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.nodes.objects;
 
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
@@ -41,11 +43,8 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private CastNode castStringScalar;
     @Child private CastNode castLogicalScalar;
     {
-        CastBuilder builder = new CastBuilder();
-        builder.arg(0).asStringVector().findFirst(RRuntime.STRING_NA);
-        builder.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
-        castStringScalar = builder.getCasts()[0];
-        castLogicalScalar = builder.getCasts()[1];
+        castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
+        castLogicalScalar = newCastBuilder().asLogicalVector().findFirst(RRuntime.LOGICAL_NA).buildCastNode();
     }
 
     @Override
