@@ -34,8 +34,10 @@ class TruffleLLVM_RFFIContextState implements ContextState {
     TruffleLLVM_PkgInit.ContextStateImpl pkgInitState;
     TruffleLLVM_Call.ContextStateImpl callState;
     TruffleLLVM_Stats.ContextStateImpl statsState;
+    private final ContextState jniContextState;
 
-    TruffleLLVM_RFFIContextState() {
+    TruffleLLVM_RFFIContextState(ContextState jniContextState) {
+        this.jniContextState = jniContextState;
         dllState = TruffleLLVM_DLL.newContextState();
         pkgInitState = TruffleLLVM_PkgInit.newContextState();
         callState = TruffleLLVM_Call.newContextState();
@@ -52,6 +54,7 @@ class TruffleLLVM_RFFIContextState implements ContextState {
 
     @Override
     public ContextState initialize(RContext context) {
+        jniContextState.initialize(context);
         dllState.initialize(context);
         pkgInitState.initialize(context);
         callState.initialize(context);

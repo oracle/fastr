@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call.JNI_CallRFFINode;
@@ -55,7 +56,6 @@ class TruffleLLVM_Call implements CallRFFI {
         new JNI_Call();
         truffleCall = this;
         truffleCallTruffleObject = JavaInterop.asTruffleObject(truffleCall);
-        TruffleLLVM_PkgInit.initialize();
         truffleCallHelper = TruffleLLVM_UpCallsRFFIImpl.initialize();
     }
 
@@ -66,6 +66,7 @@ class TruffleLLVM_Call implements CallRFFI {
         @Override
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
+            RFFIFactory.getRFFI().getCallRFFI();
             context.addExportedSymbol("_fastr_rffi_call", truffleCallTruffleObject);
             context.addExportedSymbol("_fastr_rffi_callhelper", truffleCallHelper);
             return this;

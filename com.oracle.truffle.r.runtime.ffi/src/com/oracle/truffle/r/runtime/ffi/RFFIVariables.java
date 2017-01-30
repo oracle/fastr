@@ -80,7 +80,7 @@ public enum RFFIVariables {
     R_BlankString(RDataFactory.createStringVectorFromScalar("")),
     R_TrueValue(RRuntime.LOGICAL_TRUE),
     R_FalseValue(RRuntime.LOGICAL_FALSE),
-    R_LogicalNAValue(RRuntime.LOGICAL_NA); // updated with setInteractive
+    R_LogicalNAValue(RRuntime.LOGICAL_NA);
 
     private Object value;
 

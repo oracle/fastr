@@ -45,6 +45,7 @@ class TruffleLLVM_PkgInit {
     static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
+            TruffleLLVM_PkgInit.initialize();
             context.addExportedSymbol("_fastr_rffi_pkginit", trufflePkgInitTruffleObject);
             return this;
         }
@@ -58,7 +59,7 @@ class TruffleLLVM_PkgInit {
         return new ContextStateImpl();
     }
 
-    static TruffleLLVM_PkgInit initialize() {
+    private static TruffleLLVM_PkgInit initialize() {
         if (trufflePkgInit == null) {
             trufflePkgInit = new TruffleLLVM_PkgInit();
             trufflePkgInitTruffleObject = JavaInterop.asTruffleObject(trufflePkgInit);
