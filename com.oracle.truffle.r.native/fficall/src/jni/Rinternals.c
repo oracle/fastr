@@ -101,7 +101,7 @@ static jmethodID SET_TYPEOF_FASTR_MethodID;
 static jmethodID TYPEOF_MethodID;
 static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
-static jmethodID isS4ObjectMethodID;
+static jmethodID IS_S4_OBJECTMethodID;
 static jmethodID logNotCharSXPWrapperMethodID;
 static jmethodID R_tryEvalMethodID;
 static jmethodID RDEBUGMethodID;
@@ -205,7 +205,7 @@ void init_internals(JNIEnv *env) {
 	TYPEOF_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "TYPEOF", "(Ljava/lang/Object;)I", 0);
 	OBJECT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "OBJECT", "(Ljava/lang/Object;)I", 0);
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
-	isS4ObjectMethodID = checkGetMethodID(env, UpCallsRFFIClass, "isS4Object", "(Ljava/lang/Object;)I", 0);
+	IS_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "IS_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
 	logNotCharSXPWrapperMethodID = checkGetMethodID(env, UpCallsRFFIClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 0);
 	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 0);
 	RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RDEBUG", "(Ljava/lang/Object;)I", 0);
@@ -1367,7 +1367,7 @@ R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 
 int IS_S4_OBJECT(SEXP x) {
 	JNIEnv *env = getEnv();
-	return 	(*env)->CallIntMethod(env, UpCallsRFFIObject, isS4ObjectMethodID, x);
+	return 	(*env)->CallIntMethod(env, UpCallsRFFIObject, IS_S4_OBJECTMethodID, x);
 }
 
 void SET_S4_OBJECT(SEXP x) {

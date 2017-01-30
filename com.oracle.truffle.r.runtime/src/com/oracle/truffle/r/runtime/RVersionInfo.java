@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -45,8 +46,8 @@ public enum RVersionInfo {
     public static final int SERIALIZE_VERSION = (2 << 16) + (3 << 8) + 0;
 
     @CompilationFinal private static final RVersionInfo[] VALUES = RVersionInfo.values();
-    @CompilationFinal private static final String[] LIST_VALUES = new String[VALUES.length];
-    @CompilationFinal private static final String[] LIST_NAMES = new String[VALUES.length];
+    @CompilationFinal private static String[] ListValues;
+    @CompilationFinal private static String[] ListNames;
 
     private final String listName;
     private String value;
@@ -76,49 +77,56 @@ public enum RVersionInfo {
         return Character.toLowerCase(s.charAt(0)) + s.substring(1);
     }
 
-    public static void initialize() {
-        UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
-        String osName = toFirstLower(utsname.sysname());
-        String vendor = osName.equals("darwin") ? "apple" : "unknown";
-        OS.value = osName + utsname.release();
-        for (int i = 0; i < VALUES.length; i++) {
-            RVersionInfo data = VALUES[i];
-            LIST_NAMES[i] = data.listName;
-            if (data.value == null) {
-                switch (data) {
-                    case Platform:
-                        /*
-                         * FIXME In order to match the info in the default packages copied from
-                         * GnuR, this value on Linux has to be x86_64-unknown-linux-gnu
-                         */
-                        if (osName.equals("linux")) {
-                            if (Arch.value.equals("sparcv9")) {
-                                data.value = "sparc64-unknown-linux-gnu";
+    private static void initialize() {
+        if (ListValues == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            ListValues = new String[VALUES.length];
+            ListNames = new String[VALUES.length];
+            UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+            String osName = toFirstLower(utsname.sysname());
+            String vendor = osName.equals("darwin") ? "apple" : "unknown";
+            OS.value = osName + utsname.release();
+            for (int i = 0; i < VALUES.length; i++) {
+                RVersionInfo data = VALUES[i];
+                ListNames[i] = data.listName;
+                if (data.value == null) {
+                    switch (data) {
+                        case Platform:
+                            /*
+                             * FIXME In order to match the info in the default packages copied from
+                             * GnuR, this value on Linux has to be x86_64-unknown-linux-gnu
+                             */
+                            if (osName.equals("linux")) {
+                                if (Arch.value.equals("sparcv9")) {
+                                    data.value = "sparc64-unknown-linux-gnu";
+                                } else {
+                                    data.value = "x86_64-unknown-linux-gnu";
+                                }
+                            } else if (osName.toLowerCase().equals("sunos")) {
+                                data.value = "sparc-sun-solaris2.11";
                             } else {
-                                data.value = "x86_64-unknown-linux-gnu";
+                                data.value = Arch.value + "-" + vendor + "-" + OS.value;
                             }
-                        } else if (osName.toLowerCase().equals("sunos")) {
-                            data.value = "sparc-sun-solaris2.11";
-                        } else {
-                            data.value = Arch.value + "-" + vendor + "-" + OS.value;
-                        }
-                        break;
-                    case System:
-                        data.value = Arch.value + ", " + OS.value;
-                        break;
-                    default:
-                        data.value = "";
+                            break;
+                        case System:
+                            data.value = Arch.value + ", " + OS.value;
+                            break;
+                        default:
+                            data.value = "";
+                    }
                 }
+                ListValues[i] = data.value;
             }
-            LIST_VALUES[i] = data.value;
         }
     }
 
     public static String[] listNames() {
-        return LIST_NAMES;
+        initialize();
+        return ListNames;
     }
 
     public static String[] listValues() {
-        return LIST_VALUES;
+        initialize();
+        return ListValues;
     }
 }

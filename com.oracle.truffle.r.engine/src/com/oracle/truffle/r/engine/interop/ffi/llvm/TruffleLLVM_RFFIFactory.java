@@ -38,13 +38,8 @@ import com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory;
 public class TruffleLLVM_RFFIFactory extends JNI_RFFIFactory implements RFFI {
 
     @Override
-    protected void initialize(boolean runtime) {
-        super.initialize(runtime);
-    }
-
-    @Override
     public ContextState newContextState() {
-        return new TruffleLLVM_RFFIContextState();
+        return new TruffleLLVM_RFFIContextState(super.newContextState());
     }
 
     private CRFFI cRFFI;

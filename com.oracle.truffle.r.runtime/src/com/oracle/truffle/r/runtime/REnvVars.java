@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,9 +160,9 @@ public final class REnvVars implements RContext.ContextState {
 
     /**
      * Returns the value of the {@code R_HOME} environment variable (setting it in the unusual case
-     * where it it is not set by the initiating shell scripts. This is called very early in the
-     * startup as it is required to access the native libraries, before the initial context is
-     * initialized and, therefore, before {@link #envVars} is available.
+     * where it it is not set by the initiating shell scripts. This may be called very early in the
+     * startup possibly before the initial context is initialized and, therefore, before
+     * {@link #envVars} is available.
      */
     public static String rHome() {
         if (rHome == null) {
@@ -216,8 +216,11 @@ public final class REnvVars implements RContext.ContextState {
     private void checkRHome() {
         String envRHome = envVars.get(R_HOME);
         if (envRHome == null) {
-            assert rHome != null;
-            envVars.put(R_HOME, rHome);
+            envVars.put(R_HOME, rHome());
+        } else {
+            if (rHome == null) {
+                rHome = envRHome;
+            }
         }
     }
 

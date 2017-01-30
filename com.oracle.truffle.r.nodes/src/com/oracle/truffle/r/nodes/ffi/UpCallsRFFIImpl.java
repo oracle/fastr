@@ -1208,17 +1208,17 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int isInteractive() {
+    public int R_Interactive() {
         if (tracer != null) {
-            tracer.isInteractive();
+            tracer.R_Interactive();
         }
         return RContext.getInstance().isInteractive() ? 1 : 0;
     }
 
     @Override
-    public int isS4Object(Object x) {
+    public int IS_S4_OBJECT(Object x) {
         if (tracer != null) {
-            tracer.isS4Object(x);
+            tracer.IS_S4_OBJECT(x);
         }
         return x instanceof RS4Object ? 1 : 0;
     }
@@ -1510,4 +1510,5 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         System.out.println("object " + x);
         System.out.println("class " + x.getClass());
     }
+
 }

@@ -45,8 +45,6 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVersionInfo;
-import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -77,9 +75,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             Load_RFFIFactory.initialize(true);
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
-            RVersionInfo.initialize();
-            TempPathName.initialize();
-
         } catch (Throwable t) {
             t.printStackTrace();
             /*

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import java.nio.file.FileSystems;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -111,7 +113,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
         }
     }
 
-    class ContextStateImpl implements RContext.ContextState {
+    static class ContextStateImpl implements RContext.ContextState {
         /**
          * A map from function name to its {@link ParseStatus}, allowing fast determination whether
          * parsing is required in a call, see {@link #ensureParsed}. N.B. parsing happens at the
@@ -128,8 +130,20 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
          */
         @Override
         public ContextState initialize(RContext context) {
-            for (LLVM_IR ir : libRModules) {
+            for (LLVM_IR ir : truffleDLL.libRModules) {
                 addExportsToMap(this, "libR", ir, (name) -> name.endsWith("_llvm"));
+            }
+            if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+                // must propagate all LLVM library exports
+                ArrayList<DLLInfo> loadedDLLs = DLL.getLoadedDLLs();
+                for (DLLInfo dllInfo : loadedDLLs) {
+                    if (dllInfo.handle instanceof LLVM_Handle) {
+                        LLVM_Handle llvmHandle = (LLVM_Handle) dllInfo.handle;
+                        for (LLVM_IR ir : llvmHandle.irs) {
+                            addExportsToMap(this, llvmHandle.libName, ir, (name) -> true);
+                        }
+                    }
+                }
             }
             return this;
         }
@@ -150,7 +164,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
     }
 
     static ContextStateImpl newContextState() {
-        return truffleDLL.new ContextStateImpl();
+        return new ContextStateImpl();
     }
 
     static boolean isBlacklisted(String libName) {
@@ -170,9 +184,11 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
 
     static class LLVM_Handle {
         private final String libName;
+        private final LLVM_IR[] irs;
 
-        LLVM_Handle(String libName) {
+        LLVM_Handle(String libName, LLVM_IR[] irs) {
             this.libName = libName;
+            this.irs = irs;
         }
     }
 
@@ -207,7 +223,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
                         LLVM_IR ir = irs[i];
                         addExportsToMap(contextState, libName, ir, (name) -> true);
                     }
-                    return new LLVM_Handle(libName);
+                    return new LLVM_Handle(libName, irs);
                 }
             } catch (Exception ex) {
                 return null;

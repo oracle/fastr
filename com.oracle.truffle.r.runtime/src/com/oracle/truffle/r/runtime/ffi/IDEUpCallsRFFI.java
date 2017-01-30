@@ -22,27 +22,30 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.frame.Frame;
 
 /**
- * Support for the {.Call} and {.External} calls.
+ * Additional upcalls created for supporting FastR in RStudio. These mainly relate to the GNU R
+ * notion of a "context", which corresponds somewhat to a Truffle {@link Frame}.
  */
-public interface CallRFFI {
-    abstract class CallRFFINode extends Node {
-        /**
-         * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
-         * {@code args}. The values in {@code args} can be any of the types used to represent
-         * {@code R} values in the implementation.
-         */
-        public abstract Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args);
+public interface IDEUpCallsRFFI {
+    // Checkstyle: stop method name check
+    Object R_getGlobalFunctionContext();
 
-        /**
-         * Variant that does not return a result (primarily for library "init" methods).
-         */
-        public abstract void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args);
+    Object R_getParentFunctionContext(Object c);
 
-    }
+    Object R_getContextEnv(Object c);
 
-    CallRFFINode createCallRFFINode();
+    Object R_getContextFun(Object c);
+
+    Object R_getContextCall(Object c);
+
+    Object R_getContextSrcRef(Object c);
+
+    int R_insideBrowser();
+
+    int R_isGlobal(Object c);
+
+    int R_isEqual(Object x, Object y);
 
 }

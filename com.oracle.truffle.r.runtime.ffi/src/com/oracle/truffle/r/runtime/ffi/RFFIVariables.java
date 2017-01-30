@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -91,7 +92,12 @@ public enum RFFIVariables {
         return value;
     }
 
-    public static void setTempDir(String tempDir) {
-        R_TempDir.value = tempDir;
+    /**
+     * Sets {@link #R_TempDir} for the initial context.
+     */
+    public static RFFIVariables[] initialize() {
+        R_TempDir.value = TempPathName.tempDirPath();
+        return values();
+
     }
 }

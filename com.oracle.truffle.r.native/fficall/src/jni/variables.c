@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ jmethodID R_GlobalEnvMethodID;
 jmethodID R_BaseEnvMethodID;
 jmethodID R_BaseNamespaceMethodID;
 jmethodID R_NamespaceRegistryMethodID;
-jmethodID isInteractiveMethodID;
+jmethodID R_InteractiveMethodID;
 jmethodID R_GlobalContextMethodID;
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
@@ -73,6 +73,11 @@ char *FASTR_R_Home() {
 	return (char *)R_Home_local;
 }
 
+Rboolean FASTR_Interactive() {
+	JNIEnv *env = getEnv();
+	CTXT res = (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_InteractiveMethodID);
+}
+
 SEXP FASTR_R_NilValue() {
 	return R_NilValue_local;
 }
@@ -98,7 +103,7 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 	R_BaseEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_BaseEnv", "()Ljava/lang/Object;", 0);
 	R_BaseNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_BaseNamespace", "()Ljava/lang/Object;", 0);
 	R_NamespaceRegistryMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NamespaceRegistry", "()Ljava/lang/Object;", 0);
-	isInteractiveMethodID = checkGetMethodID(env, UpCallsRFFIClass, "isInteractive", "()I", 0);
+	R_InteractiveMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_Interactive", "()I", 0);
 	R_GlobalContextMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_GlobalContext", "()Ljava/lang/Object;", 0);
 
 	int length = (*env)->GetArrayLength(env, initialValues);
@@ -121,6 +126,8 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 				R_NaReal = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_NaInt") == 0) {
 				R_NaInt = (*env)->CallIntMethod(env, value, intValueMethodID);
+			} else if (strcmp(nameChars, "R_TempDir") == 0) {
+				R_TempDir = (*env)->GetStringUTFChars(env, value, NULL);
 			} else {
 				SEXP ref = createGlobalRef(env, value, 1);
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
@@ -210,9 +217,5 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			}
 		}
 	}
-}
-
-void setTempDir(JNIEnv *env, jstring tempDir) {
-	R_TempDir = (*env)->GetStringUTFChars(env, tempDir, NULL);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,48 +28,48 @@ import java.nio.file.Path;
 import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  *
- * As per the GnuR spec, the tempdir() directory is identified on startup.
+ * As per the GnuR spec, the tempdir() directory is identified on startup. It <b>must</b>be
+ * initialized before the first RFFI call as the value is available in the R FFI.
  *
  */
-public class TempPathName {
+public class TempPathName implements RContext.ContextState {
     private static final String RANDOM_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
     private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
     private static final int RANDOM_LENGTH = 12; // as per GnuR
-
-    private static String tempDirPath;
     private static final Random rand = new Random();
 
-    public static void initialize() {
-        if (tempDirPath == null) {
-            //
-            final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
-            String startingTempDir = null;
-            for (String envVar : envVars) {
-                String value = System.getenv(envVar);
-                if (value != null && isWriteableDirectory(value)) {
-                    startingTempDir = value;
-                }
+    private String tempDirPath;
+
+    @Override
+    public RContext.ContextState initialize(RContext context) {
+        final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
+        String startingTempDir = null;
+        for (String envVar : envVars) {
+            String value = System.getenv(envVar);
+            if (value != null && isWriteableDirectory(value)) {
+                startingTempDir = value;
             }
-            if (startingTempDir == null) {
-                startingTempDir = "/tmp";
-            }
-            Path startingTempDirPath = FileSystems.getDefault().getPath(startingTempDir, "Rtmp");
-            // ensure absolute, to avoid problems with R code does a setwd
-            if (!startingTempDirPath.isAbsolute()) {
-                startingTempDirPath = startingTempDirPath.toAbsolutePath();
-            }
-            String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath.toString() + "XXXXXX");
-            if (t != null) {
-                tempDirPath = t;
-            } else {
-                Utils.rSuicide("cannot create 'R_TempDir'");
-            }
-            RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode().setTempDir(tempDirPath);
         }
+        if (startingTempDir == null) {
+            startingTempDir = "/tmp";
+        }
+        Path startingTempDirPath = FileSystems.getDefault().getPath(startingTempDir, "Rtmp");
+        // ensure absolute, to avoid problems with R code does a setwd
+        if (!startingTempDirPath.isAbsolute()) {
+            startingTempDirPath = startingTempDirPath.toAbsolutePath();
+        }
+        String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath.toString() + "XXXXXX");
+        if (t != null) {
+            tempDirPath = t;
+        } else {
+            Utils.rSuicide("cannot create 'R_TempDir'");
+        }
+        return this;
     }
 
     private static boolean isWriteableDirectory(String path) {
@@ -78,7 +78,11 @@ public class TempPathName {
     }
 
     public static String tempDirPath() {
-        return tempDirPath;
+        return RContext.getInstance().stateTempPath.tempDirPath;
+    }
+
+    public static TempPathName newContextState() {
+        return new TempPathName();
     }
 
     @TruffleBoundary

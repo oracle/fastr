@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -152,3 +152,4 @@ InputHandler *R_InputHandlers = &BasicInputHandler;
 #define R_TrueValue_x 46
 #define R_FalseValue_x 47
 #define R_LogicalNAValue_x 48
+#define R_Interactive_x 49

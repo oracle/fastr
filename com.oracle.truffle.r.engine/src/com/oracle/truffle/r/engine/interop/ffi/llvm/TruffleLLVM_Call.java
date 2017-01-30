@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call.JNI_CallRFFINode;
@@ -55,7 +56,6 @@ class TruffleLLVM_Call implements CallRFFI {
         new JNI_Call();
         truffleCall = this;
         truffleCallTruffleObject = JavaInterop.asTruffleObject(truffleCall);
-        TruffleLLVM_PkgInit.initialize();
         truffleCallHelper = TruffleLLVM_UpCallsRFFIImpl.initialize();
     }
 
@@ -66,6 +66,7 @@ class TruffleLLVM_Call implements CallRFFI {
         @Override
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
+            RFFIFactory.getRFFI().getCallRFFI();
             context.addExportedSymbol("_fastr_rffi_call", truffleCallTruffleObject);
             context.addExportedSymbol("_fastr_rffi_callhelper", truffleCallHelper);
             return this;
@@ -101,7 +102,7 @@ class TruffleLLVM_Call implements CallRFFI {
         }
         VirtualFrame frame = TruffleRFFIFrameHelper.create();
         Node executeNode = Message.createExecute(2).createNode();
-        RFFIVariables[] variables = RFFIVariables.values();
+        RFFIVariables[] variables = RFFIVariables.initialize();
         for (int i = 0; i < variables.length; i++) {
             RFFIVariables var = variables[i];
             Object value = var.getValue();
@@ -230,17 +231,6 @@ class TruffleLLVM_Call implements CallRFFI {
             splitTruffleCallRFFINode.execute(nativeCallInfo, args, true);
         }
 
-        @Override
-        public void setTempDir(String tempDir) {
-            // TODO Truffleize
-            new JNI_CallRFFINode().setTempDir(tempDir);
-        }
-
-        @Override
-        public void setInteractive(boolean interactive) {
-            // TODO Truffleize
-            new JNI_CallRFFINode().setInteractive(interactive);
-        }
     }
 
     /**

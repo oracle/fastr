@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -74,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -401,6 +401,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * processor, but the set is relatively small, so we just enumerate them here.
      */
     public final REnvVars stateREnvVars;
+    public final TempPathName stateTempPath;
     public final RProfile stateRProfile;
     public final StdConnections.ContextStateImpl stateStdConnections;
     public final ROptions.ContextStateImpl stateROptions;
@@ -457,6 +458,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         this.initial = isInitial;
         this.env = env;
         this.stateREnvVars = REnvVars.newContextState();
+        this.stateTempPath = TempPathName.newContextState();
         this.stateROptions = ROptions.ContextStateImpl.newContextState(stateREnvVars);
         this.stateRProfile = RProfile.newContextState(stateREnvVars);
         this.stateStdConnections = StdConnections.ContextStateImpl.newContextState();
@@ -517,6 +519,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         attachThread();
         state.add(State.ATTACHED);
 
+        stateDLL.initialize(this);
+        stateRFFI = RFFIContextStateFactory.newContextState();
+        // separate in case initialize calls getStateRFFI()!
+        stateRFFI.initialize(this);
+
         if (!embedded) {
             doEnvOptionsProfileInitialization();
         }
@@ -526,14 +533,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRConnection.initialize(this);
         stateStdConnections.initialize(this);
         stateRNG.initialize(this);
-        stateRFFI = RFFIContextStateFactory.newContextState();
-        // separate in case initialize calls getStateRFFI()!
-        stateRFFI.initialize(this);
         stateRSerialize.initialize(this);
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
-        stateDLL.initialize(this);
         state.add(State.INITIALIZED);
 
         if (!embedded) {
@@ -552,7 +555,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
         }
         if (initial && !embedded) {
-            RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode().setInteractive(isInteractive());
             initialContextInitialized = true;
         }
         return this;
@@ -564,6 +566,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     private void doEnvOptionsProfileInitialization() {
         stateREnvVars.initialize(this);
+        stateTempPath.initialize(this);
         stateROptions.initialize(this);
         stateRProfile.initialize(this);
     }

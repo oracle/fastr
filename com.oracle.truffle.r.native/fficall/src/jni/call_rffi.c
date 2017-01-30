@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1248,14 +1248,6 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_callVoid0(JNIEnv *env, jclas
 	}
 	callExit(env);
 }
-
-#include <Rinterface.h>
-
-JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Call_nativeSetInteractive(JNIEnv *env, jclass c, jboolean interactive) {
-	R_Interactive = interactive;
-}
-
 
 
 

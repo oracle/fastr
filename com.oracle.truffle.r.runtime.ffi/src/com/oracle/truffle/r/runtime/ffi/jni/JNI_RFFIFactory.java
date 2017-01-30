@@ -29,9 +29,11 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
@@ -53,17 +55,30 @@ public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
     public JNI_RFFIFactory() {
     }
 
-    @Override
-    protected void initialize(boolean runtime) {
-        // This must load early as package libraries reference symbols in it.
-        getCallRFFI();
-    }
-
-    /**
-     * Placeholder class for context-specific native state.
-     */
     private static class ContextStateImpl implements RContext.ContextState {
+        @Override
+        /**
+         * For the initial context, load the {@code libR} library. N.B. this library defines some
+         * non-JNI global symbols that are referenced by C code in R packages. Unfortunately,
+         * {@link System#load(String)} uses {@code RTLD_LOCAL} with {@code dlopen}, so we have to
+         * load the library manually and set {@code RTLD_GLOBAL}. However, a {@code dlopen} does not
+         * hook the JNI functions into the JVM, so we have to do an additional {@code System.load}
+         * to achieve that.
+         *
+         * Before we do that we must load {@code libjniboot} because the implementation of
+         * {@link DLLRFFI.DLLRFFINode#dlopen} is called by {@link DLL#loadLibR} which uses JNI!
+         */
+        public ContextState initialize(RContext context) {
+            if (context.isInitial()) {
+                String libjnibootPath = LibPaths.getBuiltinLibPath("jniboot");
+                System.load(libjnibootPath);
 
+                String librffiPath = LibPaths.getBuiltinLibPath("R");
+                DLL.loadLibR(librffiPath);
+                System.load(librffiPath);
+            }
+            return this;
+        }
     }
 
     @Override

@@ -62,9 +62,8 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG;
  *
  * The {@code libR} library is a special case, as it is an implementation artifact and not visible
  * at the R level. However, it is convenient to manage it in a similar way in this code. It is
- * always stored in slot 0 of the list, and is hidden from R code. It is loaded by the
- * {@link RFFIFactory} early in the startup, before the initial {@link RContext} is created, by
- * {@link #loadLibR}. This should only be called once.
+ * always stored in slot 0 of the list, and is hidden from R code. It is loaded by {@link #loadLibR}
+ * , which should only be called once.
  *
  * As far as possible, all execution is via Truffle {@link Node} classes as, in most cases, the
  * invocation is from an existing AST node.
@@ -74,6 +73,7 @@ public class DLL {
     public static class ContextStateImpl implements RContext.ContextState {
         private ArrayList<DLLInfo> list;
         private RContext context;
+        private static DLLInfo libRdllInfo;
 
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
@@ -86,7 +86,10 @@ public class DLL {
                 list = context.getParent().stateDLL.list;
             } else {
                 list = new ArrayList<>();
-                list.add(libRDLLInfo);
+                if (!context.isInitial()) {
+                    assert list.isEmpty();
+                    list.add(libRdllInfo);
+                }
             }
             return this;
         }
@@ -100,6 +103,12 @@ public class DLL {
                 }
             }
             list = null;
+        }
+
+        private void addLibR(DLLInfo dllInfo) {
+            assert list.isEmpty();
+            list.add(dllInfo);
+            libRdllInfo = dllInfo;
         }
     }
 
@@ -354,22 +363,16 @@ public class DLL {
     }
 
     /**
-     * A temporary stash until such time as the initial context is initialized.
-     */
-    private static DLLInfo libRDLLInfo;
-
-    /**
-     * Loads a the {@code libR} library. This is an implementation specific library N.B., when this
-     * is called for the first time, there is no {@link RContext} available, so we stash the result
-     * until {@link ContextStateImpl#initialize} is called.
+     * Loads a the {@code libR} library. This is an implementation specific library.
      */
     public static void loadLibR(String path) {
-        assert libRDLLInfo == null;
+        RContext context = RContext.getInstance();
         Object handle = DLLFFIRootNode.create().getCallTarget().call(DLLFFIRootNode.DLOPEN, path, false, false);
         if (handle == null) {
             throw Utils.rSuicide("error loading libR from: " + path + "\n");
         }
-        libRDLLInfo = DLLInfo.create(libName(path), path, true, handle, false);
+        ContextStateImpl dllContext = context.stateDLL;
+        dllContext.addLibR(DLLInfo.create(libName(path), path, true, handle, false));
     }
 
     public static String libName(String absPath) {
