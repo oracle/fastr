@@ -1,0 +1,18 @@
+# see ed_grid for description of what is going on here.
+# 
+# Note: the state cannot be 'preserved' in globaliseState(SEXP) 
+# function, which would seem as appropriate place, because the 
+# state is stored into a global variable before globaliseState
+# is invoked.
+#
+# prepend R_PreserveObject call to any sd->systemSpecific assignment 
+# in form of sd->systemSpecific = (void*) variablename;
+s/sd->systemSpecific[[:space:]]*=[[:space:]]*(void\*)[[:space:]]*\([[:alnum:]_]*\);/\1 = R_PreserveObject(\1); sd->systemSpecific = (void*)\1;/g
+#
+# rename deglobaliseState to deglobaliseStateOriginal and prepend a 
+# new definition of deglobaliseState that calls R_ReleaseObject and 
+# the original function (note we need deglobaliseStateOriginal 
+# forward declaration)
+s/static void deglobaliseState(SEXP state)/static void deglobaliseStateOriginal(SEXP state);\
+static void deglobaliseState(SEXP state) { deglobaliseStateOriginal(state); R_ReleaseObject(state); }\
+static void deglobaliseStateOriginal(SEXP state)/g

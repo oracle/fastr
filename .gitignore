@@ -17,6 +17,8 @@
 /com.oracle.truffle.r.native/library/*/lib/*
 /com.oracle.truffle.r.native/library/stats/src/fft.c
 /com.oracle.truffle.r.native/library/tools/src/gramRd.c
+/com.oracle.truffle.r.native/library/grid/src/grid.c
+/com.oracle.truffle.r.native/library/grid/src/state.c
 /com.oracle.truffle.r.native/platform.mk
 /com.oracle.truffle.r.native/gnur/Makeconf.done
 /com.oracle.truffle.r.native/gnur/platform.mk.temp*
