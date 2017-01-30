@@ -174,7 +174,8 @@ public abstract class Parse extends RBuiltinNode {
     private static Source createSource(Object srcFile, String coalescedLines) {
         if (srcFile instanceof REnvironment) {
             REnvironment srcFileEnv = (REnvironment) srcFile;
-            boolean isFile = RRuntime.fromLogical((byte) srcFileEnv.get("isFile"));
+            Object b = srcFileEnv.get("isFile");
+            boolean isFile = RRuntime.fromLogical(b != null ? (byte) b : 0);
             if (isFile) {
                 // Might be a URL
                 String urlFileName = RRuntime.asString(srcFileEnv.get("filename"));

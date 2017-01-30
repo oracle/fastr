@@ -20,11 +20,15 @@ import java.nio.file.attribute.PosixFileAttributes;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Utilities for handling R srcref attributes, in particular conversion from {@link Source},
@@ -90,7 +94,42 @@ public class RSrcref {
     }
 
     @TruffleBoundary
+    public static Object createLloc(SourceSection src) {
+        if (src == null) {
+            return RNull.instance;
+        }
+        if (src == RSyntaxNode.INTERNAL || src == RSyntaxNode.LAZY_DEPARSE || src == RSyntaxNode.SOURCE_UNAVAILABLE) {
+            return RNull.instance;
+        }
+        Source source = src.getSource();
+        REnvironment env = RContext.getInstance().sourceRefEnvironments.get(source);
+        if (env == null) {
+            env = RDataFactory.createNewEnv("src");
+            env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
+            try {
+                env.put("filename", source.getPath() == null ? "" : source.getPath());
+                env.put("fixedNewlines", RRuntime.LOGICAL_TRUE);
+                String[] lines = new String[source.getLineCount()];
+                for (int i = 0; i < lines.length; i++) {
+                    lines[i] = source.getCode(i + 1);
+                }
+                env.put("lines", RDataFactory.createStringVector(lines, true));
+            } catch (PutException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            RContext.getInstance().sourceRefEnvironments.put(source, env);
+        }
+        return createLloc(src, env);
+    }
+
+    @TruffleBoundary
     public static RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
+        /*
+         * TODO: it's unclear what the exact format is, experimentally it is (first line, first
+         * column, last line, last column, first column, last column, first line, last line). the
+         * second pair of columns is likely bytes instead of chars, and the second pair of lines
+         * parsed as opposed to "real" lines (may be modified by #line).
+         */
         int[] llocData = new int[8];
         int startLine = ss.getStartLine();
         int startColumn = ss.getStartColumn();
