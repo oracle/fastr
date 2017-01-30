@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.methods;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -55,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -67,6 +67,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
 public class MethodsListDispatch {
+
+    private static void checkSingleString(CastBuilder casts, int argNum, String argName, String msg, boolean nonEmpty, Function<Object, String> clsHierFn, Function<Object, Integer> vecLenFn) {
+        //@formatter:off
+        casts.arg(argNum, argName).
+            defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn).
+            mustBe(stringValue()).
+            asStringVector().
+            mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg, vecLenFn).
+            findFirst().
+            mustBe(nonEmpty ? lengthGt(0) : lengthGte(0), RError.NO_CALLER, RError.Message.NON_EMPTY_STRING, msg);
+        //@formatter:on
+    }
 
     public abstract static class R_initMethodDispatch extends RExternalBuiltinNode.Arg1 {
 
@@ -87,19 +99,23 @@ public class MethodsListDispatch {
 
     public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
 
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
+            Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
+
+            checkSingleString(casts, 0, "prefix", "The internal prefix (e.g., \"C\") for a meta-data object", true, clsHierFn, vecLenFn);
+            checkSingleString(casts, 1, "name", "The name of the object (e.g,. a class or generic function) to find in the meta-data", false, clsHierFn, vecLenFn);
+            checkSingleString(casts, 2, "pkg", "The name of the package for a meta-data object", false, clsHierFn, vecLenFn);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected String callMethodsPackageMetaName(RAbstractStringVector prefixStringVector, RAbstractStringVector nameStringVector, RAbstractStringVector pkgStringVector) {
-            // TODO: proper error messages
-            assert prefixStringVector.getLength() == 1 && nameStringVector.getLength() == 1 && pkgStringVector.getLength() == 1;
-            String prefixString = prefixStringVector.getDataAt(0);
-            String nameString = nameStringVector.getDataAt(0);
-            String pkgString = pkgStringVector.getDataAt(0);
-
-            if (pkgString.length() == 0) {
-                return ".__" + prefixString + "__" + nameString;
+        protected String callMethodsPackageMetaName(String prefix, String name, String pkg) {
+            if (pkg.length() == 0) {
+                return ".__" + prefix + "__" + name;
             } else {
-                return ".__" + prefixString + "__" + nameString + ":" + pkgString;
+                return ".__" + prefix + "__" + name + ":" + pkg;
             }
         }
     }
@@ -300,14 +316,7 @@ public class MethodsListDispatch {
             //@formatter:off
             Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
 
-            String msg0 = "The argument \"f\" to getGeneric";
-            casts.arg(0, "f").
-                defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg0, clsHierFn).
-                mustBe(stringValue()).
-                asStringVector().
-                mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg0, vecLenFn).
-                findFirst().
-                mustBe(lengthGt(0), RError.NO_CALLER, RError.Message.NON_EMPTY_STRING, msg0);
+            checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn);
 
             casts.arg(1, "mustFind").
                 asLogicalVector().
@@ -317,13 +326,7 @@ public class MethodsListDispatch {
             casts.arg(2, "env").
                 mustBe(instanceOf(REnvironment.class));
 
-            String msg1 = "The argument \"package\" to getGeneric";
-            casts.arg(3, "package").
-                defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg1, clsHierFn).
-                mustBe(stringValue()).
-                asStringVector().
-                mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg1, vecLenFn).
-                findFirst();
+            checkSingleString(casts, 3, "package", "The argument \"package\" to getGeneric", false, clsHierFn, vecLenFn);
             //@formatter:on
         }
 

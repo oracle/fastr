@@ -54,7 +54,7 @@ public abstract class RExplicitCallNode extends Node {
 
     @Specialization
     Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args,
-                    @Cached("createArgsIdentifier()") Object argsIdentifier,
+                    @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
                     @Cached("createExplicitCall(argsIdentifier)") RCallBaseNode call,
                     @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode argumentsSlot) {
         FrameSlot argsFrameSlot = argumentsSlot.executeFrameSlot(frame);

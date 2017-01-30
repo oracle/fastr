@@ -22,18 +22,23 @@
  */
 package com.oracle.truffle.r.library.tools;
 
-import java.io.IOException;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.ffi.AsIntegerNode;
+import com.oracle.truffle.r.nodes.ffi.AsLogicalNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -44,38 +49,43 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg(0).defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
-    }
-
-    @Specialization
-    protected Object parseRd(int con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL, byte macrosL, byte warndupsL) {
-        return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, RDataFactory.createLogicalVectorFromScalar(macrosL), warndupsL);
-    }
-
-    @Specialization
-    protected Object parseRd(int con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL, REnvironment macros, byte warndupsL) {
-        return doParseRd(con, srcfile, encoding, verboseL, basename, fragmentL, warningCallsL, macros, warndupsL);
+        /*
+         * Most arguments require coercion using, e.g., asLogical; N.B. GNU R doesn't check
+         * everything, e.g., srcfile. Since this is "internal" code we do not really expect argument
+         * errors.
+         */
+        casts.arg(1, "srcfile").mustBe(instanceOf(REnvironment.class));
+        casts.arg(3, "verbose").mustBe(logicalValue()).asLogicalVector();
+        casts.arg(4, "basename").mustBe(stringValue()).asStringVector();
     }
 
     @TruffleBoundary
-    private Object doParseRd(int con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL,
-                    Object macros, byte warndupsL) {
-        if (RRuntime.isNA(warningCallsL)) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "warningCalls");
+    @Specialization
+    protected Object parseRd(Object conObj, REnvironment srcfile, @SuppressWarnings("unused") Object encoding, RAbstractLogicalVector verbose, RAbstractStringVector basename, Object fragmentObj,
+                    Object warningCallsObj, Object macros, Object warndupsObj,
+                    @Cached("create()") AsIntegerNode conAsInteger,
+                    @Cached("create()") AsLogicalNode fragmentAsLogical,
+                    @Cached("create()") AsLogicalNode warningCallsAsLogical,
+                    @Cached("create()") AsLogicalNode warnDupsAsLogical) {
+        int con = conAsInteger.execute(conObj);
+        int warningCalls = warningCallsAsLogical.execute(warningCallsObj);
+        if (RRuntime.isNA(warningCalls)) {
+            throw RError.error(this, RError.Message.INVALID_VALUE, "warningCalls");
         }
+        int fragment = fragmentAsLogical.execute(fragmentObj);
+        int warndups = warnDupsAsLogical.execute(warndupsObj);
 
+        // fromIndex checks validity of con and throws error if not
         try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {
             // @formatter:off
             return toolsRFFINode.parseRd(openConn, srcfile,
-                            RDataFactory.createLogicalVectorFromScalar(verboseL),
-                            RDataFactory.createLogicalVectorFromScalar(fragmentL),
-                            RDataFactory.createStringVectorFromScalar(basename.getDataAt(0)),
-                            RDataFactory.createLogicalVectorFromScalar(warningCallsL),
+                            verbose.materialize(),
+                            RDataFactory.createLogicalVectorFromScalar((byte) fragment),
+                            basename.materialize(),
+                            RDataFactory.createLogicalVectorFromScalar((byte) warningCalls),
                             macros,
-                            RDataFactory.createLogicalVectorFromScalar(warndupsL));
+                            RDataFactory.createLogicalVectorFromScalar((byte) warndups));
             // @formatter:on
-        } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         } catch (Throwable ex) {
             throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
