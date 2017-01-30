@@ -368,7 +368,7 @@ public final class Utils {
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 if (!first) {
-                    Frame pf = frameInstance.getFrame(fa, false);
+                    Frame pf = frameInstance.getFrame(fa);
                     Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
                         return RArguments.getCall(f) == target ? f : null;
@@ -393,7 +393,7 @@ public final class Utils {
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 if (!first) {
-                    Frame pf = frameInstance.getFrame(fa, false);
+                    Frame pf = frameInstance.getFrame(fa);
                     Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
                         RCaller call = RArguments.getCall(f);
@@ -423,7 +423,7 @@ public final class Utils {
             @Override
             public T visitFrame(FrameInstance frameInstance) {
                 if (!first) {
-                    Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
+                    Frame f = RArguments.unwrap(frameInstance.getFrame(fa));
                     if (RArguments.isRFrame(f)) {
                         return func.apply(f);
                     } else {
@@ -468,7 +468,7 @@ public final class Utils {
             // Truffle/R system has started
             return null;
         }
-        return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE, true));
+        return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE));
     }
 
     private static final class TracebackVisitor implements FrameInstanceVisitor<Frame> {
@@ -483,7 +483,7 @@ public final class Utils {
         @Override
         @TruffleBoundary
         public Frame visitFrame(FrameInstance frameInstance) {
-            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY, true));
+            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY));
             if (!RArguments.isRFrame(f) || RArguments.getFunction(f) == null) {
                 return null;
             }
@@ -548,13 +548,13 @@ public final class Utils {
         } else {
             StringBuilder str = new StringBuilder();
             Truffle.getRuntime().iterateFrames(frameInstance -> {
-                dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), false, frameInstance.isVirtualFrame());
+                dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), false, frameInstance.isVirtualFrame());
                 return null;
             });
             if (printFrameSlots) {
                 str.append("\n\nwith frame slot contents:\n");
                 Truffle.getRuntime().iterateFrames(frameInstance -> {
-                    dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), true, frameInstance.isVirtualFrame());
+                    dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), true, frameInstance.isVirtualFrame());
                     return null;
                 });
             }

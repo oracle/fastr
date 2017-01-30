@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -189,7 +189,7 @@ public class TraceFunctions {
         protected static String getStackTrace() {
             final StringBuffer result = new StringBuffer();
             Truffle.getRuntime().iterateFrames(frame -> {
-                Frame unwrapped = RArguments.unwrap(frame.getFrame(FrameAccess.READ_ONLY, true));
+                Frame unwrapped = RArguments.unwrap(frame.getFrame(FrameAccess.READ_ONLY));
                 if (RArguments.isRFrame(unwrapped)) {
                     RCaller call = RArguments.getCall(unwrapped);
                     if (call != null && call.isValidCaller()) {
