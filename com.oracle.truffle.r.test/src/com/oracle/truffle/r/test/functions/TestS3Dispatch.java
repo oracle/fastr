@@ -138,8 +138,8 @@ public class TestS3Dispatch extends TestRBase {
     public void testGenericDispatchThroughMethodsTable() {
         // Note: `[.term` is "private" in stats, but it has entry in __S3MethodsTable__
         assertEval("terms(x~z)[1];");
-        assertEval("{ assign('Ops.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; x+x; }");
-        assertEval("{ assign('[[.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; x[[99]]; }");
+        assertEval("{ assign('Ops.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; res <- x+x; rm('Ops.myclass', envir=.__S3MethodsTable__.); res; }");
+        assertEval("{ assign('[[.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; res <- x[[99]]; rm('[[.myclass', envir=.__S3MethodsTable__.); res; }");
     }
 
     @Override
