@@ -40,6 +40,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestBase.Context;
 import com.oracle.truffle.r.test.TestBase.Ignored;
 import com.oracle.truffle.r.test.TestBase.Output;
@@ -401,7 +402,7 @@ public class TestOutputManager {
      * @param keepTrailingWhiteSpace if {@code true} preserve trailing white space, otherwise trim
      * @return the GnuR output
      */
-    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace, TestTrait... traits) {
+    public String genTestResult(TestBase testClass, String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace, TestTrait... traits) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
         TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
@@ -418,7 +419,8 @@ public class TestOutputManager {
             String expected = null;
             if (!checkOnly) {
                 try {
-                    expected = rSession.eval(null, test, null, false);
+                    testClass.beforeEval();
+                    expected = rSession.eval(testClass, test, null, false);
                 } catch (Throwable e) {
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }

@@ -853,6 +853,7 @@ public class TestBase {
         microTestInfo.expression = input;
         String result;
         try {
+            beforeEval();
             result = fastROutputManager.fastRSession.eval(this, input, contextInfo, longTimeout);
         } catch (Throwable e) {
             String clazz;
@@ -900,7 +901,7 @@ public class TestBase {
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
-    protected static String expectedEval(String input, TestTrait... traits) {
+    protected String expectedEval(String input, TestTrait... traits) {
         if (generatingExpected()) {
             // generation mode
             return genTestResult(input, traits);
@@ -920,8 +921,8 @@ public class TestBase {
         }
     }
 
-    private static String genTestResult(String input, TestTrait... traits) {
-        return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace, traits);
+    private String genTestResult(String input, TestTrait... traits) {
+        return expectedOutputManager.genTestResult(this, testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace, traits);
     }
 
     /**
@@ -1027,6 +1028,12 @@ public class TestBase {
                 System.out.printf("    failed: %6d | %6d%n", failedTestCount, failedInputCount);
             }
         });
+    }
 
+    /**
+     * Called before an actual evaluation happens.
+     */
+    public void beforeEval() {
+        // empty
     }
 }

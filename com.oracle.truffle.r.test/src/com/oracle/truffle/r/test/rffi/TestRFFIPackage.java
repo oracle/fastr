@@ -41,7 +41,7 @@ public class TestRFFIPackage extends TestRPackages {
 
     @AfterClass
     public static void tearDownUninstallMyTestPackages() {
-        tearDownUninstallTestPackages(TEST_PACKAGES);
+        tearDownUninstallTestPackages();
     }
 
     /**
