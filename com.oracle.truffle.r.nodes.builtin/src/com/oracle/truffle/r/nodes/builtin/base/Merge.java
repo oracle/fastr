@@ -38,19 +38,19 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "merge", kind = INTERNAL, parameterNames = {"xinds", "yinds", "all.x", "all.y"}, behavior = PURE)
 public abstract class Merge extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Merge.class);
         addIntegerCast(casts, "xinds");
         addIntegerCast(casts, "yinds");
         addLogicalCast(casts, "all.x");
         addLogicalCast(casts, "all.y");
     }
 
-    private static void addIntegerCast(CastBuilder casts, String name) {
+    private static void addIntegerCast(Casts casts, String name) {
         casts.arg(name).mustBe(integerValue()).asIntegerVector().mustBe(notEmpty());
     }
 
-    private static void addLogicalCast(CastBuilder casts, String name) {
+    private static void addLogicalCast(Casts casts, String name) {
         casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").mustBe(numericValue()).asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 

@@ -37,6 +37,10 @@ public class GraphicsCCalls {
     public static final class C_PlotXY extends RExternalBuiltinNode {
         @Child private CastNode castXYNode;
 
+        static {
+            Casts.noCasts(C_PlotXY.class);
+        }
+
         public C_PlotXY() {
             castXYNode = newCastBuilder().mustBe(doubleValue().and(size(2))).asDoubleVector().buildCastNode();
         }
@@ -79,6 +83,10 @@ public class GraphicsCCalls {
 
     public static final class C_Par extends RExternalBuiltinNode {
 
+        static {
+            Casts.noCasts(C_Par.class);
+        }
+
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
@@ -100,6 +108,10 @@ public class GraphicsCCalls {
         private double col = RRuntime.DOUBLE_NA;
         private double font = RRuntime.DOUBLE_NA;
         @Child private CastNode firstDoubleCast;
+
+        static {
+            Casts.noCasts(C_mtext.class);
+        }
 
         public C_mtext() {
             firstDoubleCast = newCastBuilder().asDoubleVector().findFirst().buildCastNode();

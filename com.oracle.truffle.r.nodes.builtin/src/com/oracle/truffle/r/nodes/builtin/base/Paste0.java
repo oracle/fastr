@@ -42,8 +42,8 @@ public abstract class Paste0 extends RBuiltinNode {
 
     @Child private Paste pasteNode = PasteNodeGen.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Paste0.class);
         casts.arg("list").mustBe(RList.class);
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }

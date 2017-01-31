@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public class TestBuiltin_asfunction extends TestBase {
         assertEval("{ as.function(alist(\"foo\"))() }");
         assertEval("{ as.function(alist(7+42i))() }");
         assertEval("{ as.function(alist(as.raw(7)))() }");
-        assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(alist(a+b), \"foo\")) }");
+        assertEval("{ .Internal(as.function.default(alist(a+b), \"foo\")) }");
         assertEval(Output.IgnoreErrorContext, "{ .Internal(as.function.default(function() 42, parent.frame())) }");
     }
 }

@@ -58,6 +58,10 @@ public abstract class Colon extends RBuiltinNode {
     @Child private ColonCastNode rightCast = ColonCastNodeGen.create();
     @Child private ColonInternal internal = ColonInternalNodeGen.create();
 
+    static {
+        Casts.noCasts(Colon.class);
+    }
+
     @Specialization
     protected RSequence colon(Object left, Object right) {
         return internal.execute(leftCast.execute(left), rightCast.execute(right));

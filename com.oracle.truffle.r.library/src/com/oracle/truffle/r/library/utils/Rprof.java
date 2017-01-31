@@ -40,7 +40,6 @@ import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -81,8 +80,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*;
  */
 public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryCopyTracer.Listener {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Rprof.class);
         casts.arg(0, "filename").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         casts.arg(1, "append_mode").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
         casts.arg(2, "dinterval").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);

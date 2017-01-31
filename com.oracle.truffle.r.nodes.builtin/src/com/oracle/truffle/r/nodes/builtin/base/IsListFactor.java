@@ -19,7 +19,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.IsListFactorNodeGen.IsListFactorInternalNodeGen;
 import com.oracle.truffle.r.nodes.unary.IsFactorNode;
@@ -70,8 +69,8 @@ public abstract class IsListFactor extends RBuiltinNode {
         }
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(IsListFactor.class);
         casts.arg("recursive").asLogicalVector().findFirst().map(toBoolean());
     }
 

@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -66,45 +67,45 @@ public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
         @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
 
-        protected void castPattern(CastBuilder casts) {
+        protected static void castPattern(Casts casts) {
             // with default error message, NO_CALLER does not work
             casts.arg("pattern").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
                             "pattern");
         }
 
-        protected void castText(CastBuilder casts, String textId) {
+        protected static void castText(Casts casts, String textId) {
             casts.arg(textId).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, textId);
         }
 
-        protected void castIgnoreCase(CastBuilder casts) {
+        protected static void castIgnoreCase(Casts casts) {
             casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        protected void castPerl(CastBuilder casts) {
+        protected static void castPerl(Casts casts) {
             casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        protected void castFixed(CastBuilder casts, byte defaultValue) {
+        protected static void castFixed(Casts casts, byte defaultValue) {
             casts.arg("fixed").asLogicalVector().findFirst(defaultValue);
         }
 
-        protected void castValue(CastBuilder casts) {
+        protected static void castValue(Casts casts) {
             casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        protected void castUseBytes(CastBuilder casts) {
+        protected static void castUseBytes(Casts casts) {
             casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        protected void castInvert(CastBuilder casts) {
+        protected static void castInvert(Casts casts) {
             casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        protected void castCosts(CastBuilder casts) {
+        protected static void castCosts(Casts casts) {
             casts.arg("costs").asIntegerVector();
         }
 
-        protected void castBounds(CastBuilder casts) {
+        protected static void castBounds(Casts casts) {
             casts.arg("bounds").asDoubleVector();
         }
 
@@ -319,8 +320,8 @@ public class GrepFunctions {
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class Grep extends GrepAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Grep.class);
             castPattern(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -342,8 +343,8 @@ public class GrepFunctions {
     @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
     public abstract static class GrepL extends GrepAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(GrepL.class);
             castPattern(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -365,7 +366,7 @@ public class GrepFunctions {
 
     protected abstract static class SubAdapter extends CommonCodeAdapter {
 
-        protected void castReplacement(CastBuilder casts) {
+        protected static void castReplacement(Casts casts) {
             // with default error message, NO_CALLER does not work
             casts.arg("replacement").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.NO_CALLER,
                             RError.Message.INVALID_ARGUMENT, "replacement");
@@ -641,8 +642,8 @@ public class GrepFunctions {
     @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Sub extends SubAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Sub.class);
             castPattern(casts);
             castReplacement(casts);
             castText(casts, "text");
@@ -663,8 +664,8 @@ public class GrepFunctions {
     @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class GSub extends SubAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(GSub.class);
             castPattern(casts);
             castReplacement(casts);
             castText(casts, "text");
@@ -692,8 +693,8 @@ public class GrepFunctions {
         @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
         @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Regexp.class);
             castPattern(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -880,8 +881,8 @@ public class GrepFunctions {
         @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
         @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Gregexpr.class);
             castPattern(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -1019,8 +1020,8 @@ public class GrepFunctions {
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
     public abstract static class AGrep extends CommonCodeAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AGrep.class);
             castPattern(casts);
             castText(casts, "x");
             castIgnoreCase(casts);
@@ -1135,8 +1136,8 @@ public class GrepFunctions {
     @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
     public abstract static class AGrepL extends CommonCodeAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AGrepL.class);
             castPattern(casts);
             castText(casts, "x");
             castIgnoreCase(casts);
@@ -1166,8 +1167,8 @@ public class GrepFunctions {
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends CommonCodeAdapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Strsplit.class);
             casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
             casts.arg("split").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
             castFixed(casts, RRuntime.LOGICAL_FALSE);

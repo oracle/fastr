@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -43,17 +44,18 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
 
-    private static final class Casts {
-        private static void name(CastBuilder casts) {
+    private static final class CastsHelper {
+        private static void name(Casts casts) {
             casts.arg("name").mustBe(stringValue().or(instanceOf(RSymbol.class)));
         }
     }
 
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class GetRegisteredNamespace extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.name(casts);
+
+        static {
+            Casts casts = new Casts(GetRegisteredNamespace.class);
+            CastsHelper.name(casts);
         }
 
         @Specialization
@@ -79,9 +81,10 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
     public abstract static class IsRegisteredNamespace extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.name(casts);
+
+        static {
+            Casts casts = new Casts(IsRegisteredNamespace.class);
+            CastsHelper.name(casts);
         }
 
         @Specialization
@@ -107,6 +110,11 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
     public abstract static class IsNamespaceEnv extends RBuiltinNode {
+
+        static {
+            Casts.noCasts(IsNamespaceEnv.class);
+        }
+
         @Specialization
         protected byte doIsNamespaceEnv(REnvironment env) {
             return RRuntime.asLogical(env.isNamespaceEnv());
@@ -128,9 +136,10 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
     public abstract static class RegisterNamespace extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.name(casts);
+
+        static {
+            Casts casts = new Casts(RegisterNamespace.class);
+            CastsHelper.name(casts);
             casts.arg("env").mustBe(instanceOf(REnvironment.class));
         }
 
@@ -154,9 +163,10 @@ public class NamespaceFunctions {
 
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = MODIFIES_STATE)
     public abstract static class UnregisterNamespace extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.name(casts);
+
+        static {
+            Casts casts = new Casts(UnregisterNamespace.class);
+            CastsHelper.name(casts);
         }
 
         @Specialization

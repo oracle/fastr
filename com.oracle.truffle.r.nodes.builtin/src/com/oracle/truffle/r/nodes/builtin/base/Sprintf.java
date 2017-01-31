@@ -45,7 +45,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."}, behavior = PURE)
+
 public abstract class Sprintf extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(Sprintf.class);
+    }
 
     public abstract Object executeObject(String fmt, Object args);
 

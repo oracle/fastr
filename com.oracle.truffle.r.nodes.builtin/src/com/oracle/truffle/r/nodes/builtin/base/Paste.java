@@ -73,8 +73,8 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile isNotStringProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNoClassProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Paste.class);
         casts.arg(0).mustBe(RAbstractListVector.class);
         casts.arg("sep").asStringVector().findFirst(Message.INVALID_SEPARATOR);
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();

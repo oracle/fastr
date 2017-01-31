@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -52,6 +53,10 @@ public abstract class ListBuiltin extends RBuiltinNode {
     private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private RStringVector suppliedSignatureArgNames;
+
+    static {
+        Casts.noCasts(ListBuiltin.class);
+    }
 
     /**
      * Creates a shared permanent vector so that it can be re-used for every list(...) with the same

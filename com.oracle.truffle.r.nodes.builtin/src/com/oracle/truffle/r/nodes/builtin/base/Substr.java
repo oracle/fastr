@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,10 @@ public abstract class Substr extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
     private final ConditionProfile naIndexesProfile = ConditionProfile.createBinaryProfile();
+
+    static {
+        Casts.noCasts(Substr.class);
+    }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")

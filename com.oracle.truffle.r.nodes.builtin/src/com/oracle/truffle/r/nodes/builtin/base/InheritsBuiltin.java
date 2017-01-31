@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,7 +20,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.InheritsNode;
 import com.oracle.truffle.r.nodes.unary.InheritsNodeGen;
@@ -34,8 +33,8 @@ public abstract class InheritsBuiltin extends RBuiltinNode {
 
     public abstract Object execute(Object x, Object what, Object which);
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(InheritsBuiltin.class);
         casts.arg("what").mustBe(stringValue(), NOT_CHARACTER_VECTOR, "what");
         casts.arg("which").mustBe(logicalValue(), NOT_LEN_ONE_LOGICAL_VECTOR, "which").asLogicalVector().findFirst().map(toBoolean());
     }

@@ -37,7 +37,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -63,8 +62,8 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(CumSum.class);
         casts.arg("x").allowNull().mapIf(integerValue().or(logicalValue()), asIntegerVector(true, false, false), chain(mapIf(complexValue().not(), asDoubleVector(true, false, false))).end());
     }
 

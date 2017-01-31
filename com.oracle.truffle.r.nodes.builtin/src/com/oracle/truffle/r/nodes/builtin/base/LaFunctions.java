@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -87,10 +86,12 @@ public class LaFunctions {
         protected static final String[] NAMES = new String[]{"values", "vectors"};
         protected final BranchProfile errorProfile = BranchProfile.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
-            casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
+        static final class RsgCasts extends Casts {
+            RsgCasts(Class<? extends RsgAdapter> extClass) {
+                super(extClass);
+                casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
+                casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
+            }
         }
     }
 
@@ -98,6 +99,10 @@ public class LaFunctions {
     public abstract static class Rg extends RsgAdapter {
 
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
+
+        static {
+            new RsgCasts(Rg.class);
+        }
 
         @Specialization
         protected Object doRg(RDoubleVector matrix, boolean onlyValues,
@@ -193,6 +198,11 @@ public class LaFunctions {
 
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
     public abstract static class Rs extends RsgAdapter {
+
+        static {
+            new RsgCasts(Rs.class);
+        }
+
         @Specialization
         protected Object doRs(RDoubleVector matrix, boolean onlyValues,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
@@ -255,8 +265,8 @@ public class LaFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Qr.class);
             casts.arg("in").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
         }
 
@@ -311,8 +321,8 @@ public class LaFunctions {
         private static final char SIDE = 'L';
         private static final char TRANS = 'T';
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(QrCoefReal.class);
             casts.arg("q").mustBe(instanceOf(RList.class));
             casts.arg("b").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
         }
@@ -379,19 +389,11 @@ public class LaFunctions {
 
         @Child private SetFixedAttributeNode setLogAttrNode = SetFixedAttributeNode.create("logarithm");
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            //@formatter:off
-            casts.arg("a").asDoubleVector(false, true, false).
-                mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
-                mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a");
+        static {
+            Casts casts = new Casts(DetGeReal.class);
+            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a");
 
-            casts.arg("uselog").defaultError(RError.Message.MUST_BE_LOGICAL, "logarithm").
-                asLogicalVector().
-                findFirst().
-                notNA().
-                map(toBoolean());
-            //@formatter:on
+            casts.arg("uselog").defaultError(RError.Message.MUST_BE_LOGICAL, "logarithm").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
         @Specialization
@@ -465,22 +467,14 @@ public class LaFunctions {
         @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
         @Child private SetFixedAttributeNode setRankAttrNode = SetFixedAttributeNode.create("rank");
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            //@formatter:off
-            casts.arg("a").asDoubleVector(false, true, false).
-                mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
-                mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a").
-                mustBe(dimGt(1, 0), RError.Message.DIMS_GT_ZERO, "a");
+        static {
+            Casts casts = new Casts(LaChol.class);
+            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a").mustBe(
+                            dimGt(1, 0), RError.Message.DIMS_GT_ZERO, "a");
 
-            casts.arg("pivot").asLogicalVector().
-                findFirst().
-                notNA().
-                map(toBoolean());
+            casts.arg("pivot").asLogicalVector().findFirst().notNA().map(toBoolean());
 
-            casts.arg("tol").asDoubleVector().
-                findFirst(RRuntime.DOUBLE_NA);
-            //@formatter:on
+            casts.arg("tol").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
         }
 
         @Specialization
@@ -541,19 +535,14 @@ public class LaFunctions {
             return vec -> vec.getDimensions()[dim];
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            //@formatter:off
-            casts.arg("a").mustBe(numericValue()).asVector().
-                mustBe(matrix(), RError.ROOTNODE, RError.Message.MUST_BE_NUMERIC_MATRIX, "a").
-                mustBe(not(dimEq(0, 0)), RError.ROOTNODE, RError.Message.GENERIC, "'a' is 0-diml").
-                mustBe(squareMatrix(), RError.ROOTNODE, RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
+        static {
+            Casts casts = new Casts(LaSolve.class);
+            casts.arg("a").mustBe(numericValue()).asVector().mustBe(matrix(), RError.ROOTNODE, RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)), RError.ROOTNODE,
+                            RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.ROOTNODE, RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
 
-            casts.arg("bin").asDoubleVector(false, true, false).
-                mustBe(or(not(matrix()), not(dimEq(1, 0))), RError.ROOTNODE, RError.Message.GENERIC, "no right-hand side in 'b'");
+            casts.arg("bin").asDoubleVector(false, true, false).mustBe(or(not(matrix()), not(dimEq(1, 0))), RError.ROOTNODE, RError.Message.GENERIC, "no right-hand side in 'b'");
 
             casts.arg("tolin").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
-            //@formatter:on
         }
 
         @Specialization

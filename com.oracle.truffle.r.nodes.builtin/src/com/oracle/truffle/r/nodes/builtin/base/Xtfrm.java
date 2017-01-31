@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class Xtfrm extends RBuiltinNode {
 
     @Child private GetFunctions.Get getNode;
+
+    static {
+        Casts.noCasts(Xtfrm.class);
+    }
 
     @Specialization
     protected Object xtfrm(VirtualFrame frame, Object x,

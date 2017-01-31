@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,9 +42,11 @@ public class DebugFunctions {
 
     protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
+        static final class ErrorAndFunCasts extends Casts {
+            ErrorAndFunCasts(Class<? extends ErrorAndFunAdapter> extCls) {
+                super(extCls);
+                casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
+            }
         }
 
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
@@ -58,8 +59,13 @@ public class DebugFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class Debug extends ErrorAndFunAdapter {
+
+        static {
+            new ErrorAndFunCasts(Debug.class);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -69,8 +75,13 @@ public class DebugFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class DebugOnce extends ErrorAndFunAdapter {
+
+        static {
+            new ErrorAndFunCasts(DebugOnce.class);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -81,8 +92,13 @@ public class DebugFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class UnDebug extends ErrorAndFunAdapter {
+
+        static {
+            new ErrorAndFunCasts(UnDebug.class);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -94,8 +110,13 @@ public class DebugFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class IsDebugged extends ErrorAndFunAdapter {
+
+        static {
+            new ErrorAndFunCasts(IsDebugged.class);
+        }
 
         @Specialization
         @TruffleBoundary

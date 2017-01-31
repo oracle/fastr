@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
@@ -40,8 +39,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 @RBuiltin(name = "warning", visibility = OFF, kind = INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"}, behavior = COMPLEX)
 public abstract class Warning extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Warning.class);
         casts.arg("call").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("immediate").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("nobreaks").asLogicalVector().findFirst().map(toBoolean());

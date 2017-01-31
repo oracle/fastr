@@ -57,7 +57,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
@@ -134,52 +134,52 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    public static final class Casts {
-        private static void description(CastBuilder casts) {
+    public static final class CastsHelper {
+        private static void description(Casts casts) {
             casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().notNA();
         }
 
-        private static HeadPhaseBuilder<String> open(CastBuilder casts) {
+        private static HeadPhaseBuilder<String> open(Casts casts) {
             return casts.arg("open").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA();
         }
 
-        private static void encoding(CastBuilder casts) {
+        private static void encoding(Casts casts) {
             casts.arg("encoding").asStringVector().mustBe(singleElement()).findFirst();
         }
 
-        private static void raw(CastBuilder casts) {
+        private static void raw(Casts casts) {
             casts.arg("raw").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        private static void blocking(CastBuilder casts) {
+        private static void blocking(Casts casts) {
             casts.arg("blocking").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        public static void connection(CastBuilder casts) {
+        public static void connection(Casts casts) {
             casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
         }
 
-        private static void nchars(CastBuilder casts) {
+        private static void nchars(Casts casts) {
             casts.arg("nchars").asIntegerVector().mustBe(notEmpty());
         }
 
-        private static void useBytes(CastBuilder casts) {
+        private static void useBytes(Casts casts) {
             casts.arg("useBytes").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        private static void n(CastBuilder casts) {
+        private static void n(Casts casts) {
             casts.arg("n").asIntegerVector().findFirst().mustBe(gte(0));
         }
 
-        private static void size(CastBuilder casts) {
+        private static void size(Casts casts) {
             casts.arg("size").asIntegerVector().findFirst();
         }
 
-        private static void swap(CastBuilder casts) {
+        private static void swap(Casts casts) {
             casts.arg("swap").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
-        private static void method(CastBuilder casts) {
+        private static void method(Casts casts) {
             casts.arg("method").asStringVector().findFirst();
         }
     }
@@ -187,14 +187,14 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
     public abstract static class File extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.description(casts);
-            Casts.open(casts);
+        static {
+            Casts casts = new Casts(File.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
             casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
-            Casts.encoding(casts);
-            Casts.method(casts);
-            Casts.raw(casts);
+            CastsHelper.encoding(casts);
+            CastsHelper.method(casts);
+            CastsHelper.raw(casts);
         }
 
         @Specialization
@@ -236,12 +236,14 @@ public abstract class ConnectionFunctions {
             this.cType = cType;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.description(casts);
-            Casts.open(casts);
-            Casts.encoding(casts);
-            casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
+        static final class ZZCasts extends Casts {
+            protected ZZCasts(Class<? extends ZZFileAdapter> extCls, RCompression.Type cType) {
+                super(extCls);
+                CastsHelper.description(this);
+                CastsHelper.open(this);
+                CastsHelper.encoding(this);
+                casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
+            }
         }
 
         @Specialization
@@ -260,37 +262,56 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class GZFile extends ZZFileAdapter {
         protected GZFile() {
             super(RCompression.Type.GZIP);
         }
+
+        static {
+            new ZZCasts(GZFile.class, RCompression.Type.GZIP);
+        }
+
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "bzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class BZFile extends ZZFileAdapter {
         protected BZFile() {
             super(RCompression.Type.BZIP2);
         }
+
+        static {
+            new ZZCasts(BZFile.class, RCompression.Type.BZIP2);
+        }
+
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "xzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class XZFile extends ZZFileAdapter {
         protected XZFile() {
             super(RCompression.Type.XZ);
         }
+
+        static {
+            new ZZCasts(XZFile.class, RCompression.Type.XZ);
+        }
+
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)
     public abstract static class TextConnection extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.description(casts);
+
+        static {
+            Casts casts = new Casts(TextConnection.class);
+            CastsHelper.description(casts);
             // TODO how to have either a RNull or a String/RStringVector and have the latter coerced
             // to a
             // RAbstractStringVector to avoid the explicit handling in the specialization
             casts.arg("text").allowNull().mustBe(stringValue());
-            Casts.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
+            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("encoding").asIntegerVector().findFirst().notNA();
         }
@@ -330,8 +351,9 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class TextConnectionValue extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(TextConnectionValue.class);
             casts.arg("con").defaultError(Message.NOT_A_TEXT_CONNECTION).mustBe(integerValue()).asIntegerVector().findFirst();
         }
 
@@ -350,13 +372,13 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"}, behavior = IO)
     public abstract static class SocketConnection extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SocketConnection.class);
             casts.arg("host").mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("port").asIntegerVector().findFirst().notNA().mustBe(gte(0));
             casts.arg("server").asLogicalVector().findFirst().notNA().map(toBoolean());
-            Casts.open(casts);
-            Casts.blocking(casts);
+            CastsHelper.open(casts);
+            CastsHelper.blocking(casts);
             casts.arg("timeout").asIntegerVector().findFirst();
         }
 
@@ -379,13 +401,13 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method"}, behavior = IO)
     public abstract static class URLConnection extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.description(casts);
-            Casts.open(casts);
-            Casts.blocking(casts);
-            Casts.encoding(casts);
-            Casts.method(casts);
+        static {
+            Casts casts = new Casts(URLConnection.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            CastsHelper.blocking(casts);
+            CastsHelper.encoding(casts);
+            CastsHelper.method(casts);
         }
 
         @Specialization
@@ -407,8 +429,8 @@ public abstract class ConnectionFunctions {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"description", "class", "mode", "text", "opened", "can read", "can write"},
                         RDataFactory.COMPLETE_VECTOR);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Summary.class);
             casts.arg("object").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
         }
 
@@ -431,11 +453,11 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "open", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"}, behavior = IO)
     public abstract static class Open extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
-            Casts.open(casts);
-            Casts.blocking(casts);
+        static {
+            Casts casts = new Casts(Open.class);
+            CastsHelper.connection(casts);
+            CastsHelper.open(casts);
+            CastsHelper.blocking(casts);
         }
 
         @Specialization
@@ -460,9 +482,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"}, behavior = IO)
     public abstract static class IsOpen extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(IsOpen.class);
+            CastsHelper.connection(casts);
             casts.arg("rw").asIntegerVector().findFirst();
         }
 
@@ -489,9 +512,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "close", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "type"}, behavior = IO)
     public abstract static class Close extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(Close.class);
+            CastsHelper.connection(casts);
             casts.arg("type").asStringVector().findFirst();
         }
 
@@ -511,13 +535,13 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"}, behavior = IO)
     public abstract static class ReadLines extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+        static {
+            Casts casts = new Casts(ReadLines.class);
+            CastsHelper.connection(casts);
             casts.arg("n").asIntegerVector().findFirst().notNA();
             casts.arg("ok").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("warn").asLogicalVector().findFirst().notNA().map(toBoolean());
-            Casts.encoding(casts);
+            CastsHelper.encoding(casts);
             casts.arg("skipNul").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 
@@ -539,12 +563,13 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "writeLines", visibility = OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"}, behavior = IO)
     public abstract static class WriteLines extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(WriteLines.class);
             casts.arg("text").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
-            Casts.connection(casts);
+            CastsHelper.connection(casts);
             casts.arg("sep").asStringVector().findFirst();
-            Casts.useBytes(casts);
+            CastsHelper.useBytes(casts);
         }
 
         @Specialization
@@ -561,9 +586,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "flush", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class Flush extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(Flush.class);
+            CastsHelper.connection(casts);
         }
 
         @Specialization
@@ -581,10 +607,10 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "pushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"data", "con", "newLine", "type"}, behavior = IO)
     public abstract static class PushBack extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(PushBack.class);
             casts.arg("data").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
-            Casts.connection(casts);
+            CastsHelper.connection(casts);
             casts.arg("newLine").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("type").asIntegerVector().findFirst();
         }
@@ -599,9 +625,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class PushBackLength extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(PushBackLength.class);
+            CastsHelper.connection(casts);
         }
 
         @Specialization
@@ -613,9 +640,9 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "clearPushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
     public abstract static class PushBackClear extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+        static {
+            Casts casts = new Casts(PushBackClear.class);
+            CastsHelper.connection(casts);
         }
 
         @Specialization
@@ -628,11 +655,11 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"}, behavior = IO)
     public abstract static class ReadChar extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
-            Casts.nchars(casts);
-            Casts.useBytes(casts);
+        static {
+            Casts casts = new Casts(ReadChar.class);
+            CastsHelper.connection(casts);
+            CastsHelper.nchars(casts);
+            CastsHelper.useBytes(casts);
         }
 
         @SuppressWarnings("unused")
@@ -662,14 +689,15 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "writeChar", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "sep", "useBytes"}, behavior = IO)
     public abstract static class WriteChar extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(WriteChar.class);
             casts.arg("object").asStringVector();
             casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
                             asIntegerVector().setNext(findFirst().integerElement()));
-            Casts.nchars(casts);
+            CastsHelper.nchars(casts);
             casts.arg("sep").allowNull().mustBe(stringValue());
-            Casts.useBytes(casts);
+            CastsHelper.useBytes(casts);
         }
 
         @TruffleBoundary
@@ -717,15 +745,15 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"}, behavior = IO)
     public abstract static class ReadBin extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ReadBin.class);
             // TODO con can be a RAWSXP (not implemented)
-            Casts.connection(casts);
+            CastsHelper.connection(casts);
             casts.arg("what").asStringVector().findFirst();
-            Casts.n(casts);
-            Casts.size(casts);
+            CastsHelper.n(casts);
+            CastsHelper.size(casts);
             casts.arg("signed").asLogicalVector().findFirst().notNA().map(toBoolean());
-            Casts.swap(casts);
+            CastsHelper.swap(casts);
         }
 
         @Specialization
@@ -1003,14 +1031,14 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "writeBin", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
     public abstract static class WriteBin extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(WriteBin.class);
             // TODO atomic, i.e. not RList or RExpression
             casts.arg("object").asVector().mustBe(instanceOf(RAbstractVector.class));
             casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(), asIntegerVector().setNext(findFirst().integerElement()));
-            Casts.size(casts);
-            Casts.swap(casts);
-            Casts.useBytes(casts);
+            CastsHelper.size(casts);
+            CastsHelper.swap(casts);
+            CastsHelper.useBytes(casts);
         }
 
         @TruffleBoundary
@@ -1050,8 +1078,8 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"}, behavior = IO)
     public abstract static class GetConnection extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(GetConnection.class);
             casts.arg("what").asIntegerVector().findFirst();
         }
 
@@ -1078,9 +1106,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "isSeekable", kind = INTERNAL, parameterNames = "con", behavior = IO)
     public abstract static class IsSeekable extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(IsSeekable.class);
+            CastsHelper.connection(casts);
         }
 
         @Specialization
@@ -1092,9 +1121,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "seek", kind = INTERNAL, parameterNames = {"con", "where", "origin", "rw"}, behavior = IO)
     public abstract static class Seek extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.connection(casts);
+
+        static {
+            Casts casts = new Casts(Seek.class);
+            CastsHelper.connection(casts);
             casts.arg("where").asDoubleVector().findFirst();
             casts.arg("origin").asIntegerVector().findFirst();
             casts.arg("rw").asIntegerVector().findFirst();

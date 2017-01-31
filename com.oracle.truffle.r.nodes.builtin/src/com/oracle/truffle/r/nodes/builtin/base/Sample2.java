@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetInt;
@@ -50,18 +49,12 @@ public abstract class Sample2 extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        // @formatter:off
-        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().
-                mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, INVALID_FIRST_ARGUMENT).
-                asDoubleVector().findFirst().mustBe(gte(0.0)).mustBe(isFinite());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
-                mustBe(integerValue().or(doubleValue())).
-                asIntegerVector().findFirst().
-                defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
-                notNA().mustBe(gte0());
-        // @formatter:on
+    static {
+        Casts casts = new Casts(Sample2.class);
+        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER,
+                        INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(gte(0.0)).mustBe(isFinite());
+        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().defaultError(SHOW_CALLER, INVALID_ARGUMENT,
+                        "size").notNA().mustBe(gte0());
     }
 
     @Specialization(guards = "x > MAX_INT")

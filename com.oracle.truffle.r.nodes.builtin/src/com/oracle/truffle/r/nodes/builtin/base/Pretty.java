@@ -21,7 +21,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -36,8 +35,8 @@ public abstract class Pretty extends RBuiltinNode {
 
     private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"l", "u", "n"}, RDataFactory.COMPLETE_VECTOR);
 
-    @Override
-    public void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Pretty.class);
         casts.arg("l").asDoubleVector().findFirst().mustBe(isFinite());
         casts.arg("u").asDoubleVector().findFirst().mustBe(isFinite());
         casts.arg("n").asIntegerVector().findFirst().notNA().mustBe(gte0());

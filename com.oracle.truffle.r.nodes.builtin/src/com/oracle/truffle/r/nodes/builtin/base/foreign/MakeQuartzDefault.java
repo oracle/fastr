@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,6 +16,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
 public final class MakeQuartzDefault extends RExternalBuiltinNode {
+
+    static {
+        Casts.noCasts(MakeQuartzDefault.class);
+    }
 
     @Override
     public Object call(RArgsValuesAndNames args) {

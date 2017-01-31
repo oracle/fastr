@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,10 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
+
+    static {
+        Casts.noCasts(UpdateSubstr.class);
+    }
 
     private static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();

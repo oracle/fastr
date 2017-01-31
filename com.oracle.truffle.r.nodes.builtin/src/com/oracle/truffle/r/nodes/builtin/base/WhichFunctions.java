@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMaxNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.WhichFunctionsFactory.WhichMinNodeGen;
@@ -54,8 +53,8 @@ public class WhichFunctions {
     @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class Which extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Which.class);
             casts.arg("x").mustBe(logicalValue()).asLogicalVector();
         }
 
@@ -111,9 +110,11 @@ public class WhichFunctions {
             this.isMax = isMax;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg(0, "x").asDoubleVector(true, false, false);
+        static final class WhichMinMaxs extends Casts {
+            protected WhichMinMaxs(Class<? extends WhichMinMax> extCls) {
+                super(extCls);
+                casts.arg(0, "x").asDoubleVector(true, false, false);
+            }
         }
 
         @Specialization
@@ -156,6 +157,11 @@ public class WhichFunctions {
 
     @RBuiltin(name = "which.max", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class WhichMax extends WhichMinMax {
+
+        static {
+            new WhichMinMaxs(WhichMax.class);
+        }
+
         protected WhichMax() {
             super(true);
         }
@@ -167,6 +173,11 @@ public class WhichFunctions {
 
     @RBuiltin(name = "which.min", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
     public abstract static class WhichMin extends WhichMinMax {
+
+        static {
+            new WhichMinMaxs(WhichMin.class);
+        }
+
         protected WhichMin() {
             super(false);
         }

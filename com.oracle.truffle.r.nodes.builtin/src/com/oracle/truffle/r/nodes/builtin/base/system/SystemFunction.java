@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,8 +39,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 public abstract class SystemFunction extends RBuiltinNode {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(SystemFunction.class);
         casts.arg("command").mustBe(stringValue(), RError.Message.SYSTEM_CHAR_ARG).asStringVector().findFirst();
         casts.arg("intern").asLogicalVector().findFirst().notNA(RError.Message.SYSTEM_INTERN_NOT_NA).map(toBoolean());
     }

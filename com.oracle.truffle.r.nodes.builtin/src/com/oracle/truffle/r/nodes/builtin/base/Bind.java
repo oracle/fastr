@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -525,18 +524,30 @@ public abstract class Bind extends RBaseNode {
         return result;
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class CbindInternal extends AbstractBind {
         public CbindInternal() {
             super(BindType.cbind);
         }
+
+        static {
+            new BindCasts(CbindInternal.class);
+        }
+
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class RbindInternal extends AbstractBind {
         public RbindInternal() {
             super(BindType.rbind);
         }
+
+        static {
+            new BindCasts(RbindInternal.class);
+        }
+
     }
 
     protected abstract static class AbstractBind extends RBuiltinNode {
@@ -557,9 +568,11 @@ public abstract class Bind extends RBaseNode {
             this.type = type;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("deparse.level").asIntegerVector().findFirst(0);
+        static final class BindCasts extends Casts {
+            BindCasts(Class<? extends AbstractBind> extCls) {
+                super(extCls);
+                casts.arg("deparse.level").asIntegerVector().findFirst(0);
+            }
         }
 
         @Specialization
@@ -614,6 +627,7 @@ public abstract class Bind extends RBaseNode {
             }
             return result != null ? result.function : null;
         }
+
     }
 
     public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,

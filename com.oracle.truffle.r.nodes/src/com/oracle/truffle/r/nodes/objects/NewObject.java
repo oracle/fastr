@@ -20,7 +20,6 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.DuplicateNode;
@@ -47,8 +46,8 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
         castLogicalScalar = newCastBuilder().asLogicalVector().findFirst(RRuntime.LOGICAL_NA).buildCastNode();
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(NewObject.class);
         // TODO: should we change the message to (incompatible) "Java level ..."?
         casts.arg(0).mustNotBeNull(RError.NO_CALLER, RError.Message.GENERIC, "C level NEW macro called with null class definition pointer");
     }

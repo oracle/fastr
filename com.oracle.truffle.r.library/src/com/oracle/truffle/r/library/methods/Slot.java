@@ -20,7 +20,6 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
@@ -37,8 +36,8 @@ public class Slot {
         @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(false);
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(R_getSlot.class);
             casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
                             singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
@@ -65,8 +64,8 @@ public class Slot {
         @Child private UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create();
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(R_setSlot.class);
             casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
                             singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }

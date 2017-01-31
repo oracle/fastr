@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -46,8 +45,8 @@ public abstract class MakeNames extends RBuiltinNode {
     private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(MakeNames.class);
         casts.arg("names").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER_NAMES);
         casts.arg("allow_").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "allow_").asLogicalVector().findFirst().mustBe(notLogicalNA());
     }

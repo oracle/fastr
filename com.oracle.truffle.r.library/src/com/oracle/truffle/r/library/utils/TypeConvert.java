@@ -40,6 +40,10 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     @Child private SetFixedAttributeNode setLevelsAttrNode = SetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
+    static {
+        Casts.noCasts(TypeConvert.class);
+    }
+
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         // naStrings are in addition to NA_character_
         if (RRuntime.isNA(s)) {

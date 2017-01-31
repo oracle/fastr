@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -50,6 +50,10 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private SetClassAttributeNode setClassAttrNode;
 
     private final BranchProfile errorProfile = BranchProfile.create();
+
+    static {
+        Casts.noCasts(UpdateStorageMode.class);
+    }
 
     @Specialization
     protected Object update(Object x, String value,

@@ -25,7 +25,6 @@ import java.nio.file.Path;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -37,8 +36,8 @@ public class ToolsText {
 
     public abstract static class DoTabExpand extends RExternalBuiltinNode.Arg2 {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(DoTabExpand.class);
             casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustBe(stringValue());
             casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustBe(integerValue()).asIntegerVector();
         }
@@ -79,8 +78,8 @@ public class ToolsText {
 
     public abstract static class CodeFilesAppend extends RExternalBuiltinNode.Arg2 {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(CodeFilesAppend.class);
             casts.arg(0, "file1").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg(1, "file2").mustBe(stringValue()).asStringVector();
         }

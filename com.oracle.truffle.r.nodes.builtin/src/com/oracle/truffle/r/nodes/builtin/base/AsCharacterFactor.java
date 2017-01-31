@@ -49,6 +49,10 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
     @Child CastToVectorNode castToVectorNode = CastToVectorNode.create();
     @Child private GetFixedAttributeNode getLevelsAttrNode = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
+    static {
+        Casts.noCasts(AsCharacterFactor.class);
+    }
+
     @Specialization
     protected RStringVector doAsCharacterFactor(Object x) {
         byte isFactor = (byte) inheritsNode.execute(x, CLASS_FACTOR_VEC, false);

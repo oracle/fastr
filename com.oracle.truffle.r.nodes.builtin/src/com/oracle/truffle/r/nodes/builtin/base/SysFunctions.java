@@ -52,7 +52,6 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -90,8 +89,8 @@ public class SysFunctions {
     public abstract static class SysGetenv extends RBuiltinNode {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SysGetenv.class);
             casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
             casts.arg("unset").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
@@ -163,8 +162,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.setenv", visibility = OFF, kind = INTERNAL, parameterNames = {"nm", "values"}, behavior = MODIFIES_STATE)
     public abstract static class SysSetEnv extends LoadNamespaceAdapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysSetEnv.class);
             casts.arg("nm").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
             casts.arg("values").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
         }
@@ -192,8 +192,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.unsetenv", visibility = OFF, kind = INTERNAL, parameterNames = {"x"}, behavior = READS_STATE)
     public abstract static class SysUnSetEnv extends LoadNamespaceAdapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysUnSetEnv.class);
             casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_WRONG_TYPE);
         }
 
@@ -217,8 +218,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.sleep", visibility = OFF, kind = INTERNAL, parameterNames = {"time"}, behavior = COMPLEX)
     public abstract static class SysSleep extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysSleep.class);
             casts.arg("time").asDoubleVector().findFirst().mustBe(gte(0.0).and(eq(Double.NaN).not()));
         }
 
@@ -247,8 +249,9 @@ public class SysFunctions {
      */
     @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"}, behavior = IO)
     public abstract static class SysReadlink extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysReadlink.class);
             casts.arg("paths").mustBe(stringValue());
         }
 
@@ -289,8 +292,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.chmod", visibility = OFF, kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"}, behavior = IO)
     public abstract static class SysChmod extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysChmod.class);
             casts.arg("paths").mustBe(stringValue());
             casts.arg("octmode").asIntegerVector().mustBe(notEmpty(), RError.Message.MODE_LENGTH_ONE);
             casts.arg("use_umask").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -316,8 +320,9 @@ public class SysFunctions {
     // TODO implement
     @RBuiltin(name = "Sys.umask", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"octmode"}, behavior = COMPLEX)
     public abstract static class SysUmask extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysUmask.class);
             casts.arg("octmode").asIntegerVector().findFirst();
         }
 
@@ -366,8 +371,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"}, behavior = IO)
     public abstract static class SysGlob extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysGlob.class);
             casts.arg("paths").mustBe(stringValue()).asStringVector();
             casts.arg("dirmask").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
@@ -394,8 +400,9 @@ public class SysFunctions {
 
     @RBuiltin(name = "setFileTime", kind = INTERNAL, parameterNames = {"path", "time"}, visibility = OFF, behavior = IO)
     public abstract static class SysSetFileTime extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SysSetFileTime.class);
             casts.arg("path").mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("time").asIntegerVector().findFirst().notNA();
         }

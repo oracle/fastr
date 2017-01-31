@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -42,8 +41,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Strrep extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Strrep.class);
         casts.arg("x").asStringVector();
         casts.arg("times").asIntegerVector();
     }

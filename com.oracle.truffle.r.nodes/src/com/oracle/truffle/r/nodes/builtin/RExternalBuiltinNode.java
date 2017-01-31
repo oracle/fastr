@@ -48,23 +48,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RExternalBuiltinNode extends RBaseNode {
+public abstract class RExternalBuiltinNode extends RBaseNode implements NodeWithArgumentCasts {
 
     public Object call(@SuppressWarnings("unused") VirtualFrame frame, RArgsValuesAndNames args) {
         return call(args);
     }
 
     protected abstract Object call(RArgsValuesAndNames args);
-
-    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
-        // nothing to do
-    }
-
-    public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder();
-        createCasts(builder);
-        return builder.getCasts();
-    }
 
     // TODO: these should be in the build nodes
     @Child private CastLogicalNode castLogical;

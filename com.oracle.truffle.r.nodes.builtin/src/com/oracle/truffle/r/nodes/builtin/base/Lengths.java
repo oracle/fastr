@@ -36,7 +36,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -52,8 +51,8 @@ public abstract class Lengths extends RBuiltinNode {
 
     @Child private RLengthNode lengthNode;
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Lengths.class);
         casts.arg("x").defaultError(RError.SHOW_CALLER, X_LIST_ATOMIC).allowNull().mustBe(abstractVectorValue());
         casts.arg("use.names").mustBe(numericValue(), RError.SHOW_CALLER, INVALID_VALUE, "use.names").asLogicalVector().findFirst().map(toBoolean());
     }

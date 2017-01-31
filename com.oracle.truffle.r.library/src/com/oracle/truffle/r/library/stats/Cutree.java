@@ -13,7 +13,6 @@ package com.oracle.truffle.r.library.stats;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -23,8 +22,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
 
-    @Override
-    public void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Cutree.class);
         casts.arg(0).asIntegerVector();
         casts.arg(1).asIntegerVector();
     }

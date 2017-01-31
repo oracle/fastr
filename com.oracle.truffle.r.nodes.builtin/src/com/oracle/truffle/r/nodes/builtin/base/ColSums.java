@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
+@SuppressWarnings("unused")
 @RBuiltin(name = "colSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColSums extends ColSumsBase {
 
@@ -44,6 +45,10 @@ public abstract class ColSums extends ColSumsBase {
 
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
     private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();
+
+    static {
+        new ColSumsCasts(ColSums.class);
+    }
 
     @Specialization
     protected RDoubleVector colSums(RAbstractDoubleVector x, int rowNum, int colNum, boolean rnaParam) {

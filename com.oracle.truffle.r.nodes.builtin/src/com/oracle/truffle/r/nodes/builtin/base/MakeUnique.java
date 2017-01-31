@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -45,8 +44,8 @@ public abstract class MakeUnique extends RBuiltinNode {
     private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(MakeUnique.class);
         casts.arg("names").defaultError(RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names").mustBe(stringValue());
         casts.arg("sep").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
 

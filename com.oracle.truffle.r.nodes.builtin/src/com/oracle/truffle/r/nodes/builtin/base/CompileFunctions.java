@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
@@ -38,8 +37,8 @@ public class CompileFunctions {
     @RBuiltin(name = "compilePKGS", kind = INTERNAL, parameterNames = "enable", behavior = PURE)
     public abstract static class CompilePKGS extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(CompilePKGS.class);
             casts.arg("enable").asIntegerVector().findFirst(0);
         }
 
@@ -51,8 +50,9 @@ public class CompileFunctions {
 
     @RBuiltin(name = "enableJIT", kind = INTERNAL, parameterNames = "level", behavior = PURE)
     public abstract static class EnableJIT extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(EnableJIT.class);
             casts.arg("level").asIntegerVector().findFirst(0);
         }
 

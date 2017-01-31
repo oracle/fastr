@@ -23,7 +23,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.grDevices.DevicesCCallsFactory.C_DevOffNodeGen;
 import com.oracle.truffle.r.library.grDevices.pdf.PdfGraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.GraphicsEngineImpl;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -36,8 +35,8 @@ public class DevicesCCalls {
             return C_DevOffNodeGen.create();
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(C_DevOff.class);
             casts.arg(0).asIntegerVector().findFirst();
         }
 
@@ -64,6 +63,10 @@ public class DevicesCCalls {
         @Child private CastNode asDoubleNode;
         @Child private CastNode asLogicalNode;
         @Child private CastNode asIntNode;
+
+        static {
+            Casts.noCasts(C_PDF.class);
+        }
 
         public C_PDF() {
             asStringNode = newCastBuilder().asStringVector().findFirst().buildCastNode();

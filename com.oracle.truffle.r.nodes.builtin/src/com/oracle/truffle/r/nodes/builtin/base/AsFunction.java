@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -65,8 +64,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "as.function.default", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class AsFunction extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(AsFunction.class);
         casts.arg("x").mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(RExpression.class)), RError.SHOW_CALLER2, RError.Message.TYPE_EXPECTED, RType.List.getName());
         casts.arg("envir").mustBe(instanceOf(REnvironment.class), RError.Message.INVALID_ENVIRONMENT);
     }

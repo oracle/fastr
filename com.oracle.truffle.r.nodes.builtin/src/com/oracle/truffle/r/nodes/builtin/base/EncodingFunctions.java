@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -40,8 +39,9 @@ public class EncodingFunctions {
 
     @RBuiltin(name = "Encoding", kind = INTERNAL, parameterNames = "x", behavior = PURE)
     public abstract static class Encoding extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(Encoding.class);
             casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT);
         }
 
@@ -54,8 +54,9 @@ public class EncodingFunctions {
 
     @RBuiltin(name = "setEncoding", kind = INTERNAL, parameterNames = {"x", "value"}, behavior = PURE)
     public abstract static class SetEncoding extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SetEncoding.class);
             casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT).mustBe(stringValue());
             // asStringVector is required for notEmpty() to receive a proper type in case of scalars
             casts.arg("value").defaultError(RError.SHOW_CALLER, RError.Message.GENERIC, "a character vector 'value' expected").mustBe(stringValue()).asStringVector().mustBe(notEmpty(),

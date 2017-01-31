@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
@@ -63,7 +64,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.PipelineStepVisitor;
-import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.unary.BypassNode;
 import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
@@ -113,11 +113,12 @@ public final class PipelineToCastNode {
         // nop: static class
     }
 
-    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep) {
-        return convert(config, firstStep, PipelineConfig.getFilterFactory(), PipelineConfig.getMapperFactory());
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, Optional<ForwardingAnalysisResult> fwdAnalysisResult) {
+        return convert(config, firstStep, PipelineConfig.getFilterFactory(), PipelineConfig.getMapperFactory(), fwdAnalysisResult);
     }
 
-    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory) {
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory,
+                    Optional<ForwardingAnalysisResult> fwdAnalysisResult) {
         if (firstStep == null) {
             return BypassNode.create(config, null, mapperFactory, null);
         }
@@ -133,11 +134,9 @@ public final class PipelineToCastNode {
             return originalPipelineFactory.get();
         }
 
-        // TODO: the result of this analysis should be cached
-        ForwardedValuesAnalyser fwdAnalyser = new ForwardedValuesAnalyser();
-        ForwardingAnalysisResult fwdAnalytics = fwdAnalyser.analyse(firstStep);
-        if (fwdAnalytics.isAnythingForwarded()) {
-            return ValueForwardingNodeGen.create(fwdAnalytics, originalPipelineFactory);
+        ForwardingAnalysisResult fwdRes = fwdAnalysisResult.get();
+        if (fwdRes != null && fwdRes.isAnythingForwarded()) {
+            return ValueForwardingNodeGen.create(fwdRes, originalPipelineFactory);
         } else {
             return originalPipelineFactory.get();
         }

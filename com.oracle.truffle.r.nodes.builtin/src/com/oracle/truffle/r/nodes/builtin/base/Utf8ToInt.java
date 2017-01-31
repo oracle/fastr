@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -40,8 +39,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "utf8ToInt", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Utf8ToInt extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Utf8ToInt.class);
         casts.arg(0, "x").defaultError(RError.SHOW_CALLER, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE, "x").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(size(1),
                         RError.SHOW_CALLER, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE).findFirst();
     }

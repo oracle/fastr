@@ -29,9 +29,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.library.utils.TypeConvert;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctions.SeqInt.IsIntegralNumericNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.GetIntegralNumericNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.IsMissingOrNumericNodeGen;
@@ -330,6 +332,10 @@ public final class SeqFunctions {
     public abstract static class SeqAlong extends RBuiltinNode {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
 
+        static {
+            Casts.noCasts(SeqAlong.class);
+        }
+
         @Specialization(guards = "!hasClass(value)")
         protected RIntSequence seq(VirtualFrame frame, Object value,
                         @Cached("create()") RLengthNode length) {
@@ -373,8 +379,8 @@ public final class SeqFunctions {
     @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"}, behavior = PURE)
     public abstract static class SeqLen extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SeqLen.class);
             /*
              * This is slightly different than what GNU R does as it will report coercion warning
              * for: seq_len(c("7", "b")) GNU R (presumably) gets the first element before doing a
@@ -425,6 +431,10 @@ public final class SeqFunctions {
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
         private static final double FLT_EPSILON = 1.19209290e-7;
+
+        static {
+            Casts.noCasts(SeqInt.class);
+        }
 
         protected abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith);
 

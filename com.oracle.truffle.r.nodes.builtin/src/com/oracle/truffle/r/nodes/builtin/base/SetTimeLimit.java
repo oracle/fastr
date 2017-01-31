@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -36,8 +35,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 @RBuiltin(name = "setTimeLimit", kind = INTERNAL, parameterNames = {"cpu", "elapsed", "transient"}, visibility = OFF, behavior = COMPLEX)
 public abstract class SetTimeLimit extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(SetTimeLimit.class);
         casts.arg("cpu").asDoubleVector().findFirst();
         casts.arg("elapsed").asDoubleVector().findFirst();
         casts.arg("transient").asLogicalVector().findFirst().map(toBoolean());

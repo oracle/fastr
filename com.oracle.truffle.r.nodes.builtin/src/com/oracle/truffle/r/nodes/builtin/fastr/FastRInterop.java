@@ -48,7 +48,6 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.Builder;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -66,8 +65,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Eval.class);
             casts.arg("mimeType").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg("source").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
@@ -106,8 +105,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.evalFile", visibility = OFF, kind = PRIMITIVE, parameterNames = {"path", "mimeType"}, behavior = COMPLEX)
     public abstract static class EvalFile extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(EvalFile.class);
             casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg("mimeType").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
@@ -146,8 +145,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
     public abstract static class Export extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Export.class);
             casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg("value").boxPrimitive();
         }
@@ -178,8 +177,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
     public abstract static class Import extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Import.class);
             casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
 
@@ -199,6 +198,10 @@ public class FastRInterop {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
 
+        static {
+            Casts.noCasts(HasSize.class);
+        }
+
         @Specialization
         public byte hasSize(VirtualFrame frame, TruffleObject obj) {
             return RRuntime.asLogical(ForeignAccess.sendHasSize(node, frame, obj));
@@ -209,6 +212,10 @@ public class FastRInterop {
     public abstract static class IsNull extends RBuiltinNode {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
+
+        static {
+            Casts.noCasts(IsNull.class);
+        }
 
         @Specialization
         public byte hasSize(VirtualFrame frame, TruffleObject obj) {
@@ -221,6 +228,10 @@ public class FastRInterop {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.IS_EXECUTABLE.createNode();
 
+        static {
+            Casts.noCasts(IsExecutable.class);
+        }
+
         @Specialization
         public byte hasSize(VirtualFrame frame, TruffleObject obj) {
             return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, frame, obj));
@@ -230,8 +241,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.toBoolean", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToBoolean extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ToBoolean.class);
             casts.arg("value").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(notLogicalNA()).map(Predef.toBoolean());
         }
 

@@ -40,6 +40,10 @@ public abstract class Quote extends RBuiltinNode {
 
     protected static final int LIMIT = 3;
 
+    static {
+        Casts.noCasts(Quote.class);
+    }
+
     private final ConditionProfile shareableProfile = ConditionProfile.createBinaryProfile();
 
     public abstract Object execute(RPromise expr);

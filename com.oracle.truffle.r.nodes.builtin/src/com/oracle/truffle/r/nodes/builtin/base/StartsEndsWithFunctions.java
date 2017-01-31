@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class StartsEndsWithFunctions {
-    private static class Casts {
+    private static class CastsHelper {
         private static void arg(CastBuilder casts, String name) {
             casts.arg(name).mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER_OBJECTS).asStringVector();
         }
@@ -48,10 +48,12 @@ public class StartsEndsWithFunctions {
         private final NACheck naCheck = NACheck.create();
         private final ConditionProfile singlePrefixProfile = ConditionProfile.createBinaryProfile();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.arg(casts, "x");
-            Casts.arg(casts, "prefix");
+        static final class AdapterCasts extends Casts {
+            AdapterCasts(Class<? extends Adapter> extCls) {
+                super(extCls);
+                CastsHelper.arg(casts, "x");
+                CastsHelper.arg(casts, "prefix");
+            }
         }
 
         protected Object doIt(RAbstractStringVector xVec, RAbstractStringVector prefixVec, boolean startsWith) {
@@ -95,16 +97,27 @@ public class StartsEndsWithFunctions {
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "startsWith", kind = INTERNAL, parameterNames = {"x", "prefix"}, behavior = PURE)
     public abstract static class StartsWith extends Adapter {
+
+        static {
+            new AdapterCasts(StartsWith.class);
+        }
+
         @Specialization
         protected Object startsWith(RAbstractStringVector x, RAbstractStringVector prefix) {
             return doIt(x, prefix, true);
         }
     }
 
+    @SuppressWarnings("unused")
     @RBuiltin(name = "endsWith", kind = INTERNAL, parameterNames = {"x", "prefix"}, behavior = PURE)
     public abstract static class EndsWith extends Adapter {
+
+        static {
+            new AdapterCasts(EndsWith.class);
+        }
 
         @Specialization
         protected Object endsWith(RAbstractStringVector x, RAbstractStringVector prefix) {

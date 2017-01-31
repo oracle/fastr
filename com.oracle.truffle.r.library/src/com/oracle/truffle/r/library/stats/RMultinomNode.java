@@ -24,7 +24,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
@@ -49,8 +48,8 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return RMultinomNodeGen.create();
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(RMultinomNode.class);
         casts.arg(0).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_FIRST_ARGUMENT_NAME, "n");
         casts.arg(1).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_SECOND_ARGUMENT_NAME, "size");
         casts.arg(2).asDoubleVector();

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.ffi.AsIntegerNode;
 import com.oracle.truffle.r.nodes.ffi.AsLogicalNode;
@@ -47,8 +46,8 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
     @Child ToolsRFFI.ParseRdNode parseRdNode = RFFIFactory.getRFFI().getToolsRFFI().createParseRdNode();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(C_ParseRd.class);
         /*
          * Most arguments require coercion using, e.g., asLogical; N.B. GNU R doesn't check
          * everything, e.g., srcfile. Since this is "internal" code we do not really expect argument

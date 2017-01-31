@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -38,8 +37,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "stop", kind = INTERNAL, parameterNames = {"call", "message"}, behavior = COMPLEX)
 public abstract class Stop extends RBuiltinNode {
-    @Override
-    protected void createCasts(CastBuilder casts) {
+
+    static {
+        Casts casts = new Casts(Stop.class);
         casts.arg("call").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("message").allowNull().mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_STRING_IN_STOP).findFirst();
     }

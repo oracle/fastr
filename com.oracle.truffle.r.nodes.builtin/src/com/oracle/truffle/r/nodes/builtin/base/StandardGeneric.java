@@ -32,10 +32,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNodeGen;
 import com.oracle.truffle.r.nodes.objects.DispatchGeneric;
@@ -68,7 +66,6 @@ public abstract class StandardGeneric extends RBuiltinNode {
     @Child private LocalReadVariableNode readSigARgs = LocalReadVariableNode.create(RRuntime.DOT_SIG_ARGS, true);
     @Child private CollectGenericArgumentsNode collectArgumentsNode;
     @Child private DispatchGeneric dispatchGeneric = DispatchGenericNodeGen.create();
-    @Child private ClassHierarchyScalarNode classNode;
 
     @Child private CastNode castIntScalar;
     @Child private CastNode castStringScalar;
@@ -80,19 +77,11 @@ public abstract class StandardGeneric extends RBuiltinNode {
     private final BranchProfile noGenFunFound = BranchProfile.create();
     private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();
 
-    private String argClass(Object arg) {
-        if (classNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            classNode = insert(ClassHierarchyScalarNodeGen.create());
-        }
-        return classNode.executeString(arg);
-    }
-
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(StandardGeneric.class);
         casts.arg("f").defaultError(RError.Message.GENERIC, "argument to 'standardGeneric' must be a non-empty character string").mustBe(
                         stringValue()).asStringVector().findFirst().mustBe(lengthGt(0));
-        Function<Object, Object> argClass = this::argClass;
+        Function<Object, Object> argClass = ClassHierarchyScalarNode::get;
         casts.arg("fdef").defaultError(RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass).allowMissing().asAttributable(true, true, true).mustBe(instanceOf(RFunction.class));
     }
 

@@ -34,7 +34,6 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
@@ -62,20 +61,17 @@ public abstract class Rank extends RBuiltinNode {
         MIN
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        // @formatter:off
+    static {
+        Casts casts = new Casts(Rank.class);
         Function<Object, Object> typeFunc = x -> x.getClass().getSimpleName();
         casts.arg("x").mustBe(abstractVectorValue(), SHOW_CALLER, UNIMPLEMENTED_TYPE_IN_GREATER, typeFunc).mustBe(not(rawValue()), SHOW_CALLER, RError.Message.RAW_SORT);
-        // Note: in the case of no long vector support, when given anything but integer as n, GnuR behaves as if n=1,
+        // Note: in the case of no long vector support, when given anything but integer as n, GnuR
+        // behaves as if n=1,
         // we allow ourselves to be bit inconsistent with GnuR in that.
-        casts.arg("len").defaultError(NO_CALLER, INVALID_VALUE, "length(xx)").mustBe(numericValue()).
-                asIntegerVector().
-                mustBe(notEmpty()).
-                findFirst().mustBe(intNA().not().and(gte0()));
-        // Note: we parse ties.methods in the Specialization anyway, so the validation of the value is there
+        casts.arg("len").defaultError(NO_CALLER, INVALID_VALUE, "length(xx)").mustBe(numericValue()).asIntegerVector().mustBe(notEmpty()).findFirst().mustBe(intNA().not().and(gte0()));
+        // Note: we parse ties.methods in the Specialization anyway, so the validation of the value
+        // is there
         casts.arg("ties.method").defaultError(NO_CALLER, INVALID_TIES_FOR_RANK).mustBe(stringValue()).asStringVector().findFirst();
-        // @formatter:on
     }
 
     private Order.OrderVector1Node initOrderVector1() {

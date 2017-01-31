@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -63,22 +62,13 @@ public abstract class Round extends RBuiltinNode {
         return new Object[]{RMissing.instance, 0};
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        //@formatter:off
-        casts.arg("x").
-            defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustBe(numericValue().or(complexValue()));
+    static {
+        Casts casts = new Casts(Round.class);
+        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue()));
 
         // TODO: this should also accept vectors
         // TODO: digits argument is rounded, not simply stripped off the decimal part
-        casts.arg("digits").
-            defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustBe(numericValue().or(complexValue())).
-            asIntegerVector().
-            findFirst();
-
-        //@formatter:on
+        casts.arg("digits").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue())).asIntegerVector().findFirst();
     }
 
     @Specialization

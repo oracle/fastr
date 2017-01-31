@@ -37,7 +37,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
@@ -134,13 +133,11 @@ public abstract class Eval extends RBuiltinNode {
     @Child private EvalEnvCast envCast = EvalEnvCastNodeGen.create();
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        // @formatter:off
-        casts.arg("envir").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RList.class)).or(instanceOf(RPairList.class)).or(numericValue())).
-                mapIf(numericValue(), chain(asIntegerVector()).with(mustBe(singleElement())).with(findFirst().integerElement()).end());
+    static {
+        Casts casts = new Casts(Eval.class);
+        casts.arg("envir").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RList.class)).or(instanceOf(RPairList.class)).or(numericValue())).mapIf(numericValue(),
+                        chain(asIntegerVector()).with(mustBe(singleElement())).with(findFirst().integerElement()).end());
         casts.arg("enclos").allowNull().mustBe(REnvironment.class);
-        // @formatter:on
     }
 
     @Specialization

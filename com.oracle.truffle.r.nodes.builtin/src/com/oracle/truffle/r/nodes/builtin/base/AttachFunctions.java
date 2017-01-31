@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -49,8 +48,8 @@ public class AttachFunctions {
     @RBuiltin(name = "attach", visibility = OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"}, behavior = COMPLEX)
     public abstract static class Attach extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Attach.class);
             casts.arg("what").allowNull().mustBe(instanceOf(REnvironment.class).or(instanceOf(RAbstractListVector.class)), RError.Message.ATTACH_BAD_TYPE);
             casts.arg("pos").mustBe(numericValue(), Message.MUST_BE_INTEGER, "pos").asIntegerVector();
             casts.arg("name").mustBe(stringValue());
@@ -106,8 +105,8 @@ public class AttachFunctions {
     @RBuiltin(name = "detach", visibility = OFF, kind = INTERNAL, parameterNames = {"pos"}, behavior = COMPLEX)
     public abstract static class Detach extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Detach.class);
             casts.arg("pos").mustBe(numericValue(), Message.MUST_BE_INTEGER, "pos").asIntegerVector();
         }
 

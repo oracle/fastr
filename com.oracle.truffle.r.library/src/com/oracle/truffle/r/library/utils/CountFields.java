@@ -53,6 +53,10 @@ public final class CountFields extends RExternalBuiltinNode {
 
     }
 
+    static {
+        Casts.noCasts(CountFields.class);
+    }
+
     @TruffleBoundary
     private static Object countFields(RConnection file, char sepChar, String quoteSet, @SuppressWarnings("unused") int nskip, boolean blskip, char comChar) throws IOException {
         LocalData data = new LocalData();

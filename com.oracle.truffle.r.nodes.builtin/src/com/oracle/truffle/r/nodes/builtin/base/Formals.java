@@ -43,6 +43,10 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @RBuiltin(name = "formals", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
 public abstract class Formals extends RBuiltinNode {
 
+    static {
+        Casts.noCasts(Formals.class);
+    }
+
     @SuppressWarnings("unused")
     @Specialization(limit = "3", guards = "fun == cachedFunction")
     protected Object formalsCached(RFunction fun,

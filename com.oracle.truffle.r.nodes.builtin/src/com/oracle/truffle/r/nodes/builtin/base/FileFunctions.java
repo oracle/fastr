@@ -59,7 +59,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -93,8 +92,8 @@ public class FileFunctions {
         private static final int WRITE = 2;
         private static final int READ = 4;
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileAccess.class);
             casts.arg("names").mustBe(stringValue()).asStringVector();
             casts.arg("mode").asIntegerVector().findFirst().mustBe(gte(0).and(lte(7)));
         }
@@ -125,8 +124,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"}, behavior = IO)
     public abstract static class FileAppend extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(FileAppend.class);
             casts.arg("file1").mustBe(stringValue()).asStringVector();
             casts.arg("file2").mustBe(stringValue()).asStringVector();
         }
@@ -220,8 +220,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"}, behavior = IO)
     public abstract static class FileCreate extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(FileCreate.class);
             casts.arg("vec").mustBe(stringValue()).asStringVector();
             casts.arg("showWarnings").asLogicalVector().findFirst().mapIf(logicalNA(), constant(RRuntime.LOGICAL_FALSE));
         }
@@ -266,8 +267,8 @@ public class FileFunctions {
 
         @Child private SetClassAttributeNode setClassAttrNode;
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileInfo.class);
             casts.arg("extra_cols").asLogicalVector().findFirst().map(toBoolean());
         }
 
@@ -423,8 +424,9 @@ public class FileFunctions {
     }
 
     private abstract static class FileLinkAdaptor extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(FileLinkAdaptor.class);
             casts.arg("from").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
             casts.arg("to").mustBe(stringValue(), RError.Message.INVALID_SECOND_FILENAME).asStringVector();
         }
@@ -487,8 +489,8 @@ public class FileFunctions {
     @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
     public abstract static class FileRemove extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileRemove.class);
             casts.arg("file").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
         }
 
@@ -515,8 +517,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileRename extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(FileRename.class);
             casts.arg("from").mustBe(stringValue()).asStringVector();
             casts.arg("to").mustBe(stringValue()).asStringVector();
         }
@@ -551,8 +554,8 @@ public class FileFunctions {
     @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"file"}, behavior = IO)
     public abstract static class FileExists extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileExists.class);
             casts.arg("file").mustBe(stringValue()).asStringVector();
         }
 
@@ -580,8 +583,8 @@ public class FileFunctions {
         private static final String DOT = ".";
         private static final String DOTDOT = "..";
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ListFiles.class);
             casts.arg("path").mustBe(stringValue()).asStringVector();
             casts.arg("pattern").allowNull().mustBe(stringValue());
             casts.arg("all.files").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -721,8 +724,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"directory", "full.names", "recursive"}, behavior = IO)
     public abstract static class ListDirs extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(ListDirs.class);
             casts.arg("directory").mustBe(stringValue()).asStringVector();
             casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -777,8 +781,8 @@ public class FileFunctions {
     @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"}, behavior = IO)
     public abstract static class FilePath extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FilePath.class);
             casts.arg("paths").mustBe(instanceOf(RList.class), RError.Message.INVALID_FIRST_ARGUMENT);
             casts.arg("fsep").mustBe(stringValue()).asStringVector().findFirst().notNA();
         }
@@ -876,8 +880,8 @@ public class FileFunctions {
     @RBuiltin(name = "file.copy", kind = INTERNAL, parameterNames = {"from", "to", "overwrite", "recursive", "copy.mode", "copy.date"}, behavior = IO)
     public abstract static class FileCopy extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileCopy.class);
             casts.arg("from").mustBe(stringValue()).asStringVector();
             casts.arg("to").mustBe(stringValue()).asStringVector();
             casts.arg("overwrite").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -1011,8 +1015,8 @@ public class FileFunctions {
     @RBuiltin(name = "file.show", kind = INTERNAL, parameterNames = {"files", "header", "title", "delete.file", "pager"}, visibility = OFF, behavior = IO)
     public abstract static class FileShow extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FileShow.class);
             casts.arg("files").asStringVector();
             casts.arg("header").asStringVector();
             casts.arg("title").asStringVector();
@@ -1068,8 +1072,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class DirName extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(DirName.class);
             casts.arg("path").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
         }
 
@@ -1087,8 +1092,8 @@ public class FileFunctions {
     @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"}, behavior = IO)
     public abstract static class BaseName extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(BaseName.class);
             casts.arg("path").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
         }
 
@@ -1106,8 +1111,8 @@ public class FileFunctions {
     @RBuiltin(name = "unlink", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"}, behavior = IO)
     public abstract static class Unlink extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Unlink.class);
             casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
             casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("force").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -1175,8 +1180,8 @@ public class FileFunctions {
     @RBuiltin(name = "dir.create", visibility = OFF, kind = INTERNAL, parameterNames = {"path", "showWarnings", "recursive", "mode"}, behavior = IO)
     public abstract static class DirCreate extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(DirCreate.class);
             casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
             casts.arg("showWarnings").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("recursive").asLogicalVector().findFirst().map(toBoolean());
@@ -1232,8 +1237,9 @@ public class FileFunctions {
 
     @RBuiltin(name = "dir.exists", kind = INTERNAL, parameterNames = "paths", behavior = IO)
     public abstract static class DirExists extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(DirExists.class);
             casts.arg("paths").mustBe(stringValue()).asStringVector();
         }
 

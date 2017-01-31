@@ -15,7 +15,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -28,8 +27,8 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
     private final ConditionProfile zVecLgt1 = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Fft.class);
         casts.arg(0).mustNotBeNull().asComplexVector(false, true, false);
         casts.arg(1).mustNotBeNull().asLogicalVector().findFirst().map(Predef.toBoolean());
     }

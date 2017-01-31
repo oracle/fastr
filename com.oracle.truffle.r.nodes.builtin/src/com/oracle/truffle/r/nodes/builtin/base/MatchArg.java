@@ -65,6 +65,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "match.arg", kind = SUBSTITUTE, parameterNames = {"arg", "choices", "several.ok"}, nonEvalArgs = {0}, behavior = COMPLEX)
 public abstract class MatchArg extends RBuiltinNode {
 
+    static {
+        Casts.noCasts(MatchArg.class);
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};

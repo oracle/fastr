@@ -27,11 +27,16 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.r.nodes.builtin.base.Quantifier.QuantifierCasts;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "any", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
 public abstract class Any extends Quantifier {
+
+    static {
+        new QuantifierCasts(Any.class);
+    }
 
     @Override
     protected boolean emptyVectorResult() {

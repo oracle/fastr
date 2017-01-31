@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -47,12 +46,14 @@ public abstract class ColSumsBase extends RBuiltinNode {
     protected final NACheck na = NACheck.create();
     private final ConditionProfile vectorLengthProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected final void createCasts(CastBuilder casts) {
-        casts.arg("X").mustBe(numericValue(), RError.SHOW_CALLER, RError.Message.X_NUMERIC);
-        casts.arg("m").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-        casts.arg("n").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-        casts.arg("na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+    static final class ColSumsCasts extends Casts {
+        ColSumsCasts(Class<? extends ColSumsBase> extCls) {
+            super(extCls);
+            casts.arg("X").mustBe(numericValue(), RError.SHOW_CALLER, RError.Message.X_NUMERIC);
+            casts.arg("m").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
+            casts.arg("n").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
+            casts.arg("na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+        }
     }
 
     protected final void checkVectorLength(RAbstractVector x, int rowNum, int colNum) {

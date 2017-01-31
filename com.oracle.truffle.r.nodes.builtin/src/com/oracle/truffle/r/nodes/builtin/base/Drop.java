@@ -50,6 +50,10 @@ public abstract class Drop extends RBuiltinNode {
     private final ConditionProfile resultIsScalarProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile noDimNamesProfile = ConditionProfile.createBinaryProfile();
 
+    static {
+        Casts.noCasts(Drop.class);
+    }
+
     @Specialization
     protected RAbstractVector doDrop(RAbstractVector x,
                     @Cached("create()") GetDimAttributeNode getDimsNode,

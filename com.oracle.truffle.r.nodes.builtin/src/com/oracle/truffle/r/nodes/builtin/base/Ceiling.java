@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
@@ -47,16 +46,10 @@ public abstract class Ceiling extends UnaryArithmeticBuiltinNode {
         super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        //@formatter:off
-        casts.arg("x").
-            defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustNotBeNull().
-            mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).
-            mustBe(numericValue()).
-            asDoubleVector(true, true, true);
-        //@formatter:on
+    static {
+        Casts casts = new Casts(Ceiling.class);
+        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustNotBeNull().mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector(true,
+                        true, true);
     }
 
     @Override

@@ -40,7 +40,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -140,8 +139,8 @@ public class DatePOSIXFunctions {
 
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Date2POSIXlt.class);
             casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector();
         }
 
@@ -176,8 +175,8 @@ public class DatePOSIXFunctions {
 
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AsPOSIXlt.class);
             casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector(true, false, false);
             casts.arg("tz").asStringVector().findFirst("");
         }
@@ -216,8 +215,8 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "as.POSIXct", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
     public abstract static class AsPOSIXct extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AsPOSIXct.class);
             casts.arg("x").mustBe(RAbstractListVector.class);
             casts.arg("tz").asStringVector().findFirst("");
         }
@@ -275,8 +274,8 @@ public class DatePOSIXFunctions {
     public abstract static class POSIXlt2Date extends RBuiltinNode {
         private static final RStringVector CLASS_ATTR = (RStringVector) RDataFactory.createStringVectorFromScalar("Date").makeSharedPermanent();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(POSIXlt2Date.class);
             casts.arg("x").mustBe(RAbstractListVector.class);
         }
 
@@ -333,8 +332,8 @@ public class DatePOSIXFunctions {
             // TODO: find a proper source for this mapping
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(FormatPOSIXlt.class);
             casts.arg("x").mustBe(RAbstractListVector.class);
             casts.arg("format").asStringVector().mustBe(notEmpty());
             casts.arg("usetz").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
@@ -391,8 +390,8 @@ public class DatePOSIXFunctions {
     @RBuiltin(name = "strptime", kind = INTERNAL, parameterNames = {"x", "format", "tz"}, behavior = PURE)
     public abstract static class StrPTime extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(StrPTime.class);
             casts.arg("x").mapNull(emptyStringVector()).asStringVector();
             casts.arg("format").mapNull(emptyStringVector()).asStringVector();
             casts.arg("tz").mapNull(emptyStringVector()).asStringVector();

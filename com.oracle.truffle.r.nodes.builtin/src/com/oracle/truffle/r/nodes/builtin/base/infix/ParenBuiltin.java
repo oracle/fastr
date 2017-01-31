@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,10 @@ final class ParensSpecial extends RNode {
 
 @RBuiltin(name = "(", kind = PRIMITIVE, parameterNames = {""}, visibility = ON, behavior = PURE)
 public final class ParenBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(ParenBuiltin.class);
+    }
 
     public static RNode special(ArgumentsSignature signature, RNode[] args, @SuppressWarnings("unused") boolean inReplacement) {
         if (signature == ArgumentsSignature.empty(1)) {

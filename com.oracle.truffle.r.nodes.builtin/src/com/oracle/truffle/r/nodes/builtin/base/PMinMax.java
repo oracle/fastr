@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.PMinMaxNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -90,9 +89,11 @@ public abstract class PMinMax extends RBuiltinNode {
         this.op = factory.createOperation();
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+    static final class PMinMaxCasts extends Casts {
+        PMinMaxCasts(Class<? extends PMinMax> extCls) {
+            super(extCls);
+            casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+        }
     }
 
     private byte handleString(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object data) {
@@ -346,6 +347,11 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true),
                             BinaryArithmetic.MAX);
         }
+
+        static {
+            new PMinMaxCasts(PMax.class);
+        }
+
     }
 
     @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
@@ -355,6 +361,11 @@ public abstract class PMinMax extends RBuiltinNode {
             super(new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, false, true),
                             BinaryArithmetic.MIN);
         }
+
+        static {
+            new PMinMaxCasts(PMin.class);
+        }
+
     }
 
     protected boolean isIntegerPrecedence(RArgsValuesAndNames args) {

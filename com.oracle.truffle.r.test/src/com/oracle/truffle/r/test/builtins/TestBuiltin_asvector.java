@@ -422,9 +422,9 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("as.vector(x~z)");
         assertEval("as.vector(file(''))");
 
-        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, NULL) }");
-        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");
-        assertEval(Output.IgnoreErrorContext, "{ as.vector(42, character())  }");
+        assertEval("{ as.vector(42, NULL) }");
+        assertEval("{ as.vector(42, c(\"character\", \"character\")) }");
+        assertEval("{ as.vector(42, character())  }");
     }
 
     @Test

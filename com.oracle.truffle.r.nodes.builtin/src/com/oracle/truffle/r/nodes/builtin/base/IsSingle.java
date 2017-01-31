@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -34,8 +33,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 @RBuiltin(name = "is.single", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class IsSingle extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(IsSingle.class);
         casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENTS_PASSED, 0, "'is.single'", 1);
     }
 

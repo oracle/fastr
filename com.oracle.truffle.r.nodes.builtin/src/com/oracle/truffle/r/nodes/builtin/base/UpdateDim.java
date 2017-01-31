@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -49,10 +48,10 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Child private ReuseNonSharedNode reuse = ReuseNonSharedNode.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateDim.class);
         casts.arg("x"); // disallows null
-        casts.arg("value").allowNull().asIntegerVector().mustBe(notEmpty(), this, LENGTH_ZERO_DIM_INVALID);
+        casts.arg("value").allowNull().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID);
     }
 
     @Specialization

@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -31,8 +30,8 @@ public abstract class Tabulate extends RBuiltinNode {
 
     private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Tabulate.class);
         casts.arg("bin").defaultError(RError.NO_CALLER, RError.Message.INVALID_INPUT).mustBe(integerValue()).asIntegerVector();
         casts.arg("nbins").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "nbin").asIntegerVector().findFirst().mustBe(gte(0));
     }

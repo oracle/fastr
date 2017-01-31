@@ -38,8 +38,8 @@ public abstract class BinDist extends RExternalBuiltinNode.Arg5 {
         return BinDistNodeGen.create();
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(BinDist.class);
         casts.arg(0).asDoubleVector();
         casts.arg(1).asDoubleVector();
         casts.arg(2).asDoubleVector().findFirst();

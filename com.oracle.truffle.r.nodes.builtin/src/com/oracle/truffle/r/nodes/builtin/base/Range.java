@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
@@ -53,8 +52,8 @@ public abstract class Range extends RBuiltinNode {
     @Child private UnaryArithmeticReduceNode minReduce = UnaryArithmeticReduceNodeGen.create(minSemantics, BinaryArithmetic.MIN);
     @Child private UnaryArithmeticReduceNode maxReduce = UnaryArithmeticReduceNodeGen.create(maxSemantics, BinaryArithmetic.MAX);
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Range.class);
         casts.arg("na.rm").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("finite").asLogicalVector().findFirst().map(toBoolean());
     }

@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -43,8 +42,8 @@ public abstract class FastrDqrls extends RBuiltinNode {
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
     private static RStringVector namesVector = null;
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(FastrDqrls.class);
         casts.arg("x").asDoubleVector(true, true, true);
         casts.arg("n").asIntegerVector().findFirst();
         casts.arg("p").asIntegerVector().findFirst();

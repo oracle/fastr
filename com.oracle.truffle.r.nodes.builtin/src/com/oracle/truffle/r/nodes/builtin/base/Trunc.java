@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
@@ -48,16 +47,10 @@ public abstract class Trunc extends RBuiltinNode {
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
     @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        //@formatter:off
-        casts.arg("x").
-            defaultError(this, RError.Message.NON_NUMERIC_MATH).
-            mustNotBeNull().
-            mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).
-            mustBe(numericValue()).
-            asDoubleVector(true, true, true);
-        //@formatter:on
+    static {
+        Casts casts = new Casts(Trunc.class);
+        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustNotBeNull().mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector(true,
+                        true, true);
     }
 
     @Specialization

@@ -40,7 +40,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -69,8 +68,8 @@ public abstract class Signif extends RBuiltinNode {
     private final BranchProfile identity = BranchProfile.create();
     private final ConditionProfile infProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Signif.class);
         casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue())).mapIf(complexValue().not(),
                         asDoubleVector(true, true, true));
         // TODO: for the error messages to be consistent with GNU R we should chack for notEmpty()
