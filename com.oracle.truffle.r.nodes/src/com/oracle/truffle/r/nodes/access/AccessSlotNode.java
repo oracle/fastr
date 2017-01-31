@@ -15,8 +15,6 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -39,15 +37,14 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // Transcribed from src/main/attrib.c file (R_do_slot function)
 
 /**
  * Perform a slot access. This node represents the {@code @} operator in R.
  */
-@NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "name", type = RNode.class)})
-public abstract class AccessSlotNode extends RNode {
+public abstract class AccessSlotNode extends RBaseNode {
 
     public abstract Object executeAccess(Object o, String name);
 

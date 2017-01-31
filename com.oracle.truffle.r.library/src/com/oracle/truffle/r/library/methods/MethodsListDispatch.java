@@ -202,7 +202,7 @@ public class MethodsListDispatch {
 
         private AccessSlotNode initAccessSlotNode() {
             if (accessSlotNode == null) {
-                accessSlotNode = insert(AccessSlotNodeGen.create(true, null, null));
+                accessSlotNode = insert(AccessSlotNodeGen.create(true));
             }
             return accessSlotNode;
         }

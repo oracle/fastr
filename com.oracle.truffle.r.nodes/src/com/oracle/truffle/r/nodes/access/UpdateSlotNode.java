@@ -14,8 +14,6 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
@@ -28,12 +26,11 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // Transcribed from src/main/attrib.c file (R_do_slot_assign function)
 
-@NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "name", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
-public abstract class UpdateSlotNode extends RNode {
+public abstract class UpdateSlotNode extends RBaseNode {
 
     public abstract Object executeUpdate(Object object, String name, Object value);
 

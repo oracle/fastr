@@ -33,9 +33,9 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 // transcribed from src/main/objects.c
 public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
 
-    @Child private AccessSlotNode accessSlotVirtual = AccessSlotNodeGen.create(true, null, null);
-    @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true, null, null);
-    @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true, null, null);
+    @Child private AccessSlotNode accessSlotVirtual = AccessSlotNodeGen.create(true);
+    @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true);
+    @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true);
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);
     @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
     @Child private SetClassAttributeNode setClassAttrNode;

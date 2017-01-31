@@ -51,7 +51,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @CompilationFinal private RFunction checkSlotAssignFunction;
     @Child private ClassHierarchyNode objClassHierarchy;
     @Child private ClassHierarchyNode valClassHierarchy;
-    @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
+    @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create();
     @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
     @Child private CallRFunctionNode checkAtAssignmentCall;
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
