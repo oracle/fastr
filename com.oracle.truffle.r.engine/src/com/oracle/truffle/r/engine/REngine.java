@@ -525,7 +525,7 @@ final class REngine implements Engine, Engine.Timings {
             VirtualFrame vf = prepareFrame(frame);
             Object result = null;
             try {
-                result = body.execute(vf);
+                result = body.visibleExecute(vf);
                 assert checkResult(result);
                 if (printResult && result != null) {
                     assert topLevel;
@@ -536,7 +536,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (topLevel) {
                     RErrorHandling.printWarnings(suppressWarnings);
                 }
-                setVisibility.executeEndOfFunction(vf, this);
+                setVisibility.executeEndOfFunction(vf);
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;

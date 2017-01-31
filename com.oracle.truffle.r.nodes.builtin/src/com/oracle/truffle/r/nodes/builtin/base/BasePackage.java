@@ -335,7 +335,7 @@ public class BasePackage extends RBuiltinPackage {
         add(EnvFunctions.UnlockBinding.class, EnvFunctionsFactory.UnlockBindingNodeGen::create);
         add(Eval.class, EvalNodeGen::create);
         add(RecordGraphics.class, RecordGraphics::create);
-        add(WithVisible.class, WithVisibleNodeGen::create);
+        add(WithVisible.class, WithVisibleNodeGen::create, WithVisible::createSpecial);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
         add(FastRContext.R.class, FastRContextFactory.RNodeGen::create);
@@ -567,7 +567,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Repeat.class, RepeatNodeGen::create);
         add(RepeatInternal.class, RepeatInternalNodeGen::create);
         add(RepeatLength.class, RepeatLengthNodeGen::create);
-        add(Return.class, ReturnNodeGen::create);
+        add(Return.class, ReturnNodeGen::create, Return::createSpecial);
         add(Rhome.class, RhomeNodeGen::create);
         add(Rm.class, RmNodeGen::create);
         add(Round.class, RoundNodeGen::create);

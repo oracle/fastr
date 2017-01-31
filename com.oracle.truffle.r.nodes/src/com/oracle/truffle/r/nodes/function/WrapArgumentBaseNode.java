@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -47,9 +48,19 @@ public abstract class WrapArgumentBaseNode extends RNode {
     }
 
     @Override
+    public final void voidExecute(VirtualFrame frame) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final Object execute(VirtualFrame frame) {
-        assert operand != null;
         Object result = operand.execute(frame);
+        return execute(frame, result);
+    }
+
+    @Override
+    public final Object visibleExecute(VirtualFrame frame) {
+        Object result = operand.visibleExecute(frame);
         return execute(frame, result);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -383,6 +384,8 @@ public class PromiseHelperNode extends RBaseNode {
     private static final int GENERIC = -2;
     @CompilationFinal private int cachedWrapIndex = UNINITIALIZED;
 
+    @Child private SetVisibilityNode visibility;
+
     /**
      * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
@@ -419,6 +422,11 @@ public class PromiseHelperNode extends RBaseNode {
                 }
             }
         }
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, true);
         return eagerValueProfile.profile(o);
     }
 

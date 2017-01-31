@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
@@ -168,19 +168,33 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     @Override
+    public void voidExecute(VirtualFrame frame) {
+        executeInternal(frame, frame);
+    }
+
+    @Override
     public Object execute(VirtualFrame frame) {
-        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame);
+        return executeInternal(frame, frame);
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        assert kind != ReadKind.Silent;
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, true);
+        return executeInternal(frame, frame);
     }
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         assert frame != null;
-        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame);
+        return executeInternal(frame, variableFrame);
     }
 
-    private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
-        if (kind != ReadKind.Silent) {
-            visibility.execute(frame, true);
-        }
+    private Object executeInternal(VirtualFrame frame, Frame initialFrame) {
+        Frame variableFrame = kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(initialFrame)) : initialFrame;
 
         Object result;
         if (read == null) {

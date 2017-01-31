@@ -71,7 +71,7 @@ public abstract class InlineCacheNode extends RBaseNode {
         } else {
             vf = SubstituteVirtualFrame.create(frame.materialize());
         }
-        return reified.execute(vf);
+        return reified.visibleExecute(vf);
     }
 
     protected RNode cache(Object value) {

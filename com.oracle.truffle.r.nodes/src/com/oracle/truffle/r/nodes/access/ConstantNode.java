@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.SourceSection;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class ConstantNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxConstant {
 
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     private ConstantNode(SourceSection sourceSection) {
         super(sourceSection);
@@ -60,13 +61,23 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
     @Override
     public abstract Object getValue();
 
-    protected final void handleVisibility(VirtualFrame frame) {
-        visibility.execute(frame, true);
+    @Override
+    public final void voidExecute(VirtualFrame frame) {
+        // nothing to do
     }
 
     @Override
     public final Object execute(VirtualFrame frame) {
-        handleVisibility(frame);
+        return getValue();
+    }
+
+    @Override
+    public final Object visibleExecute(VirtualFrame frame) {
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, true);
         return getValue();
     }
 
@@ -113,7 +124,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public double executeDouble(VirtualFrame frame) {
-            handleVisibility(frame);
             return doubleValue;
         }
     }
@@ -136,7 +146,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public byte executeByte(VirtualFrame frame) {
-            handleVisibility(frame);
             return logicalValue;
         }
     }
@@ -159,7 +168,6 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
         @Override
         public int executeInteger(VirtualFrame frame) {
-            handleVisibility(frame);
             return intValue;
         }
     }

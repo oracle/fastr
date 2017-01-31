@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
@@ -42,7 +43,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 public final class WriteVariableSyntaxNode extends OperatorNode {
 
     @Child private WriteVariableNode write;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     private final RSyntaxElement lhs;
 
@@ -69,8 +70,22 @@ public final class WriteVariableSyntaxNode extends OperatorNode {
     }
 
     @Override
+    public void voidExecute(VirtualFrame frame) {
+        write.execute(frame);
+    }
+
+    @Override
     public Object execute(VirtualFrame frame) {
+        return write.execute(frame);
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
         Object result = write.execute(frame);
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
         visibility.execute(frame, false);
         return result;
     }

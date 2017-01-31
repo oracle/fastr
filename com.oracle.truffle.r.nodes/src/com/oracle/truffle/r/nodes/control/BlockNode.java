@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
@@ -41,7 +42,7 @@ public final class BlockNode extends OperatorNode {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     @Children protected final RNode[] sequence;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     public BlockNode(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
         super(src, operator);
@@ -55,7 +56,6 @@ public final class BlockNode extends OperatorNode {
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        visibility.execute(frame, true);
         if (sequence.length == 0) {
             return RNull.instance;
         }
@@ -71,6 +71,23 @@ public final class BlockNode extends OperatorNode {
         for (int i = 0; i < sequence.length; i++) {
             sequence[i].voidExecute(frame);
         }
+    }
+
+    @Override
+    @ExplodeLoop
+    public Object visibleExecute(VirtualFrame frame) {
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, true);
+        if (sequence.length == 0) {
+            return RNull.instance;
+        }
+        for (int i = 0; i < sequence.length - 1; i++) {
+            sequence[i].voidExecute(frame);
+        }
+        return sequence[sequence.length - 1].visibleExecute(frame);
     }
 
     @Override

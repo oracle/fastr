@@ -63,15 +63,26 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @Instrumentable(factory = com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory.class)
 public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
+    /**
+     * Normal execute function that is called when the return value, but not its visibility is
+     * needed.
+     */
     public abstract Object execute(VirtualFrame frame);
 
     /**
-     * This function can be called when the result is not needed, and normally just dispatches to
-     * {@link #execute(VirtualFrame)}. Its name does not start with "execute" so that the DSL does
-     * not treat it like an execute function.
+     * This function is called when the result is not needed. Its name does not start with "execute"
+     * so that the DSL does not treat it like an execute function.
      */
     public void voidExecute(VirtualFrame frame) {
         execute(frame);
+    }
+
+    /**
+     * This function is called when both the result and the result's visibility are needed. Its name
+     * does not start with "execute" so that the DSL does not treat it like an execute function.
+     */
+    public Object visibleExecute(VirtualFrame frame) {
+        return execute(frame);
     }
 
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
