@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -275,6 +275,13 @@ public class TestBuiltin_deparse extends TestBase {
                     "1.545234523452345252523452345", "Inf", "NaN", "-0", "-1", "-1000", "-10000", "-99999", "-100000000", "-10000000000000", "-0.1", "-0.123", "-0.00123", "-0.0000000001",
                     "-0.0000000000000001", "-1.545234523452345252523452345", "-Inf", "c(1L,2L,3L)", "c(1,2,3)", "c(NA_integer_, 1L,2L,3L)", "c(1L,2L,3L, NA_integer_)", "c(3L,2L,1L)",
                     "c(-2L,-1L,0L,1L)"};
+
+    @Test
+    public void testDeparseStructure() {
+        assertEval("{ deparse(structure(.Data=c(1,2))) }");
+        assertEval("{ deparse(structure(.Data=c(1,2), attr1=c(1))) }");
+        assertEval("{ deparse(structure(.Data=c(1,2), attr1=c(1), attr2=c(2))) }");
+    }
 
     @Test
     public void testDeparse() {
