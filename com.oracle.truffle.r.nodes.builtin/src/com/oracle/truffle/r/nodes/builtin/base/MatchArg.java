@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ public abstract class MatchArg extends RBuiltinNode {
 
         {
             CastBuilder builder = new CastBuilder();
-            builder.arg(0).allowNull().asStringVector();
+            builder.arg(0).asStringVector();
             builder.arg(1).allowMissing().mustBe(stringValue()).asStringVector();
             builder.arg(2).mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
             this.casts = builder.getCasts();

@@ -48,7 +48,7 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().mapIf(instanceOf(RAbstractListVector.class).not(), asStringVector());
+        casts.arg("x").mapIf(instanceOf(RAbstractListVector.class).not(), asStringVector());
     }
 
     @Specialization

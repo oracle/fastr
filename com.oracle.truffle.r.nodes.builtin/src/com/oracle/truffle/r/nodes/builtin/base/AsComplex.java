@@ -42,7 +42,7 @@ public abstract class AsComplex extends RBuiltinNode {
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.arg("x").allowNull().asComplexVector();
+        casts.arg("x").asComplexVector();
     }
 
     @Specialization

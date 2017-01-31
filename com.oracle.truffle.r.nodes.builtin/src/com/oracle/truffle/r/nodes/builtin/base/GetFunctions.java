@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,7 +174,7 @@ public class GetFunctions {
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
                             chain(asIntegerVector()).with(findFirst().integerElement()).end());
             casts.arg("mode").mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("inherits").allowNull().asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("inherits").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -211,7 +211,7 @@ public class GetFunctions {
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
                             chain(asIntegerVector()).with(findFirst().integerElement()).end());
             casts.arg("mode").mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("inherits").allowNull().asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("inherits").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization

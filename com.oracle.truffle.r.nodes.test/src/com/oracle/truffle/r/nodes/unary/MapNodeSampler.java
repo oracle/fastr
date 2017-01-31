@@ -39,7 +39,7 @@ public class MapNodeSampler extends CastNodeSampler<MapNode> {
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputTypes) {
+    public TypeExpr resultTypes(TypeExpr inputTypes, SamplingContext ctx) {
         return mapFn.resultTypes(inputTypes);
     }
 

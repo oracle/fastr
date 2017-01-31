@@ -59,8 +59,8 @@ public final class PipelineBuilder {
         return PipelineToCastNode.convert(pcb.build(), getFirstStep());
     }
 
-    public PreinitialPhaseBuilder<Object> fluent() {
-        return new PreinitialPhaseBuilder<>(this);
+    public PreinitialPhaseBuilder fluent() {
+        return new PreinitialPhaseBuilder(this);
     }
 
     public void appendBoxPrimitive() {
@@ -88,20 +88,20 @@ public final class PipelineBuilder {
         append(new NotNAStep<>(naReplacement, createMessage(callObj, message, messageArgs)));
     }
 
-    public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper) {
-        appendMapIf(argFilter, trueBranchMapper, null);
+    public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper, boolean returns) {
+        appendMapIf(argFilter, trueBranchMapper, null, returns);
     }
 
-    public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper, Mapper<?, ?> falseBranchMapper) {
-        appendMapIf(argFilter, new MapStep<>(trueBranchMapper), falseBranchMapper == null ? null : new MapStep<>(falseBranchMapper));
+    public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper, Mapper<?, ?> falseBranchMapper, boolean returns) {
+        appendMapIf(argFilter, new MapStep<>(trueBranchMapper), falseBranchMapper == null ? null : new MapStep<>(falseBranchMapper), returns);
     }
 
-    public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch) {
-        appendMapIf(argFilter, trueBranch, null);
+    public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch, boolean returns) {
+        appendMapIf(argFilter, trueBranch, null, returns);
     }
 
-    public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
-        append(new MapIfStep<>(argFilter, trueBranch, falseBranch));
+    public void appendMapIf(Filter<?, ?> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch, boolean returns) {
+        append(new MapIfStep<>(argFilter, trueBranch, falseBranch, returns));
     }
 
     public void appendMap(Mapper<?, ?> mapFn) {

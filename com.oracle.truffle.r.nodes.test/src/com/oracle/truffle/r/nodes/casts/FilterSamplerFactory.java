@@ -80,26 +80,28 @@ public final class FilterSamplerFactory
         return x -> filter.test(x);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public ArgumentFilterSampler<?, ?> visit(TypeFilter<?, ?> filter) {
+        Class<?>[] filterTypes = new Class[]{filter.getType1(), filter.getType2()};
         return TypePredicateArgumentFilterSampler.fromLambda(toPredicate(filter.getInstanceOfLambda()),
-                        CastUtils.sampleValuesForClases(filter.getType()), CastUtils.samples(null), filter.getType());
+                        CastUtils.sampleValuesForClases(filterTypes), CastUtils.samples(null), filterTypes);
     }
 
     @Override
     public ArgumentFilterSampler<?, ?> visit(RTypeFilter<?> filter) {
         if (filter.getType() == RType.Integer) {
-            return visit(new TypeFilter<>(x -> x instanceof Integer || x instanceof RAbstractIntVector, Integer.class, RAbstractIntVector.class));
+            return visit(new TypeFilter<>(Integer.class, RAbstractIntVector.class));
         } else if (filter.getType() == RType.Double) {
-            return visit(new TypeFilter<>(x -> x instanceof Double || x instanceof RAbstractDoubleVector, Double.class, RAbstractDoubleVector.class));
+            return visit(new TypeFilter<>(Double.class, RAbstractDoubleVector.class));
         } else if (filter.getType() == RType.Logical) {
-            return visit(new TypeFilter<>(x -> x instanceof Byte || x instanceof RAbstractLogicalVector, Byte.class, RAbstractLogicalVector.class));
+            return visit(new TypeFilter<>(Byte.class, RAbstractLogicalVector.class));
         } else if (filter.getType() == RType.Complex) {
-            return visit(new TypeFilter<>(x -> x instanceof RAbstractComplexVector, RAbstractComplexVector.class));
+            return visit(new TypeFilter<>(RAbstractComplexVector.class));
         } else if (filter.getType() == RType.Character) {
-            return visit(new TypeFilter<>(x -> x instanceof String || x instanceof RAbstractStringVector, String.class, RAbstractStringVector.class));
+            return visit(new TypeFilter<>(String.class, RAbstractStringVector.class));
         } else if (filter.getType() == RType.Raw) {
-            return visit(new TypeFilter<>(x -> x instanceof RAbstractRawVector, RAbstractRawVector.class));
+            return visit(new TypeFilter<>(RAbstractRawVector.class));
         } else {
             throw RInternalError.unimplemented("TODO: more types here");
         }

@@ -54,7 +54,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg("x"); // disallows null
-        casts.arg("value").allowNull().asStringVector();
+        casts.arg("value").asStringVector();
     }
 
     @Specialization

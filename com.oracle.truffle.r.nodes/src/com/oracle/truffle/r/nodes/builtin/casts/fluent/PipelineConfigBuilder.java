@@ -22,14 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Provides fluent API for building the pipeline configuration {@link PipelineConfig}: default
@@ -45,6 +43,7 @@ public final class PipelineConfigBuilder {
     private Mapper<? super RNull, ?> nullMapper;
     private MessageData missingMsg;
     private MessageData nullMsg;
+    private boolean valueForwarding = true;
 
     public PipelineConfigBuilder(String argumentName) {
         this.argumentName = argumentName;
@@ -53,7 +52,7 @@ public final class PipelineConfigBuilder {
     }
 
     public PipelineConfig build() {
-        return new PipelineConfig(argumentName, defaultError, defaultWarning, missingMapper, nullMapper, missingMsg, nullMsg);
+        return new PipelineConfig(argumentName, defaultError, defaultWarning, missingMapper, nullMapper, valueForwarding, missingMsg, nullMsg);
     }
 
     void setDefaultError(MessageData defaultError) {
@@ -64,55 +63,9 @@ public final class PipelineConfigBuilder {
         this.defaultWarning = defaultWarning;
     }
 
-    public PipelineConfigBuilder mustNotBeMissing(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
-        missingMapper = null;
-        missingMsg = new MessageData(callObj, errorMsg, msgArgs);
+    public PipelineConfigBuilder setValueForwarding(boolean flag) {
+        this.valueForwarding = flag;
         return this;
     }
 
-    public PipelineConfigBuilder mapMissing(Mapper<? super RMissing, ?> mapper) {
-        missingMapper = mapper;
-        missingMsg = null;
-        return this;
-    }
-
-    public PipelineConfigBuilder mapMissing(Mapper<? super RMissing, ?> mapper, RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
-        missingMapper = mapper;
-        missingMsg = new MessageData(callObj, warningMsg, msgArgs);
-        return this;
-    }
-
-    public PipelineConfigBuilder allowMissing() {
-        return mapMissing(Predef.missingConstant());
-    }
-
-    public PipelineConfigBuilder allowMissing(RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
-        return mapMissing(Predef.missingConstant(), callObj, warningMsg, msgArgs);
-    }
-
-    public PipelineConfigBuilder mustNotBeNull(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
-        nullMapper = null;
-        nullMsg = new MessageData(callObj, errorMsg, msgArgs);
-        return this;
-    }
-
-    public PipelineConfigBuilder mapNull(Mapper<? super RNull, ?> mapper) {
-        nullMapper = mapper;
-        nullMsg = null;
-        return this;
-    }
-
-    public PipelineConfigBuilder mapNull(Mapper<? super RNull, ?> mapper, RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
-        nullMapper = mapper;
-        nullMsg = new MessageData(callObj, warningMsg, msgArgs);
-        return this;
-    }
-
-    public PipelineConfigBuilder allowNull() {
-        return mapNull(Predef.nullConstant());
-    }
-
-    public PipelineConfigBuilder allowNull(RBaseNode callObj, RError.Message warningMsg, Object... msgArgs) {
-        return mapNull(Predef.nullConstant(), callObj, warningMsg, msgArgs);
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public class PipelineToCastNodeTests {
 
     @Test
     public void mustBeREnvironmentAsIntegerVectorFindFirst() {
-        CastNode pipeline = createPipeline(new FilterStep<>(new TypeFilter<>(x -> x instanceof REnvironment, REnvironment.class), null, false).setNext(
+        CastNode pipeline = createPipeline(new FilterStep<>(new TypeFilter<>(REnvironment.class), null, false).setNext(
                         new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))));
         CastNode chain = assertBypassNode(pipeline);
         assertChainedCast(chain, ChainedCastNode.class, FindFirstNode.class);
@@ -126,6 +126,7 @@ public class PipelineToCastNodeTests {
 
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
+        configBuilder.setValueForwarding(false);
         return PipelineToCastNode.convert(configBuilder.build(), lastStep);
     }
 }

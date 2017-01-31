@@ -50,7 +50,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.arg(0).mustNotBeNull(SHOW_CALLER, Message.IS_NULL, "x").asDoubleVector();
-        casts.arg(1).allowNull().asDoubleVector();
+        casts.arg(1).asDoubleVector();
         casts.arg(2).asIntegerVector().findFirst().mustBe(eq(4), this, Message.NYI, "covcor: other method than 4 not implemented.");
         casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
     }

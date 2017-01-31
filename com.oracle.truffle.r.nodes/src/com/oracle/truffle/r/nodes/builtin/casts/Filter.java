@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import java.util.function.Predicate;
+
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
@@ -91,16 +93,45 @@ public abstract class Filter<T, R extends T> {
      * Filters specific Java class.
      */
     public static final class TypeFilter<T, R extends T> extends Filter<T, R> {
-        private final Class<?>[] type;
-        private final ArgumentFilter<Object, Object> instanceOfLambda;
+        private final Class<?> type1;
+        private final Class<?> type2;
+        private final Predicate<R> extraCondition;
 
-        public TypeFilter(ArgumentFilter<Object, Object> instanceOfLambda, Class<?>... type) {
-            this.type = type;
-            this.instanceOfLambda = instanceOfLambda;
+        @SuppressWarnings("rawtypes")
+        public TypeFilter(Class<R> type) {
+            assert type != null;
+            this.type1 = type;
+            this.type2 = null;
+            this.extraCondition = null;
         }
 
-        public Class<?>[] getType() {
-            return type;
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public TypeFilter(Class<R> type, Predicate<R> extraCondition) {
+            assert type != null;
+            this.type1 = type;
+            this.type2 = null;
+            this.extraCondition = extraCondition;
+        }
+
+        @SuppressWarnings("rawtypes")
+        public TypeFilter(Class<?> type1, Class<?> type2) {
+            assert type1 != null && type2 != null;
+            assert type1 != Object.class && type2 != Object.class;
+            this.type1 = type1;
+            this.type2 = type2;
+            this.extraCondition = null;
+        }
+
+        public Class<?> getType1() {
+            return type1;
+        }
+
+        public Class<?> getType2() {
+            return type2;
+        }
+
+        public Predicate<R> getExtraCondition() {
+            return extraCondition;
         }
 
         @Override
@@ -108,7 +139,26 @@ public abstract class Filter<T, R extends T> {
             return true;
         }
 
+        @SuppressWarnings("unchecked")
         public ArgumentFilter<Object, Object> getInstanceOfLambda() {
+            final ArgumentFilter<Object, Object> instanceOfLambda;
+            if (type2 == null) {
+                if (extraCondition == null) {
+                    if (type1 == Object.class) {
+                        instanceOfLambda = x -> true;
+                    } else {
+                        instanceOfLambda = x -> type1.isInstance(x);
+                    }
+                } else {
+                    if (type1 == Object.class) {
+                        instanceOfLambda = x -> extraCondition.test((R) x);
+                    } else {
+                        instanceOfLambda = x -> type1.isInstance(x) && extraCondition.test((R) x);
+                    }
+                }
+            } else {
+                instanceOfLambda = x -> type1.isInstance(x) || type2.isInstance(x);
+            }
             return instanceOfLambda;
         }
 
@@ -126,6 +176,7 @@ public abstract class Filter<T, R extends T> {
         public ResultForArg resultForMissing() {
             return ResultForArg.FALSE;
         }
+
     }
 
     /**
@@ -363,6 +414,16 @@ public abstract class Filter<T, R extends T> {
         public <D> D accept(FilterVisitor<D> visitor) {
             return visitor.visit(this);
         }
+
+        @Override
+        public ResultForArg resultForNull() {
+            if (subject instanceof VectorSize && ((VectorSize) subject).size == 0) {
+                return ResultForArg.TRUE;
+            } else {
+                return ResultForArg.FALSE;
+            }
+        }
+
     }
 
     public abstract static class MatrixFilter<T extends RAbstractVector> extends Filter<T, T> {

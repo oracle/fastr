@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public abstract class UpdateLength extends RBuiltinNode {
     protected void createCasts(CastBuilder casts) {
         // Note: `length<-`(NULL, newLen) really works in GnuR unlike other update builtins
         // @formatter:off
-        casts.arg("x").conf(c -> c.allowNull()).mustBe(abstractVectorValue(), this, INVALID_UNNAMED_ARGUMENT);
+        casts.arg("x").allowNull().mustBe(abstractVectorValue(), this, INVALID_UNNAMED_ARGUMENT);
         casts.arg("value").defaultError(this, INVALID_UNNAMED_VALUE).
                 mustBe(integerValue().or(doubleValue()).or(stringValue())).
                 asIntegerVector().mustBe(singleElement()).findFirst();

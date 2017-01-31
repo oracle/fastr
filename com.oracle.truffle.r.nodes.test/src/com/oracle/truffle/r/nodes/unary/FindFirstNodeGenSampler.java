@@ -113,7 +113,7 @@ public class FindFirstNodeGenSampler extends CastNodeSampler<FindFirstNodeGen> {
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
+    public TypeExpr resultTypes(TypeExpr inputType, SamplingContext ctx) {
         TypeExpr rt;
         if (elementClass == null || elementClass == Object.class) {
             if (inputType.isAnything()) {

@@ -44,7 +44,7 @@ public class NonNANodeGenSampler extends CastNodeSampler<NonNANodeGen> {
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
+    public TypeExpr resultTypes(TypeExpr inputType, SamplingContext ctx) {
         return inputType;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,17 +42,26 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
     }
 
     @Override
-    public TypeExpr resultTypes(TypeExpr inputType) {
-        return trueBranchResultTypes(inputType).or(falseBranchResultTypes(inputType));
+    public TypeExpr resultTypes(TypeExpr inputType, SamplingContext ctx) {
+        if (castNode.isReturns()) {
+            ctx.addAltResultType(trueBranchResultTypes(inputType, ctx));
+            return falseBranchResultTypes(inputType, ctx);
+        } else {
+            return trueBranchResultTypes(inputType, ctx).or(falseBranchResultTypes(inputType, ctx));
+        }
     }
 
-    private TypeExpr trueBranchResultTypes(TypeExpr inputType) {
-        return trueBranch.resultTypes(argFilter.trueBranchType().and(inputType));
+    private TypeExpr trueBranchResultTypes(TypeExpr inputType, SamplingContext ctx) {
+        if (trueBranch != null) {
+            return trueBranch.resultTypes(argFilter.trueBranchType().and(inputType), ctx);
+        } else {
+            return argFilter.trueBranchType().and(inputType);
+        }
     }
 
-    private TypeExpr falseBranchResultTypes(TypeExpr inputType) {
+    private TypeExpr falseBranchResultTypes(TypeExpr inputType, SamplingContext ctx) {
         if (falseBranch != null) {
-            return falseBranch.resultTypes(argFilter.falseBranchType().and(inputType));
+            return falseBranch.resultTypes(argFilter.falseBranchType().and(inputType), ctx);
         } else {
             return argFilter.falseBranchType().and(inputType);
         }
@@ -60,8 +69,8 @@ public class ConditionalMapNodeGenSampler extends CastNodeSampler<ConditionalMap
 
     @Override
     public Samples<?> collectSamples(TypeExpr inputType, Samples<?> downStreamSamples) {
-        TypeExpr trueBranchResultType = trueBranchResultTypes(inputType);
-        TypeExpr falseBranchResultType = falseBranchResultTypes(inputType);
+        TypeExpr trueBranchResultType = trueBranchResultTypes(inputType, new SamplingContext());
+        TypeExpr falseBranchResultType = falseBranchResultTypes(inputType, new SamplingContext());
 
         // filter out the incompatible samples
         Samples compatibleTrueBranchDownStreamSamples = downStreamSamples.filter(x -> trueBranchResultType.isInstance(x));

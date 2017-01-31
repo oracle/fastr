@@ -98,23 +98,48 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return new InitialPhaseBuilder<>(pipelineBuilder());
     }
 
+    public InitialPhaseBuilder<Object> returnIf(Filter<? super T, ?> argFilter) {
+        pipelineBuilder().appendMapIf(argFilter, (PipelineStep<?, ?>) null, (PipelineStep<?, ?>) null, true);
+        return new InitialPhaseBuilder<>(pipelineBuilder());
+    }
+
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
-        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper);
+        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, false);
+        return new InitialPhaseBuilder<>(pipelineBuilder());
+    }
+
+    public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
+        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, true);
         return new InitialPhaseBuilder<>(pipelineBuilder());
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
-        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper);
+        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, false);
+        return new InitialPhaseBuilder<>(pipelineBuilder());
+    }
+
+    public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
+        pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, true);
         return new InitialPhaseBuilder<>(pipelineBuilder());
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
-        pipelineBuilder().appendMapIf(argFilter, trueBranch);
+        pipelineBuilder().appendMapIf(argFilter, trueBranch, false);
+        return new InitialPhaseBuilder<>(pipelineBuilder());
+    }
+
+    public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
+        pipelineBuilder().appendMapIf(argFilter, trueBranch, true);
         return new InitialPhaseBuilder<>(pipelineBuilder());
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
-        pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch);
+        pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, false);
+        return new InitialPhaseBuilder<>(pipelineBuilder());
+    }
+
+    public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
+        pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, true);
         return new InitialPhaseBuilder<>(pipelineBuilder());
     }
 
