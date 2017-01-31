@@ -6,6 +6,7 @@
 * [Building](building.md)
 * [Testing](testing.md)
 * [R FFI Implementation](ffi.md)
+* [Cast pipelines](casts.md)
 
 
 
