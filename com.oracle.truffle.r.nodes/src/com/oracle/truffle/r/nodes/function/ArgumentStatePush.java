@@ -31,7 +31,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -104,17 +103,13 @@ public abstract class ArgumentStatePush extends Node {
         }
     }
 
-    @Specialization
-    public void transitionState(RShareable shareable) {
-        throw RInternalError.shouldNotReachHere("unexpected RShareable that is not RSharingAttributeStorage: " + shareable.getClass());
-    }
-
     @Specialization(guards = "!isShareable(o)")
     public void transitionStateNonShareable(@SuppressWarnings("unused") Object o) {
         // do nothing
     }
 
     protected boolean isShareable(Object o) {
-        return o instanceof RShareable;
+        RSharingAttributeStorage.verify(o);
+        return o instanceof RSharingAttributeStorage;
     }
 }

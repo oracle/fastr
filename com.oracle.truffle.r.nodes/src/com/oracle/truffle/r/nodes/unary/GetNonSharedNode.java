@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,55 +22,70 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@NodeChild(value = "n", type = RNode.class)
-public abstract class GetNonSharedNode extends RNode implements RSyntaxNode {
-    // TODO This should not be an RSyntaxNode
+public abstract class GetNonSharedNode extends Node {
 
-    private final ValueProfile shareableTypeProfile = ValueProfile.createClassProfile();
+    public static final class GetNonSharedSyntaxNode extends RNode implements RSyntaxNode {
 
-    protected abstract RNode getN();
+        @Child private RNode delegate;
+        @Child private GetNonSharedNode nonShared = GetNonSharedNodeGen.create();
 
-    @Override
-    protected RSyntaxNode getRSyntaxNode() {
-        return getN().asRSyntaxNode();
+        public GetNonSharedSyntaxNode(RNode delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return nonShared.execute(delegate.execute(frame));
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return delegate.asRSyntaxNode();
+        }
+
+        @Override
+        public void setSourceSection(SourceSection sourceSection) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public SourceSection getLazySourceSection() {
+            return RSyntaxNode.INTERNAL;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
+        }
     }
 
-    @Specialization
-    protected RTypedValue getNonShared(RShareable shareable) {
-        return shareableTypeProfile.profile(shareable).getNonShared();
+    public abstract Object execute(Object value);
+
+    public static GetNonSharedNode create() {
+        return GetNonSharedNodeGen.create();
     }
 
-    protected static boolean isRShareable(Object o) {
-        return o instanceof RShareable;
+    @Specialization(guards = "shareable.getClass() == shareableClass")
+    protected RTypedValue getNonShared(RSharingAttributeStorage shareable,
+                    @Cached("shareable.getClass()") Class<? extends RSharingAttributeStorage> shareableClass) {
+        return shareableClass.cast(shareable).getNonShared();
     }
 
-    @Specialization(guards = "!isRShareable(o)")
+    @Fallback
     protected Object getNonShared(Object o) {
+        RSharingAttributeStorage.verify(o);
         return o;
-    }
-
-    @Override
-    public void setSourceSection(SourceSection sourceSection) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public SourceSection getLazySourceSection() {
-        return RSyntaxNode.INTERNAL;
-    }
-
-    @Override
-    public SourceSection getSourceSection() {
-        return RSyntaxNode.INTERNAL;
     }
 }

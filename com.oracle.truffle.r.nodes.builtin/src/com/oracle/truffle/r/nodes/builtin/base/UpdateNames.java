@@ -28,10 +28,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -62,10 +64,11 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractContainer updateNames(RAbstractContainer container, Object names) {
+    protected RAbstractContainer updateNames(RAbstractContainer container, Object names,
+                    @Cached("create()") GetNonSharedNode nonShared) {
         Object newNames = castString(names);
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (newNames == RNull.instance) {
-            RAbstractContainer result = (RAbstractContainer) container.getNonShared();
             result.setNames(null);
             return result;
         }
@@ -76,7 +79,6 @@ public abstract class UpdateNames extends RBuiltinNode {
         } else {
             stringVector = (RStringVector) ((RAbstractVector) newNames).materialize().copyDropAttributes();
         }
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
         if (stringVector.getLength() < result.getLength()) {
             stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
@@ -86,7 +88,6 @@ public abstract class UpdateNames extends RBuiltinNode {
         }
         if (stringVector.isTemporary()) {
             stringVector.incRefCount();
-
         }
         result.setNames(stringVector);
         return result;

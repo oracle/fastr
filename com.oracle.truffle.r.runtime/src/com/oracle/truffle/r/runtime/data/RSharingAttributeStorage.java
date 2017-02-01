@@ -76,4 +76,15 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
         }
         return this;
     }
+
+    @Override
+    public abstract RSharingAttributeStorage copy();
+
+    /**
+     * Verifies that the given object either is and instance of RShareable and
+     * RSharingAttributeStorage or an instance of neither of them.
+     */
+    public static void verify(Object value) {
+        assert (value instanceof RShareable) == (value instanceof RSharingAttributeStorage) : "unexpected RShareable that is not RSharingAttributeStorage: " + value;
+    }
 }

@@ -23,10 +23,9 @@
 package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
@@ -44,34 +43,26 @@ public abstract class ReuseNonSharedNode extends Node {
 
     public abstract Object execute(Object value);
 
-    @Specialization
-    protected RShareable getStorage(RSharingAttributeStorage value,
-                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile,
-                    @Cached("createClassProfile()") ValueProfile copyProfile) {
-        if (isSharedProfile.profile(value.isShared())) {
-            RShareable res = copyProfile.profile(value).copy();
-            assert res.isTemporary();
-            return res;
-        }
+    @Specialization(guards = "!value.isShared()")
+    protected RShareable reuseNonShared(RSharingAttributeStorage value) {
         return value;
     }
 
-    @Specialization(replaces = "getStorage")
-    protected static RShareable getRShareable(RShareable value,
-                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile) {
-        if (isSharedProfile.profile(value.isShared())) {
-            RShareable res = value.copy();
-            return res;
-        }
-        return value;
+    @Specialization(guards = {"value.isShared()", "value.getClass() == valueClass"})
+    protected RSharingAttributeStorage reuseShared(RSharingAttributeStorage value,
+                    @Cached("value.getClass()") Class<? extends RSharingAttributeStorage> valueClass) {
+        RSharingAttributeStorage res = valueClass.cast(value).copy();
+        assert res.isTemporary();
+        return res;
     }
 
     protected static boolean isRShareable(Object value) {
-        return value instanceof RShareable;
+        return value instanceof RSharingAttributeStorage;
     }
 
-    @Specialization(guards = "!isRShareable(value)")
+    @Fallback
     protected static Object getNonShareable(Object value) {
+        RSharingAttributeStorage.verify(value);
         return value;
     }
 }

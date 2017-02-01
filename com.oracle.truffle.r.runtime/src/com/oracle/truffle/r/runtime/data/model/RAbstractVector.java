@@ -53,6 +53,7 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RVector<?> createEmptySameType(int newLength, boolean newIsComplete);
 
+    @Override
     RVector<?> materialize();
 
     boolean isMatrix();

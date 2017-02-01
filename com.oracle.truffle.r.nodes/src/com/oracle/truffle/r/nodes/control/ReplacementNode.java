@@ -37,7 +37,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -136,7 +136,7 @@ abstract class ReplacementNode extends OperatorNode {
             if ("slot".equals(symbol) || "@".equals(symbol)) {
                 // this is pretty gross, but at this point seems like the only way to get setClass
                 // to work properly
-                argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
+                argNodes[0] = new GetNonSharedNode.GetNonSharedSyntaxNode(argNodes[0].asRNode());
             }
             newSyntaxLHS = builder.lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
         } else {

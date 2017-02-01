@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertValue;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -39,6 +40,7 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertValue;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
@@ -59,7 +61,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @NodeChild(value = "vector", type = ProfiledValue.class)
 @NodeChild(value = "index", type = ConvertIndex.class)
-@NodeChild(value = "value", type = RNode.class)
+@NodeChild(value = "value", type = ConvertValue.class)
 abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
 
     protected UpdateSubscriptSpecial(boolean inReplacement) {
@@ -110,7 +112,7 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
 @NodeChild(value = "vector", type = ProfiledValue.class)
 @NodeChild(value = "index1", type = ConvertIndex.class)
 @NodeChild(value = "index2", type = ConvertIndex.class)
-@NodeChild(value = "value", type = RNode.class)
+@NodeChild(value = "value", type = ConvertValue.class)
 abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
 
     protected UpdateSubscriptSpecial2(boolean inReplacement) {
@@ -174,9 +176,9 @@ public abstract class UpdateSubscript extends RBuiltinNode {
             ProfiledValue vector = profile(args[0]);
             ConvertIndex index = convertIndex(args[1]);
             if (args.length == 3) {
-                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, args[2]);
+                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, convertValue(args[2]));
             } else {
-                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), args[3]);
+                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), convertValue(args[3]));
             }
         }
         return null;

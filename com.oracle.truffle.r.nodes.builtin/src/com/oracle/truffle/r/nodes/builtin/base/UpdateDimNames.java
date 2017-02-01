@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -94,22 +95,25 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list,
-                    @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+                    @Cached("createDimNames()") RemoveFixedAttributeNode remove,
+                    @Cached("create()") GetNonSharedNode nonShared) {
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         remove.execute(result);
         return result;
     }
 
     @Specialization(guards = "list.getLength() == 0")
     protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list,
-                    @Cached("createDimNames()") RemoveFixedAttributeNode remove) {
-        return updateDimnamesNull(container, RNull.instance, remove);
+                    @Cached("createDimNames()") RemoveFixedAttributeNode remove,
+                    @Cached("create()") GetNonSharedNode nonShared) {
+        return updateDimnamesNull(container, RNull.instance, remove, nonShared);
     }
 
     @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") GetNonSharedNode nonShared) {
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         setDimNamesNode.setDimNames(result, convertToListOfStrings(list));
         return result;
     }

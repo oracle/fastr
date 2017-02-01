@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function.opt;
 import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -58,18 +59,14 @@ public abstract class ShareObjectNode extends Node {
         return obj;
     }
 
-    @Specialization(guards = "!isRShareable(obj)")
+    @Fallback
     protected Object doNonShareable(Object obj) {
+        RSharingAttributeStorage.verify(obj);
         return obj;
     }
 
-    protected static boolean isRShareable(Object value) {
-        verify(value);
-        return value instanceof RSharingAttributeStorage;
-    }
-
     public static <T> T share(T value) {
-        verify(value);
+        RSharingAttributeStorage.verify(value);
         if (value instanceof RSharingAttributeStorage) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
@@ -80,7 +77,7 @@ public abstract class ShareObjectNode extends Node {
     }
 
     public static <T> T sharePermanent(T value) {
-        verify(value);
+        RSharingAttributeStorage.verify(value);
         if (value instanceof RSharingAttributeStorage) {
             ((RSharingAttributeStorage) value).makeSharedPermanent();
         }
@@ -88,16 +85,12 @@ public abstract class ShareObjectNode extends Node {
     }
 
     public static void unshare(Object value) {
-        verify(value);
+        RSharingAttributeStorage.verify(value);
         if (value instanceof RSharingAttributeStorage) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
                 shareable.decRefCount();
             }
         }
-    }
-
-    private static void verify(Object value) {
-        assert (value instanceof RShareable) == (value instanceof RSharingAttributeStorage) : "unexpected RShareable that is not RSharingAttributeStorage: " + value;
     }
 }

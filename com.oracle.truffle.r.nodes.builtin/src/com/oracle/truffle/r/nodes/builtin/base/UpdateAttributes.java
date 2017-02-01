@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -44,6 +45,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -115,20 +117,22 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttributes(RAbstractContainer abstractContainer, @SuppressWarnings("unused") RNull list) {
-        RAbstractContainer resultVector = (RAbstractContainer) abstractContainer.getNonShared();
+    protected RAbstractContainer updateAttributes(RAbstractContainer abstractContainer, @SuppressWarnings("unused") RNull list,
+                    @Cached("create()") GetNonSharedNode nonShared) {
+        RAbstractContainer resultVector = ((RAbstractContainer) nonShared.execute(abstractContainer)).materialize();
         resultVector.resetAllAttributes(true);
         return resultVector;
     }
 
     @Specialization
-    protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
+    protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list,
+                    @Cached("create()") GetNonSharedNode nonShared) {
         Object listNamesObject = getNamesNode.getNames(list);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (numAttributesProfile.profile(list.getLength() == 0)) {
             result.resetAllAttributes(true);
         } else {

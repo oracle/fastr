@@ -183,11 +183,6 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RShareable materializeToShareable() {
-        return this.materialize();
-    }
-
-    @Override
     public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -178,11 +177,6 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public final RTypedValue getNonShared() {
         return vector.getNonShared();
-    }
-
-    @Override
-    public final RShareable materializeToShareable() {
-        return vector.materialize();
     }
 
     @Override

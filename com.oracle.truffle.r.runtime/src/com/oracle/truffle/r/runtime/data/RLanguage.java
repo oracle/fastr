@@ -165,7 +165,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RShareable materializeToShareable() {
+    public RLanguage materialize() {
         // TODO is copy necessary?
         return copy();
     }
