@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
@@ -49,7 +50,8 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RNull dirChmod(String pathName, boolean setGroupWrite) {
+    protected RNull dirChmod(String pathName, boolean setGroupWrite,
+                    @Cached("create()") BaseRFFI.ChmodNode chmodNode) {
         Path path = FileSystems.getDefault().getPath(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
@@ -65,7 +67,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
                 int elementMode = Utils.intFilePermissions(pfa.permissions());
                 int newMode = Files.isDirectory(element) ? elementMode | dirMask : elementMode | fileMask;
                 // System.out.printf("path %s: old %o, new %o%n", element, elementMode, newMode);
-                RFFIFactory.getRFFI().getBaseRFFI().chmod(element.toString(), newMode);
+                chmodNode.chmod(element.toString(), newMode);
             }
         } catch (IOException ex) {
             // ignore

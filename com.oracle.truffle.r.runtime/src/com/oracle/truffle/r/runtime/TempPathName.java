@@ -29,7 +29,7 @@ import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 /**
  *
@@ -63,7 +63,7 @@ public class TempPathName implements RContext.ContextState {
         if (!startingTempDirPath.isAbsolute()) {
             startingTempDirPath = startingTempDirPath.toAbsolutePath();
         }
-        String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath.toString() + "XXXXXX");
+        String t = (String) BaseRFFI.MkdtempRootNode.create().getCallTarget().call(startingTempDirPath.toString() + "XXXXXX");
         if (t != null) {
             tempDirPath = t;
         } else {

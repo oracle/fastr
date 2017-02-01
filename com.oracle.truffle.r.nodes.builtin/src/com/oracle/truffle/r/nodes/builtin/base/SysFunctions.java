@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -68,17 +69,19 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class SysFunctions {
 
     @RBuiltin(name = "Sys.getpid", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class SysGetpid extends RBuiltinNode {
+        @Child private BaseRFFI.GetpidNode getpidNode = BaseRFFI.GetpidNode.create();
+
         @Specialization
         @TruffleBoundary
         protected Object sysGetPid() {
-            int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+            int pid = getpidNode.getpid();
             return RDataFactory.createIntVectorFromScalar(pid);
         }
     }
@@ -251,7 +254,8 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysReadlink(RAbstractStringVector vector) {
+        protected Object sysReadlink(RAbstractStringVector vector,
+                        @Cached("create()") BaseRFFI.ReadlinkNode readlinkNode) {
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < paths.length; i++) {
@@ -259,7 +263,7 @@ public class SysFunctions {
                 if (RRuntime.isNA(path)) {
                     paths[i] = path;
                 } else {
-                    paths[i] = doSysReadLink(path);
+                    paths[i] = doSysReadLink(path, readlinkNode);
                 }
                 if (RRuntime.isNA(paths[i])) {
                     complete = RDataFactory.INCOMPLETE_VECTOR;
@@ -269,10 +273,10 @@ public class SysFunctions {
         }
 
         @TruffleBoundary
-        private static String doSysReadLink(String path) {
+        private static String doSysReadLink(String path, BaseRFFI.ReadlinkNode readlinkNode) {
             String s;
             try {
-                s = RFFIFactory.getRFFI().getBaseRFFI().readlink(path);
+                s = readlinkNode.readlink(path);
                 if (s == null) {
                     s = "";
                 }
@@ -294,14 +298,15 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
+                        @Cached("create()") BaseRFFI.ChmodNode chmodNode) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String path = Utils.tildeExpand(pathVec.getDataAt(i));
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = RFFIFactory.getRFFI().getBaseRFFI().chmod(path, octmode.getDataAt(i % octmode.getLength()));
+                int result = chmodNode.chmod(path, octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
@@ -338,10 +343,12 @@ public class SysFunctions {
         private static final String[] NAMES = new String[]{"sysname", "release", "version", "nodename", "machine", "login", "user", "effective_user"};
         private static final RStringVector NAMES_ATTR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
 
+        @Child private BaseRFFI.UnameNode unameNode = BaseRFFI.UnameNode.create();
+
         @Specialization
         @TruffleBoundary
         protected Object sysTime() {
-            UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+            UtsName utsname = unameNode.uname();
             String[] data = new String[NAMES.length];
             data[0] = utsname.sysname();
             data[1] = utsname.release();
@@ -367,7 +374,8 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask) {
+        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask,
+                        @Cached("create()") BaseRFFI.GlobNode globNode) {
             ArrayList<String> matches = new ArrayList<>();
             // Sys.glob closure already called path.expand
             for (int i = 0; i < pathVec.getLength(); i++) {
@@ -375,7 +383,7 @@ public class SysFunctions {
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                ArrayList<String> pathPatternMatches = RFFIFactory.getRFFI().getBaseRFFI().glob(pathPattern);
+                ArrayList<String> pathPatternMatches = globNode.glob(pathPattern);
                 matches.addAll(pathPatternMatches);
             }
             String[] data = new String[matches.size()];
