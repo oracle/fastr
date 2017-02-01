@@ -904,50 +904,49 @@ public class RDeparse {
                 append("structure(");
                 return () -> {
                     DynamicObject attrs = ((RAttributable) obj).getAttributes();
-                    if (attrs != null) {
-                        Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
-                        while (iter.hasNext()) {
-                            RAttributesLayout.RAttribute attr = iter.next();
-                            // TODO ignore function source attribute
-                            String attrName = attr.getName();
-                            append(", ");
-                            String dotName = null;
-                            switch (attrName) {
-                                case "dimnames":
-                                    dotName = ".Dimnames";
-                                    break;
-                                case "dim":
-                                    dotName = ".Dim";
-                                    break;
-                                case "names":
-                                    dotName = ".Names";
-                                    break;
-                                case "tsp":
-                                    dotName = ".Tsp";
-                                    break;
-                                case "levels":
-                                    dotName = ".Label";
-                                    break;
+                    assert attrs != null;
+                    Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
+                    while (iter.hasNext()) {
+                        RAttributesLayout.RAttribute attr = iter.next();
+                        // TODO ignore function source attribute
+                        String attrName = attr.getName();
+                        append(", ");
+                        String dotName = null;
+                        switch (attrName) {
+                            case "dimnames":
+                                dotName = ".Dimnames";
+                                break;
+                            case "dim":
+                                dotName = ".Dim";
+                                break;
+                            case "names":
+                                dotName = ".Names";
+                                break;
+                            case "tsp":
+                                dotName = ".Tsp";
+                                break;
+                            case "levels":
+                                dotName = ".Label";
+                                break;
 
-                                default: {
-                                    opts = SIMPLEDEPARSE;
-                                    if (attrName.contains(" ")) {
-                                        append('"');
-                                        append(attrName);
-                                        append('"');
-                                    } else {
-                                        append(attrName);
-                                    }
+                            default: {
+                                opts = SIMPLEDEPARSE;
+                                if (attrName.contains(" ")) {
+                                    append('"');
+                                    append(attrName);
+                                    append('"');
+                                } else {
+                                    append(attrName);
                                 }
                             }
-                            if (dotName != null) {
-                                append(dotName);
-                            }
-                            append(" = ");
-                            appendValue(attr.getValue());
-                            append(')');
                         }
+                        if (dotName != null) {
+                            append(dotName);
+                        }
+                        append(" = ");
+                        appendValue(attr.getValue());
                     }
+                    append(')');
                 };
             } else {
                 return () -> {
