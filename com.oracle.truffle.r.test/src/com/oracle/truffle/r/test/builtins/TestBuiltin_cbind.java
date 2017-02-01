@@ -103,7 +103,7 @@ public class TestBuiltin_cbind extends TestBase {
     public void testGenericDispatch() {
         assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(...) 'foo'; cbind(v) }");
         assertEval("{ v <- 1; class(v) <- 'foo'; cbind.foo <- function(...) 'foo'; v2 <- 1; class(v2) <- 'foo'; cbind(v2) }");
-        assertEval("{ v <- 1; class(v) <- 'foo'; assign('cbind.foo', function(x) {'foo'}, envir=.__S3MethodsTable__.); cbind(v) ; rm('cbind.foo', envir=.__S3MethodsTable__.)}");
+        assertEval("{ v <- 1; class(v) <- 'foo'; assign('cbind.foo', function(x) {'foo'}, envir=.__S3MethodsTable__.); result <- cbind(v) ; rm('cbind.foo', envir=.__S3MethodsTable__.); result;}");
 
         // segfault in gnur
         assertEval(Ignored.ReferenceError, "{ v <- 1; class(v) <- 'foo'; cbind.foo <- length; cbind(v) }");
@@ -129,4 +129,48 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
     }
 
+    @Test
+    public void testDimnames() {
+        assertEval("{ attributes(cbind(integer(0))) }");
+        assertEval("{ attributes(cbind(list())) }");
+        assertEval("{ attributes(cbind(matrix())) }");
+        assertEval("{ attributes(cbind(1L)) }");
+        assertEval("{ attributes(cbind(c(1L, 2L))) }");
+        assertEval("{ attributes(cbind(list(1L, 2L))) }");
+        assertEval("{ attributes(cbind(matrix(1L, 2L))) }");
+        assertEval("{ attributes(cbind(1L, 2L)) }");
+
+        assertEval("{ cbind(structure(1:4, dim=c(2,2), dimnames=list(c('y1', 'y2'), c('x1', 'x2'))), 1L) }");
+        assertEval("{ cbind(structure(1:4, dim=c(2,2), dimnames=list(y=c('y1', 'y2'), x=c('x1', 'x2'))), 1L) }");
+        assertEval("{ cbind(structure(1:4, dim=c(2,2)), 1L) }");
+
+        assertEval("{ attributes(cbind(structure(1:4, dim=c(2,2), dimnames=list(c('y1', 'y2'), c('x1', 'x2'))), 1L)) }");
+        assertEval("{ attributes(cbind(structure(1:4, dim=c(2,2), dimnames=list(y=c('y1', 'y2'), x=c('x1', 'x2'))), 1L)) }");
+        assertEval("{ attributes(cbind(structure(1:4, dim=c(2,2)), 1L)) }");
+
+        assertEval("{ cbind(NULL, integer(0)) }");
+        assertEval("{ cbind(integer(0), integer(0)) }");
+        assertEval("{ cbind(c(1), integer(0)) }");
+        assertEval("{ cbind(structure(1:4, dim=c(2,2), dimnames=list(y=c('y1', 'y2'), x=c('x1', 'x2'))), integer(0)) }");
+
+        assertEval("{ attributes(cbind(NULL, integer(0))) }");
+        assertEval("{ attributes(cbind(integer(0), integer(0))) }");
+        assertEval("{ attributes(cbind(c(1), integer(0))) }");
+        assertEval("{ attributes(cbind(structure(1:4, dim=c(2,2), dimnames=list(y=c('y1', 'y2'), x=c('x1', 'x2'))), integer(0))) }");
+    }
+
+    @Test
+    public void testRetType() {
+        assertEval("dput(cbind(NULL))");
+        assertEval("dput(cbind(NULL, integer(0)))");
+        assertEval("dput(cbind(NULL, NULL, integer(0)))");
+        assertEval("dput(cbind(NULL, NULL, double(0)))");
+        assertEval("dput(cbind(NULL, NULL, integer(0), double(0)))");
+        assertEval("dput(cbind(NULL, NULL, double(0), integer(0)))");
+        assertEval("dput(cbind(NULL, NULL, double(0), character(0)))");
+        assertEval("dput(cbind(NULL, NULL, double(0), integer(0), character(0)))");
+        assertEval("dput(cbind(c(NULL, NULL), integer(0)))");
+        assertEval("dput(cbind(integer(0)))");
+        assertEval("dput(cbind(integer(0), NULL, NULL))");
+    }
 }
