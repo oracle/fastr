@@ -53,7 +53,7 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 $(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
-	$(CC) $(CFLAGS) $(INCLUDES) -I../variable_defs -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # for debugging, to see what's really being compiled
 $(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h

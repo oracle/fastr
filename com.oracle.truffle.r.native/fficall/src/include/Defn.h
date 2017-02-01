@@ -46,15 +46,18 @@ void Rf_checkArityCall(SEXP, SEXP, SEXP);
 /* ../main/devices.c, used in memory.c, gnuwin32/extra.c */
 #define R_MaxDevices 64
 
-extern SEXP R_DeviceSymbol;
-extern SEXP R_DevicesSymbol;
-extern Rboolean FASTR_Interactive();
-#define R_Interactive FASTR_Interactive()
+extern SEXP FASTR_R_DevicesSymbol();
+#define R_DevicesSymbol FASTR_R_DevicesSymbol()
+extern SEXP FASTR_R_DeviceSymbol();
+#define R_DeviceSymbol FASTR_R_DeviceSymbol()
+extern Rboolean FASTR_R_Interactive();
+#define R_Interactive FASTR_R_Interactive()
 extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
 extern const char *FASTR_R_Home();
 #define R_Home FASTR_R_Home()
-extern const char *R_TempDir;
+extern const char *FASTR_R_TempDir();
+#define R_TempDir FASTR_R_TempDir()
 
 //#define HAVE_MBSTATE_T 1 // actually from config.h
 
