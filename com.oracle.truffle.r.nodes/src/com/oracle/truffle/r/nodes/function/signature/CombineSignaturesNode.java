@@ -27,9 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -45,7 +43,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  * @see com.oracle.truffle.r.nodes.function.ArgumentMatcher
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class CombineSignaturesNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 3;

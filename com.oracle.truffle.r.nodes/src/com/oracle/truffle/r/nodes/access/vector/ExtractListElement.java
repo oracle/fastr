@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -47,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
  * convenient wrapper that performs the extraction as well as invocation of
  * {@link UpdateShareableChildValueNode}. See also the documentation of {@link RListBase}.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ExtractListElement extends Node {
 
     public abstract Object execute(RAbstractContainer container, int index);

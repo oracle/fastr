@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  * empty type system to avoid conversions to vector types. NA values cause
  * {@link RSpecialFactory#throwFullCallNeeded()} exception.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class BinaryBooleanSpecial extends RNode {
     @Child private BooleanOperation operation;

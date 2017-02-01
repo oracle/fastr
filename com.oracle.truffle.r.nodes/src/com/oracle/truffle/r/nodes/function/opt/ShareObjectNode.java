@@ -26,11 +26,9 @@ import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
@@ -42,9 +40,9 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
  * This class relies (and asserts) that all RShareable objects are subclasses of
  * RSharingAttributeStorage.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NONE)
 public abstract class ShareObjectNode extends Node {
+
     public abstract Object execute(Object obj);
 
     public static ShareObjectNode create() {

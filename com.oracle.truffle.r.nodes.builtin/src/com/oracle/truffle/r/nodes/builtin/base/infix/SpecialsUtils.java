@@ -26,12 +26,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
@@ -64,7 +62,6 @@ class SpecialsUtils {
     /**
      * Common code shared between specials doing subset/subscript related operation.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class SubscriptSpecialCommon extends RNode {
 
         protected final boolean inReplacement;
@@ -90,7 +87,6 @@ class SpecialsUtils {
         }
     }
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class SubscriptSpecial2Common extends SubscriptSpecialCommon {
 
         protected SubscriptSpecial2Common(boolean inReplacement) {
@@ -115,7 +111,6 @@ class SpecialsUtils {
     /**
      * Common code shared between specials accessing/updating fields.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class ListFieldSpecialBase extends RNode {
 
         @Child private ClassHierarchyNode hierarchyNode = ClassHierarchyNode.create();
@@ -172,7 +167,6 @@ class SpecialsUtils {
 
     @NodeInfo(cost = NodeCost.NONE)
     @NodeChild(value = "delegate", type = RNode.class)
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class ConvertIndex extends RNode {
 
         protected abstract RNode getDelegate();

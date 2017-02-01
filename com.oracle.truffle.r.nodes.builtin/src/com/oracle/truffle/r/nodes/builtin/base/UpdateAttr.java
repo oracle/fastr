@@ -33,10 +33,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -79,7 +77,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Child private InternStringNode intern = InternStringNodeGen.create();
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class InternStringNode extends Node {
 
         public abstract String execute(String value);

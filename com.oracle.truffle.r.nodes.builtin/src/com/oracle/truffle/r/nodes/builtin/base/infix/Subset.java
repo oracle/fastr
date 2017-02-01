@@ -30,9 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -90,7 +88,6 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
  * Subset special only handles single element integer/double index. In the case of list, we need to
  * create the actual list otherwise we just return the primitive type.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
 
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
@@ -112,7 +109,6 @@ abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
 }
 
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class Subset extends RBuiltinNode {
 
     @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE)

@@ -28,9 +28,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecialNodeGen.IntegerBinaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
@@ -44,7 +42,6 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
  * handling, which is replicated here, others (notably pow and mul) throw
  * {@link RSpecialFactory#throwFullCallNeeded()} on NA.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "left", type = RNode.class)
 @NodeChild(value = "right", type = RNode.class)
 public abstract class BinaryArithmeticSpecial extends RNode {
@@ -101,7 +98,6 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     /**
      * Adds integers handling.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class IntegerBinaryArithmeticSpecial extends BinaryArithmeticSpecial {
 
         IntegerBinaryArithmeticSpecial(BinaryArithmeticFactory opFactory) {

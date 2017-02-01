@@ -25,9 +25,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetInt;
@@ -42,7 +40,6 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * Sample2 is more efficient special case implementation of {@link Sample}.
  */
 @RBuiltin(name = "sample2", kind = INTERNAL, parameterNames = {"x", "size"}, behavior = MODIFIES_STATE)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class Sample2 extends RBuiltinNode {
     private static final double U = 33554432.0;
     static final double MAX_INT = Integer.MAX_VALUE;
