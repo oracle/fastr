@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -80,5 +80,16 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ paste(1:2, 1:3, FALSE, collapse=NULL) }");
         assertEval("{ paste(sep=\"\") }");
         assertEval("{ paste(1:2, 1:3, FALSE, collapse=\"-\", sep=\"+\") }");
+    }
+
+    @Test
+    public void testPasteWithS3AsCharacter() {
+        // Note the catch: class on strings is ignored....
+        assertEval("{ as.character.myc <- function(x) '42'; val <- 'hello'; class(val) <- 'myc'; paste(val, 'world') }");
+        // Next 2 tests should show error since 42, nor NULL is not character
+        assertEval("{ as.character.myc <- function(x) 42; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval("{ as.character.myc <- function(x) NULL; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval("{ as.character.myc <- function(x) '42'; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval("{ assign('as.character.myc', function(x) '42', envir=.__S3MethodsTable__.); val <- 3.14; class(val) <- 'myc'; res <- paste(val, 'world'); rm('as.character.myc', envir=.__S3MethodsTable__.); res }");
     }
 }

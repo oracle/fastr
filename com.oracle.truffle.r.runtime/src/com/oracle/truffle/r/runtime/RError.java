@@ -748,7 +748,7 @@ public final class RError extends RuntimeException {
         SYSTEM_CHAR_ARG("non-empty character argument expected"),
         SYSTEM_INTERN_NOT_NA("'intern' must be logical and not NA"),
         NO_SUCH_FILE("cannot open file '%s': No such file or directory"),
-        NON_STRING_ARG_TO_INTERNAL_PASTE("non-string argument to Internal paste"),
+        NON_STRING_ARG_TO_INTERNAL_PASTE("non-string argument to internal 'paste'"),
         INVALID_STRING_IN_STOP(" [invalid string in stop(.)]"),
         INVALID_STRING_IN_WARNING(" [invalid string in warning(.)]"),
         ERR_MSG_MUST_BE_STRING("error message must be a character string"),

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
@@ -43,14 +42,6 @@ public abstract class RExplicitCallNode extends Node {
     }
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
-
-    /**
-     * Helper method that wraps the argument into {@link RArgsValuesAndNames} and invokes the
-     * {@link #execute(VirtualFrame, RFunction, RArgsValuesAndNames)} method.
-     */
-    public Object call(VirtualFrame frame, RFunction function, Object arg1) {
-        return execute(frame, function, new RArgsValuesAndNames(new Object[]{arg1}, ArgumentsSignature.empty(1)));
-    }
 
     @Specialization
     Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args,
