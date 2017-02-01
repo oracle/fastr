@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -43,20 +43,18 @@ public abstract class VectorFastPaths {
 
         @Specialization
         protected RAbstractIntVector get(int length,
-                        @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
-            if (emptyProfile.profile(length == 0)) {
-                return RDataFactory.createIntVector(0);
-            } else if (length > 0) {
-                return RDataFactory.createIntSequence(0, 0, length);
+                        @Cached("create()") VectorLengthProfile profile) {
+            if (length > 0) {
+                return RDataFactory.createIntVector(profile.profile(length));
             }
             return null;
         }
 
         @Specialization
         protected RAbstractIntVector get(double length,
-                        @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
+                        @Cached("create()") VectorLengthProfile profile) {
             if (!Double.isNaN(length)) {
-                return get((int) length, emptyProfile);
+                return get((int) length, profile);
             }
             return null;
         }
@@ -77,20 +75,18 @@ public abstract class VectorFastPaths {
 
         @Specialization
         protected RAbstractDoubleVector get(int length,
-                        @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
-            if (emptyProfile.profile(length == 0)) {
-                return RDataFactory.createDoubleVector(0);
-            } else if (length > 0) {
-                return RDataFactory.createDoubleSequence(0, 0, length);
+                        @Cached("create()") VectorLengthProfile profile) {
+            if (length > 0) {
+                return RDataFactory.createDoubleVector(profile.profile(length));
             }
             return null;
         }
 
         @Specialization
         protected RAbstractDoubleVector get(double length,
-                        @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
+                        @Cached("create()") VectorLengthProfile profile) {
             if (!Double.isNaN(length)) {
-                return get((int) length, emptyProfile);
+                return get((int) length, profile);
             }
             return null;
         }
