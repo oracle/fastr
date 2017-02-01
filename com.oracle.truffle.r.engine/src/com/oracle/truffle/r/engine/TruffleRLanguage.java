@@ -155,18 +155,20 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected Object findMetaObject(RContext context, Object value) {
-        String ret = "Object";
-        if (value instanceof RPromise) {
-            RPromise promise = (RPromise) value;
+        Object unwrappedValue = value;
+        if (unwrappedValue instanceof RPromise) {
+            RPromise promise = (RPromise) unwrappedValue;
             if (promise.isEvaluated()) {
-                value = promise.getValue();
+                unwrappedValue = promise.getValue();
             }
         }
-        value = RRuntime.asAbstractVector(value); // Wrap scalars "Integer", "Double" etc.
-        if (value instanceof RTypedValue) {
-            ret = ((RTypedValue) value).getRType().getName();
+        unwrappedValue = RRuntime.asAbstractVector(unwrappedValue); // Wrap scalars "Integer",
+                                                                    // "Double" etc.
+        if (unwrappedValue instanceof RTypedValue) {
+            return ((RTypedValue) unwrappedValue).getRType().getName();
+        } else {
+            return "Object";
         }
-        return ret;
     }
 
     @Override
