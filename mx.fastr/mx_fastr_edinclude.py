@@ -20,13 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import os
 from os.path import join
-import platform
-import subprocess
-import shutil
-import mx
-import mx_fastr
 
 '''
 Handles all the editing of R FFI header files from the GNUR include directory to the
@@ -40,7 +34,7 @@ r_internals_vars = ['R_NilValue', 'R_UnboundValue', 'R_MissingArg', 'R_GlobalEnv
     'R_LevelsSymbol', 'R_ModeSymbol', 'R_NameSymbol', 'R_NamesSymbol', 'R_NaRmSymbol', 'R_PackageSymbol',
     'R_QuoteSymbol', 'R_RowNamesSymbol', 'R_SeedsSymbol', 'R_SourceSymbol', 'R_TspSymbol', 'R_dot_defined',
     'R_dot_Method', 'R_dot_target', 'R_SrcrefSymbol', 'R_SrcfileSymbol', 'R_NaString', 'R_BlankString',
-    'R_BlankScalarString','R_BaseSymbol', 'R_baseSymbol', 'R_NamespaceEnvSymbol']
+    'R_BlankScalarString', 'R_BaseSymbol', 'R_baseSymbol', 'R_NamespaceEnvSymbol']
 
 interface_vars = ['R_Home', 'R_TempDir',]
 
@@ -81,11 +75,11 @@ SEXP R_PreserveObject(SEXP);
 '''
 
 def ed_r_internals(gnu_dir):
-    r_internals_h = join(gnu_dir,'Rinternals.h')
+    r_internals_h = join(gnu_dir, 'Rinternals.h')
     with open(r_internals_h) as f:
         lines = f.readlines()
 
-    use_rinternals_count = 0;
+    use_rinternals_count = 0
     with open('Rinternals.h', 'w') as f:
         for line in lines:
             if '== USE_RINTERNALS section' in line:
@@ -104,7 +98,7 @@ def ed_r_internals(gnu_dir):
                     use_rinternals_count = 1
             elif 'macro version of R_CheckStack' in line:
                 f.write(use_internals_end)
-                f.write(line);
+                f.write(line)
             elif 'R_PreserveObject' in line:
                 f.write(preserveObject)
                 f.write(line)
@@ -180,7 +174,7 @@ extern char* FASTR_R_Home();
 '''
 
 def ed_r_interface(gnu_dir):
-    r_interface_h = join(gnu_dir,'Rinterface.h')
+    r_interface_h = join(gnu_dir, 'Rinterface.h')
     with open(r_interface_h) as f:
         lines = f.readlines()
 
