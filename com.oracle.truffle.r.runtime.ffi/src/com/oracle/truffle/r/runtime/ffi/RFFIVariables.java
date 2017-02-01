@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public enum RFFIVariables {
     R_Home(REnvVars.rHome()),
-    R_TempDir(null), // Set later with setTmpDir
+    R_TempDir(null), // Set later
     R_NilValue(RNull.instance),
     R_UnboundValue(RUnboundValue.instance),
     R_MissingArg(RMissing.instance),
@@ -77,10 +77,14 @@ public enum RFFIVariables {
     R_NegInf(Double.NEGATIVE_INFINITY),
     R_NaReal(RRuntime.DOUBLE_NA),
     R_NaInt(RRuntime.INT_NA),
-    R_BlankString(RDataFactory.createStringVectorFromScalar("")),
+    R_BlankString(CharSXPWrapper.create("")),
+    R_BlankScalarString(RDataFactory.createStringVectorFromScalar("")),
     R_TrueValue(RRuntime.LOGICAL_TRUE),
     R_FalseValue(RRuntime.LOGICAL_FALSE),
-    R_LogicalNAValue(RRuntime.LOGICAL_NA);
+    R_LogicalNAValue(RRuntime.LOGICAL_NA),
+    R_BaseSymbol(RDataFactory.createSymbol("base")),
+    R_NamespaceEnvSymbol(RDataFactory.createSymbol(".__NAMESPACE__.")),
+    R_RestartToken(null);
 
     private Object value;
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 $(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
-	$(CC) $(CFLAGS) $(INCLUDES) -I../variable_defs -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # for debugging, to see what's really being compiled
 $(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h

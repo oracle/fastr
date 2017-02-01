@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,10 @@ def mkgramrd(args):
     converts GNU R gramRd.c into one suitable for invoking via FastR
     '''
     parse_defs = '''
-extern SEXP R_SrcrefSymbol;
-extern SEXP R_SrcfileSymbol;
+extern SEXP FASTR_R_SrcrefSymbol();
+#define R_SrcrefSymbol FASTR_R_SrcrefSymbol()
+extern SEXP FASTR_R_SrcfileSymbol();
+#define R_SrcfileSymbol FASTR_R_SrcfileSymbol()
 extern int R_ParseContextLast;
 #define R_EOF -1
 #define PARSE_ERROR_SIZE 256
@@ -37,7 +39,8 @@ static char    R_ParseContext[PARSE_CONTEXT_SIZE];
 int    R_ParseContextLast;
 int    R_ParseContextLine;
 int R_ParseError;
-extern SEXP R_EmptyEnv;
+extern SEXP FASTR_R_EmptyEnv();
+#define R_EmptyEnv FASTR_R_EmptyEnv()
 extern SEXP R_NewHashedEnv(SEXP a, SEXP b);
 
 char *dgettext(const char *p, const char *msgid) {

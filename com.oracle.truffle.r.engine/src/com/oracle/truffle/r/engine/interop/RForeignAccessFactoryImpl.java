@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
@@ -104,7 +105,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                     DLLInfo.class, DotSymbol.class,
                     NativeRawArray.class, NativeCharArray.class, NativeIntegerArray.class,
                     NativeDoubleArray.class, NativeLogicalArray.class,
-                    RDouble.class, RInteger.class};
+                    RDouble.class, RInteger.class, CharSXPWrapper.class};
 
     private static final class ForeignAccessState {
 
@@ -230,6 +231,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                 foreignAccess = RIntegerMRForeign.createAccess();
             } else if (RDouble.class.isAssignableFrom(clazz)) {
                 foreignAccess = RDoubleMRForeign.createAccess();
+            } else if (CharSXPWrapper.class.isAssignableFrom(clazz)) {
+                foreignAccess = CharSXPWrapperMRForeign.createAccess();
             } else {
                 if (RAbstractVector.class.isAssignableFrom(clazz)) {
                     foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());

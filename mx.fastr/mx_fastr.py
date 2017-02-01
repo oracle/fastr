@@ -32,6 +32,7 @@ import mx_fastr_junit
 from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
+import mx_fastr_edinclude
 
 import os
 
@@ -602,6 +603,7 @@ _commands = {
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
+    'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],
     'gnu-rscript' : [gnu_rscript, '[]'],
     'nativebuild' : [nativebuild, '[]'],
