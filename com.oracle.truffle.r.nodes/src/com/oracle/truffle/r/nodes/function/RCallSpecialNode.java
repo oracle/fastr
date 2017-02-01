@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
@@ -187,9 +188,12 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         String name = ((RSyntaxLookup) syntaxFunction).getIdentifier();
         RBuiltinDescriptor builtinDescriptor = RContext.lookupBuiltinDescriptor(name);
         if (builtinDescriptor == null) {
-            // no builtint -> bail out
+            // no builtin -> bail out
             return null;
         }
+        RDispatch dispatch = builtinDescriptor.getDispatch();
+        // it's ok to evaluate promises for args that would be forced by dispatch anyway
+        int evaluatedArgs = dispatch == RDispatch.OPS_GROUP_GENERIC ? 2 : (dispatch == RDispatch.INTERNAL_GENERIC || dispatch.isGroupGeneric()) ? 1 : 0;
         RSpecialFactory specialCall = builtinDescriptor.getSpecialCall();
         if (specialCall == null) {
             // no special call definition -> bail out
@@ -202,7 +206,15 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 localArguments[i] = arg.asRNode();
             } else {
                 if (arg instanceof RSyntaxLookup) {
-                    localArguments[i] = new PeekLocalVariableNode(((RSyntaxLookup) arg).getIdentifier());
+                    String lookup = ((RSyntaxLookup) arg).getIdentifier();
+                    if (ArgumentsSignature.VARARG_NAME.equals(lookup)) {
+                        return null;
+                    }
+                    if (i < evaluatedArgs) {
+                        localArguments[i] = arg.asRNode();
+                    } else {
+                        localArguments[i] = new PeekLocalVariableNode(lookup);
+                    }
                 } else if (arg instanceof RSyntaxConstant) {
                     localArguments[i] = RContext.getASTBuilder().process(arg).asRNode();
                 } else {
