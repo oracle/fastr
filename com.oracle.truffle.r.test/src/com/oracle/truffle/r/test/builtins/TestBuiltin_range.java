@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -155,5 +155,26 @@ public class TestBuiltin_range extends TestBase {
     @Test
     public void testrange31() {
         assertEval("argv <- list(structure(c(1, 0.666666666666667, 0.333333333333333, 0, -0.333333333333333, -0.666666666666667, -1, -1.33333333333333, -1.66666666666667, 1.5, 1, 0.5, 0, -0.5, -1, -1.5, -2, -2.5, 3, 2, 1, 0, -1, -2, -3, -4, -5, -Inf, -Inf, -Inf, NaN, Inf, Inf, Inf, Inf, Inf, -3, -2, -1, 0, 1, 2, 3, 4, 5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, -1, -0.666666666666667, -0.333333333333333, 0, 0.333333333333333, 0.666666666666667, 1, 1.33333333333333, 1.66666666666667, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1, 1.25, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1), .Dim = c(9L, 9L)));range(argv[[1]][[1]],argv[[1]][[2]], na.rm = TRUE);");
+    }
+
+    // Following tests run range with the same input, but once with na.rm=F (default), na.rm=T and
+    // finite=T
+    private static final String[][] OPTIONAL_ARGS = new String[][]{{"", ", na.rm=T", ", finite=T"}};
+
+    @Test
+    public void testNaRmAndFiniteWithDoubles() {
+        assertEval(template("range(c(1.615, 3.19, 2.62, 3.44, NA, NA, 1.513)%0)", OPTIONAL_ARGS));
+        assertEval(template("range(c(1.615, 3.19, 2.62, 3.44, NaN, 1.513)%0)", OPTIONAL_ARGS));
+        assertEval(template("range(c(1.615, 3.19, -Inf, 3.44, Inf, 1.513)%0)", OPTIONAL_ARGS));
+    }
+
+    @Test
+    public void testNaRmAndFiniteWithIntegers() {
+        assertEval(template("range(c(2L, 3L, NA, NA, 1L)%0)", OPTIONAL_ARGS));
+    }
+
+    @Test
+    public void testNaRmAndFiniteWithLogical() {
+        assertEval(template("range(c(T, F, NA, NA, T)%0)", OPTIONAL_ARGS));
     }
 }

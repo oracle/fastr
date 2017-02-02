@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -47,7 +48,12 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * TODO: handle "finite" parameter correctly.
+ * This node is used at several places, but only 'range' actually uses the 'finite' parameter,
+ * others should typically use {@code false} as its value. The 'finite' parameter is not handled
+ * consistently in GnuR: the documentation reads ‘finite = TRUE’ _includes_ ‘na.rm = TRUE’, but this
+ * only applies to some types (e.g. double or integer), for other types 'finite' seems to be ignored
+ * (e.g. logical). The only situation where semantics of finite is different to na.rm is double
+ * values: na.rm removes NA and NaN, but not -/+Inf.
  */
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNode {
@@ -110,7 +116,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doInt(int operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected int doInt(int operand, boolean naRm, boolean finite) {
         na.enable(operand);
         if (naRmProfile.profile(naRm)) {
             if (na.check(operand)) {
@@ -125,16 +131,21 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDouble(double operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected double doDouble(double operand, boolean naRm, boolean finite,
+                    @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
         na.enable(operand);
-        if (naRmProfile.profile(naRm)) {
-            if (na.check(operand)) {
+        if (naRmProfile.profile(naRm || finite)) {
+            boolean profiledFinite = finiteProfile.profile(finite);
+            if (na.checkNAorNaN(operand) || (profiledFinite && isInfiniteProfile.profile(!RRuntime.isFinite(operand)))) {
+                // the only value we have should be removed...
                 emptyWarning();
                 return semantics.getIntStart();
             } else {
                 return operand;
             }
         } else {
+            // since !naRm and !finite, NaN or +/-Inf can be valid results
             return na.check(operand) ? RRuntime.DOUBLE_NA : operand;
         }
     }
@@ -204,9 +215,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doIntVector(RIntVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected int doIntVector(RIntVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
-        boolean profiledNaRm = naRmProfile.profile(naRm);
+        boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
@@ -235,24 +246,33 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDoubleVector(RDoubleVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected double doDoubleVector(RDoubleVector operand, boolean naRm, boolean finite,
+                    @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
         RBaseNode.reportWork(this, operand.getLength());
-        boolean profiledNaRm = naRmProfile.profile(naRm);
+        boolean profiledNaRm = naRmProfile.profile(naRm || finite);
+        boolean profiledFinite = finiteProfile.profile(finite);
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int opCount = 0;
         double[] data = operand.getDataWithoutCopying();
         for (int i = 0; i < operand.getLength(); i++) {
             double d = data[i];
-            if (na.check(d)) {
+            if (na.checkNAorNaN(d)) {
                 if (profiledNaRm) {
-                    continue;
-                } else {
+                    continue;   // ignore NA/NaN
+                } else if (na.check(d)) {
+                    // NA produces NA directly, but NaN should be handled by arithmetics.op to
+                    // produce NaN. We cannot directly return NaN because if we encounter NA later
+                    // on, we should return NA not NaN
                     return RRuntime.DOUBLE_NA;
                 }
-            } else {
-                result = arithmetic.op(result, d);
+            } else if (profiledFinite && isInfiniteProfile.profile(!RRuntime.isFinite(d))) {
+                // ignore -/+Inf if 'infinite == TRUE'
+                continue;
             }
+
+            result = arithmetic.op(result, d);
             opCount++;
         }
         if (opCount == 0) {
@@ -327,10 +347,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         if (semantics.supportComplex) {
-            boolean profiledNaRm = naRmProfile.profile(naRm);
+            boolean profiledNaRm = naRmProfile.profile(naRm || finite);
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
             int opCount = 0;
             na.enable(operand);
