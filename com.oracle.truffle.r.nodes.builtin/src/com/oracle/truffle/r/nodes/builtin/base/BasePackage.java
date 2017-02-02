@@ -683,6 +683,7 @@ public class BasePackage extends RBuiltinPackage {
         add(WhichFunctions.WhichMax.class, WhichFunctions.WhichMax::create);
         add(WhichFunctions.WhichMin.class, WhichFunctions.WhichMin::create);
         add(Xtfrm.class, XtfrmNodeGen::create);
+        add(IsSingle.class, IsSingleNodeGen::create);
 
         // infix functions
         add(Subscript.class, SubscriptNodeGen::create, Subscript::special);
