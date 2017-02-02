@@ -44,7 +44,7 @@ is rewritten as
 ```r
 tmp <- `$`(k, 'bar')  
 tmp[1] <- 42  
-k <- `$<-`(tmp, 'bar', 42)
+k <- `$<-`(k, 'bar', tmp)
 ```
 
 If "k" is _non-shared_ and there is some other vector in k$foo which is also non-shared, we want it to stay non-shared after this operation to avoid possible future copying. Imagine that "k" does not yet have a field named "bar", this means that "k" has to be reallocated and the replacement will return different instance of RList (but the original RList will be lost after the replacement). If the reference counting is not done in smart way, "k$foo" will be marked as shared (referenced by list that is now in "k" and by the list we thrown away because original "k" needed to be reallocated).

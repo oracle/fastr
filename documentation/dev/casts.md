@@ -31,18 +31,18 @@ CP API is an extension of the `CastBuilder` class, whose instance is passed as t
     }
 ```
 
-The CP API part for the pipeline construction is designed in the fluent-builder style. A new pipeline for an argument is initialized by calling `arg` method on the `CastBuilder` instance. The `arg` method accepts either the index of the argument or the name of the argument, while the latter case is preffered. Following the `arg` method is a series of steps, each inserting a special Truffle node (`CastNode`) into the cast pipeline of the argument. The flow of a pipeline can be divided into three phases: __pre-initial_, initial_, _coerced_ and _head_, while the last three are optional and each phase may consist of zero or more steps.
+The CP API part for the pipeline construction is designed in the fluent-builder style. A new pipeline for an argument is initialized by calling the `arg` method on the `CastBuilder` instance. The `arg` method accepts either the index of the argument or the name of the argument, while the latter case is preffered. Following the `arg` method is a series of steps, each inserting a special Truffle node (`CastNode`) into the cast pipeline of the argument. The flow of a pipeline can be divided into four phases: _pre-initial_, _initial_, _coerced_ and _head_, while the last three are optional and each phase may consist of zero or more steps.
 
-In the pre-initial phase one can configure the overall behavior of the pipeline. Currently, only the default handling of `RNull` and `RMissing` values can be overridden (the default behavior is explained below). The pipeline can be configured using `PreinitialPhaseBuilder#conf(Consumer)` or any other method of the `PreinitialPhaseBuilder` class, e.g. `PreinitialPhaseBuilder#allowNull()`.
+In the **pre-initial** phase one can configure the overall behavior of the pipeline. Currently, only the default handling of `RNull` and `RMissing` values can be overridden (the default behavior is explained below). The pipeline can be configured using `PreinitialPhaseBuilder.conf(Consumer)` or any other method of the `PreinitialPhaseBuilder` class, e.g. `PreinitialPhaseBuilder.allowNull()`.
 
-An argument enters the initial phase as a generic object, which may be subjected to various assertions and conversions. The argument may, but may not, exit the initial phase as an instance of a specific type. The pipeline declared in the following listing specifies the default error of the pipeline and inserts one assertion node checking whether the argument is a non-null string. The argument exits this pipeline as a string represented by the `RAbstractStringVector` class. If any of the two conditions fails, the default error is raised.
+An argument enters the **initial** phase as a generic object, which may be subjected to various assertions and conversions. The argument may, but may not, exit the initial phase as an instance of a specific type. The pipeline declared in the following listing specifies the default error of the pipeline and inserts one assertion node checking whether the argument is a non-null string. The argument exits this pipeline as a string represented by the `RAbstractStringVector` class. If any of the two conditions fails, the default error is raised.
 
 ```java
-  defaultError(RError.Message.MUST_BE_STRING, "msg1").
-  mustBe(notNull().and(stringValue()));</pre>
+  casts.arg("m").defaultError(RError.Message.MUST_BE_STRING, "msg1").
+  mustBe(notNull().and(stringValue()));
 ```
 
-The argument enters the coerced phase after having been processed by a node inserted by one of the `as_X_Vector` pipeline steps, where `X` is the type of the resulting vector. The input type of the argument corresponds to the used `as_X_Vector` step. The following example illustrates a pipeline, where the initial phase consists of one step (`asIntegerVector`) and the coerced phase has no step.
+The argument enters the **coerced** phase after having been processed by a node inserted by one of the `as_X_Vector` pipeline steps, where `X` is the type of the resulting vector. The input type of the argument corresponds to the used `as_X_Vector` step. The following example illustrates a pipeline, where the initial phase consists of one step (`asIntegerVector`) and the coerced phase has no step.
 
 ```java
 casts.arg("m").asIntegerVector();
@@ -55,24 +55,24 @@ The next listing shows a pipeline having two steps belonging to the initial phas
   mustBe(stringValue()).
   asStringVector().
   mustBe(singleElement()).
-  findFirst();</pre>
+  findFirst();
 ```
 
 The `singleElement()` condition requires that the string vector contain exactly one element. The `findFirst()` step retrieves the first element (the head) while exiting the coerced phase and entering the head phase.
 
-In the head phase, the argument value corresponds to the first element of the vector processed in the preceding coerced phase and may be handled basically by the same steps as in the initial phase, except the `as_X_Vector` steps. The head phase in the following example consists of two steps - `mustBe(notLogicalNA())` and `map(toBoolean())` - where the former asserts that the head of the logical vector argument must not be `NA` and the latter converts the logical value from the vector's head to the corresponding `boolean` value. The `findFirst` step in the coerced phase picks the head of the vector or returns the `RRuntime.LOGICAL_FALSE` in case the vector is empty.
+In the **head** phase, the argument value corresponds to the first element of the vector processed in the preceding coerced phase and may be handled basically by the same steps as in the initial phase, except the `as_X_Vector` steps. The head phase in the following example consists of two steps - `mustBe(notLogicalNA())` and `map(toBoolean())` - where the former asserts that the head of the logical vector argument must not be `NA` and the latter converts the logical value from the vector's head to the corresponding `boolean` value. The `findFirst` step in the coerced phase picks the head of the vector or returns the `RRuntime.LOGICAL_FALSE` in case the vector is empty.
 
 ```java
   casts.arg("na.encode").
   asLogicalVector().
   findFirst(RRuntime.LOGICAL_FALSE).
   mustBe(notLogicalNA()).
-  map(toBoolean());</pre>
+  map(toBoolean());
 ```
 
 ### Standalone usage
 
-One can use the same API to only create a cast node not necessarily associated with an argument and possibly outside of the Builtins world. Entry point of this API is static method `CastNodeBuilder#newCastBuilder()` and the final invocation should be `createCastNode()`. Example:
+One can use the same API to only create a cast node not necessarily associated with an argument and possibly outside of the Builtins world. Entry point of this API is the static method `CastNodeBuilder.newCastBuilder()` and the final invocation should be `createCastNode()`. Example:
 
 ```java
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
@@ -92,7 +92,7 @@ There are two steps that actually insert no node into the pipeline. The `default
 
 There are two modal steps - `mustBe` and `shouldBe` - that establish assertions on the argument value. If the assertion fails, the former raises an error, while the latter outputs a warning. If no message is specified, the default one is used. These steps may be used in all phases.
 
-The assertion conditions are passed as the first argument of those steps and must match the context argument type, which is `java.lang.Object` initially and may be made more specific further in the pipeline by certain steps, among which is also the `mustBe` one. The conditions are objects implementing `ArgumentFilter<T, R extends T>` interface. Under normal circumstances, the user is not supposed to implement custom conditions. Instead, there is a set of predefined conditions in the `CastBuilder.Predef` class, which should contain all conditions occuring in the original GnuR code, although some may be missing.
+The assertion conditions are passed as the first argument of those steps and must match the context argument type, which is `java.lang.Object` initially and may be made more specific further in the pipeline by certain steps, among which is also the `mustBe` one. The conditions are objects implementing the `ArgumentFilter<T, R extends T>` interface. Under normal circumstances, the user is not supposed to implement custom conditions. Instead, there is a set of predefined conditions in the `CastBuilder.Predef` class, which should contain all conditions occuring in the original GnuR code, although some may be missing.
 
 ```java
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.*
@@ -104,10 +104,10 @@ The `ArgumentFilter<T, R extends T>` contains the logical operators `and`, `or` 
 casts.arg("msg1").mustBe(notNull().and(stringValue().or(logicalValue())));
 ```
 
-The `mustBe` step changes the context argument type of the argument in the following steps accordingly to the used filter expression. For example, in the following pipeline the `mustBe` step asserts that the argument must be a scalar string value. This assertion narrows the context argument type in the following steps to `java.lang.String`. Therefore, the conditions requiring a string as the input value, such as `stringNA`, may be used in the subsequent `shouldBe` step.
+The `mustBe` step changes the context argument type of the argument in the following steps accordingly to the used filter expression. For example, in the following pipeline the `mustBe` step asserts that the argument must be a vector. This assertion narrows the context argument type in the following steps to `RAbstractVector`. Therefore, the conditions requiring a vector as the input value, such as `size`, may be used in the subsequent `shouldBe` step.
 
 ```java
-casts.arg("quote").mustBe(scalarStringValue).shouldBe(stringNA.not());
+casts.arg("x").mustBe(abstractVectorValue()).shouldBe(size(2));
 ```
 
 #### Mapping Steps
@@ -123,14 +123,14 @@ map(ArgumentMapper<T, S> mapFn)
 mapIf(ArgumentFilter<? super T, ? extends S> argFilter, ArgumentMapper<S, R> mapFn)
 ```
 
-A usage of the unconditional is illustrated in the following listing, where a logical value is mapped to a boolean value using the `toBoolean`() mapper. Since the unconditional mapping changes the context argument type according to the output type of the used mapper, it is possible to append the `shouldBe` modal step with the `trueValue()` filter requiring a boolean value on its input.
+A usage of the unconditional is illustrated in the following listing, where a logical value is mapped to a boolean value using the `toBoolean()` mapper. Since the unconditional mapping changes the context argument type according to the output type of the used mapper, it is possible to append the `shouldBe` modal step with the `trueValue()` filter requiring a boolean value on its input.
 
 ```java
   casts.arg("na.rm").
   asLogicalVector().
   findFirst().
-  map(toBoolean).
-  shouldBe(trueValue());</pre>
+  map(toBoolean()).
+  shouldBe(trueValue());
 ```
 
 In the following pipeline **only** null values are converted to the empty string in the initial phase. In contrast to the unconditional mapping, the conditional mapping does not change the context type.
@@ -149,19 +149,19 @@ The vector coercion steps coerce the input argument value to the specified vecto
 *   `asStringVector()`: coerces the input value to `RAbstractStringVector`
 *   `asVector()`: coerces the input value to `RAbstractVector`
 
-All these steps terminate the initial phase and starts the coerced phase.
+All these steps terminate the initial phase and start the coerced phase.
 
 #### findFirst
 
 The `findFirst` step retrieves the first element from the vector argument. The output type corresponds to the element type of the vector.
 
-This step is available in the coerced phase only. It comes in a couple of flavours, which differ in how they handle the missing the first element.
+This step is available in the coerced phase only. It comes in a couple of flavours, which differ in how they handle a missing first element.
 
 ```java
 findFirst()
 findFirst(RError.Message message, Object... messageArgs)
 <E>findFirst(E defaultValue)
-<E>findFirst(E defaultValue, RError.Message message, Object... messageArgs)</pre>
+<E>findFirst(E defaultValue, RError.Message message, Object... messageArgs)
 ```
 
 The first variant raises the default error of the pipeline as long as the vector is empty, the second variant throws the error specified in its arguments, the third one returns the default value instead of raising an error and the fourth one returns the default value and prints the warning specified in its arguments.
@@ -174,7 +174,7 @@ The `notNA` step reacts on NA argument values. This step is available in the ini
 notNA()
 notNA(RError.Message message, Object... messageArgs)
 notNA(T naReplacement)
-notNA(T naReplacement, RError.Message message, Object... messageArgs)</pre>
+notNA(T naReplacement, RError.Message message, Object... messageArgs)
 ```
 
 Analogously to the findFirst step, the no-arg version throws the default error if the argument value is NA, while the second version throws the specified error. The next two versions return the `naReplacement` value, instead of raising an exception, while the last version prints the specified warning.
@@ -183,14 +183,14 @@ The notNA step does not change the context argument type.
 
 ### Handling of RNull and RMissing values
 
-By default, `RNull` and `RMissing` argument values are sent to the pipeline. While most of the pipeline cast nodes ignore those values and let them pass through, there are some nodes that may perform some transformation of those values. For example, the `FindFirstNode` node replaces both `RNull` and `RMissing` by the replacement values specified in the corresponding `findFirstStep(repl)` pipeline step. Also the `CastToVectorNode` coercion node replaces those values by an empty list provided that the `isPreserveNonVector` flag is set.
+By default, `RNull` and `RMissing` argument values are sent to the pipeline. While most of the pipeline cast nodes ignore those values and let them pass through, there are some nodes that may perform some transformation of those values. For example, the `FindFirstNode` node replaces both `RNull` and `RMissing` by the replacement values specified in the corresponding `findFirst(repl)` pipeline step. Also the `CastToVectorNode` coercion node replaces those values by an empty list provided that the `isPreserveNonVector` flag is set.
 
 The following list summarizes the behavior of a couple of pipeline steps with regard to the special values:
 
 *   `as<TYPE>()` coercions: RNull/RMissing passing through
 *   `findFirst`: RNull/RMissing treated as an empty vector, i.e. if the default value is specified it is used as a replacement for the special value, otherwise an error is raised.
 *   `notNA`: RNull/RMissing passing through
-*   `mustBe`, `shouldBe`: the filter condition determines whether RNull/RMissing is let through. For example, step `mustBe(stringValue())` blocks NULL since it is obviously not a string value. On the other hand, `mustBe(stringValue())` lets the NULL through.
+*   `mustBe`, `shouldBe`: the filter condition determines whether RNull/RMissing is let through, e.g. `mustBe(stringValue())` blocks NULL since it is obviously not a string value. On the other hand, `shouldBe(stringValue())` lets the NULL through.
 *   `mapIf`: the condition behaves accordingly to the used filter (in the 1st parameter). For example, step `mapIf(stringValue(), constant(0), constant(1))` maps NULL to 1.
 
 The following cast pipeline examples aim to elucidate the behavior concerning the special values.
@@ -243,7 +243,7 @@ Analogous methods exist for `RMissing`.
 
 #### Optimizing the default behavior
 
-The above-mentioned overriding configurations may also be applied behind-the-scenes as optimization of the pipelines with certain structure. For instance, `allowNull()` may be activated if the pipeline contains no `RNull/RMissing` handling cast node, such as `FindFirstNode` or `CastToVectorNode`. The `mustNotBeNull` configuration may optimize pipelines containing cast nodes raising an error for `RNull/RMissing`, such as the nodes produced by steps `findFirstStep()`, `findFirstStep(error)` or `mustBe(singleElement())`. Or the `mapNull(x)` configuration may be applied provided that the pipeline's last step is `findFirst(x)`.
+The above-mentioned overriding configurations may also be applied behind-the-scenes as optimization of the pipelines with certain structure. For instance, `allowNull()` may be activated if the pipeline contains no `RNull/RMissing` handling cast node, such as `FindFirstNode` or `CastToVectorNode`. The `mustNotBeNull` configuration may optimize pipelines containing cast nodes raising an error for `RNull/RMissing`, such as the nodes produced by steps `findFirst()`, `findFirst(error)` or `mustBe(singleElement())`. Or the `mapNull(x)` configuration may be applied provided that the pipeline's last step is `findFirst(x)`.
 
 ### Cast Pipeline Optimizations
 
@@ -251,11 +251,11 @@ The declarative character of cast pipelines allows for a number of optimizations
 
 #### FindFirst optimization
 
-Provided that the pipeline contains the `findFirst(x)` step specifying the replacement `x`, `RNull/RMissing` values are routed directly before the `FindFirstNode`. If the pipeline contains the overloaded versions `findFirst()` or `findFirst(error)`, the pipeline is configured to throw the error associated with the `FindFirstNode` for `RNull/RMissing` argument values.
+Provided that the pipeline contains the `findFirst(x)` step specifying the replacement `x`, than the `RNull/RMissing` values are routed directly before the `FindFirstNode`. If the pipeline contains the overloaded versions `findFirst()` or `findFirst(error)`, the pipeline is configured to throw the error associated with the `FindFirstNode` for `RNull/RMissing` argument values.
 
 #### Scalar values optimization
 
-String, double and integer argument values are routed directly after the `FindFirstNode`. On the other hand, logical values bypass the whole pipeline provided that the pipeline ends by the pattern `asLogicalVector()...findFirst().mapToBoolean()`.
+String, double and integer argument values are routed directly after the `FindFirstNode`. On the other hand, logical values bypass the whole pipeline provided that the pipeline ends by the pattern `asLogicalVector()...findFirst().map(toBoolean())`.
 
 ### Sample Builtins Using Cast Pipelines
 
@@ -326,7 +326,7 @@ To filter out stack traces, the error output can be redirected as follows:
 mx rbdiag colSums --sweep 2> /dev/null
 ```
 
-The following command sweeps all builtins using a less strict method for comparing FastR and GNUR outputs (`–matchLevel=error`), according to which two outputs are considered matching if both contains `Error` or none of them contains `Error`.
+The following command sweeps all builtins using a less strict method for comparing FastR and GNUR outputs (`–matchLevel=error`), according to which two outputs are considered matching if both contain `Error` or none of them contains `Error`.
 
 ```bash
 mx rbdiag --sweep --mnonly --matchLevel=error --maxSweeps=30 --outMaxLev=0
