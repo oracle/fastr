@@ -74,7 +74,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -520,7 +520,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         state.add(State.ATTACHED);
 
         stateDLL.initialize(this);
-        stateRFFI = RFFIContextStateFactory.newContextState();
+        stateRFFI = RFFIFactory.getInstance().newContextState();
         // separate in case initialize calls getStateRFFI()!
         stateRFFI.initialize(this);
 

@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -72,7 +71,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
      */
     private static void initialize() {
         try {
-            Load_RFFIFactory.initialize(true);
+            RFFIFactory.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
         } catch (Throwable t) {

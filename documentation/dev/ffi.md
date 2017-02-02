@@ -1,7 +1,11 @@
 # The R FFI Implementation
 
 # Introduction
-The implementation of the [R FFI](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) is contained in the `fficall` directory of
+FastR interfaces to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property. The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows
+for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `JNI_RFFIFactory` which uses the Java JNI system to implement the transition to native code.
+
+# Native Implementation
+The native implementation of the [R FFI](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) is contained in the `fficall` directory of
 the `com.oracle/truffle.r.native` project`. It's actually a bit more than that as it also contains code copied from GNU R, for example that supports graphics or is sufficiently
 simple that it is neither necessary nor desirable to implement in Java. As this has evolved a better name for `fficall` would probably be `main`
 for compatibility with GNU R.
@@ -9,9 +13,8 @@ for compatibility with GNU R.
  There are four sub-directories in `fficall/src`:
  * `include`
  * `common`
- * `variable_defs`
  * `jni`
- * `truffle`
+ * `truffle_llvm`
 
 ## The `fficall/include` directory
 
@@ -40,15 +43,16 @@ angle bracket form.
 copied/included from GNU R. N.B. Some modified files have a `_fastr` suffix to avoid a clash with an existing file in GNU R that would match
 the Makefile rule for compiling directly from the GNU R file.
 
-## The `variable_defs` directory
-
-The GNU R FFI defines a large number of (extern) variables the definitions of which, in GNU R, are scattered across the source files.
-In FastR these are collected into one file, `variable_defs.h`. However, the actual initialization of the variables is, in general, implementation
-dependent. In order to support a JNI and a non-JNI implementation, the file is stored in a separate directory.
-
 ## The `jni` directory
 `jni` contains the implementation that is based on and has explicit dependencies on Java JNI. It is described in more detail [here](jni_ffi.md)
 
 ## The `truffle_llvm` directory
 
-`truffle` contains the native side of the variant that is based on the Truffle LLVM implementation. It is described in more detail [here](truffle_llvm_ffi.md)
+`truffle_llvm` contains the native side of the variant that is based on the Truffle LLVM implementation. It is described in more detail [here](truffle_llvm_ffi.md)
+
+# RFFI Initialization
+Not all of the individual interfaces need to be instantiated on startup. The `getXXXRFFI()` method of `RFFI` is responsible for instantiating the `XXX` interface (e.e.g `Call`).
+However, the factory can choose to instantiate the interfqces eagerly if desired. The choice of factory class is made by `RFFIFactory.initialize()` which is called when the
+initial `RContext` is being created by `PolyglotEngine`. Note that at this stage, very little code can be executed as the initial context has not yet been fully created and registered with `PolyglotEngine`.
+
+In general, state maintained by the `RFFI` implementation classes is `RContext` specific and to facilitate this `RFFIFactory` defines a `newContextState` method that is called by `RContext`. Again, at the point this is called the context is not active and so any execution that requires an active context must be delayed until the `initialize` method is called on the `ContextState` instance. Typically special initialization may be required on the initialization of the initial context, such as loading native libraries, and also on the initialization of a `SHARED_PARENT_RW` context kind.

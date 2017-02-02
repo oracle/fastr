@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,41 +23,50 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**
- * Factory class for the different possible implementations of the {@link RFFI} interface. The
- * choice of factory is made by the R engine and set here by the call to {@link #setRFFIFactory}.
+ * Factory class for the different possible implementations of the {@link RFFI} interface.
  *
  * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link #newContextState()} method. However, since we don't know exactly which
- * factory will be used, {@link RContext} references the {@link RFFIContextStateFactory} class.
+ * must support the {@link #newContextState()} method.
  */
 public abstract class RFFIFactory {
+    private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
+    private static final String DEFAULT_FACTORY_CLASS = "com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory";
+
+    /**
+     * Singleton instance of the factory.
+     */
+    private static RFFIFactory instance;
 
     @CompilationFinal protected static RFFI theRFFI;
 
-    public static void setRFFIFactory(RFFIFactory factory) {
-        RFFIContextStateFactory.registerFactory(factory);
-        theRFFI = factory.createRFFI();
+    public static RFFIFactory initialize() {
+        if (instance == null) {
+            String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+            try {
+                if (prop == null) {
+                    prop = DEFAULT_FACTORY_CLASS;
+                }
+                instance = (RFFIFactory) Class.forName(prop).newInstance();
+                theRFFI = instance.createRFFI();
+            } catch (Exception ex) {
+                throw Utils.rSuicide("Failed to instantiate class: " + prop + ": " + ex);
+            }
+        }
+        return instance;
+    }
+
+    public static RFFIFactory getInstance() {
+        assert instance != null;
+        return instance;
     }
 
     public static RFFI getRFFI() {
         assert theRFFI != null : "RFFI factory is not initialized!";
         return theRFFI;
-    }
-
-    /**
-     * Initialize the factory instance. This method will be called immediately after the factory
-     * instance is created allowing any additional initialization that could not be done in the
-     * constructor.
-     *
-     * @param runtime {@code true} if the initialization is being done at runtime. An AOT system may
-     *            call this twice, once with {@code false} whern an image is being bilt and once
-     *            when starting up.
-     */
-    protected void initialize(boolean runtime) {
     }
 
     /**
