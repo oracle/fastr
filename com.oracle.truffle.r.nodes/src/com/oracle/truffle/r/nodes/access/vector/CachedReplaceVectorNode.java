@@ -396,7 +396,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             return RType.maxPrecedence(value, vector);
         } else if (vector.isNull() || value.isNull()) {
             if (!value.isNull()) {
-                return value;
+                return (mode == ElementAccessMode.FIELD_SUBSCRIPT) ? RType.List : value;
             }
             if (mode.isSubscript() && numberOfDimensions > 1) {
                 return null;
