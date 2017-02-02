@@ -782,7 +782,8 @@ public final class RError extends RuntimeException {
         MACRO_CAN_BE_APPLIED_TO("%s can only be applied to a '%s', not a '%s'"),
         LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus"),
         LENGTH_MISAPPLIED("LENGTH or similar applied to %s object"),
-        TOO_MANY_ARGS("too many arguments");
+        TOO_MANY_ARGS("too many arguments"),
+        UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R");
 
         public final String message;
         final boolean hasArgs;
