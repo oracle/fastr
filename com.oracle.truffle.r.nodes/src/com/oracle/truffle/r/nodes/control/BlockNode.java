@@ -76,12 +76,12 @@ public final class BlockNode extends OperatorNode {
     @Override
     @ExplodeLoop
     public Object visibleExecute(VirtualFrame frame) {
-        if (visibility == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            visibility = insert(SetVisibilityNode.create());
-        }
-        visibility.execute(frame, true);
         if (sequence.length == 0) {
+            if (visibility == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                visibility = insert(SetVisibilityNode.create());
+            }
+            visibility.execute(frame, true);
             return RNull.instance;
         }
         for (int i = 0; i < sequence.length - 1; i++) {
