@@ -83,11 +83,6 @@ static SEXP R_SrcrefSymbol_static;
 static SEXP R_SrcfileSymbol_static;
 static SEXP R_RestartToken_static;
 
-// logical constants
-static SEXP R_TrueValue_static;
-static SEXP R_FalseValue_static;
-static SEXP R_LogicalNAValue_static;
-
 static const char *R_Home_static;
 static const char *R_TempDir_static;
 
@@ -437,12 +432,6 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_BlankScalarString_static = ref;
 				} else if (strcmp(nameChars, "R_NamespaceEnvSymbol") == 0) {
 					R_NamespaceEnvSymbol_static = ref;
-				} else if (strcmp(nameChars, "R_TrueValue") == 0) {
-				    R_TrueValue_static = ref;
-				} else if (strcmp(nameChars, "R_FalseValue") == 0) {
-				    R_FalseValue_static = ref;
-				} else if (strcmp(nameChars, "R_LogicalNAValue") == 0) {
-				    R_LogicalNAValue_static = ref;
 				} else {
 					char msg[128];
 					strcpy(msg, "non-null R variable not assigned: ");
