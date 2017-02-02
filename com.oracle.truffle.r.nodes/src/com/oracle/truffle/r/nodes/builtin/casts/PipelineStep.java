@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 /**
  * Represents a single step in the cast pipeline. {@code PipelineStep}, {@code Mapper} and
  * {@code Filter} are only symbolic representation of the pipeline, these objects can be transformed
- * to something useful by using corresponding visitors, e.g. {@linek PipelineStepVisitor}. Steps can
+ * to something useful by using corresponding visitors, e.g. {@link PipelineStepVisitor}. Steps can
  * be chained as a linked list by setting the next step in the chain using
  * {@link #setNext(PipelineStep)}. The order of steps should be the same as the order of cast
  * pipeline API invocations.
@@ -197,8 +197,9 @@ public abstract class PipelineStep<T, R> {
     }
 
     /**
-     * Converts the value to a vector of given type (or a vector if Any, or Attributable). Null and
-     * missing values are forwarded.
+     * Converts the value to a vector of given type (or a vector if Any, or Attributable). Null,
+     * missing and primitive of given type are forwarded. Primitive values of other types are
+     * converted to primitive value of the target type.
      */
     public static final class CoercionStep<T, V> extends PipelineStep<T, V> {
         public final RType type;

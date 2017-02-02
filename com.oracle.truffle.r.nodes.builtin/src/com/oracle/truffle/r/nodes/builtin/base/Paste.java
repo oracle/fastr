@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -43,24 +51,27 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode {
 
     private static final String[] ONE_EMPTY_STRING = new String[]{""};
 
-    public abstract Object executeList(RList value, String sep, Object collapse);
+    public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
-    /**
-     * {@code paste} is specified to convert its arguments using {@code as.character}.
-     */
-    @Child private AsCharacter asCharacterNode;
-    @Child private CastStringNode castCharacterNode;
+    @Child private ClassHierarchyNode classHierarchyNode;
+    @Child private CastNode asCharacterNode;
+    @Child private CastNode castAsCharacterResultNode;
+    @Child private RExplicitBaseEnvCallDispatcher asCharacterDispatcher;
+    @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
 
     private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
+    private final ConditionProfile isNotStringProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile hasNoClassProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -69,31 +80,33 @@ public abstract class Paste extends RBuiltinNode {
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }
 
-    /**
-     * FIXME The exact semantics needs checking regarding the use of {@code as.character}. Currently
-     * there are problem using it here, so we retain the previous implementation that just uses
-     * {@link CastStringNode}.
-     */
-    private RStringVector castCharacterVector(Object o) {
-        if (castCharacterNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeGen.create(false, false, false));
+    private RAbstractStringVector castCharacterVector(VirtualFrame frame, Object o) {
+        // Note: GnuR does not actually invoke as.character for character values, even if they have
+        // class and uses their value directly
+        Object result = o;
+        if (isNotStringProfile.profile(!(o instanceof String || o instanceof RAbstractStringVector))) {
+            result = castNonStringToCharacterVector(frame, result);
         }
-        Object ret = castCharacterNode.executeString(o);
-        if (ret instanceof String) {
-            return RDataFactory.createStringVector((String) ret);
-        } else if (ret == RNull.instance) {
-            return RDataFactory.createEmptyStringVector();
-        } else {
-            return (RStringVector) ((RStringVector) ret).copyDropAttributes();
+        // box String to RAbstractStringVector
+        return (RAbstractStringVector) boxPrimitiveNode.execute(result);
+    }
+
+    private Object castNonStringToCharacterVector(VirtualFrame frame, Object result) {
+        RStringVector classVec = getClassHierarchyNode().execute(result);
+        if (hasNoClassProfile.profile(classVec == null || classVec.getLength() == 0)) {
+            // coerce non-string result to string, i.e. do what 'as.character' would do
+            return getAsCharacterNode().execute(result);
         }
+        // invoke the actual 'as.character' function (with its dispatch)
+        ensureAsCharacterFuncNodes();
+        return castAsCharacterResultNode.execute(asCharacterDispatcher.call(frame, result));
     }
 
     @Specialization
-    protected RStringVector pasteList(RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
+    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
-            String[] result = pasteListElements(values, sep, length);
+            String[] result = pasteListElements(frame, values, sep, length);
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         } else {
             return RDataFactory.createEmptyStringVector();
@@ -101,10 +114,10 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    protected String pasteList(RAbstractListVector values, String sep, String collapse) {
+    protected String pasteList(VirtualFrame frame, RAbstractListVector values, String sep, String collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
-            String[] result = pasteListElements(values, sep, length);
+            String[] result = pasteListElements(frame, values, sep, length);
             return collapseString(result, collapse);
         } else {
             return "";
@@ -122,12 +135,12 @@ public abstract class Paste extends RBuiltinNode {
         return false;
     }
 
-    private String[] pasteListElements(RAbstractListVector values, String sep, int length) {
+    private String[] pasteListElements(VirtualFrame frame, RAbstractListVector values, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            String[] array = castCharacterVector(element).getDataWithoutCopying();
+            String[] array = castCharacterVector(frame, element).materialize().getDataWithoutCopying();
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }
@@ -202,5 +215,32 @@ public abstract class Paste extends RBuiltinNode {
         }
         assert pos == stringLength;
         return new String(chars);
+    }
+
+    private void ensureAsCharacterFuncNodes() {
+        if (asCharacterDispatcher == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            asCharacterDispatcher = insert(RExplicitBaseEnvCallDispatcher.create("as.character"));
+        }
+        if (castAsCharacterResultNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castAsCharacterResultNode = insert(newCastBuilder().mustBe(stringValue(), SHOW_CALLER, NON_STRING_ARG_TO_INTERNAL_PASTE).buildCastNode());
+        }
+    }
+
+    private ClassHierarchyNode getClassHierarchyNode() {
+        if (classHierarchyNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classHierarchyNode = insert(ClassHierarchyNode.create());
+        }
+        return classHierarchyNode;
+    }
+
+    private CastNode getAsCharacterNode() {
+        if (asCharacterNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            asCharacterNode = insert(newCastBuilder().returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
+        }
+        return asCharacterNode;
     }
 }

@@ -85,10 +85,10 @@ public abstract class Quantifier extends RBuiltinNode {
 
     private void createArgCast(int index) {
         // @formatter:off
-        argCastNodes[index] = insert(newCastBuilder().allowNull().
+        argCastNodes[index] = insert(new ProfileCastNode(newCastBuilder().allowNull().
             shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))),
                     RError.Message.COERCING_ARGUMENT, typeName(), "logical").
-            asLogicalVector().buildCastNode());
+            asLogicalVector().buildCastNode()));
         // @formatter:on
     }
 

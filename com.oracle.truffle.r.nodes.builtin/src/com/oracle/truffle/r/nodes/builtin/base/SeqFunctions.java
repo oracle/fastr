@@ -12,7 +12,9 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -27,7 +29,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -42,9 +43,8 @@ import com.oracle.truffle.r.nodes.ffi.AsRealNode;
 import com.oracle.truffle.r.nodes.ffi.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.FindFirstNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -66,7 +66,6 @@ import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
@@ -337,10 +336,17 @@ public final class SeqFunctions {
             return RDataFactory.createIntSequence(1, 1, length.executeInteger(frame, value));
         }
 
+        /**
+         * Invokes the 'length' function, which may dispatch to some other function than the default
+         * length depending on the class of the argument.
+         */
         @Specialization(guards = "hasClass(value)")
         protected RIntSequence seq(VirtualFrame frame, Object value,
-                        @Cached("create()") LengthDispatcher dispatcher) {
-            return RDataFactory.createIntSequence(1, 1, dispatcher.execute(frame, value));
+                        @Cached("createLengthResultCast()") CastNode resultCast,
+                        @Cached("createLengthDispatcher()") RExplicitBaseEnvCallDispatcher dispatcher,
+                        @Cached("create()") BranchProfile errorProfile) {
+            int result = (Integer) resultCast.execute(dispatcher.call(frame, value));
+            return RDataFactory.createIntSequence(1, 1, result);
         }
 
         boolean hasClass(Object obj) {
@@ -348,35 +354,18 @@ public final class SeqFunctions {
             return classVec != null && classVec.getLength() != 0;
         }
 
-        /**
-         * Invokes the 'length' function, which may dispatch to some other function than default
-         * length depending on the class of the argument.
-         */
-        static final class LengthDispatcher extends Node {
-            private final BranchProfile errorProfile = BranchProfile.create();
-            @Child private LocalReadVariableNode readLength = LocalReadVariableNode.create("length", true);
-            @Child RExplicitCallNode callNode = RExplicitCallNode.create();
-            @Child private CastIntegerNode castInteger = CastIntegerNode.createNonPreserving();
-            @Child private FindFirstNode findFirst = FindFirstNode.create(Integer.class, NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+        RExplicitBaseEnvCallDispatcher createLengthDispatcher() {
+            return RExplicitBaseEnvCallDispatcher.create("length");
+        }
 
-            public static LengthDispatcher create() {
-                return new LengthDispatcher();
-            }
-
-            public int execute(VirtualFrame frame, Object target) {
-                Object lengthFunction = readLength.execute(frame, REnvironment.baseEnv().getFrame());
-                assert lengthFunction instanceof RFunction : "unexpected that 'length' in base environment is not a function";
-                int result = castResult(callNode.call(frame, (RFunction) lengthFunction, target));
-                if (result < 0 || RRuntime.isNA(result)) {
-                    errorProfile.enter();
-                    throw RError.error(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
-                }
-                return result;
-            }
-
-            private int castResult(Object result) {
-                return (Integer) findFirst.execute(castInteger.execute(result));
-            }
+        CastNode createLengthResultCast() {
+            // @formatter:off
+            return newCastBuilder().asIntegerVector(false, false, false).
+                    defaultError(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED).
+                    findFirst().
+                    mustBe(gte(0).and(notIntNA())).
+                    buildCastNode();
+            // @formatter:on
         }
     }
 
