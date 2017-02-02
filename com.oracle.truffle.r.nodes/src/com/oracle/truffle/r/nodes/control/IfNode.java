@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ public final class IfNode extends OperatorNode {
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
     @Child private RNode elsePart;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
@@ -53,33 +53,54 @@ public final class IfNode extends OperatorNode {
         this.elsePart = elsePart == null ? null : elsePart.asRNode();
     }
 
-    /**
-     * Result visibility of an {@code if} expression is not only a property of the {@code if}
-     * builtin; it also depends on whether there is an else branch or not, and on the condition. For
-     * instance, the expression {@code if (FALSE) 23} will evaluate to {@code NULL}, but the result
-     * will not be printed in the shell. Conversely, {@code NULL} will be printed for
-     * {@code if (FALSE) 23 else NULL} because the else branch is given.
-     */
-
-    @Override
-    public Object execute(VirtualFrame frame) {
+    private boolean evaluateCondition(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
-        visibility.execute(frame, elsePart != null || cond == RRuntime.LOGICAL_TRUE);
-
         if (cond == RRuntime.LOGICAL_NA) {
-            // NA is the only remaining option
             CompilerDirectives.transferToInterpreter();
             throw RError.error(this, RError.Message.NA_UNEXP);
         }
+        assert cond == RRuntime.LOGICAL_FALSE || cond == RRuntime.LOGICAL_TRUE : "logical value none of TRUE|FALSE|NA";
+        return conditionProfile.profile(cond == RRuntime.LOGICAL_TRUE);
+    }
 
-        if (conditionProfile.profile(cond == RRuntime.LOGICAL_TRUE)) {
+    @Override
+    public void voidExecute(VirtualFrame frame) {
+        if (evaluateCondition(frame)) {
+            thenPart.voidExecute(frame);
+        } else {
+            if (elsePart != null) {
+                elsePart.voidExecute(frame);
+            }
+        }
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        if (evaluateCondition(frame)) {
             return thenPart.execute(frame);
         } else {
-            assert cond == RRuntime.LOGICAL_FALSE : "logical value none of TRUE|FALSE|NA";
-
             if (elsePart != null) {
                 return elsePart.execute(frame);
             } else {
+                return RNull.instance;
+            }
+        }
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        if (evaluateCondition(frame)) {
+            return thenPart.visibleExecute(frame);
+        } else {
+            if (elsePart != null) {
+                return elsePart.visibleExecute(frame);
+            } else {
+                // otherwise: return invisible NULL
+                if (visibility == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    visibility = insert(SetVisibilityNode.create());
+                }
+                visibility.execute(frame, false);
                 return RNull.instance;
             }
         }

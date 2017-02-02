@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,15 +71,22 @@ public final class ReplacementDispatchNode extends OperatorNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        return create(false).execute(frame);
-    }
-
-    @Override
     public void voidExecute(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         create(true).voidExecute(frame);
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        return create(false).execute(frame);
+
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        return create(false).visibleExecute(frame);
     }
 
     public RNode create(boolean isVoid) {

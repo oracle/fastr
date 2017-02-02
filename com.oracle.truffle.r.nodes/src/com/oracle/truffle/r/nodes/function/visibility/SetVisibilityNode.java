@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -88,19 +87,11 @@ public final class SetVisibilityNode extends Node {
      * Needs to be called at the end of each function, so that the visibility is transferred from
      * the current frame into the {@link RCaller}.
      */
-    public void executeEndOfFunction(VirtualFrame frame, RootNode root) {
+    public void executeEndOfFunction(VirtualFrame frame) {
         ensureFrameSlot(frame);
         try {
             if (frame.isBoolean(frameSlot)) {
                 RArguments.getCall(frame).setVisibility(frame.getBoolean(frameSlot) == Boolean.TRUE);
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                /*
-                 * Most likely the (only) builtin call in the function was configured to
-                 * RVisibility.CUSTOM and didn't actually set the visibility. Another possible
-                 * problem is a node that is created by RASTBuilder that does not set visibility.
-                 */
-                throw RInternalError.shouldNotReachHere("visibility not set at the end of " + root.getName());
             }
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);

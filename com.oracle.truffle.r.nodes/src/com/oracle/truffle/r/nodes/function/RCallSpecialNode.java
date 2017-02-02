@@ -29,11 +29,13 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -120,10 +122,12 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
 
     @Child private RNode functionNode;
     @Child private RNode special;
+    @Child private SetVisibilityNode visibility;
 
     private final RSyntaxNode[] arguments;
     private final ArgumentsSignature signature;
     private final RFunction expectedFunction;
+    private final RVisibility visible;
 
     /**
      * If this is true, then any bailout should simply be forwarded by re-throwing the exception.
@@ -143,6 +147,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         this.functionNode = functionNode;
         this.arguments = arguments;
         this.signature = signature;
+        this.visible = expectedFunction.getRBuiltin().getVisibility();
     }
 
     /**
@@ -308,6 +313,17 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, functionNode.execute(frame));
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        Object result = execute(frame, functionNode.execute(frame));
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, visible);
+        return result;
     }
 
     @Override

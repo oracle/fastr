@@ -251,7 +251,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             verifyEnclosingAssumptions(frame);
             setupDispatchSlots(frame);
             saveArguments.execute(frame);
-            Object result = body.execute(frame);
+            Object result = body.visibleExecute(frame);
             normalExit.enter();
             return result;
         } catch (ReturnException ex) {
@@ -290,12 +290,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
              * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
              * caught above.
              */
-            visibility.executeEndOfFunction(frame, this);
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(frame);
             }
             if (runOnExitHandlers) {
+                visibility.executeEndOfFunction(frame);
                 if (!noHandlerStackSlot.isValid() && frame.isObject(handlerStackSlot)) {
                     try {
                         RErrorHandling.restoreHandlerStack(frame.getObject(handlerStackSlot));
