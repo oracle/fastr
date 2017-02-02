@@ -79,9 +79,6 @@ public enum RFFIVariables {
     R_NaInt(RRuntime.INT_NA),
     R_BlankString(CharSXPWrapper.create("")),
     R_BlankScalarString(RDataFactory.createStringVectorFromScalar("")),
-    R_TrueValue(RRuntime.LOGICAL_TRUE),
-    R_FalseValue(RRuntime.LOGICAL_FALSE),
-    R_LogicalNAValue(RRuntime.LOGICAL_NA),
     R_BaseSymbol(RDataFactory.createSymbol("base")),
     R_NamespaceEnvSymbol(RDataFactory.createSymbol(".__NAMESPACE__.")),
     R_RestartToken(null);
