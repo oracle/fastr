@@ -89,14 +89,21 @@ public abstract class UpdateSlot extends RBuiltinNode {
         if (checkSlotAssignFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
+        }
+        if (checkAtAssignmentCall == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             checkAtAssignmentCall = insert(CallRFunctionNode.create(checkSlotAssignFunction.getTarget()));
-            assert objClassHierarchy == null && valClassHierarchy == null;
+        }
+        if (objClassHierarchy == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             objClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
+        }
+        if (valClassHierarchy == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             valClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
-
         }
         RStringVector objClass = objClassHierarchy.execute(object);
-        RStringVector valClass = objClassHierarchy.execute(value);
+        RStringVector valClass = valClassHierarchy.execute(value);
         RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
         if (cached.profile(currentFunction == checkSlotAssignFunction)) {
             // TODO: technically, someone could override checkAtAssignment function and access the

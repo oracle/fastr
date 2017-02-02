@@ -273,7 +273,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
         if (extractDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractDimNames = new ExtractDimNamesNode(numberOfDimensions);
+            extractDimNames = insert(new ExtractDimNamesNode(numberOfDimensions));
         }
         return extractDimNames.extract(dimensionIndex, vector, pos, profile);
     }

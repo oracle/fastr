@@ -155,15 +155,15 @@ abstract class LookupAdapter extends RBuiltinNode {
         protected Object extractNativeCallInfo(VirtualFrame frame, RList symbol) {
             if (nameExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+                nameExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
             if (addressExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+                addressExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
             if (packageExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+                packageExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
             String name = RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
             SymbolHandle address = ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
