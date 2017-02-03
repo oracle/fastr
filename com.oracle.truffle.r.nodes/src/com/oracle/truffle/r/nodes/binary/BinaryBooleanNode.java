@@ -134,13 +134,17 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (isSymbolOrLang(left)) {
-            recursiveLeft = RString.valueOf(RDeparse.deparse(left));
+            recursiveLeft = deparseSymbolOrLang(left);
         }
         Object recursiveRight = right;
         if (isSymbolOrLang(right)) {
-            recursiveRight = RString.valueOf(RDeparse.deparse(right));
+            recursiveRight = deparseSymbolOrLang(right);
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
+    }
+
+    private static RString deparseSymbolOrLang(Object val) {
+        return RString.valueOf(RDeparse.deparse(val, RDeparse.MAX_Cutoff, false, RDeparse.KEEPINTEGER, -1));
     }
 
     protected BinaryBooleanNode createRecursive() {
