@@ -21,38 +21,47 @@
  * questions.
  */
 #include <rffiutils.h>
-#include <variable_defs.h>
+#include <variables.h>
+
+// Arith.h
+double R_NaN;		/* IEEE NaN */
+double R_PosInf;	/* IEEE Inf */
+double R_NegInf;	/* IEEE -Inf */
+double R_NaReal;	/* NA_REAL: IEEE */
+int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
-SEXP FASTR_GlobalEnv() {
+SEXP FASTR_R_GlobalEnv() {
 	IMPORT_CALLHELPER();
 	return truffle_invoke(obj, "R_GlobalEnv");
 }
 
-SEXP FASTR_BaseEnv() {
+SEXP FASTR_R_BaseEnv() {
 	IMPORT_CALLHELPER();
 	return truffle_invoke(obj, "R_BaseEnv");
 }
 
-SEXP FASTR_BaseNamespace() {
+SEXP FASTR_R_BaseNamespace() {
 	IMPORT_CALLHELPER();
 	return truffle_invoke(obj, "R_BaseNamespace");
 }
 
-SEXP FASTR_NamespaceRegistry() {
+SEXP FASTR_R_NamespaceRegistry() {
 	IMPORT_CALLHELPER();
 	return truffle_invoke(obj, "R_NamespaceRegistry");
 }
 
-Rboolean FASTR_IsInteractive() {
+Rboolean FASTR_R_Interactive() {
 	IMPORT_CALLHELPER();
-	return (Rboolean) truffle_invoke_i(obj, "isInteractive");
+	return (Rboolean) truffle_invoke_i(obj, "R_Interactive");
 }
 
 char *FASTR_R_Home() {
 	IMPORT_CALLHELPER();
 	return (char *) truffle_invoke(obj, "R_Home");
 }
+
+// Callbacks because cannot store TruffleObjects in memory (currently)
 
 SEXP FASTR_R_NilValue() {
 	IMPORT_CALLHELPER();
@@ -65,52 +74,166 @@ SEXP FASTR_R_UnboundValue() {
 	return truffle_invoke(obj, "R_UnboundValue");
 }
 
-void Call_initvar_obj(int index, void* value) {
-	/*
-	switch (index) {
-    case R_Home_x: R_Home = (char *) value; break;
-    case R_TempDir_x: R_TempDir = value; break;
-    case R_NilValue_x: R_NilValue = value; break;
-    case R_UnboundValue_x: R_UnboundValue = value; break;
-    case R_MissingArg_x: R_MissingArg = value; break;
-    case R_Srcref_x: R_Srcref = value; break;
-    case R_Bracket2Symbol_x: R_Bracket2Symbol = value; break;
-    case R_BracketSymbol_x: R_BracketSymbol = value; break;
-    case R_BraceSymbol_x: R_BraceSymbol = value; break;
-    case R_ClassSymbol_x: R_ClassSymbol = value; break;
-    case R_DeviceSymbol_x: R_DeviceSymbol = value; break;
-    case R_DevicesSymbol_x: R_DevicesSymbol = value; break;
-    case R_DimNamesSymbol_x: R_DimNamesSymbol = value; break;
-    case R_DimSymbol_x: R_DimSymbol = value; break;
-    case R_DollarSymbol_x: R_DollarSymbol = value; break;
-    case R_DotsSymbol_x: R_DotsSymbol = value; break;
-    case R_DropSymbol_x: R_DropSymbol = value; break;
-    case R_LastvalueSymbol_x: R_LastvalueSymbol = value; break;
-    case R_LevelsSymbol_x: R_LevelsSymbol = value; break;
-    case R_ModeSymbol_x: R_ModeSymbol = value; break;
-    case R_NameSymbol_x: R_NameSymbol = value; break;
-    case R_NamesSymbol_x: R_NamesSymbol = value; break;
-    case R_NaRmSymbol_x: R_NaRmSymbol = value; break;
-    case R_PackageSymbol_x: R_PackageSymbol = value; break;
-    case R_QuoteSymbol_x: R_QuoteSymbol = value; break;
-    case R_RowNamesSymbol_x: R_RowNamesSymbol = value; break;
-    case R_SeedsSymbol_x: R_SeedsSymbol = value; break;
-    case R_SourceSymbol_x: R_SourceSymbol = value; break;
-    case R_TspSymbol_x: R_TspSymbol = value; break;
-    case R_dot_defined_x: R_dot_defined = value; break;
-    case R_dot_Method_x: R_dot_Method = value; break;
-    case R_dot_target_x: R_dot_target = value; break;
-    case R_SrcrefSymbol_x: R_SrcrefSymbol = value; break;
-    case R_SrcfileSymbol_x: R_SrcfileSymbol = value; break;
-    case R_NaString_x: R_NaString = value; break;
-    case R_NaInt_x: R_NaInt = (int) value; break;
-    case R_BlankString_x: R_BlankString = value; break;
-    case R_TrueValue_x: R_TrueValue = value; break;
-    case R_FalseValue_x: R_FalseValue = value; break;
-    case R_LogicalNAValue_x: R_LogicalNAValue = value; break;
-	}
-	*/
+SEXP FASTR_R_EmptyEnv() {
+	IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_EmptyEnv");
 }
+
+SEXP FASTR_R_MissingArg() {
+    IMPORT_CALLHELPER();
+    return Truffle_Invoke(Obj, "R_MissingArg");
+}
+
+SEXP FASTR_R_BaseSymbol() {
+    IMPORT_CALLHELPER();
+    Return Truffle_Invoke(Obj, "R_BaseSymbol");
+}
+
+SEXP FASTR_R_BraceSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_BraceSymbol");
+}
+
+SEXP FASTR_R_Bracket2Symbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_Bracket2Symbol");
+}
+
+SEXP FASTR_R_BracketSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_BracketSymbol");
+}
+
+SEXP FASTR_R_ClassSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_ClassSymbol");
+}
+
+SEXP FASTR_R_DeviceSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DeviceSymbol");
+}
+
+SEXP FASTR_R_DimNamesSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DimNamesSymbol");
+}
+
+SEXP FASTR_R_DimSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DimSymbol");
+}
+
+SEXP FASTR_R_DollarSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DollarSymbol");
+}
+
+SEXP FASTR_R_DotsSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DotsSymbol");
+}
+
+SEXP FASTR_R_DropSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_DropSymbol");
+}
+
+SEXP FASTR_R_LastvalueSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_LastvalueSymbol");
+}
+
+SEXP FASTR_R_LevelsSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_LevelsSymbol");
+}
+
+SEXP FASTR_R_ModeSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_ModeSymbol");
+}
+
+SEXP FASTR_R_NaRmSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_NaRmSymbol");
+}
+
+SEXP FASTR_R_NameSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_NameSymbol");
+}
+
+SEXP FASTR_R_NamesSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_NamesSymbol");
+}
+
+SEXP FASTR_R_NamespaceEnvSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_NamespaceEnvSymbol");
+}
+
+SEXP FASTR_R_PackageSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_PackageSymbol");
+}
+
+SEXP FASTR_R_QuoteSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_QuoteSymbol");
+}
+
+SEXP FASTR_R_RowNamesSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_RowNamesSymbol");
+}
+
+SEXP FASTR_R_SeedsSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_SeedsSymbol");
+}
+
+SEXP FASTR_R_SourceSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_SourceSymbol");
+}
+
+SEXP FASTR_R_TspSymbol() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_TspSymbol");
+}
+
+SEXP FASTR_R_dot_defined() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_dot_defined");
+}
+
+SEXP FASTR_R_dot_Method() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_dot_Method");
+}
+
+SEXP FASTR_R_dot_target() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_dot_target");
+}
+
+SEXP FASTR_R_NaString() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_NaString");
+}
+
+SEXP FASTR_R_BlankString() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_BlankString");
+}
+
+SEXP FASTR_R_BlankScalarString() {
+    IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "R_BlankScalarString");
+}
+
 
 void Call_initvar_double(int index, double value) {
 	switch (index) {

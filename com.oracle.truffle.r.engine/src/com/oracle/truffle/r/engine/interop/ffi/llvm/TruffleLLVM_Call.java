@@ -79,7 +79,6 @@ class TruffleLLVM_Call implements CallRFFI {
     }
 
     private enum INIT_VAR_FUN {
-        OBJ,
         DOUBLE,
         INT;
 
@@ -100,6 +99,8 @@ class TruffleLLVM_Call implements CallRFFI {
         Node executeNode = Message.createExecute(2).createNode();
         RFFIVariables[] variables = RFFIVariables.initialize();
         for (int i = 0; i < variables.length; i++) {
+            // The TruffleObject instances are not passed down as
+            // they cannot be stored in memory at the moment
             RFFIVariables var = variables[i];
             Object value = var.getValue();
             if (value == null) {
@@ -110,10 +111,6 @@ class TruffleLLVM_Call implements CallRFFI {
                     ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
                 } else if (value instanceof Integer) {
                     ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
-                } else {
-                    // TODO
-                    // ForeignAccess.sendExecute(executeNode, frame,
-                    // INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
                 }
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
