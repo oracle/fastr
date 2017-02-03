@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -235,6 +235,11 @@ public class TestFunctions extends TestBase {
         // with ... partial-match only if formal parameter are before ...
         assertEval("{ f<-function(..., val=1) { c(list(...), val) }; f(v=7, 2) }");
         assertEval("{ f<-function(er=1, ..., val=1) { c(list(...), val, er) }; f(v=7, 2, e=8) }");
+
+        // exact match of 'xa' is not "stolen" by partial match of 'x'
+        assertEval("{ foo <- function(xa, ...) list(xa=xa, ...); foo(x=4,xa=5); }");
+        // however, two partial matches produce error, even if one is "longer"
+        assertEval("{ foo <- function(xaaa, ...) list(xaa=xaaa, ...); foo(xa=4,xaa=5); }");
     }
 
     @Test

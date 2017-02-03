@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -483,7 +483,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * /** This method does the heavy lifting of re-arranging arguments by their names and position,
+     * This method does the heavy lifting of re-arranging arguments by their names and position,
      * also handling varargs.
      *
      * @param signature The signature (==names) of the supplied arguments
@@ -507,19 +507,27 @@ public class ArgumentMatcher {
         Arrays.fill(resultPermutation, MatchPermutation.UNMATCHED);
         Arrays.fill(resultSignature, ArgumentsSignature.UNMATCHED);
 
+        // MATCH in two phases: first by exact name (if we have actual: 'x', 'xa' and formal 'xa',
+        // then actual 'x' should not steal the position of 'xa'), then by partial
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
-        for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
-            String suppliedName = signature.getName(suppliedIndex);
-            if (suppliedName == null || suppliedName.isEmpty()) {
-                continue;
-            }
+        boolean[] formalsMatchedByExactName = new boolean[formalSignature.getLength()];
+        for (boolean byExactName : new boolean[]{true, false}) {
+            for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
+                String suppliedName = signature.getName(suppliedIndex);
+                boolean wasMatchedByExactName = !byExactName && matchedSuppliedArgs[suppliedIndex];
+                if (wasMatchedByExactName || suppliedName == null || suppliedName.isEmpty()) {
+                    continue;
+                }
 
-            // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formalSignature, suppliedName, resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin);
-            if (formalIndex != MatchPermutation.UNMATCHED) {
-                resultPermutation[formalIndex] = suppliedIndex;
-                resultSignature[formalIndex] = suppliedName;
-                matchedSuppliedArgs[suppliedIndex] = true;
+                // Search for argument name inside formal arguments
+                int formalIndex = findParameterPosition(formalSignature, suppliedName, resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin,
+                                formalsMatchedByExactName, byExactName);
+                if (formalIndex != MatchPermutation.UNMATCHED) {
+                    resultPermutation[formalIndex] = suppliedIndex;
+                    resultSignature[formalIndex] = suppliedName;
+                    formalsMatchedByExactName[formalIndex] = byExactName;
+                    matchedSuppliedArgs[suppliedIndex] = true;
+                }
             }
         }
 
@@ -536,7 +544,8 @@ public class ArgumentMatcher {
                         break outer;
                     }
                     if (!matchedSuppliedArgs[suppliedIndex]) {
-                        if (signature.getName(suppliedIndex) == null || signature.getName(suppliedIndex).isEmpty()) {
+                        String suppliedName = signature.getName(suppliedIndex);
+                        if (suppliedName == null || suppliedName.isEmpty()) {
                             // unnamed parameter, match by position
                             break;
                         }
@@ -622,14 +631,23 @@ public class ArgumentMatcher {
         return sum;
     }
 
+    private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, RBaseNode callingNode,
+                    int varArgIndex, IntFunction<String> errorString, RBuiltinDescriptor builtin, boolean[] formalsMatchedByExactName, boolean exactNameMatch) {
+        if (exactNameMatch) {
+            return findParameterPositionByExactName(formalsSignature, suppliedName, resultPermutation, hasVarArgs, callingNode, builtin);
+        } else {
+            return findParameterPositionByPartialName(formalsSignature, formalsMatchedByExactName, suppliedName, resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString);
+        }
+    }
+
     /**
      * Searches for suppliedName inside formalNames and returns its (formal) index.
      *
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
-    private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, RBaseNode callingNode,
-                    int varArgIndex, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
+    private static <T> int findParameterPositionByExactName(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, boolean hasVarArgs,
+                    RBaseNode callingNode, RBuiltinDescriptor builtin) {
         assert suppliedName != null && !suppliedName.isEmpty();
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
@@ -638,9 +656,8 @@ public class ArgumentMatcher {
                     if (resultPermutation[i] != MatchPermutation.UNMATCHED) {
                         if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {
                             // for primitives, the first argument is matched, and the others are
-                            // folded
-                            // into varargs, for example:
-                            // x<-1:64; dim(x)<-c(4,4,2,2); x[1,drop=FALSE,1,drop=TRUE,-1]
+                            // folded into varargs, for example: x<-1:64; dim(x)<-c(4,4,2,2);
+                            // x[1,drop=FALSE,1,drop=TRUE,-1]
                             return MatchPermutation.UNMATCHED;
                         } else {
                             // Has already been matched: Error!
@@ -651,8 +668,25 @@ public class ArgumentMatcher {
                 }
             }
         }
+        return MatchPermutation.UNMATCHED;
+    }
+
+    /**
+     * Searches for partial match of suppliedName inside formalNames and returns its (formal) index.
+     *
+     * @return The position of the given suppliedName inside the formalNames. Throws errors if the
+     *         argument has been matched before
+     */
+    private static <T> int findParameterPositionByPartialName(ArgumentsSignature formalsSignature, boolean[] formalsMatchedByExactName, String suppliedName, int[] resultPermutation, int suppliedIndex,
+                    boolean hasVarArgs, RBaseNode callingNode, int varArgIndex, IntFunction<String> errorString) {
+        assert suppliedName != null && !suppliedName.isEmpty();
         int found = MatchPermutation.UNMATCHED;
         for (int i = 0; i < formalsSignature.getLength(); i++) {
+            if (formalsMatchedByExactName[i]) {
+                // was already matched by some exact match
+                continue;
+            }
+
             String formalName = formalsSignature.getName(i);
             if (formalName != null) {
                 if (formalName.startsWith(suppliedName) && ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
