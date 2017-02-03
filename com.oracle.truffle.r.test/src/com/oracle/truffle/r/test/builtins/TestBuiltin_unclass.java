@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -155,7 +155,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass27() {
-        assertEval("argv <- list(list(structure(list(label = 'FALSE', x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = c('left', 'centre'), hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = 'GRID.text.106', gp = structure(list(), class = 'gpar'), vp = NULL), .Names = c('label', 'x', 'y', 'just', 'hjust', 'vjust', 'rot', 'check.overlap', 'name', 'gp', 'vp'), class = c('text', 'grob', 'gDesc'))));unclass(argv[[1]]);");
+        assertEval("argv <- list(list(structure(list(label = 'FALSE', x = structure(0, unit = 'npc', valid.unit = 0L, class = 'r_unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'r_unit'), just = c('left', 'centre'), hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = 'GRID.text.106', gp = structure(list(), class = 'r_gpar'), vp = NULL), .Names = c('label', 'x', 'y', 'just', 'hjust', 'vjust', 'rot', 'check.overlap', 'name', 'gp', 'vp'), class = c('r_text', 'r_grob', 'r_gDesc'))));unclass(argv[[1]]);");
     }
 
     @Test

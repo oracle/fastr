@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist9() {
-        assertEval("argv <- list(label = '', x = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), just = 'centre', hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]]);");
+        assertEval("argv <- list(label = '', x = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'r_unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'r_unit'), just = 'centre', hjust = NULL, vjust = NULL, rot = 0, check.overlap = FALSE, name = NULL, gp = structure(list(), class = 'r_gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]]);");
     }
 
     @Test
@@ -237,7 +237,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist43() {
-        assertEval("argv <- list(raster = structure('#000000', .Dim = c(1L, 1L), class = 'raster'), x = structure(0, unit = 'npc', valid.unit = 0L, class = 'unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'unit'), width = NULL, height = NULL, just = 'centre', hjust = NULL, vjust = NULL, interpolate = TRUE, name = NULL, gp = structure(list(), class = 'gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]],argv[[12]]);");
+        assertEval("argv <- list(raster = structure('#000000', .Dim = c(1L, 1L), class = 'r_raster'), x = structure(0, unit = 'npc', valid.unit = 0L, class = 'r_unit'), y = structure(0.5, unit = 'npc', valid.unit = 0L, class = 'r_unit'), width = NULL, height = NULL, just = 'centre', hjust = NULL, vjust = NULL, interpolate = TRUE, name = NULL, gp = structure(list(), class = 'r_gpar'), vp = NULL);list(argv[[1]],argv[[2]],argv[[3]],argv[[4]],argv[[5]],argv[[6]],argv[[7]],argv[[8]],argv[[9]],argv[[10]],argv[[11]],argv[[12]]);");
     }
 
     @Test

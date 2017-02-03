@@ -621,6 +621,16 @@ public class CallAndExternalFunctions {
                 case "sockwrite":
                     return new UnimplementedExternal(name);
 
+                // parallel
+                case "mc_is_child":
+                    return MCIsChildNodeGen.create();
+                default:
+                    return FastROptions.UseInternalGraphics.getBooleanValue() ? lookupGraphicsBuiltin(name) : null;
+            }
+        }
+
+        private RExternalBuiltinNode lookupGraphicsBuiltin(String name) {
+            switch (name) {
                 // grDevices
                 case "cairoProps":
                     return CairoPropsNodeGen.create();
@@ -632,10 +642,6 @@ public class CallAndExternalFunctions {
                     return InitGridNodeGen.create();
                 case "L_validUnits":
                     return ValidUnitsNodeGen.create();
-
-                // parallel
-                case "mc_is_child":
-                    return MCIsChildNodeGen.create();
                 default:
                     return null;
             }
