@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,82 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+
+/**
+ * zip compression/uncompression.
+ */
 public interface ZipRFFI {
-    // zip compression/uncompression
 
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, byte[] source);
+    abstract class CompressNode extends Node {
+        /**
+         * compress {@code source} into {@code dest}.
+         *
+         * @return standard return code (0 ok)
+         */
+        public abstract int execute(byte[] dest, byte[] source);
 
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, byte[] source);
+        public static CompressNode create() {
+            return RFFIFactory.getRFFI().getZipRFFI().createCompressNode();
+        }
+    }
+
+    abstract class UncompressNode extends Node {
+        /**
+         * uncompress {@code source} into {@code dest}.
+         *
+         * @return standard return code (0 ok)
+         */
+        public abstract int execute(byte[] dest, byte[] source);
+    }
+
+    CompressNode createCompressNode();
+
+    UncompressNode createUncompressNode();
+
+    // RootNodes for calling when not in Truffle context
+
+    final class CompressRootNode extends RFFIRootNode<CompressNode> {
+        private static CompressRootNode compressRootNode;
+
+        private CompressRootNode() {
+            super(RFFIFactory.getRFFI().getZipRFFI().createCompressNode());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            return rffiNode.execute((byte[]) args[0], (byte[]) args[1]);
+        }
+
+        public static CompressRootNode create() {
+            if (compressRootNode == null) {
+                compressRootNode = new CompressRootNode();
+            }
+            return compressRootNode;
+        }
+    }
+
+    final class UncompressRootNode extends RFFIRootNode<UncompressNode> {
+        private static UncompressRootNode uncompressRootNode;
+
+        private UncompressRootNode() {
+            super(RFFIFactory.getRFFI().getZipRFFI().createUncompressNode());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            return rffiNode.execute((byte[]) args[0], (byte[]) args[1]);
+        }
+
+        public static UncompressRootNode create() {
+            if (uncompressRootNode == null) {
+                uncompressRootNode = new UncompressRootNode();
+            }
+            return uncompressRootNode;
+        }
+    }
 
 }

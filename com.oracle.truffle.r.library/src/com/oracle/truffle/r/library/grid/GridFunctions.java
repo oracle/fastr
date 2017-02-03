@@ -35,12 +35,12 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 public class GridFunctions {
 
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
-        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
+        @Child GridRFFI.InitGridNode initGridNode = RFFIFactory.getRFFI().getGridRFFI().createInitGridNode();
 
         @Specialization
         @TruffleBoundary
         protected Object initGrid(REnvironment gridEvalEnv) {
-            return gridRFFINode.initGrid(gridEvalEnv);
+            return initGridNode.execute(gridEvalEnv);
         }
 
         @Fallback
@@ -50,12 +50,12 @@ public class GridFunctions {
     }
 
     public static final class KillGrid extends RExternalBuiltinNode {
-        @Child GridRFFI.GridRFFINode gridRFFINode = RFFIFactory.getRFFI().getGridRFFI().createGridRFFINode();
+        @Child GridRFFI.KillGridNode killGridNode = RFFIFactory.getRFFI().getGridRFFI().createKillGridNode();
 
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
-            return gridRFFINode.killGrid();
+            return killGridNode.execute();
         }
     }
 

@@ -197,16 +197,16 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
         boolean match(String name);
     }
 
-    private static class TruffleLLVM_DLLRFFINode extends JNI_DLLRFFINode {
+    private static class TruffleLLVM_DLOpenNode extends JNI_DLOpenNode {
 
         /**
          * If a library is enabled for LLVM, the IR for all the modules is retrieved and analyzed.
          * Every exported symbol in the module added to the parseStatus map for the current
-         * {@link RContext}. This allows {@link #dlsym} to definitively locate any symbol, even if
+         * {@link RContext}. This allows {@code dlsym} to definitively locate any symbol, even if
          * the IR has not been parsed yet.
          */
         @Override
-        public Object dlopen(String path, boolean local, boolean now) {
+        public Object execute(String path, boolean local, boolean now) {
             try {
                 LLVM_IR[] irs = LLVM_IR.getLLVMIR(path);
                 String libName = getLibName(path);
@@ -216,7 +216,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
                     truffleDLL.libRModules = irs;
                 }
                 if (irs == null || isBlacklisted(libName)) {
-                    return super.dlopen(path, local, now);
+                    return super.execute(path, local, now);
                 } else {
                     ContextStateImpl contextState = getContextState();
                     for (int i = 0; i < irs.length; i++) {
@@ -229,9 +229,11 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
                 return null;
             }
         }
+    }
 
+    private static class TruffleLLVM_DLSymNode extends JNI_DLSymNode {
         @Override
-        public SymbolHandle dlsym(Object handle, String symbol) {
+        public SymbolHandle execute(Object handle, String symbol) {
             if (handle instanceof LLVM_Handle) {
                 // If the symbol exists it will be in the map
                 ParseStatus parseStatus = getContextState().parseStatusMap.get(symbol);
@@ -248,23 +250,36 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
                     return null;
                 }
             } else {
-                return super.dlsym(handle, symbol);
-            }
-        }
-
-        @Override
-        public int dlclose(Object handle) {
-            if (handle instanceof LLVM_Handle) {
-                return 0;
-            } else {
-                return super.dlclose(handle);
+                return super.execute(handle, symbol);
             }
         }
     }
 
+    private static class TruffleLLVM_DLCloseNode extends JNI_DLCloseNode {
+        @Override
+        public int execute(Object handle) {
+            if (handle instanceof LLVM_Handle) {
+                return 0;
+            } else {
+                return super.execute(handle);
+            }
+        }
+
+    }
+
     @Override
-    public DLLRFFINode createDLLRFFINode() {
-        return new TruffleLLVM_DLLRFFINode();
+    public DLOpenNode createDLOpenNode() {
+        return new TruffleLLVM_DLOpenNode();
+    }
+
+    @Override
+    public DLSymNode createDLSymNode() {
+        return new TruffleLLVM_DLSymNode();
+    }
+
+    @Override
+    public DLCloseNode createDLCloseNode() {
+        return new TruffleLLVM_DLCloseNode();
     }
 
     private static void addExportsToMap(ContextStateImpl contextState, String libName, LLVM_IR ir, ModuleNameMatch moduleNameMatch) {

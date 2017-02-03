@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClass
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -78,10 +77,7 @@ public class DynLoadFunctions {
                 DLLInfo dllInfo = loadPackageDLLNode.execute(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
-                // This is not a recoverable error
-                System.out.println("exception while loading " + lib + ":");
-                ex.printStackTrace();
-                throw RInternalError.shouldNotReachHere(ex);
+                throw RError.error(RError.SHOW_CALLER, ex);
             }
         }
     }
@@ -132,7 +128,7 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "PACKAGE", "type"}, behavior = READS_STATE)
     public abstract static class IsLoaded extends RBuiltinNode {
-        @Child DLL.FindSymbolNode findSymbolNode = DLL.FindSymbolNode.create();
+        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -168,7 +164,7 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withRegistrationInfo"}, behavior = READS_STATE)
     public abstract static class GetSymbolInfo extends RBuiltinNode {
-        @Child DLL.FindSymbolNode findSymbolNode = DLL.FindSymbolNode.create();
+        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -191,7 +187,7 @@ public class DynLoadFunctions {
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, boolean withReg, //
-                        @Cached("create()") DLL.DlsymNode dlsymNode) {
+                        @Cached("create()") DLL.RdlsymNode dlsymNode) {
             DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             if (dllInfo == null) {
                 throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);

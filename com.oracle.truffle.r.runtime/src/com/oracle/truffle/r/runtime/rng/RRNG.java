@@ -25,7 +25,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
@@ -294,7 +294,7 @@ public class RRNG {
      * Create a random integer.
      */
     public static Integer timeToSeed() {
-        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        int pid = (int) BaseRFFI.GetpidRootNode.create().getCallTarget().call();
         int millis = (int) (System.currentTimeMillis() & 0xFFFFFFFFL);
         return (millis << 16) ^ pid;
     }

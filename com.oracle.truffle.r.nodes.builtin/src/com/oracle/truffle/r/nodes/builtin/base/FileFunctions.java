@@ -56,6 +56,7 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
@@ -80,7 +81,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 // Much of this code was influences/transcribed from GnuR src/main/platform.c
 
@@ -1184,7 +1185,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode) {
+        protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode,
+                        @Cached("create()") BaseRFFI.MkdirNode mkdirNode) {
             boolean ok;
             if (RRuntime.isNA(pathIn)) {
                 ok = false;
@@ -1192,32 +1194,32 @@ public class FileFunctions {
                 ok = true;
                 String path = Utils.tildeExpand(pathIn);
                 if (recursive) {
-                    ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode);
+                    ok = mkparentdirs(mkdirNode, new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode);
                 }
                 if (ok) {
-                    ok = mkdir(path, showWarnings, octMode);
+                    ok = mkdir(mkdirNode, path, showWarnings, octMode);
                 }
             }
             return RRuntime.asLogical(ok);
         }
 
-        private boolean mkparentdirs(File file, boolean showWarnings, int mode) {
+        private boolean mkparentdirs(BaseRFFI.MkdirNode mkdirNode, File file, boolean showWarnings, int mode) {
             if (file.isDirectory()) {
                 return true;
             }
             if (file.exists()) {
                 return false;
             }
-            if (mkparentdirs(file.getParentFile(), showWarnings, mode)) {
-                return mkdir(file.getAbsolutePath(), showWarnings, mode);
+            if (mkparentdirs(mkdirNode, file.getParentFile(), showWarnings, mode)) {
+                return mkdir(mkdirNode, file.getAbsolutePath(), showWarnings, mode);
             } else {
                 return false;
             }
         }
 
-        private boolean mkdir(String path, boolean showWarnings, int mode) {
+        private boolean mkdir(BaseRFFI.MkdirNode mkdirNode, String path, boolean showWarnings, int mode) {
             try {
-                RFFIFactory.getRFFI().getBaseRFFI().mkdir(path, mode);
+                mkdirNode.execute(path, mode);
                 return true;
             } catch (IOException ex) {
                 if (showWarnings) {

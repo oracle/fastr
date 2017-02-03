@@ -37,7 +37,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.tukaani.xz.LZMA2InputStream;
 
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
  * Abstracts the implementation of the various forms of compression used in R. Since the C API for
@@ -148,12 +148,12 @@ public class RCompression {
     }
 
     private static boolean gzipCompress(byte[] udata, byte[] cdata) {
-        int rc = RFFIFactory.getRFFI().getZipRFFI().compress(cdata, udata);
+        int rc = (int) ZipRFFI.CompressRootNode.create().getCallTarget().call(cdata, udata);
         return rc == 0;
     }
 
     private static boolean gzipUncompress(byte[] udata, byte[] data) {
-        int rc = RFFIFactory.getRFFI().getZipRFFI().uncompress(udata, data);
+        int rc = (int) ZipRFFI.UncompressRootNode.create().getCallTarget().call(udata, data);
         return rc == 0;
     }
 

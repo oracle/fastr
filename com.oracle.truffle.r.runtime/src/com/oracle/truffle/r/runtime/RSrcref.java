@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -79,7 +80,7 @@ public class RSrcref {
         env.safePut(SrcrefFields.timestamp.name(), mtime);
         env.safePut(SrcrefFields.filename.name(), path.toString());
         env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
-        env.safePut(SrcrefFields.wd.name(), RFFIFactory.getRFFI().getBaseRFFI().getwd());
+        env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
         env.setClassAttr(SRCFILE_ATTR);
         return env;
     }

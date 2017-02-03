@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call;
-import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call.JNI_CallRFFINode;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 class TruffleLLVM_Call implements CallRFFI {
@@ -125,15 +124,19 @@ class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    public static class InvokeJNI extends Node {
-        @Child JNI_CallRFFINode jniCall = new JNI_CallRFFINode();
+    public static class InvokeJNICall extends Node {
+        @Child CallRFFI.InvokeCallNode jniCall = new JNI_Call.JNI_InvokeCallNode();
 
-        public Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            return jniCall.invokeCall(nativeCallInfo, args);
+        public Object execute(NativeCallInfo nativeCallInfo, Object[] args) {
+            return jniCall.execute(nativeCallInfo, args);
         }
+    }
 
-        public Object invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            jniCall.invokeVoidCall(nativeCallInfo, args);
+    public static class InvokeJNIVoidCall extends Node {
+        @Child CallRFFI.InvokeVoidCallNode jniCall = new JNI_Call.JNI_InvokeVoidCallNode();
+
+        public Object execute(NativeCallInfo nativeCallInfo, Object[] args) {
+            jniCall.execute(nativeCallInfo, args);
             return RNull.instance;
         }
     }
@@ -194,15 +197,15 @@ class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization(guards = {"isJNICall(nativeCallInfo)", "!voidCall"})
         protected Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall,
-                        @Cached("new()") InvokeJNI invokeJNI) {
-            return invokeJNI.invokeCall(nativeCallInfo, args);
+                        @Cached("new()") InvokeJNICall invokeJNI) {
+            return invokeJNI.execute(nativeCallInfo, args);
 
         }
 
         @Specialization(guards = {"isJNICall(nativeCallInfo)", "voidCall"})
         protected Object invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean voidCall,
-                        @Cached("new()") InvokeJNI invokeJNI) {
-            return invokeJNI.invokeVoidCall(nativeCallInfo, args);
+                        @Cached("new()") InvokeJNICall invokeJNI) {
+            return invokeJNI.execute(nativeCallInfo, args);
 
         }
 
@@ -217,17 +220,21 @@ class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleCallRFFINode extends CallRFFINode {
+    private static class TruffleLLVM_InvokeCallNode extends InvokeCallNode {
         @Child SplitTruffleCallRFFINode splitTruffleCallRFFINode = SplitTruffleCallRFFINodeGen.create();
 
         @Override
-        public synchronized Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
+        public synchronized Object execute(NativeCallInfo nativeCallInfo, Object[] args) {
             return splitTruffleCallRFFINode.execute(nativeCallInfo, args, false);
 
         }
+    }
+
+    private static class TruffleLLVM_InvokeVoidCallNode extends InvokeVoidCallNode {
+        @Child SplitTruffleCallRFFINode splitTruffleCallRFFINode = SplitTruffleCallRFFINodeGen.create();
 
         @Override
-        public synchronized void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
+        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             splitTruffleCallRFFINode.execute(nativeCallInfo, args, true);
         }
 
@@ -243,7 +250,12 @@ class TruffleLLVM_Call implements CallRFFI {
     }
 
     @Override
-    public CallRFFINode createCallRFFINode() {
-        return new TruffleCallRFFINode();
+    public InvokeCallNode createInvokeCallNode() {
+        return new TruffleLLVM_InvokeCallNode();
+    }
+
+    @Override
+    public InvokeVoidCallNode createInvokeVoidCallNode() {
+        return new TruffleLLVM_InvokeVoidCallNode();
     }
 }

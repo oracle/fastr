@@ -37,7 +37,7 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
@@ -88,7 +88,7 @@ public final class REnvVars implements RContext.ContextState {
             String userFile = envVars.get("R_ENVIRON_USER");
             if (userFile == null) {
                 String dotRenviron = ".Renviron";
-                userFile = fileSystem.getPath(RFFIFactory.getRFFI().getBaseRFFI().getwd(), dotRenviron).toString();
+                userFile = fileSystem.getPath((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call(), dotRenviron).toString();
                 if (!new File(userFile).exists()) {
                     userFile = fileSystem.getPath(System.getProperty("user.home"), dotRenviron).toString();
                 }

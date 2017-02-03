@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -284,7 +285,7 @@ public final class Utils {
      */
     public static Path getLogPath(String fileName) {
         String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
-        int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
+        int pid = (int) BaseRFFI.GetpidRootNode.create().getCallTarget().call();
         String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
         return FileSystems.getDefault().getPath(root, baseName);
     }

@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.CallRFFIRootNode;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 /**
@@ -64,7 +64,7 @@ public class RGraphics {
                 DLL.DLLInfo dllInfo = DLL.findLibrary("graphics");
                 DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
                 assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-                CallRFFIRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), true, new Object[0]);
+                CallRFFI.InvokeVoidCallRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
             }
         }
     }

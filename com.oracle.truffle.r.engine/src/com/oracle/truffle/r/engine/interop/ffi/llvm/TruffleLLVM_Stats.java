@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLLRFFINode;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
@@ -87,13 +87,13 @@ public class TruffleLLVM_Stats implements StatsRFFI {
     }
 
     public abstract static class LookupAdapter extends Node {
-        @Child DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+        @Child DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
 
         public SymbolHandle lookup(String name) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
             // cannot go through DLL because stats does not allow dynamic lookup
             // and these symbols are not registered (only fft)
-            SymbolHandle result = dllRFFINode.dlsym(dllInfo.handle, name);
+            SymbolHandle result = dllSymNode.execute(dllInfo.handle, name);
             if (result == DLL.SYMBOL_NOT_FOUND) {
                 @SuppressWarnings("unused")
                 TruffleLLVM_RFFIContextState cs = TruffleLLVM_RFFIContextState.getContextState();
@@ -187,23 +187,31 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    public static class Truffle_FFTNode extends FFTNode {
-        @Child ExecuteWork executeWork = ExecuteWork.create();
+    public static class Truffle_FactorNode extends FactorNode {
         @Child ExecuteFactor executeFactor = ExecuteFactor.create();
 
         @Override
-        public int executeWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-            return executeWork.execute(a, nseg, n, nspn, isn, work, iwork, RContext.getInstance());
-        }
-
-        @Override
-        public void executeFactor(int n, int[] pmaxf, int[] pmaxp) {
+        public void execute(int n, int[] pmaxf, int[] pmaxp) {
             executeFactor.execute(n, pmaxf, pmaxp, RContext.getInstance());
         }
     }
 
+    public static class Truffle_WorkNode extends WorkNode {
+        @Child ExecuteWork executeWork = ExecuteWork.create();
+
+        @Override
+        public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
+            return executeWork.execute(a, nseg, n, nspn, isn, work, iwork, RContext.getInstance());
+        }
+    }
+
     @Override
-    public FFTNode createFFTNode() {
-        return new Truffle_FFTNode();
+    public FactorNode createFactorNode() {
+        return new Truffle_FactorNode();
+    }
+
+    @Override
+    public WorkNode createWorkNode() {
+        return new Truffle_WorkNode();
     }
 }

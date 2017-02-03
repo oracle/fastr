@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,23 +27,11 @@
 #include <dlfcn.h>
 #include <jni.h>
 
-// It seems that an internal (JVM) dlsym call can occur between a call to these functions and dlerror
-// (probably resolving the JNI dlerror symbol, so we capture it here (N.B. depends on single
-// threaded limitation).
+static jclass unsatisfiedLinkError;
 
-static jobject last_dlerror = NULL;
-
-static void create_dlerror_string(JNIEnv *env) {
-	if (last_dlerror != NULL) {
-		(*env)->DeleteGlobalRef(env, last_dlerror);
-		last_dlerror = NULL;
-	}
-	char *err = dlerror();
-	if (err == NULL) {
-		last_dlerror = NULL;
-	} else {
-//    	printf("dlerror: %s\n", err);
-		last_dlerror = (*env)->NewGlobalRef(env, (*env)->NewStringUTF(env, err));
+static void initUnsatisfiedLinkError(JNIEnv *env) {
+	if (unsatisfiedLinkError == NULL) {
+		unsatisfiedLinkError = (jclass) (*env)->NewGlobalRef(env, (*env)->FindClass(env, "java/lang/UnsatisfiedLinkError"));
 	}
 }
 
@@ -53,7 +41,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlopen(JNIEnv *env, j
     int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
     void *handle = dlopen(path, flags);
     if (handle == NULL) {
-        create_dlerror_string(env);
+    	char *err = dlerror();
+    	initUnsatisfiedLinkError(env);
+//        (*env)->ReleaseStringUTFChars(env, jpath, path);
+    	(*env)->ThrowNew(env, unsatisfiedLinkError, err);
     }
     (*env)->ReleaseStringUTFChars(env, jpath, path);
     return (jlong) handle;
@@ -63,7 +54,14 @@ JNIEXPORT jlong JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlsym(JNIEnv *env, jclass c, jlong handle, jstring jsymbol) {
     const char *symbol = (*env)->GetStringUTFChars(env, jsymbol, NULL);
     void *address = dlsym((void *)handle, symbol);
-    create_dlerror_string(env);
+    if (address == NULL) {
+    	char *err = dlerror();
+    	if (err != NULL) {
+        	initUnsatisfiedLinkError(env);
+//            (*env)->ReleaseStringUTFChars(env, jsymbol, symbol);
+        	(*env)->ThrowNew(env, unsatisfiedLinkError, err);
+    	}
+    }
     (*env)->ReleaseStringUTFChars(env, jsymbol, symbol);
     return (jlong) address;
 }
@@ -74,8 +72,4 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlclose(JNIEnv *env, 
     return rc;
 }
 
-JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlerror(JNIEnv *env, jclass c) {
-   	return last_dlerror;
-}
 

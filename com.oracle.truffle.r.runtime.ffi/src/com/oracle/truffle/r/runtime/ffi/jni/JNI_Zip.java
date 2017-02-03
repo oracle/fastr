@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,18 +30,22 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  */
 public class JNI_Zip implements ZipRFFI {
 
-    @Override
-    @TruffleBoundary
-    public int compress(byte[] dest, byte[] source) {
-        int rc = native_compress(dest, dest.length, source, source.length);
-        return rc;
+    public static class JNI_CompressNode extends ZipRFFI.CompressNode {
+        @Override
+        @TruffleBoundary
+        public int execute(byte[] dest, byte[] source) {
+            int rc = native_compress(dest, dest.length, source, source.length);
+            return rc;
+        }
     }
 
-    @Override
-    @TruffleBoundary
-    public int uncompress(byte[] dest, byte[] source) {
-        int rc = native_uncompress(dest, dest.length, source, source.length);
-        return rc;
+    public static class JNI_UncompressNode extends ZipRFFI.UncompressNode {
+        @Override
+        @TruffleBoundary
+        public int execute(byte[] dest, byte[] source) {
+            int rc = native_uncompress(dest, dest.length, source, source.length);
+            return rc;
+        }
     }
 
     // Checkstyle: stop method name
@@ -49,4 +53,14 @@ public class JNI_Zip implements ZipRFFI {
     private static native int native_compress(byte[] dest, long destlen, byte[] source, long sourcelen);
 
     private static native int native_uncompress(byte[] dest, long destlen, byte[] source, long sourcelen);
+
+    @Override
+    public CompressNode createCompressNode() {
+        return new JNI_CompressNode();
+    }
+
+    @Override
+    public UncompressNode createUncompressNode() {
+        return new JNI_UncompressNode();
+    }
 }

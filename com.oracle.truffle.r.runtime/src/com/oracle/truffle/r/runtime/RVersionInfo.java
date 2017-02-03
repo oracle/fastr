@@ -24,8 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public enum RVersionInfo {
     // @formatter:off
@@ -82,7 +82,7 @@ public enum RVersionInfo {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             ListValues = new String[VALUES.length];
             ListNames = new String[VALUES.length];
-            UtsName utsname = RFFIFactory.getRFFI().getBaseRFFI().uname();
+            UtsName utsname = (UtsName) BaseRFFI.UnameRootNode.create().getCallTarget().call();
             String osName = toFirstLower(utsname.sysname());
             String vendor = osName.equals("darwin") ? "apple" : "unknown";
             OS.value = osName + utsname.release();

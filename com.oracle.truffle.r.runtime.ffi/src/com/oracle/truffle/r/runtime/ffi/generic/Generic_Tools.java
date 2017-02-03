@@ -37,12 +37,12 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class Generic_Tools implements ToolsRFFI {
-    private static class Generic_ToolsRFFINode extends ToolsRFFINode {
+    private static class Generic_ToolsRFFINode extends ParseRdNode {
         private static final String C_PARSE_RD = "C_parseRd";
         private static final String TOOLS = "tools";
 
-        @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
-        @Child DLL.FindSymbolNode findSymbolNode = DLL.FindSymbolNode.create();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
+        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         @CompilationFinal private NativeCallInfo nativeCallInfo;
 
@@ -50,7 +50,7 @@ public class Generic_Tools implements ToolsRFFI {
          * Invoke C implementation, N.B., code is not thread safe.
          */
         @Override
-        public synchronized Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
             try {
                 if (nativeCallInfo == null) {
@@ -61,7 +61,7 @@ public class Generic_Tools implements ToolsRFFI {
                     assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
                     nativeCallInfo = new NativeCallInfo(C_PARSE_RD, symbolHandle, toolsDLLInfo);
                 }
-                return callRFFINode.invokeCall(nativeCallInfo,
+                return callRFFINode.execute(nativeCallInfo,
                                 new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
             } catch (Throwable ex) {
                 throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
@@ -70,7 +70,7 @@ public class Generic_Tools implements ToolsRFFI {
     }
 
     @Override
-    public ToolsRFFINode createToolsRFFINode() {
+    public ParseRdNode createParseRdNode() {
         return new Generic_ToolsRFFINode();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,39 +24,17 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RNull;
 
-public final class CallRFFIRootNode extends RootNode {
-    private static CallRFFIRootNode callRFFIRootNode;
-    @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
+public abstract class RFFIRootNode<T extends Node> extends RootNode {
+    @Child T rffiNode;
 
-    public CallRFFIRootNode() {
+    protected RFFIRootNode(T baseRFFINode) {
         super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
-
+        this.rffiNode = baseRFFINode;
+        Truffle.getRuntime().createCallTarget(this);
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        Object[] args = frame.getArguments();
-        NativeCallInfo nativeCallInfo = (NativeCallInfo) args[0];
-        boolean isVoidCall = (boolean) args[1];
-        Object[] callArgs = (Object[]) args[2];
-        if (isVoidCall) {
-            callRFFINode.invokeVoidCall(nativeCallInfo, callArgs);
-            return RNull.instance;
-        } else {
-            return callRFFINode.invokeCall(nativeCallInfo, callArgs);
-        }
-    }
-
-    public static CallRFFIRootNode create() {
-        if (callRFFIRootNode == null) {
-            callRFFIRootNode = new CallRFFIRootNode();
-            Truffle.getRuntime().createCallTarget(callRFFIRootNode);
-        }
-        return callRFFIRootNode;
-    }
 }
