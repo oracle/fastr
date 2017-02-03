@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class JNI_C implements CRFFI {
-    public static class JNI_CRFFINode extends CRFFINode {
+    public static class JNI_InvokeCNode extends InvokeCNode {
         /**
          * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
          * native array types, no upcalls are possible, and no result is returned. However, the
@@ -39,8 +39,8 @@ public class JNI_C implements CRFFI {
          */
         @Override
         @TruffleBoundary
-        public void invoke(NativeCallInfo nativeCallInfo, Object[] args) {
-            synchronized (JNI_CRFFINode.class) {
+        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_C.class) {
                 if (traceEnabled()) {
                     traceDownCall(nativeCallInfo.name, args);
                 }
@@ -52,7 +52,7 @@ public class JNI_C implements CRFFI {
     private static native void c(long address, Object[] args);
 
     @Override
-    public CRFFINode createCRFFINode() {
-        return new JNI_CRFFINode();
+    public InvokeCNode createInvokeCNode() {
+        return new JNI_InvokeCNode();
     }
 }

@@ -81,7 +81,7 @@ public class SysFunctions {
         @Specialization
         @TruffleBoundary
         protected Object sysGetPid() {
-            int pid = getpidNode.getpid();
+            int pid = getpidNode.execute();
             return RDataFactory.createIntVectorFromScalar(pid);
         }
     }
@@ -276,7 +276,7 @@ public class SysFunctions {
         private static String doSysReadLink(String path, BaseRFFI.ReadlinkNode readlinkNode) {
             String s;
             try {
-                s = readlinkNode.readlink(path);
+                s = readlinkNode.execute(path);
                 if (s == null) {
                     s = "";
                 }
@@ -306,7 +306,7 @@ public class SysFunctions {
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = chmodNode.chmod(path, octmode.getDataAt(i % octmode.getLength()));
+                int result = chmodNode.execute(path, octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
@@ -348,7 +348,7 @@ public class SysFunctions {
         @Specialization
         @TruffleBoundary
         protected Object sysTime() {
-            UtsName utsname = unameNode.uname();
+            UtsName utsname = unameNode.execute();
             String[] data = new String[NAMES.length];
             data[0] = utsname.sysname();
             data[1] = utsname.release();

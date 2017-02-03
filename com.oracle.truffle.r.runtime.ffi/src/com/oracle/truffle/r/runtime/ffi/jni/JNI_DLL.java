@@ -28,44 +28,33 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
 public class JNI_DLL implements DLLRFFI {
 
-    public static class JNI_DLLRFFINode extends DLLRFFINode {
+    public static class JNI_DLOpenNode extends DLOpenNode {
         @Override
         @TruffleBoundary
-        public Object dlopen(String path, boolean local, boolean now) {
+        public Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
             long handle = native_dlopen(path, local, now);
-            if (handle == 0) {
-                return null;
-            } else {
-                return new Long(handle);
-            }
+            return new Long(handle);
         }
+    }
 
+    public static class JNI_DLSymNode extends DLSymNode {
         @Override
         @TruffleBoundary
-        public SymbolHandle dlsym(Object handle, String symbol) {
+        public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
             long nativeHandle = (Long) handle;
             long symv = native_dlsym(nativeHandle, symbol);
-            if (symv == 0) {
-                // symbol might actually be zero
-                if (dlerror() != null) {
-                    return null;
-                }
-            }
             return new SymbolHandle(symv);
         }
+    }
 
+    public static class JNI_DLCloseNode extends DLCloseNode {
         @Override
         @TruffleBoundary
-        public int dlclose(Object handle) {
+        public int execute(Object handle) {
             long nativeHandle = (Long) handle;
             return native_dlclose(nativeHandle);
         }
 
-        @Override
-        @TruffleBoundary
-        public String dlerror() {
-            return native_dlerror();
-        }
     }
 
     // Checkstyle: stop method name check
@@ -79,8 +68,18 @@ public class JNI_DLL implements DLLRFFI {
     private static native long native_dlsym(long handle, String symbol);
 
     @Override
-    public DLLRFFINode createDLLRFFINode() {
-        return new JNI_DLLRFFINode();
+    public DLOpenNode createDLOpenNode() {
+        return new JNI_DLOpenNode();
+    }
+
+    @Override
+    public DLSymNode createDLSymNode() {
+        return new JNI_DLSymNode();
+    }
+
+    @Override
+    public DLCloseNode createDLCloseNode() {
+        return new JNI_DLCloseNode();
     }
 
 }

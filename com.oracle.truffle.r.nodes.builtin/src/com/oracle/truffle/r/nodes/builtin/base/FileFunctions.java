@@ -1219,7 +1219,7 @@ public class FileFunctions {
 
         private boolean mkdir(BaseRFFI.MkdirNode mkdirNode, String path, boolean showWarnings, int mode) {
             try {
-                mkdirNode.mkdir(path, mode);
+                mkdirNode.execute(path, mode);
                 return true;
             } catch (IOException ex) {
                 if (showWarnings) {

@@ -67,7 +67,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
                 int elementMode = Utils.intFilePermissions(pfa.permissions());
                 int newMode = Files.isDirectory(element) ? elementMode | dirMask : elementMode | fileMask;
                 // System.out.printf("path %s: old %o, new %o%n", element, elementMode, newMode);
-                chmodNode.chmod(element.toString(), newMode);
+                chmodNode.execute(element.toString(), newMode);
             }
         } catch (IOException ex) {
             // ignore

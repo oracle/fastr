@@ -40,7 +40,7 @@ public abstract class Getwd extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object getwd() {
-        String result = getwdNode.getwd();
+        String result = getwdNode.execute();
         return RDataFactory.createStringVector(result);
     }
 }

@@ -25,12 +25,8 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
@@ -39,7 +35,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
  */
 public interface BaseRFFI {
     abstract class GetpidNode extends Node {
-        public abstract int getpid();
+        public abstract int execute();
 
         public static GetpidNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createGetpidNode();
@@ -50,7 +46,7 @@ public interface BaseRFFI {
         /**
          * Returns the current working directory, in the face of calls to {@code setwd}.
          */
-        public abstract String getwd();
+        public abstract String execute();
 
         public static GetwdNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createGetwdNode();
@@ -63,7 +59,7 @@ public interface BaseRFFI {
          *
          * @return 0 if successful.
          */
-        public abstract int setwd(String dir);
+        public abstract int execute(String dir);
 
         public static SetwdNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createSetwdNode();
@@ -74,7 +70,7 @@ public interface BaseRFFI {
         /**
          * Create directory with given mode. Exception is thrown omn error.
          */
-        public abstract void mkdir(String dir, int mode) throws IOException;
+        public abstract void execute(String dir, int mode) throws IOException;
 
         public static MkdirNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createMkdirNode();
@@ -89,7 +85,7 @@ public interface BaseRFFI {
          * @return the target if {@code path} is a link else {@code null}
          * @throws IOException for any other error except "not a link"
          */
-        public abstract String readlink(String path) throws IOException;
+        public abstract String execute(String path) throws IOException;
 
         public static ReadlinkNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createReadlinkNode();
@@ -101,7 +97,7 @@ public interface BaseRFFI {
          * Creates a temporary directory using {@code template} and return the resulting path or
          * {@code null} if error.
          */
-        public abstract String mkdtemp(String template);
+        public abstract String execute(String template);
 
         public static MkdtempNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createMkdtempNode();
@@ -112,7 +108,7 @@ public interface BaseRFFI {
         /**
          * Change the file mode of {@code path}.
          */
-        public abstract int chmod(String path, int mode);
+        public abstract int execute(String path, int mode);
 
         public static ChmodNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createChmodNode();
@@ -123,7 +119,7 @@ public interface BaseRFFI {
         /**
          * Convert string to long.
          */
-        public abstract long strtol(String s, int base) throws IllegalArgumentException;
+        public abstract long execute(String s, int base) throws IllegalArgumentException;
 
         public static StrolNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createStrolNode();
@@ -146,7 +142,7 @@ public interface BaseRFFI {
         /**
          * Return {@code utsname} info.
          */
-        public abstract UtsName uname();
+        public abstract UtsName execute();
 
         public static UnameNode create() {
             return RFFIFactory.getRFFI().getBaseRFFI().createUnameNode();
@@ -196,17 +192,7 @@ public interface BaseRFFI {
      * Some functions are called from non-Truffle contexts, which requires a RootNode
      */
 
-    abstract class BaseRFFIRootNode<T extends Node> extends RootNode {
-        @Child T baseRFFINode;
-
-        private BaseRFFIRootNode(T baseRFFINode) {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
-            this.baseRFFINode = baseRFFINode;
-            Truffle.getRuntime().createCallTarget(this);
-        }
-    }
-
-    final class GetpidRootNode extends BaseRFFIRootNode<GetpidNode> {
+    final class GetpidRootNode extends RFFIRootNode<GetpidNode> {
         private static GetpidRootNode getpidRootNode;
 
         private GetpidRootNode() {
@@ -215,7 +201,7 @@ public interface BaseRFFI {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return baseRFFINode.getpid();
+            return rffiNode.execute();
         }
 
         public static GetpidRootNode create() {
@@ -226,7 +212,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class GetwdRootNode extends BaseRFFIRootNode<GetwdNode> {
+    final class GetwdRootNode extends RFFIRootNode<GetwdNode> {
         private static GetwdRootNode getwdRootNode;
 
         private GetwdRootNode() {
@@ -235,7 +221,7 @@ public interface BaseRFFI {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return baseRFFINode.getwd();
+            return rffiNode.execute();
         }
 
         public static GetwdRootNode create() {
@@ -246,7 +232,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class MkdtempRootNode extends BaseRFFIRootNode<MkdtempNode> {
+    final class MkdtempRootNode extends RFFIRootNode<MkdtempNode> {
         private static MkdtempRootNode mkdtempRootNode;
 
         private MkdtempRootNode() {
@@ -256,7 +242,7 @@ public interface BaseRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return baseRFFINode.mkdtemp((String) args[0]);
+            return rffiNode.execute((String) args[0]);
         }
 
         public static MkdtempRootNode create() {
@@ -267,7 +253,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class UnameRootNode extends BaseRFFIRootNode<UnameNode> {
+    final class UnameRootNode extends RFFIRootNode<UnameNode> {
         private static UnameRootNode unameRootNode;
 
         private UnameRootNode() {
@@ -276,7 +262,7 @@ public interface BaseRFFI {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return baseRFFINode.uname();
+            return rffiNode.execute();
         }
 
         public static UnameRootNode create() {

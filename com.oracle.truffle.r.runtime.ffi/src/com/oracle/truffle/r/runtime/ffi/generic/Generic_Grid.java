@@ -33,43 +33,55 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class Generic_Grid implements GridRFFI {
-    private static class Generic_GridRFFINode extends GridRFFINode {
-        private static final String L_InitGrid = "L_initGrid";
-        private static final String L_KillGrid = "L_killGrid";
-        private static final String GRID = "grid";
-        @Child private CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
-        @Child DLL.FindSymbolNode findSymbolNode = DLL.FindSymbolNode.create();
+    private static final String GRID = "grid";
 
+    private static class Generic_InitGridNode extends InitGridNode {
+        private static final String L_InitGrid = "L_initGrid";
+        @Child private CallRFFI.InvokeCallNode invokeCallNode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
+        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
         @CompilationFinal private NativeCallInfo initNativeCallInfo;
+
+        @Override
+        public Object execute(REnvironment gridEvalEnv) {
+            if (initNativeCallInfo == null) {
+                initNativeCallInfo = createNativeCallInfo(L_InitGrid, findSymbolNode);
+            }
+            return invokeCallNode.execute(initNativeCallInfo, new Object[]{gridEvalEnv});
+        }
+    }
+
+    private static class Generic_KillGridNode extends KillGridNode {
+        private static final String L_KillGrid = "L_killGrid";
+        @Child private CallRFFI.InvokeCallNode invokeCallNode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
+        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
         @CompilationFinal private NativeCallInfo killNativeCallInfo;
 
         @Override
-        public Object initGrid(REnvironment gridEvalEnv) {
-            if (initNativeCallInfo == null) {
-                initNativeCallInfo = createNativeCallInfo(L_InitGrid);
-            }
-            return callRFFINode.invokeCall(initNativeCallInfo, new Object[]{gridEvalEnv});
-        }
-
-        @Override
-        public Object killGrid() {
+        public Object execute() {
             if (killNativeCallInfo == null) {
-                killNativeCallInfo = createNativeCallInfo(L_KillGrid);
+                killNativeCallInfo = createNativeCallInfo(L_KillGrid, findSymbolNode);
             }
-            return callRFFINode.invokeCall(killNativeCallInfo, new Object[0]);
+            return invokeCallNode.execute(killNativeCallInfo, new Object[0]);
         }
 
-        private NativeCallInfo createNativeCallInfo(String call) {
-            DLLInfo dllInfo = DLL.findLibrary(GRID);
-            assert dllInfo != null;
-            SymbolHandle symbolHandle = findSymbolNode.execute(call, GRID, DLL.RegisteredNativeSymbol.any());
-            assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-            return new NativeCallInfo(call, symbolHandle, dllInfo);
-        }
+    }
+
+    private static NativeCallInfo createNativeCallInfo(String call, DLL.RFindSymbolNode findSymbolNode) {
+        DLLInfo dllInfo = DLL.findLibrary(GRID);
+        assert dllInfo != null;
+        SymbolHandle symbolHandle = findSymbolNode.execute(call, GRID, DLL.RegisteredNativeSymbol.any());
+        assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+        return new NativeCallInfo(call, symbolHandle, dllInfo);
     }
 
     @Override
-    public GridRFFINode createGridRFFINode() {
-        return new Generic_GridRFFINode();
+    public InitGridNode createInitGridNode() {
+        return new Generic_InitGridNode();
     }
+
+    @Override
+    public KillGridNode createKillGridNode() {
+        return new Generic_KillGridNode();
+    }
+
 }

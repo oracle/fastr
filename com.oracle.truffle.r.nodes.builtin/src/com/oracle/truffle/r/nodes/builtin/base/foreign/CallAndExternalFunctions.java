@@ -202,7 +202,7 @@ public class CallAndExternalFunctions {
     }
 
     abstract static class CallRFFIAdapter extends LookupAdapter {
-        @Child CallRFFI.CallRFFINode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode();
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
     }
 
     /**
@@ -661,7 +661,7 @@ public class CallAndExternalFunctions {
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
-            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
+            return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
         /**
@@ -672,7 +672,7 @@ public class CallAndExternalFunctions {
         @Specialization(replaces = "callNamedFunction")
         protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
-            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
+            return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
         /**
@@ -681,7 +681,7 @@ public class CallAndExternalFunctions {
         @Specialization
         protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
         }
 
@@ -692,13 +692,13 @@ public class CallAndExternalFunctions {
         @Specialization
         protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
         }
 
         @SuppressWarnings("unused")
@@ -780,27 +780,27 @@ public class CallAndExternalFunctions {
                         @Cached("symbol") RList cached,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{list});
+            return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
         protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
         }
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -858,20 +858,20 @@ public class CallAndExternalFunctions {
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
         }
 
         @Specialization
         protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
         }
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
@@ -879,7 +879,7 @@ public class CallAndExternalFunctions {
             }
             Object list = encodeArgumentPairList(args, symbol);
             // TODO: provide proper values for the CALL, OP and RHO parameters
-            return callRFFINode.invokeCall(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
         }
 
         @Fallback
@@ -919,18 +919,18 @@ public class CallAndExternalFunctions {
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.invokeCall(nativeCallInfo, new Object[]{list});
+            return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
         protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             return callNamedFunctionWithPackage(name, args, null, findSymbolNode);
         }
 
         @Specialization
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -938,7 +938,7 @@ public class CallAndExternalFunctions {
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return callRFFINode.invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -977,26 +977,26 @@ public class CallAndExternalFunctions {
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
-            return callRFFINode.invokeCall(nativeCallInfo, args.getArguments());
+            return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
         @Specialization
         protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             return callNamedFunctionWithPackage(name, args, null, findSymbolNode);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return callRFFINode.invokeCall(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback

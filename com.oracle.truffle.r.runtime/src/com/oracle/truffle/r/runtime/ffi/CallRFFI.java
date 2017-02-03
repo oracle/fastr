@@ -22,27 +22,76 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Support for the {.Call} and {.External} calls.
  */
 public interface CallRFFI {
-    abstract class CallRFFINode extends Node {
+    abstract class InvokeCallNode extends Node {
         /**
          * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} can be any of the types used to represent
          * {@code R} values in the implementation.
          */
-        public abstract Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args);
+        public abstract Object execute(NativeCallInfo nativeCallInfo, Object[] args);
+    }
 
+    abstract class InvokeVoidCallNode extends Node {
         /**
          * Variant that does not return a result (primarily for library "init" methods).
          */
-        public abstract void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args);
+        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
 
     }
 
-    CallRFFINode createCallRFFINode();
+    InvokeCallNode createInvokeCallNode();
+
+    InvokeVoidCallNode createInvokeVoidCallNode();
+
+    final class InvokeCallRootNode extends RFFIRootNode<InvokeCallNode> {
+        private static InvokeCallRootNode invokeCallRootNode;
+
+        private InvokeCallRootNode() {
+            super(RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            return rffiNode.execute((NativeCallInfo) args[0], (Object[]) args[1]);
+        }
+
+        public static InvokeCallRootNode create() {
+            if (invokeCallRootNode == null) {
+                invokeCallRootNode = new InvokeCallRootNode();
+            }
+            return invokeCallRootNode;
+        }
+    }
+
+    final class InvokeVoidCallRootNode extends RFFIRootNode<InvokeVoidCallNode> {
+        private static InvokeVoidCallRootNode InvokeVoidCallRootNode;
+
+        private InvokeVoidCallRootNode() {
+            super(RFFIFactory.getRFFI().getCallRFFI().createInvokeVoidCallNode());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            rffiNode.execute((NativeCallInfo) args[0], (Object[]) args[1]);
+            return RNull.instance; // unused
+        }
+
+        public static InvokeVoidCallRootNode create() {
+            if (InvokeVoidCallRootNode == null) {
+                InvokeVoidCallRootNode = new InvokeVoidCallRootNode();
+            }
+            return InvokeVoidCallRootNode;
+        }
+    }
 
 }

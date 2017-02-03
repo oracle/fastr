@@ -30,14 +30,14 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 public class JNI_Base implements BaseRFFI {
     public static class JNI_GetpidNode extends GetpidNode {
         @Override
-        public int getpid() {
+        public int execute() {
             return native_getpid();
         }
     }
 
     public static class JNI_GetwdNode extends GetwdNode {
         @Override
-        public String getwd() {
+        public String execute() {
             byte[] buf = new byte[4096];
             int rc = native_getwd(buf, buf.length);
             if (rc == 0) {
@@ -54,7 +54,7 @@ public class JNI_Base implements BaseRFFI {
 
     public static class JNI_SetwdNode extends SetwdNode {
         @Override
-        public int setwd(String dir) {
+        public int execute(String dir) {
             return native_setwd(dir);
         }
     }
@@ -63,7 +63,7 @@ public class JNI_Base implements BaseRFFI {
         private static final int EINVAL = 22;
 
         @Override
-        public String readlink(String path) throws IOException {
+        public String execute(String path) throws IOException {
             int[] errno = new int[]{0};
             String s = native_readlink(path, errno);
             if (s == null) {
@@ -80,7 +80,7 @@ public class JNI_Base implements BaseRFFI {
 
     public static class JNI_MkdtempNode extends MkdtempNode {
         @Override
-        public String mkdtemp(String template) {
+        public String execute(String template) {
             /*
              * Not only must the (C) string end in XXXXXX it must also be null-terminated. Since it
              * is modified by mkdtemp we must make a copy.
@@ -100,7 +100,7 @@ public class JNI_Base implements BaseRFFI {
 
     public static class JNI_MkdirNode extends MkdirNode {
         @Override
-        public void mkdir(String dir, int mode) throws IOException {
+        public void execute(String dir, int mode) throws IOException {
             int rc = native_mkdir(dir, mode);
             if (rc != 0) {
                 throw new IOException("mkdir " + dir + " failed");
@@ -110,14 +110,14 @@ public class JNI_Base implements BaseRFFI {
 
     public static class JNI_ChmodNode extends ChmodNode {
         @Override
-        public int chmod(String path, int mode) {
+        public int execute(String path, int mode) {
             return native_chmod(path, mode);
         }
     }
 
     public static class JNI_StrolNode extends StrolNode {
         @Override
-        public long strtol(String s, int base) throws IllegalArgumentException {
+        public long execute(String s, int base) throws IllegalArgumentException {
             int[] errno = new int[]{0};
             long result = native_strtol(s, base, errno);
             if (errno[0] != 0) {
@@ -130,7 +130,7 @@ public class JNI_Base implements BaseRFFI {
 
     public static class JNI_UnameNode extends UnameNode {
         @Override
-        public UtsName uname() {
+        public UtsName execute() {
             return JNI_UtsName.get();
         }
     }

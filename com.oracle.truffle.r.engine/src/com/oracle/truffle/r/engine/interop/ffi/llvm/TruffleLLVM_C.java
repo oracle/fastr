@@ -32,16 +32,16 @@ import com.oracle.truffle.r.engine.interop.NativeRawArray;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
-import com.oracle.truffle.r.runtime.ffi.jni.JNI_C;
+import com.oracle.truffle.r.runtime.ffi.jni.JNI_C.JNI_InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 class TruffleLLVM_C implements CRFFI {
-    private static class TruffleCRFFINode extends JNI_C.JNI_CRFFINode {
+    private static class TruffleLLVM_InvokeCNode extends JNI_InvokeCNode {
 
         @Override
-        public synchronized void invoke(NativeCallInfo nativeCallInfo, Object[] args) {
+        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             if (nativeCallInfo.address.value instanceof Long) {
-                super.invoke(nativeCallInfo, args);
+                super.execute(nativeCallInfo, args);
             } else {
                 VirtualFrame frame = TruffleRFFIFrameHelper.create();
                 TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
@@ -76,7 +76,7 @@ class TruffleLLVM_C implements CRFFI {
     }
 
     @Override
-    public CRFFINode createCRFFINode() {
-        return new TruffleCRFFINode();
+    public InvokeCNode createInvokeCNode() {
+        return new TruffleLLVM_InvokeCNode();
     }
 }

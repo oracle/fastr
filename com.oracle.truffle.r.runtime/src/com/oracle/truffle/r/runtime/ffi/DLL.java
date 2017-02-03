@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -38,8 +39,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.CallRFFINode;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLLRFFINode;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
 /**
@@ -99,7 +99,7 @@ public class DLL {
             if (context.getKind() != RContext.ContextKind.SHARE_PARENT_RW) {
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
-                    DLLFFIRootNode.create().getCallTarget().call(DLLFFIRootNode.DLCLOSE, dllInfo.handle);
+                    DLLRFFI.DLCloseRootNode.create().getCallTarget().call(dllInfo.handle);
                 }
             }
             list = null;
@@ -367,7 +367,7 @@ public class DLL {
      */
     public static void loadLibR(String path) {
         RContext context = RContext.getInstance();
-        Object handle = DLLFFIRootNode.create().getCallTarget().call(DLLFFIRootNode.DLOPEN, path, false, false);
+        Object handle = DLLRFFI.DLOpenRootNode.create().getCallTarget().call(path, false, false);
         if (handle == null) {
             throw Utils.rSuicide("error loading libR from: " + path + "\n");
         }
@@ -388,8 +388,9 @@ public class DLL {
     public static final String R_INIT_PREFIX = "R_init_";
 
     public static class LoadPackageDLLNode extends Node {
-        @Child private CallRFFINode callRFFINode;
-        @Child private DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+        @Child private InvokeVoidCallNode invokeVoidCallNode;
+        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getRFFI().getDLLRFFI().createDLOpenNode();
 
         public static LoadPackageDLLNode create() {
             return new LoadPackageDLLNode();
@@ -407,15 +408,16 @@ public class DLL {
             }
             DLLInfo dllInfo = doLoad(absPath, local, now, true);
 
-            // Search for init method
+            // Search for an init method
             String pkgInit = R_INIT_PREFIX + dllInfo.name;
-            SymbolHandle initFunc = dllRFFINode.dlsym(dllInfo.handle, pkgInit);
-            if (initFunc != SYMBOL_NOT_FOUND) {
+            try {
+                SymbolHandle initFunc = dlSymNode.execute(dllInfo.handle, pkgInit);
                 try {
-                    if (callRFFINode == null) {
-                        callRFFINode = insert(RFFIFactory.getRFFI().getCallRFFI().createCallRFFINode());
+                    if (invokeVoidCallNode == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        invokeVoidCallNode = insert(RFFIFactory.getRFFI().getCallRFFI().createInvokeVoidCallNode());
                     }
-                    callRFFINode.invokeVoidCall(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                    invokeVoidCallNode.execute(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propogate
@@ -427,6 +429,8 @@ public class DLL {
                         throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
+            } catch (UnsatisfiedLinkError ex) {
+                // no such symbol, that's ok
             }
             return dllInfo;
         }
@@ -439,23 +443,24 @@ public class DLL {
          * that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
          */
         private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
-            Object handle = dllRFFINode.dlopen(absPath, local, now);
-            if (handle == null) {
-                String dlError = dllRFFINode.dlerror();
+            try {
+                Object handle = dlOpenNode.execute(absPath, local, now);
+                DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
+                return dllInfo;
+            } catch (UnsatisfiedLinkError ex) {
+                String dlError = ex.getMessage();
                 if (RContext.isInitialContextInitialized()) {
                     throw new DLLException(RError.Message.DLL_LOAD_ERROR, absPath, dlError);
                 } else {
                     throw Utils.rSuicide("error loading default package: " + absPath + "\n" + dlError);
                 }
             }
-            DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
-            return dllInfo;
         }
 
     }
 
     public static class UnloadNode extends Node {
-        @Child private DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+        @Child private DLLRFFI.DLCloseNode dlCloseNode = RFFIFactory.getRFFI().getDLLRFFI().createDLCloseNode();
 
         @TruffleBoundary
         public void execute(String path) throws DLLException {
@@ -463,7 +468,7 @@ public class DLL {
             ContextStateImpl contextState = getContextState();
             for (DLLInfo info : contextState.list) {
                 if (info.path.equals(absPath)) {
-                    int rc = dllRFFINode.dlclose(info.handle);
+                    int rc = dlCloseNode.execute(info.handle);
                     if (rc != 0) {
                         throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                     }
@@ -525,9 +530,8 @@ public class DLL {
         return SYMBOL_NOT_FOUND;
     }
 
-    public static final class FindSymbolNode extends Node {
-        @Child DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
-        @Child DlsymNode dlsymNode = new DlsymNode();
+    public static final class RFindSymbolNode extends Node {
+        @Child RdlsymNode rdlsymNode = new RdlsymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_FindSymbol}.
@@ -547,7 +551,7 @@ public class DLL {
                     continue;
                 }
                 if (all || dllInfo.name.equals(libName)) {
-                    SymbolHandle func = dlsymNode.execute(dllInfo, name, rns);
+                    SymbolHandle func = rdlsymNode.execute(dllInfo, name, rns);
                     if (func != SYMBOL_NOT_FOUND) {
                         if (rns != null) {
                             rns.dllInfo = dllInfo;
@@ -562,18 +566,18 @@ public class DLL {
             return SYMBOL_NOT_FOUND;
         }
 
-        public static FindSymbolNode create() {
-            return new FindSymbolNode();
+        public static RFindSymbolNode create() {
+            return new RFindSymbolNode();
         }
 
     }
 
-    private static final class FindSymbolRootNode extends RootNode {
-        private static FindSymbolRootNode findSymbolRootNode;
+    private static final class RFindSymbolRootNode extends RootNode {
+        private static RFindSymbolRootNode findSymbolRootNode;
 
-        @Child FindSymbolNode findSymbolNode = FindSymbolNode.create();
+        @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
 
-        private FindSymbolRootNode() {
+        private RFindSymbolRootNode() {
             super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
         }
 
@@ -583,9 +587,9 @@ public class DLL {
             return findSymbolNode.execute((String) args[0], (String) args[1], (RegisteredNativeSymbol) args[2]);
         }
 
-        private static FindSymbolRootNode create() {
+        private static RFindSymbolRootNode create() {
             if (findSymbolRootNode == null) {
-                findSymbolRootNode = new FindSymbolRootNode();
+                findSymbolRootNode = new RFindSymbolRootNode();
                 Truffle.getRuntime().createCallTarget(findSymbolRootNode);
             }
             return findSymbolRootNode;
@@ -593,13 +597,17 @@ public class DLL {
 
     }
 
-    public static final class DlsymNode extends Node {
-        @Child DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
+    public static final class RdlsymNode extends Node {
+        @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_dlsym}. Checks first for a
          * {@link RegisteredNativeSymbol} using {@code rns}, then, unless dynamic lookup has been
          * disabled, looks up the symbol using the {@code dlopen} machinery.
+         *
+         * N.B. Unlike the underlying {@link DLLRFFI.DLSymNode} node this does <b>not</b> throw
+         * {@link UnsatisfiedLinkError} if the symbol is not found; it returns
+         * {@link #SYMBOL_NOT_FOUND}.
          */
         @TruffleBoundary
         public SymbolHandle execute(DLLInfo dllInfo, String name, RegisteredNativeSymbol rns) {
@@ -617,16 +625,16 @@ public class DLL {
             if (rns != null && rns.nst == NativeSymbolType.Fortran) {
                 mName = name + "_";
             }
-            SymbolHandle symValue = dllRFFINode.dlsym(dllInfo.handle, mName);
-            if (symValue != null) {
+            try {
+                SymbolHandle symValue = dlSymNode.execute(dllInfo.handle, mName);
                 return symValue;
-            } else {
+            } catch (UnsatisfiedLinkError ex) {
                 return SYMBOL_NOT_FOUND;
             }
         }
 
-        public static DlsymNode create() {
-            return new DlsymNode();
+        public static RdlsymNode create() {
+            return new RdlsymNode();
         }
     }
 
@@ -636,7 +644,7 @@ public class DLL {
      */
     public static DLLInfo findLibraryContainingSymbol(String symbol) {
         RegisteredNativeSymbol rns = RegisteredNativeSymbol.any();
-        SymbolHandle func = (SymbolHandle) FindSymbolRootNode.create().getCallTarget().call(symbol, null, rns);
+        SymbolHandle func = (SymbolHandle) RFindSymbolRootNode.create().getCallTarget().call(symbol, null, rns);
         if (func == SYMBOL_NOT_FOUND) {
             return null;
         } else {
@@ -666,9 +674,9 @@ public class DLL {
      */
     public static SymbolHandle findSymbol(String name, DLLInfo dllInfo) {
         if (dllInfo != null) {
-            return (SymbolHandle) DLLFFIRootNode.create().getCallTarget().call(DLLFFIRootNode.DLSYM, dllInfo.handle, name);
+            return (SymbolHandle) DLLRFFI.DLSymRootNode.create().getCallTarget().call(dllInfo.handle, name);
         } else {
-            return (SymbolHandle) FindSymbolRootNode.create().getCallTarget().call(name, null, RegisteredNativeSymbol.any());
+            return (SymbolHandle) RFindSymbolRootNode.create().getCallTarget().call(name, null, RegisteredNativeSymbol.any());
         }
     }
 
@@ -699,47 +707,4 @@ public class DLL {
         return result;
     }
 
-    /**
-     * {@link RootNode} class for the unusual case where we are not already in a Truffle AST
-     * execution.
-     *
-     */
-    public static final class DLLFFIRootNode extends RootNode {
-        public static final int DLOPEN = 0;
-        public static final int DLCLOSE = 1;
-        public static final int DLSYM = 2;
-
-        private static DLLFFIRootNode dllFFIRootNode;
-
-        @Child private DLLRFFINode dllRFFINode = RFFIFactory.getRFFI().getDLLRFFI().createDLLRFFINode();
-
-        private DLLFFIRootNode() {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            Object[] args = frame.getArguments();
-            int method = (int) args[0];
-            switch (method) {
-                case DLOPEN:
-                    return dllRFFINode.dlopen((String) args[1], (boolean) args[2], (boolean) args[3]);
-                case DLCLOSE:
-                    return dllRFFINode.dlclose(args[1]);
-                case DLSYM:
-                    return dllRFFINode.dlsym(args[1], (String) args[2]);
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
-        }
-
-        public static DLLFFIRootNode create() {
-            if (dllFFIRootNode == null) {
-                dllFFIRootNode = new DLLFFIRootNode();
-                Truffle.getRuntime().createCallTarget(dllFFIRootNode);
-            }
-            return dllFFIRootNode;
-        }
-
-    }
 }

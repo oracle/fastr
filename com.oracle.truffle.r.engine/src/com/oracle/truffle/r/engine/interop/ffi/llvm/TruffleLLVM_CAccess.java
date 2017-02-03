@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_DLL;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
@@ -49,7 +50,7 @@ public class TruffleLLVM_CAccess {
             if (symbolHandle == null) {
                 // This would be the generic path
                 // symbolHandle = DLL.findSymbol(cName(), null);
-                symbolHandle = (DLL.SymbolHandle) DLL.DLLFFIRootNode.create().getCallTarget().call(DLL.DLLFFIRootNode.DLSYM, handle, cName());
+                symbolHandle = (DLL.SymbolHandle) DLLRFFI.DLSymRootNode.create().getCallTarget().call(handle, cName());
                 assert symbolHandle != null;
             }
             return symbolHandle;

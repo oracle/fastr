@@ -62,7 +62,7 @@ public class FortranAndCFunctions {
         private static final int VECTOR_LOGICAL = 12;
         @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
-        @Child private CRFFI.CRFFINode cRFFINode = RFFIFactory.getRFFI().getCRFFI().createCRFFINode();
+        @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getRFFI().getCRFFI().createInvokeCNode();
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -110,7 +110,7 @@ public class FortranAndCFunctions {
                     throw RError.error(node, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
-            cRFFINode.invoke(nativeCallInfo, nativeArgs);
+            invokeCNode.execute(nativeCallInfo, nativeArgs);
             // we have to assume that the native method updated everything
             RStringVector listNames = validateArgNames(array.length, args.getSignature());
             Object[] results = new Object[array.length];
@@ -222,7 +222,7 @@ public class FortranAndCFunctions {
 
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = checkPackageArg(rPackage, errorProfile);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
@@ -260,7 +260,7 @@ public class FortranAndCFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
-                        @Cached("create()") DLL.FindSymbolNode findSymbolNode,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
                         @Cached("create()") BranchProfile errorProfile) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,24 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public interface GridRFFI {
-    abstract class GridRFFINode extends Node {
-        public abstract Object initGrid(REnvironment gridEvalEnv);
+    abstract class InitGridNode extends Node {
+        public abstract Object execute(REnvironment gridEvalEnv);
 
-        public abstract Object killGrid();
+        public static InitGridNode create() {
+            return RFFIFactory.getRFFI().getGridRFFI().createInitGridNode();
+        }
     }
 
-    GridRFFINode createGridRFFINode();
+    abstract class KillGridNode extends Node {
+
+        public abstract Object execute();
+
+        public static KillGridNode create() {
+            return RFFIFactory.getRFFI().getGridRFFI().createKillGridNode();
+        }
+    }
+
+    InitGridNode createInitGridNode();
+
+    KillGridNode createKillGridNode();
 }

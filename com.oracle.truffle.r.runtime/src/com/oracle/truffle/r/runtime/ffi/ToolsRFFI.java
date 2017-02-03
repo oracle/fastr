@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Interface to native (C) methods provided by the {@code tools} package.
  */
 public interface ToolsRFFI {
-    abstract class ToolsRFFINode extends Node {
+    abstract class ParseRdNode extends Node {
         /**
          * This invokes the Rd parser, written in C, and part of GnuR, that does its work using the
          * R FFI interface. The R code initially invokes this via {@code .External2(C_parseRd, ...)}
@@ -41,9 +41,9 @@ public interface ToolsRFFI {
          * code. We can't go straight to the GnuR C entry point as that makes GnuR-specific
          * assumptions about, for example, how connections are implemented.
          */
-        public abstract Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        public abstract Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups);
     }
 
-    ToolsRFFINode createToolsRFFINode();
+    ParseRdNode createParseRdNode();
 }

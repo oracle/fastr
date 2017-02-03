@@ -53,13 +53,13 @@ public abstract class Setwd extends RBuiltinNode {
     protected Object setwd(String path,
                     @Cached("create()") BaseRFFI.GetwdNode getwdNode,
                     @Cached("create()") BaseRFFI.SetwdNode setwdNode) {
-        String owd = getwdNode.getwd();
+        String owd = getwdNode.execute();
         String nwd = Utils.tildeExpand(path);
-        int rc = setwdNode.setwd(nwd);
+        int rc = setwdNode.execute(nwd);
         if (rc != 0) {
             throw RError.error(this, RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
-            String nwdAbs = getwdNode.getwd();
+            String nwdAbs = getwdNode.execute();
             Utils.updateCurwd(nwdAbs);
             return owd;
         }

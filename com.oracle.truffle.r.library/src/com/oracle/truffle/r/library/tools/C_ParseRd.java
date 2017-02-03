@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
-    @Child ToolsRFFI.ToolsRFFINode toolsRFFINode = RFFIFactory.getRFFI().getToolsRFFI().createToolsRFFINode();
+    @Child ToolsRFFI.ParseRdNode parseRdNode = RFFIFactory.getRFFI().getToolsRFFI().createParseRdNode();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -78,7 +78,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
         // fromIndex checks validity of con and throws error if not
         try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {
             // @formatter:off
-            return toolsRFFINode.parseRd(openConn, srcfile,
+            return parseRdNode.execute(openConn, srcfile,
                             verbose.materialize(),
                             RDataFactory.createLogicalVectorFromScalar((byte) fragment),
                             basename.materialize(),

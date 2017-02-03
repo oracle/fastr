@@ -42,17 +42,17 @@ import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
  * efficient).
  *
  * The JNI layer is not (currently) MT safe, so all calls are single threaded. N.B. Since the calls
- * take place from a {@link JNI_CallRFFINode}, and this is duplicated in separate contexts, we must
- * synchronize on the class.
+ * take place from nodes, and these may be duplicated in separate contexts, we must synchronize on
+ * the class.
  */
 public class JNI_Call implements CallRFFI {
 
-    public static class JNI_CallRFFINode extends CallRFFINode {
+    public static class JNI_InvokeCallNode extends InvokeCallNode {
 
         @Override
         @TruffleBoundary
-        public Object invokeCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            synchronized (JNI_CallRFFINode.class) {
+        public Object execute(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_Call.class) {
                 long address = nativeCallInfo.address.asAddress();
                 Object result = null;
                 if (traceEnabled()) {
@@ -60,20 +60,20 @@ public class JNI_Call implements CallRFFI {
                 }
                 try {
                     switch (args.length) {
-            // @formatter:off
-            case 0: result = call0(address); break;
-            case 1: result = call1(address, args[0]); break;
-            case 2: result = call2(address, args[0], args[1]); break;
-            case 3: result = call3(address, args[0], args[1], args[2]); break;
-            case 4: result = call4(address, args[0], args[1], args[2], args[3]); break;
-            case 5: result = call5(address, args[0], args[1], args[2], args[3], args[4]); break;
-            case 6: result = call6(address, args[0], args[1], args[2], args[3], args[4], args[5]); break;
-            case 7: result = call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]); break;
-            case 8: result = call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]); break;
-            case 9: result = call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]); break;
-            default:
-                result = call(address, args); break;
-                // @formatter:on
+                    // @formatter:off
+                        case 0: result = call0(address); break;
+                        case 1: result = call1(address, args[0]); break;
+                        case 2: result = call2(address, args[0], args[1]); break;
+                        case 3: result = call3(address, args[0], args[1], args[2]); break;
+                        case 4: result = call4(address, args[0], args[1], args[2], args[3]); break;
+                        case 5: result = call5(address, args[0], args[1], args[2], args[3], args[4]); break;
+                        case 6: result = call6(address, args[0], args[1], args[2], args[3], args[4], args[5]); break;
+                        case 7: result = call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]); break;
+                        case 8: result = call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]); break;
+                        case 9: result = call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]); break;
+                        default:
+                            result = call(address, args); break;
+                           // @formatter:on
                     }
                     return result;
                 } finally {
@@ -83,11 +83,14 @@ public class JNI_Call implements CallRFFI {
                 }
             }
         }
+    }
+
+    public static class JNI_InvokeVoidCallNode extends InvokeVoidCallNode {
 
         @Override
         @TruffleBoundary
-        public void invokeVoidCall(NativeCallInfo nativeCallInfo, Object[] args) {
-            synchronized (JNI_CallRFFINode.class) {
+        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
+            synchronized (JNI_Call.class) {
                 if (traceEnabled()) {
                     traceDownCall(nativeCallInfo.name, args);
                 }
@@ -166,7 +169,12 @@ public class JNI_Call implements CallRFFI {
     private static native void callVoid1(long address, Object arg1);
 
     @Override
-    public CallRFFINode createCallRFFINode() {
-        return new JNI_CallRFFINode();
+    public InvokeCallNode createInvokeCallNode() {
+        return new JNI_InvokeCallNode();
+    }
+
+    @Override
+    public InvokeVoidCallNode createInvokeVoidCallNode() {
+        return new JNI_InvokeVoidCallNode();
     }
 }
