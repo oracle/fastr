@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -33,21 +34,22 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 public class JNI_Stats implements StatsRFFI {
 
     public static class JNI_WorkNode extends WorkNode {
+        private static final String FFT_WORK = "fft_work";
         @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
-
         private SymbolHandle fftWorkAddress;
 
         @Override
         @TruffleBoundary
         public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
             if (fftWorkAddress == null) {
-                fftWorkAddress = fftAddress("fft_work", dlSymNode);
+                fftWorkAddress = fftAddress(FFT_WORK, dlSymNode);
             }
             return native_fft_work(fftWorkAddress.asAddress(), a, nseg, n, nspn, isn, work, iwork);
         }
     }
 
     public static class JNI_FactorNode extends FactorNode {
+        private static final String FFT_FACTOR = "fft_factor";
         @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
         private SymbolHandle fftFactorAddress;
 
@@ -55,7 +57,7 @@ public class JNI_Stats implements StatsRFFI {
         @TruffleBoundary
         public void execute(int n, int[] pmaxf, int[] pmaxp) {
             if (fftFactorAddress == null) {
-                fftFactorAddress = fftAddress("fft_factor", dlSymNode);
+                fftFactorAddress = fftAddress(FFT_FACTOR, dlSymNode);
             }
             native_fft_factor(fftFactorAddress.asAddress(), n, pmaxf, pmaxp);
 
@@ -67,8 +69,11 @@ public class JNI_Stats implements StatsRFFI {
         SymbolHandle fftAddress;
         DLLInfo dllInfo = DLL.findLibrary("stats");
         assert dllInfo != null;
-        fftAddress = dlSymNode.execute(dllInfo.handle, symbol);
-        assert fftAddress != DLL.SYMBOL_NOT_FOUND;
+        try {
+            fftAddress = dlSymNode.execute(dllInfo.handle, symbol);
+        } catch (UnsatisfiedLinkError ex) {
+            throw RInternalError.shouldNotReachHere(ex);
+        }
         return fftAddress;
     }
 

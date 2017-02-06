@@ -43,7 +43,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlopen(JNIEnv *env, j
     if (handle == NULL) {
     	char *err = dlerror();
     	initUnsatisfiedLinkError(env);
-//        (*env)->ReleaseStringUTFChars(env, jpath, path);
+    	// N.B.throw doesn't happen until return, so path is released
     	(*env)->ThrowNew(env, unsatisfiedLinkError, err);
     }
     (*env)->ReleaseStringUTFChars(env, jpath, path);
@@ -58,7 +58,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1DLL_native_1dlsym(JNIEnv *env, jc
     	char *err = dlerror();
     	if (err != NULL) {
         	initUnsatisfiedLinkError(env);
-//            (*env)->ReleaseStringUTFChars(env, jsymbol, symbol);
+        	// N.B.throw doesn't happen until return, so symbol is released
         	(*env)->ThrowNew(env, unsatisfiedLinkError, err);
     	}
     }
