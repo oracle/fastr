@@ -116,7 +116,7 @@ public final class ContextInfo implements TruffleObject {
     }
 
     public static ContextInfo getContextInfo(PolyglotEngine vm) {
-        return (ContextInfo) vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).get();
+        return vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).as(ContextInfo.class);
     }
 
     public RStartParams getStartParams() {

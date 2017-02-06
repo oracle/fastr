@@ -31,7 +31,6 @@ import org.junit.Assert;
 
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVersionNumber;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -140,26 +139,14 @@ public abstract class TestRPackages extends TestBase {
         }
         cmd = binBase.resolve("bin").resolve("R").toString();
         try {
-            Object result = evalInstallPackage(String.format(SYSTEM2_COMMAND, cmd, packagePath.path.toString(), installDir().toString()));
-            boolean success;
-            if (generatingExpected()) {
-                String stringResult = (String) result;
-                success = stringResult.contains("* DONE (");
-                if (!success) {
-                    System.out.println(stringResult);
-                }
-            } else {
-                RStringVector vecResult = (RStringVector) result;
-                success = vecResult.getAttr("status") == null;
-                if (!success) {
-                    String[] output = vecResult.getDataWithoutCopying();
-                    for (String line : output) {
-                        System.out.println(line);
-                    }
-                }
+            String result = evalInstallPackage(String.format(SYSTEM2_COMMAND, cmd, packagePath.path.toString(), installDir().toString()));
+            boolean success = result.contains("* DONE (");
+            if (!success) {
+                System.out.println(result);
             }
             return success;
         } catch (Throwable t) {
+            t.printStackTrace();
             return false;
         }
     }

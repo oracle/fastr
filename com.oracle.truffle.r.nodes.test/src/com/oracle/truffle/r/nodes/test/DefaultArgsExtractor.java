@@ -61,13 +61,12 @@ class DefaultArgsExtractor {
         HashMap<String, Samples<?>> samplesMap = new HashMap<>();
         try {
 
-            Source source = RSource.fromTextInternal("formals(" + functionName + ")",
-                            RSource.Internal.UNIT_TEST);
+            Source source = RSource.fromTextInternal("formals(" + functionName + ")", RSource.Internal.UNIT_TEST);
 
             Value defArgVal = vm.eval(source);
 
-            if (defArgVal.get() instanceof RPairList) {
-                RPairList formals = (RPairList) defArgVal.get();
+            try {
+                RPairList formals = defArgVal.as(RPairList.class);
                 RStringVector names = formals.getNames();
 
                 for (int i = 0; i < names.getLength(); i++) {
@@ -77,8 +76,7 @@ class DefaultArgsExtractor {
                     if (defVal instanceof RLanguage) {
                         String deparsedDefVal = RDeparse.deparse(defVal);
                         try {
-                            Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal,
-                                            RSource.Internal.UNIT_TEST));
+                            Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal, RSource.Internal.UNIT_TEST));
                             defVal = eval.get();
                         } catch (Throwable t) {
                             printer.accept("Warning: Unable to evaluate the default value of argument " + name + ". Expression: " + deparsedDefVal);
@@ -107,6 +105,8 @@ class DefaultArgsExtractor {
                         samplesMap.put(name, Samples.anything(defVal));
                     }
                 }
+            } catch (ClassCastException e) {
+                // no pairlist...
             }
         } catch (Throwable t) {
             printer.accept("Warning: Unable to evaluate formal arguments of function " + functionName);

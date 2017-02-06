@@ -183,17 +183,6 @@ public final class FastRSession implements RSession {
 
     @Override
     public String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
-        evalAsObject(testClass, expression, contextInfo, longTimeout);
-        return consoleHandler.buffer.toString();
-    }
-
-    /**
-     * Returns the actual object from evaluating expression. Used (and result ignored) by
-     * {@link #eval} but also used for package installation via the {@code system2} command, where
-     * the result is used to check whether the installation succeeded.
-     */
-    public Object evalAsObject(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
-        Object result = null;
         Timer timer = null;
         consoleHandler.reset();
         try {
@@ -212,7 +201,7 @@ public final class FastRSession implements RSession {
                     Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
                     try {
                         try {
-                            result = vm.eval(source).get();
+                            vm.eval(source);
                             // checked exceptions are wrapped in RuntimeExceptions
                         } catch (RuntimeException e) {
                             if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
@@ -252,7 +241,7 @@ public final class FastRSession implements RSession {
                 timer.cancel();
             }
         }
-        return result;
+        return consoleHandler.buffer.toString();
     }
 
     private static Timer scheduleTimeBoxing(PolyglotEngine engine, long timeout) {
