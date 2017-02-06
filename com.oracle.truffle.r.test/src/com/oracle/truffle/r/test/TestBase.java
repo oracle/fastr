@@ -889,11 +889,11 @@ public class TestBase {
      * we go via the {@code system2} R function (which may call {@link ProcessBuilder} internally).
      *
      */
-    protected static Object evalInstallPackage(String system2Command) throws Throwable {
+    protected static String evalInstallPackage(String system2Command) throws Throwable {
         if (generatingExpected()) {
             return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
         } else {
-            return fastROutputManager.fastRSession.evalAsObject(null, system2Command, null, true);
+            return fastROutputManager.fastRSession.eval(null, system2Command, null, true);
         }
     }
 
