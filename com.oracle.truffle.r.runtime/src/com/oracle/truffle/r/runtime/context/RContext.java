@@ -448,13 +448,15 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         if (initialInfo == null) {
             /*
              * This implies that FastR is being invoked initially from another Truffle language and
-             * not via RCommand/RscriptCommand.
+             * not via RCommand/RscriptCommand. In this case, we also assume that no previously
+             * stored session should be restored.
              */
-            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[0], false), false), null,
+            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"--no-restore"}, false), false), null,
                             ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
         }
+
         this.initial = isInitial;
         this.env = env;
         this.stateREnvVars = REnvVars.newContextState();

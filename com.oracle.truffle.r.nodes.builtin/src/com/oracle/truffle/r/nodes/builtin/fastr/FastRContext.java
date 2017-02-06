@@ -40,12 +40,10 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RChannel;
-import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -295,9 +293,7 @@ public class FastRContext {
     }
 
     private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
-        RStartParams startParams = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, EMPTY, false), false);
-        ContextInfo info = ContextInfo.create(startParams, null, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
-        return info;
+        return ContextInfo.createNoRestore(Client.RSCRIPT, null, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
     }
 
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)

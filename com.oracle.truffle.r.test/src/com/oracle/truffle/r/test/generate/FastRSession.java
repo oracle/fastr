@@ -156,7 +156,7 @@ public final class FastRSession implements RSession {
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[0], false), false);
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
         return ContextInfo.create(params, null, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
     }
 

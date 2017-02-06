@@ -46,7 +46,7 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public class GnuROneShotRSession implements RSession {
 
-    private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent"};
+    private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent", "--no-restore"};
     private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
     private static final String NATIVE_PROJECT = "com.oracle.truffle.r.native";
     private static final int DEFAULT_TIMEOUT_MINS = 5;
