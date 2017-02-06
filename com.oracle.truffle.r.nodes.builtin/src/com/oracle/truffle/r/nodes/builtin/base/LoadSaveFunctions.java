@@ -196,7 +196,7 @@ public class LoadSaveFunctions {
 
         @Override
         protected void createCasts(CastBuilder casts) {
-            casts.arg("list").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.FIRST_ARGUMENT_NOT_CHARVEC).findFirst();
+            casts.arg("list").mustBe(stringValue()).asStringVector();
             ConnectionFunctions.Casts.connection(casts);
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
             casts.arg("version").allowNull().mustBe(integerValue());
