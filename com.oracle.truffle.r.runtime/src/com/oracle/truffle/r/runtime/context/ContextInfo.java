@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RCmdOptions;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -96,6 +98,21 @@ public final class ContextInfo implements TruffleObject {
 
     public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
         return create(startParams, env, kind, parent, consoleHandler, TimeZone.getDefault());
+    }
+
+    /**
+     * Create a context configuration object such that FastR does not restore previously stored
+     * sessions on startup.
+     *
+     * @param env TODO
+     * @param kind defines the degree to which this context shares base and package environments
+     *            with its parent
+     * @param parent if non-null {@code null}, the parent creating the context
+     * @param consoleHandler a {@link ConsoleHandler} for output
+     */
+    public static ContextInfo createNoRestore(Client client, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(client, new String[]{"--no-restore"}, false), false);
+        return create(params, env, kind, parent, consoleHandler);
     }
 
     public static ContextInfo getContextInfo(PolyglotEngine vm) {
