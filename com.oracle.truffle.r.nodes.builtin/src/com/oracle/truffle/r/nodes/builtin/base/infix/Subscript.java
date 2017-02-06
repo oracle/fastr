@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -188,6 +188,10 @@ public abstract class Subscript extends RBuiltinNode {
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)
     public abstract class DefaultBuiltin {
         // same implementation as "[[", with different dispatch
+    }
+
+    static {
+        Casts.noCasts(Subscript.class);
     }
 
     public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {

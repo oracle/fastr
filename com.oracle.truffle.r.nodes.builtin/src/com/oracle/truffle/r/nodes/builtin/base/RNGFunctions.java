@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -52,10 +52,10 @@ public class RNGFunctions {
     @RBuiltin(name = "set.seed", visibility = OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"}, behavior = MODIFIES_STATE)
     public abstract static class SetSeed extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SetSeed.class);
             casts.arg("seed").allowNull().mustBe(numericValue(), SHOW_CALLER, SEED_NOT_VALID_INT).asIntegerVector().findFirst();
-            Casts.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
+            CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             // TODO: implement normal.kind specializations with String
             casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), SHOW_CALLER, INVALID_NORMAL_TYPE_IN_RGNKIND);
         }
@@ -83,10 +83,10 @@ public class RNGFunctions {
     @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"}, behavior = MODIFIES_STATE)
     public abstract static class RNGkind extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
-            Casts.kindInteger(casts, "normkind", INVALID_NORMAL_TYPE_IN_RGNKIND);
+        static {
+            Casts casts = new Casts(RNGkind.class);
+            CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
+            CastsHelper.kindInteger(casts, "normkind", INVALID_NORMAL_TYPE_IN_RGNKIND);
         }
 
         @Specialization
@@ -102,8 +102,8 @@ public class RNGFunctions {
         }
     }
 
-    private static final class Casts {
-        public static void kindInteger(CastBuilder casts, String name, Message error, Object... messageArgs) {
+    private static final class CastsHelper {
+        public static void kindInteger(Casts casts, String name, Message error, Object... messageArgs) {
             casts.arg(name).mapNull(constant(RRNG.NO_KIND_CHANGE)).mustBe(numericValue(), SHOW_CALLER, error, messageArgs).asIntegerVector().findFirst();
         }
     }

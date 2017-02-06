@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,6 +31,10 @@ public final class Dqrdc2 extends RExternalBuiltinNode {
     private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
+
+    static {
+        Casts.noCasts(Dqrdc2.class);
+    }
 
     @Override
     public RList call(RArgsValuesAndNames args) {

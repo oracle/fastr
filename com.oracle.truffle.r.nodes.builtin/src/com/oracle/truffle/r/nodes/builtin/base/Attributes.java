@@ -56,6 +56,10 @@ public abstract class Attributes extends RBuiltinNode {
     @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
+    static {
+        Casts.noCasts(Attributes.class);
+    }
+
     @Specialization
     protected Object attributesNull(RAbstractContainer container,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {

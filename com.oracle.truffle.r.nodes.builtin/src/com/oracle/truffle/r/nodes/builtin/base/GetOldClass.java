@@ -40,6 +40,10 @@ public abstract class GetOldClass extends RBuiltinNode {
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
+    static {
+        Casts.noCasts(GetOldClass.class);
+    }
+
     @Specialization
     protected Object getOldClass(RAbstractContainer arg) {
         if (isObjectProfile.profile(getClassNode.isObject(arg))) {

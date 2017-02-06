@@ -24,7 +24,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -49,8 +48,8 @@ public abstract class EncodeString extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final BranchProfile everSeenNA = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(EncodeString.class);
         casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
 
         casts.arg("width").asIntegerVector().findFirst().mustBe(intNA().or(gte0()));

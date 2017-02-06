@@ -42,7 +42,6 @@ import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UpdateAttrNodeGen.InternStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -98,8 +97,8 @@ public abstract class UpdateAttr extends RBuiltinNode {
         }
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateAttr.class);
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
         casts.arg("x"); // disallows null

@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -45,8 +44,8 @@ public abstract class Primitive extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Primitive.class);
         casts.arg("name").defaultError(Message.STRING_ARGUMENT_REQUIRED).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
     }
 

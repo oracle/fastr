@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -168,8 +167,8 @@ public class GetFunctions {
 
         public abstract Object execute(VirtualFrame frame, String x, REnvironment environment, String mode, boolean inherits);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Get.class);
             casts.arg("x").mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
                             chain(asIntegerVector()).with(findFirst().integerElement()).end());
@@ -205,8 +204,8 @@ public class GetFunctions {
 
         private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Get0.class);
             casts.arg("x").mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
                             chain(asIntegerVector()).with(findFirst().integerElement()).end());
@@ -252,8 +251,8 @@ public class GetFunctions {
 
         @CompilationFinal private boolean needsCallerFrame;
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(MGet.class);
             casts.arg("x").mustBe(stringValue()).asStringVector();
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
                             chain(asIntegerVector()).with(findFirst().integerElement()).end());

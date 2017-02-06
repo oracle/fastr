@@ -38,7 +38,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
@@ -124,8 +123,8 @@ public abstract class UpdateField extends RBuiltinNode {
 
     private final ConditionProfile coerceList = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateField.class);
         casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue()).asStringVector().findFirst();
     }
 

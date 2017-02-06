@@ -86,15 +86,16 @@ public class SerializeFunctions {
             }
         }
 
-        protected void connection(CastBuilder casts) {
+        protected static void connection(Casts casts) {
             casts.arg("con").mustBe(integerValue()).asIntegerVector().findFirst();
         }
     }
 
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
     public abstract static class UnserializeFromConn extends Adapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(UnserializeFromConn.class);
             connection(casts);
         }
 
@@ -112,8 +113,9 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "serializeToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "ascii", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeToConn extends Adapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SerializeToConn.class);
             connection(casts);
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
             casts.arg("version").allowNull().mustBe(integerValue());
@@ -135,8 +137,9 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
     public abstract static class Unserialize extends Adapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(Unserialize.class);
             casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
                             asIntegerVector().setNext(findFirst().integerElement()));
         }
@@ -154,8 +157,9 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "con", "type", "version", "refhook"}, behavior = IO)
     public abstract static class Serialize extends Adapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(Serialize.class);
             casts.arg("con").allowNull().mustBe(integerValue()).asIntegerVector().findFirst();
             casts.arg("type").asIntegerVector().findFirst();
         }
@@ -175,8 +179,9 @@ public class SerializeFunctions {
 
     @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "con", "xdr", "version", "refhook"}, behavior = IO)
     public abstract static class SerializeB extends Adapter {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SerializeB.class);
             connection(casts);
             casts.arg("xdr").asLogicalVector().findFirst();
         }

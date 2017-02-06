@@ -19,15 +19,13 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
-
-import java.util.function.Function;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
@@ -137,19 +135,15 @@ public class BitwiseFunctions {
             }
             return RDataFactory.createIntVector(na, RDataFactory.INCOMPLETE_VECTOR);
         }
-
-        protected Function<Object, String> getArgType() {
-            return x -> typeofA.execute(x).getName();
-        }
     }
 
     @RBuiltin(name = "bitwiseAnd", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseAnd extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        static {
+            Casts casts = new Casts(BitwiseAnd.class);
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.AND.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -167,10 +161,10 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseOr", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseOr extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        static {
+            Casts casts = new Casts(BitwiseOr.class);
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.OR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -188,10 +182,10 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseXor", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
     public abstract static class BitwiseXor extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        static {
+            Casts casts = new Casts(BitwiseXor.class);
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("b").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.XOR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
         }
 
         @Specialization
@@ -209,9 +203,9 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseShiftR", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftR extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+        static {
+            Casts casts = new Casts(BitwiseShiftR.class);
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
             casts.arg("n").mapIf(stringValue(), asStringVector(), asIntegerVector());
         }
 
@@ -236,9 +230,9 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseShiftL", kind = INTERNAL, parameterNames = {"a", "n"}, behavior = PURE)
     public abstract static class BitwiseShiftL extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.SHIFTL.name).mustBe(
+        static {
+            Casts casts = new Casts(BitwiseShiftL.class);
+            casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
             casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
                             asIntegerVector());
@@ -265,10 +259,12 @@ public class BitwiseFunctions {
     @RBuiltin(name = "bitwiseNot", kind = INTERNAL, parameterNames = {"a"}, behavior = PURE)
     public abstract static class BitwiseNot extends BasicBitwise {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, getArgType(), Operation.NOT.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-        }
+        // @formatter:off
+    static {
+        Casts casts = new Casts(BitwiseNot.class);
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.NOT.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
+    }
+        //@formatter:on
 
         @Specialization
         protected Object bitwNot(RAbstractIntVector a) {

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,6 +33,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 // Transcribed from GnuR, library/stats/src/complete_cases.c
 
 public final class CompleteCases extends RExternalBuiltinNode {
+
+    static {
+        Casts.noCasts(CompleteCases.class);
+    }
 
     private RError invalidType(Object entry) {
         throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) entry).getRType().getName());

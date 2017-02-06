@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AcosNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AsinNodeGen;
@@ -495,8 +494,8 @@ public class TrigExpFunctions {
         private final NACheck yNACheck = NACheck.create();
         private final NACheck xNACheck = NACheck.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Atan2.class);
             casts.arg(0).mapIf(numericValue(), asDoubleVector());
             casts.arg(1).mapIf(numericValue(), asDoubleVector());
         }

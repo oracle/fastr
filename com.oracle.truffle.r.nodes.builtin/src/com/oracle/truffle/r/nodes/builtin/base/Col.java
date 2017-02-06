@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -41,8 +40,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "col", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
 public abstract class Col extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Col.class);
         casts.arg("dims").defaultError(RError.SHOW_CALLER, RError.Message.MATRIX_LIKE_REQUIRED, "col").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
     }
 

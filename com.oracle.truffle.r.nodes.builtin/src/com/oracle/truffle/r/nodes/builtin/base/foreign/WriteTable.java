@@ -18,7 +18,6 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
@@ -50,8 +49,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(WriteTable.class);
         // file
         casts.arg(1).defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
         // nrows

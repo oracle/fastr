@@ -20,7 +20,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -43,8 +42,8 @@ public abstract class CumProd extends RBuiltinNode {
 
     @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.createOperation();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(CumProd.class);
         casts.arg("x").allowNull().mapIf(complexValue().not(), asDoubleVector(true, false, false));
     }
 

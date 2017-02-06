@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.utils.Crc64;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -39,8 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "crc64", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class CRC64 extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(CRC64.class);
         casts.arg("x").defaultError(RError.NO_CALLER, Message.INPUT_MUST_BE_STRING).mustBe(stringValue());
     }
 

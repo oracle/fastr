@@ -46,7 +46,7 @@ public class DuplicatedFunctions {
 
         private final ConditionProfile incomparable = ConditionProfile.createBinaryProfile();
 
-        protected void casts(CastBuilder casts) {
+        protected static void casts(Casts casts) {
             // these are similar to those in DuplicatedFunctions.java
             casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.SHOW_CALLER,
                             RError.Message.APPLIES_TO_VECTORS,
@@ -85,8 +85,8 @@ public class DuplicatedFunctions {
     @RBuiltin(name = "duplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
     public abstract static class Duplicated extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Duplicated.class);
             casts(casts);
             // currently not supported and not tested, but NA is a correct value (the same for empty
             // vectors) whereas 0 is not (throws an error)
@@ -132,8 +132,8 @@ public class DuplicatedFunctions {
     @RBuiltin(name = "anyDuplicated", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast"}, behavior = PURE)
     public abstract static class AnyDuplicated extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AnyDuplicated.class);
             casts(casts);
         }
 

@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.TempPathName;
@@ -42,8 +41,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"}, behavior = COMPLEX)
 public abstract class TempFile extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(TempFile.class);
         casts.arg("pattern").asVector().mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.INVALID_FILENAME_PATTERN).mustBe(notEmpty(), RError.SHOW_CALLER, RError.Message.NO, "pattern");
         casts.arg("tempdir").asVector().mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "tempdir").findFirst(RError.SHOW_CALLER, RError.Message.NO, "tempdir");
         casts.arg("fileext").asVector().mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.INVALID_FILE_EXT).mustBe(notEmpty(), RError.SHOW_CALLER, RError.Message.NO, "fileext");

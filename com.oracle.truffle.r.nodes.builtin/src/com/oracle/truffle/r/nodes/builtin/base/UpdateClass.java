@@ -23,7 +23,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClass
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
@@ -51,8 +50,8 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Child private TypeofNode typeof;
     @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateClass.class);
         casts.arg("x"); // disallows null
         casts.arg("value").asStringVector();
     }

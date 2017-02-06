@@ -140,6 +140,17 @@ public abstract class RBaseNode extends Node {
         Node current = this;
         while (current != null) {
             if (current instanceof RSyntaxNode && ((RSyntaxNode) current).isSyntax()) {
+                if (current instanceof RSyntaxCall) {
+                    RSyntaxCall call = (RSyntaxCall) current;
+                    if (call.getSyntaxArguments().length > 0 && call.getSyntaxLHS() instanceof RSyntaxLookup &&
+                                    ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals(".Internal")) {
+                        // unwrap .Internal calls
+                        RSyntaxElement firstArg = call.getSyntaxArguments()[0];
+                        if (firstArg instanceof RSyntaxNode) {
+                            return (RSyntaxNode) firstArg;
+                        }
+                    }
+                }
                 return (RSyntaxNode) current;
             }
             current = current.getParent();

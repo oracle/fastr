@@ -58,6 +58,10 @@ public abstract class Split extends RBuiltinNode {
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
 
+    static {
+        Casts.noCasts(Split.class);
+    }
+
     public static class SplitTemplate {
         @SuppressWarnings("unused") private int[] collectResultsSize;
         @SuppressWarnings("unused") private int nLevels;

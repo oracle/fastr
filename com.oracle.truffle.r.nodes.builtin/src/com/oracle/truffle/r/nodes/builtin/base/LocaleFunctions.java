@@ -38,7 +38,7 @@ import java.nio.charset.Charset;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -55,9 +55,9 @@ public class LocaleFunctions {
     @RBuiltin(name = "Sys.getlocale", kind = INTERNAL, parameterNames = {"category"}, behavior = READS_STATE)
     public abstract static class GetLocale extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.category(casts);
+        static {
+            Casts casts = new Casts(GetLocale.class);
+            CastsHelper.category(casts);
         }
 
         @Specialization
@@ -93,9 +93,9 @@ public class LocaleFunctions {
     @RBuiltin(name = "Sys.setlocale", kind = INTERNAL, parameterNames = {"category", "locale"}, behavior = MODIFIES_STATE)
     public abstract static class SetLocale extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.category(casts);
+        static {
+            Casts casts = new Casts(SetLocale.class);
+            CastsHelper.category(casts);
             casts.arg("locale").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
 
@@ -134,9 +134,10 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "enc2native", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
     public abstract static class Enc2Native extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.xCharacterVector(casts);
+
+        static {
+            Casts casts = new Casts(Enc2Native.class);
+            CastsHelper.xCharacterVector(casts);
         }
 
         @Specialization
@@ -148,9 +149,10 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "enc2utf8", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
     public abstract static class Enc2Utf8 extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.xCharacterVector(casts);
+
+        static {
+            Casts casts = new Casts(Enc2Utf8.class);
+            CastsHelper.xCharacterVector(casts);
         }
 
         @Specialization
@@ -162,8 +164,9 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "bindtextdomain", kind = PRIMITIVE, parameterNames = {"domain", "dirname"}, behavior = READS_STATE)
     public abstract static class BindTextDomain extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(BindTextDomain.class);
             casts.arg("domain").mustBe(stringValue(), INVALID_VALUE, "domain");
         }
 
@@ -175,12 +178,12 @@ public class LocaleFunctions {
         }
     }
 
-    private static final class Casts {
-        private static void xCharacterVector(CastBuilder casts) {
+    private static final class CastsHelper {
+        private static void xCharacterVector(Casts casts) {
             casts.arg("x").mustBe(stringValue(), ARGUMENT_NOT_CHAR_VECTOR);
         }
 
-        private static void category(CastBuilder casts) {
+        private static void category(Casts casts) {
             casts.arg("category").mustBe(numericValue(), NO_CALLER, INVALID_ARGUMENT, "category").asIntegerVector().findFirst();
         }
     }

@@ -36,7 +36,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -101,8 +100,8 @@ public abstract class Parse extends RBuiltinNode {
     @Child private SetFixedAttributeNode setWholeSrcRefAttrNode = SetFixedAttributeNode.create("wholeSrcref");
     @Child private SetFixedAttributeNode setSrcFileAttrNode = SetFixedAttributeNode.create("srcfile");
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Parse.class);
         // Note: string is captured by the R wrapper and transformed to a file, other types not
         casts.arg("conn").defaultError(MUST_BE_STRING_OR_CONNECTION, "file").mustNotBeNull().asIntegerVector().findFirst();
         casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).notNA(-1);

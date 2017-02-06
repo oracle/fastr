@@ -47,6 +47,10 @@ public abstract class Substitute extends RBuiltinNode {
 
     @Child private Quote quote;
 
+    static {
+        Casts.noCasts(Substitute.class);
+    }
+
     @Specialization
     protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
         return doSubstituteWithEnv(expr, REnvironment.frameToEnvironment(frame.materialize()));

@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
@@ -74,8 +73,8 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
         return new Object[]{RMissing.instance, "syntaxelement", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(FastRSyntaxTree.class);
         casts.arg("func").mustBe(instanceOf(RFunction.class));
         casts.arg("visitMode").asStringVector().findFirst();
         casts.arg("printSource").asLogicalVector().findFirst().map(toBoolean());

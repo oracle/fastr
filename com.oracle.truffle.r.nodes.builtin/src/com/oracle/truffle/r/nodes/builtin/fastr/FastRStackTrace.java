@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -45,8 +44,8 @@ public abstract class FastRStackTrace extends RBuiltinNode {
         return new Object[]{RRuntime.LOGICAL_FALSE};
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(FastRStackTrace.class);
         casts.arg("print.frame.contents").asLogicalVector().findFirst().map(toBoolean());
     }
 

@@ -60,12 +60,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class SortFunctions {
 
     private abstract static class Adapter extends RBuiltinNode {
-        protected static void addCastForX(CastBuilder castBuilder) {
-            castBuilder.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
+        protected static void addCastForX(Casts casts) {
+            casts.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
         }
 
-        protected static void addCastForDecreasing(CastBuilder castBuilder) {
-            castBuilder.arg("decreasing").defaultError(SHOW_CALLER, INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+        protected static void addCastForDecreasing(Casts casts) {
+            casts.arg("decreasing").defaultError(SHOW_CALLER, INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @TruffleBoundary
@@ -152,8 +152,8 @@ public class SortFunctions {
     @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class Sort extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Sort.class);
             addCastForX(casts);
             addCastForDecreasing(casts);
         }
@@ -182,8 +182,8 @@ public class SortFunctions {
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
     public abstract static class QSort extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(QSort.class);
             addCastForX(casts);
             addCastForDecreasing(casts);
         }
@@ -202,8 +202,8 @@ public class SortFunctions {
     @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"}, behavior = PURE)
     public abstract static class PartialSort extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(PartialSort.class);
             addCastForX(casts);
         }
 
@@ -242,8 +242,8 @@ public class SortFunctions {
     public abstract static class RadixSort extends Adapter {
         @Child private Order orderNode = OrderNodeGen.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(RadixSort.class);
             casts.arg("na.last").asLogicalVector().findFirst();
             casts.arg("decreasing").mustBe(numericValue(), SHOW_CALLER, INVALID_LOGICAL, "decreasing").asLogicalVector();
             casts.arg("retgrp").asLogicalVector().findFirst().map(toBoolean());

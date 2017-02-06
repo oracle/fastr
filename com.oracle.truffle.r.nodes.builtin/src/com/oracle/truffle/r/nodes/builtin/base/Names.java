@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
+import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -43,6 +45,10 @@ public abstract class Names extends RBuiltinNode {
 
     private final ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+
+    static {
+        Casts.noCasts(Names.class);
+    }
 
     @Specialization
     protected Object getNames(RAbstractContainer container) {

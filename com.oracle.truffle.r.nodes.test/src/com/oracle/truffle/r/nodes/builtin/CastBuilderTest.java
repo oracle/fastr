@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicIntegerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
@@ -103,8 +104,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.NewEnv;
 
 /**
  * Tests the cast pipelines and also that the samples generation process matches the intended
@@ -121,6 +125,7 @@ public class CastBuilderTest {
     private static final boolean TEST_SAMPLING = false;
 
     private CastBuilder cb;
+    private CastNode castNode;
     private PreinitialPhaseBuilder arg;
 
     static {
@@ -135,6 +140,7 @@ public class CastBuilderTest {
     public void setUp() {
         cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class));
         arg = cb.arg("x");
+        castNode = null;
     }
 
     @After
@@ -486,6 +492,21 @@ public class CastBuilderTest {
         assertCastPreserves(RDataFactory.createList());
         assertEquals(true, cast(1));
         assertCastFail(RRuntime.INT_NA);
+    }
+
+    @Test
+    public void testChain2() {
+        arg.
+        mapIf(instanceOf(RAbstractListVector.class),
+           chain(asVector()).
+              with(findFirst().objectElement()).
+              end()).mustBe(instanceOf(RList.class).or(instanceOf(REnvironment.class)));
+
+        RList l = RDataFactory.createList();
+        assertEquals(l, cast(RDataFactory.createList(new Object[]{l})));
+        NewEnv env = RDataFactory.createNewEnv("aaa");
+        assertEquals(env, cast(RDataFactory.createList(new Object[]{env})));
+        assertCastPreserves(env);
     }
 
     public Function<InitialPhaseBuilder<Object>, InitialPhaseBuilder<Object>> nonListToBoolean() {
@@ -844,8 +865,7 @@ public class CastBuilderTest {
      * Casts given object using the configured pipeline in {@link #arg}.
      */
     private Object cast(Object a) {
-        CastNode argCastNode = cb.getCasts()[0];
-        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(argCastNode, (node, args) -> node.execute(args[0]));
+        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.execute(args[0]));
         return argCastNodeHandle.call(a);
     }
 
@@ -900,7 +920,7 @@ public class CastBuilderTest {
     }
 
     private TypeExpr resultTypes() {
-        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
+        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(getCastNode());
         return sampler.resultTypes();
     }
 
@@ -909,12 +929,19 @@ public class CastBuilderTest {
             return;
         }
 
-        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cb.getCasts()[0]);
+        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(getCastNode());
         Samples<?> samples = sampler.collectSamples();
         if (!emptyPositiveSamplesAllowed) {
             Assert.assertFalse(samples.positiveSamples().isEmpty());
         }
         testPipeline(samples);
+    }
+
+    private CastNode getCastNode() {
+        if (castNode == null) {
+            castNode = cb.getCasts()[0];
+        }
+        return castNode;
     }
 
     private void testPipeline(Samples<?> samples) {

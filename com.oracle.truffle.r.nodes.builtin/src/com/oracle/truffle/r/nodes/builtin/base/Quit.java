@@ -19,7 +19,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.RError;
@@ -34,8 +33,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 @RBuiltin(name = "quit", visibility = OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"}, behavior = COMPLEX)
 public abstract class Quit extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Quit.class);
         casts.arg("save").mustBe(stringValue(), RError.Message.QUIT_ASK).asStringVector().findFirst();
         casts.arg("status").asIntegerVector().findFirst();
         casts.arg("runLast").asLogicalVector().findFirst();

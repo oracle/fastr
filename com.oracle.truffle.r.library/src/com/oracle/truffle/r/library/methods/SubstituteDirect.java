@@ -38,6 +38,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
+    static {
+        Casts.noCasts(SubstituteDirect.class);
+    }
+
     @Specialization
     @TruffleBoundary
     protected static Object substituteDirect(Object object, REnvironment env) {

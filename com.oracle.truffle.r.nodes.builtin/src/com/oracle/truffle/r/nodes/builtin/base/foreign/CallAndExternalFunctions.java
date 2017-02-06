@@ -226,6 +226,10 @@ public class CallAndExternalFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        static {
+            Casts.noCasts(DotCall.class);
+        }
+
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
@@ -723,6 +727,10 @@ public class CallAndExternalFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        static {
+            Casts.noCasts(DotExternal.class);
+        }
+
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
@@ -820,6 +828,10 @@ public class CallAndExternalFunctions {
         private static final Object CALL = "call";
         private static final Object OP = "op";
         private static final Object RHO = "rho";
+
+        static {
+            Casts.noCasts(DotExternal2.class);
+        }
 
         private final BranchProfile errorProfile = BranchProfile.create();
 

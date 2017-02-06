@@ -44,6 +44,10 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 public abstract class FastRTry extends RBuiltinNode {
     @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
+    static {
+        Casts.noCasts(FastRTry.class);
+    }
+
     @Specialization
     public Object tryFunc(VirtualFrame frame, RFunction func) {
         try {

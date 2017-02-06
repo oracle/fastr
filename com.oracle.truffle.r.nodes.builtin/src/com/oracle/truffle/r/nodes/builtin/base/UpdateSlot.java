@@ -25,7 +25,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -56,8 +55,8 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private CallRFunctionNode checkAtAssignmentCall;
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateSlot.class);
         casts.arg(0).asAttributable(true, true, true);
     }
 

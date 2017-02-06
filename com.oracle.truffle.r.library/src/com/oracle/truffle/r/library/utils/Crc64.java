@@ -26,15 +26,14 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Crc64.class);
         casts.arg(0).mustNotBeNull(RError.NO_CALLER,
                         RError.Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INPUT_MUST_BE_STRING);
     }

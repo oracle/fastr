@@ -33,7 +33,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -66,8 +65,8 @@ public abstract class Matrix extends RBuiltinNode {
         return (RAbstractVector) updateDimNames.executeRAbstractContainer(vector, o);
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Matrix.class);
         casts.arg("data").asVector().mustBe(instanceOf(RAbstractVector.class));
         casts.arg("nrow").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
         casts.arg("ncol").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);

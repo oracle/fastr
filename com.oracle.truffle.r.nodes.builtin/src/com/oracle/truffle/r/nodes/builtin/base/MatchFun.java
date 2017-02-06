@@ -37,7 +37,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchFunNodeGen.MatchFunInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -65,8 +64,8 @@ public abstract class MatchFun extends RBuiltinNode {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE};
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(MatchFun.class);
         casts.arg("descend").asLogicalVector().findFirst().map(toBoolean());
     }
 

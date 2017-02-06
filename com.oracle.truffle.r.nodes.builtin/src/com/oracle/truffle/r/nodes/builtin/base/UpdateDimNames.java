@@ -55,6 +55,10 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
 
+    static {
+        Casts.noCasts(UpdateDimNames.class);
+    }
+
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

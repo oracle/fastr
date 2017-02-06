@@ -65,6 +65,10 @@ public abstract class Transpose extends RBuiltinNode {
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode;
 
+    static {
+        Casts.noCasts(Transpose.class);
+    }
+
     public abstract Object execute(RAbstractVector o);
 
     @FunctionalInterface

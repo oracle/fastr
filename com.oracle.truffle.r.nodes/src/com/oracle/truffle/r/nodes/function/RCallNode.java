@@ -803,7 +803,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                             arg = casts[i].execute(arg);
                         }
                     } else {
-                        assert casts.length <= i || casts[i] == null : "no casts allowed on non-evaluated arguments";
+                        assert casts.length <= i || casts[i] == null : "no casts allowed on non-evaluated arguments in builtin " + builtinDescriptor.getName();
                         if (arg instanceof RPromise || arg instanceof RMissing) {
                             if (!nonWrapSeen[i]) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();

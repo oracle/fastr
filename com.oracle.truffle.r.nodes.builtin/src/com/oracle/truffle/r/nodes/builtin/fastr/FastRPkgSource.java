@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -70,8 +69,8 @@ public abstract class FastRPkgSource extends RBuiltinNode {
         return new Object[]{RNull.instance, RRuntime.LOGICAL_FALSE};
     }
 
-    @Override
-    public void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(FastRPkgSource.class);
         casts.arg("pkgs").mustBe(stringValue());
         casts.arg("verbose").asLogicalVector().findFirst().notNA().map(toBoolean());
     }

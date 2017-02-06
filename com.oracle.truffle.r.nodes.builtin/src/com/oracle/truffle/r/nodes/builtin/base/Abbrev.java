@@ -18,7 +18,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -30,8 +29,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Abbrev extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
 
-    @Override
-    public void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Abbrev.class);
         casts.arg("x").mustBe(stringValue());
         casts.arg("minlength").asIntegerVector().findFirst().notNA();
         casts.arg("use.classes").asLogicalVector().findFirst().notNA().map(toBoolean());

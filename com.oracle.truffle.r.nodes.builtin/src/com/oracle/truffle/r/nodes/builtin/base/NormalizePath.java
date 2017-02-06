@@ -38,7 +38,6 @@ import java.nio.file.NoSuchFileException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -54,8 +53,8 @@ public abstract class NormalizePath extends RBuiltinNode {
 
     private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(NormalizePath.class);
         casts.arg("path").mustBe(stringValue(), NOT_CHARACTER_VECTOR, "path");
         casts.arg("winslash").defaultError(NOT_CHARACTER_VECTOR, "winslash").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(eq("/").or(eq("\\\\")).or(eq("\\")),
                         WRONG_WINSLASH);

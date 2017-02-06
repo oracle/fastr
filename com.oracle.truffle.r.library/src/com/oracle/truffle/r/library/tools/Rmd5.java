@@ -33,7 +33,6 @@ import java.security.NoSuchAlgorithmException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -45,8 +44,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Rmd5.class);
         casts.arg(0).defaultError(RError.NO_CALLER, RError.Message.ARG_MUST_BE_CHARACTER, "files").mustBe(stringValue());
     }
 

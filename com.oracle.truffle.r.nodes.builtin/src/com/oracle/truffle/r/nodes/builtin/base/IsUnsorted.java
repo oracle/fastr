@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryMapBooleanFunctionNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Order.CmpNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
@@ -55,8 +54,8 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     private final ConditionProfile strictlyProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(IsUnsorted.class);
         casts.arg("strictly").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).notNA().map(toBoolean());
     }
 

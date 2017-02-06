@@ -49,7 +49,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
@@ -104,8 +103,8 @@ public abstract class Combine extends RBuiltinNode {
     private final ConditionProfile hasNewNamesProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private final ValueProfile[] argProfiles = new ValueProfile[MAX_PROFILES];
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Combine.class);
         casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
     }
 

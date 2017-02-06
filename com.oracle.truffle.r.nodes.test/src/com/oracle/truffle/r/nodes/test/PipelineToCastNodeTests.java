@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.test;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+import java.util.Optional;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
@@ -127,6 +129,6 @@ public class PipelineToCastNodeTests {
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
         configBuilder.setValueForwarding(false);
-        return PipelineToCastNode.convert(configBuilder.build(), lastStep);
+        return PipelineToCastNode.convert(configBuilder.build(), lastStep, Optional.empty());
     }
 }

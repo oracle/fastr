@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -70,8 +69,8 @@ public abstract class Lapply extends RBuiltinNode {
 
     @Child private LapplyInternalNode lapply = LapplyInternalNodeGen.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Lapply.class);
         // to make conversion of X parameter 100% correct, we'd need to match semantics of
         // asVector() to whatever GNU R is doing there; still this can be a problem only if the
         // internal is called directly (otherwise, it's guaranteed that it's a vector)

@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
@@ -90,8 +89,8 @@ public class HiddenInternalFunctions {
             }
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(MakeLazy.class);
             casts.arg("names").mustBe(stringValue()).asStringVector();
             casts.arg("eval.env").mustBe(instanceOf(REnvironment.class));
             casts.arg("assign.env").mustBe(instanceOf(REnvironment.class));
@@ -144,8 +143,9 @@ public class HiddenInternalFunctions {
      */
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impenv", "impnames", "expenv", "expnames"}, behavior = COMPLEX)
     public abstract static class ImportIntoEnv extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(ImportIntoEnv.class);
             casts.arg("impenv").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
             casts.arg("impnames").defaultError(RError.Message.INVALID_ARGUMENT, "names").mustBe(stringValue()).asStringVector();
             casts.arg("expenv").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class), RError.Message.BAD_ENVIRONMENT, "import");
@@ -188,8 +188,8 @@ public class HiddenInternalFunctions {
 
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(LazyLoadDBFetch.class);
             casts.arg("compressed").asIntegerVector().findFirst();
         }
 
@@ -278,6 +278,10 @@ public class HiddenInternalFunctions {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{".C", ".Call", ".Fortran", ".External"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector NATIVE_ROUTINE_LIST = RDataFactory.createStringVectorFromScalar("NativeRoutineList");
 
+        static {
+            Casts.noCasts(GetRegisteredRoutines.class);
+        }
+
         @Specialization
         protected RList getRegisteredRoutines(@SuppressWarnings("unused") RNull info) {
             throw RError.error(this, RError.Message.NULL_DLLINFO);
@@ -323,6 +327,10 @@ public class HiddenInternalFunctions {
     public abstract static class GetVarsFromFrame extends RBuiltinNode {
         @Child private PromiseHelperNode promiseHelper;
 
+        static {
+            Casts.noCasts(GetVarsFromFrame.class);
+        }
+
         @Specialization
         protected RList getVarsFromFrame(VirtualFrame frame, RAbstractStringVector varsVec, REnvironment env, byte forceArg) {
             boolean force = RRuntime.fromLogical(forceArg);
@@ -357,8 +365,8 @@ public class HiddenInternalFunctions {
 
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(LazyLoadDBinsertValue.class);
             casts.arg("ascii").asIntegerVector().findFirst();
             casts.arg("compsxp").asIntegerVector().findFirst();
         }
@@ -458,6 +466,11 @@ public class HiddenInternalFunctions {
 
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path", behavior = COMPLEX)
     public abstract static class LazyLoadDBFlush extends RBuiltinNode {
+
+        static {
+            Casts.noCasts(LazyLoadDBFlush.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {

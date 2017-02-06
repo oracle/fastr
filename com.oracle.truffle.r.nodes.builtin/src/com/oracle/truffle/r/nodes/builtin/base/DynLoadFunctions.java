@@ -38,7 +38,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -62,8 +61,8 @@ public class DynLoadFunctions {
     public abstract static class DynLoad extends RBuiltinNode {
         @Child private DLL.LoadPackageDLLNode loadPackageDLLNode = DLL.LoadPackageDLLNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(DynLoad.class);
             casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
             casts.arg("local").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("now").asLogicalVector().findFirst().map(toBoolean());
@@ -86,8 +85,8 @@ public class DynLoadFunctions {
     public abstract static class DynUnload extends RBuiltinNode {
         @Child DLL.UnloadNode dllUnloadNode = DLL.UnloadNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(DynUnload.class);
             casts.arg("lib").mustBe(stringValue()).asStringVector().mustBe(size(1), RError.Message.CHAR_ARGUMENT).findFirst();
         }
 
@@ -130,8 +129,8 @@ public class DynLoadFunctions {
     public abstract static class IsLoaded extends RBuiltinNode {
         @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(IsLoaded.class);
             casts.arg("symbol").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
             casts.arg("PACKAGE").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
             casts.arg("type").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
@@ -166,8 +165,8 @@ public class DynLoadFunctions {
     public abstract static class GetSymbolInfo extends RBuiltinNode {
         @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(GetSymbolInfo.class);
             casts.arg("symbol").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
             casts.arg("withRegistrationInfo").mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
         }

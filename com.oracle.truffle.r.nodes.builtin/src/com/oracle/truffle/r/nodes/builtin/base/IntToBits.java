@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -37,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 @RBuiltin(name = "intToBits", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class IntToBits extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(IntToBits.class);
         casts.arg("x").asIntegerVector();
     }
 

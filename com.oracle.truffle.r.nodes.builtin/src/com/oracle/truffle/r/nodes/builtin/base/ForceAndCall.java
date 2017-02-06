@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
@@ -48,8 +47,8 @@ public abstract class ForceAndCall extends RBuiltinNode {
 
     @Child private PromiseHelperNode promiseHelper;
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(ForceAndCall.class);
         casts.arg("n").asIntegerVector().findFirst();
         // TODO other types are possible for FUN that we don't yet handle
         casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);

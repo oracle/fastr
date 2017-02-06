@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -86,8 +86,8 @@ public abstract class Format extends RBuiltinNode {
         return (RAbstractIntVector) castInteger.execute(operand);
     }
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Format.class);
         casts.arg("x");
         casts.arg("trim").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
         casts.arg("digits").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(R_MIN_DIGITS_OPT).and(lte(R_MAX_DIGITS_OPT))));

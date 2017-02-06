@@ -50,7 +50,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
@@ -95,8 +94,8 @@ public class EnvFunctions {
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
     public abstract static class AsEnvironment extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(AsEnvironment.class);
             casts.arg("fun").mapIf(numericValue(), asIntegerVector());
         }
 
@@ -231,6 +230,10 @@ public class EnvFunctions {
     @RBuiltin(name = "topenv", kind = INTERNAL, parameterNames = {"envir", "matchThisEnv"}, behavior = COMPLEX)
     public abstract static class TopEnv extends Adapter {
 
+        static {
+            Casts.noCasts(TopEnv.class);
+        }
+
         @Child private FrameFunctions.ParentFrame parentFrameNode;
 
         @Specialization
@@ -281,8 +284,8 @@ public class EnvFunctions {
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"}, behavior = READS_FRAME)
     public abstract static class ParentEnv extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ParentEnv.class);
             casts.arg("env").mustBe(instanceOf(REnvironment.class), RError.SHOW_CALLER, Message.ARGUMENT_NOT_ENVIRONMENT);
         }
 
@@ -299,8 +302,8 @@ public class EnvFunctions {
     @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class SetParentEnv extends Adapter {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SetParentEnv.class);
             casts.arg("env").mustBe(instanceOf(REnvironment.class), Message.NON_LANG_ASSIGNMENT_TARGET);
             casts.arg("value").mustNotBeNull(Message.USE_NULL_ENV_DEFUNCT, "NULL").mustBe(instanceOf(REnvironment.class), Message.ARGUMENT_NAME_NOT_ENVIRONMENT, "parent");
         }
@@ -319,6 +322,10 @@ public class EnvFunctions {
     @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsEnvironment extends RBuiltinNode {
 
+        static {
+            Casts.noCasts(IsEnvironment.class);
+        }
+
         @Specialization
         protected byte isEnvironment(Object env) {
             return env instanceof REnvironment ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
@@ -330,6 +337,10 @@ public class EnvFunctions {
 
         private final ConditionProfile attributable = ConditionProfile.createBinaryProfile();
         @Child private GetFixedAttributeNode getEnvAttrNode;
+
+        static {
+            Casts.noCasts(Environment.class);
+        }
 
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun,
@@ -390,8 +401,8 @@ public class EnvFunctions {
     @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"}, behavior = COMPLEX)
     public abstract static class UpdateEnvironment extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(UpdateEnvironment.class);
             casts.arg("value").allowNull().mustBe(REnvironment.class, Message.REPLACEMENT_NOT_ENVIRONMENT);
         }
 
@@ -464,6 +475,10 @@ public class EnvFunctions {
     @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class EnvironmentName extends RBuiltinNode {
 
+        static {
+            Casts.noCasts(EnvironmentName.class);
+        }
+
         @Specialization
         protected String environmentName(REnvironment env) {
             return env.getName();
@@ -479,8 +494,8 @@ public class EnvFunctions {
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"}, behavior = COMPLEX)
     public abstract static class NewEnv extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(NewEnv.class);
             casts.arg("hash").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("parent").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
             casts.arg("size").mustNotBeNull().asIntegerVector().findFirst(0);
@@ -506,8 +521,8 @@ public class EnvFunctions {
     @RBuiltin(name = "lockEnvironment", visibility = OFF, kind = INTERNAL, parameterNames = {"env", "bindings"}, behavior = COMPLEX)
     public abstract static class LockEnvironment extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(LockEnvironment.class);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
             // TODO: the actual interpretation of this parameter remains dubious
             casts.arg("bindings").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
@@ -523,8 +538,8 @@ public class EnvFunctions {
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
     public abstract static class EnvironmentIsLocked extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(EnvironmentIsLocked.class);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
 
@@ -537,8 +552,8 @@ public class EnvFunctions {
     @RBuiltin(name = "lockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
     public abstract static class LockBinding extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(LockBinding.class);
             casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
@@ -553,8 +568,8 @@ public class EnvFunctions {
     @RBuiltin(name = "unlockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
     public abstract static class UnlockBinding extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(UnlockBinding.class);
             casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
@@ -569,8 +584,8 @@ public class EnvFunctions {
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
     public abstract static class BindingIsLocked extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(BindingIsLocked.class);
             casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
@@ -584,8 +599,8 @@ public class EnvFunctions {
     @RBuiltin(name = "makeActiveBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"}, behavior = COMPLEX)
     public abstract static class MakeActiveBinding extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(MakeActiveBinding.class);
             casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
             casts.arg("fun").mustBe(RFunction.class, RError.SHOW_CALLER, Message.NOT_A_FUNCTION);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
@@ -602,8 +617,8 @@ public class EnvFunctions {
     @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
     public abstract static class BindingIsActive extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(BindingIsActive.class);
             casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
             casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
         }
@@ -621,8 +636,8 @@ public class EnvFunctions {
 
         @Child private CopyNode copy;
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(EnvToList.class);
             casts.arg("x").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
             casts.arg("all.names").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("sorted").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());

@@ -46,6 +46,10 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
+    static {
+        Casts.noCasts(UpdateNames.class);
+    }
+
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

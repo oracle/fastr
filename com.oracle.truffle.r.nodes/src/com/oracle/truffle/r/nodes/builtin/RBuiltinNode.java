@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -47,19 +46,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RBuiltinNode extends RBaseNode {
+public abstract class RBuiltinNode extends RBaseNode implements NodeWithArgumentCasts {
 
     public abstract Object executeBuiltin(VirtualFrame frame, Object... args);
-
-    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
-        // nothing to do
-    }
-
-    public CastNode[] getCasts() {
-        CastBuilder builder = new CastBuilder(getRBuiltin());
-        createCasts(builder);
-        return builder.getCasts();
-    }
 
     /**
      * Return the default values of the builtin's formal arguments. This is only valid for builtins
@@ -132,4 +121,5 @@ public abstract class RBuiltinNode extends RBaseNode {
     public String toString() {
         return (getRBuiltin() == null ? getClass().getSimpleName() : getRBuiltin().name());
     }
+
 }

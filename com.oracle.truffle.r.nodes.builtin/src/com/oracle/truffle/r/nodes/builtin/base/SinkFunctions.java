@@ -32,7 +32,6 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -43,8 +42,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public class SinkFunctions {
     @RBuiltin(name = "sink", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "closeOnExit", "type", "split"}, behavior = IO)
     public abstract static class Sink extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(Sink.class);
             casts.arg("file").mustBe(integerValue()).asIntegerVector().findFirst();
             casts.arg("closeOnExit").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
@@ -78,8 +78,9 @@ public class SinkFunctions {
 
     @RBuiltin(name = "sink.number", kind = INTERNAL, parameterNames = {"type"}, behavior = IO)
     public abstract static class SinkNumber extends RBuiltinNode {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(SinkNumber.class);
             casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
         }
 

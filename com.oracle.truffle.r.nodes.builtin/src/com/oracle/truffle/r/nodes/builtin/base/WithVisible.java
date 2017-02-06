@@ -92,6 +92,10 @@ public abstract class WithVisible extends RBuiltinNode {
         return RDataFactory.createList(new Object[]{value, RRuntime.asLogical(visibility.execute(frame))}, LISTNAMES);
     }
 
+    static {
+        Casts.noCasts(WithVisible.class);
+    }
+
     @Specialization
     protected RList withVisible(@SuppressWarnings("unused") RMissing x) {
         CompilerDirectives.transferToInterpreter();

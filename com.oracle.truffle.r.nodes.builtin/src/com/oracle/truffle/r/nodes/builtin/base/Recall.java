@@ -55,6 +55,10 @@ public abstract class Recall extends RBuiltinNode {
 
     @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
+    static {
+        Casts.noCasts(Recall.class);
+    }
+
     @Specialization
     protected Object recall(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
         Frame cframe = callerFrame.execute(frame);

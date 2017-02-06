@@ -42,7 +42,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -62,12 +62,12 @@ import com.oracle.truffle.tools.Profiler.Counter.TimeKind;
 
 public class FastRStats {
 
-    private static final class Casts {
-        private static void filename(CastBuilder casts) {
+    private static final class CastsHelper {
+        private static void filename(Casts casts) {
             casts.arg("filename").allowNull().mustBe(stringValue()).asStringVector();
         }
 
-        private static void append(CastBuilder casts) {
+        private static void append(Casts casts) {
             casts.arg("append").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
         }
     }
@@ -79,10 +79,10 @@ public class FastRStats {
             return new Object[]{"Rprofattr.out", RRuntime.LOGICAL_FALSE};
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.filename(casts);
-            Casts.append(casts);
+        static {
+            Casts casts = new Casts(FastRProfAttr.class);
+            CastsHelper.filename(casts);
+            CastsHelper.append(casts);
         }
 
         @SuppressWarnings("unused")
@@ -164,10 +164,10 @@ public class FastRStats {
             return new Object[]{"Rproftypecounts.out", RRuntime.LOGICAL_FALSE};
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.filename(casts);
-            Casts.append(casts);
+        static {
+            Casts casts = new Casts(FastRProfTypecounts.class);
+            CastsHelper.filename(casts);
+            CastsHelper.append(casts);
         }
 
         @SuppressWarnings("unused")
@@ -295,10 +295,10 @@ public class FastRStats {
             return new Object[]{"Rproffuncounts.out", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, 0, RRuntime.LOGICAL_FALSE};
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            Casts.filename(casts);
-            Casts.append(casts);
+        static {
+            Casts casts = new Casts(FastRProfFuncounts.class);
+            CastsHelper.filename(casts);
+            CastsHelper.append(casts);
             casts.arg("timing").asLogicalVector().findFirst().notNA().map(toBoolean());
             casts.arg("threshold").asIntegerVector().findFirst().notNA();
             casts.arg("histograms").asLogicalVector().findFirst().notNA().map(toBoolean());

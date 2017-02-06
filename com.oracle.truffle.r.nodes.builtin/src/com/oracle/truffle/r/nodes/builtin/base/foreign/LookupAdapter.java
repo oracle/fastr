@@ -74,6 +74,10 @@ abstract class LookupAdapter extends RBuiltinNode {
     protected static class UnimplementedExternal extends RExternalBuiltinNode {
         private final String name;
 
+        static {
+            Casts.noCasts(UnimplementedExternal.class);
+        }
+
         public UnimplementedExternal(String name) {
             this.name = name;
         }

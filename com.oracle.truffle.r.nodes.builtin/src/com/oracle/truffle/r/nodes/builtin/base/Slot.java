@@ -24,7 +24,6 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -38,8 +37,8 @@ public abstract class Slot extends RBuiltinNode {
 
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Slot.class);
         casts.arg(0).asAttributable(true, true, true);
     }
 

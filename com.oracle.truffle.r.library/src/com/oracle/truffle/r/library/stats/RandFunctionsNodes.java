@@ -31,7 +31,7 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction2NodeGen;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction3NodeGen;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -66,8 +66,8 @@ public final class RandFunctionsNodes {
 
     /**
      * Converts given value to actual length that should be used as length of the output vector. The
-     * argument must be cast using {@link #addLengthCast(CastBuilder)}. Using this node allows us to
-     * avoid casting of long vectors to integers if we only need to know their length.
+     * argument must be cast using {@link #addLengthCast(Casts)}. Using this node allows us to avoid
+     * casting of long vectors to integers if we only need to know their length.
      */
     protected abstract static class ConvertToLength extends Node {
         public abstract int execute(RAbstractVector value);
@@ -89,7 +89,7 @@ public final class RandFunctionsNodes {
             return vector.getLength();
         }
 
-        private static void addLengthCast(CastBuilder casts) {
+        private static void addLengthCast(Casts casts) {
             casts.arg(0).defaultError(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS).mustBe(abstractVectorValue()).asVector();
         }
     }
@@ -262,8 +262,8 @@ public final class RandFunctionsNodes {
             return RandFunction3NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
         }
 
-        @Override
-        protected final void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(RandFunction3Node.class);
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -292,8 +292,8 @@ public final class RandFunctionsNodes {
             return RandFunction2NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
         }
 
-        @Override
-        protected final void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(RandFunction2Node.class);
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -321,8 +321,8 @@ public final class RandFunctionsNodes {
             return RandFunction1NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
         }
 
-        @Override
-        protected final void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(RandFunction1Node.class);
             ConvertToLength.addLengthCast(casts);
             casts.arg(1).asDoubleVector();
         }

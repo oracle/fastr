@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -52,6 +51,10 @@ public class GridFunctions {
     public static final class KillGrid extends RExternalBuiltinNode {
         @Child GridRFFI.KillGridNode killGridNode = RFFIFactory.getRFFI().getGridRFFI().createKillGridNode();
 
+        static {
+            Casts.noCasts(KillGrid.class);
+        }
+
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
@@ -60,8 +63,9 @@ public class GridFunctions {
     }
 
     public abstract static class ValidUnits extends RExternalBuiltinNode.Arg1 {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(ValidUnits.class);
             casts.arg(0).mustBe(stringValue(), RError.Message.GENERIC, "'units' must be character").asStringVector().mustBe(notEmpty(), RError.Message.GENERIC, "'units' must be of length > 0");
         }
 

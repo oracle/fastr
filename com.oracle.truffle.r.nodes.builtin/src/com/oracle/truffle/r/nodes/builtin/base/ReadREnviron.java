@@ -32,7 +32,6 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -42,8 +41,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 @RBuiltin(name = "readRenviron", visibility = OFF, kind = INTERNAL, parameterNames = "x", behavior = COMPLEX)
 public abstract class ReadREnviron extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(ReadREnviron.class);
         casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_STRING, "x").asStringVector().findFirst();
     }
 

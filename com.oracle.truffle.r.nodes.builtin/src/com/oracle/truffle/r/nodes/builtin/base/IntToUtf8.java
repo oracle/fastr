@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -44,8 +43,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "intToUtf8", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
 public abstract class IntToUtf8 extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(IntToUtf8.class);
         casts.arg("x").asIntegerVector();
         casts.arg("multiple").mustNotBeNull().asLogicalVector().findFirst().map(toBoolean());
     }

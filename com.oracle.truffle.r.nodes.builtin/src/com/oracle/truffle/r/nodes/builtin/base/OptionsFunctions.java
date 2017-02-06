@@ -37,7 +37,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -64,6 +63,10 @@ public class OptionsFunctions {
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
+
+        static {
+            Casts.noCasts(Options.class);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -191,8 +194,8 @@ public class OptionsFunctions {
     @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x", behavior = READS_STATE)
     public abstract static class GetOption extends RBuiltinNode {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(GetOption.class);
             casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "x").mustBe(stringValue()).asStringVector().findFirst();
         }
 

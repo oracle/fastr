@@ -33,7 +33,7 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -68,7 +68,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class MethodsListDispatch {
 
-    private static void checkSingleString(CastBuilder casts, int argNum, String argName, String msg, boolean nonEmpty, Function<Object, String> clsHierFn, Function<Object, Integer> vecLenFn) {
+    private static void checkSingleString(Casts casts, int argNum, String argName, String msg, boolean nonEmpty, Function<Object, String> clsHierFn,
+                    Function<Object, Integer> vecLenFn) {
         //@formatter:off
         casts.arg(argNum, argName).
             defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn).
@@ -81,6 +82,10 @@ public class MethodsListDispatch {
     }
 
     public abstract static class R_initMethodDispatch extends RExternalBuiltinNode.Arg1 {
+
+        static {
+            Casts.noCasts(R_initMethodDispatch.class);
+        }
 
         @Specialization
         @TruffleBoundary
@@ -99,8 +104,8 @@ public class MethodsListDispatch {
 
     public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(R_methodsPackageMetaName.class);
             Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
             Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
 
@@ -122,14 +127,11 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            //@formatter:off
-            casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").
-                mustBe(stringValue().or(instanceOf(RS4Object.class)));
+        static {
+            Casts casts = new Casts(R_getClassFromCache.class);
+            casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").mustBe(stringValue().or(instanceOf(RS4Object.class)));
 
             casts.arg(1, "table").mustNotBeNull(RError.NO_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
-            //@formatter:on
         }
 
         protected GetFixedAttributeNode createPckgAttrAccess() {
@@ -175,8 +177,8 @@ public class MethodsListDispatch {
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(R_set_method_dispatch.class);
             casts.arg(0).asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
         }
 
@@ -199,6 +201,10 @@ public class MethodsListDispatch {
 
     public abstract static class R_M_setPrimitiveMethods extends RExternalBuiltinNode.Arg5 {
         @Child private AccessSlotNode accessSlotNode;
+
+        static {
+            Casts.noCasts(R_M_setPrimitiveMethods.class);
+        }
 
         private AccessSlotNode initAccessSlotNode() {
             if (accessSlotNode == null) {
@@ -289,6 +295,10 @@ public class MethodsListDispatch {
 
     public abstract static class R_identC extends RExternalBuiltinNode.Arg2 {
 
+        static {
+            Casts.noCasts(R_identC.class);
+        }
+
         @Specialization
         protected Object identC(RAbstractStringVector e1, RAbstractStringVector e2) {
             if (e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0))) {
@@ -309,25 +319,18 @@ public class MethodsListDispatch {
 
         @Child private GetGenericInternal getGenericInternal = GetGenericInternalNodeGen.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(R_getGeneric.class);
             Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
-
-            //@formatter:off
             Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
 
             checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn);
 
-            casts.arg(1, "mustFind").
-                asLogicalVector().
-                findFirst(RRuntime.LOGICAL_NA).
-                map(toBoolean());
+            casts.arg(1, "mustFind").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
 
-            casts.arg(2, "env").
-                mustBe(instanceOf(REnvironment.class));
+            casts.arg(2, "env").mustBe(instanceOf(REnvironment.class));
 
             checkSingleString(casts, 3, "package", "The argument \"package\" to getGeneric", false, clsHierFn, vecLenFn);
-            //@formatter:on
         }
 
         @Specialization
@@ -433,6 +436,10 @@ public class MethodsListDispatch {
 
         @Child private LocalReadVariableNode readDotNextMethod;
         @Child private LocalReadVariableNode readDots;
+
+        static {
+            Casts.noCasts(R_nextMethodCall.class);
+        }
 
         @Specialization
         @TruffleBoundary

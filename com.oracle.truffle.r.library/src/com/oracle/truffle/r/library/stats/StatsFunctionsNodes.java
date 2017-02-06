@@ -30,7 +30,6 @@ import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function3_2
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_1NodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_2NodeGen;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -149,8 +148,8 @@ public final class StatsFunctionsNodes {
             return Function3_2NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function3_2Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -177,8 +176,8 @@ public final class StatsFunctionsNodes {
             return Function4_1NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function4_1Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -205,8 +204,8 @@ public final class StatsFunctionsNodes {
             return Function4_2NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function4_2Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -234,8 +233,8 @@ public final class StatsFunctionsNodes {
             return Function3_1NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function3_1Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asDoubleVector();
@@ -261,8 +260,8 @@ public final class StatsFunctionsNodes {
             return Function2_1NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function2_1Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
@@ -287,8 +286,8 @@ public final class StatsFunctionsNodes {
             return Function2_2NodeGen.create(function);
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Function2_2Node.class);
             casts.arg(0).asDoubleVector();
             casts.arg(1).asDoubleVector();
             casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
@@ -308,8 +307,8 @@ public final class StatsFunctionsNodes {
             return ApproxTestNodeGen.create();
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ApproxTest.class);
             casts.arg(2).asIntegerVector().findFirst();
             casts.arg(3).asDoubleVector().findFirst();
         }
@@ -346,8 +345,8 @@ public final class StatsFunctionsNodes {
             return ApproxNodeGen.create();
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Approx.class);
             casts.arg(2).asDoubleVector();
             casts.arg(3).asIntegerVector().findFirst();
             casts.arg(4).asDoubleVector().findFirst();

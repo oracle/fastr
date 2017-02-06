@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
@@ -35,6 +39,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
+import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
+import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -50,13 +56,14 @@ public final class PipelineBuilder {
 
     private final PipelineConfigBuilder pcb;
     private ChainBuilder<?> chainBuilder;
+    private final AtomicReference<Optional<ForwardingAnalysisResult>> fwdAnalysisResult = new AtomicReference<>();
 
     public PipelineBuilder(String argumentName) {
         this.pcb = new PipelineConfigBuilder(argumentName);
     }
 
     public CastNode buildNode() {
-        return PipelineToCastNode.convert(pcb.build(), getFirstStep());
+        return PipelineToCastNode.convert(pcb.build(), getFirstStep(), getFwdAnalysisResult());
     }
 
     public PreinitialPhaseBuilder fluent() {
@@ -145,6 +152,26 @@ public final class PipelineBuilder {
             chainBuilder = new ChainBuilder<>(step);
         } else {
             chainBuilder.addStep(step);
+        }
+    }
+
+    public Optional<ForwardingAnalysisResult> getFwdAnalysisResult() {
+        Optional<ForwardingAnalysisResult> res = fwdAnalysisResult.get();
+        if (res == null) {
+            ForwardedValuesAnalyser fwdAnalyser = new ForwardedValuesAnalyser();
+            PipelineStep<?, ?> firstStep = getFirstStep();
+            if (firstStep == null) {
+                res = Optional.empty();
+            } else {
+                res = Optional.of(fwdAnalyser.analyse(firstStep));
+            }
+            if (fwdAnalysisResult.compareAndSet(null, res)) {
+                return res;
+            } else {
+                return fwdAnalysisResult.get();
+            }
+        } else {
+            return res;
         }
     }
 }

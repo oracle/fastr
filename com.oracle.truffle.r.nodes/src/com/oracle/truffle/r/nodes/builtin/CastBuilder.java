@@ -91,7 +91,6 @@ public final class CastBuilder {
     private final RBuiltin builtin;
     private final String[] argumentNames;
     private PipelineBuilder[] argumentBuilders;
-    private CastNode[] castsCache = null;
 
     public CastBuilder(RBuiltin builtin) {
         // Note: if we have the builtin metadata, we pre-allocate the arrays, builtinNode != null is
@@ -125,16 +124,14 @@ public final class CastBuilder {
      * casting, returns {@code null} as its cast node.
      */
     public CastNode[] getCasts() {
-        if (castsCache == null) {
-            castsCache = new CastNode[argumentBuilders.length];
-            for (int i = 0; i < argumentBuilders.length; i++) {
-                PipelineBuilder arg = argumentBuilders[i];
-                if (arg != null) {
-                    castsCache[i] = arg.buildNode();
-                }
+        CastNode[] castNodes = new CastNode[argumentBuilders.length];
+        for (int i = 0; i < argumentBuilders.length; i++) {
+            PipelineBuilder arg = argumentBuilders[i];
+            if (arg != null) {
+                castNodes[i] = arg.buildNode();
             }
         }
-        return castsCache;
+        return castNodes;
     }
 
     // ---------------------

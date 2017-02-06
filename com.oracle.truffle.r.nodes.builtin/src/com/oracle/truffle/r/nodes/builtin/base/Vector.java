@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
@@ -45,8 +44,8 @@ public abstract class Vector extends RBuiltinNode {
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Vector.class);
         casts.arg("mode").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "mode").asStringVector().mustBe(singleElement()).findFirst();
         casts.arg("length").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "length").asIntegerVector().mustBe(singleElement()).findFirst();
     }

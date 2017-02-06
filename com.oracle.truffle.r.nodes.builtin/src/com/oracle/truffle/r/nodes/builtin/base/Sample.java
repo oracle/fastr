@@ -39,7 +39,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,24 +53,15 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 public abstract class Sample extends RBuiltinNode {
     private final ConditionProfile sampleSizeProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
-        // @formatter:off
-        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().
-                mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, VECTOR_SIZE_NA_NAN).
-                mapIf(doubleValue(), chain(asDoubleVector()).with(findFirst().doubleElement()).
-                        with(mustBe(isFinite(), SHOW_CALLER, VECTOR_SIZE_NA_NAN)).
-                        with(mustBe(lt(4.5e15), SHOW_CALLER, VECTOR_SIZE_TOO_LARGE)).end()).
-                asIntegerVector().findFirst().mustBe(gte0());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
-                mustBe(integerValue().or(doubleValue()).or(stringValue())).
-                asIntegerVector().findFirst().
-                defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").
-                notNA().mustBe(gte0());
-        casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).
-                asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
+    static {
+        Casts casts = new Casts(Sample.class);
+        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
+                        chain(asDoubleVector()).with(findFirst().doubleElement()).with(mustBe(isFinite(), SHOW_CALLER, VECTOR_SIZE_NA_NAN)).with(
+                                        mustBe(lt(4.5e15), SHOW_CALLER, VECTOR_SIZE_TOO_LARGE)).end()).asIntegerVector().findFirst().mustBe(gte0());
+        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().defaultError(SHOW_CALLER,
+                        INVALID_ARGUMENT, "size").notNA().mustBe(gte0());
+        casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
         casts.arg("prob").asDoubleVector();
-        // @formatter:on
     }
 
     // Validation that correlates two or more argument values (note: positiveness of prob is checked

@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysFrameNodeGen;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
@@ -187,8 +186,8 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysCall extends FrameHelper {
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SysCall.class);
             casts.arg("which").asIntegerVector().findFirst();
         }
 
@@ -238,8 +237,8 @@ public class FrameFunctions {
             return FrameAccess.READ_ONLY;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(MatchCall.class);
             casts.arg("definition").mustBe(RFunction.class);
             casts.arg("call").mustBe(RLanguage.class);
             casts.arg("expand.dots").asLogicalVector().findFirst();
@@ -447,8 +446,8 @@ public class FrameFunctions {
             return FrameAccess.MATERIALIZE;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SysFrame.class);
             casts.arg("which").asIntegerVector().findFirst();
         }
 
@@ -555,8 +554,8 @@ public class FrameFunctions {
         private final BranchProfile promiseProfile = BranchProfile.create();
         private final BranchProfile nonNullCallerProfile = BranchProfile.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SysParent.class);
             casts.arg("n").asIntegerVector().findFirst();
         }
 
@@ -589,8 +588,8 @@ public class FrameFunctions {
             return FrameAccess.READ_ONLY;
         }
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(SysFunction.class);
             casts.arg("which").asIntegerVector().findFirst();
         }
 
@@ -661,8 +660,8 @@ public class FrameFunctions {
 
         public abstract REnvironment execute(VirtualFrame frame, int n);
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(ParentFrame.class);
             casts.arg("n").asIntegerVector().findFirst();
         }
 

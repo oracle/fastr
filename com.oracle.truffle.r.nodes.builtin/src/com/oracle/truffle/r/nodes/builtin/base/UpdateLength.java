@@ -34,7 +34,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -43,15 +42,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateLength extends RBuiltinNode {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateLength.class);
         // Note: `length<-`(NULL, newLen) really works in GnuR unlike other update builtins
-        // @formatter:off
-        casts.arg("x").allowNull().mustBe(abstractVectorValue(), this, INVALID_UNNAMED_ARGUMENT);
-        casts.arg("value").defaultError(this, INVALID_UNNAMED_VALUE).
-                mustBe(integerValue().or(doubleValue()).or(stringValue())).
-                asIntegerVector().mustBe(singleElement()).findFirst();
-        // @formatter:on
+        casts.arg("x").allowNull().mustBe(abstractVectorValue(), INVALID_UNNAMED_ARGUMENT);
+        casts.arg("value").defaultError(INVALID_UNNAMED_VALUE).mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     @SuppressWarnings("unused")

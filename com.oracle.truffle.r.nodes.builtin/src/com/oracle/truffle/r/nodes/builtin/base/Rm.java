@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -59,8 +58,8 @@ public abstract class Rm extends RBuiltinNode {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Rm.class);
         casts.arg("list").mustBe(stringValue(), SHOW_CALLER, INVALID_FIRST_ARGUMENT);
         casts.arg("envir").mustNotBeNull(SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
         casts.arg("inherits").mustBe(numericValue(), SHOW_CALLER, INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());

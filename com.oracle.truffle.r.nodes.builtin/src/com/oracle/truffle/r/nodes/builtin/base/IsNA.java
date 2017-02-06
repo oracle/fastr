@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,10 @@ public abstract class IsNA extends RBuiltinNode {
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
+
+    static {
+        Casts.noCasts(IsNA.class);
+    }
 
     private Object isNARecursive(Object o) {
         if (recursiveIsNA == null) {

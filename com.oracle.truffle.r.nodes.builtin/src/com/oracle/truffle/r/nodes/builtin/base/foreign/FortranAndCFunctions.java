@@ -192,6 +192,10 @@ public class FortranAndCFunctions {
     @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
     public abstract static class Fortran extends CRFFIAdapter {
 
+        static {
+            Casts.noCasts(Fortran.class);
+        }
+
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
@@ -243,6 +247,10 @@ public class FortranAndCFunctions {
 
     @RBuiltin(name = ".C", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
     public abstract static class DotC extends CRFFIAdapter {
+
+        static {
+            Casts.noCasts(DotC.class);
+        }
 
         @Override
         @TruffleBoundary

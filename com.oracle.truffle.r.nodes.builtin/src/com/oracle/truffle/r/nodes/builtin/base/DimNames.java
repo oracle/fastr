@@ -41,6 +41,10 @@ public abstract class DimNames extends RBuiltinNode {
 
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
 
+    static {
+        Casts.noCasts(DimNames.class);
+    }
+
     @Specialization(guards = "!isRAbstractContainer(operand)")
     protected RNull getDimNames(@SuppressWarnings("unused") Object operand) {
         return RNull.instance;

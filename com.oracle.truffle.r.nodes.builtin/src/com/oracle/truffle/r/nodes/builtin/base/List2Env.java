@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -37,8 +36,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
 public abstract class List2Env extends RBuiltinNode {
-    @Override
-    protected void createCasts(CastBuilder casts) {
+
+    static {
+        Casts casts = new Casts(List2Env.class);
         casts.arg("x").mustBe(RAbstractListVector.class, Message.FIRST_ARGUMENT_NOT_NAMED_LIST);
         casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
     }

@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -72,12 +71,12 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private SetRowNamesAttributeNode setRowNamesNode;
     @Child private RemoveAttributeNode removeAttrNode;
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(UpdateAttributes.class);
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
         casts.arg("obj"); // by default disallows RNull
-        casts.arg("value").mustBe(nullValue().or(instanceOf(RList.class)), this, ATTRIBUTES_LIST_OR_NULL);
+        casts.arg("value").mustBe(nullValue().or(instanceOf(RList.class)), ATTRIBUTES_LIST_OR_NULL);
     }
 
     // it's OK for the following two methods to update attributes in-place as the container has been

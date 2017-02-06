@@ -62,6 +62,10 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
     private final BooleanOperation booleanLogic;
 
+    static {
+        Casts.noCasts(BinaryBooleanScalarNode.class);
+    }
+
     BinaryBooleanScalarNode(BooleanOperationFactory factory) {
         this.booleanLogic = factory.createOperation();
         logic = new BinaryMapBooleanFunctionNode(booleanLogic);

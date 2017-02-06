@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.AsS4;
 import com.oracle.truffle.r.nodes.objects.AsS4NodeGen;
@@ -45,8 +44,8 @@ public abstract class SetS4Object extends RBuiltinNode {
 
     @Child private AsS4 asS4 = AsS4NodeGen.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(SetS4Object.class);
         casts.arg("object").asAttributable(true, true, true);
         casts.arg("flag").asLogicalVector().mustBe(singleElement(), RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "flag").findFirst().map(toBoolean());
         // "complete" can be a vector, unlike "flag"

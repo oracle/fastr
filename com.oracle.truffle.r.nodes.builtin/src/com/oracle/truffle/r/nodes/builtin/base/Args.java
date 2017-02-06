@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,10 @@ public abstract class Args extends RBuiltinNode {
 
     @Child private GetFunctions.Get getNode;
     @Child private FrameFunctions.ParentFrame parentFrameNode;
+
+    static {
+        Casts.noCasts(Args.class);
+    }
 
     @Specialization
     protected Object args(VirtualFrame frame, RAbstractStringVector funName) {

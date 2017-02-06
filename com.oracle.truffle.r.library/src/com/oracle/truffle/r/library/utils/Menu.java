@@ -14,7 +14,6 @@ package com.oracle.truffle.r.library.utils;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.runtime.RError;
@@ -26,8 +25,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class Menu extends RExternalBuiltinNode.Arg1 {
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(Menu.class);
         casts.arg(0, "choices").mustBe(Predef.stringValue()).asStringVector().mustBe(Predef.notEmpty());
     }
 

@@ -39,6 +39,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 @RBuiltin(name = "dim", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Dim extends RBuiltinNode {
 
+    static {
+        Casts.noCasts(Dim.class);
+    }
+
     @Specialization
     protected Object dim(RAbstractContainer container,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimensionsProfile,

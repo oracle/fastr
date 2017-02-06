@@ -132,6 +132,10 @@ public class IsFiniteFunctions {
     @RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsFinite extends Adapter {
 
+        static {
+            Casts.noCasts(IsFinite.class);
+        }
+
         @Specialization
         protected RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
             return doFunDouble(vec, RRuntime::isFinite);
@@ -166,6 +170,10 @@ public class IsFiniteFunctions {
     @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsInfinite extends Adapter {
 
+        static {
+            Casts.noCasts(IsInfinite.class);
+        }
+
         @Specialization
         protected RLogicalVector doIsInfinite(RAbstractDoubleVector vec) {
             return doFunDouble(vec, Double::isInfinite);
@@ -189,6 +197,10 @@ public class IsFiniteFunctions {
 
     @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNaN extends Adapter {
+
+        static {
+            Casts.noCasts(IsNaN.class);
+        }
 
         private static boolean isNaN(double value) {
             return Double.isNaN(value) && !RRuntime.isNA(value);

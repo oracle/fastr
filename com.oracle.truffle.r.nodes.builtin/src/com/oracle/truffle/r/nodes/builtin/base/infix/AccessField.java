@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -95,8 +94,8 @@ public abstract class AccessField extends RBuiltinNode {
     private final ConditionProfile invalidAtomicVector = ConditionProfile.createBinaryProfile();
     private final BranchProfile error = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(AccessField.class);
         casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName()).mustBe(stringValue()).asStringVector().findFirst();
     }
 

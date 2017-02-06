@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -39,8 +38,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "reg.finalizer", kind = INTERNAL, parameterNames = {"e", "f", "onexit"}, behavior = COMPLEX)
 public abstract class RegFinalizer extends RBuiltinNode {
-    @Override
-    protected void createCasts(CastBuilder casts) {
+
+    static {
+        Casts casts = new Casts(RegFinalizer.class);
         casts.arg("e").mustBe(instanceOf(REnvironment.class).or(instanceOf(RExternalPtr.class)), RError.Message.REG_FINALIZER_FIRST);
         casts.arg("f").mustBe(instanceOf(RFunction.class), RError.Message.REG_FINALIZER_SECOND);
         casts.arg("onexit").asLogicalVector().findFirst().notNA(RError.Message.REG_FINALIZER_THIRD).map(toBoolean());

@@ -101,6 +101,10 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
+        static {
+            Casts.noCasts(UseMethod.class);
+        }
+
         protected UseMethod() {
             super(false);
         }
@@ -192,6 +196,10 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         private final ValueProfile parameterSignatureProfile = ValueProfile.createIdentityProfile();
         private final ValueProfile suppliedParameterSignatureProfile = ValueProfile.createIdentityProfile();
+
+        static {
+            Casts.noCasts(NextMethod.class);
+        }
 
         protected NextMethod() {
             super(true);

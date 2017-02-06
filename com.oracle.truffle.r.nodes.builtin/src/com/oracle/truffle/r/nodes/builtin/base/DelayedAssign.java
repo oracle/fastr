@@ -33,7 +33,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -49,8 +48,8 @@ public abstract class DelayedAssign extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    protected void createCasts(CastBuilder casts) {
+    static {
+        Casts casts = new Casts(DelayedAssign.class);
         casts.arg("x").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_FIRST_ARGUMENT).findFirst();
         casts.arg("eval.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
         casts.arg("assign.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));

@@ -44,7 +44,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
@@ -70,12 +69,12 @@ public class TraceFunctions {
     private abstract static class PrimTraceAdapter extends RBuiltinNode {
         @Child private GetFunctions.Get getNode;
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
-            // @formatter:off
-            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).
-                    mapIf(stringValue(), chain(asStringVector()).with(findFirst().stringElement()).end());
-            // @formatter:on
+        static final class PrimTraceCasts extends Casts {
+            PrimTraceCasts(Class<? extends PrimTraceAdapter> extCls) {
+                super(extCls);
+                casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
+                                chain(asStringVector()).with(findFirst().stringElement()).end());
+            }
         }
 
         protected Object getFunction(VirtualFrame frame, String funcName) {
@@ -89,6 +88,10 @@ public class TraceFunctions {
 
     @RBuiltin(name = ".primTrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
     public abstract static class PrimTrace extends PrimTraceAdapter {
+
+        static {
+            new PrimTraceCasts(PrimTrace.class);
+        }
 
         @Specialization
         protected RNull primTrace(VirtualFrame frame, RAbstractStringVector funcName) {
@@ -110,6 +113,10 @@ public class TraceFunctions {
     @RBuiltin(name = ".primUntrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
     public abstract static class PrimUnTrace extends PrimTraceAdapter {
 
+        static {
+            new PrimTraceCasts(PrimUnTrace.class);
+        }
+
         @Specialization
         protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
             return primUnTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
@@ -127,6 +134,11 @@ public class TraceFunctions {
 
     @RBuiltin(name = "traceOnOff", kind = INTERNAL, parameterNames = "state", behavior = COMPLEX)
     public abstract static class TraceOnOff extends RBuiltinNode {
+
+        static {
+            Casts.noCasts(TraceOnOff.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(byte state) {
@@ -220,8 +232,9 @@ public class TraceFunctions {
      */
     @RBuiltin(name = "tracemem", kind = PRIMITIVE, parameterNames = "x", behavior = COMPLEX)
     public abstract static class Tracemem extends TracememBase {
-        @Override
-        protected void createCasts(CastBuilder casts) {
+
+        static {
+            Casts casts = new Casts(Tracemem.class);
             casts.arg("x").mustNotBeNull(Message.TRACEMEM_NOT_NULL);
         }
 
@@ -242,8 +255,8 @@ public class TraceFunctions {
 
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-        @Override
-        protected void createCasts(CastBuilder casts) {
+        static {
+            Casts casts = new Casts(Retracemem.class);
             casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue());
         }
 
@@ -281,6 +294,11 @@ public class TraceFunctions {
 
     @RBuiltin(name = "untracemem", kind = PRIMITIVE, visibility = OFF, parameterNames = "x", behavior = COMPLEX)
     public abstract static class Untracemem extends TracememBase {
+
+        static {
+            Casts.noCasts(Untracemem.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected RNull execute(Object x) {

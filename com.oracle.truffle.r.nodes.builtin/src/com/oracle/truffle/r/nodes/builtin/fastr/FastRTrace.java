@@ -115,6 +115,10 @@ public class FastRTrace {
         @Child private CastLogicalNode castLogical;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
+        static {
+            Casts.noCasts(Trace.class);
+        }
+
         @Specialization
         protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
             Object what = whatObj;

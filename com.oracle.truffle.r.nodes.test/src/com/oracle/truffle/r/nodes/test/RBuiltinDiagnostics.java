@@ -94,6 +94,13 @@ public class RBuiltinDiagnostics {
     }
 
     public static void main(String[] args) throws Throwable {
+        // TODO: Enable it when the diagnostics is rewritten using CP-IR
+        if (true) {
+            System.out.println("Temporarily disabled until the diagnostics is rewritten using CP-IR");
+            return;
+        }
+
+        @SuppressWarnings("unused")
         RBuiltinDiagnostics rbDiag = ChimneySweepingSuite.createChimneySweepingSuite(args).orElseGet(() -> createRBuiltinDiagnostics(args));
 
         List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
