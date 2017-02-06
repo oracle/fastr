@@ -25,10 +25,12 @@ package com.oracle.truffle.r.runtime.ffi.jni;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class JNI_Base implements BaseRFFI {
     public static class JNI_GetpidNode extends GetpidNode {
+        @TruffleBoundary
         @Override
         public int execute() {
             return native_getpid();
@@ -36,6 +38,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_GetwdNode extends GetwdNode {
+        @TruffleBoundary
         @Override
         public String execute() {
             byte[] buf = new byte[4096];
@@ -53,6 +56,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_SetwdNode extends SetwdNode {
+        @TruffleBoundary
         @Override
         public int execute(String dir) {
             return native_setwd(dir);
@@ -62,6 +66,7 @@ public class JNI_Base implements BaseRFFI {
     public static class JNI_ReadlinkNode extends ReadlinkNode {
         private static final int EINVAL = 22;
 
+        @TruffleBoundary
         @Override
         public String execute(String path) throws IOException {
             int[] errno = new int[]{0};
@@ -79,6 +84,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_MkdtempNode extends MkdtempNode {
+        @TruffleBoundary
         @Override
         public String execute(String template) {
             /*
@@ -99,6 +105,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_MkdirNode extends MkdirNode {
+        @TruffleBoundary
         @Override
         public void execute(String dir, int mode) throws IOException {
             int rc = native_mkdir(dir, mode);
@@ -109,6 +116,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_ChmodNode extends ChmodNode {
+        @TruffleBoundary
         @Override
         public int execute(String path, int mode) {
             return native_chmod(path, mode);
@@ -116,6 +124,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_StrolNode extends StrolNode {
+        @TruffleBoundary
         @Override
         public long execute(String s, int base) throws IllegalArgumentException {
             int[] errno = new int[]{0};
@@ -129,6 +138,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_UnameNode extends UnameNode {
+        @TruffleBoundary
         @Override
         public UtsName execute() {
             return JNI_UtsName.get();
@@ -136,6 +146,7 @@ public class JNI_Base implements BaseRFFI {
     }
 
     public static class JNI_GlobNode extends GlobNode {
+        @TruffleBoundary
         @Override
         public ArrayList<String> glob(String pattern) {
             return JNI_Glob.glob(pattern);
