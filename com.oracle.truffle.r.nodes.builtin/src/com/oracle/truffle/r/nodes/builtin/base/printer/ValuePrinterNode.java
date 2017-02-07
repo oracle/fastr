@@ -104,6 +104,7 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
         @Child private SetFixedAttributeNode isTruffleObjAttrSetter = SetFixedAttributeNode.create("is.truffle.object");
 
+        @TruffleBoundary
         public Object convert(TruffleObject obj) {
             class RStringWrapper extends TruffleObjectWrapper implements RAbstractStringVector {
                 final TruffleObject object;
