@@ -1927,6 +1927,13 @@ public class TestBuiltin_operators extends TestBase {
     }
 
     @Test
+    public void testBooleanOperators() {
+        // tests that deparse in as.symbol removes backticks
+        assertEval("as.symbol('*') == '*'");
+        assertEval("as.symbol('<-') == '<-'");
+    }
+
+    @Test
     public void testOperators() {
         assertEval("{ `+`(1,2) }");
         assertEval("{ `-`(1,2) }");
