@@ -147,7 +147,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, REnvironment value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+    protected RStringVector format(REnvironment value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
         return RDataFactory.createStringVector(value.getPrintName());
     }
