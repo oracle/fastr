@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
@@ -859,6 +860,26 @@ public class CastBuilderTest {
         } catch (Exception e) {
         }
         Assert.assertEquals("abc", cast("abc"));
+    }
+
+    @Test
+    public void testWarningInElseBranchOfMapIf() {
+        arg.mapIf(numericValue(),
+                        chain(asIntegerVector()).with(findFirst().integerElement()).end(),
+                        chain(asIntegerVector()).with(Predef.shouldBe(anyValue().not(), RError.NO_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end());
+
+        Assert.assertEquals(1, cast(1));
+        Assert.assertEquals(1, cast("1"));
+        Assert.assertEquals(RError.Message.NA_INTRODUCED_COERCION.message, CastNode.getLastWarning());
+    }
+
+    @Test
+    public void testWarningInTrueBranchOfMapIf() {
+        arg.allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(),
+                        RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
+                        asIntegerVector());
+        Assert.assertEquals("1", cast("1"));
+        Assert.assertEquals(RError.Message.NA_INTRODUCED_COERCION.message, CastNode.getLastWarning());
     }
 
     /**
