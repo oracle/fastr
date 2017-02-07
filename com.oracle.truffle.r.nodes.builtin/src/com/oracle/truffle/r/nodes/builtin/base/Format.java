@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -39,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific", "decimal.mark"}, behavior = PURE)
@@ -143,6 +145,12 @@ public abstract class Format extends RBuiltinNode {
     protected RStringVector format(VirtualFrame frame, RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
         return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+    }
+
+    @Specialization
+    protected RStringVector format(VirtualFrame frame, REnvironment value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+                    String decimalMark) {
+        return RDataFactory.createStringVector(value.getPrintName());
     }
 
     @Specialization

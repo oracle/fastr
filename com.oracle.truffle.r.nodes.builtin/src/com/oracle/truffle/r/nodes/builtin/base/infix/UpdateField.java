@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -118,14 +120,14 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class UpdateField extends RBuiltinNode {
 
-    @Child private ReplaceVectorNode update = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private ReplaceVectorNode update = ReplaceVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
     @Child private CastListNode castList;
 
     private final ConditionProfile coerceList = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(UpdateField.class);
-        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue(), RError.NO_CALLER, Message.INVALID_SUBSCRIPT_TYPE, Predef.typeName()).asStringVector().findFirst();
     }
 
     public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {

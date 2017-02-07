@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -311,5 +311,6 @@ public class TestBuiltin_format extends TestBase {
         assertEval("{ format(c(7,42)) }");
         assertEval("{ format(c(7.42,42.7)) }");
         assertEval("{ format(c(7.42,42.7,NA)) }");
+        assertEval("{ .Internal(format(.GlobalEnv,FALSE,NA,0,0,3,TRUE,NA,'.')) }");
     }
 }

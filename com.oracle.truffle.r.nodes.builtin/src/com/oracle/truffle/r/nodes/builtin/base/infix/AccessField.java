@@ -89,7 +89,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class AccessField extends RBuiltinNode {
 
-    @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
 
     private final ConditionProfile invalidAtomicVector = ConditionProfile.createBinaryProfile();
     private final BranchProfile error = BranchProfile.create();
