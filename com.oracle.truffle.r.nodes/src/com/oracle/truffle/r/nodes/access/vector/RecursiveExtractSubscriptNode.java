@@ -54,8 +54,8 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions);
 
     @Specialization(guards = "positionLength <= 1")
-    @SuppressWarnings("unused")
-    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions) {
+    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, @SuppressWarnings({"unused", "unused"}) int positionLength, Object exact,
+                    Object dropDimensions) {
         try {
             return subscriptExtract.apply(frame, vector, positions, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
@@ -65,8 +65,8 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     }
 
     @Specialization(replaces = "doDefault")
-    @SuppressWarnings("unused")
-    protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions,
+    protected Object doRecursive(VirtualFrame frame, Object vector, @SuppressWarnings("unused") Object[] positions, Object originalFirstPosition, int positionLength, Object exact,
+                    Object dropDimensions,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object currentVector = vector;

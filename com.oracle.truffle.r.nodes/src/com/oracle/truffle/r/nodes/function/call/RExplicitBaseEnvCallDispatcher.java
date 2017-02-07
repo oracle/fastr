@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.GetBaseEnvFrameNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -38,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * assumption that a function in base environment is not going to change and can be cached.
  */
 public abstract class RExplicitBaseEnvCallDispatcher extends Node {
-    private final BranchProfile errorProfile = BranchProfile.create();
+
     @Child private LocalReadVariableNode readFunc;
     @Child RExplicitCallNode callNode = RExplicitCallNode.create();
     @Child GetBaseEnvFrameNode getBaseEnvFrameNode = GetBaseEnvFrameNode.create();

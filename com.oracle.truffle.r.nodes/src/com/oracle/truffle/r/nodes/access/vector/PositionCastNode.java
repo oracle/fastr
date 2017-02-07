@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@SuppressWarnings("unused")
 abstract class PositionCastNode extends Node {
 
     private final ElementAccessMode mode;
@@ -143,7 +142,7 @@ abstract class PositionCastNode extends Node {
     }
 
     @Specialization
-    protected RMissing doMissing(RMissing position) {
+    protected RMissing doMissing(@SuppressWarnings("unused") RMissing position) {
         if (mode.isSubscript()) {
             if (replace) {
                 throw RError.error(this, RError.Message.MISSING_SUBSCRIPT);
@@ -156,12 +155,12 @@ abstract class PositionCastNode extends Node {
     }
 
     @Specialization
-    protected RMissing doEmpty(REmpty position) {
+    protected RMissing doEmpty(@SuppressWarnings("unused") REmpty position) {
         return doMissing(null);
     }
 
     @Specialization
-    protected RAbstractVector doNull(RNull position) {
+    protected RAbstractVector doNull(@SuppressWarnings("unused") RNull position) {
         // NULL expands to integer(0).
         return RDataFactory.createEmptyIntVector();
     }

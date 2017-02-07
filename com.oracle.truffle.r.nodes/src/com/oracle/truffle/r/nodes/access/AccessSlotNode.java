@@ -125,9 +125,8 @@ public abstract class AccessSlotNode extends RBaseNode {
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"!slotAccessAllowed(object)", "isDotData(name)"})
-    protected Object getSlotNonS4(RAttributable object, String name) {
+    protected Object getSlotNonS4(RAttributable object, @SuppressWarnings("unused") String name) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);

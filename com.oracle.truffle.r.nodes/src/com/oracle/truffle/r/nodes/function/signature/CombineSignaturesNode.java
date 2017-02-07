@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,12 +64,10 @@ public abstract class CombineSignaturesNode extends RBaseNode {
         return new RArgsValuesAndNames(leftValues, left);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(limit = "CACHE_LIMIT", guards = {"left == leftCached", "right == rightCached", "leftValues == leftValuesCached", "!right.isEmpty()", "!left.isEmpty()"})
-    protected RArgsValuesAndNames combineCached(ArgumentsSignature left, Object[] leftValues, ArgumentsSignature right, Object[] rightValues,
-                    @Cached("left") ArgumentsSignature leftCached,
-                    @Cached("leftValues") Object[] leftValuesCached,
-                    @Cached("right") ArgumentsSignature rightCached,
+    @Specialization(limit = "CACHE_LIMIT", guards = {"left == leftCached", "right == rightCached", "!right.isEmpty()", "!left.isEmpty()"})
+    protected RArgsValuesAndNames combineCached(ArgumentsSignature left, Object[] leftValues, @SuppressWarnings("unused") ArgumentsSignature right, Object[] rightValues,
+                    @Cached("left") @SuppressWarnings("unused") ArgumentsSignature leftCached,
+                    @Cached("right") @SuppressWarnings("unused") ArgumentsSignature rightCached,
                     @Cached("combine(left, leftValues, right)") CombineResult resultCached,
                     @Cached("createBinaryProfile()") ConditionProfile shufflingProfile,
                     @Cached("createBinaryProfile()") ConditionProfile noVarArgsProfile) {

@@ -67,9 +67,8 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization(limit = "3", //
                     guards = {"shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
-    @SuppressWarnings("unused")
-    protected boolean hasAttrCached(DynamicObject attrs,
-                    @Cached("lookupShape(attrs)") Shape shape,
+    protected boolean hasAttrCached(@SuppressWarnings("unused") DynamicObject attrs,
+                    @Cached("lookupShape(attrs)") @SuppressWarnings("unused") Shape shape,
                     @Cached("lookupLocation(shape, name)") Location location) {
         return location != null;
     }

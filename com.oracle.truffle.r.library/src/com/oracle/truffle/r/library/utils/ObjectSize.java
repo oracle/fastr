@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
  * {@link RObjectSize#getObjectSize}. As per GNU R the AST size for a closure is included. TODO AST
  * size not included owing to problems sizing it automatically.
  */
-@SuppressWarnings("unused")
 public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
 
     private static class MyIgnoreObjectHandler implements RObjectSize.IgnoreObjectHandler {
@@ -52,17 +51,17 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
     private static final MyIgnoreObjectHandler ignoreObjectHandler = new MyIgnoreObjectHandler();
 
     @Specialization
-    protected int objectSize(int o) {
+    protected int objectSize(@SuppressWarnings("unused") int o) {
         return RObjectSize.INT_SIZE;
     }
 
     @Specialization
-    protected int objectSize(double o) {
+    protected int objectSize(@SuppressWarnings("unused") double o) {
         return RObjectSize.DOUBLE_SIZE;
     }
 
     @Specialization
-    protected int objectSize(byte o) {
+    protected int objectSize(@SuppressWarnings("unused") byte o) {
         return RObjectSize.BYTE_SIZE;
     }
 

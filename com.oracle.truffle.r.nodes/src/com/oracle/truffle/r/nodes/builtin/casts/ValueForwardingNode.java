@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class ValueForwardingNode extends CastNode {
 
-    @SuppressWarnings("unused") protected final ForwardingAnalysisResult forwardingResult;
+    protected final ForwardingAnalysisResult forwardingResult;
     private final Supplier<CastNode> pipelineFactory;
 
     protected ValueForwardingNode(ForwardingAnalysisResult forwardingResult, Supplier<CastNode> pipelineFactory) {

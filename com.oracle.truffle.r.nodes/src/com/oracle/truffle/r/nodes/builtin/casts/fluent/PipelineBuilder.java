@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;

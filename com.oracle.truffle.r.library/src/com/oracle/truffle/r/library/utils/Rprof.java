@@ -92,11 +92,10 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         casts.arg(7, "bufsize").asIntegerVector().findFirst().mustBe(gte(0));
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling,
-                    boolean gcProfiling, boolean lineProfiling, int numFiles, int bufSize) {
+    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") int numFiles,
+                    @SuppressWarnings("unused") int bufSize) {
         RprofState profState = RprofState.get();
         if (filename.length() == 0) {
             // disable

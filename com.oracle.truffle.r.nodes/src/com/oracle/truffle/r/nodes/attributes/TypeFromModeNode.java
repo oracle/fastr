@@ -40,10 +40,9 @@ public abstract class TypeFromModeNode extends Node {
 
     public abstract RType execute(Object mode);
 
-    @SuppressWarnings("unused")
     @Specialization(limit = "CACHE_LIMIT", guards = "mode == cachedMode")
-    protected RType getTypeCAched(String mode,
-                    @Cached("mode") String cachedMode,
+    protected RType getTypeCAched(@SuppressWarnings("unused") String mode,
+                    @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                     @Cached("fromMode(mode)") RType type) {
         return type;
     }

@@ -116,7 +116,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doInt(int operand, boolean naRm, boolean finite) {
+    protected int doInt(int operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         na.enable(operand);
         if (naRmProfile.profile(naRm)) {
             if (na.check(operand)) {

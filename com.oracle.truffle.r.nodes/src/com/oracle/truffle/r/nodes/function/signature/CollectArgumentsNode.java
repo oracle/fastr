@@ -61,11 +61,10 @@ public abstract class CollectArgumentsNode extends RBaseNode {
         return reads;
     }
 
-    @SuppressWarnings("unused")
     @ExplodeLoop
     @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
-    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature,
-                    @Cached("signature") ArgumentsSignature cachedSignature,
+    protected Object[] combineCached(VirtualFrame frame, @SuppressWarnings("unused") ArgumentsSignature signature,
+                    @Cached("signature") @SuppressWarnings("unused") ArgumentsSignature cachedSignature,
                     @Cached("createArgs(signature, frame)") Node[] reads) {
         Object[] result = new Object[reads.length];
         for (int i = 0; i < reads.length; i++) {

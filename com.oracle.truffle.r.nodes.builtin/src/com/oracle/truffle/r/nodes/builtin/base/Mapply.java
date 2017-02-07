@@ -102,9 +102,8 @@ public abstract class Mapply extends RBuiltinNode {
         return RDataFactory.createList(result);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object mApply(VirtualFrame frame, RFunction fun, RAbstractListVector dots, RNull moreArgs) {
+    protected Object mApply(VirtualFrame frame, RFunction fun, RAbstractListVector dots, @SuppressWarnings("unused") RNull moreArgs) {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 

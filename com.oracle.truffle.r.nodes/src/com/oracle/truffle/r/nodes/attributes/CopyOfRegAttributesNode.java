@@ -58,9 +58,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         return CopyOfRegAttributesNodeGen.create();
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(RAbstractVector source, RVector<?> target) {
+    protected void copyNoAttributes(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
         // nothing to do
     }
 
@@ -69,9 +68,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         return attributes == null || attributes.isEmpty();
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
-    protected void copyEmptyAttributes(RAbstractVector source, RVector<?> target) {
+    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
         // nothing to do
     }
 
@@ -80,9 +78,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(attributes) != null;
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(RAbstractVector source, RVector<?> target) {
+    protected void copyDimOnly(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
         // nothing to do
     }
 
@@ -91,9 +88,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(attributes) != null;
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(RAbstractVector source, RVector<?> target) {
+    protected void copyNamesOnly(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
         // nothing to do
     }
 

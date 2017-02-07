@@ -29,27 +29,22 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"}, behavior = COMPLEX)
 public abstract class NGetText extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(NGetText.class);
         casts.arg("n").asIntegerVector().findFirst().mustBe(gte0());
-
         casts.arg("msg1").defaultError(RError.Message.MUST_BE_STRING, "msg1").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-
         casts.arg("msg2").defaultError(RError.Message.MUST_BE_STRING, "msg2").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-
     }
 
     @Specialization()
-    protected String getText(int n, String msg1, String msg2, Object domain) {
+    protected String getText(int n, String msg1, String msg2, @SuppressWarnings("unused") Object domain) {
         return n == 1 ? msg1 : msg2;
     }
 }

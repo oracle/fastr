@@ -724,9 +724,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RInstrumentation.checkDebugRequested(func);
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public Class<? extends TruffleLanguage> getTruffleRLanguage() {
+    public Class<? extends TruffleLanguage<?>> getTruffleRLanguage() {
         return TruffleRLanguage.class;
     }
 }

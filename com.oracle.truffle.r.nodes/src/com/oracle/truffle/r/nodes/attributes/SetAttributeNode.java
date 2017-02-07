@@ -72,9 +72,8 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                     assumptions = {
                                     "shape.getValidAssumption()"
                     })
-    @SuppressWarnings("unused")
-    protected static void setExistingAttrCached(DynamicObject attrs, String name, Object value,
-                    @Cached("name") String cachedName,
+    protected static void setExistingAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name, Object value,
+                    @Cached("name") @SuppressWarnings("unused") String cachedName,
                     @Cached("lookupShape(attrs)") Shape shape,
                     @Cached("lookupLocation(shape, name, value)") Location location) {
         try {
