@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -194,9 +193,7 @@ public class PromiseHelperNode extends RBaseNode {
             if (isInOriginFrame(frame, promise)) {
                 return promiseClosureCache.execute(frame, promise.getClosure());
             } else {
-                Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
-                assert promiseFrame != null;
-                return promiseClosureCache.execute(wrapPromiseFrame(frame, promiseFrame), promise.getClosure());
+                return promiseClosureCache.execute(wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame())), promise.getClosure());
             }
         } finally {
             promise.resetUnderEvaluation();
@@ -266,20 +263,16 @@ public class PromiseHelperNode extends RBaseNode {
             if (promise.isInOriginFrame(frame)) {
                 return promise.getClosure().eval(frame.materialize());
             } else {
-                Frame promiseFrame = promise.getFrame();
-                assert promiseFrame != null;
-
-                promiseFrame = wrapPromiseFrame(frame, promiseFrame);
-                return promise.getClosure().eval(promiseFrame.materialize());
+                return promise.getClosure().eval(wrapPromiseFrame(frame, promise.getFrame()));
             }
         } finally {
             promise.resetUnderEvaluation();
         }
     }
 
-    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, Frame promiseFrame) {
-        return VirtualEvalFrame.create(promiseFrame.materialize(), RArguments.getFunction(promiseFrame),
-                        RCaller.createForPromise(RArguments.getCall(promiseFrame), frame));
+    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame) {
+        assert promiseFrame != null;
+        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), RCaller.createForPromise(RArguments.getCall(promiseFrame), frame));
     }
 
     private static Object generateValueEagerSlowPath(VirtualFrame frame, int state, EagerPromiseBase promise) {
