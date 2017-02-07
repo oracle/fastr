@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -96,6 +98,7 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     }
 }
 
+@NodeInfo(cost = NodeCost.NONE)
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     private static final boolean useSpecials = FastROptions.UseSpecials.getBooleanValue();
@@ -216,6 +219,9 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                         return null;
                     }
                     if (i < evaluatedArgs) {
+                        // not quite correct:
+                        // || (dispatch == RDispatch.DEFAULT
+                        // && builtinDescriptor.evaluatesArg(i))
                         localArguments[i] = arg.asRNode();
                     } else {
                         localArguments[i] = new PeekLocalVariableNode(lookup);
