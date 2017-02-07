@@ -911,6 +911,10 @@ public class CallAndExternalFunctions {
 
         private final BranchProfile errorProfile = BranchProfile.create();
 
+        static {
+            Casts.noCasts(DotExternalGraphics.class);
+        }
+
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
@@ -969,6 +973,10 @@ public class CallAndExternalFunctions {
     public abstract static class DotCallGraphics extends CallRFFIAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
+
+        static {
+            Casts.noCasts(DotCallGraphics.class);
+        }
 
         @Override
         public Object[] getDefaultParameterValues() {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -52,6 +53,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class RecordGraphics extends RBuiltinNode {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
     @Child private RList2EnvNode list2EnvNode = new RList2EnvNode();
+
+    static {
+        Casts casts = new Casts(RecordGraphics.class);
+        casts.arg("expr").mustBe(instanceOf(RLanguage.class).or(instanceOf(RExpression.class)));
+        casts.arg("list").mustBe(instanceOf(RList.class));
+        casts.arg("env").mustBe(instanceOf(REnvironment.class));
+    }
 
     public static RecordGraphics create() {
         return RecordGraphicsNodeGen.create();
