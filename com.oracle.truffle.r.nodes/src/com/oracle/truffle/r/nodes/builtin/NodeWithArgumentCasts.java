@@ -44,7 +44,7 @@ public interface NodeWithArgumentCasts {
         return casts;
     }
 
-    class Casts {
+    final class Casts {
         private static final ConcurrentHashMap<Class<?>, Casts> castsMap = new ConcurrentHashMap<>();
         private static final Casts empty = new Casts();
 

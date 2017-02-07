@@ -104,9 +104,9 @@ public abstract class ExtractVectorNode extends Node {
     }
 
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
-    protected Object accessField(TruffleObject object, Object[] positions, Object exact, Object dropDimensions,
+    protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("createForeignRead(positions)") Node foreignRead,
-                    @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
+                    @Cached("positions.length") @SuppressWarnings("unused") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("createClassProfile()") ValueProfile positionProfile) {

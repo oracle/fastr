@@ -20,12 +20,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "rowSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class RowSums extends RowSumsBase {
 
     static {
-        new ColSumsCasts(RowSums.class);
+        createCasts(RowSums.class);
     }
 
     @Specialization

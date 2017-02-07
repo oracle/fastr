@@ -46,14 +46,13 @@ public abstract class ColSumsBase extends RBuiltinNode {
     protected final NACheck na = NACheck.create();
     private final ConditionProfile vectorLengthProfile = ConditionProfile.createBinaryProfile();
 
-    static final class ColSumsCasts extends Casts {
-        ColSumsCasts(Class<? extends ColSumsBase> extCls) {
-            super(extCls);
-            casts.arg("X").mustBe(numericValue(), RError.SHOW_CALLER, RError.Message.X_NUMERIC);
-            casts.arg("m").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-            casts.arg("n").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-            casts.arg("na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
-        }
+    protected static Casts createCasts(Class<? extends ColSumsBase> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("X").mustBe(numericValue(), RError.SHOW_CALLER, RError.Message.X_NUMERIC);
+        casts.arg("m").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
+        casts.arg("n").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
+        casts.arg("na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+        return casts;
     }
 
     protected final void checkVectorLength(RAbstractVector x, int rowNum, int colNum) {

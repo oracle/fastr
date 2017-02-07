@@ -54,7 +54,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions);
 
     @Specialization(guards = "positionLength <= 1")
-    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, @SuppressWarnings({"unused", "unused"}) int positionLength, Object exact,
+    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") int positionLength, Object exact,
                     Object dropDimensions) {
         try {
             return subscriptExtract.apply(frame, vector, positions, exact, dropDimensions);

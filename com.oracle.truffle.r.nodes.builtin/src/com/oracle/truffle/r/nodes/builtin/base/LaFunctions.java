@@ -86,12 +86,11 @@ public class LaFunctions {
         protected static final String[] NAMES = new String[]{"values", "vectors"};
         protected final BranchProfile errorProfile = BranchProfile.create();
 
-        static final class RsgCasts extends Casts {
-            RsgCasts(Class<? extends RsgAdapter> extClass) {
-                super(extClass);
-                casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
-                casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
-            }
+        protected static Casts createCasts(Class<? extends RsgAdapter> extClass) {
+            Casts casts = new Casts(extClass);
+            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
+            casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().notNA().map(toBoolean());
+            return casts;
         }
     }
 
@@ -101,7 +100,7 @@ public class LaFunctions {
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
         static {
-            new RsgCasts(Rg.class);
+            createCasts(Rg.class);
         }
 
         @Specialization
@@ -200,7 +199,7 @@ public class LaFunctions {
     public abstract static class Rs extends RsgAdapter {
 
         static {
-            new RsgCasts(Rs.class);
+            createCasts(Rs.class);
         }
 
         @Specialization

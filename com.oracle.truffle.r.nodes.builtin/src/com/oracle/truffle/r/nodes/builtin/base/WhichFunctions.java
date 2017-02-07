@@ -110,11 +110,10 @@ public class WhichFunctions {
             this.isMax = isMax;
         }
 
-        static final class WhichMinMaxs extends Casts {
-            protected WhichMinMaxs(Class<? extends WhichMinMax> extCls) {
-                super(extCls);
-                casts.arg(0, "x").asDoubleVector(true, false, false);
-            }
+        protected static Casts createCasts(Class<? extends WhichMinMax> extCls) {
+            Casts casts = new Casts(extCls);
+            casts.arg(0, "x").asDoubleVector(true, false, false);
+            return casts;
         }
 
         @Specialization
@@ -159,7 +158,7 @@ public class WhichFunctions {
     public abstract static class WhichMax extends WhichMinMax {
 
         static {
-            new WhichMinMaxs(WhichMax.class);
+            createCasts(WhichMax.class);
         }
 
         protected WhichMax() {
@@ -175,7 +174,7 @@ public class WhichFunctions {
     public abstract static class WhichMin extends WhichMinMax {
 
         static {
-            new WhichMinMaxs(WhichMin.class);
+            createCasts(WhichMin.class);
         }
 
         protected WhichMin() {

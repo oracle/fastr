@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
