@@ -44,12 +44,13 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 /**
  * (Incomplete) Variant of {@link UpCallsRFFIImpl} for Truffle LLVM.
  *
  */
-public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl {
+public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl implements VariableUpCallsRFFI {
     private static TruffleLLVM_UpCallsRFFIImpl singleton;
     private static TruffleObject singletonTruffleObject;
 
@@ -124,14 +125,6 @@ public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl {
         }
     }
 
-    public Object R_NilValue() {
-        return RNull.instance;
-    }
-
-    public Object R_UnboundValue() {
-        return RUnboundValue.instance;
-    }
-
     public Object bytesToNativeCharArray(byte[] bytes) {
         return new NativeCharArray(bytes);
     }
@@ -147,4 +140,180 @@ public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl {
             throw RInternalError.shouldNotReachHere();
         }
     }
+
+    @Override
+    public Object R_NilValue() {
+        return RNull.instance;
+    }
+
+    @Override
+    public Object R_UnboundValue() {
+        return RUnboundValue.instance;
+    }
+
+    @Override
+    public Object R_Srcref() {
+        return RFFIVariables.R_Srcref.getValue();
+    }
+
+    @Override
+    public Object R_MissingArg() {
+        return RFFIVariables.R_MissingArg.getValue();
+    }
+
+    @Override
+    public Object R_BaseSymbol() {
+        return RFFIVariables.R_BaseSymbol.getValue();
+    }
+
+    @Override
+    public Object R_BraceSymbol() {
+        return RFFIVariables.R_BraceSymbol.getValue();
+    }
+
+    @Override
+    public Object R_Bracket2Symbol() {
+        return RFFIVariables.R_Bracket2Symbol.getValue();
+    }
+
+    @Override
+    public Object R_BracketSymbol() {
+        return RFFIVariables.R_BracketSymbol.getValue();
+    }
+
+    @Override
+    public Object R_ClassSymbol() {
+        return RFFIVariables.R_ClassSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DeviceSymbol() {
+        return RFFIVariables.R_DeviceSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DimNamesSymbol() {
+        return RFFIVariables.R_DimNamesSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DimSymbol() {
+        return RFFIVariables.R_DimSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DollarSymbol() {
+        return RFFIVariables.R_DollarSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DotsSymbol() {
+        return RFFIVariables.R_DotsSymbol.getValue();
+    }
+
+    @Override
+    public Object R_DropSymbol() {
+        return RFFIVariables.R_DropSymbol.getValue();
+    }
+
+    @Override
+    public Object R_LastvalueSymbol() {
+        return RFFIVariables.R_LastvalueSymbol.getValue();
+    }
+
+    @Override
+    public Object R_LevelsSymbol() {
+        return RFFIVariables.R_LevelsSymbol.getValue();
+    }
+
+    @Override
+    public Object R_ModeSymbol() {
+        return RFFIVariables.R_ModeSymbol.getValue();
+    }
+
+    @Override
+    public Object R_NaRmSymbol() {
+        return RFFIVariables.R_NaRmSymbol.getValue();
+    }
+
+    @Override
+    public Object R_NameSymbol() {
+        return RFFIVariables.R_NameSymbol.getValue();
+    }
+
+    @Override
+    public Object R_NamesSymbol() {
+        return RFFIVariables.R_NamesSymbol.getValue();
+    }
+
+    @Override
+    public Object R_NamespaceEnvSymbol() {
+        return RFFIVariables.R_NamespaceEnvSymbol.getValue();
+    }
+
+    @Override
+    public Object R_PackageSymbol() {
+        return RFFIVariables.R_PackageSymbol.getValue();
+    }
+
+    @Override
+    public Object R_QuoteSymbol() {
+        return RFFIVariables.R_QuoteSymbol.getValue();
+    }
+
+    @Override
+    public Object R_RowNamesSymbol() {
+        return RFFIVariables.R_RowNamesSymbol.getValue();
+    }
+
+    @Override
+    public Object R_SeedsSymbol() {
+        return RFFIVariables.R_SeedsSymbol.getValue();
+    }
+
+    @Override
+    public Object R_SourceSymbol() {
+        return RFFIVariables.R_SourceSymbol.getValue();
+    }
+
+    @Override
+    public Object R_TspSymbol() {
+        return RFFIVariables.R_TspSymbol.getValue();
+    }
+
+    @Override
+    public Object R_dot_defined() {
+        return RFFIVariables.R_dot_defined.getValue();
+    }
+
+    @Override
+    public Object R_dot_Method() {
+        return RFFIVariables.R_dot_Method.getValue();
+    }
+
+    @Override
+    public Object R_dot_target() {
+        return RFFIVariables.R_dot_target.getValue();
+    }
+
+    @Override
+    public Object R_NaString() {
+        return RFFIVariables.R_NaString.getValue();
+    }
+
+    @Override
+    public Object R_BlankString() {
+        return RFFIVariables.R_BlankString.getValue();
+    }
+
+    @Override
+    public Object R_BlankScalarString() {
+        return RFFIVariables.R_BlankScalarString.getValue();
+    }
+
+    @Override
+    public Object R_EmptyEnv() {
+        return RFFIVariables.R_EmptyEnv.getValue();
+    }
+
 }

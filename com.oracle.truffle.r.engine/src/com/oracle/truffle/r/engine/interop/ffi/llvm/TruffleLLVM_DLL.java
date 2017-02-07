@@ -233,7 +233,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
 
     private static class TruffleLLVM_DLSymNode extends JNI_DLSymNode {
         @Override
-        public SymbolHandle execute(Object handle, String symbol) {
+        public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
             if (handle instanceof LLVM_Handle) {
                 // If the symbol exists it will be in the map
                 ParseStatus parseStatus = getContextState().parseStatusMap.get(symbol);
@@ -247,7 +247,7 @@ class TruffleLLVM_DLL extends JNI_DLL implements DLLRFFI {
                     return new SymbolHandle(symValue);
                 } else {
                     // symbol not found (or not in requested library)
-                    return null;
+                    throw new UnsatisfiedLinkError();
                 }
             } else {
                 return super.execute(handle, symbol);
