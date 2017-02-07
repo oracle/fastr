@@ -499,7 +499,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                Object result = ForeignAccess.sendExecute(foreignCall, frame, function, argumentsArray);
+                Object result = ForeignAccess.sendExecute(foreignCall, function, argumentsArray);
                 if (result instanceof Boolean) {
                     // convert to R logical
                     // TODO byte/short convert to int?

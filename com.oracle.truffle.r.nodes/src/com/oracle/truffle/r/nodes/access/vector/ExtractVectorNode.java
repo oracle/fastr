@@ -103,29 +103,28 @@ public abstract class ExtractVectorNode extends Node {
         return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
-    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object exact, Object dropDimensions,
+    protected Object accessField(TruffleObject object, Object[] positions, Object exact, Object dropDimensions,
                     @Cached("createForeignRead(positions)") Node foreignRead,
-                    @Cached("positions.length") int cachedLength,
+                    @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("createClassProfile()") ValueProfile positionProfile) {
         Object position = positionProfile.profile(positions[0]);
         try {
             if (position instanceof Integer) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((int) position) - 1});
+                return ForeignAccess.send(foreignRead, object, new Object[]{((int) position) - 1});
             } else if (position instanceof Double) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((double) position) - 1});
+                return ForeignAccess.send(foreignRead, object, new Object[]{((double) position) - 1});
             } else if (position instanceof String) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{position});
+                return ForeignAccess.send(foreignRead, object, new Object[]{position});
             } else if (position instanceof RAbstractStringVector) {
                 String string = firstString.executeString(castNode.execute(position));
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{string});
+                return ForeignAccess.send(foreignRead, object, new Object[]{string});
             } else if (position instanceof RAbstractDoubleVector) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0) - 1});
+                return ForeignAccess.send(foreignRead, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0) - 1});
             } else if (position instanceof RAbstractIntVector) {
-                return ForeignAccess.send(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0) - 1});
+                return ForeignAccess.send(foreignRead, object, new Object[]{((RAbstractIntVector) position).getDataAt(0) - 1});
             } else {
                 throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
             }

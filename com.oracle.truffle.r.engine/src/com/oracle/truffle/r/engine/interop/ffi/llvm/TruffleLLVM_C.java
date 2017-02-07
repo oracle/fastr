@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
@@ -33,7 +32,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_C.JNI_InvokeCNode;
-import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 class TruffleLLVM_C implements CRFFI {
     private static class TruffleLLVM_InvokeCNode extends JNI_InvokeCNode {
@@ -43,12 +41,11 @@ class TruffleLLVM_C implements CRFFI {
             if (nativeCallInfo.address.value instanceof Long) {
                 super.execute(nativeCallInfo, args);
             } else {
-                VirtualFrame frame = TruffleRFFIFrameHelper.create();
                 TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
                 Object[] wargs = wrap(args);
                 try {
                     Node messageNode = Message.createExecute(0).createNode();
-                    ForeignAccess.sendExecute(messageNode, frame, nativeCallInfo.address.asTruffleObject(), wargs);
+                    ForeignAccess.sendExecute(messageNode, nativeCallInfo.address.asTruffleObject(), wargs);
                 } catch (Throwable t) {
                     throw RInternalError.shouldNotReachHere(t);
                 }

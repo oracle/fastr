@@ -142,14 +142,14 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization(guards = "isForeignObject(object)")
-    protected int getForeignSize(VirtualFrame frame, TruffleObject object,
+    protected int getForeignSize(TruffleObject object,
                     @Cached("createHasSize()") Node hasSizeNode,
                     @Cached("createGetSize()") Node getSizeNode) {
         try {
-            if (!(boolean) ForeignAccess.send(hasSizeNode, frame, object)) {
+            if (!(boolean) ForeignAccess.send(hasSizeNode, object)) {
                 return 1;
             }
-            return (int) ForeignAccess.send(getSizeNode, frame, object);
+            return (int) ForeignAccess.send(getSizeNode, object);
         } catch (InteropException e) {
             throw RError.interopError(this, e, object);
         }

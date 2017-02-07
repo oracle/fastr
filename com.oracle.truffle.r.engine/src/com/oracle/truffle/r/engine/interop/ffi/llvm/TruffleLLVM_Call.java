@@ -25,7 +25,6 @@ package com.oracle.truffle.r.engine.interop.ffi.llvm;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -43,7 +42,6 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.jni.JNI_Call;
-import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 class TruffleLLVM_Call implements CallRFFI {
     private static TruffleLLVM_Call truffleCall;
@@ -99,7 +97,6 @@ class TruffleLLVM_Call implements CallRFFI {
             TruffleLLVM_DLL.ensureParsed("libR", initVarFun.funName, true);
             initVarFun.symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + initVarFun.funName));
         }
-        VirtualFrame frame = TruffleRFFIFrameHelper.create();
         Node executeNode = Message.createExecute(2).createNode();
         RFFIVariables[] variables = RFFIVariables.initialize();
         for (int i = 0; i < variables.length; i++) {
@@ -110,9 +107,9 @@ class TruffleLLVM_Call implements CallRFFI {
             }
             try {
                 if (value instanceof Double) {
-                    ForeignAccess.sendExecute(executeNode, frame, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
+                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
                 } else if (value instanceof Integer) {
-                    ForeignAccess.sendExecute(executeNode, frame, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
                 } else {
                     // TODO
                     // ForeignAccess.sendExecute(executeNode, frame,
@@ -166,9 +163,8 @@ class TruffleLLVM_Call implements CallRFFI {
         }
 
         private static Object doInvoke(Node messageNode, NativeCallInfo nativeCallInfo, Object[] args) {
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             try {
-                return ForeignAccess.sendExecute(messageNode, frame, nativeCallInfo.address.asTruffleObject(), args);
+                return ForeignAccess.sendExecute(messageNode, nativeCallInfo.address.asTruffleObject(), args);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
             }

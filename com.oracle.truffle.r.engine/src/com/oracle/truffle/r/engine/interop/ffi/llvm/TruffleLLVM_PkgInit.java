@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -35,7 +34,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 class TruffleLLVM_PkgInit {
 
@@ -78,11 +76,10 @@ class TruffleLLVM_PkgInit {
     }
 
     private static Object setSymbol(int nstOrd, long routines, int index, SymbolHandle symbolHandle) {
-        VirtualFrame frame = TruffleRFFIFrameHelper.create();
         Node executeNode = Message.createExecute(3).createNode();
         try {
 
-            Object result = ForeignAccess.sendExecute(executeNode, frame, symbolHandle.asTruffleObject(), nstOrd, routines, index);
+            Object result = ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject(), nstOrd, routines, index);
             return result;
         } catch (Throwable t) {
             throw RInternalError.shouldNotReachHere();

@@ -104,7 +104,7 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
         @Child private SetFixedAttributeNode isTruffleObjAttrSetter = SetFixedAttributeNode.create("is.truffle.object");
 
-        public Object convert(VirtualFrame frame, TruffleObject obj) {
+        public Object convert(TruffleObject obj) {
             class RStringWrapper extends TruffleObjectWrapper implements RAbstractStringVector {
                 final TruffleObject object;
 
@@ -122,9 +122,9 @@ public final class ValuePrinterNode extends RBaseNode {
                 public String getDataAt(int index) {
                     Object value;
                     try {
-                        value = ForeignAccess.sendRead(readNode, frame, object, index);
-                        if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                            value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                        value = ForeignAccess.sendRead(readNode, object, index);
+                        if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                            value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                         }
                     } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                         throw RInternalError.shouldNotReachHere(e);
@@ -143,17 +143,16 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
             }
             try {
-                if (ForeignAccess.sendHasSize(hasSizeNode, frame, obj)) {
-                    CompilerDirectives.transferToInterpreter();
-                    int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, frame, obj);
+                if (ForeignAccess.sendHasSize(hasSizeNode, obj)) {
+                    int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, obj);
                     boolean allBoolean = true;
                     boolean allInteger = true;
                     boolean allNumber = true;
                     boolean allString = true;
                     for (int i = 0; i < size; i++) {
-                        Object value = ForeignAccess.sendRead(readNode, frame, obj, i);
-                        if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                            value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                        Object value = ForeignAccess.sendRead(readNode, obj, i);
+                        if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                            value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                         }
                         allBoolean &= value instanceof Boolean;
                         allInteger &= value instanceof Integer;
@@ -176,9 +175,9 @@ public final class ValuePrinterNode extends RBaseNode {
                             public byte getDataAt(int index) {
                                 Object value;
                                 try {
-                                    value = ForeignAccess.sendRead(readNode, frame, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                                    value = ForeignAccess.sendRead(readNode, obj, index);
+                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                                     }
                                 } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                                     throw RInternalError.shouldNotReachHere(e);
@@ -213,9 +212,9 @@ public final class ValuePrinterNode extends RBaseNode {
                             public int getDataAt(int index) {
                                 Object value;
                                 try {
-                                    value = ForeignAccess.sendRead(readNode, frame, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                                    value = ForeignAccess.sendRead(readNode, obj, index);
+                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                                     }
                                 } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                                     throw RInternalError.shouldNotReachHere(e);
@@ -250,9 +249,9 @@ public final class ValuePrinterNode extends RBaseNode {
                             public double getDataAt(int index) {
                                 Object value;
                                 try {
-                                    value = ForeignAccess.sendRead(readNode, frame, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                                    value = ForeignAccess.sendRead(readNode, obj, index);
+                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                                     }
                                 } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                                     throw RInternalError.shouldNotReachHere(e);
@@ -289,9 +288,9 @@ public final class ValuePrinterNode extends RBaseNode {
                             public Object getDataAt(int index) {
                                 Object value;
                                 try {
-                                    value = ForeignAccess.sendRead(readNode, frame, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                                    value = ForeignAccess.sendRead(readNode, obj, index);
+                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                                     }
                                 } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                                     throw RInternalError.shouldNotReachHere(e);
@@ -312,9 +311,9 @@ public final class ValuePrinterNode extends RBaseNode {
                         return new RListWrapper(size);
                     }
                 }
-                TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, frame, obj);
+                TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
                 if (keys != null) {
-                    int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, frame, keys);
+                    int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
                     RAbstractStringVector abstractNames = new RStringWrapper(size, keys);
                     RStringVector names = RDataFactory.createStringVector(size);
                     for (int i = 0; i < size; i++) {
@@ -339,9 +338,9 @@ public final class ValuePrinterNode extends RBaseNode {
                         public Object getDataAt(int index) {
                             Object value;
                             try {
-                                value = ForeignAccess.sendRead(readNode, frame, obj, names.getDataAt(index));
-                                if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, frame, (TruffleObject) value)) {
-                                    value = ForeignAccess.sendUnbox(unboxNode, frame, (TruffleObject) value);
+                                value = ForeignAccess.sendRead(readNode, obj, names.getDataAt(index));
+                                if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                                    value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                                 }
                             } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                                 throw RInternalError.shouldNotReachHere(e);
@@ -405,20 +404,20 @@ public final class ValuePrinterNode extends RBaseNode {
         return boxPrimitiveNode.execute(o);
     }
 
-    private Object convertTruffleObject(VirtualFrame frame, Object o) {
+    private Object convertTruffleObject(Object o) {
         if (o instanceof TruffleObject && !(o instanceof RTypedValue)) {
             if (convertTruffleObject == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 convertTruffleObject = insert(new ConvertTruffleObjectNode());
             }
-            return convertTruffleObject.convert(frame, (TruffleObject) o);
+            return convertTruffleObject.convert((TruffleObject) o);
         }
         return o;
     }
 
-    public String execute(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+    public String execute(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
         try {
-            prettyPrint(convertTruffleObject(frame, o), new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, noOpt), RWriter::new);
+            prettyPrint(convertTruffleObject(o), new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, noOpt), RWriter::new);
             return null;
         } catch (IOException ex) {
             throw RError.ioError(this, ex);
@@ -576,12 +575,8 @@ public final class ValuePrinterNode extends RBaseNode {
         }
     }
 
-    public Object prettyPrint(VirtualFrame frame, Object v, WriterFactory wf) {
-        return prettyPrint(convertTruffleObject(frame, v), wf);
-    }
-
     @TruffleBoundary
-    private Object prettyPrint(Object v, WriterFactory wf) {
+    public Object prettyPrint(Object v, WriterFactory wf) {
         PrintParameters printParams = new PrintParameters();
         printParams.setDefaults();
         printParams.setSuppressIndexLabels(true);
@@ -619,7 +614,7 @@ public final class ValuePrinterNode extends RBaseNode {
 
             @Override
             public Object execute(VirtualFrame frame) {
-                return valuePrinterNode.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+                return valuePrinterNode.prettyPrint(value, AnyVectorToStringVectorWriter::new);
             }
         }).call(value);
     }
