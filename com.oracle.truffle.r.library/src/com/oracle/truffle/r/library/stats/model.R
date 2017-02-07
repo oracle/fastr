@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
 # Copyright (c) 1997-2013,  The R Core Team
-# Copyright (c) 2016, Oracle and/or its affiliates
+# Copyright (c) 2016, 2017 Oracle and/or its affiliates
 #
 # All rights reserved.
 #
@@ -166,7 +166,7 @@ ExtractVars <- function (formula, checkonly=FALSE) {
         if (identical(op, quote(`~`))) { # tilde
             if (response) {
                 error("invalid model formula")
-            } else if (is.null(formula[[3]])) {
+            } else if (length(formula) < 3 || is.null(formula[[3]])) {
                 response <<- FALSE
                 ExtractVars(formula[[2]], FALSE)
             } else {

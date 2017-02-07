@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,8 @@ public class TestFormulae extends TestBase {
     private static final String[] FORMULAE = new String[]{
                     "y~z", "y~1+z", "y~0+z", "y~-1+z", "y~z*k", "y~z*k+w*m", "u~z*k+w*m",
                     "y~z:k", "y~z^2", "y~(z+k)^2", "y~z*((m+w)^3)",
-                    "y~(z+k)*(w+u)", "y~w%in%v", "y~w/k", "y~(1 + w/k)"
+                    "y~(z+k)*(w+u)", "y~w%in%v", "y~w/k", "y~(1 + w/k)",
+                    "~k+y+z"
     };
 
     /**
