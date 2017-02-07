@@ -11,11 +11,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -24,50 +25,49 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-public final class Dqrdc2 extends RExternalBuiltinNode {
+public abstract class Dqrdc2 extends RExternalBuiltinNode.Arg9 {
     @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().createRApplRFFINode();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
+    public static Dqrdc2 create() {
+        return Dqrdc2NodeGen.create();
+    }
+
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
     static {
-        Casts.noCasts(Dqrdc2.class);
+        Casts casts = new Casts(Dqrdc2.class);
+        casts.arg(0, "xVec").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(1, "ldx").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(2, "n").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(3, "p").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(4, "tol").mustBe(doubleValue()).asDoubleVector().findFirst();
+        casts.arg(5, "rankVec").mustBe(integerValue()).asIntegerVector();
+        casts.arg(6, "qrauxVec").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(7, "pivotVec").mustBe(integerValue()).asIntegerVector();
+        casts.arg(8, "workVec").mustBe(doubleValue()).asDoubleVector();
     }
 
-    @Override
-    public RList call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        try {
-            RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
-            int ldx = argValues[1] instanceof Integer ? (int) argValues[1] : ((RAbstractIntVector) argValues[1]).getDataAt(0);
-            int n = argValues[2] instanceof Integer ? (int) argValues[2] : ((RAbstractIntVector) argValues[2]).getDataAt(0);
-            int p = argValues[3] instanceof Integer ? (int) argValues[3] : ((RAbstractIntVector) argValues[3]).getDataAt(0);
-            double tol = argValues[4] instanceof Double ? (double) argValues[4] : ((RAbstractDoubleVector) argValues[4]).getDataAt(0);
-            RAbstractIntVector rankVec = (RAbstractIntVector) argValues[5];
-            RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[6];
-            RAbstractIntVector pivotVec = (RAbstractIntVector) argValues[7];
-            RAbstractDoubleVector workVec = (RAbstractDoubleVector) argValues[8];
-            double[] x = xVec.materialize().getDataTemp();
-            int[] rank = rankVec.materialize().getDataTemp();
-            double[] qraux = qrauxVec.materialize().getDataTemp();
-            int[] pivot = pivotVec.materialize().getDataTemp();
-            rApplRFFINode.dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
-            // @formatter:off
-            Object[] data = new Object[]{
-                        RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, getDimNode.getDimensions(xVec)),
-                        argValues[1], argValues[2], argValues[3], argValues[4],
-                        RDataFactory.createIntVector(rank, RDataFactory.COMPLETE_VECTOR),
-                        RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),
-                        RDataFactory.createIntVector(pivot, RDataFactory.COMPLETE_VECTOR),
-                        argValues[8]
-            };
-            // @formatter:on
-            return RDataFactory.createList(data, DQRDC2_NAMES);
-        } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INCORRECT_ARG, "dqrdc2");
-        }
+    @Specialization
+    public RList dqrdc2(RAbstractDoubleVector xVec, int ldx, int n, int p, double tol, RAbstractIntVector rankVec, RAbstractDoubleVector qrauxVec, RAbstractIntVector pivotVec,
+                    RAbstractDoubleVector workVec) {
+        double[] x = xVec.materialize().getDataTemp();
+        int[] rank = rankVec.materialize().getDataTemp();
+        double[] qraux = qrauxVec.materialize().getDataTemp();
+        int[] pivot = pivotVec.materialize().getDataTemp();
+        rApplRFFINode.dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
+        // @formatter:off
+        Object[] data = new Object[]{
+                    RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, getDimNode.getDimensions(xVec)),
+                    ldx, n, p, tol,
+                    RDataFactory.createIntVector(rank, RDataFactory.COMPLETE_VECTOR),
+                    RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),
+                    RDataFactory.createIntVector(pivot, RDataFactory.COMPLETE_VECTOR),
+                    workVec
+        };
+        // @formatter:on
+        return RDataFactory.createList(data, DQRDC2_NAMES);
     }
 }
