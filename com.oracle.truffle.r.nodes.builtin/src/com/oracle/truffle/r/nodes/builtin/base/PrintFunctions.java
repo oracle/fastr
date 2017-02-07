@@ -79,8 +79,8 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(VirtualFrame frame, Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
-            valuePrinter.execute(frame, o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+            valuePrinter.execute(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             return o;
         }
 
@@ -89,13 +89,14 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt,
+        protected Object printDefaultS4(@SuppressWarnings("unused") VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max,
+                        boolean useSource, boolean noOpt,
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
             if (noOpt) {
                 // S4 should only be called in case noOpt is true
                 RContext.getEngine().evalFunction(showFunction, null, null, null, o);
             } else {
-                printDefault(frame, showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             }
             return o;
         }
@@ -117,10 +118,9 @@ public class PrintFunctions {
             casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RFunction printFunction(VirtualFrame frame, RFunction x, boolean useSource, RArgsValuesAndNames extra) {
-            valuePrinter.execute(frame, x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
+        protected RFunction printFunction(RFunction x, boolean useSource, @SuppressWarnings("unused") RArgsValuesAndNames extra) {
+            valuePrinter.execute(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
             return x;
         }
     }

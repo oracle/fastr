@@ -25,7 +25,6 @@ package com.oracle.truffle.r.engine.interop.ffi.llvm;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
@@ -42,7 +41,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
-import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 
 public class TruffleLLVM_Stats implements StatsRFFI {
 
@@ -124,9 +122,8 @@ public class TruffleLLVM_Stats implements StatsRFFI {
             NativeDoubleArray na = new NativeDoubleArray(a);
             NativeDoubleArray nwork = new NativeDoubleArray(work);
             NativeIntegerArray niwork = new NativeIntegerArray(iwork);
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             try {
-                return (int) ForeignAccess.sendExecute(messageNode, frame, fftWork.asTruffleObject(), na, nseg, n, nspn, isn, nwork, niwork);
+                return (int) ForeignAccess.sendExecute(messageNode, fftWork.asTruffleObject(), na, nseg, n, nspn, isn, nwork, niwork);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
             }
@@ -165,10 +162,9 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         private static void doFactor(int n, int[] pmaxf, int[] pmaxp, Node messageNode, SymbolHandle fftFactor) {
             NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
             NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp);
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
 
             try {
-                ForeignAccess.sendExecute(messageNode, frame, fftFactor.asTruffleObject(), n, npmaxf, npmaxp);
+                ForeignAccess.sendExecute(messageNode, fftFactor.asTruffleObject(), n, npmaxf, npmaxp);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
             }

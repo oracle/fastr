@@ -22,13 +22,11 @@
  */
 package com.oracle.truffle.r.engine.interop.ffi.llvm;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
-import com.oracle.truffle.r.runtime.ffi.truffle.TruffleRFFIFrameHelper;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleLLVM_UserRng implements UserRngRFFI {
@@ -41,12 +39,11 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
         @Override
         public void init(int seed) {
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             if (initMessage == null) {
                 initMessage = Message.createExecute(1).createNode();
             }
             try {
-                ForeignAccess.sendExecute(initMessage, frame, Function.Init.getSymbolHandle().asTruffleObject(), seed);
+                ForeignAccess.sendExecute(initMessage, Function.Init.getSymbolHandle().asTruffleObject(), seed);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -54,13 +51,12 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
         @Override
         public double rand() {
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             if (randMessage == null) {
                 randMessage = Message.createExecute(0).createNode();
             }
             try {
-                Object address = ForeignAccess.sendExecute(randMessage, frame, Function.Rand.getSymbolHandle().asTruffleObject());
-                Object value = ForeignAccess.sendExecute(readPointerNode, frame, TruffleLLVM_CAccess.Function.READ_POINTER_DOUBLE.getSymbolHandle().asTruffleObject(), address);
+                Object address = ForeignAccess.sendExecute(randMessage, Function.Rand.getSymbolHandle().asTruffleObject());
+                Object value = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_DOUBLE.getSymbolHandle().asTruffleObject(), address);
                 return (double) value;
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
@@ -69,13 +65,12 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
         @Override
         public int nSeed() {
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             if (nSeedMessage == null) {
                 nSeedMessage = Message.createExecute(0).createNode();
             }
             try {
-                Object address = ForeignAccess.sendExecute(nSeedMessage, frame, Function.NSeed.getSymbolHandle().asTruffleObject());
-                Object n = ForeignAccess.sendExecute(readPointerNode, frame, TruffleLLVM_CAccess.Function.READ_POINTER_INT.getSymbolHandle().asTruffleObject(), address);
+                Object address = ForeignAccess.sendExecute(nSeedMessage, Function.NSeed.getSymbolHandle().asTruffleObject());
+                Object n = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_INT.getSymbolHandle().asTruffleObject(), address);
                 return (int) n;
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
@@ -84,14 +79,13 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
         @Override
         public void seeds(int[] n) {
-            VirtualFrame frame = TruffleRFFIFrameHelper.create();
             if (seedsMessage == null) {
                 seedsMessage = Message.createExecute(0).createNode();
             }
             try {
-                Object address = ForeignAccess.sendExecute(seedsMessage, frame, Function.Seedloc.getSymbolHandle().asTruffleObject());
+                Object address = ForeignAccess.sendExecute(seedsMessage, Function.Seedloc.getSymbolHandle().asTruffleObject());
                 for (int i = 0; i < n.length; i++) {
-                    Object seed = ForeignAccess.sendExecute(readPointerNode, frame, TruffleLLVM_CAccess.Function.READ_ARRAY_INT.getSymbolHandle().asTruffleObject(), address, i);
+                    Object seed = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_ARRAY_INT.getSymbolHandle().asTruffleObject(), address, i);
                     n[i] = (int) seed;
                 }
             } catch (Throwable t) {

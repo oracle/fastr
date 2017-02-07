@@ -41,7 +41,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -203,8 +202,8 @@ public class FastRInterop {
         }
 
         @Specialization
-        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendHasSize(node, frame, obj));
+        public byte hasSize(TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendHasSize(node, obj));
         }
     }
 
@@ -218,8 +217,8 @@ public class FastRInterop {
         }
 
         @Specialization
-        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendIsNull(node, frame, obj));
+        public byte hasSize(TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsNull(node, obj));
         }
     }
 
@@ -233,8 +232,8 @@ public class FastRInterop {
         }
 
         @Specialization
-        public byte hasSize(VirtualFrame frame, TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, frame, obj));
+        public byte hasSize(TruffleObject obj) {
+            return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, obj));
         }
     }
 

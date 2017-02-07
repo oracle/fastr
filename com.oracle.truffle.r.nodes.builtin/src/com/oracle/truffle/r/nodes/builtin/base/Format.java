@@ -20,7 +20,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -102,15 +101,15 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+    protected RStringVector format(RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+    protected RStringVector format(RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     // TODO: even though format's arguments are not used at this point, their processing mirrors
@@ -136,15 +135,15 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+    protected RStringVector format(RAbstractDoubleVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
-    protected RStringVector format(VirtualFrame frame, RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
+    protected RStringVector format(RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
                     String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(frame, value, AnyVectorToStringVectorWriter::new);
+        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
     }
 
     @Specialization
