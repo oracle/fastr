@@ -192,7 +192,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
                 // names only need to be considered for single dimensional accesses
                 if (getNamesNode == null) {
-                    CompilerDirectives.transferToInterpreter();
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     getNamesNode = insert(GetNamesAttributeNode.create());
                 }
                 RStringVector originalNames = getNamesNode.getNames(vector);
