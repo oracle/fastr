@@ -201,7 +201,7 @@ public class FortranAndCFunctions {
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             switch (lookupName(symbol)) {
                 case "dqrdc2":
-                    return new Dqrdc2();
+                    return Dqrdc2.create();
                 case "dqrcf":
                     return new Dqrcf();
                 default:
