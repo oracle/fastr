@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -56,18 +57,12 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class AccessArgumentNode extends RNode {
 
-    @Child private ReadArgumentNode readArgNode;
-
     @Child private PromiseHelperNode promiseHelper;
 
     /**
      * The formal index of this argument.
      */
     private final int index;
-
-    public ReadArgumentNode getReadArgNode() {
-        return readArgNode;
-    }
 
     /**
      * Used to cache {@link RPromise} evaluations.
@@ -84,7 +79,6 @@ public final class AccessArgumentNode extends RNode {
 
     private AccessArgumentNode(int index) {
         this.index = index;
-        this.readArgNode = new ReadArgumentNode(index);
     }
 
     public static AccessArgumentNode create(int index) {
@@ -100,7 +94,7 @@ public final class AccessArgumentNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return doArgument(frame, readArgNode.execute(frame));
+        return doArgument(frame, RArguments.getArgument(frame, index));
     }
 
     @Override
