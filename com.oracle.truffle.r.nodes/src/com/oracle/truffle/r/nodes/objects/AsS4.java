@@ -54,7 +54,7 @@ public abstract class AsS4 extends Node {
             if (complete != 0) {
                 if (getS4DataSlot == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    getS4DataSlot = GetS4DataSlotNodeGen.create(RType.Any);
+                    getS4DataSlot = insert(GetS4DataSlotNodeGen.create(RType.Any));
 
                 }
                 RTypedValue value = getS4DataSlot.executeObject(obj);
