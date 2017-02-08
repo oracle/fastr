@@ -43,11 +43,16 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
     }
 
     @Child private CastDoubleNode recursiveCastDouble;
@@ -117,7 +122,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             ddata[i] = doubleValue;
         }
         if (warning) {
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
@@ -141,7 +146,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         }
         if (warning) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }

@@ -321,24 +321,48 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Integer, false);
         }
 
+        public static <T> PipelineStep<T, Integer> asInteger(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Integer, false, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector() {
             return new CoercionStep<>(RType.Integer, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Integer, true, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes);
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, null);
+        }
+
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
             return new CoercionStep<>(RType.Double, false);
         }
 
+        public static <T> PipelineStep<T, Double> asDouble(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Double, false, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector() {
             return new CoercionStep<>(RType.Double, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Double, true, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
+        }
+
+        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
         }
 
         public static <T> PipelineStep<T, String> asString() {
@@ -357,6 +381,10 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Complex, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractComplexVector> asComplex(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Complex, false, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractRawVector> asRawVector() {
             return new CoercionStep<>(RType.Raw, true);
         }
@@ -365,12 +393,24 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Logical, false);
         }
 
+        public static <T> PipelineStep<T, Byte> asLogical(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Logical, false, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector() {
             return new CoercionStep<>(RType.Logical, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Logical, true, false, false, false, true, messageCallerObj);
+        }
+
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
+            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false, null);
+        }
+
+        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
         }
 
         public static PipelineStep<Byte, Boolean> asBoolean() {
@@ -382,7 +422,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {
-            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector);
+            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector, null);
         }
 
         /**

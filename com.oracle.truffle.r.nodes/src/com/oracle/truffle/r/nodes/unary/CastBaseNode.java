@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CastBaseNode extends CastNode {
 
@@ -59,13 +60,20 @@ public abstract class CastBaseNode extends CastNode {
     private final boolean preserveDimensions;
     private final boolean preserveAttributes;
 
-    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    protected final RBaseNode messageCallObj;
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
         if (preserveDimensions) {
             getDimNamesNode = GetDimNamesAttributeNode.create();
         }
+        this.messageCallObj = messageCallObj == null ? this : messageCallObj;
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        this(preserveNames, preserveDimensions, preserveAttributes, null);
     }
 
     public boolean preserveNames() {
@@ -84,7 +92,7 @@ public abstract class CastBaseNode extends CastNode {
 
     protected RError throwCannotCoerceListError(String type) {
         listCoercionErrorBranch.enter();
-        throw RError.error(this, RError.Message.LIST_COERCION, type);
+        throw RError.error(messageCallObj, RError.Message.LIST_COERCION, type);
     }
 
     protected int[] getPreservedDimensions(RAbstractContainer operand) {

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CastIntegerBaseNode extends CastBaseNode {
@@ -47,6 +48,10 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         super(preserveNames, preserveDimensions, preserveAttributes);
     }
 
+    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallObj);
+    }
+
     @Override
     protected final RType getTargetType() {
         return RType.Integer;
@@ -55,7 +60,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected Object castIntegerRecursive(Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes(), messageCallObj));
         }
         return recursiveCastInteger.executeInt(o);
     }
@@ -87,7 +92,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         int result = naCheck.convertComplexToInt(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return result;
     }
@@ -102,7 +107,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         int result = RRuntime.string2intNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }

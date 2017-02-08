@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Represents a single step in the cast pipeline. {@code PipelineStep}, {@code Mapper} and
@@ -206,6 +207,7 @@ public abstract class PipelineStep<T, R> {
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
+        public final RBaseNode messageCallObj;
 
         /**
          * Whether RNull/RMissing should be preserved, or converted to an empty list.
@@ -218,24 +220,29 @@ public abstract class PipelineStep<T, R> {
         public final boolean vectorCoercion;
 
         public CoercionStep(RType type, boolean vectorCoercion) {
-            this(type, vectorCoercion, false, false, false, true);
+            this(type, vectorCoercion, false, false, false, true, null);
         }
 
         public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
+            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true, null);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, RBaseNode messageCallObj) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
             this.preserveAttributes = preserveAttributes;
             this.preserveDimensions = preserveDimensions;
             this.preserveNonVector = preserveNonVector;
+            this.messageCallObj = messageCallObj;
         }
 
         public RType getType() {
             return type;
+        }
+
+        public RBaseNode getMessageCallObj() {
+            return messageCallObj;
         }
 
         @Override

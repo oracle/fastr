@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -42,8 +43,12 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     protected final NAProfile naProfile = NAProfile.create();
     protected final BranchProfile warningBranch = BranchProfile.create();
 
+    protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallObj);
+    }
+
     protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, null);
     }
 
     @Override
@@ -86,7 +91,7 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         double result = naCheck.convertComplexToDouble(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return result;
     }
@@ -106,7 +111,7 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         double result = RRuntime.string2doubleNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
