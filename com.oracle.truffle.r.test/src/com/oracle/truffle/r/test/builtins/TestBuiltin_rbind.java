@@ -91,8 +91,8 @@ public class TestBuiltin_rbind extends TestBase {
 
         // segfault in gnur
         assertEval(Ignored.ReferenceError, "{ v <- 1; class(v) <- 'foo'; rbind.foo <- length; rbind(v) }");
-        assertEval(Ignored.WrongCaller, "{ v <- 1; class(v) <- 'foo'; rbind.foo <- rawToBits; rbind(v) }");
 
+        assertEval(Output.IgnoreErrorContext, "{ v <- 1; class(v) <- 'foo'; rbind.foo <- rawToBits; rbind(v) }");
         assertEval("{ v <- 1; class(v) <- 'foo'; rbind(v) }");
         assertEval("{ v <- 1; rbind.foo <- function(...) 'foo'; rbind(v) }");
 

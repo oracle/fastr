@@ -55,7 +55,7 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf8() {
-        assertEval(Ignored.Unknown, "argv <- list('plot_%02g', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('plot_%02g', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test

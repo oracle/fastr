@@ -109,8 +109,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(structure(list(given = c('George', 'E.', 'P.'), family = 'Box', role = NULL, email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment')), structure(list(given = c('David', 'R.'), family = 'Cox', role = NULL, email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(list(structure(list(given = c('George', 'E.', 'P.'), family = 'Box', role = NULL, email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment')), structure(list(given = c('David', 'R.'), family = 'Cox', role = NULL, email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -175,7 +174,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter32() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, class = 'roman'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(1:4, class = 'roman'));as.character(argv[[1]]);");
     }
 
     @Test
