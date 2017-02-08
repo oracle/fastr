@@ -27,8 +27,9 @@ import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceDownCallReturn;
 import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
+import com.oracle.truffle.r.nodes.ffi.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
+import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -128,7 +129,7 @@ public class JNI_Call implements CallRFFI {
             traceDownCall("initialize");
         }
         try {
-            initialize(new UpCallsRFFIImpl(), RFFIVariables.initialize());
+            initialize(new UpCallsRFFIImpl(new JavaUpCallsRFFIImpl()), RFFIVariables.initialize());
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
