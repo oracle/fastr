@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -257,7 +258,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
-    private boolean checkForScalarPosition = true;
+    @CompilationFinal private boolean checkForScalarPosition = true;
 
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RAbstractIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
