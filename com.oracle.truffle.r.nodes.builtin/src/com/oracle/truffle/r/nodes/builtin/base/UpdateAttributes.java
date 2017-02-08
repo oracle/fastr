@@ -214,7 +214,6 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 } else {
                     setClassNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
                 }
-                res = result;
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 if (setRowNamesNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
