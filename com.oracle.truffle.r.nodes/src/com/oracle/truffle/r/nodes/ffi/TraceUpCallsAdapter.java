@@ -96,7 +96,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_mkCharLenCE(byte[] bytes, int encoding) {
+    public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_mkCharLenCE", bytes);
         }
@@ -119,7 +119,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_do_MAKE_CLASS(String clazz) {
+    public Object R_do_MAKE_CLASS(Object clazz) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("R_do_MAKE_CLASS", clazz);
         }
@@ -166,7 +166,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_inherits(Object x, String clazz) {
+    public int Rf_inherits(Object x, Object clazz) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_inherits", x, clazz);
         }
@@ -174,7 +174,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_install(String name) {
+    public Object Rf_install(Object name) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_install", name);
         }
@@ -214,21 +214,21 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public void Rf_error(String msg) {
+    public void Rf_error(Object msg) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_error", msg);
         }
     }
 
     @Override
-    public void Rf_warning(String msg) {
+    public void Rf_warning(Object msg) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_warning", msg);
         }
     }
 
     @Override
-    public void Rf_warningcall(Object call, String msg) {
+    public void Rf_warningcall(Object call, Object msg) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rf_warningcall", call, msg);
         }
@@ -721,7 +721,7 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public void Rprintf(String message) {
+    public void Rprintf(Object message) {
         if (RFFIUtils.traceEnabled()) {
             RFFIUtils.traceUpCall("Rprintf", message);
         }
@@ -883,9 +883,9 @@ public class TraceUpCallsAdapter implements UpCallsRFFI {
     }
 
     @Override
-    public REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+    public REnvironment R_NewHashedEnv(REnvironment parent, int initialSize) {
         if (RFFIUtils.traceEnabled()) {
-            RFFIUtils.traceUpCall("R_NewHashedEnv", parent, name, hashed, initialSize);
+            RFFIUtils.traceUpCall("R_NewHashedEnv", parent, initialSize);
         }
         return null;
     }

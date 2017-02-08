@@ -69,14 +69,16 @@ public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl implements Vari
 
     // Checkstyle: stop method name check
 
-    public Object Rf_mkCharLenCE(Object bytes, int encoding) {
+    @Override
+    public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         if (bytes instanceof NativeCharArray) {
-            return super.Rf_mkCharLenCE(((NativeCharArray) bytes).getBytes(), encoding);
+            return super.Rf_mkCharLenCE(((NativeCharArray) bytes).getBytes(), len, encoding);
         } else {
             throw RInternalError.unimplemented();
         }
     }
 
+    @Override
     public Object Rf_install(Object name) {
         if (name instanceof NativeCharArray) {
             return RDataFactory.createSymbolInterned(new String(((NativeCharArray) name).getBytes(), StandardCharsets.UTF_8));

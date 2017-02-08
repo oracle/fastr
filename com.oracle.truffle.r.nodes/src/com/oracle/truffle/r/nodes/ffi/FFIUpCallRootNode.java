@@ -29,11 +29,17 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CADDRNodeGen;
+import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CADRNodeGen;
+import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CARNodeGen;
+import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CDDRNodeGen;
+import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CDRNodeGen;
+import com.oracle.truffle.r.nodes.ffi.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class FFIUpCallRootNode extends RootNode {
-    private static RootCallTarget[] rootCallTargets = new RootCallTarget[UpCallsIndex.TABLE_LENGTH];
+    private static RootCallTarget[] rootCallTargets = new RootCallTarget[RFFIUpCallMethod.values().length];
 
     @Child private FFIUpCallNode theFFIUpCallNode;
     private final int numArgs;
@@ -61,15 +67,29 @@ public final class FFIUpCallRootNode extends RootNode {
         }
     }
 
-    static void add(int index, Supplier<FFIUpCallNode> constructor) {
+    static void add(RFFIUpCallMethod upCallMethod, Supplier<FFIUpCallNode> constructor) {
+
         FFIUpCallRootNode rootNode = new FFIUpCallRootNode(constructor.get());
-        rootCallTargets[index] = Truffle.getRuntime().createCallTarget(rootNode);
+        rootCallTargets[upCallMethod.ordinal()] = Truffle.getRuntime().createCallTarget(rootNode);
     }
 
-    public static RootCallTarget getCallTarget(int index) {
-        RootCallTarget target = rootCallTargets[index];
+    public static RootCallTarget getCallTarget(RFFIUpCallMethod upCallMethod) {
+        RootCallTarget target = rootCallTargets[upCallMethod.ordinal()];
         assert target != null;
         return target;
+    }
+
+    static void register() {
+        FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asReal, AsRealNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asLogical, AsLogicalNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asInteger, AsIntegerNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asChar, AsCharNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.CAR, CARNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.CDR, CDRNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.CADR, CADRNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.CADDR, CADDRNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.CDDR, CDDRNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.LENGTH, LENGTHNodeGen::create);
     }
 
 }

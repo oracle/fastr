@@ -108,7 +108,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (RFFIUtils.traceEnabled()) {
             tracer = new TraceUpCallsAdapter();
         }
-        UpCallsIndex.register();
+        FFIUpCallRootNode.register();
     }
 
     // Checkstyle: stop method name check
@@ -157,7 +157,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.Rf_asInteger(x);
         }
-        return (int) FFIUpCallRootNode.getCallTarget(UpCallsIndex.Rf_asInteger).call(x);
+        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.Rf_asInteger).call(x);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.Rf_asReal(x);
         }
-        return (double) FFIUpCallRootNode.getCallTarget(UpCallsIndex.Rf_asReal).call(x);
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.Rf_asReal).call(x);
     }
 
     @Override
@@ -173,7 +173,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.Rf_asLogical(x);
         }
-        return (int) FFIUpCallRootNode.getCallTarget(UpCallsIndex.Rf_asLogical).call(x);
+        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.Rf_asLogical).call(x);
     }
 
     @Override
@@ -181,16 +181,16 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.Rf_asChar(x);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.Rf_asChar).call(x);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.Rf_asChar).call(x);
     }
 
     @Override
-    public Object Rf_mkCharLenCE(byte[] bytes, int encoding) {
+    public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         if (tracer != null) {
-            tracer.Rf_mkCharLenCE(bytes, encoding);
+            tracer.Rf_mkCharLenCE(bytes, len, encoding);
         }
         // TODO: handle encoding properly
-        return CharSXPWrapper.create(new String(bytes, StandardCharsets.UTF_8));
+        return CharSXPWrapper.create(new String((byte[]) bytes, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -216,7 +216,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_do_MAKE_CLASS(String clazz) {
+    public Object R_do_MAKE_CLASS(Object clazz) {
         if (tracer != null) {
             tracer.R_do_MAKE_CLASS(clazz);
         }
@@ -349,7 +349,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_inherits(Object x, String clazz) {
+    public int Rf_inherits(Object x, Object clazz) {
         if (tracer != null) {
             tracer.Rf_inherits(x, clazz);
         }
@@ -364,11 +364,11 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_install(String name) {
+    public Object Rf_install(Object name) {
         if (tracer != null) {
             tracer.Rf_install(name);
         }
-        return RDataFactory.createSymbolInterned(name);
+        return RDataFactory.createSymbolInterned((String) name);
     }
 
     @Override
@@ -409,7 +409,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void Rf_error(String msg) {
+    public void Rf_error(Object msg) {
         if (tracer != null) {
             tracer.Rf_error(msg);
         }
@@ -417,7 +417,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void Rf_warning(String msg) {
+    public void Rf_warning(Object msg) {
         if (tracer != null) {
             tracer.Rf_warning(msg);
         }
@@ -425,11 +425,11 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void Rf_warningcall(Object call, String msg) {
+    public void Rf_warningcall(Object call, Object msg) {
         if (tracer != null) {
             tracer.Rf_warningcall(call, msg);
         }
-        RErrorHandling.warningcallRFFI(call, msg);
+        RErrorHandling.warningcallRFFI(call, (String) msg);
     }
 
     @Override
@@ -536,7 +536,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.LENGTH(x);
         }
-        return (int) FFIUpCallRootNode.getCallTarget(UpCallsIndex.LENGTH).call(x);
+        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.LENGTH).call(x);
     }
 
     @Override
@@ -755,7 +755,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.CAR(e);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.CAR).call(e);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.CAR).call(e);
     }
 
     @Override
@@ -763,7 +763,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.CDR(e);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.CDR).call(e);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.CDR).call(e);
     }
 
     @Override
@@ -771,7 +771,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.CADR(e);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.CADR).call(e);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.CADR).call(e);
     }
 
     @Override
@@ -779,7 +779,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.CADDR(e);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.CADDR).call(e);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.CADDR).call(e);
     }
 
     @Override
@@ -787,7 +787,7 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
         if (tracer != null) {
             tracer.CDDR(e);
         }
-        return FFIUpCallRootNode.getCallTarget(UpCallsIndex.CDDR).call(e);
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.CDDR).call(e);
     }
 
     @Override
@@ -1224,11 +1224,11 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void Rprintf(String message) {
+    public void Rprintf(Object message) {
         if (tracer != null) {
             tracer.Rprintf(message);
         }
-        RContext.getInstance().getConsoleHandler().print(message);
+        RContext.getInstance().getConsoleHandler().print((String) message);
     }
 
     @Override
@@ -1481,11 +1481,11 @@ public class UpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+    public REnvironment R_NewHashedEnv(REnvironment parent, int initialSize) {
         if (tracer != null) {
-            tracer.R_NewHashedEnv(parent, name, hashed, initialSize);
+            tracer.R_NewHashedEnv(parent, initialSize);
         }
-        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
+        REnvironment env = RDataFactory.createNewEnv(REnvironment.UNNAMED, true, initialSize);
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
     }
