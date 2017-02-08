@@ -63,13 +63,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_asChar(Object x);
 
-    Object Rf_mkCharLenCE(Object bytes, int len, int encoding);
+    Object Rf_mkCharLenCE(@RFFICstring Object bytes, int len, int encoding);
 
     Object Rf_cons(Object car, Object cdr);
 
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
-    Object R_do_MAKE_CLASS(Object clazz);
+    Object R_do_MAKE_CLASS(@RFFICstring Object clazz);
 
     /**
      * WARNING: argument order reversed from Rf_findVarInFrame!
@@ -84,9 +84,9 @@ public interface StdUpCallsRFFI {
 
     void Rf_setAttrib(Object obj, Object name, Object val);
 
-    int Rf_inherits(Object x, Object clazz);
+    int Rf_inherits(@RFFICstring Object x, Object clazz);
 
-    Object Rf_install(Object name);
+    Object Rf_install(@RFFICstring Object name);
 
     Object Rf_lengthgets(Object x, int newSize);
 
@@ -96,11 +96,11 @@ public interface StdUpCallsRFFI {
 
     Object Rf_PairToVectorList(Object x);
 
-    void Rf_error(Object msg);
+    void Rf_error(@RFFICstring Object msg);
 
-    void Rf_warning(Object msg);
+    void Rf_warning(@RFFICstring Object msg);
 
-    void Rf_warningcall(Object call, Object msg);
+    void Rf_warningcall(Object call, @RFFICstring Object msg);
 
     Object Rf_allocateVector(int mode, int n);
 
@@ -212,7 +212,7 @@ public interface StdUpCallsRFFI {
 
     int IS_S4_OBJECT(Object x);
 
-    void Rprintf(Object message);
+    void Rprintf(@RFFICstring Object message);
 
     void GetRNGstate();
 

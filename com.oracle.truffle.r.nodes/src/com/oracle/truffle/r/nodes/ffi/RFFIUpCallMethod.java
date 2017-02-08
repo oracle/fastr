@@ -152,7 +152,7 @@ public enum RFFIUpCallMethod {
 
     public static void main(String[] args) {
         for (RFFIUpCallMethod f : RFFIUpCallMethod.values()) {
-            System.out.printf("#define %s %d\n", f.name(), f.ordinal());
+            System.out.printf("#define %s_x %d\n", f.name(), f.ordinal());
         }
     }
 

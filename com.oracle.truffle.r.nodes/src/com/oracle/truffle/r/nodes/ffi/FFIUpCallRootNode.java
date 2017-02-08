@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class FFIUpCallRootNode extends RootNode {
-    private static RootCallTarget[] rootCallTargets = new RootCallTarget[RFFIUpCallMethod.values().length];
+    private static final RootCallTarget[] rootCallTargets = new RootCallTarget[RFFIUpCallMethod.values().length];
 
     @Child private FFIUpCallNode theFFIUpCallNode;
     private final int numArgs;

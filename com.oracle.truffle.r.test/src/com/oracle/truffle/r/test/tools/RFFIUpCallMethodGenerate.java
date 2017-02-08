@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.test.tools;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 
 import com.oracle.truffle.r.nodes.ffi.RFFIUpCallMethod;
+import com.oracle.truffle.r.runtime.ffi.RFFICstring;
 import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 
 /**
@@ -55,11 +58,12 @@ public class RFFIUpCallMethodGenerate {
 
     private static String getNFISignature(Method m) {
         Class<?>[] paramTypes = m.getParameterTypes();
+        Annotation[][] annotations = m.getParameterAnnotations();
         StringBuilder sb = new StringBuilder();
         sb.append('(');
         for (int i = 0; i < paramTypes.length; i++) {
             Class<?> paramType = paramTypes[i];
-            String nfiParam = nfiParamName(paramType);
+            String nfiParam = nfiParamName(paramType, annotations[i]);
             sb.append(nfiParam);
             if (i != paramTypes.length - 1) {
                 sb.append(", ");
@@ -67,15 +71,16 @@ public class RFFIUpCallMethodGenerate {
         }
         sb.append(')');
         sb.append(" : ");
-        sb.append(nfiParamName(m.getReturnType()));
+        sb.append(nfiParamName(m.getReturnType(), new Annotation[0]));
         return sb.toString();
     }
 
-    static String nfiParamName(Class<?> paramType) {
+    static String nfiParamName(Class<?> paramType, Annotation[] annotation) {
         String paramName = paramType.getSimpleName();
+        Class<?> klass = annotation.length == 0 ? null : annotation[0].annotationType();
         switch (paramName) {
             case "Object":
-                return "object";
+                return klass == null ? "object" : "pointer";
             case "int":
                 return "sint32";
             case "double":
