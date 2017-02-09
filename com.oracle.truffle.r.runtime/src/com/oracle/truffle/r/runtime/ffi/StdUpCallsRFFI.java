@@ -39,6 +39,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * writing. From the GNU R perspective all {@code Object} parameters are {@code SEXP} instances.
  * Some of the functions are typed with a specific return type but, again, this is a {@code SEXP} in
  * GNU R terms. The native side does not require a specific Java type.
+ *
+ * N.B. It is important not to be too specific about types owing the support for Truffle interop
+ * implementations. For example, many arguments are "strings" but we do not specify them as
+ * {@code String} here.
  */
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
@@ -59,13 +63,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_asChar(Object x);
 
-    Object Rf_mkCharLenCE(byte[] bytes, int encoding);
+    Object Rf_mkCharLenCE(@RFFICstring Object bytes, int len, int encoding);
 
     Object Rf_cons(Object car, Object cdr);
 
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
-    Object R_do_MAKE_CLASS(String clazz);
+    Object R_do_MAKE_CLASS(@RFFICstring Object clazz);
 
     /**
      * WARNING: argument order reversed from Rf_findVarInFrame!
@@ -80,9 +84,9 @@ public interface StdUpCallsRFFI {
 
     void Rf_setAttrib(Object obj, Object name, Object val);
 
-    int Rf_inherits(Object x, String clazz);
+    int Rf_inherits(@RFFICstring Object x, Object clazz);
 
-    Object Rf_install(String name);
+    Object Rf_install(@RFFICstring Object name);
 
     Object Rf_lengthgets(Object x, int newSize);
 
@@ -92,11 +96,11 @@ public interface StdUpCallsRFFI {
 
     Object Rf_PairToVectorList(Object x);
 
-    void Rf_error(String msg);
+    void Rf_error(@RFFICstring Object msg);
 
-    void Rf_warning(String msg);
+    void Rf_warning(@RFFICstring Object msg);
 
-    void Rf_warningcall(Object call, String msg);
+    void Rf_warningcall(Object call, @RFFICstring Object msg);
 
     Object Rf_allocateVector(int mode, int n);
 
@@ -208,7 +212,7 @@ public interface StdUpCallsRFFI {
 
     int IS_S4_OBJECT(Object x);
 
-    void Rprintf(String message);
+    void Rprintf(@RFFICstring Object message);
 
     void GetRNGstate();
 
@@ -234,6 +238,6 @@ public interface StdUpCallsRFFI {
 
     void R_CleanUp(int sa, int status, int runlast);
 
-    REnvironment R_NewHashedEnv(REnvironment parent, String name, boolean hashed, int initialSize);
+    REnvironment R_NewHashedEnv(REnvironment parent, int initialSize);
 
 }

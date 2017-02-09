@@ -32,7 +32,7 @@ import com.oracle.truffle.r.engine.interop.NativeIntegerArray;
 import com.oracle.truffle.r.engine.interop.NativeLogicalArray;
 import com.oracle.truffle.r.engine.interop.NativeRawArray;
 import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
-import com.oracle.truffle.r.nodes.ffi.UpCallsRFFIImpl;
+import com.oracle.truffle.r.nodes.ffi.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -47,10 +47,10 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 /**
- * (Incomplete) Variant of {@link UpCallsRFFIImpl} for Truffle LLVM.
+ * (Incomplete) Variant of {@link JavaUpCallsRFFIImpl} for Truffle LLVM.
  *
  */
-public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl implements VariableUpCallsRFFI {
+public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl implements VariableUpCallsRFFI {
     private static TruffleLLVM_UpCallsRFFIImpl singleton;
     private static TruffleObject singletonTruffleObject;
 
@@ -69,14 +69,16 @@ public class TruffleLLVM_UpCallsRFFIImpl extends UpCallsRFFIImpl implements Vari
 
     // Checkstyle: stop method name check
 
-    public Object Rf_mkCharLenCE(Object bytes, int encoding) {
+    @Override
+    public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         if (bytes instanceof NativeCharArray) {
-            return super.Rf_mkCharLenCE(((NativeCharArray) bytes).getBytes(), encoding);
+            return super.Rf_mkCharLenCE(((NativeCharArray) bytes).getBytes(), len, encoding);
         } else {
             throw RInternalError.unimplemented();
         }
     }
 
+    @Override
     public Object Rf_install(Object name) {
         if (name instanceof NativeCharArray) {
             return RDataFactory.createSymbolInterned(new String(((NativeCharArray) name).getBytes(), StandardCharsets.UTF_8));

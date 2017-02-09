@@ -151,24 +151,24 @@ void init_internals(JNIEnv *env) {
 	Rf_setAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	Rf_isStringMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isString", "(Ljava/lang/Object;)I", 0);
 	Rf_isNullMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isNull", "(Ljava/lang/Object;)I", 0);
-	Rf_installMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_install", "(Ljava/lang/String;)Ljava/lang/Object;", 0);
-	Rf_warningMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warning", "(Ljava/lang/String;)V", 0);
-	Rf_warningcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/String;)V", 0);
-	Rf_errorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_error", "(Ljava/lang/String;)V", 0);
+	Rf_installMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_install", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_warningMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warning", "(Ljava/lang/Object;)V", 0);
+	Rf_warningcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
+	Rf_errorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_error", "(Ljava/lang/Object;)V", 0);
 	Rf_allocateVectorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 0);
 	Rf_allocateMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 0);
 	Rf_allocateArrayMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_duplicateMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 0);
-	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
+	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;I)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
 	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
-	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/String;)V", 0);
-	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/String;)Ljava/lang/Object;", 0);
+	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/Object;)V", 0);
+	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_FindNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_BindingIsLockedID = checkGetMethodID(env, UpCallsRFFIClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 	Rf_GetOption1MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_gsetVarMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_gsetVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 0);
-	Rf_inheritsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/String;)I", 0);
+	Rf_inheritsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_inherits", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 	Rf_lengthgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_lengthgets", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 //	Rf_rPsortMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 0);
 //	Rf_iPsortMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 0);
@@ -197,7 +197,7 @@ void init_internals(JNIEnv *env) {
 	Rf_asIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 0);
 	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
 	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
-	Rf_mkCharLenCEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_mkCharLenCE", "([BI)Ljava/lang/Object;", 0);
+	Rf_mkCharLenCEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_mkCharLenCE", "(Ljava/lang/Object;II)Ljava/lang/Object;", 0);
 	Rf_asLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 0);
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	NAMED_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "NAMED", "(Ljava/lang/Object;)I", 0);
@@ -527,7 +527,7 @@ SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	JNIEnv *thisenv = getEnv();
 	jbyteArray bytes = (*thisenv)->NewByteArray(thisenv, len);
 	(*thisenv)->SetByteArrayRegion(thisenv, bytes, 0, len, (const jbyte *) x);
-	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_mkCharLenCEMethodID, bytes, (int) enc);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_mkCharLenCEMethodID, bytes, len, (int) enc);
 	return checkRef(thisenv, result);
 }
 
