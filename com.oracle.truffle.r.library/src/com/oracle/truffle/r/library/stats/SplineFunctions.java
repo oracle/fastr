@@ -20,6 +20,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_INTRODUCED_COERCION;
@@ -78,6 +80,12 @@ public class SplineFunctions {
     }
 
     public abstract static class SplineEval extends RExternalBuiltinNode.Arg2 {
+
+        static {
+            Casts casts = new Casts(SplineEval.class);
+            casts.arg(0, "xout").mustBe(doubleValue()).asDoubleVector();
+            casts.arg(1, "z").mustBe(instanceOf(RList.class));
+        }
 
         @Specialization
         @TruffleBoundary
