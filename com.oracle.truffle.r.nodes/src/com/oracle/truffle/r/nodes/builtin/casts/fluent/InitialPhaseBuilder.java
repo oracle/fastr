@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -174,8 +175,16 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        pipelineBuilder().appendAsVector(RType.Integer, preserveNames, preserveDimensions, preserveAttributes);
+        return asIntegerVector(preserveNames, preserveDimensions, preserveAttributes, null);
+    }
+
+    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        pipelineBuilder().appendAsVector(RType.Integer, preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
+    }
+
+    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(RBaseNode messageCallerObj) {
+        return asIntegerVector(false, false, false, messageCallerObj);
     }
 
     public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector() {
@@ -183,20 +192,36 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        pipelineBuilder().appendAsVector(RType.Double, preserveNames, preserveDimensions, preserveAttributes);
+        return asDoubleVector(preserveNames, preserveDimensions, preserveAttributes, null);
+    }
+
+    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        pipelineBuilder().appendAsVector(RType.Double, preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);
+    }
+
+    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(RBaseNode messageCallerObj) {
+        return asDoubleVector(false, false, false, messageCallerObj);
     }
 
     public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector() {
         return asDoubleVector(false, false, false);
     }
 
-    public CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        pipelineBuilder().appendAsVector(RType.Logical, preserveNames, preserveDimensions, preserveAttributes);
+    public CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        pipelineBuilder().appendAsVector(RType.Logical, preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Byte.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractDoubleVector, Byte> asLogicalVector() {
+    public CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return asLogicalVector(preserveNames, preserveDimensions, preserveAttributes, null);
+    }
+
+    public CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector(RBaseNode messageCallerObj) {
+        return asLogicalVector(false, false, false, messageCallerObj);
+    }
+
+    public CoercedPhaseBuilder<RAbstractLogicalVector, Byte> asLogicalVector() {
         return asLogicalVector(false, false, false);
     }
 
@@ -210,8 +235,16 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        pipelineBuilder().appendAsVector(RType.Complex, preserveNames, preserveDimensions, preserveAttributes);
+        return asComplexVector(preserveNames, preserveDimensions, preserveAttributes, null);
+    }
+
+    public CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        pipelineBuilder().appendAsVector(RType.Complex, preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), RComplex.class);
+    }
+
+    public CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector(RBaseNode messageCallerObj) {
+        return asComplexVector(false, false, false, messageCallerObj);
     }
 
     public CoercedPhaseBuilder<RAbstractComplexVector, RComplex> asComplexVector() {
@@ -228,17 +261,17 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     }
 
     public CoercedPhaseBuilder<RAbstractVector, Object> asVector() {
-        pipelineBuilder().appendAsVector(false, false, false, true);
+        pipelineBuilder().appendAsVector(false, false, false, true, null);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
     }
 
     public CoercedPhaseBuilder<RAbstractVector, Object> asVector(boolean preserveNonVector) {
-        pipelineBuilder().appendAsVector(false, false, false, preserveNonVector);
+        pipelineBuilder().appendAsVector(false, false, false, preserveNonVector, null);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
     }
 
     public CoercedPhaseBuilder<RAbstractVector, Object> asVectorPreserveAttrs(boolean preserveNonVector) {
-        pipelineBuilder().appendAsVector(false, false, true, preserveNonVector);
+        pipelineBuilder().appendAsVector(false, false, true, preserveNonVector, null);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Object.class);
     }
 

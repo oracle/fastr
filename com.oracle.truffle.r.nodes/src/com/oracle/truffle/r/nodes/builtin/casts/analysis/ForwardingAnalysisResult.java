@@ -151,6 +151,15 @@ public final class ForwardingAnalysisResult {
                             nullForwarded,
                             missingForwarded,
                             invalid);
+        } else if (Object.class == tp) {
+            return new ForwardingAnalysisResult(FORWARDED,
+                            FORWARDED,
+                            FORWARDED,
+                            FORWARDED,
+                            FORWARDED,
+                            FORWARDED,
+                            FORWARDED,
+                            invalid);
         } else {
             return this;
         }

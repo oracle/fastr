@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -61,6 +62,10 @@ public abstract class CastComplexNode extends CastBaseNode {
     public abstract Object executeComplex(byte o);
 
     public abstract Object executeComplex(Object o);
+
+    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
+    }
 
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);

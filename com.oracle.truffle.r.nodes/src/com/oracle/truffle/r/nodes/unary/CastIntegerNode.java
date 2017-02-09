@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public abstract class CastIntegerNode extends CastIntegerBaseNode {
@@ -50,6 +51,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallObj);
     }
 
     public abstract Object executeInt(int o);
@@ -118,7 +123,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         }
         if (warning) {
             warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return vectorCopy(operand, idata, naCheck.neverSeenNA());
     }
@@ -149,7 +154,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
             idata[i] = intValue;
         }
         if (warning) {
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
         }
         return vectorCopy(operand, idata, !seenNA);
     }
@@ -221,14 +226,14 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     public static CastIntegerNode create() {
-        return CastIntegerNodeGen.create(true, true, true);
+        return CastIntegerNodeGen.create(true, true, true, null);
     }
 
     public static CastIntegerNode createNonPreserving() {
-        return CastIntegerNodeGen.create(false, false, false);
+        return CastIntegerNodeGen.create(false, false, false, null);
     }
 
     public static CastIntegerNode createPreserveNames() {
-        return CastIntegerNodeGen.create(false, false, false);
+        return CastIntegerNodeGen.create(false, false, false, null);
     }
 }

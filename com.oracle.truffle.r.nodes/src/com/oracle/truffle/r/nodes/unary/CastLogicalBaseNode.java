@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CastLogicalBaseNode extends CastBaseNode {
@@ -35,6 +36,10 @@ public abstract class CastLogicalBaseNode extends CastBaseNode {
 
     protected CastLogicalBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);
+    }
+
+    protected CastLogicalBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
+        super(preserveNames, preserveDimensions, preserveAttributes, messageCallObj);
     }
 
     @Override

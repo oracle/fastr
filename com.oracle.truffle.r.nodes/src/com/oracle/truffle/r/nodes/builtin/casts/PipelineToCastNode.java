@@ -420,19 +420,19 @@ public final class PipelineToCastNode {
             RType type = step.getType();
             switch (type) {
                 case Integer:
-                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
-                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj())
+                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj());
                 case Double:
-                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
-                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj())
+                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj());
                 case Character:
                     return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
                                     : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Logical:
-                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
-                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj())
+                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj());
                 case Complex:
-                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.getMessageCallObj());
                 case Raw:
                     return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Any:
