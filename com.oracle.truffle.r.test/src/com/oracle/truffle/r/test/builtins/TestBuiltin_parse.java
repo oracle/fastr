@@ -13,7 +13,6 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import java.io.IOException;
 
 // Checkstyle: stop line length check
 
@@ -60,8 +59,7 @@ public class TestBuiltin_parse extends TestBase {
     }
 
     @Test
-    public void testSrcfile() throws IOException {
+    public void testSrcfile() {
         assertEval("parse(text='', srcfile=srcfile(system.file('testfile')))");
     }
-
 }

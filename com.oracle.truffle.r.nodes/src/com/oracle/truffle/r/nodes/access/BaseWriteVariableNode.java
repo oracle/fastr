@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,18 +120,19 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isLogicalKind(Frame frame, FrameSlot frameSlot) {
+    /*
+     * The frame parameters are needed to keep the guards from being considered static.
+     */
+
+    protected boolean isLogicalKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isIntegerKind(Frame frame, FrameSlot frameSlot) {
+    protected boolean isIntegerKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Int);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isDoubleKind(Frame frame, FrameSlot frameSlot) {
+    protected boolean isDoubleKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 

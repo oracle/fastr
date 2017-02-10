@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,9 +33,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "for", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class ForBuiltin extends RBuiltinNode {
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object doIt(Object x) {
+    protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();
     }
 }

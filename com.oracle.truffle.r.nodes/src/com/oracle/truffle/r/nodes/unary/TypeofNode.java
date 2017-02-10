@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
-@SuppressWarnings("unused")
 public abstract class TypeofNode extends UnaryNode {
 
     protected static final int NUMBER_OF_CACHED_CLASSES = 5;
@@ -38,27 +37,27 @@ public abstract class TypeofNode extends UnaryNode {
     public abstract RType execute(Object x);
 
     @Specialization
-    protected static RType doLogical(byte x) {
+    protected static RType doLogical(@SuppressWarnings("unused") byte x) {
         return RType.Logical;
     }
 
     @Specialization
-    protected static RType doInt(int s) {
+    protected static RType doInt(@SuppressWarnings("unused") int s) {
         return RType.Integer;
     }
 
     @Specialization
-    protected static RType doDouble(double x) {
+    protected static RType doDouble(@SuppressWarnings("unused") double x) {
         return RType.Double;
     }
 
     @Specialization
-    protected static RType doString(String x) {
+    protected static RType doString(@SuppressWarnings("unused") String x) {
         return RType.Character;
     }
 
     @Specialization
-    protected static RType doMissing(RMissing x) {
+    protected static RType doMissing(@SuppressWarnings("unused") RMissing x) {
         return RType.Missing;
     }
 

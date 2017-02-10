@@ -59,38 +59,32 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doNull(RNull operand) {
+    protected int doNull(@SuppressWarnings("unused") RNull operand) {
         return 0;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doLogical(byte operand) {
+    protected int doLogical(@SuppressWarnings("unused") byte operand) {
         return 1;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doInteger(int operand) {
+    protected int doInteger(@SuppressWarnings("unused") int operand) {
         return 1;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doDouble(double operand) {
+    protected int doDouble(@SuppressWarnings("unused") double operand) {
         return 1;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doString(String operand) {
+    protected int doString(@SuppressWarnings("unused") String operand) {
         return 1;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int doSymbol(RSymbol operand) {
+    protected int doSymbol(@SuppressWarnings("unused") RSymbol operand) {
         return 1;
     }
 

@@ -60,8 +60,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  */
 public class FastRContext {
 
-    private static final String[] EMPTY = new String[0];
-
     private static final class CastsHelper {
         private static void exprs(Casts casts) {
             casts.arg("exprs").asStringVector().mustBe(notEmpty());

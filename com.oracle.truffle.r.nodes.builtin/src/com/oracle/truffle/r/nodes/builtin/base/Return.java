@@ -72,8 +72,6 @@ public abstract class Return extends RBuiltinNode {
         return arguments.length == 1 ? new ReturnSpecial(arguments[0]) : null;
     }
 
-    private final BranchProfile isPromiseEvalProfile = BranchProfile.create();
-
     static {
         Casts.noCasts(Return.class);
     }

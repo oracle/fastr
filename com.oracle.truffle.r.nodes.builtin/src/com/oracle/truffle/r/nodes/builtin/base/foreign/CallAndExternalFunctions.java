@@ -633,7 +633,7 @@ public class CallAndExternalFunctions {
             }
         }
 
-        private RExternalBuiltinNode lookupGraphicsBuiltin(String name) {
+        private static RExternalBuiltinNode lookupGraphicsBuiltin(String name) {
             switch (name) {
                 // grDevices
                 case "cairoProps":

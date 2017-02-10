@@ -22,7 +22,6 @@ import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;

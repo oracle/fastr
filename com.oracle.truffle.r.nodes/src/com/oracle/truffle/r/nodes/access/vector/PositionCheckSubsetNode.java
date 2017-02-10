@@ -56,9 +56,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         super(mode, containerType, positionValue, dimensionIndex, numDimensions, exact, assignment);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object doMissing(PositionProfile statistics, int dimSize, RMissing position, int positionLength) {
+    protected Object doMissing(PositionProfile statistics, int dimSize, RMissing position, @SuppressWarnings("unused") int positionLength) {
         statistics.selectedPositionsCount = dimSize;
         return position;
     }

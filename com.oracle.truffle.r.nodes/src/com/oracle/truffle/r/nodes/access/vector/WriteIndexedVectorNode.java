@@ -190,10 +190,9 @@ abstract class WriteIndexedVectorNode extends Node {
                     Object[] positions, Object position, int positionOffset, int positionLength,
                     RTypedValue right, Object rightStore, int valueBase, int valueLength, boolean parentNA);
 
-    @SuppressWarnings("unused")
     @Specialization
     protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
-                    Object[] positions, RMissing position, int positionOffset, int positionLength,
+                    Object[] positions, @SuppressWarnings("unused") RMissing position, int positionOffset, @SuppressWarnings("unused") int positionLength,
                     RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int rightIndex = rightBase;
@@ -316,7 +315,6 @@ abstract class WriteIndexedVectorNode extends Node {
         return rightIndex;
     }
 
-    @SuppressWarnings("all")
     private int applyInner(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions,
                     Object[] positions, int positionOffset, int positionValue,

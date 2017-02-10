@@ -52,9 +52,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         this.recursive = recursive;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object doMissing(PositionProfile statistics, int dimSize, RMissing position, int positionLength) {
+    protected Object doMissing(PositionProfile statistics, int dimSize, RMissing position, @SuppressWarnings("unused") int positionLength) {
         statistics.selectedPositionsCount = dimSize;
         return position;
     }

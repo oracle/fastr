@@ -29,11 +29,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.library.utils.TypeConvert;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctions.SeqInt.IsIntegralNumericNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.GetIntegralNumericNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.IsMissingOrNumericNodeGen;
@@ -103,42 +100,40 @@ public final class SeqFunctions {
     }
 
     @TypeSystemReference(RTypesFlatLayout.class)
-    @SuppressWarnings("unused")
     public abstract static class IsNumericNode extends Node {
         public abstract boolean execute(Object obj);
 
         @Specialization
-        protected boolean isNumericNode(Integer obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") Integer obj) {
             return true;
         }
 
         @Specialization
-        protected boolean isNumericNode(Double obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") Double obj) {
             return true;
         }
 
         @Specialization
-        protected boolean isNumericNode(RAbstractIntVector obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") RAbstractIntVector obj) {
             return true;
         }
 
         @Specialization
-        protected boolean isNumericNode(RAbstractDoubleVector obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") RAbstractDoubleVector obj) {
             return true;
         }
 
         @Fallback
-        protected boolean isNumericNode(Object obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") Object obj) {
             return false;
         }
     }
 
     @TypeSystemReference(RTypesFlatLayout.class)
-    @SuppressWarnings("unused")
     public abstract static class IsMissingOrNumericNode extends IsNumericNode {
 
         @Specialization
-        protected boolean isMissingOrNumericNode(RMissing obj) {
+        protected boolean isMissingOrNumericNode(@SuppressWarnings("unused") RMissing obj) {
             return true;
         }
     }
@@ -210,15 +205,14 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = {"!hasClass(args, getClassAttributeNode)"})
-        @SuppressWarnings("unused")
         protected Object seqNoClassAndNumeric(VirtualFrame frame, RArgsValuesAndNames args,
                         @Cached("createSeqIntForFastPath()") SeqInt seqInt,
                         @Cached("lookupSeqInt()") RFunction seqIntFunction,
                         @Cached("createBinaryProfile()") ConditionProfile isNumericProfile,
-                        @Cached("createGetClassAttributeNode()") GetClassAttributeNode getClassAttributeNode,
+                        @Cached("createGetClassAttributeNode()") @SuppressWarnings("unused") GetClassAttributeNode getClassAttributeNode,
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode byCheck) {
+                        @Cached("createIsMissingOrNumericNode()") @SuppressWarnings("unused") IsMissingOrNumericNode byCheck) {
             Object[] rargs = reorderedArguments(args, seqIntFunction);
             if (isNumericProfile.profile(fromCheck.execute(rargs[0]) && toCheck.execute(rargs[1]) && toCheck.execute(rargs[2]))) {
                 return seqInt.execute(frame, rargs[0], rargs[1], rargs[2], rargs[3], rargs[4]);
@@ -227,9 +221,8 @@ public final class SeqFunctions {
             }
         }
 
-        @SuppressWarnings("unused")
         @Fallback
-        protected Object seqFallback(VirtualFrame frame, Object args) {
+        protected Object seqFallback(@SuppressWarnings("unused") Object args) {
             return null;
         }
 
@@ -349,8 +342,7 @@ public final class SeqFunctions {
         @Specialization(guards = "hasClass(value)")
         protected RIntSequence seq(VirtualFrame frame, Object value,
                         @Cached("createLengthResultCast()") CastNode resultCast,
-                        @Cached("createLengthDispatcher()") RExplicitBaseEnvCallDispatcher dispatcher,
-                        @Cached("create()") BranchProfile errorProfile) {
+                        @Cached("createLengthDispatcher()") RExplicitBaseEnvCallDispatcher dispatcher) {
             int result = (Integer) resultCast.execute(dispatcher.call(frame, value));
             return RDataFactory.createIntSequence(1, 1, result);
         }
@@ -568,8 +560,8 @@ public final class SeqFunctions {
         /**
          * The performance of this specialization, we assert, is not important. It captures a
          * mixture of coercions from improbable types and error cases. N.B. However, mixing doubles
-         * and ints <b<will</b> hit this specialization; is that likely and a concern? If
-         * "from ==missing", it defaults to 1.0. "to" cannot be missing as that would overlap with
+         * and ints <b<will</b> hit this specialization; is that likely and a concern? If "from
+         * ==missing", it defaults to 1.0. "to" cannot be missing as that would overlap with
          * previous specializations.
          */
         @Specialization(guards = {"!isMissing(toObj)"})

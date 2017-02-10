@@ -55,8 +55,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
     protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object value);
 
     @Specialization(guards = "positionLength <= 1")
-    @SuppressWarnings("unused")
-    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object value) {
+    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") int positionLength, Object value) {
         return subscriptReplace.apply(frame, vector, positions, value);
     }
 
@@ -83,8 +82,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
      * </code>
      */
     @Specialization(replaces = "doDefault")
-    @SuppressWarnings("unused")
-    protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object value,
+    protected Object doRecursive(VirtualFrame frame, Object vector, @SuppressWarnings("unused") Object[] positions, Object originalFirstPosition, int positionLength, Object value,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object[] positionStack = new Object[positionLength];

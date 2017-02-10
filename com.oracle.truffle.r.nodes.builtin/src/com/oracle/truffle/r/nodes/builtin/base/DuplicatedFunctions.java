@@ -22,7 +22,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
