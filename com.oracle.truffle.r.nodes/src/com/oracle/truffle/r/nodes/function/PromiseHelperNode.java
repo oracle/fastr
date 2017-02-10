@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -155,7 +156,6 @@ public class PromiseHelperNode extends RBaseNode {
             return value;
         }
 
-        Object obj;
         int state = optStateProfile.profile(promise.getState());
         if (PromiseState.isExplicit(state)) {
             CompilerDirectives.transferToInterpreter();
@@ -165,17 +165,9 @@ public class PromiseHelperNode extends RBaseNode {
             return evaluateSlowPath(frame, promise);
         }
         if (PromiseState.isDefaultOpt(state)) {
-            obj = generateValueDefault(frame, promise);
+            return generateValueDefault(frame, promise);
         } else {
-            obj = generateValueEager(frame, state, (EagerPromise) promise);
-        }
-        if (isEvaluated(promise)) {
-            // TODO: this only happens if compilation is in play and, as such, is difficult to track
-            // why (there is no obvious call path...)
-            return promise.getValue();
-        } else {
-            setValue(obj, promise);
-            return obj;
+            return generateValueNonDefault(frame, state, (EagerPromise) promise);
         }
     }
 
@@ -190,28 +182,34 @@ public class PromiseHelperNode extends RBaseNode {
                 promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
             }
             promise.setUnderEvaluation();
-            if (isInOriginFrame(frame, promise)) {
-                return promiseClosureCache.execute(frame, promise.getClosure());
-            } else {
-                return promiseClosureCache.execute(wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame())), promise.getClosure());
-            }
+            Frame execFrame = isInOriginFrame(frame, promise) ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
+            Object value = promiseClosureCache.execute(execFrame, promise.getClosure());
+            assert promise.getRawValue() == null;
+            assert value != null;
+            promise.setValue(value);
+            return value;
         } finally {
             promise.resetUnderEvaluation();
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, int state, EagerPromise promise) {
+    private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise) {
         assert !PromiseState.isDefaultOpt(state);
         if (!isDeoptimized(promise)) {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
             if (eagerAssumption.isValid()) {
-                if (!PromiseState.isEager(state)) {
-                    RPromise nextPromise = (RPromise) promise.getEagerValue();
-                    return checkNextNode().evaluate(frame, nextPromise);
-                } else {
+                Object value;
+                if (PromiseState.isEager(state)) {
                     assert PromiseState.isEager(state);
-                    return getEagerValue(frame, promise);
+                    value = getEagerValue(frame, promise);
+                } else {
+                    RPromise nextPromise = (RPromise) promise.getEagerValue();
+                    value = checkNextNode().evaluate(frame, nextPromise);
                 }
+                assert promise.getRawValue() == null;
+                assert value != null;
+                promise.setValue(value);
+                return value;
             } else {
                 CompilerDirectives.transferToInterpreter();
                 promise.notifyFailure();
