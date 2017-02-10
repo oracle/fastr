@@ -153,3 +153,6 @@ rffi.LENGTH <- function(x) {
 	.Call("test_LENGTH", x)
 }
 
+rffi.coerceVector <- function(x, mode) {
+	.Call("test_coerceVector", x, mode)
+}

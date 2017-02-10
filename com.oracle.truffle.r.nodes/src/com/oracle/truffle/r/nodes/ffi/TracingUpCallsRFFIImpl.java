@@ -88,6 +88,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_coerceVector(Object x, int mode) {
+        RFFIUtils.traceUpCall("Rf_coerceVector", x, mode);
+        return delegate.Rf_coerceVector(x, mode);
+    }
+
+    @Override
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         RFFIUtils.traceUpCall("Rf_mkCharLenCE", bytes);
         return delegate.Rf_mkCharLenCE(bytes, len, encoding);

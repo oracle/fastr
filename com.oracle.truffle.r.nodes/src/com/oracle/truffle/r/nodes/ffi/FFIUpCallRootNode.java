@@ -84,6 +84,7 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asLogical, AsLogicalNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asInteger, AsIntegerNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_asChar, AsCharNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.Rf_coerceVector, CoerceVectorNode::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.CAR, CARNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.CDR, CDRNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.CADR, CADRNodeGen::create);

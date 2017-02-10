@@ -164,6 +164,8 @@ public abstract class TestRPackages extends TestBase {
         }
     }
 
+    private boolean packagesInstallSuccess = true;
+
     @Override
     public void beforeEval() {
         if (needsInstall) {
@@ -177,11 +179,14 @@ public abstract class TestRPackages extends TestBase {
                 System.out.printf(".pkg: %s.", p);
                 PackagePath packagePath = getPackagePaths(p, resolver.getPath(p));
                 if (!installPackage(packagePath)) {
+                    packagesInstallSuccess = false;
                     Assert.fail(String.format("package %s failed to install", p));
                 }
             }
             System.out.printf(".end install.");
         }
+        // This makes sure that any consequent tests fail with informative error
+        Assert.assertTrue("Error during package installation process.", packagesInstallSuccess);
     }
 
     protected static void tearDownUninstallTestPackages() {

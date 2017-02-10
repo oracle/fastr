@@ -317,3 +317,9 @@ SEXP test_CDR(SEXP x) {
 SEXP test_LENGTH(SEXP x) {
 	return ScalarInteger(LENGTH(x));
 }
+
+SEXP test_coerceVector(SEXP x, SEXP mode) {
+    int intMode = INTEGER_VALUE(mode);
+    return Rf_coerceVector(x, intMode);
+}
+
