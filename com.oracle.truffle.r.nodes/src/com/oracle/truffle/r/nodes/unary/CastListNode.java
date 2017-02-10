@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,11 @@ public abstract class CastListNode extends CastBaseNode {
     public abstract RList executeList(Object o);
 
     protected CastListNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastListNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     @Override
@@ -142,5 +146,9 @@ public abstract class CastListNode extends CastBaseNode {
 
     public static CastListNode create() {
         return CastListNodeGen.create(true, true, true);
+    }
+
+    public static CastListNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastListNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 }

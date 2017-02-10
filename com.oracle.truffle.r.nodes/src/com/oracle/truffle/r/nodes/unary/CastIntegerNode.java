@@ -50,7 +50,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     private final NAProfile naProfile = NAProfile.create();
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
@@ -227,6 +231,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     public static CastIntegerNode create() {
         return CastIntegerNodeGen.create(true, true, true, null);
+    }
+
+    public static CastIntegerNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastIntegerNode createNonPreserving() {

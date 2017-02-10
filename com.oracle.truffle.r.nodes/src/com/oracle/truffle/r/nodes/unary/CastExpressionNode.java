@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,11 @@ public abstract class CastExpressionNode extends CastBaseNode {
     public abstract Object executeExpression(Object o);
 
     protected CastExpressionNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastExpressionNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     @Override
@@ -102,6 +106,11 @@ public abstract class CastExpressionNode extends CastBaseNode {
 
     private static RExpression create(Object obj) {
         return RDataFactory.createExpression(new Object[]{obj});
+    }
+
+    public static CastExpressionNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        // RFFI coercion to list unlike others does not preserve names it seems
+        return CastExpressionNodeGen.create(false, false, false, true);
     }
 
     public static CastExpressionNode createNonPreserving() {

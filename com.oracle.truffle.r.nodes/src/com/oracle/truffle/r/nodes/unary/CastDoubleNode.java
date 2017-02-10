@@ -48,7 +48,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
@@ -209,6 +213,10 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     public static CastDoubleNode create() {
         return CastDoubleNodeGen.create(true, true, true);
+    }
+
+    public static CastDoubleNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastDoubleNode createNonPreserving() {

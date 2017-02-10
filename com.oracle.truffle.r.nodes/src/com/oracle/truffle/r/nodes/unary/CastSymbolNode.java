@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,28 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CastSymbolNode extends CastBaseNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create();
 
     protected CastSymbolNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastSymbolNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     @Override
@@ -119,6 +126,19 @@ public abstract class CastSymbolNode extends CastBaseNode {
     @TruffleBoundary
     private static RSymbol asSymbol(String s) {
         return RDataFactory.createSymbolInterned(s);
+    }
+
+    @Override
+    protected Object doOtherRFFI(Object mappedValue) {
+        if (mappedValue instanceof RList) {
+            // to be compatible with GnuR
+            throw RError.error(RError.NO_CALLER, Message.INVALID_TYPE_LENGTH, "symbol", ((RList) mappedValue).getLength());
+        }
+        return super.doOtherRFFI(mappedValue);
+    }
+
+    public static CastSymbolNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastSymbolNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastSymbolNode createNonPreserving() {

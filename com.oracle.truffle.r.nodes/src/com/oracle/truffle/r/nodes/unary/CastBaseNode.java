@@ -34,10 +34,12 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -62,21 +64,37 @@ public abstract class CastBaseNode extends CastNode {
 
     protected final RBaseNode messageCallObj;
 
+    /**
+     * GnuR provides several, sometimes incompatible, ways to coerce given value to given type. This
+     * flag tells the cast node that it should behave in a way compatible with functions exposed by
+     * the native interface.
+     */
+    private final boolean forRFFI;
+
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
+        this(preserveNames, preserveDimensions, preserveAttributes, false, messageCallObj);
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        this(preserveNames, preserveDimensions, preserveAttributes, false, null);
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, null);
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, RBaseNode messageCallObj) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
+        this.forRFFI = forRFFI;
         if (preserveDimensions) {
             getDimNamesNode = GetDimNamesAttributeNode.create();
         }
         this.messageCallObj = messageCallObj == null ? this : messageCallObj;
     }
 
-    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        this(preserveNames, preserveDimensions, preserveAttributes, null);
-    }
-
-    public boolean preserveNames() {
+    public final boolean preserveNames() {
         return preserveNames;
     }
 
@@ -84,7 +102,7 @@ public abstract class CastBaseNode extends CastNode {
         return preserveDimensions;
     }
 
-    public boolean preserveAttributes() {
+    public final boolean preserveAttributes() {
         return preserveAttributes;
     }
 
@@ -132,6 +150,10 @@ public abstract class CastBaseNode extends CastNode {
     @TruffleBoundary
     protected Object doOther(Object value) {
         Object mappedValue = RRuntime.asAbstractVector(value);
+        return forRFFI ? doOtherRFFI(mappedValue) : doOtherDefault(mappedValue);
+    }
+
+    protected Object doOtherDefault(Object mappedValue) {
         if (mappedValue instanceof REnvironment) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ENVIRONMENTS_COERCE);
         } else if (mappedValue instanceof RTypedValue) {
@@ -141,5 +163,14 @@ public abstract class CastBaseNode extends CastNode {
         } else {
             throw RInternalError.shouldNotReachHere("unexpected value of type " + (mappedValue == null ? "null" : mappedValue.getClass()));
         }
+    }
+
+    protected Object doOtherRFFI(Object mappedValue) {
+        if (mappedValue instanceof RTypedValue) {
+            RError.warning(RError.SHOW_CALLER2, Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
+        } else if (mappedValue instanceof TruffleObject) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
+        }
+        return RNull.instance;
     }
 }
