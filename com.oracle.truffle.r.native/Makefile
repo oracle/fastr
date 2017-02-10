@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,17 @@ export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
-all: 
+# Completely accurate dependency analysis is very difficult for this project, so use a version number
+# to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the 
+# dependencies accurately.
+
+all: checkversion
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C fficall
 	$(MAKE) -C library
 	$(MAKE) -C run
+	cp version.source version.built
 
 clean: 
 	$(MAKE) -C include clean
@@ -44,3 +49,23 @@ clean:
 	$(MAKE) -C run clean
 	$(MAKE) -C gnur clean
 
+version.source := $(shell cat version.source)
+
+#$(info version: $(version.source))
+ifeq ($(wildcard version.built),)
+	doclean = 1
+else
+version.built := $(shell cat version.built)
+#$(info version.built: $(version.built))
+ifneq ($(version.source),$(version.built))
+	doclean = 1
+else
+	doclean = 0
+endif
+endif
+
+#$(info doclean: $(doclean))
+checkversion:
+ifeq ($(doclean),1)
+	$(MAKE) clean
+endif

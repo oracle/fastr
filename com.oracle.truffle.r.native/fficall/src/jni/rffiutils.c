@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -332,7 +332,7 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 			fatalError("releaseNativeArray type");
 		}
 		// update complete status
-		(*env)->CallVoidMethod(env, UpCallsRFFIObject, setCompleteMethodID, cv.obj, complete);
+		(*env)->CallStaticVoidMethod(env, JNIUpCallsRFFIImplClass, setCompleteMethodID, cv.obj, complete);
 
         if (freedata) {
             // free up the slot

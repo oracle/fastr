@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 
 /**
  * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
@@ -46,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
  *
  */
 public class RFFIUtils {
-    private static boolean initialized;
     /**
      * Set this to {@code true} when it is not possible to set {@link FastROptions}.
      */
@@ -66,16 +66,24 @@ public class RFFIUtils {
      */
     private static int depth;
 
-    public static void initialize() {
-        if (!initialized) {
-            traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
-            if (traceEnabled) {
-                if (traceStream == null) {
-                    initTraceStream();
-                }
+    /**
+     * Handles the initialization of the RFFI downcalls/upcall implementation.
+     *
+     * @param upCallsRFFIImpl the concrete, implementation-specific variant of {@link UpCallsRFFI}.
+     * @return if tracing is enabled an instance of {@link TracingUpCallsRFFIImpl} that wraps
+     *         {@code upCallsRFFIImpl} else {@code upCallsRFFIImpl}.
+     */
+    public static UpCallsRFFI initialize(UpCallsRFFI upCallsRFFIImpl) {
+        UpCallsRFFI returnUpCallsRFFIImpl = upCallsRFFIImpl;
+        traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
+        if (traceEnabled) {
+            if (traceStream == null) {
+                initTraceStream();
             }
-            initialized = true;
+            returnUpCallsRFFIImpl = new TracingUpCallsRFFIImpl(upCallsRFFIImpl);
         }
+        FFIUpCallRootNode.register();
+        return returnUpCallsRFFIImpl;
     }
 
     private static void initTraceStream() {
@@ -141,7 +149,6 @@ public class RFFIUtils {
     }
 
     private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
-        assert initialized;
         if (traceEnabled) {
             StringBuffer sb = new StringBuffer();
             sb.append("CallRFFI[");

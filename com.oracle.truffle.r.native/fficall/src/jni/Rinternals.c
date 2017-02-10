@@ -136,6 +136,7 @@ static jmethodID Rf_ncolsMethodID;
 
 static jclass CharSXPWrapperClass;
 static jfieldID CharSXPWrapperContentsFieldID;
+jclass JNIUpCallsRFFIImplClass;
 
 jmethodID setCompleteMethodID;
 
@@ -210,7 +211,6 @@ void init_internals(JNIEnv *env) {
 	OBJECT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "OBJECT", "(Ljava/lang/Object;)I", 0);
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	IS_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "IS_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
-	logNotCharSXPWrapperMethodID = checkGetMethodID(env, UpCallsRFFIClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 0);
 	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 0);
 	RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RDEBUG", "(Ljava/lang/Object;)I", 0);
 	SET_RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 0);
@@ -225,7 +225,6 @@ void init_internals(JNIEnv *env) {
 	PRCODEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRCODE", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 
 	R_ToplevelExecMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExec", "()Ljava/lang/Object;", 0);
-	restoreHandlerStacksMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 0);
 
 	R_MakeExternalPtrMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_MakeExternalPtr", "(JLjava/lang/Object;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/data/RExternalPtr;", 0);
 	R_ExternalPtrAddrMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ExternalPtrAddr", "(Ljava/lang/Object;)J", 0);
@@ -244,7 +243,11 @@ void init_internals(JNIEnv *env) {
     Rf_nrowsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_nrows", "(Ljava/lang/Object;)I", 0);
     Rf_ncolsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ncols", "(Ljava/lang/Object;)I", 0);
 
-    setCompleteMethodID = checkGetMethodID(env, UpCallsRFFIClass, "setComplete", "(Ljava/lang/Object;Z)V", 0);
+    // static JNI-specific methods
+	JNIUpCallsRFFIImplClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/JNIUpCallsRFFIImpl");
+	logNotCharSXPWrapperMethodID = checkGetMethodID(env, UpCallsRFFIClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 1);
+	restoreHandlerStacksMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 1);
+    setCompleteMethodID = checkGetMethodID(env, UpCallsRFFIClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
@@ -252,7 +255,7 @@ static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
 	validateRef(thisenv, charsxp, "stringFromCharSXP");
 	if (!(*thisenv)->IsInstanceOf(thisenv, charsxp, CharSXPWrapperClass)) {
 
-	    (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, logNotCharSXPWrapperMethodID, charsxp);
+	    (*thisenv)->CallStaticVoidMethod(thisenv, JNIUpCallsRFFIImplClass, logNotCharSXPWrapperMethodID, charsxp);
 	    fatalError("only CharSXPWrapper expected in stringFromCharSXP");
 	}
 #endif
@@ -1391,7 +1394,7 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
 	JNIEnv *env = getEnv();
 	jobject handlerStacks = (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_ToplevelExecMethodID);
 	fun(data);
-	(*env)->CallVoidMethod(env, UpCallsRFFIObject, restoreHandlerStacksMethodID, handlerStacks);
+	(*env)->CallStaticVoidMethod(env, JNIUpCallsRFFIImplClass, restoreHandlerStacksMethodID, handlerStacks);
 	// TODO how do we detect error
 	return TRUE;
 }

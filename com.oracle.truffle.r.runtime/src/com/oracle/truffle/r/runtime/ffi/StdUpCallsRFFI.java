@@ -248,4 +248,6 @@ public interface StdUpCallsRFFI {
 
     Object PRCODE(Object x);
 
+    Object R_CHAR(Object x);
+
 }
