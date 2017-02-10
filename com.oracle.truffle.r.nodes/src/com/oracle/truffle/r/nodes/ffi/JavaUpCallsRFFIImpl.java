@@ -105,7 +105,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * is desirable. In some cases it may be possible to "implement" the functions in R (which is a
  * simple way to achieve the above).
  */
-public class JavaUpCallsRFFIImpl implements UpCallsRFFI {
+public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     // Checkstyle: stop method name check
 

@@ -91,6 +91,7 @@ void setEmbedded(void);
 void setTempDir(JNIEnv *, jstring tempDir);
 
 extern jclass UpCallsRFFIClass;
+extern jclass JNIUpCallsRFFIImplClass;
 extern jobject UpCallsRFFIObject;
 extern FILE *traceFile;
 

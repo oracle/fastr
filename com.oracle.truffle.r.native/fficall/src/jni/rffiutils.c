@@ -332,7 +332,7 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 			fatalError("releaseNativeArray type");
 		}
 		// update complete status
-		(*env)->CallVoidMethod(env, UpCallsRFFIObject, setCompleteMethodID, cv.obj, complete);
+		(*env)->CallStaticVoidMethod(env, JNIUpCallsRFFIImplClass, setCompleteMethodID, cv.obj, complete);
 
         if (freedata) {
             // free up the slot
