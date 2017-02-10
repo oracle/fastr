@@ -149,7 +149,6 @@ public class RFFIUtils {
     }
 
     private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
-        assert initialized;
         if (traceEnabled) {
             StringBuffer sb = new StringBuffer();
             sb.append("CallRFFI[");

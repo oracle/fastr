@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
  * Some additional methods to support the native JNI side.
  */
 public final class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
+    // Checkstyle: stop method name check
 
     /**
      * Helper function for {@code R_TopLevelExec}, see {@link #R_ToplevelExec()}, called after C
