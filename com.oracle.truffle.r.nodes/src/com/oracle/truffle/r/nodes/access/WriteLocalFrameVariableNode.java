@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,118 +22,73 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
-
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNodeFactory.ResolvedWriteLocalFrameVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNodeFactory.UnresolvedWriteLocalFrameVariableNodeGen;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * {@link WriteLocalFrameVariableNode} captures a write to the "local", i.e., current, frame. There
  * are several clients capturing different "kinds" of writes to the frame, e.g. saving an argument,
- * a source-level write, a a write helper for another source node (e.g. {@code ForNode}.
- *
- * The state starts out a "unresolved" and transforms to "resolved".
+ * a source-level write, a a write helper for another source node (e.g. {@code ForNode}).
  */
+@ImportStatic(FrameSlotKind.class)
 public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode {
 
-    public static WriteLocalFrameVariableNode create(String name, RNode rhs, Mode mode) {
-        return UnresolvedWriteLocalFrameVariableNodeGen.create(rhs, name, mode);
+    public static WriteLocalFrameVariableNode create(Object name, Mode mode, RNode rhs) {
+        return WriteLocalFrameVariableNodeGen.create(name, mode, rhs);
     }
 
     public static WriteLocalFrameVariableNode createForRefCount(Object name) {
-        return UnresolvedWriteLocalFrameVariableNodeGen.create(null, name, Mode.INVISIBLE);
+        return WriteLocalFrameVariableNodeGen.create(name, Mode.INVISIBLE, null);
     }
 
-    @NodeField(name = "mode", type = Mode.class)
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    abstract static class UnresolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
+    private final Mode mode;
 
-        public abstract Mode getMode();
+    private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
+    private final BranchProfile invalidateProfile = BranchProfile.create();
 
-        @Specialization
-        protected byte doLogical(VirtualFrame frame, byte value) {
-            resolveAndSet(frame, value, FrameSlotKind.Byte);
-            return value;
-        }
-
-        @Specialization
-        protected int doInteger(VirtualFrame frame, int value) {
-            resolveAndSet(frame, value, FrameSlotKind.Int);
-            return value;
-        }
-
-        @Specialization
-        protected double doDouble(VirtualFrame frame, double value) {
-            resolveAndSet(frame, value, FrameSlotKind.Double);
-            return value;
-        }
-
-        @Specialization
-        protected Object doObject(VirtualFrame frame, Object value) {
-            resolveAndSet(frame, value, FrameSlotKind.Object);
-            return value;
-        }
-
-        private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            // it's slow path (unconditional replace) so toString() is fine as well
-            if (getName().toString().isEmpty()) {
-                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-            FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
-            replace(ResolvedWriteLocalFrameVariableNode.create(getRhs(), getName(), frameSlot, getMode())).execute(frame, value);
-        }
+    protected WriteLocalFrameVariableNode(Object name, Mode mode) {
+        super(name);
+        this.mode = mode;
     }
 
-    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
-    abstract static class ResolvedWriteLocalFrameVariableNode extends WriteLocalFrameVariableNode {
+    protected FrameSlot findOrAddFrameSlot(VirtualFrame frame, FrameSlotKind initialKind) {
+        return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
+    }
 
-        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
-        private final BranchProfile invalidateProfile = BranchProfile.create();
+    @Specialization(guards = "isLogicalKind(frame, frameSlot)")
+    protected byte doLogical(VirtualFrame frame, byte value,
+                    @Cached("findOrAddFrameSlot(frame, Byte)") FrameSlot frameSlot) {
+        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+        return value;
+    }
 
-        public abstract Mode getMode();
+    @Specialization(guards = "isIntegerKind(frame, frameSlot)")
+    protected int doInteger(VirtualFrame frame, int value,
+                    @Cached("findOrAddFrameSlot(frame, Int)") FrameSlot frameSlot) {
+        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+        return value;
+    }
 
-        private static ResolvedWriteLocalFrameVariableNode create(RNode rhs, Object name, FrameSlot frameSlot, Mode mode) {
-            return ResolvedWriteLocalFrameVariableNodeGen.create(rhs, name, frameSlot, mode);
-        }
+    @Specialization(guards = "isDoubleKind(frame, frameSlot)")
+    protected double doDouble(VirtualFrame frame, double value,
+                    @Cached("findOrAddFrameSlot(frame, Double)") FrameSlot frameSlot) {
+        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+        return value;
+    }
 
-        @Specialization(guards = "isLogicalKind(frame, frameSlot)")
-        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
-            FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization(guards = "isIntegerKind(frame, frameSlot)")
-        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
-            FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization(guards = "isDoubleKind(frame, frameSlot)")
-        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization
-        protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
-            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
-            return value;
-        }
+    @Specialization
+    protected Object doObject(VirtualFrame frame, Object value,
+                    @Cached("findOrAddFrameSlot(frame, Object)") FrameSlot frameSlot) {
+        Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
+        return value;
     }
 }

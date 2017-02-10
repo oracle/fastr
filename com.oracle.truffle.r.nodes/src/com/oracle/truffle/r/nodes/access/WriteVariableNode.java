@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,15 @@ public abstract class WriteVariableNode extends RNode {
         INVISIBLE
     }
 
-    public abstract Object getName();
+    private final Object name;
+
+    protected WriteVariableNode(Object name) {
+        this.name = name;
+    }
+
+    public final Object getName() {
+        return name;
+    }
 
     public abstract RNode getRhs();
 
@@ -54,27 +62,27 @@ public abstract class WriteVariableNode extends RNode {
      */
     public static WriteVariableNode createArgSave(String name, RNode rhs) {
         if (FastROptions.InvisibleArgs.getBooleanValue()) {
-            return WriteLocalFrameVariableNode.create(name, rhs, Mode.INVISIBLE);
+            return WriteLocalFrameVariableNode.create(name, Mode.INVISIBLE, rhs);
         } else {
-            return WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR);
+            return WriteLocalFrameVariableNode.create(name, Mode.REGULAR, rhs);
         }
     }
 
     /**
      * Variant for anonymous variables in the current frame.
      */
-    public static WriteVariableNode createAnonymous(String name, RNode rhs, Mode mode) {
-        return WriteLocalFrameVariableNode.create(name, rhs, mode);
+    public static WriteVariableNode createAnonymous(String name, Mode mode, RNode rhs) {
+        return WriteLocalFrameVariableNode.create(name, mode, rhs);
     }
 
     /**
      * Variant for anonymous variables in either the current or a super frame..
      */
-    public static WriteVariableNode createAnonymous(String name, RNode rhs, Mode mode, boolean isSuper) {
+    public static WriteVariableNode createAnonymous(String name, Mode mode, RNode rhs, boolean isSuper) {
         if (isSuper) {
-            return WriteSuperFrameVariableNode.create(name, rhs, mode);
+            return WriteSuperFrameVariableNode.create(name, mode, rhs);
         } else {
-            return WriteLocalFrameVariableNode.create(name, rhs, mode);
+            return WriteLocalFrameVariableNode.create(name, mode, rhs);
         }
     }
 }

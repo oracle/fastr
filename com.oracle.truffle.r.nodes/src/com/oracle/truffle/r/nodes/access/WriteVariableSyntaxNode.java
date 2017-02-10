@@ -27,18 +27,19 @@ import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
+/**
+ * This node represents a write to a variable on the syntax level, i.e., in the R source code.
+ */
 @NodeInfo(cost = NONE)
 public final class WriteVariableSyntaxNode extends OperatorNode {
 
@@ -47,25 +48,10 @@ public final class WriteVariableSyntaxNode extends OperatorNode {
 
     private final RSyntaxElement lhs;
 
-    public WriteVariableSyntaxNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs, RNode rhs, boolean isSuper) {
+    public WriteVariableSyntaxNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs, String name, RNode rhs, boolean isSuper) {
         super(source, operator);
         this.lhs = lhs;
-        String name;
-        if (lhs instanceof RSyntaxLookup) {
-            name = ((RSyntaxLookup) lhs).getIdentifier();
-        } else if (lhs instanceof RSyntaxConstant) {
-            RSyntaxConstant c = (RSyntaxConstant) lhs;
-            if (c.getValue() instanceof String) {
-                name = (String) c.getValue();
-            } else {
-                // "this" needs to be initialized for error reporting to work
-                this.write = WriteVariableNode.createAnonymous("dummy", rhs, Mode.REGULAR, isSuper);
-                throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
-            }
-        } else {
-            throw RInternalError.unimplemented("unexpected lhs type in replacement: " + lhs.getClass());
-        }
-        this.write = WriteVariableNode.createAnonymous(name, rhs, Mode.REGULAR, isSuper);
+        this.write = WriteVariableNode.createAnonymous(name, Mode.REGULAR, rhs, isSuper);
         assert write != null;
     }
 
@@ -77,6 +63,21 @@ public final class WriteVariableSyntaxNode extends OperatorNode {
     @Override
     public Object execute(VirtualFrame frame) {
         return write.execute(frame);
+    }
+
+    @Override
+    public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
+        return write.executeInteger(frame);
+    }
+
+    @Override
+    public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
+        return write.executeDouble(frame);
+    }
+
+    @Override
+    public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
+        return write.executeByte(frame);
     }
 
     @Override

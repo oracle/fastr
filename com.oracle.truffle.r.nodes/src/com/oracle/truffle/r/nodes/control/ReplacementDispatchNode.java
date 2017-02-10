@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableSyntaxNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -91,12 +92,34 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     public RNode create(boolean isVoid) {
         RNode replacement;
-        if (lhs.asRSyntaxNode() instanceof RSyntaxCall) {
+        RSyntaxNode lhsSyntax = lhs.asRSyntaxNode();
+        if (lhsSyntax instanceof RSyntaxCall) {
             replacement = createReplacementNode(isVoid);
         } else {
-            replacement = new WriteVariableSyntaxNode(getLazySourceSection(), operator, lhs.asRSyntaxNode(), rhs, isSuper);
+            replacement = createWriteVariableNode(lhsSyntax);
         }
         return replace(replacement);
+    }
+
+    private RNode createWriteVariableNode(RSyntaxNode lhsSyntax) {
+        String name;
+        if (lhsSyntax instanceof RSyntaxLookup) {
+            name = ((RSyntaxLookup) lhsSyntax).getIdentifier();
+        } else if (lhsSyntax instanceof RSyntaxConstant) {
+            RSyntaxConstant c = (RSyntaxConstant) lhsSyntax;
+            if (c.getValue() instanceof String) {
+                name = (String) c.getValue();
+            } else {
+                // "this" needs to be initialized for error reporting to work
+                throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
+            }
+        } else {
+            throw RInternalError.unimplemented("unexpected lhs type in replacement: " + lhsSyntax.getClass());
+        }
+        if (name.isEmpty()) {
+            throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+        }
+        return new WriteVariableSyntaxNode(getLazySourceSection(), operator, lhsSyntax, name, rhs, isSuper);
     }
 
     @Override

@@ -88,7 +88,7 @@ public abstract class Mapply extends RBuiltinNode {
             this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create());
             this.indexedLoadNode = insert(SubscriptNodeGen.create());
-            this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, null, Mode.REGULAR));
+            this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, Mode.REGULAR, null));
             this.argName = argName;
         }
     }

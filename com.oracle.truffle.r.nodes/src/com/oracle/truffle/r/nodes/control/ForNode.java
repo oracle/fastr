@@ -62,9 +62,9 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
 
-        this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
-        this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
-        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName)), Mode.REGULAR);
+        this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
+        this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, Mode.REGULAR, range);
+        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, Mode.REGULAR, RLengthNodeGen.create(ReadVariableNode.create(rangeName)));
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, var.getIdentifier(), body, indexName, lengthName, rangeName));
     }
 
@@ -96,12 +96,12 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
 
         ForRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String lengthName, String rangeName) {
             this.forNode = forNode;
-            this.writeElementNode = WriteVariableNode.createAnonymous(var, createIndexedLoad(indexName, rangeName), Mode.REGULAR, false);
+            this.writeElementNode = WriteVariableNode.createAnonymous(var, Mode.REGULAR, createIndexedLoad(indexName, rangeName), false);
             this.body = body;
 
             this.readIndexNode = ReadVariableNode.create(indexName);
             this.readLengthNode = ReadVariableNode.create(lengthName);
-            this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
+            this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
             // pre-initialize the profile so that loop exits to not deoptimize
             conditionProfile.profile(false);
         }
