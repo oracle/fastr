@@ -85,25 +85,35 @@ public abstract class CastSymbolNode extends CastBaseNode {
         return RDataFactory.createSymbolInterned(value);
     }
 
-    @Specialization
+    @Specialization(guards = "value.getLength() > 0")
     protected RSymbol doStringVector(RStringVector value) {
         // Only element 0 interpreted
         return doString(value.getDataAt(0));
     }
 
-    @Specialization
+    @Specialization(guards = "value.getLength() > 0")
     protected RSymbol doIntegerVector(RIntVector value) {
         return doInteger(value.getDataAt(0));
     }
 
-    @Specialization
+    @Specialization(guards = "value.getLength() > 0")
     protected RSymbol doDoubleVector(RDoubleVector value) {
         return doDouble(value.getDataAt(0));
     }
 
-    @Specialization
+    @Specialization(guards = "value.getLength() > 0")
     protected RSymbol doLogicalVector(RLogicalVector value) {
         return doLogical(value.getDataAt(0));
+    }
+
+    @Specialization(guards = "vector.getLength() == 0")
+    @TruffleBoundary
+    protected RSymbol doEmptyVector(RAbstractVector vector) {
+        if (vector instanceof RList) {
+            throw RError.error(this, RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+        } else {
+            throw RError.error(this, Message.INVALID_DATA_OF_TYPE_TOO_SHORT, vector.getRType().getName(), 0);
+        }
     }
 
     @TruffleBoundary
