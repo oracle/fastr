@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.ffi;
 
-import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.*;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.guarantee;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.guaranteeInstanceOf;
+import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.unimplemented;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
@@ -30,9 +32,11 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.ffi.ParseResult.ParseStatus;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -81,11 +85,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -1140,6 +1145,33 @@ public class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         REnvironment env = RDataFactory.createNewEnv(REnvironment.UNNAMED, true, initialSize);
         RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
+    }
+
+    @Override
+    public int PRSEEN(Object x) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
+        return promise.getGPBits();
+    }
+
+    @Override
+    public Object PRENV(Object x) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
+        final MaterializedFrame frame = promise.getFrame();
+        return frame != null ? REnvironment.frameToEnvironment(frame) : RNull.instance;
+    }
+
+    @Override
+    public Object R_PromiseExpr(Object x) {
+        // R_PromiseExpr usually checks, if 'x' is a byte code object. This is not possible in
+        // FastR, so simply call PRCODE.
+        return PRCODE(x);
+    }
+
+    @Override
+    public Object PRCODE(Object x) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
+        RSyntaxNode expr = RASTUtils.unwrap(promise.getRep()).asRSyntaxNode();
+        return RASTUtils.createLanguageElement(expr);
     }
 
 }

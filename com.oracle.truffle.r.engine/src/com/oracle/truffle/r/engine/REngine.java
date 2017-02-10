@@ -295,16 +295,18 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         List<RSyntaxNode> statements = parseImpl(source);
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(statements), executionFrame));
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(source, statements), executionFrame));
     }
 
-    private static SourceSection createSourceSection(List<RSyntaxNode> statements) {
+    private static SourceSection createSourceSection(Source source, List<RSyntaxNode> statements) {
         // All statements come from the same "Source"
-        if (statements.size() == 1) {
+        if (statements.isEmpty()) {
+            return source.createSection(0, source.getLength());
+        } else if (statements.size() == 1) {
             return statements.get(0).getSourceSection();
         } else {
-            Source source = statements.get(0).getSourceSection().getSource();
-            return source.createSection(0, statements.get(statements.size() - 1).getSourceSection().getCharEndIndex());
+            Source newSource = statements.get(0).getSourceSection().getSource();
+            return newSource.createSection(0, statements.get(statements.size() - 1).getSourceSection().getCharEndIndex());
         }
     }
 

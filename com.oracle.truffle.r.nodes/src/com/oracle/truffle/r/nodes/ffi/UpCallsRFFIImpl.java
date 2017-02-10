@@ -927,6 +927,38 @@ public final class UpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.R_NewHashedEnv(parent, initialSize);
     }
 
+    @Override
+    public int PRSEEN(Object x) {
+        if (tracing) {
+            RFFIUtils.traceUpCall("PRSEEN", x);
+        }
+        return delegate.PRSEEN(x);
+    }
+
+    @Override
+    public Object PRENV(Object x) {
+        if (tracing) {
+            RFFIUtils.traceUpCall("PRENV", x);
+        }
+        return delegate.PRENV(x);
+    }
+
+    @Override
+    public Object R_PromiseExpr(Object x) {
+        if (tracing) {
+            RFFIUtils.traceUpCall("R_PromiseExpr", x);
+        }
+        return delegate.R_PromiseExpr(x);
+    }
+
+    @Override
+    public Object PRCODE(Object x) {
+        if (tracing) {
+            RFFIUtils.traceUpCall("PRCODE", x);
+        }
+        return delegate.PRCODE(x);
+    }
+
     // Implementation specific support
 
     /**

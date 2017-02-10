@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,14 @@ package com.oracle.truffle.r.test.library.base;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestRBase;
 
-public class TestConditionHandling extends TestBase {
+public class TestConditionHandling extends TestRBase {
+
+    @Override
+    public String getTestDir() {
+        return "library/base/condition";
+    }
 
     @Test
     public void testTryCatch() {
@@ -38,5 +43,25 @@ public class TestConditionHandling extends TestBase {
         assertEval(Ignored.Unknown, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
         assertEval("{ f <- function() { tryCatch(1, error = function(e) print(\"Hello\")); stop(\"fred\")}; f() }");
         assertEval("{ f <- function() { tryCatch(stop(\"fred\"), error = function(e) print(\"Hello\"))}; f() }");
+        assertEval("{ tryCatch(stop(\"xyz\"), error=function(e) { cat(\"<error>\");123L }, finally=function() { cat(\"<finally>\")}) }");
+    }
+
+    @Test
+    public void testWithRestarts() {
+        assertEval("withRestarts({cat(\"<start>\");invokeRestart(\"foo\", 123L, 456L);789L},\n foo=function(a,b) c(a,b))");
+        assertEval("withRestarts({cat(\"<start>\");invokeRestart(\"foo\", 123L, 456L);789L},\n foo=list(description=\"my handler\", handler=function(a,b) c(a,b)))");
+        assertEval("withRestarts({cat(\"<start>\");invokeRestart(\"foo\", 123L, 456L);789L},\n foo=function(a,b) {cat(\"<first>\");invokeRestart(\"foo\", a+1, b+1)},\n foo=function(a,b) {cat(\"<second>\");c(a,b)})");
+        assertEval("withRestarts(findRestart(\"noSuchRestart\"),\n foo=function(a,b) c(a,b))");
+        assertEval("withRestarts(findRestart(\"foo\"),\n foo=function(a,b) c(a,b))");
+        assertEval("withRestarts(computeRestarts(),\n foo=function(a,b) c(a,b))");
+    }
+
+    @Test
+    public void testWithCallingHandlers() {
+        assertEval(Output.IgnoreWarningContext, "withCallingHandlers({warning(\"foo\");123L},\n warning=function(e) {cat(\"<warn>\")})");
+        assertEval(Ignored.ImplementationError, "withCallingHandlers({warning(\"foo\");123L},\n warning=function(e) {\n cat(\"<warn>\")\n invokeRestart(\"muffleWarning\")\n })");
+        assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {cat(\"<msg>\")})");
+        assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
+        assertEval("withCallingHandlers({message(\"foo\");packageStartupMessage(\"bar\");123L},\n packageStartupMessage=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
     }
 }

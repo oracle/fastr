@@ -462,8 +462,7 @@ public class FileConnections {
             raf.seek(writeOffset);
             byte[] sepData = sep.getBytes();
             for (int i = 0; i < lines.getLength(); i++) {
-                byte[] data = lines.getDataAt(i).getBytes();
-                raf.write(data);
+                writeString(lines.getDataAt(i), false);
                 raf.write(sepData);
             }
             writeOffset = raf.getFilePointer();
@@ -476,7 +475,10 @@ public class FileConnections {
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            throw RInternalError.unimplemented();
+            raf.write(s.getBytes());
+            if (nl) {
+                raf.writeBytes(System.lineSeparator());
+            }
         }
 
         @Override

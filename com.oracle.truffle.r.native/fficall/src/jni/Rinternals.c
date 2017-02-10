@@ -112,6 +112,10 @@ static jmethodID ENCLOSMethodID;
 static jmethodID PRVALUEMethodID;
 static jmethodID R_lsInternal3MethodID;
 static jmethodID R_do_MAKE_CLASS_MethodID;
+static jmethodID PRSEENMethodID;
+static jmethodID PRENVMethodID;
+static jmethodID R_PromiseExprMethodID;
+static jmethodID PRCODEMethodID;
 
 static jmethodID R_ToplevelExecMethodID;
 static jmethodID restoreHandlerStacksMethodID;
@@ -215,6 +219,10 @@ void init_internals(JNIEnv *env) {
 	ENCLOSMethodID = checkGetMethodID(env, UpCallsRFFIClass, "ENCLOS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	PRVALUEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRVALUE", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_lsInternal3MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_lsInternal3", "(Ljava/lang/Object;II)Ljava/lang/Object;", 0);
+	PRSEENMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRSEEN", "(Ljava/lang/Object;)I", 0);
+	PRENVMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRENV", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_PromiseExprMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_PromiseExpr", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	PRCODEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "PRCODE", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 
 	R_ToplevelExecMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExec", "()Ljava/lang/Object;", 0);
 	restoreHandlerStacksMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 0);
@@ -1047,14 +1055,15 @@ void SET_HASHTAB(SEXP x, SEXP v) {
 	unimplemented("SET_HASHTAB");
 }
 
-
 SEXP PRCODE(SEXP x) {
-	return unimplemented("PRCODE");
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRCODEMethodID, x);
 }
 
 SEXP PRENV(SEXP x) {
-	unimplemented("PRSEEN");
-    return 0;
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRENVMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 SEXP PRVALUE(SEXP x) {
@@ -1064,7 +1073,8 @@ SEXP PRVALUE(SEXP x) {
 }
 
 int PRSEEN(SEXP x) {
-	return (int) unimplemented("PRSEEN");
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRSEENMethodID, x);
 }
 
 void SET_PRSEEN(SEXP x, int v) {
@@ -1494,7 +1504,8 @@ double R_strtod(const char *c, char **end) {
 }
 
 SEXP R_PromiseExpr(SEXP x) {
-	return unimplemented("R_PromiseExpr");
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_PromiseExprMethodID, x);
 }
 
 SEXP R_ClosureExpr(SEXP x) {
