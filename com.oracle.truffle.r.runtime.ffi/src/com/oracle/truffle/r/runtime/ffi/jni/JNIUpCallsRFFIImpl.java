@@ -26,13 +26,14 @@ import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.guaranteeInstanceOf;
 
 import com.oracle.truffle.r.nodes.ffi.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
 /**
  * Some additional methods to support the native JNI side.
  */
-public final class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
+public class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     // Checkstyle: stop method name check
 
     /**
@@ -61,6 +62,11 @@ public final class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public static void logNotCharSXPWrapper(Object x) {
         System.out.println("object " + x);
         System.out.println("class " + x.getClass());
+    }
+
+    @Override
+    public Object R_CHAR(Object x) {
+        throw RInternalError.shouldNotReachHere();
     }
 
 }

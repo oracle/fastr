@@ -723,4 +723,10 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.PRCODE(x);
     }
 
+    @Override
+    public Object R_CHAR(Object x) {
+        RFFIUtils.traceUpCall("R_CHAR", x);
+        return delegate.R_CHAR(x);
+    }
+
 }

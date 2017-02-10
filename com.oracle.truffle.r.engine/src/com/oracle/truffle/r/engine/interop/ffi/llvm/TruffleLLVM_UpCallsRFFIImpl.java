@@ -45,12 +45,13 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
+import com.oracle.truffle.r.runtime.ffi.jni.JNIUpCallsRFFIImpl;
 
 /**
  * (Incomplete) Variant of {@link JavaUpCallsRFFIImpl} for Truffle LLVM.
  *
  */
-public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl implements VariableUpCallsRFFI {
+public class TruffleLLVM_UpCallsRFFIImpl extends JNIUpCallsRFFIImpl implements VariableUpCallsRFFI {
     private static TruffleLLVM_UpCallsRFFIImpl singleton;
     private static TruffleObject singletonTruffleObject;
 
