@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -92,7 +93,13 @@ public abstract class PrepareArguments extends Node {
         private static RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                result[i] = arguments[i].execute(frame);
+                Object value = arguments[i].execute(frame);
+                if (CompilerDirectives.inInterpreter()) {
+                    if (value == null) {
+                        throw RInternalError.shouldNotReachHere("Java 'null' not allowed in arguments");
+                    }
+                }
+                result[i] = value;
             }
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
