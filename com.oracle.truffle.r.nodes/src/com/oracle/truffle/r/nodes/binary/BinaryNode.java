@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@NodeChildren({@NodeChild(value = "left", type = RNode.class), @NodeChild(value = "right", type = RNode.class)})
+@NodeChild(value = "left", type = RNode.class)
+@NodeChild(value = "right", type = RNode.class)
 abstract class BinaryNode extends RNode {
 
     protected abstract RNode getLeft();

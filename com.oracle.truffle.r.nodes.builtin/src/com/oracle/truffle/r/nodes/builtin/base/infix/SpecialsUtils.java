@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -172,7 +171,7 @@ class SpecialsUtils {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    @NodeChildren({@NodeChild(value = "delegate", type = RNode.class)})
+    @NodeChild(value = "delegate", type = RNode.class)
     @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class ConvertIndex extends RNode {
 

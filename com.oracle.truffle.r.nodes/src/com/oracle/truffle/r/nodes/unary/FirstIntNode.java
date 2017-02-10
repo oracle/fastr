@@ -22,25 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@NodeFields({@NodeField(name = "emptyError", type = RError.Message.class), @NodeField(name = "sizeWarning", type = RError.Message.class), @NodeField(name = "argumentName", type = String.class),
-                @NodeField(name = "defaultValue", type = int.class)})
 public abstract class FirstIntNode extends CastNode {
 
-    protected abstract RError.Message getEmptyError();
+    private final RError.Message emptyError;
+    private final RError.Message sizeWarning;
+    private final String argumentName;
+    private final int defaultValue;
 
-    protected abstract RError.Message getSizeWarning();
-
-    protected abstract String getArgumentName();
-
-    protected abstract int getDefaultValue();
+    protected FirstIntNode(Message emptyError, Message sizeWarning, String argumentName, int defaultValue) {
+        this.emptyError = emptyError;
+        this.sizeWarning = sizeWarning;
+        this.argumentName = argumentName;
+        this.defaultValue = defaultValue;
+    }
 
     public abstract int executeInt(Object value);
 
@@ -55,14 +56,14 @@ public abstract class FirstIntNode extends CastNode {
     @Specialization(replaces = "firstScalar")
     protected int firstVector(RAbstractIntVector argument) {
         if (!lengthOneProfile.profile(argument.getLength() == 1)) {
-            if (getSizeWarning() != null) {
-                RError.warning(this, getSizeWarning(), getArgumentName());
+            if (sizeWarning != null) {
+                RError.warning(this, sizeWarning, argumentName);
                 if (argument.getLength() == 0) {
-                    return getDefaultValue();
+                    return defaultValue;
                 }
-            } else if (getEmptyError() != null && argument.getLength() == 0) {
+            } else if (emptyError != null && argument.getLength() == 0) {
                 errorProfile.enter();
-                throw RError.error(this, getEmptyError(), getArgumentName());
+                throw RError.error(this, emptyError, argumentName);
             }
         }
         return argument.getDataAt(0);

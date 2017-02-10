@@ -32,7 +32,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -60,7 +59,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index", type = ConvertIndex.class), @NodeChild(value = "value", type = RNode.class)})
+@NodeChild(value = "vector", type = ProfiledValue.class)
+@NodeChild(value = "index", type = ConvertIndex.class)
+@NodeChild(value = "value", type = RNode.class)
 abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
 
     protected UpdateSubscriptSpecial(boolean inReplacement) {
@@ -108,8 +109,10 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
     }
 }
 
-@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index1", type = ConvertIndex.class), @NodeChild(value = "index2", type = ConvertIndex.class),
-                @NodeChild(value = "value", type = RNode.class)})
+@NodeChild(value = "vector", type = ProfiledValue.class)
+@NodeChild(value = "index1", type = ConvertIndex.class)
+@NodeChild(value = "index2", type = ConvertIndex.class)
+@NodeChild(value = "value", type = RNode.class)
 abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
 
     protected UpdateSubscriptSpecial2(boolean inReplacement) {

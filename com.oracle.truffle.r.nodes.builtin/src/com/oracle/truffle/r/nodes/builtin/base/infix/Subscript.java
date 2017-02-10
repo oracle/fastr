@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -66,7 +65,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
  */
-@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index", type = ConvertIndex.class)})
+@NodeChild(value = "vector", type = ProfiledValue.class)
+@NodeChild(value = "index", type = ConvertIndex.class)
 abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 
     protected SubscriptSpecialBase(boolean inReplacement) {
@@ -104,7 +104,9 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 /**
  * Subscript code for matrices minus list is the same as subset code, this class allows sharing it.
  */
-@NodeChildren({@NodeChild(value = "vector", type = ProfiledValue.class), @NodeChild(value = "index1", type = ConvertIndex.class), @NodeChild(value = "index2", type = ConvertIndex.class)})
+@NodeChild(value = "vector", type = ProfiledValue.class)
+@NodeChild(value = "index1", type = ConvertIndex.class)
+@NodeChild(value = "index2", type = ConvertIndex.class)
 abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common {
 
     protected SubscriptSpecial2Base(boolean inReplacement) {
