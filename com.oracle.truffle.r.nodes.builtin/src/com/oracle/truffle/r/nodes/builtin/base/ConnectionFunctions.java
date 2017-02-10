@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.conn.CompressedConnections.CompressedRConnec
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
@@ -413,6 +414,57 @@ public abstract class ConnectionFunctions {
                 throw RError.error(this, RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+        }
+    }
+
+    @RBuiltin(name = "rawConnection", kind = INTERNAL, parameterNames = {"description", "object", "open"}, behavior = IO)
+    public abstract static class RawConnection extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(RawConnection.class);
+            CastsHelper.description(casts);
+            casts.arg("object").mustBe(stringValue().or(rawValue()));
+            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")).or(equalTo("wb")).or(equalTo("rb")))), RError.Message.UNSUPPORTED_MODE);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector rawConnection(String description, @SuppressWarnings("unused") RAbstractStringVector text, String open) {
+            try {
+                return new RawRConnection(description, null, open).asVector();
+            } catch (IOException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector rawConnection(String description, RAbstractRawVector text, String open) {
+            try {
+                return new RawRConnection(description, text.materialize().getDataTemp(), open).asVector();
+            } catch (IOException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+    }
+
+    @RBuiltin(name = "rawConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class RawConnectionValue extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(RawConnectionValue.class);
+            casts.arg("con").defaultError(Message.NOT_A_RAW_CONNECTION).mustBe(integerValue()).asIntegerVector().findFirst();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object textConnection(int con) {
+            RConnection connection = RConnection.fromIndex(con);
+            if (connection instanceof RawRConnection) {
+                return RDataFactory.createRawVector(((RawRConnection) connection).getValue());
+            } else {
+                throw RError.error(RError.SHOW_CALLER, Message.NOT_A_RAW_CONNECTION);
             }
         }
     }

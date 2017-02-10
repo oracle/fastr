@@ -787,7 +787,9 @@ public final class RError extends RuntimeException {
         LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus"),
         LENGTH_MISAPPLIED("LENGTH or similar applied to %s object"),
         TOO_MANY_ARGS("too many arguments"),
-        UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R");
+        UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R"),
+        NOT_AN_OUTPUT_RAW_CONNECTION("'con' is not an output rawConnection"),
+        NOT_A_RAW_CONNECTION("'con' is not a rawConnection");
 
         public final String message;
         final boolean hasArgs;

@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 
 import org.tukaani.xz.XZInputStream;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;

@@ -313,6 +313,7 @@ public class ConnectionSupport {
         Socket("sockconn"),
         Text("textConnection"),
         URL("url"),
+        RAW("rawConnection"),
         Internal("internal");
 
         private final String printName;
