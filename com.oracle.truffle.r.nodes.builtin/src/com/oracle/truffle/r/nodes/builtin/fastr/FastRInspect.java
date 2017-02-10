@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
  */
 @RBuiltin(name = ".fastr.inspect", visibility = OFF, kind = PRIMITIVE, parameterNames = {"..."}, behavior = COMPLEX)
 public abstract class FastRInspect extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(FastRInspect.class);
+    }
+
     @Specialization
     public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {
         return RNull.instance;

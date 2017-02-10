@@ -40,6 +40,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 @RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode {
 
+    static {
+        Casts.noCasts(IsATTY.class);
+    }
+
     @Specialization
     @TruffleBoundary
     protected byte isATTYNonConnection(RAbstractIntVector con) {

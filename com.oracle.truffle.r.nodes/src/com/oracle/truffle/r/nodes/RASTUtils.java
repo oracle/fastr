@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,7 +134,7 @@ public class RASTUtils {
      * variables and actual values for constants.
      */
     @TruffleBoundary
-    public static Object createLanguageElement(RSyntaxNode element) {
+    public static Object createLanguageElement(RSyntaxElement element) {
         assert element != null;
         if (element instanceof RSyntaxConstant) {
             Object value = ((RSyntaxConstant) element).getValue();
@@ -149,7 +149,7 @@ public class RASTUtils {
             return RDataFactory.createSymbol(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
-            return RDataFactory.createLanguage(element.asRNode());
+            return RDataFactory.createLanguage(((RSyntaxNode) element).asRNode());
         }
     }
 

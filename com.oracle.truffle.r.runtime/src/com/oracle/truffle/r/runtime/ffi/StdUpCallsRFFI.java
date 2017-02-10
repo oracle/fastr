@@ -240,4 +240,12 @@ public interface StdUpCallsRFFI {
 
     REnvironment R_NewHashedEnv(REnvironment parent, int initialSize);
 
+    int PRSEEN(Object x);
+
+    Object PRENV(Object x);
+
+    Object R_PromiseExpr(Object x);
+
+    Object PRCODE(Object x);
+
 }

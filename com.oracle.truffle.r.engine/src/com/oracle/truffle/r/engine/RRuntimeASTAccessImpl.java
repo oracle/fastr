@@ -92,7 +92,6 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -132,17 +131,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * length 2.
  */
 class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
-
-    private static Object getIntrinsicValue(Object result) {
-        if (result instanceof RSyntaxConstant) {
-            return ((RSyntaxConstant) result).getValue();
-        } else if (result instanceof RSyntaxLookup) {
-            return RDataFactory.createSymbolInterned(((RSyntaxLookup) result).getIdentifier());
-        } else {
-            assert result instanceof RSyntaxCall || result instanceof RSyntaxFunction : result.getClass();
-            return RDataFactory.createLanguage(((RSyntaxNode) result).asRNode());
-        }
-    }
 
     @TruffleBoundary
     @Override
@@ -203,7 +191,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
                     Object list = RNull.instance;
                     for (int i = sig.getLength() - 1; i >= 0; i--) {
-                        list = RDataFactory.createPairList(defaults[i] == null ? RSymbol.MISSING : getIntrinsicValue(defaults[i]), list,
+                        list = RDataFactory.createPairList(defaults[i] == null ? RSymbol.MISSING : RASTUtils.createLanguageElement(defaults[i]), list,
                                         RDataFactory.createSymbolInterned(sig.getName(i)));
                     }
                     return list;
@@ -228,7 +216,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         /*
          * Constants and lookups are converted to their intrinsic value:
          */
-        return getIntrinsicValue(result);
+        return RASTUtils.createLanguageElement(result);
     }
 
     @Override

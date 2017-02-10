@@ -715,7 +715,7 @@ SEXP PRCODE(SEXP x) {
 }
 
 SEXP PRENV(SEXP x) {
-	unimplemented("PRSEEN");
+	unimplemented("PRENV");
     return 0;
 }
 
