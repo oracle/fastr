@@ -143,6 +143,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (intRawValue != intValue) {
             warningBranch.enter();
             RError.warning(this, RError.Message.OUT_OF_RANGE);
+            return RRaw.valueOf((byte) 0);
         }
         return RRaw.valueOf((byte) intRawValue);
     }
@@ -223,7 +224,7 @@ public abstract class CastRawNode extends CastBaseNode {
                 if (intValue != intRawValue) {
                     warningBranch.enter();
                     outOfRangeWarning = true;
-                    intRawValue = 0;
+                    intValue = 0;
                 }
             }
             bdata[i] = (byte) intValue;
