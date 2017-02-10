@@ -33,6 +33,15 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Abstracted for use by other nodes that need to convert a list into an environment.
  */
 public final class RList2EnvNode extends RBaseNode {
+    private final boolean ignoreMissingNames;
+
+    public RList2EnvNode() {
+        this(false);
+    }
+
+    public RList2EnvNode(boolean ignoreMissingNames) {
+        this.ignoreMissingNames = ignoreMissingNames;
+    }
 
     @TruffleBoundary
     public REnvironment execute(RAbstractListVector list, REnvironment env) {
@@ -45,7 +54,7 @@ public final class RList2EnvNode extends RBaseNode {
         }
         for (int i = list.getLength() - 1; i >= 0; i--) {
             String name = names.getDataAt(i);
-            if (name.length() == 0) {
+            if (!ignoreMissingNames && name.length() == 0) {
                 throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // in case of duplicates, last element in list wins

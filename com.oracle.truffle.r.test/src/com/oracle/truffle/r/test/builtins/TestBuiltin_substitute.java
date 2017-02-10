@@ -87,5 +87,30 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("f<-function(x,name) substitute(x$name <- 5); f(foo, bar); foo <- new.env(); eval(f(foo,bar)); foo$bar");
         assertEval("f<-function(x,name) substitute(x@name); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); foo@bar <- 1; eval(f(foo,bar))");
         assertEval("f<-function(x,name) substitute(x@name <- 5); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); eval(f(foo,bar)); foo@bar");
+
+        assertEval("substitute(1, 1)");
+        assertEval("substitute(1, 1, 1)");
+        assertEval("substitute(expr=1, env=1)");
+
+        assertEval("substitute(1, NULL)");
+        assertEval("substitute(1, NA)");
+        assertEval("substitute(1, c(list(1)))");
+        assertEval("substitute(1, list(c(list(1))))");
+        assertEval("substitute(1, list(list(1)))");
+
+        assertEval("a<-substitute(quote(x+1), NULL); a");
+        assertEval("a<-substitute(quote(x+1), NA); a");
+        assertEval("a<-substitute(quote(x+1), list(1)); a");
+        assertEval("a<-substitute(quote(x+1), list(x=1)); a");
+        assertEval("a<-substitute(quote(x+1), list(y=1)); a");
+        assertEval("a<-substitute(quote(x+1), c(list(x=1), 'breakme')); a");
+        assertEval("a<-substitute(quote(x+1), c(c(list(x=1)))); a");
+        assertEval("a<-substitute(quote(x+1), list(c(c(list(x=1))))); a");
+        assertEval("a<-substitute(quote(x+1), list(list(x=1))); a");
+        assertEval("a<-substitute(quote(x+1), c(list(x=1, 1))); a");
+        assertEval("a<-substitute(quote(x+y), c(list(x=1), list(y=1))); a");
+        assertEval("substitute(quote(x+1), environment())");
+        assertEval("f<-function() {}; substitute(quote(x+1), f)");
+        assertEval("substitute(quote(x+1), setClass('a'))");
     }
 }

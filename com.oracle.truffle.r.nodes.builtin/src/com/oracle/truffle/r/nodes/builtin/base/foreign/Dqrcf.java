@@ -11,10 +11,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.api.dsl.Specialization;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -24,44 +26,43 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-public final class Dqrcf extends RExternalBuiltinNode {
+public abstract class Dqrcf extends RExternalBuiltinNode.Arg8 {
     @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().createRApplRFFINode();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);
 
     static {
-        Casts.noCasts(Dqrcf.class);
+        Casts casts = new Casts(Dqrcf.class);
+        casts.arg(0).mustBe(doubleValue()).asDoubleVector();
+        casts.arg(1).mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(2).mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(3).mustBe(doubleValue()).asDoubleVector();
+        casts.arg(4).mustBe(doubleValue()).asDoubleVector();
+        casts.arg(5).mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(6).mustBe(doubleValue()).asDoubleVector();
+        casts.arg(7).mustBe(integerValue()).asIntegerVector();
     }
 
-    @Override
-    public RList call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
+    @Specialization
+    public RList dqrcf(RAbstractDoubleVector xVec, int nx, int k, RAbstractDoubleVector qrauxVec, RAbstractDoubleVector yVec, int ny, RAbstractDoubleVector bVec, RAbstractIntVector infoVec) {
         try {
-            RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
-            int n = argValues[1] instanceof Integer ? (int) argValues[1] : ((RAbstractIntVector) argValues[1]).getDataAt(0);
-            RAbstractIntVector k = (RAbstractIntVector) argValues[2];
-            RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[3];
-            RAbstractDoubleVector yVec = (RAbstractDoubleVector) argValues[4];
-            int ny = argValues[5] instanceof Integer ? (int) argValues[5] : ((RAbstractIntVector) argValues[5]).getDataAt(0);
-            RAbstractDoubleVector bVec = (RAbstractDoubleVector) argValues[6];
-            RAbstractIntVector infoVec = (RAbstractIntVector) argValues[7];
             double[] x = xVec.materialize().getDataTemp();
             double[] qraux = qrauxVec.materialize().getDataTemp();
             double[] y = yVec.materialize().getDataTemp();
             double[] b = bVec.materialize().getDataTemp();
             int[] info = infoVec.materialize().getDataTemp();
-            rApplRFFINode.dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
+            rApplRFFINode.dqrcf(x, nx, k, qraux, y, ny, b, info);
             RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
             coef.copyAttributesFrom(bVec);
             // @formatter:off
             Object[] data = new Object[]{
                         RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR),
-                        argValues[1],
-                        k.copy(),
+                        nx,
+                        k,
                         RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),
                         RDataFactory.createDoubleVector(y, RDataFactory.COMPLETE_VECTOR),
-                        argValues[5],
+                        ny,
                         coef,
                         RDataFactory.createIntVector(info, RDataFactory.COMPLETE_VECTOR),
             };

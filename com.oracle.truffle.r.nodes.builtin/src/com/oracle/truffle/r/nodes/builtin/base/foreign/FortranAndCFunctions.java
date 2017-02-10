@@ -203,7 +203,7 @@ public class FortranAndCFunctions {
                 case "dqrdc2":
                     return Dqrdc2.create();
                 case "dqrcf":
-                    return new Dqrcf();
+                    return DqrcfNodeGen.create();
                 default:
                     return null;
             }
