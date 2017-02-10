@@ -13,12 +13,22 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
+import static com.oracle.truffle.r.runtime.RError.Message.NA_INTRODUCED_COERCION;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -32,12 +42,38 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 public class SplineFunctions {
 
     public abstract static class SplineCoef extends RExternalBuiltinNode.Arg3 {
+        static {
+            Casts casts = new Casts(SplineCoef.class);
+            casts.arg(0).mapNull(constant(INT_NA)).mapIf(numericValue(),
+                            chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).end(),
+                            chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).with(
+                                            Predef.shouldBe(integerValue(), NO_CALLER, NA_INTRODUCED_COERCION)).end());
+            casts.arg(1).allowMissing().asDoubleVector();
+            casts.arg(2).allowMissing().asDoubleVector();
+        }
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(Object method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
-            int methodInt = castInt(castVector(method));
-            return SplineFunctions.splineCoef(methodInt, x.materialize(), y.materialize());
+        protected Object splineCoef(int method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
+            return SplineFunctions.splineCoef(method, x.materialize(), y.materialize());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object splineCoef(int method, RAbstractDoubleVector x, RNull y) {
+            return SplineFunctions.splineCoef(method, x.materialize(), RDataFactory.createDoubleVector(0));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object splineCoef(int method, RNull x, RAbstractDoubleVector y) {
+            return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), y.materialize());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object splineCoef(int method, RNull x, RNull y) {
+            return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), RDataFactory.createDoubleVector(0));
         }
     }
 
@@ -99,7 +135,9 @@ public class SplineFunctions {
 
         double[] e = new double[n];
 
-        RInternalError.guarantee(n >= 2 && y[0] == y[n - 1], "periodic spline: domain error");
+        if (n < 2 || y[0] != y[n - 1]) {
+            return;
+        }
 
         if (n == 2) {
             b[0] = 0.0;
@@ -215,7 +253,9 @@ public class SplineFunctions {
         int i;
         double t;
 
-        RInternalError.guarantee(n >= 2, "periodic spline: domain error");
+        if (n < 2) {
+            return;
+        }
 
         if (n < 3) {
             t = (y[1] - y[0]);
@@ -289,7 +329,9 @@ public class SplineFunctions {
         int i;
         double t;
 
-        RInternalError.guarantee(n >= 2, "periodic spline: domain error");
+        if (n < 2) {
+            return;
+        }
 
         if (n < 3) {
             t = (y[1] - y[0]);

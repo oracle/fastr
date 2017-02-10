@@ -27,8 +27,20 @@ import java.util.TreeSet;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import static com.oracle.truffle.r.runtime.RError.Message.FIRST_ARGUMENT_MUST_BE_CHARACTER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARG;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import com.oracle.truffle.r.runtime.RRuntime;
+import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_FALSE;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -41,7 +53,12 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     @Child private SetFixedAttributeNode setLevelsAttrNode = SetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
     static {
-        Casts.noCasts(TypeConvert.class);
+        Casts casts = new Casts(TypeConvert.class);
+        casts.arg(0).mustBe(stringValue(), SHOW_CALLER, FIRST_ARGUMENT_MUST_BE_CHARACTER).asStringVector();
+        casts.arg(1).mustBe(stringValue(), SHOW_CALLER, INVALID_ARG, "'na.strings'").asStringVector();
+        casts.arg(2).mapIf(logicalValue(),
+                        chain(asLogicalVector()).with(findFirst().logicalElement(LOGICAL_FALSE)).with(toBoolean()).end(),
+                        chain(map(constant(LOGICAL_FALSE))).with(toBoolean()).end());
     }
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
@@ -109,7 +126,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
-    protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
+    protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, boolean asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
         if (x.getLength() == 0) {
             return RDataFactory.createEmptyLogicalVector();
         }
@@ -164,7 +181,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         }
         // fall through target - conversion to int, double or logical failed
 
-        if (asIs == RRuntime.LOGICAL_TRUE) {
+        if (asIs) {
             return x;
         } else {
             // create a factor

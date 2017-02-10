@@ -26,20 +26,25 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.library.methods.SubstituteDirect;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import com.oracle.truffle.r.runtime.RError;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ENVIRONMENT_SPECIFIED;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0, behavior = COMPLEX)
@@ -48,7 +53,8 @@ public abstract class Substitute extends RBuiltinNode {
     @Child private Quote quote;
 
     static {
-        Casts.noCasts(Substitute.class);
+        Casts casts = new Casts(Substitute.class);
+        casts.arg(1).allowNullAndMissing().defaultError(INVALID_ENVIRONMENT_SPECIFIED).mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
     }
 
     @Specialization
@@ -57,18 +63,24 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization
+    protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RNull env) {
+        return doSubstituteWithEnv(expr, REnvironment.frameToEnvironment(frame.materialize()));
+    }
+
+    @Specialization
     protected Object doSubstitute(RPromise expr, REnvironment env) {
         return doSubstituteWithEnv(expr, env);
     }
 
-    @Specialization
+    @Specialization(guards = {"list.getNames() == null || list.getNames().getLength() == 0"})
     protected Object doSubstitute(RPromise expr, RList list) {
-        return doSubstituteWithEnv(expr, REnvironment.createFromList(list, REnvironment.baseEnv()));
+        return doSubstituteWithEnv(expr, SubstituteDirect.createNewEnvironment());
     }
 
-    @Fallback
-    protected Object doSubstitute(@SuppressWarnings("unused") Object expr, @SuppressWarnings("unused") Object x) {
-        throw RError.error(this, RError.Message.INVALID_ENVIRONMENT);
+    @Specialization(guards = {"list.getNames() != null", "list.getNames().getLength() > 0"})
+    protected Object doSubstitute(RPromise expr, RList list,
+                    @Cached("createList2EnvNode()") RList2EnvNode list2Env) {
+        return doSubstituteWithEnv(expr, SubstituteDirect.createEnvironment(list, list2Env));
     }
 
     /**
@@ -99,4 +111,9 @@ public abstract class Substitute extends RBuiltinNode {
         // so get the actual expression (AST) from that
         return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getRep()));
     }
+
+    protected static RList2EnvNode createList2EnvNode() {
+        return new RList2EnvNode(true);
+    }
+
 }

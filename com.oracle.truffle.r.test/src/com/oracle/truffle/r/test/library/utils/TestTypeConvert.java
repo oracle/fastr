@@ -58,4 +58,41 @@ public class TestTypeConvert extends TestBase {
         // UnsupportedSpecializationException: Unexpected values provided for ...
         assertEval(Ignored.Unimplemented, "type.convert('NA', 1)");
     }
+
+    @Test
+    public void typeConvertExternal2Test() {
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', NA, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', NULL, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', 'TRUE', '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', 'abc', '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', list('abc'), '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', list(), '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', c(), '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', c(NULL), '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', 1, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', 2, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', environment(), '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), 'NA', function() {}, '.', 'allow.loss')");
+
+        assertEval(".External2(utils:::C_typeconvert, NULL, 'NA', FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, NA, 'NA', FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(), 'NA', FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), NULL, FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), NA, FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), c(), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1, TRUE), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1, 'TRUE'), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1, 'TRUE', 'x'), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1, '1'), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c(1, 'x'), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), c(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, list(1), list(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, list('1'), list('1'), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, list('1'), list(1), FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, environment(), 'NA', FALSE, '.', 'allow.loss')");
+        assertEval(".External2(utils:::C_typeconvert, c('1'), environment(), FALSE, '.', 'allow.loss')");
+    }
+
 }
