@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,21 +49,67 @@ public interface PCRERFFI {
         }
     }
 
-    abstract class PCRERFFINode extends Node {
+    abstract class MaketablesNode extends Node {
 
-        public abstract long maketables();
+        public abstract long execute();
 
-        public abstract Result compile(String pattern, int options, long tables);
-
-        public abstract int getCaptureCount(long code, long extra);
-
-        public abstract String[] getCaptureNames(long code, long extra, int captureCount);
-
-        public abstract Result study(long code, int options);
-
-        public abstract int exec(long code, long extra, String subject, int offset, int options, int[] ovector);
+        public static MaketablesNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createMaketablesNode();
+        }
     }
 
-    PCRERFFINode createPCRERFFINode();
+    abstract class CompileNode extends Node {
+
+        public abstract Result execute(String pattern, int options, long tables);
+
+        public static CompileNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createCompileNode();
+        }
+    }
+
+    abstract class GetCaptureCountNode extends Node {
+
+        public abstract int execute(long code, long extra);
+
+        public static GetCaptureCountNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureCountNode();
+        }
+    }
+
+    abstract class GetCaptureNamesNode extends Node {
+        public abstract String[] execute(long code, long extra, int captureCount);
+
+        public static GetCaptureNamesNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureNamesNode();
+        }
+    }
+
+    abstract class StudyNode extends Node {
+        public abstract Result execute(long code, int options);
+
+        public static StudyNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createStudyNode();
+        }
+    }
+
+    abstract class ExecNode extends Node {
+        public abstract int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
+
+        public static ExecNode create() {
+            return RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        }
+    }
+
+    MaketablesNode createMaketablesNode();
+
+    CompileNode createCompileNode();
+
+    GetCaptureCountNode createGetCaptureCountNode();
+
+    GetCaptureNamesNode createGetCaptureNamesNode();
+
+    StudyNode createStudyNode();
+
+    ExecNode createExecNode();
 
 }
