@@ -30,6 +30,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.nodes.Node;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -47,6 +50,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 
 public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDataFactory.Listener {
+
+    static {
+        Casts casts = new Casts(Rprofmem.class);
+        casts.arg(0, "filename").mustBe(stringValue()).asStringVector();
+        casts.arg(1, "append").mustBe(instanceOf(byte.class));
+        casts.arg(2, "threshold").mustBe(doubleValue()).asDoubleVector();
+    }
 
     @Specialization
     @TruffleBoundary

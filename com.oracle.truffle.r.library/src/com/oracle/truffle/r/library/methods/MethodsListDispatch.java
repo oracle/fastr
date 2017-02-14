@@ -203,7 +203,12 @@ public class MethodsListDispatch {
         @Child private AccessSlotNode accessSlotNode;
 
         static {
-            Casts.noCasts(R_M_setPrimitiveMethods.class);
+            Casts casts = new Casts(R_M_setPrimitiveMethods.class);
+            casts.arg(0, "fname").asStringVector().findFirst();
+            casts.arg(1, "op");
+            casts.arg(2, "code").mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg(3, "fundef");
+            casts.arg(4, "mlist");
         }
 
         private AccessSlotNode initAccessSlotNode() {
@@ -215,12 +220,8 @@ public class MethodsListDispatch {
 
         @Specialization
         @TruffleBoundary
-        protected Object setPrimitiveMethods(Object fname, Object op, Object codeVec, RTypedValue fundef, Object mlist) {
-            String fnameString = RRuntime.asString(fname);
-            String codeVecString = RRuntime.asString(codeVec);
-            if (codeVecString == null) {
-                throw RError.error(this, RError.Message.GENERIC, "argument 'code' must be a character string");
-            }
+        protected Object setPrimitiveMethods(String fnameString, Object op, String codeVecString, Object fundefObj, Object mlist) {
+            RTypedValue fundef = (RTypedValue) fundefObj;
 
             if (op == RNull.instance) {
                 byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
