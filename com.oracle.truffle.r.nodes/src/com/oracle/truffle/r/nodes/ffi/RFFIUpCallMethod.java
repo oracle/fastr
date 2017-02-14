@@ -120,6 +120,7 @@ public enum RFFIUpCallMethod {
     Rf_gsetVar("(object, object, object) : void"),
     Rf_inherits("(string, object) : sint32"),
     Rf_install("(string) : object"),
+    Rf_installChar("(object) : object"),
     Rf_isNull("(object) : sint32"),
     Rf_isString("(object) : sint32"),
     Rf_lengthgets("(object, sint32) : object"),

@@ -316,6 +316,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_installChar(Object name) {
+        CharSXPWrapper charSXP = guaranteeInstanceOf(name, CharSXPWrapper.class);
+        return RDataFactory.createSymbolInterned(charSXP.getContents());
+    }
+
+    @Override
     public Object Rf_lengthgets(Object x, int newSize) {
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         return vec.resize(newSize);

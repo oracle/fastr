@@ -90,6 +90,8 @@ public interface StdUpCallsRFFI {
 
     Object Rf_install(@RFFICstring Object name);
 
+    Object Rf_installChar(Object name);
+
     Object Rf_lengthgets(Object x, int newSize);
 
     int Rf_isString(Object x);

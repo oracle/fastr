@@ -160,6 +160,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_installChar(Object name) {
+        RFFIUtils.traceUpCall("Rf_installChar", name);
+        return delegate.Rf_installChar(name);
+    }
+
+    @Override
     public Object Rf_lengthgets(Object x, int newSize) {
         RFFIUtils.traceUpCall("Rf_lengthgets", x, newSize);
         return delegate.Rf_lengthgets(x, newSize);
