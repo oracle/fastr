@@ -65,7 +65,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_coerceVector(Object x, int mode);
 
-    Object Rf_mkCharLenCE(@RFFICstring Object bytes, int len, int encoding);
+    Object Rf_mkCharLenCE(@RFFICstring(convert = false) Object bytes, int len, int encoding);
 
     Object Rf_cons(Object car, Object cdr);
 
