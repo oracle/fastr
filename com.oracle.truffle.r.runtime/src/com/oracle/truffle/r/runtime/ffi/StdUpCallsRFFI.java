@@ -240,7 +240,7 @@ public interface StdUpCallsRFFI {
 
     void R_CleanUp(int sa, int status, int runlast);
 
-    REnvironment R_NewHashedEnv(REnvironment parent, int initialSize);
+    REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize);
 
     int PRSEEN(Object x);
 

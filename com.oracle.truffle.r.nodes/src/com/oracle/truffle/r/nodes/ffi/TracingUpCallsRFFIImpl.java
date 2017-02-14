@@ -700,7 +700,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public REnvironment R_NewHashedEnv(REnvironment parent, int initialSize) {
+    public REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize) {
         RFFIUtils.traceUpCall("R_NewHashedEnv", parent, initialSize);
         return delegate.R_NewHashedEnv(parent, initialSize);
     }

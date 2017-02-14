@@ -166,7 +166,7 @@ void init_internals(JNIEnv *env) {
 	Rf_allocateArrayMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_duplicateMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 0);
-	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;I)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
+	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
 	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/Object;)V", 0);
 	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);

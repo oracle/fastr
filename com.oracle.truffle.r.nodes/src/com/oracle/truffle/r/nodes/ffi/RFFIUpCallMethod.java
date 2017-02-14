@@ -69,7 +69,7 @@ public enum RFFIUpCallMethod {
     R_Interactive("() : sint32"),
     R_MakeExternalPtr("(object, object, object) : object"),
     R_NamespaceRegistry("() : object"),
-    R_NewHashedEnv("(object, sint32) : object"),
+    R_NewHashedEnv("(object, object) : object"),
     R_ParseVector("(object, sint32, object) : object"),
     R_PromiseExpr("(object) : object"),
     R_SetExternalPtrAddr("(object, object) : void"),
