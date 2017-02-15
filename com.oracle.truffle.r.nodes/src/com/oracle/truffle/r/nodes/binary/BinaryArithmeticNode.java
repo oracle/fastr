@@ -167,10 +167,11 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
         public BinaryMapNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
-            if (!cached.isSupported(left, right)) {
-                cached = cached.replace(createCached(arithmetic, left, right));
+            BinaryMapNode map = cached;
+            if (!map.isSupported(left, right)) {
+                cached = map = map.replace(createCached(arithmetic, left, right));
             }
-            return cached;
+            return map;
         }
     }
 }
