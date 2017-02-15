@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import com.oracle.truffle.r.nodes.ffi.RFFIUpCallMethod;
+import com.oracle.truffle.r.runtime.ffi.RFFICstring;
 import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 
 /**

@@ -33,8 +33,22 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * must support the {@link #newContextState()} method.
  */
 public abstract class RFFIFactory {
-    private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
-    private static final String DEFAULT_FACTORY_CLASS = "com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory";
+    private enum Factory {
+        JNI("com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory"),
+        LLVM("com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_RFFIFactory"),
+        NFI("com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_RFFIFactory");
+
+        private final String klassName;
+
+        Factory(String klassName) {
+            this.klassName = klassName;
+        }
+    }
+
+    private static final String FACTORY_CLASS_PROPERTY = "fastr.rffi.factory.class";
+    private static final String FACTORY_CLASS_NAME_PROPERTY = "fastr.rffi.factory";
+    private static final String FACTORY_CLASS_ENV = "FASTR_RFFI_FACTORY";
+    private static final Factory DEFAULT_FACTORY = Factory.JNI;
 
     /**
      * Singleton instance of the factory.
@@ -45,18 +59,41 @@ public abstract class RFFIFactory {
 
     public static RFFIFactory initialize() {
         if (instance == null) {
-            String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+            String klassName = getFactoryClassName();
             try {
-                if (prop == null) {
-                    prop = DEFAULT_FACTORY_CLASS;
-                }
-                instance = (RFFIFactory) Class.forName(prop).newInstance();
+                instance = (RFFIFactory) Class.forName(klassName).newInstance();
                 theRFFI = instance.createRFFI();
             } catch (Exception ex) {
-                throw Utils.rSuicide("Failed to instantiate class: " + prop + ": " + ex);
+                throw Utils.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
             }
         }
         return instance;
+    }
+
+    private static String getFactoryClassName() {
+        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+        if (prop != null) {
+            return prop;
+        }
+        prop = System.getProperty(FACTORY_CLASS_NAME_PROPERTY);
+        if (prop != null) {
+            return checkFactoryName(prop);
+        }
+        prop = System.getenv(FACTORY_CLASS_ENV);
+        if (prop != null) {
+            return checkFactoryName(prop);
+        }
+        return DEFAULT_FACTORY.klassName;
+    }
+
+    private static String checkFactoryName(String prop) {
+        try {
+            Factory factory = Factory.valueOf(prop.toUpperCase());
+            return factory.klassName;
+        } catch (IllegalArgumentException ex) {
+            throw Utils.rSuicide("No RFFI factory: " + prop);
+        }
+
     }
 
     public static RFFIFactory getInstance() {
