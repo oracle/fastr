@@ -24,14 +24,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 //Implements .colMeans
-@SuppressWarnings("unused")
 @RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColMeans extends ColSumsBase {
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     static {
-        new ColSumsCasts(ColMeans.class);
+        createCasts(ColMeans.class);
     }
 
     @Specialization(guards = "!naRm")

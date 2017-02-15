@@ -236,14 +236,13 @@ public abstract class ConnectionFunctions {
             this.cType = cType;
         }
 
-        static final class ZZCasts extends Casts {
-            protected ZZCasts(Class<? extends ZZFileAdapter> extCls, RCompression.Type cType) {
-                super(extCls);
-                CastsHelper.description(this);
-                CastsHelper.open(this);
-                CastsHelper.encoding(this);
-                casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
-            }
+        protected static Casts createCasts(Class<? extends ZZFileAdapter> extCls, RCompression.Type cType) {
+            Casts casts = new Casts(extCls);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            CastsHelper.encoding(casts);
+            casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
+            return casts;
         }
 
         @Specialization
@@ -262,7 +261,6 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class GZFile extends ZZFileAdapter {
         protected GZFile() {
@@ -270,12 +268,10 @@ public abstract class ConnectionFunctions {
         }
 
         static {
-            new ZZCasts(GZFile.class, RCompression.Type.GZIP);
+            createCasts(GZFile.class, RCompression.Type.GZIP);
         }
-
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "bzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class BZFile extends ZZFileAdapter {
         protected BZFile() {
@@ -283,12 +279,10 @@ public abstract class ConnectionFunctions {
         }
 
         static {
-            new ZZCasts(BZFile.class, RCompression.Type.BZIP2);
+            createCasts(BZFile.class, RCompression.Type.BZIP2);
         }
-
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "xzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"}, behavior = IO)
     public abstract static class XZFile extends ZZFileAdapter {
         protected XZFile() {
@@ -296,9 +290,8 @@ public abstract class ConnectionFunctions {
         }
 
         static {
-            new ZZCasts(XZFile.class, RCompression.Type.XZ);
+            createCasts(XZFile.class, RCompression.Type.XZ);
         }
-
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 public abstract class All extends Quantifier {
 
     static {
-        new QuantifierCasts(All.class);
+        createCasts(All.class);
     }
 
     @Override

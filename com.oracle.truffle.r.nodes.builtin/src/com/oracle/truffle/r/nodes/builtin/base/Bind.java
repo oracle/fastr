@@ -524,7 +524,6 @@ public abstract class Bind extends RBaseNode {
         return result;
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class CbindInternal extends AbstractBind {
         public CbindInternal() {
@@ -532,12 +531,10 @@ public abstract class Bind extends RBaseNode {
         }
 
         static {
-            new BindCasts(CbindInternal.class);
+            createCasts(CbindInternal.class);
         }
-
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "rbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."}, behavior = COMPLEX)
     public abstract static class RbindInternal extends AbstractBind {
         public RbindInternal() {
@@ -545,9 +542,8 @@ public abstract class Bind extends RBaseNode {
         }
 
         static {
-            new BindCasts(RbindInternal.class);
+            createCasts(RbindInternal.class);
         }
-
     }
 
     protected abstract static class AbstractBind extends RBuiltinNode {
@@ -568,11 +564,10 @@ public abstract class Bind extends RBaseNode {
             this.type = type;
         }
 
-        static final class BindCasts extends Casts {
-            BindCasts(Class<? extends AbstractBind> extCls) {
-                super(extCls);
-                casts.arg("deparse.level").asIntegerVector().findFirst(0);
-            }
+        protected static Casts createCasts(Class<? extends AbstractBind> extCls) {
+            Casts casts = new Casts(extCls);
+            casts.arg("deparse.level").asIntegerVector().findFirst(0);
+            return casts;
         }
 
         @Specialization

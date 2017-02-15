@@ -69,12 +69,11 @@ public class TraceFunctions {
     private abstract static class PrimTraceAdapter extends RBuiltinNode {
         @Child private GetFunctions.Get getNode;
 
-        static final class PrimTraceCasts extends Casts {
-            PrimTraceCasts(Class<? extends PrimTraceAdapter> extCls) {
-                super(extCls);
-                casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
-                                chain(asStringVector()).with(findFirst().stringElement()).end());
-            }
+        protected static Casts createCasts(Class<? extends PrimTraceAdapter> extCls) {
+            Casts casts = new Casts(extCls);
+            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
+                            chain(asStringVector()).with(findFirst().stringElement()).end());
+            return casts;
         }
 
         protected Object getFunction(VirtualFrame frame, String funcName) {
@@ -90,7 +89,7 @@ public class TraceFunctions {
     public abstract static class PrimTrace extends PrimTraceAdapter {
 
         static {
-            new PrimTraceCasts(PrimTrace.class);
+            createCasts(PrimTrace.class);
         }
 
         @Specialization
@@ -114,7 +113,7 @@ public class TraceFunctions {
     public abstract static class PrimUnTrace extends PrimTraceAdapter {
 
         static {
-            new PrimTraceCasts(PrimUnTrace.class);
+            createCasts(PrimUnTrace.class);
         }
 
         @Specialization

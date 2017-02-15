@@ -89,11 +89,10 @@ public abstract class PMinMax extends RBuiltinNode {
         this.op = factory.createOperation();
     }
 
-    static final class PMinMaxCasts extends Casts {
-        PMinMaxCasts(Class<? extends PMinMax> extCls) {
-            super(extCls);
-            casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
-        }
+    protected static Casts createCasts(Class<? extends PMinMax> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+        return casts;
     }
 
     private byte handleString(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object data) {
@@ -349,7 +348,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
 
         static {
-            new PMinMaxCasts(PMax.class);
+            createCasts(PMax.class);
         }
 
     }
@@ -363,7 +362,7 @@ public abstract class PMinMax extends RBuiltinNode {
         }
 
         static {
-            new PMinMaxCasts(PMin.class);
+            createCasts(PMin.class);
         }
 
     }

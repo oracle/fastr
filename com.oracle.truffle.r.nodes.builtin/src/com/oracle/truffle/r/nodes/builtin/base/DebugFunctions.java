@@ -42,11 +42,10 @@ public class DebugFunctions {
 
     protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
 
-        static final class ErrorAndFunCasts extends Casts {
-            ErrorAndFunCasts(Class<? extends ErrorAndFunAdapter> extCls) {
-                super(extCls);
-                casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
-            }
+        protected static Casts createCasts(Class<? extends ErrorAndFunAdapter> extCls) {
+            Casts casts = new Casts(extCls);
+            casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
+            return casts;
         }
 
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
@@ -59,12 +58,11 @@ public class DebugFunctions {
         }
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class Debug extends ErrorAndFunAdapter {
 
         static {
-            new ErrorAndFunCasts(Debug.class);
+            createCasts(Debug.class);
         }
 
         @Specialization
@@ -75,12 +73,11 @@ public class DebugFunctions {
         }
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
     public abstract static class DebugOnce extends ErrorAndFunAdapter {
 
         static {
-            new ErrorAndFunCasts(DebugOnce.class);
+            createCasts(DebugOnce.class);
         }
 
         @Specialization
@@ -92,12 +89,11 @@ public class DebugFunctions {
         }
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class UnDebug extends ErrorAndFunAdapter {
 
         static {
-            new ErrorAndFunCasts(UnDebug.class);
+            createCasts(UnDebug.class);
         }
 
         @Specialization
@@ -110,12 +106,11 @@ public class DebugFunctions {
         }
     }
 
-    @SuppressWarnings("unused")
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
     public abstract static class IsDebugged extends ErrorAndFunAdapter {
 
         static {
-            new ErrorAndFunCasts(IsDebugged.class);
+            createCasts(IsDebugged.class);
         }
 
         @Specialization

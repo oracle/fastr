@@ -21,12 +21,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 // Implements .rowMeans
-@SuppressWarnings("unused")
 @RBuiltin(name = "rowMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class RowMeans extends RowSumsBase {
 
     static {
-        new ColSumsCasts(RowMeans.class);
+        createCasts(RowMeans.class);
     }
 
     @Specialization

@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "colSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColSums extends ColSumsBase {
 
@@ -47,7 +46,7 @@ public abstract class ColSums extends ColSumsBase {
     private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();
 
     static {
-        new ColSumsCasts(ColSums.class);
+        createCasts(ColSums.class);
     }
 
     @Specialization

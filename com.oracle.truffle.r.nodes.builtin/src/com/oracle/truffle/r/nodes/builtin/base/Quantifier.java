@@ -77,11 +77,10 @@ public abstract class Quantifier extends RBuiltinNode {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    static final class QuantifierCasts extends Casts {
-        QuantifierCasts(Class<? extends Quantifier> extCls) {
-            super(extCls);
-            casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
-        }
+    protected static Casts createCasts(Class<? extends Quantifier> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        return casts;
     }
 
     private void createArgCast(int index) {

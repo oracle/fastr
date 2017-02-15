@@ -32,22 +32,17 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -72,16 +67,14 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * Handles all builtin functions of the form {@code is.xxx}, where is {@code xxx} is a "type".
  */
-@SuppressWarnings("unused")
 public class IsTypeFunctions {
 
     protected abstract static class MissingAdapter extends RBuiltinNode {
 
-        static final class MissingAdapterCasts extends Casts {
-            MissingAdapterCasts(Class<? extends MissingAdapter> extCls) {
-                super(extCls);
-                casts.arg("x").mustNotBeMissing((RBaseNode) null, RError.Message.ARGUMENT_MISSING, "x");
-            }
+        protected static Casts createCasts(Class<? extends MissingAdapter> extCls) {
+            Casts casts = new Casts(extCls);
+            casts.arg("x").mustNotBeMissing((RBaseNode) null, RError.Message.ARGUMENT_MISSING, "x");
+            return casts;
         }
     }
 
@@ -89,7 +82,7 @@ public class IsTypeFunctions {
     public abstract static class IsArray extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsArray.class);
+            createCasts(IsArray.class);
         }
 
         private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
@@ -103,7 +96,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -112,21 +105,21 @@ public class IsTypeFunctions {
     public abstract static class IsRecursive extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsRecursive.class);
+            createCasts(IsRecursive.class);
         }
 
         @Specialization
-        protected byte isRecursive(RNull arg) {
+        protected byte isRecursive(@SuppressWarnings("unused") RNull arg) {
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
-        protected byte isRecursive(RAbstractVector arg) {
+        protected byte isRecursive(@SuppressWarnings("unused") RAbstractVector arg) {
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        protected byte isRecursive(RListBase arg) {
+        protected byte isRecursive(@SuppressWarnings("unused") RListBase arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -135,7 +128,7 @@ public class IsTypeFunctions {
         }
 
         @Fallback
-        protected byte isRecursiveFallback(Object value) {
+        protected byte isRecursiveFallback(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_TRUE;
         }
     }
@@ -146,16 +139,16 @@ public class IsTypeFunctions {
         @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
 
         static {
-            new MissingAdapterCasts(IsAtomic.class);
+            createCasts(IsAtomic.class);
         }
 
         @Specialization
-        protected byte isAtomic(RNull arg) {
+        protected byte isAtomic(@SuppressWarnings("unused") RNull arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
-        protected byte isAtomic(RAbstractVector arg) {
+        protected byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -169,7 +162,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isFactor(value)", "!isNonListVector(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -178,16 +171,16 @@ public class IsTypeFunctions {
     public abstract static class IsCall extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsCall.class);
+            createCasts(IsCall.class);
         }
 
         @Specialization
-        protected byte isType(RLanguage lang) {
+        protected byte isType(@SuppressWarnings("unused") RLanguage lang) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRLanguage(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -196,11 +189,11 @@ public class IsTypeFunctions {
     public abstract static class IsCharacter extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsCharacter.class);
+            createCasts(IsCharacter.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractStringVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractStringVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -209,7 +202,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyCharacter(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -218,11 +211,11 @@ public class IsTypeFunctions {
     public abstract static class IsComplex extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsComplex.class);
+            createCasts(IsComplex.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractComplexVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractComplexVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -231,7 +224,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyComplex(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -240,11 +233,11 @@ public class IsTypeFunctions {
     public abstract static class IsDouble extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsDouble.class);
+            createCasts(IsDouble.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractDoubleVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractDoubleVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -253,7 +246,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyDouble(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -262,16 +255,16 @@ public class IsTypeFunctions {
     public abstract static class IsExpression extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsExpression.class);
+            createCasts(IsExpression.class);
         }
 
         @Specialization
-        protected byte isType(RExpression expr) {
+        protected byte isType(@SuppressWarnings("unused") RExpression expr) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRExpression(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -280,16 +273,16 @@ public class IsTypeFunctions {
     public abstract static class IsFunction extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsFunction.class);
+            createCasts(IsFunction.class);
         }
 
         @Specialization
-        protected byte isType(RFunction value) {
+        protected byte isType(@SuppressWarnings("unused") RFunction value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRFunction(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -298,11 +291,11 @@ public class IsTypeFunctions {
     public abstract static class IsInteger extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsInteger.class);
+            createCasts(IsInteger.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractIntVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractIntVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -311,7 +304,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyInteger(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -320,26 +313,26 @@ public class IsTypeFunctions {
     public abstract static class IsLanguage extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsLanguage.class);
+            createCasts(IsLanguage.class);
         }
 
         @Specialization
-        protected byte isType(RSymbol value) {
+        protected byte isType(@SuppressWarnings("unused") RSymbol value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isType(RExpression value) {
+        protected byte isType(@SuppressWarnings("unused") RExpression value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isType(RLanguage value) {
+        protected byte isType(@SuppressWarnings("unused") RLanguage value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)", "!isRExpression(value)", "!isRLanguage(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -347,26 +340,24 @@ public class IsTypeFunctions {
     @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsList extends MissingAdapter {
 
-        private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
-
         static {
-            new MissingAdapterCasts(IsList.class);
+            createCasts(IsList.class);
         }
 
         public abstract byte execute(Object value);
 
         @Specialization
-        protected byte isType(RList value) {
+        protected byte isType(@SuppressWarnings("unused") RList value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isType(RPairList pl) {
+        protected byte isType(@SuppressWarnings("unused") RPairList pl) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRPairList(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -375,11 +366,11 @@ public class IsTypeFunctions {
     public abstract static class IsLogical extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsLogical.class);
+            createCasts(IsLogical.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractLogicalVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractLogicalVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -388,7 +379,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyLogical(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -400,7 +391,7 @@ public class IsTypeFunctions {
         @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
 
         static {
-            new MissingAdapterCasts(IsMatrix.class);
+            createCasts(IsMatrix.class);
         }
 
         @Specialization
@@ -409,7 +400,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -418,16 +409,16 @@ public class IsTypeFunctions {
     public abstract static class IsName extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsName.class);
+            createCasts(IsName.class);
         }
 
         @Specialization
-        protected byte isType(RSymbol value) {
+        protected byte isType(@SuppressWarnings("unused") RSymbol value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -436,21 +427,21 @@ public class IsTypeFunctions {
     public abstract static class IsNumeric extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsNumeric.class);
+            createCasts(IsNumeric.class);
         }
 
         @Specialization(guards = "!isFactor(value)")
-        protected byte isType(RAbstractIntVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractIntVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = "isFactor(value)")
-        protected byte isTypeFactor(RAbstractIntVector value) {
+        protected byte isTypeFactor(@SuppressWarnings("unused") RAbstractIntVector value) {
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        protected byte isType(RAbstractDoubleVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractDoubleVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -459,7 +450,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyNumeric(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
 
@@ -474,16 +465,16 @@ public class IsTypeFunctions {
     public abstract static class IsNull extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsNull.class);
+            createCasts(IsNull.class);
         }
 
         @Specialization
-        protected byte isType(RNull value) {
+        protected byte isType(@SuppressWarnings("unused") RNull value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -512,7 +503,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -521,21 +512,21 @@ public class IsTypeFunctions {
     public abstract static class IsPairList extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsPairList.class);
+            createCasts(IsPairList.class);
         }
 
         @Specialization
-        protected byte isType(RNull value) {
+        protected byte isType(@SuppressWarnings("unused") RNull value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isType(RPairList value) {
+        protected byte isType(@SuppressWarnings("unused") RPairList value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRPairList(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -544,11 +535,11 @@ public class IsTypeFunctions {
     public abstract static class IsRaw extends MissingAdapter {
 
         static {
-            new MissingAdapterCasts(IsRaw.class);
+            createCasts(IsRaw.class);
         }
 
         @Specialization
-        protected byte isType(RAbstractRawVector value) {
+        protected byte isType(@SuppressWarnings("unused") RAbstractRawVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
@@ -557,7 +548,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization(guards = {"!isRMissing(value)", "!isAnyRaw(value)"})
-        protected byte isType(Object value) {
+        protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -568,7 +559,6 @@ public class IsTypeFunctions {
         private final ConditionProfile attrNull = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrNames = ConditionProfile.createBinaryProfile();
-        private final BranchProfile namesAttrProfile = BranchProfile.create();
         @Child private GetFixedAttributeNode namesGetter = GetFixedAttributeNode.createNames();
 
         static {
@@ -583,8 +573,8 @@ public class IsTypeFunctions {
         }
 
         @Specialization(limit = "5", guards = "cachedMode == mode")
-        protected byte isVectorCached(RAbstractVector x, String mode,
-                        @Cached("mode") String cachedMode,
+        protected byte isVectorCached(RAbstractVector x, @SuppressWarnings("unused") String mode,
+                        @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                         @Cached("typeFromMode(mode)") RType type) {
             if (namesOnlyOrNoAttr(x) && (type == RType.Any || x.getRType() == type)) {
                 return RRuntime.LOGICAL_TRUE;
@@ -599,7 +589,7 @@ public class IsTypeFunctions {
         }
 
         @Fallback
-        protected byte isVector(Object x, Object mode) {
+        protected byte isVector(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object mode) {
             return RRuntime.LOGICAL_FALSE;
         }
 
