@@ -63,7 +63,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public class GrepFunctions {
     public abstract static class CommonCodeAdapter extends RBuiltinNode {
-        @Child protected PCRERFFI.PCRERFFINode pcreRFFINode = RFFIFactory.getRFFI().getPCRERFFI().createPCRERFFINode();
+        @Child protected PCRERFFI.MaketablesNode maketablesNode = RFFIFactory.getRFFI().getPCRERFFI().createMaketablesNode();
+        @Child protected PCRERFFI.CompileNode compileNode = RFFIFactory.getRFFI().getPCRERFFI().createCompileNode();
 
         protected static void castPattern(Casts casts) {
             // with default error message, NO_CALLER does not work
@@ -201,8 +202,8 @@ public class GrepFunctions {
 
         protected PCRERFFI.Result compilePerlPattern(String pattern, boolean ignoreCase) {
             int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-            long tables = pcreRFFINode.maketables();
-            PCRERFFI.Result pcre = pcreRFFINode.compile(pattern, cflags, tables);
+            long tables = maketablesNode.execute();
+            PCRERFFI.Result pcre = compileNode.execute(pattern, cflags, tables);
             if (pcre.result == 0) {
                 // TODO output warning if pcre.errorMessage not NULL
                 throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
@@ -212,6 +213,8 @@ public class GrepFunctions {
     }
 
     private abstract static class GrepAdapter extends CommonCodeAdapter {
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+
         protected Object doGrep(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical,
                         @SuppressWarnings("unused") byte useBytes, byte invertLogical, boolean grepl) {
             boolean value = RRuntime.fromLogical(valueLogical);
@@ -241,7 +244,7 @@ public class GrepFunctions {
                 for (int i = 0; i < len; i++) {
                     String text = vector.getDataAt(i);
                     if (!RRuntime.isNA(text)) {
-                        if (pcreRFFINode.exec(pcre.result, 0, text, 0, 0, ovector) >= 0) {
+                        if (execNode.execute(pcre.result, 0, text, 0, 0, ovector) >= 0) {
                             matches[i] = true;
                         }
                     }
@@ -363,6 +366,7 @@ public class GrepFunctions {
     }
 
     protected abstract static class SubAdapter extends CommonCodeAdapter {
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
         protected static void castReplacement(Casts casts) {
             // with default error message, NO_CALLER does not work
@@ -432,7 +436,7 @@ public class GrepFunctions {
                                                                            // necessary
 
                         StringBuffer sb = new StringBuffer();
-                        while (pcreRFFINode.exec(pcre.result, 0, input, lastEndOffset, eflag, ovector) >= 0) {
+                        while (execNode.execute(pcre.result, 0, input, lastEndOffset, eflag, ovector) >= 0) {
                             nmatch++;
 
                             // offset == byte position
@@ -690,6 +694,9 @@ public class GrepFunctions {
         @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
         @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
         @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        @Child PCRERFFI.GetCaptureNamesNode getCaptureNamesNode = RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureNamesNode();
+        @Child PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureCountNode();
 
         static {
             Casts casts = new Casts(Regexp.class);
@@ -817,13 +824,13 @@ public class GrepFunctions {
                 }
             } else if (perl) {
                 PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
-                int maxCaptureCount = pcreRFFINode.getCaptureCount(pcre.result, 0);
+                int maxCaptureCount = getCaptureCountNode.execute(pcre.result, 0);
                 int[] ovector = new int[(maxCaptureCount + 1) * 3];
                 int offset = 0;
                 while (true) {
-                    int captureCount = pcreRFFINode.exec(pcre.result, 0, text, offset, 0, ovector);
+                    int captureCount = execNode.execute(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
-                        String[] captureNames = pcreRFFINode.getCaptureNames(pcre.result, 0, maxCaptureCount);
+                        String[] captureNames = getCaptureNamesNode.execute(pcre.result, 0, maxCaptureCount);
                         for (int i = 0; i < captureNames.length; i++) {
                             if (captureNames[i] == null) {
                                 captureNames[i] = "";
@@ -1164,6 +1171,7 @@ public class GrepFunctions {
 
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends CommonCodeAdapter {
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
         static {
             Casts casts = new Casts(Strsplit.class);
@@ -1185,7 +1193,7 @@ public class GrepFunctions {
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];
-            long pcreTables = perl ? pcreRFFINode.maketables() : 0;
+            long pcreTables = perl ? maketablesNode.execute() : 0;
             PCRERFFI.Result[] pcreSplits = perl ? new PCRERFFI.Result[splits.length] : null;
 
             na.enable(x);
@@ -1194,7 +1202,7 @@ public class GrepFunctions {
                 splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
                 if (perl) {
                     if (!currentSplit.isEmpty()) {
-                        pcreSplits[i] = pcreRFFINode.compile(currentSplit, 0, pcreTables);
+                        pcreSplits[i] = compileNode.execute(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
                             throw RError.error(this, RError.Message.INVALID_REGEXP, currentSplit);
@@ -1298,7 +1306,7 @@ public class GrepFunctions {
             int[] ovector = new int[30];
             int[] fromByteMapping = getFromByteMapping(data); // non-null if it's necessary
 
-            while (pcreRFFINode.exec(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
+            while (execNode.execute(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
                 // offset == byte position
                 // index == character position
                 int startOffset = ovector[0];

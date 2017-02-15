@@ -28,19 +28,23 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class JNI_PCRE implements PCRERFFI {
-    private static class JNI_PCRERFFINode extends PCRERFFINode {
+    private static class JNI_MaketablesNode extends MaketablesNode {
         @Override
-        public long maketables() {
+        public long execute() {
             return nativeMaketables();
         }
+    }
 
+    private static class JNI_CompileNode extends CompileNode {
         @Override
-        public Result compile(String pattern, int options, long tables) {
+        public Result execute(String pattern, int options, long tables) {
             return nativeCompile(pattern, options, tables);
         }
+    }
 
+    private static class JNI_GetCaptureCountNode extends GetCaptureCountNode {
         @Override
-        public int getCaptureCount(long code, long extra) {
+        public int execute(long code, long extra) {
             int res = nativeGetCaptureCount(code, extra);
             if (res < 0) {
                 CompilerDirectives.transferToInterpreter();
@@ -48,9 +52,11 @@ public class JNI_PCRE implements PCRERFFI {
             }
             return res;
         }
+    }
 
+    private static class JNI_GetCaptureNamesNode extends GetCaptureNamesNode {
         @Override
-        public String[] getCaptureNames(long code, long extra, int captureCount) {
+        public String[] execute(long code, long extra, int captureCount) {
             String[] ret = new String[captureCount];
             int res = nativeGetCaptureNames(code, extra, ret);
             if (res < 0) {
@@ -59,14 +65,18 @@ public class JNI_PCRE implements PCRERFFI {
             }
             return ret;
         }
+    }
 
+    private static class JNI_StudyNode extends StudyNode {
         @Override
-        public Result study(long code, int options) {
+        public Result execute(long code, int options) {
             throw RInternalError.unimplemented("pcre_study");
         }
+    }
 
+    private static class JNI_ExecNode extends ExecNode {
         @Override
-        public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
+        public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
             return nativeExec(code, extra, subject, offset, options, ovector, ovector.length);
         }
     }
@@ -83,7 +93,33 @@ public class JNI_PCRE implements PCRERFFI {
                     int options, int[] ovector, int ovectorLen);
 
     @Override
-    public PCRERFFINode createPCRERFFINode() {
-        return new JNI_PCRERFFINode();
+    public MaketablesNode createMaketablesNode() {
+        return new JNI_MaketablesNode();
     }
+
+    @Override
+    public CompileNode createCompileNode() {
+        return new JNI_CompileNode();
+    }
+
+    @Override
+    public GetCaptureCountNode createGetCaptureCountNode() {
+        return new JNI_GetCaptureCountNode();
+    }
+
+    @Override
+    public GetCaptureNamesNode createGetCaptureNamesNode() {
+        return new JNI_GetCaptureNamesNode();
+    }
+
+    @Override
+    public StudyNode createStudyNode() {
+        return new JNI_StudyNode();
+    }
+
+    @Override
+    public ExecNode createExecNode() {
+        return new JNI_ExecNode();
+    }
+
 }
