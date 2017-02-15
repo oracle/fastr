@@ -23,20 +23,22 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@NodeFields({@NodeField(name = "emptyError", type = RError.Message.class), @NodeField(name = "argumentName", type = String.class)})
 public abstract class FirstStringNode extends CastNode {
 
-    protected abstract RError.Message getEmptyError();
+    private final RError.Message emptyError;
+    private final String argumentName;
 
-    protected abstract String getArgumentName();
+    protected FirstStringNode(Message emptyError, String argumentName) {
+        this.emptyError = emptyError;
+        this.argumentName = argumentName;
+    }
 
     private final ConditionProfile lengthOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -54,14 +56,14 @@ public abstract class FirstStringNode extends CastNode {
     protected String firstVector(RAbstractStringVector argument) {
         if (!lengthOneProfile.profile(argument.getLength() == 1)) {
             errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, getEmptyError(), getArgumentName());
+            throw RError.error(RError.SHOW_CALLER, emptyError, argumentName);
         }
         return argument.getDataAt(0);
     }
 
     @Fallback
     protected String firstVectorFallback(@SuppressWarnings("unused") Object argument) {
-        throw RError.error(RError.SHOW_CALLER, getEmptyError(), getArgumentName());
+        throw RError.error(RError.SHOW_CALLER, emptyError, argumentName);
     }
 
     public static FirstStringNode createWithError(RError.Message emptyError, String argumentName) {

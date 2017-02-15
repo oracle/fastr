@@ -51,10 +51,10 @@ abstract class LoadMethod extends RBaseNode {
     @Child private GetFixedAttributeNode definedAttrAccess = GetFixedAttributeNode.create(RRuntime.R_DEFINED);
     @Child private GetFixedAttributeNode nextMethodAttrAccess = GetFixedAttributeNode.create(RRuntime.R_NEXT_METHOD);
     @Child private GetFixedAttributeNode sourceAttrAccess = GetFixedAttributeNode.create(RRuntime.R_SOURCE);
-    @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, null, WriteVariableNode.Mode.REGULAR);
+    @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, WriteVariableNode.Mode.REGULAR, null);
+    @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, WriteVariableNode.Mode.REGULAR, null);
+    @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, WriteVariableNode.Mode.REGULAR, null);
+    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, WriteVariableNode.Mode.REGULAR, null);
     @Child private LocalReadVariableNode methodsEnvRead = LocalReadVariableNode.create("methods", true);
     @Child private ReadVariableNode loadMethodFind;
     @Child private CallRFunctionNode loadMethodCall;

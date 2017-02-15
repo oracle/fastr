@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeField;
-import com.oracle.truffle.api.dsl.NodeFields;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @NodeChild(value = "rhs", type = RNode.class)
-@NodeFields({@NodeField(name = "name", type = Object.class)})
 /**
  * Common code/state for all the variants of {@code WriteVariableNode}. At this level, we just have
  * a {@code name} for the variable and expression {@code rhs} to be assigned to.
@@ -46,6 +43,10 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * There are no create methods as this class is truly abstract.
  */
 abstract class BaseWriteVariableNode extends WriteVariableNode {
+
+    protected BaseWriteVariableNode(Object name) {
+        super(name);
+    }
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
@@ -136,7 +137,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 
-    private boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
+    protected boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
         if (frameSlot.getKind() == kind) {
             return true;
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,7 +174,7 @@ abstract class ReplacementNode extends OperatorNode {
             super(source, operator, lhs);
             this.rhs = rhs;
 
-            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, rhs, WriteVariableNode.Mode.INVISIBLE);
+            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, WriteVariableNode.Mode.INVISIBLE, rhs);
             this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
         }
 
@@ -368,7 +368,7 @@ abstract class ReplacementNode extends OperatorNode {
             for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
                 ReadVariableNode newFirstArg = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
                 RNode update = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
-                instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), update, WriteVariableNode.Mode.INVISIBLE));
+                instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), WriteVariableNode.Mode.INVISIBLE, update));
             }
             /*
              * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
@@ -379,14 +379,14 @@ abstract class ReplacementNode extends OperatorNode {
                 String tmprName = i == 0 ? ("*rhs*" + tempNamesStartIndex) : ("*tmpr*" + (tempNamesStartIndex + i - 1));
                 RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
                 if (i < calls.size() - 1) {
-                    instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), update, WriteVariableNode.Mode.INVISIBLE));
+                    instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), WriteVariableNode.Mode.INVISIBLE, update));
                 } else {
-                    instructions.add(WriteVariableNode.createAnonymous(targetVarName, update, WriteVariableNode.Mode.REGULAR, isSuper));
+                    instructions.add(WriteVariableNode.createAnonymous(targetVarName, WriteVariableNode.Mode.REGULAR, update, isSuper));
                 }
             }
 
             this.updates = instructions.toArray(new RNode[instructions.size()]);
-            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), target, WriteVariableNode.Mode.INVISIBLE);
+            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), WriteVariableNode.Mode.INVISIBLE, target);
             this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
         }
 

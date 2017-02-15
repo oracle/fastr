@@ -28,9 +28,8 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.RMath;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
@@ -110,7 +108,7 @@ public class BaseGammaFunctions {
         private double dpsiFnCalc(double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
+                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create());
             }
             return dpsiFnCalc.executeDouble(x, n, kode, ans);
         }
@@ -156,8 +154,7 @@ public class BaseGammaFunctions {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "x"), @NodeChild(value = "n"), @NodeChild(value = "kode"), @NodeChild(value = "ans")})
-    protected abstract static class DpsiFnCalc extends RNode {
+    protected abstract static class DpsiFnCalc extends Node {
 
         // the following is transcribed from polygamma.c
 
@@ -179,7 +176,7 @@ public class BaseGammaFunctions {
         private double dpsiFnCalc(double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
+                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create());
             }
             return dpsiFnCalc.executeDouble(x, n, kode, ans);
         }
