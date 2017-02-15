@@ -28,10 +28,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Tags an upcall argument as being (on the native side) a C string.
+ * Tags an upcall argument as being (on the native side) a C string. By default the C string is
+ * converted to a {@link String}, which requires it to be null-terminated.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface RFFICstring {
-
+    boolean convert() default true;
 }

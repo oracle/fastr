@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import com.oracle.truffle.r.nodes.ffi.RFFIUpCallMethod;
+import com.oracle.truffle.r.runtime.ffi.RFFICstring;
 import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 
 /**
@@ -73,12 +74,24 @@ public class RFFIUpCallMethodGenerate {
         return sb.toString();
     }
 
-    static String nfiParamName(Class<?> paramType, Annotation[] annotation) {
+    static String nfiParamName(Class<?> paramType, Annotation[] annotations) {
         String paramName = paramType.getSimpleName();
-        Class<?> klass = annotation.length == 0 ? null : annotation[0].annotationType();
+        RFFICstring rffiCstring = null;
+        if (annotations.length > 0) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof RFFICstring) {
+                    rffiCstring = (RFFICstring) annotation;
+                    break;
+                }
+            }
+        }
         switch (paramName) {
             case "Object":
-                return klass == null ? "object" : "pointer";
+                if (rffiCstring == null) {
+                    return "object";
+                } else {
+                    return rffiCstring.convert() ? "string" : "pointer";
+                }
             case "int":
                 return "sint32";
             case "double":

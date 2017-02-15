@@ -65,7 +65,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_coerceVector(Object x, int mode);
 
-    Object Rf_mkCharLenCE(@RFFICstring Object bytes, int len, int encoding);
+    Object Rf_mkCharLenCE(@RFFICstring(convert = false) Object bytes, int len, int encoding);
 
     Object Rf_cons(Object car, Object cdr);
 
@@ -89,6 +89,8 @@ public interface StdUpCallsRFFI {
     int Rf_inherits(@RFFICstring Object x, Object clazz);
 
     Object Rf_install(@RFFICstring Object name);
+
+    Object Rf_installChar(Object name);
 
     Object Rf_lengthgets(Object x, int newSize);
 
@@ -240,7 +242,7 @@ public interface StdUpCallsRFFI {
 
     void R_CleanUp(int sa, int status, int runlast);
 
-    REnvironment R_NewHashedEnv(REnvironment parent, int initialSize);
+    REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize);
 
     int PRSEEN(Object x);
 

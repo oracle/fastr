@@ -52,6 +52,7 @@ static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
 static jmethodID Rf_isNullMethodID;
+static jmethodID Rf_installCharMethodID;
 static jmethodID Rf_installMethodID;
 static jmethodID Rf_warningcallMethodID;
 static jmethodID Rf_warningMethodID;
@@ -158,6 +159,7 @@ void init_internals(JNIEnv *env) {
 	Rf_isStringMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isString", "(Ljava/lang/Object;)I", 0);
 	Rf_isNullMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isNull", "(Ljava/lang/Object;)I", 0);
 	Rf_installMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_install", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_installCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_installChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_warningMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warning", "(Ljava/lang/Object;)V", 0);
 	Rf_warningcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	Rf_errorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_error", "(Ljava/lang/Object;)V", 0);
@@ -166,7 +168,7 @@ void init_internals(JNIEnv *env) {
 	Rf_allocateArrayMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_duplicateMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_anyDuplicatedMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_anyDuplicated", "(Ljava/lang/Object;I)I", 0);
-	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;I)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
+	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
 	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/Object;)V", 0);
 	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
@@ -497,8 +499,7 @@ SEXP Rf_install(const char *name) {
 SEXP Rf_installChar(SEXP charsxp) {
 	TRACE(TARGp, charsxp);
 	JNIEnv *thisenv = getEnv();
-	jstring string = stringFromCharSXP(thisenv, charsxp);
-	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_installMethodID, string);
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_installCharMethodID, charsxp);
 	return checkRef(thisenv, result);
 }
 
