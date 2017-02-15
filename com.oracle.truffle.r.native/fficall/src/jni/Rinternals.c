@@ -247,9 +247,9 @@ void init_internals(JNIEnv *env) {
 
     // static JNI-specific methods
 	JNIUpCallsRFFIImplClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/JNIUpCallsRFFIImpl");
-	logNotCharSXPWrapperMethodID = checkGetMethodID(env, UpCallsRFFIClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 1);
-	restoreHandlerStacksMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 1);
-    setCompleteMethodID = checkGetMethodID(env, UpCallsRFFIClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
+	logNotCharSXPWrapperMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 1);
+	restoreHandlerStacksMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 1);
+    setCompleteMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
 }
 
 static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
