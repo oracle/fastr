@@ -56,7 +56,11 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     protected CastLogicalNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastLogicalNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     protected Object castLogicalRecursive(Object o) {
@@ -176,7 +180,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
                 }
             }
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA);
+        RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
         if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
@@ -195,6 +199,10 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     public static CastLogicalNode create() {
         return CastLogicalNodeGen.create(true, true, true);
+    }
+
+    public static CastLogicalNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastLogicalNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastLogicalNode createNonPreserving() {

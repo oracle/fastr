@@ -51,7 +51,11 @@ public abstract class CastRawNode extends CastBaseNode {
     private final BranchProfile warningBranch = BranchProfile.create();
 
     protected CastRawNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastRawNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     @Child private CastRawNode recursiveCastRaw;
@@ -143,6 +147,7 @@ public abstract class CastRawNode extends CastBaseNode {
         if (intRawValue != intValue) {
             warningBranch.enter();
             RError.warning(this, RError.Message.OUT_OF_RANGE);
+            return RRaw.valueOf((byte) 0);
         }
         return RRaw.valueOf((byte) intRawValue);
     }
@@ -223,7 +228,7 @@ public abstract class CastRawNode extends CastBaseNode {
                 if (intValue != intRawValue) {
                     warningBranch.enter();
                     outOfRangeWarning = true;
-                    intRawValue = 0;
+                    intValue = 0;
                 }
             }
             bdata[i] = (byte) intValue;
@@ -294,11 +299,19 @@ public abstract class CastRawNode extends CastBaseNode {
     @Specialization
     protected RRawVector doList(RAbstractListVector value) {
         int length = value.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
+        byte[] data = new byte[length];
         for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, (RRaw) castRawRecursive(value.getDataAt(i)));
+            data[i] = ((RRaw) castRawRecursive(value.getDataAt(i))).getValue();
+        }
+        RRawVector result = RDataFactory.createRawVector(data, getPreservedDimensions(value), getPreservedNames(value));
+        if (preserveAttributes()) {
+            result.copyRegAttributesFrom(value);
         }
         return result;
+    }
+
+    public static CastRawNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastRawNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastRawNode createNonPreserving() {

@@ -236,6 +236,7 @@ public final class RError extends RuntimeException {
          */
         GENERIC("%s"),
         TOO_SHORT("'%s' is too short"),
+        INVALID_DATA_OF_TYPE_TOO_SHORT("invalid data of mode '%s' (too short)"),
         VECTOR_SIZE_TOO_LARGE("vector size specified is too large"),
         ARG_RECYCYLED("an argument will be fractionally recycled"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
@@ -454,6 +455,7 @@ public final class RError extends RuntimeException {
         INVALID_SUBSCRIPT_TYPE("invalid subscript type '%s'"),
         ARGUMENT_NOT_VECTOR("argument %d is not a vector"),
         CANNOT_COERCE("cannot coerce type '%s' to vector of type '%s'"),
+        CANNOT_COERCE_RFFI("(%s) object cannot be coerced to type '%s'"),
         ARGUMENT_ONLY_FIRST("argument '%s' has length > 1 and only the first element will be used"),
         ARGUMENT_ONLY_FIRST_1("only the first element of '%s' argument used"),
         ARGUMENT_WRONG_LENGTH("wrong length for argument"),
@@ -741,7 +743,6 @@ public final class RError extends RuntimeException {
         QUIT_INVALID_STATUS("invalid 'status', 0 assumed"),
         QUIT_INVALID_RUNLAST("invalid 'runLast', FALSE assumed"),
         ENVIRONMENTS_COERCE("environments cannot be coerced to other types"),
-        CLOSURE_COERCE("cannot coerce type 'closure' to vector of type 'integer'"),
         ROWSUM_NAMES_NOT_CHAR("row names are not character"),
         ROWSUM_NON_NUMERIC("non-numeric matrix in rowsum(): this should not happen"),
         ARGUMENTS_REQUIRED_COUNT("%d arguments to '%s' which requires %d"),

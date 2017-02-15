@@ -92,6 +92,7 @@ static jmethodID LENGTH_MethodID;
 static jmethodID Rf_asIntegerMethodID;
 static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
+static jmethodID Rf_coerceVectorMethodID;
 static jmethodID Rf_mkCharLenCEMethodID;
 static jmethodID Rf_asLogicalMethodID;
 static jmethodID Rf_PairToVectorListMethodID;
@@ -203,6 +204,7 @@ void init_internals(JNIEnv *env) {
 	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
 	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_mkCharLenCEMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_mkCharLenCE", "(Ljava/lang/Object;II)Ljava/lang/Object;", 0);
+        Rf_coerceVectorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_coerceVector", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_asLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 0);
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	NAMED_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "NAMED", "(Ljava/lang/Object;)I", 0);
@@ -1227,6 +1229,13 @@ SEXP Rf_asChar(SEXP x){
 	TRACE(TARGp, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_asCharMethodID, x);
+	return checkRef(thisenv, result);
+}
+
+SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode){
+	TRACE(TARGp, x);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_coerceVectorMethodID, x, mode);
 	return checkRef(thisenv, result);
 }
 

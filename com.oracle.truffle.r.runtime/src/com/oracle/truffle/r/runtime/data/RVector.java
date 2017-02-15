@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -472,7 +474,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public final void setDimensions(int[] newDimensions) {
-        setDimensions(newDimensions, null);
+        setDimensions(newDimensions, NO_CALLER);
     }
 
     private void setDimensions(int[] newDimensions, RBaseNode invokingNode) {

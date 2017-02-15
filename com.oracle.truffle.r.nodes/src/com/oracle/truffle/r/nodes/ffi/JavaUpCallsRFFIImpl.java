@@ -157,6 +157,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_coerceVector(Object x, int mode) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.Rf_coerceVector).call(x, mode);
+    }
+
+    @Override
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         // TODO: handle encoding properly
         return CharSXPWrapper.create(new String((byte[]) bytes, StandardCharsets.UTF_8));

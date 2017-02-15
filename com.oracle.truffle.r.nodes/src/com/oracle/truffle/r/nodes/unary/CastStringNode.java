@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 public abstract class CastStringNode extends CastStringBaseNode {
 
     protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     public abstract Object executeString(int o);
@@ -83,6 +87,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public static CastStringNode create() {
         return CastStringNodeGen.create(true, true, true);
+    }
+
+    public static CastStringNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastStringNode createNonPreserving() {

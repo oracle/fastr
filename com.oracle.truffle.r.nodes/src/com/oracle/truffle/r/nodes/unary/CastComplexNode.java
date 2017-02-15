@@ -68,7 +68,11 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
+    }
+
+    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
     @Child private CastComplexNode recursiveCastComplex;
@@ -253,7 +257,7 @@ public abstract class CastComplexNode extends CastBaseNode {
                 }
             }
         }
-        RComplexVector ret = RDataFactory.createComplexVector(result, !seenNA);
+        RComplexVector ret = RDataFactory.createComplexVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
         if (preserveAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
@@ -262,6 +266,10 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     public static CastComplexNode create() {
         return CastComplexNodeGen.create(true, true, true);
+    }
+
+    public static CastComplexNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastComplexNode createNonPreserving() {

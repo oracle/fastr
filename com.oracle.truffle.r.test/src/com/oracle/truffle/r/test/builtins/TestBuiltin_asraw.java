@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -68,5 +68,7 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,1000,NA)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, 3L)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, NA)) }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw('10000001') }");
+        assertEval(Output.IgnoreWarningContext, "{ as.raw(c('10000001', '42')) }");
     }
 }

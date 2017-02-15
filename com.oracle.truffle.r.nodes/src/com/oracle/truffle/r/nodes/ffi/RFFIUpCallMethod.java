@@ -104,6 +104,7 @@ public enum RFFIUpCallMethod {
     Rf_asLogical("(object) : sint32"),
     Rf_asReal("(object) : double"),
     Rf_classgets("(object, object) : object"),
+    Rf_coerceVector("(object, sint32) : object"),
     Rf_cons("(object, object) : object"),
     Rf_copyListMatrix("(object, object, sint32) : void"),
     Rf_copyMatrix("(object, object, sint32) : void"),
