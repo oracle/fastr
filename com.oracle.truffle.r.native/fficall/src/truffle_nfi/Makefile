@@ -21,31 +21,43 @@
 # questions.
 #
 
+ifneq ($(MAKECMDGOALS),clean)
+include $(TOPDIR)/platform.mk
+endif
+
 .PHONY: all clean
 
-export TOPDIR = $(CURDIR)
-# all output goes into the com.oracle.truffle.r.test project for packaging into a single distribution
-export MX_OUTPUT_DIR = $(abspath $(TOPDIR)/../mxbuild/com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test)
-export REPO_DIR := $(TOPDIR)/packages/repo/src/contrib
-OSNAME := $(shell uname)
+# location of compiled code (.o files)
+OBJ = ../../lib
 
-all:
-	mkdir -p $(REPO_DIR)
-	cp packages/PACKAGES $(REPO_DIR)
-	$(MAKE) -C urand
-	$(MAKE) -C packages
-ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
-	$(MAKE) -C embedded
-endif
-endif
+C_HDRS := $(wildcard *.h)
+
+C_SOURCES = $(wildcard *.c)
+C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
+#$(info C_OBJECTS=$(C_OBJECTS))
+
+FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
+#NFI_INCLUDES is set in environment (by mx)
+LOCAL_INCLUDES = -I . -I $(abspath ../include)
+
+INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(NFI_INCLUDES)
+
+# uncomment to see exactly where headers are being read from
+#CFLAGS := $(CFLAGS) -H
+
+all: Makefile $(C_OBJECTS) 
+
+$(C_OBJECTS): | $(OBJ)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
+	$(CC) $(CFLAGS) $(INCLUDES) -I../variable_defs -c $< -o $@
+
+# for debugging, to see what's really being compiled
+$(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h
+	$(CC) -E $(CFLAGS) $(INCLUDES) -c $< > $@
 
 clean:
-	$(MAKE) -C urand clean
-	$(MAKE) -C packages clean
-ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
-	$(MAKE) -C embedded clean
-endif
-endif
-	rm -f $(REPO_DIR)/*
+	rm -rf $(OBJ)

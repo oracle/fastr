@@ -106,6 +106,13 @@ gateTestDarwin : ${gateTestCommon} ${darwinEnvironment} {
   }
 }
 
+gateTestLinuxNFI : ${gateTestCommon} {
+  environment :  {
+      FASTR_RFFI : "nfi"
+  }
+}
+
+
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
 gateStyle : ${common} {
@@ -146,6 +153,7 @@ internalPkgtest: ${common} {
 
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate, post-merge], name: "gate-test-linux-amd64"}
+#  ${gateTestLinuxNFI}         {capabilities : [linux, amd64, fast],  targets : [gate, post-merge], name: "gate-test-linux-nfi-amd64"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate, post-merge], name: "gate-test-linux-amd64-nospecials"}
   ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate, post-merge], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate, post-merge], name: "gate-style-linux-amd64"}

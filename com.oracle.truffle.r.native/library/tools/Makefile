@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,21 @@ LIB_PKG_PRE = $(GRAMRD_OBJ)
 
 CLEAN_PKG = rm_gramRd
 
+ifeq ($(FASTR_RFFI),nfi)
+XTRA_C_SOURCES += $(SRC)/truffle_nfi/gramRd_nfi.c
+XTRA_C_OBJECTS += $(OBJ)/gramRd_nfi.o
+else
+ifeq ($(FASTR_RFFI),llvm)
+XTRA_C_SOURCES += $(SRC)/truffle_llvm/gramRd_llvm.c
+XTRA_C_OBJECTS += $(OBJ)/gramRd_llvm.o
+else
+ifeq ($(FASTR_RFFI),jni)
+XTRA_C_SOURCES += $(SRC)/jni/gramRd_jni.c
+XTRA_C_OBJECTS += $(OBJ)/gramRd_jni.o
+endif
+endif
+endif
+
 include ../lib.mk
 
 # in case already generated
@@ -44,6 +59,12 @@ $(SRC)/gramRd.c: $(GNUR_SRC)/gramRd.c
 	mx mkgramrd $(GNUR_SRC)/gramRd.c $(SRC)/gramRd.c
 
 $(OBJ)/%.o: $(GNUR_SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJ)/gramRd_nfi.o: $(SRC)/truffle_nfi/gramRd_nfi.c
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
+
+$(OBJ)/gramRd_jni.o: $(SRC)/jni/gramRd_jni.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 rm_gramRd:

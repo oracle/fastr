@@ -47,7 +47,7 @@ public abstract class RFFIFactory {
 
     private static final String FACTORY_CLASS_PROPERTY = "fastr.rffi.factory.class";
     private static final String FACTORY_CLASS_NAME_PROPERTY = "fastr.rffi.factory";
-    private static final String FACTORY_CLASS_ENV = "FASTR_RFFI_FACTORY";
+    private static final String FACTORY_CLASS_ENV = "FASTR_RFFI";
     private static final Factory DEFAULT_FACTORY = Factory.JNI;
 
     /**

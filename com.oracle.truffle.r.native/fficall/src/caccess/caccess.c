@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
 
-import java.lang.reflect.Field;
+int caccess_read_pointer_int(int *address) {
+	return *address;
+}
 
-import sun.misc.Unsafe;
+double caccess_read_pointer_double(double *address) {
+	return *address;
+}
 
-public class UnsafeAdapter {
-    public static final Unsafe UNSAFE = initUnsafe();
+int caccess_read_array_int(int *address, int index) {
+	return address[index];
+}
 
-    private static Unsafe initUnsafe() {
-        try {
-            return Unsafe.getUnsafe();
-        } catch (SecurityException se) {
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(Unsafe.class);
-            } catch (Exception e) {
-                throw new RuntimeException("exception while trying to get Unsafe", e);
-            }
-        }
-    }
+double caccess_read_array_double(double *address, int index) {
+	return address[index];
 }

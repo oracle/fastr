@@ -20,26 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+#ifndef RFFIUTILS_H
+#define RFFIUTILS_H
 
-import java.lang.reflect.Field;
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <Rinternals.h>
+#include <rffi_callbacks.h>
+#include <trufflenfi.h>
 
-import sun.misc.Unsafe;
+extern void init_memory();
 
-public class UnsafeAdapter {
-    public static final Unsafe UNSAFE = initUnsafe();
-
-    private static Unsafe initUnsafe() {
-        try {
-            return Unsafe.getUnsafe();
-        } catch (SecurityException se) {
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(Unsafe.class);
-            } catch (Exception e) {
-                throw new RuntimeException("exception while trying to get Unsafe", e);
-            }
-        }
-    }
-}
+#endif

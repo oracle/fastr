@@ -197,6 +197,7 @@ suite = {
         "com.oracle.truffle.r.parser",
         "truffle:JLINE",
         "truffle:TRUFFLE_DEBUG",
+        "truffle:TRUFFLE_NFI",
       ],
      "generatedDependencies" : [
         "com.oracle.truffle.r.parser",
@@ -243,11 +244,13 @@ suite = {
       "dependencies" : [
         "GNUR",
         "GNU_ICONV",
+        "truffle:TRUFFLE_NFI_NATIVE",
       ],
       "native" : "true",
-      "class" : "FastRNativeProject",
-      "output" : "com.oracle.truffle.r.native",
       "workingSets" : "FastR",
+      "buildEnv" : {
+        "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
+      },
     },
 
     "com.oracle.truffle.r.library" : {
@@ -315,6 +318,8 @@ suite = {
       "distDependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
+        "truffle:TRUFFLE_NFI",
+        "truffle:TRUFFLE_NFI_NATIVE",
         "TRUFFLE_R_PARSER_PROCESSOR",
       ],
     },
@@ -336,8 +341,6 @@ suite = {
 
     "FASTR_UNIT_TESTS_NATIVE" : {
       "description" : "unit tests support (from test.native project)",
-      "dependencies" : ["com.oracle.truffle.r.test.native"],
-      "distDependencies" : ["FASTR_NATIVE_DEV"],
       "exclude" : ["GNUR", "GNU_ICONV"],
        "os_arch" : {
          "linux" : {
@@ -357,35 +360,6 @@ suite = {
            "sparcv9" : {
              "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
            },
-        },
-      },
-    },
-
-    "FASTR_NATIVE_DEV": {
-      "description" : "support for overriding the native project implementation in a separate suite",
-      "dependencies" : ["com.oracle.truffle.r.native"],
-      "exclude" : [
-        "GNUR",
-        "GNU_ICONV",
-      ],
-      "os_arch" : {
-        "linux" : {
-          "amd64" : {
-            "path" : "mxbuild/dists/linux/amd64/fastr-native-dev.jar",
-          },
-          "sparcv9" : {
-            "path" : "mxbuild/dists/linux/sparcv9/fastr-native-dev.jar",
-          },
-        },
-        "darwin" : {
-          "amd64" : {
-            "path" : "mxbuild/dists/darwin/amd64/fastr-native-dev.jar",
-          },
-        },
-        "solaris" : {
-          "sparcv9" : {
-            "path" : "mxbuild/dists/solaris/sparcv9/fastr-native-dev.jar",
-          },
         },
       },
     },

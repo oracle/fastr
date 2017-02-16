@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+#include <rffiutils.h>
+#include <Riconv.h>
 
-import java.lang.reflect.Field;
+void * Riconv_open (const char* tocode, const char* fromcode) {
+	return unimplemented("Riconv_open");
+}
 
-import sun.misc.Unsafe;
+size_t Riconv (void * cd, const char **inbuf, size_t *inbytesleft,
+	       char  **outbuf, size_t *outbytesleft) {
+    unimplemented("Riconv");
+    return 0;
+}
 
-public class UnsafeAdapter {
-    public static final Unsafe UNSAFE = initUnsafe();
-
-    private static Unsafe initUnsafe() {
-        try {
-            return Unsafe.getUnsafe();
-        } catch (SecurityException se) {
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(Unsafe.class);
-            } catch (Exception e) {
-                throw new RuntimeException("exception while trying to get Unsafe", e);
-            }
-        }
-    }
+int Riconv_close (void * cd) {
+	unimplemented("Riconv_close");
+	return 0;
 }
