@@ -233,7 +233,7 @@ public class GrepFunctions {
             boolean[] matches = new boolean[len];
             if (fixed && !perl) {
                 // TODO case
-                if (!fixed) {
+                if (fixed) {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
                 findAllMatches(matches, pattern, vector, fixed, ignoreCase);
