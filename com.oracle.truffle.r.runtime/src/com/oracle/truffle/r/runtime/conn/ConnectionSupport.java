@@ -302,6 +302,11 @@ public class ConnectionSupport {
              */
             return modeString;
         }
+
+        @Override
+        public String toString() {
+            return modeString;
+        }
     }
 
     public enum ConnectionClass {
@@ -880,8 +885,12 @@ public class ConnectionSupport {
                     out.write(0);
                 }
             }
-            if (eos != null && eos.length() > 0) {
-                out.write(eos.getBytes());
+            if (eos != null) {
+                if (eos.length() > 0) {
+                    out.write(eos.getBytes());
+                }
+                // function writeChar is defined to append the null character if eos != null
+                out.write(0);
             }
         }
 
