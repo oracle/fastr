@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
@@ -18,10 +40,10 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
 
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    /** current cursor position */
+    /** Current cursor position. */
     private long position = 0L;
 
-    /** position of the last available byte (exclusive) */
+    /** Position of the last available byte (exclusive). */
     private long endPos = 0L;
 
     private long offset = 0L;
@@ -37,7 +59,7 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
 
     /**
      * Find next power of two (see Hacker's Delight).
-     * 
+     *
      * @param n the number
      */
     private static int clp2(final int n) {
@@ -122,26 +144,30 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
     }
 
     private void ensureCapacity(int minCapacity) {
-        // overflow-conscious code
-        if (minCapacity - buf.length > 0)
+        // borrowed from ByteArrayOutputStream
+        if (minCapacity - buf.length > 0) {
             grow(minCapacity);
-
+        }
     }
 
     private void grow(int minCapacity) {
-        // overflow-conscious code
+        // borrowed from ByteArrayOutputStream
         int oldCapacity = buf.length;
         int newCapacity = oldCapacity << 1;
-        if (newCapacity - minCapacity < 0)
+        if (newCapacity - minCapacity < 0) {
             newCapacity = minCapacity;
-        if (newCapacity - MAX_ARRAY_SIZE > 0)
+        }
+        if (newCapacity - MAX_ARRAY_SIZE > 0) {
             newCapacity = hugeCapacity(minCapacity);
+        }
         buf = Arrays.copyOf(buf, newCapacity);
     }
 
     private static int hugeCapacity(int minCapacity) {
-        if (minCapacity < 0) // overflow
+        // borrowed from ByteArrayOutputStream
+        if (minCapacity < 0) {
             throw new OutOfMemoryError();
+        }
         return (minCapacity > MAX_ARRAY_SIZE) ? Integer.MAX_VALUE : MAX_ARRAY_SIZE;
     }
 

@@ -336,7 +336,7 @@ public final class RError extends RuntimeException {
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
         MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),
-        MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
+        MORE_CHARACTERS("writeChar: more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),
         OUT_OF_RANGE("out-of-range values treated as 0 in coercion to raw"),

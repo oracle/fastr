@@ -748,19 +748,25 @@ public abstract class ConnectionFunctions {
             CastsHelper.useBytes(casts);
         }
 
-        @TruffleBoundary
         @Specialization
         protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+            return writeCharGeneric(object, con, nchars, sep, useBytes);
+        }
+
+        @TruffleBoundary
+        private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {
-                    String s = object.getDataAt(i);
+                    // FIXME: 'i % length' is probably wrong
                     int nc = nchars.getDataAt(i % length);
+                    String s = object.getDataAt(i);
+                    final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
                     if (pad > 0) {
                         RError.warning(this, RError.Message.MORE_CHARACTERS);
                     }
-                    openConn.writeChar(s, pad, sep.getDataAt(i % length), useBytes);
+                    openConn.writeChar(s.substring(0, writeLen), pad, getSepFor(sep, i), useBytes);
                 }
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
@@ -768,11 +774,16 @@ public abstract class ConnectionFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
+        private static String getSepFor(RAbstractStringVector sep, int i) {
+            if (sep != null) {
+                return sep.getDataAt(i % sep.getLength());
+            }
+            return null;
+        }
+
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, RNull sep, boolean useBytes) {
-            throw RError.nyi(this, "writeChar(sep=NULL)");
+        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
+            return writeCharGeneric(object, con, nchars, null, useBytes);
         }
     }
 
@@ -929,7 +940,7 @@ public abstract class ConnectionFunctions {
             int s = 0;
             while (s < n) {
                 byte[] chars = con.readBinChars();
-                if (chars == null) {
+                if (chars == null || chars.length == 0) {
                     break;
                 }
                 int npos = 0;
