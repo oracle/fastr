@@ -30,18 +30,25 @@ import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class JNI_Misc implements MiscRFFI {
 
-    @Override
-    public double exactSum(double[] values, boolean hasNa, boolean naRm) {
-        if (traceEnabled()) {
-            traceDownCall("exactSum");
-        }
-        try {
-            return exactSumFunc(values, hasNa, naRm);
-        } finally {
+    private static class JNI_ExactSumNode extends ExactSumNode {
+        @Override
+        public double execute(double[] values, boolean hasNa, boolean naRm) {
             if (traceEnabled()) {
-                traceDownCallReturn("exactSum", null);
+                traceDownCall("exactSum");
+            }
+            try {
+                return exactSumFunc(values, hasNa, naRm);
+            } finally {
+                if (traceEnabled()) {
+                    traceDownCallReturn("exactSum", null);
+                }
             }
         }
+    }
+
+    @Override
+    public ExactSumNode createExactSumNode() {
+        return new JNI_ExactSumNode();
     }
 
     private static native double exactSumFunc(double[] values, boolean hasNa, boolean naRm);

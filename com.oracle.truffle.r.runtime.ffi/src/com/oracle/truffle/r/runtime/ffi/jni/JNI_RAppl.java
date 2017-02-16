@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,30 +26,46 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 public class JNI_RAppl implements RApplRFFI {
-    private static class JNI_RApplRFFINode extends RApplRFFINode {
+    private static class JNI_Dqrdc2Node extends Dqrdc2Node {
         @Override
         @TruffleBoundary
-        public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
+        public void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
             native_dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, work);
         }
+    }
+
+    private static class JNI_DqrcfNode extends DqrcfNode {
 
         @Override
         @TruffleBoundary
-        public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
             native_dqrcf(x, n, k, qraux, y, ny, b, info);
         }
+    }
 
+    private static class JNI_DqrlsNode extends DqrlsNode {
         @Override
         @TruffleBoundary
-        public void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
+        public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
             native_dqrls(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
         }
     }
 
     @Override
-    public RApplRFFINode createRApplRFFINode() {
-        return new JNI_RApplRFFINode();
+    public Dqrdc2Node createDqrdc2Node() {
+        return new JNI_Dqrdc2Node();
     }
+
+    @Override
+    public DqrcfNode createDqrcfNode() {
+        return new JNI_DqrcfNode();
+    }
+
+    @Override
+    public DqrlsNode createDqrlsNode() {
+        return new JNI_DqrlsNode();
+    }
+
     // Checkstyle: stop method name
 
     private static native void native_dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);

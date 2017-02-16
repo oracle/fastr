@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,15 +30,34 @@ import com.oracle.truffle.api.nodes.Node;
  * {@code libappl} library in GnuR.
  */
 public interface RApplRFFI {
-    abstract class RApplRFFINode extends Node {
-        // Linpack
-        public abstract void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
+    abstract class Dqrdc2Node extends Node {
+        public abstract void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
-        public abstract void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
-
-        public abstract void dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+        public static Dqrdc2Node create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
+        }
     }
 
-    RApplRFFINode createRApplRFFINode();
+    abstract class DqrcfNode extends Node {
+        public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
+
+        public static Dqrdc2Node create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
+        }
+    }
+
+    abstract class DqrlsNode extends Node {
+        public abstract void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+
+        public static DqrlsNode create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrlsNode();
+        }
+    }
+
+    Dqrdc2Node createDqrdc2Node();
+
+    DqrcfNode createDqrcfNode();
+
+    DqrlsNode createDqrlsNode();
 
 }

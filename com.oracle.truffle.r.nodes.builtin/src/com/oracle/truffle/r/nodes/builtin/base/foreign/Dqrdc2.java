@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class Dqrdc2 extends RExternalBuiltinNode.Arg9 {
-    @Child private RApplRFFI.RApplRFFINode rApplRFFINode = RFFIFactory.getRFFI().getRApplRFFI().createRApplRFFINode();
+    @Child private RApplRFFI.Dqrdc2Node dqrdc2Node = RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
@@ -57,7 +57,7 @@ public abstract class Dqrdc2 extends RExternalBuiltinNode.Arg9 {
         int[] rank = rankVec.materialize().getDataTemp();
         double[] qraux = qrauxVec.materialize().getDataTemp();
         int[] pivot = pivotVec.materialize().getDataTemp();
-        rApplRFFINode.dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
+        dqrdc2Node.execute(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
         // @formatter:off
         Object[] data = new Object[]{
                     RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, getDimNode.getDimensions(xVec)),
