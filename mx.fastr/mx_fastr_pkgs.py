@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 The pkgtest command operates in two modes:
 1. In development mode it uses the FastR 'Rscript' command and the internal GNU R for test comparison
 2. In production mode it uses the GraalVM 'Rscript' command and a GNU R loaded as a sibling suite. This is indicated
-by the environment variable 'GRAALVM_FASTR' being set.
+by the environment variable 'FASTR_GRAALVM' being set. (GRAALVM_FASTR is also accepted for backwards cmpatibility)
 
 Evidently in case 2, there is the potential for a version mismatch between FastR and GNU R, and this is checked.
 
@@ -48,17 +48,28 @@ def _mx_gnur():
     return mx.suite('gnur')
 
 def _gnur_rscript():
+    '''
+    returns path to Rscript in sibling gnur directory
+    '''
     return _mx_gnur().extensions._gnur_rscript_path()
 
 def _graalvm_rscript():
     assert graalvm is not None
     return join(graalvm, 'bin', 'Rscript')
 
+def _check_graalvm():
+    if os.environ.has_key('FASTR_GRAALVM'):
+        return os.environ['FASTR_GRAALVM']
+    elif os.environ.has_key('GRAALVM_FASTR'):
+        return os.environ['GRAALVM_FASTR']
+    else:
+        return None
+
 def _graalvm():
     global graalvm
     if graalvm is None:
-        if os.environ.has_key('GRAALVM_FASTR'):
-            graalvm = os.environ['GRAALVM_FASTR']
+        graalvm = _check_graalvm()
+        if graalvm:
             # version check
             gnur_version = _mx_gnur().extensions.r_version().split('-')[1]
             graalvm_version = subprocess.check_output([_graalvm_rscript(), '--version'], stderr=subprocess.STDOUT).rstrip()
@@ -106,7 +117,7 @@ def _installpkgs(args, **kwargs):
     '''
     Runs the R script that does package/installation and testing.
     If we are running in a binary graalvm environment, which is indicated
-    by the GRAALVM_FASTR environment variable, we can't use mx to invoke
+    by the FASTR_GRAALVM environment variable, we can't use mx to invoke
     FastR, but instead have to invoke the command directly.
     '''
     script = _installpkgs_script()

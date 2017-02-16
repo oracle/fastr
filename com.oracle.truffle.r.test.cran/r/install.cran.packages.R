@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -684,10 +684,24 @@ install.pkg <- function(pkgname) {
 	return(rc)
 }
 
+# when testing under graalvm, fastr is not built so we must use the (assumed) sibling gnur repo
+check_graalvm <- function() {
+	if (!is.na(Sys.getenv('FASTR_GRAALVM', unset=NA)) || !is.na(Sys.getenv('GRAALVM_FASTR', unset=NA))) {
+		normalizePath(Sys.glob(file.path("..", 'gnur', 'gnur', 'R-*')))
+	} else {
+		NA
+	}
+}
+
 gnu_rscript <- function() {
-	rv <- R.Version()
-	dirv <- paste0('R-', rv$major, '.', rv$minor)
-	file.path("com.oracle.truffle.r.native/gnur", dirv, 'bin/Rscript')
+	gnur_dir <- check_graalvm()
+	if (!is.na(gnur_dir)) {
+		file.path(gnur_dir, 'bin', 'Rscript')
+	} else {
+		rv <- R.Version()
+		dirv <- paste0('R-', rv$major, '.', rv$minor)
+		file.path("com.oracle.truffle.r.native/gnur", dirv, 'bin', 'Rscript')
+	}
 }
 
 system.install <- function(pkgname) {
