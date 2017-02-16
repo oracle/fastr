@@ -47,6 +47,7 @@ class JLineConsoleHandler implements ConsoleHandler {
     JLineConsoleHandler(RStartParams startParams, InputStream inStream, OutputStream outStream) {
         try {
             console = new ConsoleReader(inStream, outStream);
+            console.addCompleter(new JLineConsoleCompleter(this));
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {
