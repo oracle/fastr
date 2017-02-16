@@ -425,7 +425,10 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(RawConnection.class);
             CastsHelper.description(casts);
             casts.arg("object").mustBe(stringValue().or(rawValue()));
-            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")).or(equalTo("wb")).or(equalTo("rb")))), RError.Message.UNSUPPORTED_MODE);
+            CastsHelper.open(casts).mustBe(
+                            equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(equalTo("w+")).or(
+                                            equalTo("a")).or(equalTo("a+")),
+                            RError.Message.UNSUPPORTED_MODE);
         }
 
         @Specialization

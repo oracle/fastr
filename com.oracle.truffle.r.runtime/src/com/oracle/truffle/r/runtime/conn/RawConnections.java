@@ -1,11 +1,10 @@
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
@@ -15,6 +14,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -23,11 +23,13 @@ public class RawConnections {
 
     public static class RawRConnection extends BaseRConnection {
 
-        private byte[] data;
+        private final SeekableMemoryByteChannel channel;
+        private final String description;
 
         public RawRConnection(String description, byte[] dataTemp, String open) throws IOException {
             super(ConnectionClass.RAW, open, AbstractOpenMode.Read);
-            this.data = dataTemp;
+            this.channel = new SeekableMemoryByteChannel(dataTemp);
+            this.description = description;
             openNonLazyConnection();
         }
 
@@ -37,15 +39,22 @@ public class RawConnections {
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
                 case ReadBinary:
-                    delegate = new RawReadTextRConnection(this, data);
+                    delegate = new RawReadRConnection(this, channel);
                     break;
                 case Write:
-                case Append:
-                    delegate = new RawWriteBinaryConnection(this);
+                case WriteBinary:
+                    delegate = new RawWriteBinaryConnection(this, channel, false);
                     break;
+                case Append:
+                    delegate = new RawWriteBinaryConnection(this, channel, true);
+                    break;
+                case ReadAppend:
+                    delegate = new RawReadWriteConnection(this, channel, true);
+                    break;
+                case ReadWrite:
                 case ReadWriteTrunc:
                 case ReadWriteTruncBinary:
-                    delegate = null;
+                    delegate = new RawReadWriteConnection(this, channel, false);
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
@@ -55,56 +64,72 @@ public class RawConnections {
 
         @Override
         public String getSummaryDescription() {
-            // TODO Auto-generated method stub
-            return null;
+            return description;
+        }
+
+        @Override
+        public String getSummaryText() {
+            return "binary";
         }
 
         public byte[] getValue() {
-            try {
-                return ((ByteArrayOutputStream) getOutputStream()).toByteArray();
-            } catch (IOException e) {
-                throw RInternalError.shouldNotReachHere("Receiving output stream failed");
-            }
+            return channel.getBuffer();
         }
 
     }
 
-    static class RawReadTextRConnection extends DelegateReadRConnection implements ReadWriteHelper {
-        private InputStream inputStream;
+    static class RawReadRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+        private SeekableMemoryByteChannel channel;
 
-        RawReadTextRConnection(BaseRConnection base, byte[] data) {
+        RawReadRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) {
             super(base);
-            this.inputStream = new ByteArrayInputStream(data);
+            this.channel = channel;
+            try {
+                channel.position(0L);
+            } catch (IOException e) {
+                RInternalError.shouldNotReachHere();
+            }
         }
 
-        RawReadTextRConnection(BaseRConnection base) {
+        RawReadRConnection(BaseRConnection base) {
             super(base);
         }
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_READ_BINARY_CONNECTION);
+            return channel.read(buffer);
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_READ_BINARY_CONNECTION);
+            // acquire copy from buffer without advancing the cursor
+            final byte[] buffer = channel.getBufferFromCursor();
+            int i = 0;
+            while (i < buffer.length && buffer[i] != (byte) 0) {
+                i++;
+            }
+            if (i < buffer.length) {
+                ByteBuffer readBuf = ByteBuffer.allocate(i + 1);
+                channel.read(readBuf);
+                return readBuf.array();
+            }
+            return new byte[0];
         }
 
         @TruffleBoundary
         @Override
         public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
+            return readLinesHelper(channel.getInputStream(), n, warn, skipNul);
         }
 
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
+            return readCharHelper(nchars, channel.getInputStream(), useBytes);
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return inputStream;
+            return channel.getInputStream();
         }
 
         @Override
@@ -115,7 +140,7 @@ public class RawConnections {
 
         @Override
         public void close() throws IOException {
-            inputStream.close();
+            channel.close();
         }
 
         @Override
@@ -125,26 +150,33 @@ public class RawConnections {
     }
 
     private static class RawWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
-        private final OutputStream outputStream;
+        private final SeekableMemoryByteChannel channel;
 
-        RawWriteBinaryConnection(BaseRConnection base) {
+        RawWriteBinaryConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
             super(base);
-            outputStream = new ByteArrayOutputStream();
+            this.channel = Objects.requireNonNull(channel);
+            if (!append) {
+                try {
+                    channel.position(0);
+                } catch (IOException e) {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
         }
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(outputStream, s, pad, eos);
+            writeCharHelper(channel.getOutputStream(), s, pad, eos);
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            outputStream.write(buffer.array());
+            channel.write(buffer);
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
-            return outputStream;
+            return channel.getOutputStream();
         }
 
         @Override
@@ -156,27 +188,116 @@ public class RawConnections {
         @Override
         public void close() throws IOException {
             flush();
-            outputStream.close();
+            channel.close();
         }
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             for (int i = 0; i < lines.getLength(); i++) {
                 String line = lines.getDataAt(i);
-                outputStream.write(line.getBytes());
-                outputStream.write(sep.getBytes());
+                channel.write(line.getBytes());
+                channel.write(sep.getBytes());
             }
         }
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
+            writeStringHelper(channel.getOutputStream(), s, nl);
         }
 
         @Override
         public void flush() throws IOException {
-            outputStream.flush();
+            // nothing to do
         }
+    }
+
+    private static class RawReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+
+        private final SeekableMemoryByteChannel channel;
+
+        protected RawReadWriteConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
+            super(base);
+            this.channel = Objects.requireNonNull(channel);
+            if (!append) {
+                try {
+                    channel.position(0);
+                } catch (IOException e) {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
+        }
+
+        @Override
+        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return channel.getInputStream();
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return channel.getOutputStream();
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            close();
+        }
+
+        @Override
+        public void close() throws IOException {
+            channel.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                channel.write(lines.getDataAt(i).getBytes());
+                channel.write(sep.getBytes());
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            // nothing to do
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            channel.write(s.getBytes());
+            if (nl) {
+                channel.write(System.lineSeparator().getBytes());
+            }
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            writeCharHelper(channel.getOutputStream(), s, pad, eos);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            channel.write(buffer);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            return channel.read(buffer);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
     }
 
 }
