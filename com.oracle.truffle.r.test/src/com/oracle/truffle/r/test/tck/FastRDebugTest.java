@@ -47,13 +47,14 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
+import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public class FastRDebugTest {
     private Debugger debugger;
@@ -257,31 +258,45 @@ public class FastRDebugTest {
 
     private void assertLocation(final int line, final String code, final Object... expectedFrame) {
         run.addLast(() -> {
-            assertNotNull(suspendedEvent);
-            final int currentLine = suspendedEvent.getSourceSection().getStartLine();
-            assertEquals(line, currentLine);
-            final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
-            assertEquals(code, currentCode);
-            final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+            try {
+                assertNotNull(suspendedEvent);
+                final int currentLine = suspendedEvent.getSourceSection().getStartLine();
+                assertEquals(line, currentLine);
+                final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
+                assertEquals(code, currentCode);
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
 
-            final AtomicInteger numFrameVars = new AtomicInteger(0);
-            frame.forEach(var -> {
-                numFrameVars.incrementAndGet();
-            });
-            // There is (self) among the variables, hence substract 1:
-            assertEquals(expectedFrame.length / 2, numFrameVars.get() - 1);
+                final AtomicInteger numFrameVars = new AtomicInteger(0);
+                frame.forEach(var -> {
+                    // skip synthetic slots
+                    for (RFrameSlot slot : RFrameSlot.values()) {
+                        if (slot.name().equals(var.getName())) {
+                            return;
+                        }
+                    }
+                    numFrameVars.incrementAndGet();
+                });
+                assertEquals(line + ": " + code, expectedFrame.length / 2, numFrameVars.get());
 
-            for (int i = 0; i < expectedFrame.length; i = i + 2) {
-                String expectedIdentifier = (String) expectedFrame[i];
-                Object expectedValue = expectedFrame[i + 1];
-                String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
-                DebugValue value = frame.getValue(expectedIdentifier);
-                assertNotNull(value);
-                String valueStr = value.as(String.class);
-                assertEquals(expectedValueStr, valueStr);
+                for (int i = 0; i < expectedFrame.length; i = i + 2) {
+                    String expectedIdentifier = (String) expectedFrame[i];
+                    Object expectedValue = expectedFrame[i + 1];
+                    String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
+                    DebugValue value = frame.getValue(expectedIdentifier);
+                    assertNotNull(value);
+                    String valueStr = value.as(String.class);
+                    assertEquals(expectedValueStr, valueStr);
+                }
+
+                run.removeFirst().run();
+            } catch (RuntimeException | Error e) {
+
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+                frame.forEach(var -> {
+                    System.out.println(var);
+                });
+                throw e;
             }
-
-            run.removeFirst().run();
         });
     }
 
