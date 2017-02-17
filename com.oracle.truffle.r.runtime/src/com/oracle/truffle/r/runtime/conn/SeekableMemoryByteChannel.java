@@ -226,6 +226,7 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
     public int read() throws IOException {
         final ByteBuffer bf = ByteBuffer.allocate(1);
         read(bf);
+        bf.rewind();
         return bf.get();
     }
 

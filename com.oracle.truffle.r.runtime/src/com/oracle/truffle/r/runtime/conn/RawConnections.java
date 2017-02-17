@@ -74,6 +74,7 @@ public class RawConnections {
                     delegate = new RawReadWriteConnection(this, channel, true);
                     break;
                 case ReadWrite:
+                case ReadWriteBinary:
                 case ReadWriteTrunc:
                 case ReadWriteTruncBinary:
                     delegate = new RawReadWriteConnection(this, channel, false);
@@ -96,6 +97,27 @@ public class RawConnections {
 
         public byte[] getValue() {
             return channel.getBuffer();
+        }
+
+        public static long seek(SeekableMemoryByteChannel channel, long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            final long origPos = channel.position();
+            final long newPos;
+            switch (seekMode) {
+                case START:
+                    newPos = offset;
+                    break;
+                case CURRENT:
+                    newPos = origPos + offset;
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
+            }
+            if (newPos >= 0L && newPos <= channel.size()) {
+                channel.position(newPos);
+            } else {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_OUTSITE_RAW_CONNECTION);
+            }
+            return origPos;
         }
 
     }
@@ -169,6 +191,11 @@ public class RawConnections {
         public OutputStream getOutputStream() {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.NOT_AN_OUTPUT_RAW_CONNECTION);
         }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
     }
 
     private static class RawWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
@@ -230,6 +257,11 @@ public class RawConnections {
         @Override
         public void flush() throws IOException {
             // nothing to do
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
     }
 
@@ -302,7 +334,7 @@ public class RawConnections {
 
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw RInternalError.unimplemented();
+            return readCharHelper(nchars, channel.getInputStream(), useBytes);
         }
 
         @Override
@@ -318,6 +350,11 @@ public class RawConnections {
         @Override
         public byte[] readBinChars() throws IOException {
             throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
     }

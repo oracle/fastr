@@ -789,7 +789,8 @@ public final class RError extends RuntimeException {
         TOO_MANY_ARGS("too many arguments"),
         UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R"),
         NOT_AN_OUTPUT_RAW_CONNECTION("'con' is not an output rawConnection"),
-        NOT_A_RAW_CONNECTION("'con' is not a rawConnection");
+        NOT_A_RAW_CONNECTION("'con' is not a rawConnection"),
+        SEEK_OUTSITE_RAW_CONNECTION("attempt to seek outside the range of the raw connection");
 
         public final String message;
         final boolean hasArgs;
