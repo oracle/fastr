@@ -5,13 +5,11 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
-
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
 
 import java.io.IOException;
 
@@ -57,23 +55,23 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                 if (tmp == null || tmp == RNull.instance) {
                     pbuf = RRuntime.NULL;
                 } else if (tmp instanceof RAbstractLogicalVector) {
-                    pbuf = snprintf(115, "Logical,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Logical," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractIntVector) {
-                    pbuf = snprintf(115, "Integer,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Integer," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractDoubleVector) {
-                    pbuf = snprintf(115, "Numeric,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Numeric," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractComplexVector) {
-                    pbuf = snprintf(115, "Complex,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Complex," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractStringVector) {
-                    pbuf = snprintf(115, "Character,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Character," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractRawVector) {
-                    pbuf = snprintf(115, "Raw,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "Raw," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractListVector) {
-                    pbuf = snprintf(115, "List,%d", ((RAbstractContainer) tmp).getLength());
+                    pbuf = "List," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RLanguage) {
-                    pbuf = snprintf(115, "Expression");
+                    pbuf = "Expression";
                 } else {
-                    pbuf = snprintf(115, "?");
+                    pbuf = "?";
                 }
 
                 t[i] = pbuf;

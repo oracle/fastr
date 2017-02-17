@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
@@ -120,7 +119,7 @@ public class PrintFunctions {
 
         @Specialization
         protected RFunction printFunction(RFunction x, boolean useSource, @SuppressWarnings("unused") RArgsValuesAndNames extra) {
-            valuePrinter.execute(x, PrintParameters.getDefaultDigits(), true, RString.valueOf(RRuntime.STRING_NA), 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
+            valuePrinter.execute(x, PrintParameters.getDefaultDigits(), true, RRuntime.STRING_NA, 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
             return x;
         }
     }

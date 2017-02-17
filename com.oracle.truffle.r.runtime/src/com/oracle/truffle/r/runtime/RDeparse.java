@@ -830,7 +830,7 @@ public class RDeparse {
             switch (type) {
                 case STRSXP:
                     String s = (String) element;
-                    append(RRuntime.isNA(s) ? (singleElement ? "NA_character_" : "NA") : RRuntime.quoteString((String) element, true));
+                    append(RRuntime.isNA(s) ? (singleElement ? "NA_character_" : "NA") : RRuntime.escapeString(s, true, true));
                     break;
                 case LGLSXP:
                     append(RRuntime.logicalToString((byte) element));

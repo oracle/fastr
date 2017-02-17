@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -104,7 +104,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
 
         for (int i = 0; i < n; i++) {
             String s = x.getDataAt(offs + i);
-            String xi = quote ? RRuntime.quoteString(s, false) : s;
+            String xi = RRuntime.escapeString(s, false, quote);
 
             if (xi == RRuntime.STRING_NA) {
                 l = quote ? pp.getNaWidth() : pp.getNaWidthNoquote();
@@ -167,20 +167,11 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
     }
 
     static String encode(String value, int w, PrintParameters pp) {
-        final boolean quote = pp.getQuote();
-        final String s;
-        if (quote) {
-            if (RRuntime.isNA(value)) {
-                s = pp.getNaString();
-            } else {
-                s = RRuntime.quoteString(value, false);
-            }
+        String s;
+        if (RRuntime.isNA(value)) {
+            s = pp.getQuote() ? pp.getNaString() : pp.getNaStringNoquote();
         } else {
-            if (RRuntime.isNA(value)) {
-                s = pp.getNaStringNoquote();
-            } else {
-                s = value;
-            }
+            s = RRuntime.escapeString(value, false, pp.getQuote());
         }
         return StringVectorPrinter.encode(s, w, pp.getRight() ? PrintJustification.right : PrintJustification.left);
     }

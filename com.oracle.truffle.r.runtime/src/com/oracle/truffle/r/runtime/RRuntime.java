@@ -47,7 +47,7 @@ public class RRuntime {
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
         "FastR version " + RVersionNumber.FULL + "\n" +
-        "Copyright (c) 2013-16, Oracle and/or its affiliates\n" +
+        "Copyright (c) 2013-17, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2016, The R Core Team\n" +
         "Copyright (c) 2016 The R Foundation for Statistical Computing\n" +
         "Copyright (c) 2012-4 Purdue University\n" +
@@ -672,12 +672,14 @@ public class RRuntime {
     }
 
     @TruffleBoundary
-    public static String quoteString(String value, boolean encodeNonASCII) {
+    public static String escapeString(String value, boolean encodeNonASCII, boolean quote) {
         if (isNA(value)) {
             return STRING_NA;
         }
         StringBuilder str = new StringBuilder(value.length() + 2);
-        str.append('\"');
+        if (quote) {
+            str.append('\"');
+        }
         int offset = 0;
         while (offset < value.length()) {
             int codepoint = value.codePointAt(offset);
@@ -707,7 +709,11 @@ public class RRuntime {
                     str.append("\\\\");
                     break;
                 case '"':
-                    str.append("\\\"");
+                    if (quote) {
+                        str.append("\\\"");
+                    } else {
+                        str.append('\"');
+                    }
                     break;
                 default:
                     if (codepoint < 32 || codepoint == 0x7f) {
@@ -727,7 +733,9 @@ public class RRuntime {
             }
             offset += Character.charCount(codepoint);
         }
-        str.append('\"');
+        if (quote) {
+            str.append('\"');
+        }
         return str.toString();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         }
         // Load the (stub) DLL for base
         String path = baseDirPath.resolve("libs").resolve("base.so").toString();
-        Source loadSource = RSource.fromTextInternal(".Internal(dyn.load(" + RRuntime.quoteString(path, false) + ", TRUE, TRUE, \"\"))", RSource.Internal.R_IMPL);
+        Source loadSource = RSource.fromTextInternal(".Internal(dyn.load(" + RRuntime.escapeString(path, false, true) + ", TRUE, TRUE, \"\"))", RSource.Internal.R_IMPL);
         RContext.getEngine().parseAndEval(loadSource, baseFrame, false);
 
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
