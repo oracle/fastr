@@ -336,7 +336,7 @@ public final class RError extends RuntimeException {
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
         MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),
-        MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
+        MORE_CHARACTERS("writeChar: more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),
         OUT_OF_RANGE("out-of-range values treated as 0 in coercion to raw"),
@@ -787,7 +787,10 @@ public final class RError extends RuntimeException {
         LOSS_OF_ACCURACY_MOD("probable complete loss of accuracy in modulus"),
         LENGTH_MISAPPLIED("LENGTH or similar applied to %s object"),
         TOO_MANY_ARGS("too many arguments"),
-        UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R");
+        UNIMPLEMENTED_TYPE_IN_R("type \"%s\" unimplemented in R"),
+        NOT_AN_OUTPUT_RAW_CONNECTION("'con' is not an output rawConnection"),
+        NOT_A_RAW_CONNECTION("'con' is not a rawConnection"),
+        SEEK_OUTSITE_RAW_CONNECTION("attempt to seek outside the range of the raw connection");
 
         public final String message;
         final boolean hasArgs;

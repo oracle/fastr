@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.conn.CompressedConnections.CompressedRConnec
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
@@ -141,6 +142,11 @@ public abstract class ConnectionFunctions {
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
             return casts.arg("open").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA();
+        }
+
+        private static HeadPhaseBuilder<String> openMode(Casts casts) {
+            return open(casts).mustBe(equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("r+b")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(
+                            equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
         }
 
         private static void encoding(Casts casts) {
@@ -413,6 +419,57 @@ public abstract class ConnectionFunctions {
                 throw RError.error(this, RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+        }
+    }
+
+    @RBuiltin(name = "rawConnection", kind = INTERNAL, parameterNames = {"description", "object", "open"}, behavior = IO)
+    public abstract static class RawConnection extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(RawConnection.class);
+            CastsHelper.description(casts);
+            casts.arg("object").mustBe(stringValue().or(rawValue()));
+            CastsHelper.openMode(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector rawConnection(String description, @SuppressWarnings("unused") RAbstractStringVector text, String open) {
+            try {
+                return new RawRConnection(description, null, open).asVector();
+            } catch (IOException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector rawConnection(String description, RAbstractRawVector text, String open) {
+            try {
+                return new RawRConnection(description, text.materialize().getDataTemp(), open).asVector();
+            } catch (IOException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+    }
+
+    @RBuiltin(name = "rawConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class RawConnectionValue extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(RawConnectionValue.class);
+            casts.arg("con").defaultError(Message.NOT_A_RAW_CONNECTION).mustBe(integerValue()).asIntegerVector().findFirst();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object textConnection(int con) {
+            RConnection connection = RConnection.fromIndex(con);
+            if (connection instanceof RawRConnection) {
+                return RDataFactory.createRawVector(((RawRConnection) connection).getValue());
+            } else {
+                throw RError.error(RError.SHOW_CALLER, Message.NOT_A_RAW_CONNECTION);
             }
         }
     }
@@ -693,19 +750,25 @@ public abstract class ConnectionFunctions {
             CastsHelper.useBytes(casts);
         }
 
-        @TruffleBoundary
         @Specialization
         protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+            return writeCharGeneric(object, con, nchars, sep, useBytes);
+        }
+
+        @TruffleBoundary
+        private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {
-                    String s = object.getDataAt(i);
+                    // FIXME: 'i % length' is probably wrong
                     int nc = nchars.getDataAt(i % length);
+                    String s = object.getDataAt(i);
+                    final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
                     if (pad > 0) {
                         RError.warning(this, RError.Message.MORE_CHARACTERS);
                     }
-                    openConn.writeChar(s, pad, sep.getDataAt(i % length), useBytes);
+                    openConn.writeChar(s.substring(0, writeLen), pad, getSepFor(sep, i), useBytes);
                 }
             } catch (IOException x) {
                 throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
@@ -713,11 +776,16 @@ public abstract class ConnectionFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
+        private static String getSepFor(RAbstractStringVector sep, int i) {
+            if (sep != null) {
+                return sep.getDataAt(i % sep.getLength());
+            }
+            return null;
+        }
+
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, RNull sep, boolean useBytes) {
-            throw RError.nyi(this, "writeChar(sep=NULL)");
+        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
+            return writeCharGeneric(object, con, nchars, null, useBytes);
         }
     }
 
@@ -874,7 +942,7 @@ public abstract class ConnectionFunctions {
             int s = 0;
             while (s < n) {
                 byte[] chars = con.readBinChars();
-                if (chars == null) {
+                if (chars == null || chars.length == 0) {
                     break;
                 }
                 int npos = 0;
