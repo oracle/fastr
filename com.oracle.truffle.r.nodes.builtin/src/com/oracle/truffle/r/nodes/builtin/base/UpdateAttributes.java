@@ -206,7 +206,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 res = updateDimNames(res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (setClassNode == null) {
-                    CompilerDirectives.transferToInterpreter();
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     setClassNode = insert(SetClassAttributeNode.create());
                 }
                 if (value == RNull.instance) {
@@ -223,7 +223,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             } else {
                 if (value == RNull.instance) {
                     if (removeAttrNode == null) {
-                        CompilerDirectives.transferToInterpreter();
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
                         removeAttrNode = insert(RemoveAttributeNode.create());
                     }
                     removeAttrNode.execute(res, attrName);

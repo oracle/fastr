@@ -82,7 +82,7 @@ public abstract class Transpose extends RBuiltinNode {
         int secondDim;
         if (isMatrixProfile.profile(vector.isMatrix())) {
             if (getDimNode == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNode = insert(GetDimAttributeNode.create());
             }
             int[] dims = getDimNode.getDimensions(vector);
