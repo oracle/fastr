@@ -64,7 +64,7 @@ public class JLineConsoleCompleter implements Completer {
         return cursor;
     }
 
-    private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
+    private static int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
         if (buffer.isEmpty()) {
             return cursor;
         }
@@ -110,7 +110,7 @@ public class JLineConsoleCompleter implements Completer {
         return start;
     }
 
-    private int getStart(String buffer, REnvironment env, int cursor) {
+    private static int getStart(String buffer, REnvironment env, int cursor) {
         int start = 0;
         Object o = env.get("options");
         if (o instanceof RList) {
@@ -123,7 +123,7 @@ public class JLineConsoleCompleter implements Completer {
         return start;
     }
 
-    private int lastIdxOf(String buffer, RList opt, String key, int start, int cursor) {
+    private static int lastIdxOf(String buffer, RList opt, String key, int start, int cursor) {
         int optIdx = opt.getElementIndexByName(key);
         if (optIdx > -1) {
             Object o = opt.getDataAt(optIdx);
@@ -135,7 +135,7 @@ public class JLineConsoleCompleter implements Completer {
         return start;
     }
 
-    private int lastIdxOf(String buffer, String subs, int start, int cursor) {
+    private static int lastIdxOf(String buffer, String subs, int start, int cursor) {
         if (null != subs && !subs.isEmpty()) {
             int idx = buffer.lastIndexOf(subs, cursor);
             if (idx == cursor) {

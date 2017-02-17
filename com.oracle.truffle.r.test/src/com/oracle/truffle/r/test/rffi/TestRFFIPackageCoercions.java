@@ -56,7 +56,7 @@ public class TestRFFIPackageCoercions extends TestRPackages {
         tearDownUninstallTestPackages();
     }
 
-    private String addLib(String test) {
+    private static String addLib(String test) {
         return "{ library('testrffi', lib.loc = '" + TestRPackages.libLoc() + "'); x <- " + test + "; detach('package:testrffi', unload=T); x }";
     }
 

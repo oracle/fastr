@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -44,26 +45,26 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
  * {@link RSpecialFactory#throwFullCallNeeded()} on NA.
  */
 @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
-@NodeChild(value = "arguments", type = RNode[].class)
+@NodeChild(value = "left", type = RNode.class)
+@NodeChild(value = "right", type = RNode.class)
 public abstract class BinaryArithmeticSpecial extends RNode {
+
     private final boolean handleNA;
     @Child private BinaryArithmetic operation;
 
-    public BinaryArithmeticSpecial(BinaryArithmetic operation, boolean handleNA) {
-        this.operation = operation;
-        this.handleNA = handleNA;
+    public BinaryArithmeticSpecial(BinaryArithmeticFactory opFactory) {
+        this.operation = opFactory.createOperation();
+        this.handleNA = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.MOD);
     }
 
-    public static RSpecialFactory createSpecialFactory(final BinaryArithmeticFactory opFactory) {
-        final boolean handleNA = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.MOD);
+    public static RSpecialFactory createSpecialFactory(BinaryArithmeticFactory opFactory) {
         boolean handleIntegers = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.DIV);
         if (handleIntegers) {
             return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
-                            ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments) : null;
+                            ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory, arguments[0], arguments[1]) : null;
         } else {
             return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
-                            ? BinaryArithmeticSpecialNodeGen.create(opFactory.createOperation(), handleNA, arguments)
-                            : null;
+                            ? BinaryArithmeticSpecialNodeGen.create(opFactory, arguments[0], arguments[1]) : null;
         }
     }
 
@@ -103,8 +104,8 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class IntegerBinaryArithmeticSpecial extends BinaryArithmeticSpecial {
 
-        IntegerBinaryArithmeticSpecial(BinaryArithmetic op, boolean handleNA) {
-            super(op, handleNA);
+        IntegerBinaryArithmeticSpecial(BinaryArithmeticFactory opFactory) {
+            super(opFactory);
         }
 
         @Specialization

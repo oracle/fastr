@@ -55,8 +55,7 @@ public class TestTypeConvert extends TestBase {
 
     @Test
     public void testFirstTypeMustBeOfModeTest() {
-        // UnsupportedSpecializationException: Unexpected values provided for ...
-        assertEval(Ignored.Unimplemented, "type.convert('NA', 1)");
+        assertEval("type.convert('NA', 1)");
     }
 
     @Test
