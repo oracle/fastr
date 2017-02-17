@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,6 +29,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,6 +41,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.sun.istack.internal.NotNull;
+import com.sun.media.jfxmedia.locator.ConnectionHolder;
 
 /**
  * Basic support classes and methods for the connection implementations.
@@ -798,157 +800,7 @@ public class ConnectionSupport {
         }
     }
 
-    interface ReadWriteHelper {
-
-        /**
-         * {@code readLines} from an {@link InputStream}. It would be convenient to use a
-         * {@link BufferedReader} but mixing binary and text operations, which is a requirement,
-         * would then be difficult.
-         *
-         * @param warn TODO
-         * @param skipNul TODO
-         */
-        default String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
-            ArrayList<String> lines = new ArrayList<>();
-            int totalRead = 0;
-            byte[] buffer = new byte[64];
-            int pushBack = 0;
-            while (true) {
-                int ch;
-                if (pushBack != 0) {
-                    ch = pushBack;
-                    pushBack = 0;
-                } else {
-                    ch = in.read();
-                }
-                boolean lineEnd = false;
-                if (ch < 0) {
-                    if (totalRead > 0) {
-                        /*
-                         * TODO GnuR says keep data and output a warning if blocking, otherwise
-                         * silently push back. FastR doesn't support non-blocking yet, so we keep
-                         * the data. Some refactoring is needed to be able to reliably access the
-                         * "name" for the warning.
-                         */
-                        lines.add(new String(buffer, 0, totalRead));
-                        if (warn) {
-                            RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
-                        }
-                    }
-                    break;
-                }
-                if (ch == '\n') {
-                    lineEnd = true;
-                } else if (ch == '\r') {
-                    lineEnd = true;
-                    ch = in.read();
-                    if (ch == '\n') {
-                        // swallow the trailing lf
-                    } else {
-                        pushBack = ch;
-                    }
-                }
-                if (lineEnd) {
-                    lines.add(new String(buffer, 0, totalRead));
-                    if (n > 0 && lines.size() == n) {
-                        break;
-                    }
-                    totalRead = 0;
-                } else {
-                    buffer = checkBuffer(buffer, totalRead);
-                    buffer[totalRead++] = (byte) (ch & 0xFF);
-                }
-            }
-            String[] result = new String[lines.size()];
-            lines.toArray(result);
-            return result;
-        }
-
-        default void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                out.write(lines.getDataAt(i).getBytes());
-                out.write(sep.getBytes());
-            }
-        }
-
-        default void writeStringHelper(OutputStream out, String s, boolean nl) throws IOException {
-            out.write(s.getBytes());
-            if (nl) {
-                out.write('\n');
-            }
-        }
-
-        default void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
-            out.write(s.getBytes());
-            if (pad > 0) {
-                for (int i = 0; i < pad; i++) {
-                    out.write(0);
-                }
-            }
-            if (eos != null) {
-                if (eos.length() > 0) {
-                    out.write(eos.getBytes());
-                }
-                // function writeChar is defined to append the null character if eos != null
-                out.write(0);
-            }
-        }
-
-        default void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
-            int n = buffer.remaining();
-            byte[] b = new byte[n];
-            buffer.get(b);
-            outputStream.write(b);
-        }
-
-        /**
-         * Reads null-terminated character strings from an {@link InputStream}.
-         */
-        default byte[] readBinCharsHelper(InputStream in) throws IOException {
-            int ch = in.read();
-            if (ch < 0) {
-                return null;
-            }
-            int totalRead = 0;
-            byte[] buffer = new byte[64];
-            while (true) {
-                buffer = checkBuffer(buffer, totalRead);
-                buffer[totalRead++] = (byte) (ch & 0xFF);
-                if (ch == 0) {
-                    break;
-                }
-                ch = in.read();
-            }
-            return buffer;
-        }
-
-        default int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
-            int bytesToRead = buffer.remaining();
-            byte[] b = new byte[bytesToRead];
-            int totalRead = 0;
-            int thisRead = 0;
-            while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
-                totalRead += thisRead;
-            }
-            buffer.put(b, 0, totalRead);
-            return totalRead;
-        }
-
-        default String readCharHelper(int nchars, InputStream in, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-            byte[] bytes = new byte[nchars];
-            in.read(bytes);
-            int j = 0;
-            for (; j < bytes.length; j++) {
-                // strings end at 0
-                if (bytes[j] == 0) {
-                    break;
-                }
-            }
-            return new String(bytes, 0, j);
-        }
-    }
-
-    private static byte[] checkBuffer(byte[] buffer, int n) {
+    static byte[] checkBuffer(byte[] buffer, int n) {
         if (n > buffer.length - 1) {
             byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
             System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
@@ -960,8 +812,9 @@ public class ConnectionSupport {
 
     abstract static class DelegateRConnection extends RConnection {
         protected BaseRConnection base;
+        protected ByteChannel channel;
 
-        DelegateRConnection(BaseRConnection base) {
+        DelegateRConnection(@NotNull BaseRConnection base, @NotNull ByteChannel channel) {
             this.base = base;
         }
 
@@ -997,8 +850,8 @@ public class ConnectionSupport {
     }
 
     abstract static class DelegateReadRConnection extends DelegateRConnection {
-        protected DelegateReadRConnection(BaseRConnection base) {
-            super(base);
+        protected DelegateReadRConnection(BaseRConnection base, ByteChannel channel) {
+            super(base, channel);
         }
 
         @Override
@@ -1048,8 +901,8 @@ public class ConnectionSupport {
     }
 
     abstract static class DelegateWriteRConnection extends DelegateRConnection {
-        protected DelegateWriteRConnection(BaseRConnection base) {
-            super(base);
+        protected DelegateWriteRConnection(BaseRConnection base, ByteChannel channel) {
+            super(base, channel);
         }
 
         @Override
@@ -1091,11 +944,59 @@ public class ConnectionSupport {
         public boolean canWrite() {
             return true;
         }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            // TODO
+            writeCharHelper(channel, s, pad, eos);
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            channel.write(buffer);
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            // TODO do we still need the output stream ?
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            base.closed = true;
+            close();
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            channel.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                String line = lines.getDataAt(i);
+                outputStream.write(line.getBytes());
+                outputStream.write(sep.getBytes());
+            }
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            writeStringHelper(outputStream, s, nl);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            outputStream.flush();
+        }
     }
 
     abstract static class DelegateReadWriteRConnection extends DelegateRConnection {
-        protected DelegateReadWriteRConnection(BaseRConnection base) {
-            super(base);
+        protected DelegateReadWriteRConnection(BaseRConnection base, ByteChannel channel) {
+            super(base, channel);
         }
 
         @Override

@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class CompressedConnections {

@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {

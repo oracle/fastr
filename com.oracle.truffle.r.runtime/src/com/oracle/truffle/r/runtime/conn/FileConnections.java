@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnecti
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FileConnections {
