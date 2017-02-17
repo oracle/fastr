@@ -144,6 +144,11 @@ public abstract class ConnectionFunctions {
             return casts.arg("open").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA();
         }
 
+        private static HeadPhaseBuilder<String> openMode(Casts casts) {
+            return open(casts).mustBe(equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("r+b")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(
+                            equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
+        }
+
         private static void encoding(Casts casts) {
             casts.arg("encoding").asStringVector().mustBe(singleElement()).findFirst();
         }
@@ -425,10 +430,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(RawConnection.class);
             CastsHelper.description(casts);
             casts.arg("object").mustBe(stringValue().or(rawValue()));
-            CastsHelper.open(casts).mustBe(
-                            equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(equalTo("w+")).or(
-                                            equalTo("a")).or(equalTo("a+")),
-                            RError.Message.UNSUPPORTED_MODE);
+            CastsHelper.openMode(casts);
         }
 
         @Specialization
