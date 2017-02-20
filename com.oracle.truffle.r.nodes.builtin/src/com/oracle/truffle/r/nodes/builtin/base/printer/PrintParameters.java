@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -21,7 +21,6 @@ import com.oracle.truffle.r.nodes.builtin.base.Format;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RString;
 
 public final class PrintParameters {
     @CompilationFinal private static int DefaultDigits = -1;
@@ -58,8 +57,7 @@ public final class PrintParameters {
     }
 
     @TruffleBoundary
-    PrintParameters(Object digits, boolean quote, Object naPrint,
-                    Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
+    PrintParameters(Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
 
         setDefaults();
 
@@ -79,12 +77,12 @@ public final class PrintParameters {
             // condition, the GnuR application ignores that condition. It was revealed when running
             // test com.oracle.truffle.r.test.builtins.TestBuiltin_printdefault, which fails if the
             // condition is present complaining about an invalid na.print specification.
-            // if (!(naPrint instanceof RString) || ((RString) naPrint).getValue().length() < 1)
+            // if (!(naPrint instanceof String) || ((String) naPrint).getValue().length() < 1)
             // throw new
             // IllegalArgumentException(String.format("invalid 'na.print' specification"));
-            String nav = naPrint.toString();
-            if (!"".equals(nav)) {
-                this.naString = this.naStringNoquote = ((RString) naPrint).getValue();
+            String nav = (String) naPrint;
+            if (!nav.isEmpty()) {
+                this.naString = this.naStringNoquote = nav;
                 this.naWidth = this.naWidthNoquote = this.naString.length();
             }
         }

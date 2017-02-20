@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,8 +29,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('1', '2', '\\\\b', '4', '5', '\\\\040', '\\\\x20', 'c:\\\\spencer\\\\tests', '\\\\t', '\\\\n', '\\\\r'), .Dim = c(11L, 1L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'), 'TEST')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c('1', '2', '\\\\b', '4', '5', '\\\\040', '\\\\x20', 'c:\\\\spencer\\\\tests', '\\\\t', '\\\\n', '\\\\r'), .Dim = c(11L, 1L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'), 'TEST')), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -50,8 +49,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(NA, NA, NA, 'a', NA, NA, 'b', 'd', NA, '10', '12', '14'), .Dim = 3:4), NULL, TRUE, '----', NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(NA, NA, NA, 'a', NA, NA, 'b', 'd', NA, '10', '12', '14'), .Dim = 3:4), NULL, TRUE, '----', NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test

@@ -107,7 +107,7 @@ public abstract class MatchArg extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreter();
                 StringBuilder choicesString = new StringBuilder();
                 for (int i = 0; i < choices.getLength(); i++) {
-                    choicesString.append(i == 0 ? "" : ", ").append(RRuntime.quoteString(choices.getDataAt(i), false));
+                    choicesString.append(i == 0 ? "" : ", ").append(RRuntime.escapeString(choices.getDataAt(i), false, true));
                 }
                 throw RError.error(this, Message.ARG_ONE_OF, "arg", choicesString);
             }

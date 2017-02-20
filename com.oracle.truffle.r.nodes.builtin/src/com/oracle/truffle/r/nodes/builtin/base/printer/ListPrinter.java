@@ -79,33 +79,30 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 RAbstractLogicalVector lv = (RAbstractLogicalVector) tmp;
                 if (lv.getLength() == 1) {
                     FormatMetrics fm = LogicalVectorPrinter.formatLogicalVector(lv, 0, 1, pp.getNaWidth());
-                    pbuf = snprintf(115, "%s",
-                                    LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), fm.maxWidth, pp));
+                    pbuf = LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), fm.maxWidth, pp);
                 } else {
-                    pbuf = snprintf(115, "Logical,%d", lv.getLength());
+                    pbuf = "Logical," + lv.getLength();
                 }
             } else if (tmp instanceof RAbstractIntVector) {
                 RAbstractIntVector iv = (RAbstractIntVector) tmp;
                 if (printCtx.printerNode().inherits(iv, RRuntime.CLASS_FACTOR)) {
                     /* factors are stored as integers */
-                    pbuf = snprintf(115, "factor,%d", iv.getLength());
+                    pbuf = "factor," + iv.getLength();
                 } else {
                     if (iv.getLength() == 1) {
                         FormatMetrics fm = IntegerVectorPrinter.formatIntVector(iv, 0, 1, pp.getNaWidth());
-                        pbuf = snprintf(115, "%s",
-                                        IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), fm.maxWidth, pp));
+                        pbuf = IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), fm.maxWidth, pp);
                     } else {
-                        pbuf = snprintf(115, "Integer,%d", iv.getLength());
+                        pbuf = "Integer," + iv.getLength();
                     }
                 }
             } else if (tmp instanceof RAbstractDoubleVector) {
                 RAbstractDoubleVector dv = (RAbstractDoubleVector) tmp;
                 if (dv.getLength() == 1) {
                     DoubleVectorMetrics fm = DoubleVectorPrinter.formatDoubleVector(dv, 0, 1, 0, pp);
-                    pbuf = snprintf(115, "%s",
-                                    DoubleVectorPrinter.encodeReal(dv.getDataAt(0), fm, pp));
+                    pbuf = DoubleVectorPrinter.encodeReal(dv.getDataAt(0), fm, pp);
                 } else {
-                    pbuf = snprintf(115, "Numeric,%d", dv.getLength());
+                    pbuf = "Numeric," + dv.getLength();
                 }
             } else if (tmp instanceof RAbstractComplexVector) {
                 RAbstractComplexVector cv = (RAbstractComplexVector) tmp;
@@ -113,36 +110,35 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     RComplex x = cv.getDataAt(0);
                     if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
                         /* formatReal(NA) --> w=R_print.na_width, d=0, e=0 */
-                        pbuf = snprintf(115, "%s",
-                                        DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp));
+                        pbuf = DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp);
                     } else {
                         ComplexVectorMetrics cvm = ComplexVectorPrinter.formatComplexVector(x, 0, 1, 0, pp);
-                        pbuf = snprintf(115, "%s", ComplexVectorPrinter.encodeComplex(x, cvm, pp));
+                        pbuf = ComplexVectorPrinter.encodeComplex(x, cvm, pp);
                     }
                 } else {
-                    pbuf = snprintf(115, "Complex,%d", cv.getLength());
+                    pbuf = "Complex," + cv.getLength();
                 }
             } else if (tmp instanceof RAbstractStringVector) {
                 RAbstractStringVector sv = (RAbstractStringVector) tmp;
                 if (sv.getLength() == 1) {
-                    String ctmp = sv.getDataAt(0);
+                    String ctmp = RRuntime.escapeString(sv.getDataAt(0), true, true);
                     int len = ctmp.length();
                     if (len < 100) {
-                        pbuf = snprintf(115, "\"%s\"", ctmp);
+                        pbuf = ctmp;
                     } else {
-                        pbuf = snprintf(101, "\"%s", ctmp) + "\" [truncated]";
+                        pbuf = Utils.trimSize(101, ctmp) + "\" [truncated]";
                     }
                 } else {
-                    pbuf = snprintf(115, "Character,%d", sv.getLength());
+                    pbuf = "Character," + sv.getLength();
                 }
             } else if (tmp instanceof RAbstractRawVector) {
-                pbuf = snprintf(115, "Raw,%d", ((RAbstractRawVector) (tmp)).getLength());
+                pbuf = "Raw," + ((RAbstractRawVector) (tmp)).getLength();
             } else if (tmp instanceof RAbstractListVector) {
-                pbuf = snprintf(115, "List,%d", ((RAbstractListVector) (tmp)).getLength());
+                pbuf = "List," + ((RAbstractListVector) (tmp)).getLength();
             } else if (tmp instanceof RLanguage) {
-                pbuf = snprintf(115, "Expression");
+                pbuf = "Expression";
             } else {
-                pbuf = snprintf(115, "?");
+                pbuf = "?";
             }
 
             t[i] = pbuf;
