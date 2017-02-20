@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -83,24 +81,6 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
         try {
             return operand.executeDouble(frame);
-        } catch (UnexpectedResultException e) {
-            throw new UnexpectedResultException(execute(frame, e.getResult()));
-        }
-    }
-
-    @Override
-    public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
-        try {
-            return operand.executeMissing(frame);
-        } catch (UnexpectedResultException e) {
-            throw new UnexpectedResultException(execute(frame, e.getResult()));
-        }
-    }
-
-    @Override
-    public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-        try {
-            return operand.executeNull(frame);
         } catch (UnexpectedResultException e) {
             throw new UnexpectedResultException(execute(frame, e.getResult()));
         }

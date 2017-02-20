@@ -47,7 +47,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -215,17 +214,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (explicitArgs != null) {
             return (RArgsValuesAndNames) explicitArgs.execute(frame);
         }
-        RArgsValuesAndNames varArgs;
         if (lookupVarArgs == null) {
-            varArgs = null;
+            return null;
         } else {
-            try {
-                varArgs = lookupVarArgs.executeRArgsValuesAndNames(frame);
-            } catch (UnexpectedResultException e) {
+            Object varArgs = lookupVarArgs.execute(frame);
+            if (!(varArgs instanceof RArgsValuesAndNames)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
             }
+            return (RArgsValuesAndNames) varArgs;
         }
-        return varArgs;
     }
 
     protected FunctionDispatch createUninitializedCall() {

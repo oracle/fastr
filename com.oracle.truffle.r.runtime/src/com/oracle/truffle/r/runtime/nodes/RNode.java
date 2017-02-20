@@ -26,27 +26,8 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory;
 
 @TypeSystemReference(RTypes.class)
@@ -75,40 +56,12 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return execute(frame);
     }
 
+    /*
+     * Execute functions with primitive return types:
+     */
+
     public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectInteger(execute(frame));
-    }
-
-    public RRaw executeRRaw(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRRaw(execute(frame));
-    }
-
-    public RComplex executeRComplex(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRComplex(execute(frame));
-    }
-
-    public RAbstractDoubleVector executeRAbstractDoubleVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractDoubleVector(execute(frame));
-    }
-
-    public RAbstractIntVector executeRAbstractIntVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractIntVector(execute(frame));
-    }
-
-    public RAbstractComplexVector executeRAbstractComplexVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractComplexVector(execute(frame));
-    }
-
-    public RAbstractLogicalVector executeRAbstractLogicalVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractLogicalVector(execute(frame));
-    }
-
-    public RAbstractRawVector executeRAbstractRawVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractRawVector(execute(frame));
-    }
-
-    public RAbstractStringVector executeRAbstractStringVector(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractStringVector(execute(frame));
     }
 
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
@@ -117,53 +70,5 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectByte(execute(frame));
-    }
-
-    public RFunction executeFunction(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRFunction(execute(frame));
-    }
-
-    public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRNull(execute(frame));
-    }
-
-    public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRMissing(execute(frame));
-    }
-
-    public String executeString(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectString(execute(frame));
-    }
-
-    public REnvironment executeREnvironment(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectREnvironment(execute(frame));
-    }
-
-    public RExpression executeRExpression(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRExpression(execute(frame));
-    }
-
-    public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRSymbol(execute(frame));
-    }
-
-    public RLanguage executeRLanguage(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRLanguage(execute(frame));
-    }
-
-    public RPromise executeRPromise(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRPromise(execute(frame));
-    }
-
-    public RAbstractContainer executeRAbstractContainer(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRAbstractContainer(execute(frame));
-    }
-
-    public RPairList executeRPairList(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRPairList(execute(frame));
-    }
-
-    public RArgsValuesAndNames executeRArgsValuesAndNames(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRArgsValuesAndNames(execute(frame));
     }
 }

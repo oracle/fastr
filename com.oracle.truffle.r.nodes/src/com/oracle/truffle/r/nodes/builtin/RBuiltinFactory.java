@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -45,11 +44,5 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     public Supplier<RBuiltinNode> getConstructor() {
         return constructor;
-    }
-
-    @Override
-    public String toString() {
-        return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
-                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
     }
 }
