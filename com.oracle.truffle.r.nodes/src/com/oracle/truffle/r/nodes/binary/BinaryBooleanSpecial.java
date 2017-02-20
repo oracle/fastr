@@ -82,7 +82,7 @@ public abstract class BinaryBooleanSpecial extends RNode {
 
     @Fallback
     @SuppressWarnings("unused")
-    public void doFallback(Object left, Object right) {
+    public byte doFallback(Object left, Object right) {
         throw RSpecialFactory.throwFullCallNeeded();
     }
 }

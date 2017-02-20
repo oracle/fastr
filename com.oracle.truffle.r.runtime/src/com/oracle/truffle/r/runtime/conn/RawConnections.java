@@ -99,7 +99,7 @@ public class RawConnections {
             return channel.getBuffer();
         }
 
-        public static long seek(SeekableMemoryByteChannel channel, long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public static long seek(SeekableMemoryByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
             final long origPos = channel.position();
             final long newPos;
             switch (seekMode) {

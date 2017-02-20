@@ -62,19 +62,19 @@ public class SplineFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, RAbstractDoubleVector x, RNull y) {
+        protected Object splineCoef(int method, RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
             return SplineFunctions.splineCoef(method, x.materialize(), RDataFactory.createDoubleVector(0));
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, RNull x, RAbstractDoubleVector y) {
+        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RAbstractDoubleVector y) {
             return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), y.materialize());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, RNull x, RNull y) {
+        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RNull y) {
             return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), RDataFactory.createDoubleVector(0));
         }
     }

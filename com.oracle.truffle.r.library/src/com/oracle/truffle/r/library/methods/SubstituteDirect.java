@@ -60,7 +60,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @Specialization(guards = {"list.getNames() == null || list.getNames().getLength() == 0"})
     @TruffleBoundary
-    protected static Object substituteDirect(Object object, RList list) {
+    protected static Object substituteDirect(Object object, @SuppressWarnings("unused") RList list) {
         return substituteDirect(object, createNewEnvironment());
     }
 

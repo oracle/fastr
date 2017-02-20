@@ -740,7 +740,7 @@ public abstract class ConnectionFunctions {
         }
 
         @TruffleBoundary
-        private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        private static RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {

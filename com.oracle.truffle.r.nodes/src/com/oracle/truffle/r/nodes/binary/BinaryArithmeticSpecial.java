@@ -76,7 +76,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
 
     @Fallback
     @SuppressWarnings("unused")
-    protected void doFallback(Object left, Object right) {
+    protected double doFallback(Object left, Object right) {
         throw RSpecialFactory.throwFullCallNeeded();
     }
 

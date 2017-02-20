@@ -60,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 /*
@@ -69,16 +68,11 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"}, behavior = PURE)
 public abstract class Match extends RBuiltinNode {
 
-    private static final int TABLE_SIZE_FACTOR = 10;
-
     protected abstract Object executeRIntVector(Object x, Object table, Object noMatch, Object incomparables);
 
     @Child private CastStringNode castString;
 
     @Child private Match matchRecursive;
-
-    private final NACheck naCheck = NACheck.create();
-    private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(Match.class);
