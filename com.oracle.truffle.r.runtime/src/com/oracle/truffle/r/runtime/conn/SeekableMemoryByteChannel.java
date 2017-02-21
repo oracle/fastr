@@ -89,7 +89,7 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
         this(clp2(Objects.requireNonNull(initialBuffer).length));
         assert buf.length >= initialBuffer.length;
         endPos = initialBuffer.length;
-        position = initialBuffer.length;
+        position = 0L;
         System.arraycopy(initialBuffer, 0, buf, 0, initialBuffer.length);
     }
 
@@ -105,9 +105,10 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
         }
         Objects.requireNonNull(dst);
         RInternalError.guarantee(dst.remaining() <= Integer.MAX_VALUE);
-        final int nCanRead = (int) Math.min(dst.remaining(), size());
+        final int nCanRead = (int) Math.min(dst.remaining(), remaining());
         dst.put(buf, (int) (position - offset), nCanRead);
         position += nCanRead;
+        assert position <= endPos;
         return nCanRead;
     }
 
@@ -181,10 +182,17 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
         return endPos - offset;
     }
 
+    private long remaining() {
+        return endPos - position;
+    }
+
     @Override
     public SeekableByteChannel position(long newPosition) throws IOException {
         if (newPosition < 0) {
             throw new IllegalArgumentException("newPosition must not be negative");
+        }
+        if (newPosition + offset > endPos) {
+            throw new IllegalArgumentException("setting position outside data range is currently not supported");
         }
         position = newPosition + offset;
         return this;
@@ -224,10 +232,13 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
     }
 
     public int read() throws IOException {
-        final ByteBuffer bf = ByteBuffer.allocate(1);
-        read(bf);
-        bf.rewind();
-        return bf.get();
+        if (position < endPos) {
+            final ByteBuffer bf = ByteBuffer.allocate(1);
+            read(bf);
+            bf.rewind();
+            return bf.get();
+        }
+        return -1;
     }
 
     private class SyncOS extends OutputStream {

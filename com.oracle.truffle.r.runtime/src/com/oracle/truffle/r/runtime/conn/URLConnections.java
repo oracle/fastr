@@ -27,14 +27,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
 
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
@@ -64,7 +63,7 @@ public class URLConnections {
         }
     }
 
-    private static class URLReadRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    private static class URLReadRConnection extends DelegateReadRConnection {
 
         private final BufferedInputStream inputStream;
 
@@ -75,29 +74,8 @@ public class URLConnections {
         }
 
         @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, "readBin on URL");
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, "readBinChars on URL");
-        }
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
+        public InputStream getInputStream() {
             return inputStream;
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
         }
 
         @Override
@@ -106,8 +84,13 @@ public class URLConnections {
         }
 
         @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
+        public ReadableByteChannel getChannel() {
+            return Channels.newChannel(inputStream);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 }

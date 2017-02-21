@@ -30,6 +30,7 @@ import java.util.LinkedList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -259,9 +260,22 @@ public abstract class RConnection implements AutoCloseable {
     public abstract boolean isSeekable();
 
     /**
-     * Support for {@code seek} Internal.
+     * Support for {@code seek} Internal. Also clears push back lines.
      */
-    public abstract long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException;
+    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        if (isSeekable()) {
+            // discard any push back strings
+            pushBackClear();
+
+            return seekInternal(offset, seekMode, seekRWMode);
+        }
+        throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_ENABLED);
+    }
+
+    /**
+     * Allows to seek in the connection.
+     */
+    protected abstract long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException;
 
     /**
      * Internal support for reading one character at a time.

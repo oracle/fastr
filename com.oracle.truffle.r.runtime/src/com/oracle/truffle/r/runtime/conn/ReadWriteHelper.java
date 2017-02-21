@@ -5,11 +5,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.conn.RConnection.SeekMode;
+import com.oracle.truffle.r.runtime.conn.RConnection.SeekRWMode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.sun.istack.internal.NotNull;
 
 public class ReadWriteHelper {
 
@@ -77,27 +83,46 @@ public class ReadWriteHelper {
         return result;
     }
 
-    public static void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
+    public static void writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep) throws IOException {
         for (int i = 0; i < lines.getLength(); i++) {
-            out.write(lines.getDataAt(i).getBytes());
-            out.write(sep.getBytes());
+            final String line = lines.getDataAt(i);
+            writeStringHelper(out, line, false);
+            writeStringHelper(out, sep, false);
         }
     }
 
-    public static void writeStringHelper(ByteChannel out, String s, boolean nl) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(s.length() + 1);
-        buf.put(s.getBytes());
+    public static void writeStringHelper(WritableByteChannel out, String s, boolean nl) throws IOException {
+        final byte[] bytes = s.getBytes();
+        final byte[] lineSepBytes = nl ? System.lineSeparator().getBytes() : null;
+
+        ByteBuffer buf = ByteBuffer.allocate(bytes.length + (nl ? lineSepBytes.length : 0));
+        buf.put(bytes);
         if (nl) {
-            buf.putChar('\n');
+            buf.put(lineSepBytes);
         }
+
         buf.rewind();
         out.write(buf);
     }
 
-    public static void writeCharHelper(ByteChannel channel, String s, int pad, String eos) throws IOException {
+    /**
+     * Writes characters in binary mode (without any re-encoding) to the provided channel.
+     *
+     * @param channel The writable byte channel to write to (must not be {@code null}).
+     * @param s The character string to write (must not be {@code null}).
+     * @param pad The number of null characters to append to the characters.
+     * @param eos The end-of-string terminator (may be {@code null}).
+     * @throws IOException
+     */
+    public static void writeCharHelper(@NotNull WritableByteChannel channel, @NotNull String s, int pad, String eos) throws IOException {
 
-        ByteBuffer buf = ByteBuffer.allocate(s.length() + pad + eos.length() + 1);
-        buf.put(s.getBytes());
+        final byte[] bytes = s.getBytes();
+        final byte[] eosBytes = eos != null ? eos.getBytes() : null;
+
+        final int bufLen = bytes.length + (pad > 0 ? pad : 0) + (eos != null ? eosBytes.length + 1 : 0);
+        assert bufLen >= s.length();
+        ByteBuffer buf = ByteBuffer.allocate(bufLen);
+        buf.put(bytes);
         if (pad > 0) {
             for (int i = 0; i < pad; i++) {
                 buf.put((byte) 0);
@@ -123,7 +148,7 @@ public class ReadWriteHelper {
     }
 
     /**
-     * Reads null-terminated character strings from an {@link InputStream}.
+     * Reads null-terminated character strings from a {@link InputStream}.
      */
     public static byte[] readBinCharsHelper(InputStream in) throws IOException {
         int ch = in.read();
@@ -155,16 +180,40 @@ public class ReadWriteHelper {
         return totalRead;
     }
 
-    public static String readCharHelper(int nchars, InputStream in, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-        byte[] bytes = new byte[nchars];
-        in.read(bytes);
+    public static String readCharHelper(int nchars, ReadableByteChannel channel, @SuppressWarnings("unused") boolean useBytes) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(nchars);
+        channel.read(buf);
         int j = 0;
-        for (; j < bytes.length; j++) {
+        for (; j < buf.position(); j++) {
             // strings end at 0
-            if (bytes[j] == 0) {
+            if (buf.get(j) == 0) {
                 break;
             }
         }
-        return new String(bytes, 0, j);
+
+        return new String(buf.array(), 0, j);
+    }
+
+    /**
+     * TODO probably, this method belongs to {@link ConnectionSupport}
+     */
+    public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        long position = channel.position();
+        switch (seekMode) {
+            case ENQUIRE:
+                break;
+            case CURRENT:
+                if (offset != 0) {
+                    channel.position(position + offset);
+                }
+                break;
+            case START:
+                channel.position(offset);
+                break;
+            case END:
+                throw RInternalError.unimplemented();
+
+        }
+        return position;
     }
 }

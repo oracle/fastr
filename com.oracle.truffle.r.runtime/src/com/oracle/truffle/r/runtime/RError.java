@@ -831,7 +831,10 @@ public final class RError extends RuntimeException {
         NOT_AN_OUTPUT_RAW_CONNECTION("'con' is not an output rawConnection"),
         NOT_A_RAW_CONNECTION("'con' is not a rawConnection"),
         SEEK_OUTSITE_RAW_CONNECTION("attempt to seek outside the range of the raw connection"),
-        VECTOR_IS_TOO_LARGE("vector is too large");
+        VECTOR_IS_TOO_LARGE("vector is too large"),
+        SEEK_NOT_RELEVANT_FOR_TEXT_CON("seek is not relevant for text connection"),
+        SEEK_NOT_ENABLED("'seek' not enabled for this connection"),
+        CANNOT_OPEN_FIFO("cannot open fifo '%s'");
 
         public final String message;
         final boolean hasArgs;

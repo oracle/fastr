@@ -69,8 +69,9 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.conn.CompressedConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
+import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
@@ -310,8 +311,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(TextConnection.class);
             CastsHelper.description(casts);
             // TODO how to have either a RNull or a String/RStringVector and have the latter coerced
-            // to a
-            // RAbstractStringVector to avoid the explicit handling in the specialization
+            // to a RAbstractStringVector to avoid the explicit handling in the specialization
             casts.arg("text").allowNull().mustBe(stringValue());
             CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
@@ -748,10 +748,10 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
-                int length = object.getLength();
+                final int length = object.getLength();
+                final int ncharsLen = nchars.getLength();
                 for (int i = 0; i < length; i++) {
-                    // FIXME: 'i % length' is probably wrong
-                    int nc = nchars.getDataAt(i % length);
+                    int nc = nchars.getDataAt(i % ncharsLen);
                     String s = object.getDataAt(i);
                     final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
@@ -1200,6 +1200,31 @@ public abstract class ConnectionFunctions {
                 return (int) newOffset;
             } catch (IOException x) {
                 throw error(RError.Message.GENERIC, x.getMessage());
+            }
+        }
+    }
+
+    @RBuiltin(name = "fifo", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
+    public abstract static class Fifo extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Fifo.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            CastsHelper.blocking(casts);
+            CastsHelper.encoding(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector fifo(String path, String openArg, boolean blocking, String encoding) {
+
+            String open = openArg;
+            try {
+                return new FifoRConnection(path, open, blocking, encoding).asVector();
+            } catch (IOException ex) {
+                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }

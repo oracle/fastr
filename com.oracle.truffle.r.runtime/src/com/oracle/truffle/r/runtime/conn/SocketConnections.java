@@ -28,15 +28,13 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.nio.channels.SocketChannel;
 
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class SocketConnections {
     /**
@@ -74,7 +72,7 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
         private Socket socket;
         private SocketChannel socketChannel;
         protected InputStream inputStream;
@@ -105,68 +103,33 @@ public class SocketConnections {
 
         @Override
         public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
+            return ReadWriteHelper.readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
-        public InputStream getInputStream() throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return outputStream;
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            writeLinesHelper(outputStream, lines, sep);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            writeBinHelper(buffer, outputStream);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            return readBinHelper(buffer, inputStream);
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(outputStream, s, pad, eos);
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            return readBinCharsHelper(inputStream);
-        }
-
-        @Override
-        public void flush() throws IOException {
-            outputStream.flush();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
+        public void flush() {
+            // TODO add "throws"
+            try {
+                outputStream.flush();
+            } catch (IOException e) {
+                RInternalError.shouldNotReachHere();
+            }
         }
 
         @Override
         public void close() throws IOException {
+            // TODO(fa) I'm not sure if socket.close() is the same as channel.close()
             socket.close();
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return socketChannel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 

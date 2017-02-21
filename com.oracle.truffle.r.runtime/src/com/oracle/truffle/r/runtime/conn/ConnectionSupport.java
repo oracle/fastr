@@ -29,7 +29,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,8 +40,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.sun.istack.internal.NotNull;
-import com.sun.media.jfxmedia.locator.ConnectionHolder;
 
 /**
  * Basic support classes and methods for the connection implementations.
@@ -321,7 +318,9 @@ public class ConnectionSupport {
         Text("textConnection"),
         URL("url"),
         RAW("rawConnection"),
-        Internal("internal");
+        Internal("internal"),
+        PIPE("pipe"),
+        FIFO("fifo");
 
         private final String printName;
 
@@ -464,6 +463,11 @@ public class ConnectionSupport {
 
         @Override
         public boolean isOpen() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
     }
@@ -745,9 +749,9 @@ public class ConnectionSupport {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             checkOpen();
-            return theConnection.seek(offset, seekMode, seekRWMode);
+            return theConnection.seekInternal(offset, seekMode, seekRWMode);
         }
 
         @Override
@@ -807,211 +811,6 @@ public class ConnectionSupport {
             return newBuffer;
         } else {
             return buffer;
-        }
-    }
-
-    abstract static class DelegateRConnection extends RConnection {
-        protected BaseRConnection base;
-        protected ByteChannel channel;
-
-        DelegateRConnection(@NotNull BaseRConnection base, @NotNull ByteChannel channel) {
-            this.base = base;
-        }
-
-        @Override
-        public int getDescriptor() {
-            return base.getDescriptor();
-        }
-
-        @Override
-        public boolean isTextMode() {
-            return base.isTextMode();
-        }
-
-        @Override
-        public boolean isOpen() {
-            return base.isOpen();
-        }
-
-        @Override
-        public RConnection forceOpen(String modeString) throws IOException {
-            return base.forceOpen(modeString);
-        }
-
-        @Override
-        public boolean isSeekable() {
-            return false;
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
-        }
-    }
-
-    abstract static class DelegateReadRConnection extends DelegateRConnection {
-        protected DelegateReadRConnection(BaseRConnection base, ByteChannel channel) {
-            super(base, channel);
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public int getc() throws IOException {
-            return getInputStream().read();
-        }
-
-        @Override
-        public void flush() {
-            // nothing to do
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public boolean canRead() {
-            return true;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return false;
-        }
-    }
-
-    abstract static class DelegateWriteRConnection extends DelegateRConnection {
-        protected DelegateWriteRConnection(BaseRConnection base, ByteChannel channel) {
-            super(base, channel);
-        }
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public int getc() throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public boolean canRead() {
-            return false;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return true;
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            // TODO
-            writeCharHelper(channel, s, pad, eos);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            channel.write(buffer);
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            // TODO do we still need the output stream ?
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            flush();
-            channel.close();
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                String line = lines.getDataAt(i);
-                outputStream.write(line.getBytes());
-                outputStream.write(sep.getBytes());
-            }
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
-        }
-
-        @Override
-        public void flush() throws IOException {
-            outputStream.flush();
-        }
-    }
-
-    abstract static class DelegateReadWriteRConnection extends DelegateRConnection {
-        protected DelegateReadWriteRConnection(BaseRConnection base, ByteChannel channel) {
-            super(base, channel);
-        }
-
-        @Override
-        public boolean canRead() {
-            return true;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return true;
-        }
-
-        @Override
-        public int getc() throws IOException {
-            return getInputStream().read();
         }
     }
 

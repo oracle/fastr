@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,25 +31,40 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZ;
 import org.tukaani.xz.XZInputStream;
+import org.tukaani.xz.XZOutputStream;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RCompression.Type;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FileConnections {
+    public static final int GZIP_BUFFER_SIZE = (2 << 20);
+
     /**
      * Base class for all modes of file connections.
      *
@@ -72,10 +86,13 @@ public class FileConnections {
 
         @Override
         protected void createDelegateConnection() throws IOException {
+
+            // TODO (non-)blocking
+
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
-                    delegate = new FileReadTextRConnection(this);
+                    delegate = new FileReadTextRConnection(this, true);
                     break;
                 case Write:
                     delegate = new FileWriteTextRConnection(this, false);
@@ -87,7 +104,7 @@ public class FileConnections {
                     delegate = new FileReadBinaryRConnection(this);
                     break;
                 case WriteBinary:
-                    delegate = new FileWriteBinaryConnection(this, false);
+                    delegate = new FileWriteBinaryConnection(this, false, true);
                     break;
                 case ReadWriteTrunc:
                 case ReadWriteTruncBinary:
@@ -100,27 +117,62 @@ public class FileConnections {
         }
     }
 
-    static class FileReadTextRConnection extends DelegateReadRConnection implements ReadWriteHelper {
-        private InputStream inputStream;
+    private DelegateRConnection createDelegateConnection(BasePathRConnection base, OpenMode m) throws IOException {
 
-        FileReadTextRConnection(BasePathRConnection base) throws IOException {
+        // TODO (non-)blocking
+
+        DelegateRConnection delegate = null;
+        switch (m.abstractOpenMode) {
+            case Read:
+                delegate = new FileReadTextRConnection(base, true);
+                break;
+            case Write:
+                delegate = new FileWriteTextRConnection(base, false);
+                break;
+            case Append:
+                delegate = new FileWriteTextRConnection(base, true);
+                break;
+            case ReadBinary:
+                delegate = new FileReadBinaryRConnection(base);
+                break;
+            case WriteBinary:
+                delegate = new FileWriteBinaryConnection(base, false, true);
+                break;
+            case ReadWriteTrunc:
+            case ReadWriteTruncBinary:
+                delegate = new FileReadWriteConnection(base);
+                break;
+            default:
+                throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + m);
+        }
+        return delegate;
+    }
+
+    static class FileReadTextRConnection extends DelegateReadRConnection {
+
+        private final ReadableByteChannel channel;
+
+        FileReadTextRConnection(BasePathRConnection base, boolean blocking) throws IOException {
             super(base);
+
+            // FIXME: since streams are used to open the file, this is BLOCKING by default !
+
             // can be compressed - check for it
             RCompression.Type cType = RCompression.getCompressionType(base.path);
             switch (cType) {
                 case NONE:
-                    inputStream = new BufferedInputStream(new FileInputStream(base.path));
+                    channel = Files.newByteChannel(Paths.get(base.path), StandardOpenOption.READ);
                     break;
                 case GZIP:
-                    inputStream = new GZIPInputStream(new FileInputStream(base.path), CompressedConnections.GZIP_BUFFER_SIZE);
+                    channel = Channels.newChannel(new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE));
                     break;
                 case BZIP2:
                     // no in Java support, so go via byte array
                     byte[] bzipUdata = RCompression.bzipUncompressFromFile(base.path);
-                    inputStream = new ByteArrayInputStream(bzipUdata);
+                    channel = new SeekableMemoryByteChannel(bzipUdata);
                     break;
                 case XZ:
-                    inputStream = new XZInputStream(new FileInputStream(base.path));
+                    channel = Channels.newChannel(new XZInputStream(new FileInputStream(base.path)));
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "compression type: " + cType.name());
@@ -137,45 +189,48 @@ public class FileConnections {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
-        @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
+        public ReadableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
+        public boolean isSeekable() {
+            // TODO Auto-generated method stub
+            return false;
         }
 
-        @Override
-        public InputStream getInputStream() throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
-        }
     }
 
-    private static class FileWriteTextRConnection extends DelegateWriteRConnection implements ReadWriteHelper {
-        private final BufferedOutputStream outputStream;
+    private static class FileWriteTextRConnection extends DelegateWriteRConnection {
 
-        FileWriteTextRConnection(FileRConnection base, boolean append) throws IOException {
+        private final SeekableByteChannel channel;
+
+        /**
+         * Opens a file for writing.
+         *
+         * @param base The base connection.
+         * @param append If {@code true}, the file cursor is positioned at the end and write
+         *            operations append to the file. If {@code false}, the file will be truncated.
+         * @throws IOException
+         */
+        FileWriteTextRConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            outputStream = new BufferedOutputStream(new FileOutputStream(base.path, append));
+            List<OpenOption> opts = new ArrayList<>();
+            opts.add(StandardOpenOption.WRITE);
+            opts.add(StandardOpenOption.CREATE);
+            if (append) {
+                opts.add(StandardOpenOption.APPEND);
+            } else {
+                opts.add(StandardOpenOption.TRUNCATE_EXISTING);
+            }
+
+            channel = Files.newByteChannel(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
         }
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(outputStream, s, pad, eos);
+            ReadWriteHelper.writeCharHelper(getChannel(), s, pad, eos);
         }
 
         @Override
@@ -184,39 +239,23 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            writeLinesHelper(outputStream, lines, sep);
-            flush();
-        }
-
-        @Override
         public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
+            ReadWriteHelper.writeStringHelper(getChannel(), s, nl);
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
-            return outputStream;
+        public SeekableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
+        public boolean isSeekable() {
+            return false;
         }
 
-        @Override
-        public void close() throws IOException {
-            outputStream.close();
-        }
-
-        @Override
-        public void flush() throws IOException {
-            outputStream.flush();
-        }
     }
 
-    static class FileReadBinaryRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    static class FileReadBinaryRConnection extends DelegateReadRConnection {
         private final FileInputStream inputStream;
 
         FileReadBinaryRConnection(BasePathRConnection base) throws IOException {
@@ -225,28 +264,7 @@ public class FileConnections {
         }
 
         @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            return inputStream.getChannel().read(buffer);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            return readBinCharsHelper(inputStream);
-        }
-
-        @TruffleBoundary
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
+        public InputStream getInputStream() {
             return inputStream;
         }
 
@@ -267,7 +285,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long position = inputStream.getChannel().position();
             switch (seekMode) {
                 case ENQUIRE:
@@ -286,64 +304,45 @@ public class FileConnections {
             }
             return position;
         }
+
+        @Override
+        public ReadableByteChannel getChannel() {
+            return inputStream.getChannel();
+        }
     }
 
-    private static class FileWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
-        private final FileOutputStream outputStream;
+    private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
 
-        FileWriteBinaryConnection(FileRConnection base, boolean append) throws IOException {
+        private final SeekableByteChannel channel;
+
+        FileWriteBinaryConnection(BasePathRConnection base, boolean append, boolean blocking) throws IOException {
             super(base);
-            outputStream = new FileOutputStream(base.path, append);
-        }
 
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(outputStream, s, pad, eos);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            outputStream.getChannel().write(buffer);
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return outputStream;
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            flush();
-            outputStream.close();
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                String line = lines.getDataAt(i);
-                outputStream.write(line.getBytes());
-                outputStream.write(sep.getBytes());
+            List<OpenOption> args = new LinkedList<>();
+            args.add(StandardOpenOption.WRITE);
+            args.add(StandardOpenOption.CREATE);
+            if (append) {
+                args.add(StandardOpenOption.APPEND);
+            } else {
+                args.add(StandardOpenOption.TRUNCATE_EXISTING);
             }
+
+            channel = Files.newByteChannel(Paths.get(base.path), args.toArray(new OpenOption[args.size()]));
         }
 
         @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
+        public WritableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
-        public void flush() throws IOException {
-            outputStream.flush();
+        public boolean isSeekable() {
+            return true;
         }
+
     }
 
-    private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+    private static class FileReadWriteConnection extends DelegateReadWriteRConnection {
         /*
          * This is a minimal implementation to support one specific use in package installation.
          *
@@ -368,7 +367,7 @@ public class FileConnections {
             }
         }
 
-        FileReadWriteConnection(FileRConnection base) throws IOException {
+        FileReadWriteConnection(BasePathRConnection base) throws IOException {
             super(base);
             OpenMode openMode = base.getOpenMode();
             String rafMode = null;
@@ -431,23 +430,7 @@ public class FileConnections {
         @Override
         public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             raf.seek(readOffset);
-            return readLinesHelper(inputStream, n, warn, skipNul);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
+            return ReadWriteHelper.readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override
@@ -466,10 +449,6 @@ public class FileConnections {
             }
             writeOffset = raf.getFilePointer();
             lastMode = SeekRWMode.WRITE;
-        }
-
-        @Override
-        public void flush() throws IOException {
         }
 
         @Override
@@ -503,6 +482,226 @@ public class FileConnections {
         @Override
         public byte[] readBinChars() throws IOException {
             throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return raf.getChannel();
+        }
+    }
+
+    /**
+     * Base class for all modes of gzfile/bzfile/xzfile connections. N.B. In GNU R these can read
+     * gzip, bzip, lzma and uncompressed files, and this has to be implemented by reading the first
+     * few bytes of the file and detecting the type of the file.
+     */
+    public static class CompressedRConnection extends BasePathRConnection {
+        private final RCompression.Type cType;
+        @SuppressWarnings("unused") private final String encoding; // TODO
+        @SuppressWarnings("unused") private final int compression; // TODO
+
+        public CompressedRConnection(String path, String modeString, Type cType, String encoding, int compression) throws IOException {
+            super(path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary);
+            this.cType = cType;
+            this.encoding = encoding;
+            this.compression = compression;
+            openNonLazyConnection();
+        }
+
+        private static ConnectionClass mapConnectionClass(RCompression.Type cType) {
+            switch (cType) {
+                case NONE:
+                    return ConnectionClass.File;
+                case GZIP:
+                    return ConnectionClass.GZFile;
+                case BZIP2:
+                    return ConnectionClass.BZFile;
+                case XZ:
+                    return ConnectionClass.XZFile;
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            DelegateRConnection delegate = null;
+            AbstractOpenMode openMode = getOpenMode().abstractOpenMode;
+            switch (openMode) {
+                case Read:
+                case ReadBinary:
+                    /*
+                     * For input, we check the actual compression type as GNU R is permissive about
+                     * the claimed type.
+                     */
+                    RCompression.Type cTypeActual = RCompression.getCompressionType(path);
+                    if (cTypeActual != cType) {
+                        updateConnectionClass(mapConnectionClass(cTypeActual));
+                    }
+                    switch (cTypeActual) {
+                        case NONE:
+                            if (openMode == AbstractOpenMode.ReadBinary) {
+                                delegate = new FileConnections.FileReadBinaryRConnection(this);
+                            } else {
+                                delegate = new FileConnections.FileReadTextRConnection(this, true);
+                            }
+                            break;
+                        case GZIP:
+                            delegate = new CompressedInputRConnection(this, new GZIPInputStream(new FileInputStream(path), GZIP_BUFFER_SIZE), true);
+                            break;
+                        case XZ:
+                            delegate = new CompressedInputRConnection(this, new XZInputStream(new FileInputStream(path)), false);
+                            break;
+                        case BZIP2:
+                            // no in Java support, so go via byte array
+                            byte[] bzipUdata = RCompression.bzipUncompressFromFile(path);
+                            delegate = new ByteStreamCompressedInputRConnection(this, new ByteArrayInputStream(bzipUdata), false);
+                    }
+                    break;
+
+                case Append:
+                case AppendBinary:
+                case Write:
+                case WriteBinary: {
+                    boolean append = openMode == AbstractOpenMode.Append || openMode == AbstractOpenMode.AppendBinary;
+                    switch (cType) {
+                        case GZIP:
+                            delegate = new CompressedOutputRConnection(this, new GZIPOutputStream(new FileOutputStream(path, append), GZIP_BUFFER_SIZE), true);
+                            break;
+                        case BZIP2:
+                            delegate = new BZip2OutputRConnection(this, new ByteArrayOutputStream(), append);
+                            break;
+                        case XZ:
+                            delegate = new CompressedOutputRConnection(this, new XZOutputStream(new FileOutputStream(path, append), new LZMA2Options(), XZ.CHECK_CRC32), false);
+                            break;
+                    }
+                    break;
+                }
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
+            }
+            setDelegate(delegate);
+        }
+
+        // @Override
+        /**
+         * GnuR behavior for lazy connections is odd, e.g. gzfile returns "text", even though the
+         * default mode is "rb".
+         */
+        // public boolean isTextMode() {
+        // }
+    }
+
+    private static class CompressedInputRConnection extends DelegateReadRConnection {
+        private final InputStream inputStream;
+        private final boolean seekable;
+
+        protected CompressedInputRConnection(CompressedRConnection base, InputStream is, boolean seekable) {
+            super(base);
+            this.inputStream = is;
+            this.seekable = seekable;
+        }
+
+        @Override
+        public ReadableByteChannel getChannel() {
+            return Channels.newChannel(inputStream);
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            if (seekable) {
+                // TODO
+            }
+            return super.seekInternal(offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return seekable;
+        }
+    }
+
+    private static class ByteStreamCompressedInputRConnection extends CompressedInputRConnection {
+        ByteStreamCompressedInputRConnection(CompressedRConnection base, ByteArrayInputStream is, boolean seekable) {
+            super(base, is, seekable);
+        }
+    }
+
+    private static class CompressedOutputRConnection extends DelegateWriteRConnection {
+        protected OutputStream outputStream;
+        private final WritableByteChannel channel;
+        private final boolean seekable;
+        private long seekPosition = 0L;
+
+        protected CompressedOutputRConnection(CompressedRConnection base, OutputStream os, boolean seekable) {
+            super(base);
+            this.outputStream = os;
+            this.channel = Channels.newChannel(os);
+            this.seekable = seekable;
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return outputStream;
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            base.closed = true;
+            close();
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            outputStream.close();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            outputStream.flush();
+        }
+
+        @Override
+        public WritableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            if (seekable) {
+                // TODO GZIP is basically seekable; however, the output stream does not allow any
+                // seeking
+                long oldPos = seekPosition;
+                seekPosition = offset;
+                return oldPos;
+            }
+            return super.seekInternal(offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return seekable;
+        }
+    }
+
+    private static class BZip2OutputRConnection extends CompressedOutputRConnection {
+        private final ByteArrayOutputStream bos;
+        private final boolean append;
+
+        BZip2OutputRConnection(CompressedRConnection base, ByteArrayOutputStream os, boolean append) {
+            super(base, os, false);
+            this.bos = os;
+            this.append = append;
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            outputStream.close();
+            // Now actually do the compression using sub-process
+            byte[] data = bos.toByteArray();
+            RCompression.bzipCompressToFile(data, ((BasePathRConnection) base).path, append);
         }
     }
 }

@@ -23,22 +23,16 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.util.Objects;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class RawConnections {
 
@@ -98,7 +92,7 @@ public class RawConnections {
             return channel.getBuffer();
         }
 
-        public static long seek(SeekableMemoryByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
+        private static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
             final long origPos = channel.position();
             final long newPos;
             switch (seekMode) {
@@ -121,7 +115,7 @@ public class RawConnections {
 
     }
 
-    static class RawReadRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    static class RawReadRConnection extends DelegateReadRConnection {
         private SeekableMemoryByteChannel channel;
 
         RawReadRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) {
@@ -136,11 +130,6 @@ public class RawConnections {
 
         RawReadRConnection(BaseRConnection base) {
             super(base);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            return channel.read(buffer);
         }
 
         @Override
@@ -159,45 +148,23 @@ public class RawConnections {
             return new byte[0];
         }
 
-        @TruffleBoundary
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(channel.getInputStream(), n, warn, skipNul);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, channel.getInputStream(), useBytes);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
-            return channel.getInputStream();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            channel.close();
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.NOT_AN_OUTPUT_RAW_CONNECTION);
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
         }
     }
 
-    private static class RawWriteBinaryConnection extends DelegateWriteRConnection implements ReadWriteHelper {
+    private static class RawWriteBinaryConnection extends DelegateWriteRConnection {
         private final SeekableMemoryByteChannel channel;
 
         RawWriteBinaryConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
@@ -213,11 +180,6 @@ public class RawConnections {
         }
 
         @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(channel.getOutputStream(), s, pad, eos);
-        }
-
-        @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
             channel.write(buffer);
         }
@@ -228,52 +190,31 @@ public class RawConnections {
         }
 
         @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            flush();
-            channel.close();
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                String line = lines.getDataAt(i);
-                channel.write(line.getBytes());
-                channel.write(sep.getBytes());
-            }
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(channel.getOutputStream(), s, nl);
-        }
-
-        @Override
-        public void flush() throws IOException {
-            // nothing to do
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
         }
     }
 
-    private static class RawReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+    private static class RawReadWriteConnection extends DelegateReadWriteRConnection {
 
         private final SeekableMemoryByteChannel channel;
 
         protected RawReadWriteConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
             super(base);
-            this.channel = Objects.requireNonNull(channel);
-            if (!append) {
+            this.channel = channel;
+            if (append) {
                 try {
-                    channel.position(0);
+                    channel.position(channel.size());
                 } catch (IOException e) {
                     RInternalError.shouldNotReachHere();
                 }
@@ -281,79 +222,18 @@ public class RawConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
-            return channel.getInputStream();
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return channel.getOutputStream();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            channel.close();
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                channel.write(lines.getDataAt(i).getBytes());
-                channel.write(sep.getBytes());
-            }
-        }
-
-        @Override
-        public void flush() throws IOException {
-            // nothing to do
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            channel.write(s.getBytes());
-            if (nl) {
-                channel.write(System.lineSeparator().getBytes());
-            }
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(channel.getOutputStream(), s, pad, eos);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, channel.getInputStream(), useBytes);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            channel.write(buffer);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            return channel.read(buffer);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw RInternalError.unimplemented();
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
         }
 
     }

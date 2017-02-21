@@ -267,6 +267,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.SocketConnection.class, ConnectionFunctionsFactory.SocketConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnection.class, ConnectionFunctionsFactory.RawConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnectionValue.class, ConnectionFunctionsFactory.RawConnectionValueNodeGen::create);
+        add(ConnectionFunctions.Fifo.class, ConnectionFunctionsFactory.FifoNodeGen::create);
         add(ConnectionFunctions.Stderr.class, ConnectionFunctionsFactory.StderrNodeGen::create);
         add(ConnectionFunctions.Stdin.class, ConnectionFunctionsFactory.StdinNodeGen::create);
         add(ConnectionFunctions.Stdout.class, ConnectionFunctionsFactory.StdoutNodeGen::create);

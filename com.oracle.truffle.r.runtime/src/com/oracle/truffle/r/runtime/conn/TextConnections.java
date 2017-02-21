@@ -23,9 +23,10 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -33,9 +34,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -115,44 +113,25 @@ public class TextConnections {
             return result;
         }
 
-        @SuppressWarnings("hiding")
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
+        public String[] getValue() {
+            // TODO refactor
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
+        public void close() throws IOException {
+            // nothing to do
         }
 
         @Override
-        public void close() {
+        public ReadableByteChannel getChannel() {
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, "readBin on text connection");
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, "readBinChars on text connection");
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw RError.nyi(null, "readChar on text connection");
-        }
-
-        @Override
-        public String[] getValue() {
-            throw RError.nyi(null, "textConnectionValue");
+        public boolean isSeekable() {
+            return false;
         }
     }
 
@@ -314,6 +293,22 @@ public class TextConnections {
             public void write(int b) {
                 throw RInternalError.unimplemented();
             }
+        }
+
+        @Override
+        public WritableByteChannel getChannel() {
+            // no channel available for a text connection
+            return null;
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_RELEVANT_FOR_TEXT_CON);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 
