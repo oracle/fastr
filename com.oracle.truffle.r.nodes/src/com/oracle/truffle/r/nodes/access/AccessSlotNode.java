@@ -24,7 +24,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClass
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -49,7 +48,6 @@ public abstract class AccessSlotNode extends RBaseNode {
     public abstract Object executeAccess(Object o, String name);
 
     @Child private ClassHierarchyNode classHierarchy;
-    @Child private TypeofNode typeofNode;
 
     private final BranchProfile noSlot = BranchProfile.create();
     private final BranchProfile symbolValue = BranchProfile.create();
@@ -83,13 +81,10 @@ public abstract class AccessSlotNode extends RBaseNode {
                 return RNull.instance;
             }
 
+            CompilerDirectives.transferToInterpreter();
             RStringVector classAttr = getClassNode.getClassAttr(object);
             if (classAttr == null) {
-                if (typeofNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    typeofNode = insert(TypeofNodeGen.create());
-                }
-                throw RError.error(this, RError.Message.SLOT_CANNOT_GET, name, typeofNode.execute(object).getName());
+                throw RError.error(this, RError.Message.SLOT_CANNOT_GET, name, TypeofNode.getTypeof(object).getName());
             } else {
                 throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
             }

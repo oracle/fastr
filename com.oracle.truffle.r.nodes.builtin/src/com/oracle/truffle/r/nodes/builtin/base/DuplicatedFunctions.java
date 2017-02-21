@@ -47,9 +47,7 @@ public class DuplicatedFunctions {
 
         protected static void casts(Casts casts) {
             // these are similar to those in DuplicatedFunctions.java
-            casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.SHOW_CALLER,
-                            RError.Message.APPLIES_TO_VECTORS,
-                            "duplicated()").asVector();
+            casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS, "duplicated()").asVector();
             // not much more can be done for incomparables as it is either a vector of incomparable
             // values or a (single) logical value
             casts.arg("incomparables").asVector(true);
@@ -76,6 +74,9 @@ public class DuplicatedFunctions {
             if (castTypeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castTypeNode = insert(CastTypeNodeGen.create(null, null));
+            }
+            if (typeof == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 typeof = insert(TypeofNodeGen.create());
             }
         }
@@ -150,12 +151,12 @@ public class DuplicatedFunctions {
         }
 
         @Specialization(guards = {"notAbstractVector(incomparables)", "!empty(x)"})
+        @TruffleBoundary
         protected int anyDuplicatedTrueIncomparables(RAbstractVector x, Object incomparables, @SuppressWarnings("unused") byte fromLast) {
             initChildren();
-            RType xType = typeof.execute(x);
             // TODO: this is not quite correct, as passing expression generated some obscure error
             // message, but is it worth fixing
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
+            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, TypeofNode.getTypeof(incomparables).getName(), TypeofNode.getTypeof(x).getName());
         }
 
         @SuppressWarnings("unused")
