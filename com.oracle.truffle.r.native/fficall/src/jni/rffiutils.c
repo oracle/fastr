@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 /*
  * All calls pass through one of the call(N) methods in rfficall.c, which carry the JNIEnv value,
@@ -69,11 +70,36 @@ static NativeArrayElem *nativeArrayTable;
 // hwm of nativeArrayTable
 static int nativeArrayTableHwm;
 static int nativeArrayTableLength;
-static void releaseNativeArray(JNIEnv *env, int index, int freedata);
+static void releaseNativeArray(JNIEnv *env, int index);
 
 static int isEmbedded = 0;
 void setEmbedded() {
 	isEmbedded = 1;
+}
+
+#ifdef TRACE_ENABLED
+// Helper for debugging purposes: prints out (into the trace file) the java
+// class name for given SEXP
+static const char* fastRInspect(JNIEnv *env, SEXP v) {
+    // this invokes getClass().getName()
+    jclass cls = (*env)->GetObjectClass(env, v);
+    jmethodID getClassMethodID = checkGetMethodID(env, cls, "getClass", "()Ljava/lang/Class;", 0);
+    jobject classObj = (*env)->CallObjectMethod(env, v, getClassMethodID);
+    jclass javaClassClass = (*env)->GetObjectClass(env, classObj);
+    jmethodID getNameMethodID = checkGetMethodID(env, javaClassClass, "getName", "()Ljava/lang/String;", 0);
+    jstring nameJString = (jstring)(*env)->CallObjectMethod(env, javaClassClass, getNameMethodID);
+
+    // This gets us the C string
+    const char* result = (*env)->GetStringUTFChars(env, nameJString, NULL);
+    fprintf(traceFile, "fastRInspect(%p): %s\n",  v, result);
+
+    // Release the memory
+    (*env)->ReleaseStringUTFChars(env, nameJString, result);
+}
+#endif
+
+static int isValidJNIRef(JNIEnv *env, SEXP ref) {
+    return (*env)->GetObjectRefType(env, ref) != JNIInvalidRefType;
 }
 
 // native down call depth, indexes nativeArrayTableHwmStack
@@ -149,7 +175,7 @@ jmp_buf *getErrorJmpBuf() {
 void callExit(JNIEnv *env) {
 	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
 	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
-               releaseNativeArray(env, i, 1);
+               releaseNativeArray(env, i);
 	}
 	nativeArrayTableHwm = oldHwm;
 	callDepth--;
@@ -162,7 +188,7 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 #if TRACE_NATIVE_ARRAYS
 			fprintf(traceFile, "invalidateNativeArray(%p): found\n", oldObj);
 #endif
-			releaseNativeArray(env, i, 1);
+			releaseNativeArray(env, i);
 			nativeArrayTable[i].obj = NULL;
 		}
 	}
@@ -172,18 +198,22 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 }
 
 void updateNativeArrays(JNIEnv *env) {
+    // We just release the arrays, the up call may change their contents in the R world,
+    // so we cannot re-use the native buffers which may be out of sync
 	int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
 	for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
-        releaseNativeArray(env, i, 0);
+        releaseNativeArray(env, i);
 	}
 }
 
 
 static void *findNativeArray(JNIEnv *env, SEXP x) {
 	int i;
+        assert(isValidJNIRef(env, x));
 	for (i = 0; i < nativeArrayTableHwm; i++) {
 		NativeArrayElem cv = nativeArrayTable[i];
 		if (cv.obj != NULL) {
+                        assert(isValidJNIRef(env, cv.obj));
 			if ((*env)->IsSameObject(env, cv.obj, x)) {
 				void *data = cv.data;
 #if TRACE_NATIVE_ARRAYS
@@ -277,17 +307,18 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 	return data;
 }
 
-static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
+static void releaseNativeArray(JNIEnv *env, int i) {
 	NativeArrayElem cv = nativeArrayTable[i];
 #if TRACE_NATIVE_ARRAYS
                fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, freedata=%d)\n", cv.obj, i, freedata);
 #endif
 	if (cv.obj != NULL) {
+            assert(isValidJNIRef(env, cv.obj));
 		jboolean complete = JNI_FALSE; // pessimal
 		switch (cv.type) {
 		case INTSXP: {
 			jintArray intArray = (jintArray) cv.jArray;
-			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, freedata ? 0 : JNI_COMMIT);
+			(*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
 			break;
 		}
 
@@ -309,22 +340,20 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 
 			}
 			(*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-            if (freedata){
-                free(data); // was malloc'ed in addNativeArray
-            }
+                    free(data); // was malloc'ed in addNativeArray
 			break;
 		}
 
 		case REALSXP: {
 			jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
-			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, freedata ? 0 : JNI_COMMIT);
+			(*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
 			break;
 
 		}
 
 		case RAWSXP: {
 			jbyteArray byteArray = (jbyteArray) cv.jArray;
-			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, freedata ? 0 : JNI_COMMIT);
+			(*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
 			break;
 
 		}
@@ -334,10 +363,8 @@ static void releaseNativeArray(JNIEnv *env, int i, int freedata) {
 		// update complete status
 		(*env)->CallStaticVoidMethod(env, JNIUpCallsRFFIImplClass, setCompleteMethodID, cv.obj, complete);
 
-        if (freedata) {
             // free up the slot
-		    cv.obj = NULL;
-        }
+            nativeArrayTable[i].obj = NULL;
 	}
 }
 
@@ -377,7 +404,7 @@ SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent) {
 	cachedGlobalRefs[cachedGlobalRefsHwm].gref = gref;
 	cachedGlobalRefs[cachedGlobalRefsHwm].permanent = permanent;
 #if TRACE_REF_CACHE
-			fprintf(traceFile, "gref: add: index %d, ref %p\n", cachedGlobalRefsHwm), gref;
+			fprintf(traceFile, "gref: add: index %d, ref %p\n", cachedGlobalRefsHwm, gref);
 #endif
 	cachedGlobalRefsHwm++;
 	return gref;
