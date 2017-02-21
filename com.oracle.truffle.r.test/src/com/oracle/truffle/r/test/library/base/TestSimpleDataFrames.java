@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,5 +179,6 @@ public class TestSimpleDataFrames extends TestBase {
 
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 
+        assertEval("x <- data.frame(a=1:3,b=factor(c(\"a\",\"b\",\"c\"))); x[2,]");
     }
 }
