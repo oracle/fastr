@@ -29,19 +29,33 @@ public final class Not<T> implements Type, TypeAndInstanceCheck {
 
     public static final Not<Object> NOTHING = new Not<>(Object.class);
 
-    private final Class<T> negated;
+    private final Type negated;
 
-    private Not(Class<T> negated) {
+    private Not(Type negated) {
         this.negated = negated;
     }
 
-    public Class<T> getNegated() {
+    public Type getNegated() {
         return this.negated;
     }
 
     @Override
     public boolean isInstance(Object x) {
-        return !negated.isInstance(x);
+        if (negated instanceof TypeAndInstanceCheck) {
+            return !((TypeAndInstanceCheck) negated).isInstance(x);
+        } else {
+            assert negated instanceof Class;
+            return !((Class<?>) negated).isInstance(x);
+        }
+    }
+
+    @Override
+    public Type normalize() {
+        if (negated instanceof TypeAndInstanceCheck) {
+            return new Not<>(((TypeAndInstanceCheck) negated).normalize());
+        } else {
+            return this;
+        }
     }
 
     public static boolean isNegative(Type t) {
@@ -61,13 +75,13 @@ public final class Not<T> implements Type, TypeAndInstanceCheck {
             return getPositiveType(t);
         } else {
             assert t instanceof Class;
-            return new Not<>((Class<?>) t);
+            return new Not<>(t);
         }
     }
 
     @Override
     public String toString() {
-        return "Not(" + negated.getSimpleName() + ")";
+        return "Not(" + (negated instanceof Class ? ((Class<?>) negated).getSimpleName() : negated.toString()) + ")";
     }
 
     @Override
@@ -90,7 +104,7 @@ public final class Not<T> implements Type, TypeAndInstanceCheck {
             return false;
         }
         Not<?> other = (Not<?>) obj;
-        return other.negated == this.negated;
+        return other.negated.equals(this.negated);
     }
 
     @Override

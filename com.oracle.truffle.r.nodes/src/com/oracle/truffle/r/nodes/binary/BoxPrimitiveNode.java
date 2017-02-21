@@ -28,6 +28,8 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -44,28 +46,28 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     @Specialization
-    protected static RAbstractVector doInt(int vector) {
+    protected static RInteger doInt(int vector) {
         return RInteger.valueOf(vector);
     }
 
     @Specialization
-    protected static RAbstractVector doDouble(double vector) {
+    protected static RDouble doDouble(double vector) {
         return RDouble.valueOf(vector);
     }
 
     @Specialization
-    protected static RAbstractVector doLogical(byte vector) {
+    protected static RLogical doLogical(byte vector) {
         return RLogical.valueOf(vector);
     }
 
     @Specialization
-    protected static RAbstractVector doString(String value) {
+    protected static RString doString(String value) {
         return RString.valueOf(value);
     }
 
     /*
      * For the limit we use the number of primitive specializations - 1. After that its better to
-     * check !isPrimitve.
+     * check !isPrimitive.
      */
     @Specialization(limit = "3", guards = "vector.getClass() == cachedClass")
     protected static Object doCached(Object vector,

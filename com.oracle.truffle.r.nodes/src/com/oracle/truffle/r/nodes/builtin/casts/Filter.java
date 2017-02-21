@@ -40,11 +40,6 @@ public abstract class Filter<T, R extends T> {
     protected Filter() {
     }
 
-    /**
-     * @return true if this filter narrows the input type to a sub-type
-     */
-    public abstract boolean isNarrowing();
-
     public ResultForArg resultForNull() {
         return ResultForArg.UNDEFINED;
     }
@@ -53,7 +48,7 @@ public abstract class Filter<T, R extends T> {
         return ResultForArg.UNDEFINED;
     }
 
-    public abstract <D> D accept(FilterVisitor<D> visitor);
+    public abstract <D> D accept(FilterVisitor<D> visitor, D previous);
 
     public <S extends R> AndFilter<T, S> and(Filter<? super R, S> other) {
         return new AndFilter<>(this, other);
@@ -68,25 +63,25 @@ public abstract class Filter<T, R extends T> {
     }
 
     public interface FilterVisitor<D> {
-        D visit(TypeFilter<?, ?> filter);
+        D visit(TypeFilter<?, ?> filter, D previous);
 
-        D visit(RTypeFilter<?> filter);
+        D visit(RTypeFilter<?> filter, D previous);
 
-        D visit(CompareFilter<?> filter);
+        D visit(CompareFilter<?> filter, D previous);
 
-        D visit(AndFilter<?, ?> filter);
+        D visit(AndFilter<?, ?> filter, D previous);
 
-        D visit(OrFilter<?> filter);
+        D visit(OrFilter<?> filter, D previous);
 
-        D visit(NotFilter<?> filter);
+        D visit(NotFilter<?> filter, D previous);
 
-        D visit(MatrixFilter<?> filter);
+        D visit(MatrixFilter<?> filter, D previous);
 
-        D visit(DoubleFilter filter);
+        D visit(DoubleFilter filter, D previous);
 
-        D visit(NullFilter filter);
+        D visit(NullFilter filter, D previous);
 
-        D visit(MissingFilter filter);
+        D visit(MissingFilter filter, D previous);
     }
 
     /**
@@ -134,11 +129,6 @@ public abstract class Filter<T, R extends T> {
             return extraCondition;
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return true;
-        }
-
         @SuppressWarnings("unchecked")
         public ArgumentFilter<Object, Object> getInstanceOfLambda() {
             final ArgumentFilter<Object, Object> instanceOfLambda;
@@ -163,8 +153,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -195,13 +185,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public boolean isNarrowing() {
-            return true;
-        }
-
-        @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -223,13 +208,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public boolean isNarrowing() {
-            return true;
-        }
-
-        @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -251,13 +231,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public boolean isNarrowing() {
-            return true;
-        }
-
-        @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -278,21 +253,21 @@ public abstract class Filter<T, R extends T> {
     public static final class CompareFilter<T> extends Filter<T, T> {
 
         public interface Subject {
-            <D> D accept(SubjectVisitor<D> visitor, byte operation);
+            <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous);
         }
 
         public interface SubjectVisitor<D> {
-            D visit(ScalarValue scalarValue, byte operation);
+            D visit(ScalarValue scalarValue, byte operation, D previous);
 
-            D visit(NATest naTest, byte operation);
+            D visit(NATest naTest, byte operation, D previous);
 
-            D visit(StringLength stringLength, byte operation);
+            D visit(StringLength stringLength, byte operation, D previous);
 
-            D visit(VectorSize vectorSize, byte operation);
+            D visit(VectorSize vectorSize, byte operation, D previous);
 
-            D visit(ElementAt elementAt, byte operation);
+            D visit(ElementAt elementAt, byte operation, D previous);
 
-            D visit(Dim dim, byte operation);
+            D visit(Dim dim, byte operation, D previous);
         }
 
         public static final class ScalarValue implements Subject {
@@ -305,8 +280,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -318,8 +293,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -331,8 +306,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -344,8 +319,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -361,8 +336,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -376,8 +351,8 @@ public abstract class Filter<T, R extends T> {
             }
 
             @Override
-            public <D> D accept(SubjectVisitor<D> visitor, byte operation) {
-                return visitor.visit(this, operation);
+            public <D> D accept(SubjectVisitor<D> visitor, byte operation, D previous) {
+                return visitor.visit(this, operation, previous);
             }
         }
 
@@ -397,11 +372,6 @@ public abstract class Filter<T, R extends T> {
             this.subject = subject;
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return false;
-        }
-
         public Subject getSubject() {
             return subject;
         }
@@ -411,8 +381,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -430,22 +400,22 @@ public abstract class Filter<T, R extends T> {
 
         private static final MatrixFilter<RAbstractVector> IS_MATRIX = new MatrixFilter<RAbstractVector>() {
             @Override
-            public <D> D acceptOperation(OperationVisitor<D> visitor) {
-                return visitor.visitIsMatrix();
+            public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
+                return visitor.visitIsMatrix(previous);
             }
         };
 
         private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<RAbstractVector>() {
             @Override
-            public <D> D acceptOperation(OperationVisitor<D> visitor) {
-                return visitor.visitIsSquareMatrix();
+            public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
+                return visitor.visitIsSquareMatrix(previous);
             }
         };
 
         public interface OperationVisitor<D> {
-            D visitIsMatrix();
+            D visitIsMatrix(D previous);
 
-            D visitIsSquareMatrix();
+            D visitIsSquareMatrix(D previous);
         }
 
         @SuppressWarnings("unchecked")
@@ -461,16 +431,11 @@ public abstract class Filter<T, R extends T> {
         private MatrixFilter() {
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return false;
-        }
-
-        public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
+        public abstract <D> D acceptOperation(OperationVisitor<D> visitor, D previous);
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -478,38 +443,33 @@ public abstract class Filter<T, R extends T> {
 
         public static final DoubleFilter IS_FINITE = new DoubleFilter() {
             @Override
-            public <D> D acceptOperation(OperationVisitor<D> visitor) {
-                return visitor.visitIsFinite();
+            public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
+                return visitor.visitIsFinite(previous);
             }
         };
 
         public static final DoubleFilter IS_FRACTIONAL = new DoubleFilter() {
             @Override
-            public <D> D acceptOperation(OperationVisitor<D> visitor) {
-                return visitor.visitIsFractional();
+            public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
+                return visitor.visitIsFractional(previous);
             }
         };
 
         public interface OperationVisitor<D> {
-            D visitIsFinite();
+            D visitIsFinite(D previous);
 
-            D visitIsFractional();
+            D visitIsFractional(D previous);
         }
 
         private DoubleFilter() {
 
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return false;
-        }
-
-        public abstract <D> D acceptOperation(OperationVisitor<D> visitor);
+        public abstract <D> D acceptOperation(OperationVisitor<D> visitor, D previous);
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -522,11 +482,6 @@ public abstract class Filter<T, R extends T> {
             this.right = right;
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return left.isNarrowing() || right.isNarrowing();
-        }
-
         public Filter<?, ?> getLeft() {
             return left;
         }
@@ -536,8 +491,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -560,11 +515,6 @@ public abstract class Filter<T, R extends T> {
             this.right = right;
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return false;
-        }
-
         public Filter<?, ?> getLeft() {
             return left;
         }
@@ -574,8 +524,8 @@ public abstract class Filter<T, R extends T> {
         }
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override
@@ -596,18 +546,13 @@ public abstract class Filter<T, R extends T> {
             this.filter = filter;
         }
 
-        @Override
-        public boolean isNarrowing() {
-            return false;
-        }
-
         public Filter<?, ?> getFilter() {
             return filter;
         }
 
         @Override
-        public <D> D accept(FilterVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
 
         @Override

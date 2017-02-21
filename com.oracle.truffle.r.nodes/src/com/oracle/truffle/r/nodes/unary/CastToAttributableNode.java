@@ -51,14 +51,12 @@ public abstract class CastToAttributableNode extends CastBaseNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected RNull cast(RNull rnull) {
+    protected RNull cast(@SuppressWarnings("unused") RNull rnull) {
         return RNull.instance;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected RMissing cast(RMissing rmissing) {
+    protected RMissing cast(@SuppressWarnings("unused") RMissing rmissing) {
         return RMissing.instance;
     }
 

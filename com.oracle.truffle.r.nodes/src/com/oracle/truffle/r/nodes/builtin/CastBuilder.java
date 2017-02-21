@@ -134,6 +134,16 @@ public final class CastBuilder {
         return castNodes;
     }
 
+    /**
+     * The argument pipeline builders are needed when analyzing pipelines without instantiating
+     * them. It's useful in tests.
+     *
+     * @return the arguments cast pipeline builders
+     */
+    public PipelineBuilder[] getPipelineBuilders() {
+        return argumentBuilders;
+    }
+
     // ---------------------
     // The cast-pipelines API starts here
 

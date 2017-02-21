@@ -146,7 +146,7 @@ public final class PipelineBuilder {
         return pcb;
     }
 
-    private PipelineStep<?, ?> getFirstStep() {
+    public PipelineStep<?, ?> getFirstStep() {
         return chainBuilder != null ? chainBuilder.getFirstStep() : null;
     }
 

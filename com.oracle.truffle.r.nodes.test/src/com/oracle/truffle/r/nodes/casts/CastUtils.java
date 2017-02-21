@@ -38,17 +38,20 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -250,6 +253,15 @@ public class CastUtils {
                 }
             };
 
+            /**
+             * It transforms this type coverage into another one that would be returned in the
+             * situation when the source and the target type were either positive or negative, as
+             * determined by the <code>sourcePositive</code> and <code>targetPositive</code>
+             * arguments.
+             * <p>
+             * N.B. It is assumed that this coverage is obtained for the positive source anb target
+             * types.
+             */
             public abstract Coverage transpose(Type sourceType, Type targetType, boolean sourcePositive, boolean targetPositive);
 
             public abstract Coverage or(Coverage other);
@@ -333,14 +345,14 @@ public class CastUtils {
         }
 
         public static Set<Cast> findConvertibleActualType(TypeExpr actualInputTypes, Type formalInputCls, boolean includeImplicits) {
-            Set<Type> normActTypes = actualInputTypes.normalize();
+            Set<Type> normActTypes = actualInputTypes.toNormalizedConjunctionSet();
             return normActTypes.stream().map(actualInputCls -> new Cast(actualInputCls, formalInputCls, isConvertible(actualInputCls, formalInputCls, includeImplicits))).filter(
                             c -> c.coverage != Cast.Coverage.none).collect(Collectors.toSet());
         }
 
         public static Cast.Coverage isConvertible(Type actualInputType, Type formalInputType, boolean includeImplicits) {
-            TypeConjunction from = TypeConjunction.fromType(actualInputType);
-            TypeConjunction to = TypeConjunction.fromType(formalInputType);
+            UpperBoundsConjunction from = UpperBoundsConjunction.fromType(actualInputType);
+            UpperBoundsConjunction to = UpperBoundsConjunction.fromType(formalInputType);
 
             Cast.Coverage result = to.coverageFrom(from, includeImplicits);
             return result;
@@ -415,12 +427,12 @@ public class CastUtils {
         if (argTypeSets.isEmpty()) {
             return Collections.emptySet();
         } else if (argTypeSets.size() == 1) {
-            return argTypeSets.get(0).normalize().stream().map((Type t) -> Collections.singletonList(t)).collect(Collectors.toSet());
+            return argTypeSets.get(0).toNormalizedConjunctionSet().stream().map((Type t) -> Collections.singletonList(t)).collect(Collectors.toSet());
         } else {
             Set<List<Type>> tailPowerSet = argumentProductSet(argTypeSets.subList(1, argTypeSets.size()));
             TypeExpr headArgSet = argTypeSets.get(0);
             Set<List<Type>> resultSet = new HashSet<>();
-            for (Type headType : headArgSet.normalize()) {
+            for (Type headType : headArgSet.toNormalizedConjunctionSet()) {
                 Set<LinkedList<Type>> extSublists = tailPowerSet.stream().map(x -> {
                     LinkedList<Type> extSublist = new LinkedList<>(x);
                     extSublist.addFirst(headType);
@@ -461,13 +473,16 @@ public class CastUtils {
         if (RAbstractComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
             return RComplex.class;
         }
+        if (RAbstractRawVector.class.isAssignableFrom(vectorType)) {
+            return RRaw.class;
+        }
         if (RListBase.class.isAssignableFrom(vectorType)) {
             return Object.class;
         }
-        if (RAbstractVector.class.isAssignableFrom(vectorType) || vectorType == Object.class) {
-            return Not.negateType(RAbstractVector.class);
+        if (RAbstractVector.class.isAssignableFrom(vectorType)) {
+            return Object.class;
         }
-        return Not.negateType(RAbstractVector.class);
+        return vectorType;
     }
 
     public static RAbstractVector emptyVector(Class<?> elementType) {
@@ -512,6 +527,81 @@ public class CastUtils {
             return RDataFactory.createIntVector(size);
         }
         return null;
+    }
+
+    public static RAbstractVector vectorOfSize(RType vectorType, int size) {
+        switch (vectorType) {
+            case Integer:
+                return RDataFactory.createIntVector(size);
+            case Double:
+                return RDataFactory.createDoubleVector(size);
+            case Logical:
+                return RDataFactory.createLogicalVector(size);
+            case Character:
+                return RDataFactory.createStringVector(size);
+            case Complex:
+                return RDataFactory.createComplexVector(size);
+            case Any:
+                return RDataFactory.createIntVector(size);
+            default:
+                return null;
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static Class<?>[] rTypeToClasses(RType type) {
+        switch (type) {
+            case Integer:
+                return new Class[]{Integer.class, RAbstractIntVector.class};
+            case Double:
+                return new Class[]{Double.class, RAbstractDoubleVector.class};
+            case Logical:
+                return new Class[]{Byte.class, RAbstractLogicalVector.class};
+            case Character:
+                return new Class[]{String.class, RAbstractStringVector.class};
+            case Complex:
+                return new Class[]{RAbstractComplexVector.class};
+            case Raw:
+                return new Class[]{RAbstractRawVector.class};
+            case Any:
+                return new Class[]{Object.class};
+        }
+        return null;
+    }
+
+    public static RAbstractVector fillVector(RType vectorType, int size, Object value, boolean complete) {
+        switch (vectorType) {
+            case Integer:
+                int[] iarray = new int[size];
+                Arrays.fill(iarray, (int) value);
+                return RDataFactory.createIntVector(iarray, complete);
+            case Double:
+                double[] darray = new double[size];
+                Arrays.fill(darray, (double) value);
+                return RDataFactory.createDoubleVector(darray, complete);
+            case Logical:
+                byte[] larray = new byte[size];
+                Arrays.fill(larray, (byte) value);
+                return RDataFactory.createLogicalVector(larray, complete);
+            case Character:
+                String[] sarray = new String[size];
+                Arrays.fill(sarray, value);
+                return RDataFactory.createStringVector(sarray, complete);
+            case Complex:
+                double[] carray = new double[2 * size];
+                RComplex c = (RComplex) value;
+                for (int i = 0; i < size; i++) {
+                    carray[2 * i] = c.getRealPart();
+                    carray[2 * i + 1] = c.getImaginaryPart();
+                }
+                return RDataFactory.createComplexVector(carray, complete);
+            case Any:
+                Object[] oarray = new Object[size];
+                Arrays.fill(oarray, value);
+                return RDataFactory.createList(oarray);
+            default:
+                return null;
+        }
     }
 
     public static Object naVector(Class<?> elementType) {
@@ -660,11 +750,16 @@ public class CastUtils {
     }
 
     public static Set<?> sampleValuesForTypeExpr(TypeExpr te) {
-        return te.normalize().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
+        return te.toNormalizedConjunctionSet().stream().flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
-    public static Set<?> sampleValuesForClases(Class<?>[] classes) {
+    public static Set<?> sampleValuesForClasses(Class<?>[] classes) {
         return Arrays.stream(classes).flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static Set<?> sampleValuesForClass(Class<?> cls) {
+        return sampleValuesForClasses(new Class[]{cls});
     }
 
     public static Set<?> sampleValuesForType(Type t) {
@@ -734,6 +829,8 @@ public class CastUtils {
         }
 
         if (cls == Object.class || RAbstractComplexVector.class.isAssignableFrom(cls)) {
+            samples.add(RComplex.createNA());
+            samples.add(RDataFactory.createComplex(0, 0));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(0, 0)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(1, 1)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(-1, 1)));
@@ -747,6 +844,7 @@ public class CastUtils {
         if (cls == Object.class || String.class.isAssignableFrom(cls)) {
             samples.add("");
             samples.add("abc");
+            samples.add(RRuntime.STRING_NA);
         }
 
         if (cls == Object.class || RAbstractStringVector.class.isAssignableFrom(cls)) {
@@ -755,6 +853,11 @@ public class CastUtils {
             samples.add(RDataFactory.createStringVector(new String[]{"", "abc"}, true));
             samples.add(RDataFactory.createStringVector(new String[]{"", "abc", RRuntime.STRING_NA}, false));
             samples.add(RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, false));
+        }
+
+        if (RAbstractRawVector.class.isAssignableFrom(cls)) {
+            samples.add((byte) 0);
+            samples.add(RDataFactory.createRawVector(new byte[]{0}));
         }
 
         samples.remove(null);

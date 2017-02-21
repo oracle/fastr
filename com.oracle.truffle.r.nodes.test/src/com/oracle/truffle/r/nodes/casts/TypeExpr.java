@@ -28,21 +28,70 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public final class TypeExpr {
 
     public static final TypeExpr ANYTHING = TypeExpr.atom(Object.class);
-    public static final TypeExpr NOTHING = new TypeExpr(Collections.emptySet());
+    public static final TypeExpr NOTHING = new TypeExpr(Collections.emptySet(), Samples.nothing());
 
-    private final Set<Set<? extends Type>> disjNormForm;
+    private final Set<Set<Type>> disjNormForm;
 
-    private TypeExpr(Set<Set<? extends Type>> disjNormForm) {
-        this.disjNormForm = disjNormForm;
+    private final Samples<?> samples;
+
+    private static final Set<Set<Class<?>>> mutuallyExclusiveInterfaces = new HashSet<>();
+
+    static {
+        registerMutuallyExclusiveInterfaces(RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class, RAbstractRawVector.class,
+                        RAbstractStringVector.class, RAbstractListVector.class);
+    }
+
+    private TypeExpr(Set<Set<Type>> disjNormForm, Samples<?> samples) {
+        // remove contradictions
+        // Set<Set<Type>> noContra = disjNormForm.stream().filter(conj ->
+        // !isContradiction(conj)).collect(Collectors.toSet());
+        Set<Set<Type>> noContra = disjNormForm.stream().map(conj -> normalizeConjunctionSet(conj)).filter(conj -> !conj.isEmpty()).collect(Collectors.toSet());
+        this.disjNormForm = noContra;
+        this.samples = samples;
+    }
+
+    public static void registerMutuallyExclusiveInterfaces(Class<?>... types) {
+        mutuallyExclusiveInterfaces.add(Arrays.stream(types).collect(Collectors.toSet()));
+    }
+
+    public static Optional<Class<?>> findInMutuallyExclusiveInterfaces(Type t, Set<Class<?>> exclusiveGroup) {
+        if (t instanceof Class) {
+            return exclusiveGroup.stream().filter(x -> x.isAssignableFrom((Class<?>) t)).findFirst();
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public static boolean areMutuallyExclusiveInterfaces(Type t1, Type t2, Set<Class<?>> exclusiveGroup) {
+        Optional<Class<?>> x1 = findInMutuallyExclusiveInterfaces(t1, exclusiveGroup);
+        if (!x1.isPresent()) {
+            return false;
+        }
+        Optional<Class<?>> x2 = findInMutuallyExclusiveInterfaces(t2, exclusiveGroup);
+        if (!x2.isPresent()) {
+            return false;
+        }
+
+        return x1.get() != x2.get();
+    }
+
+    public static boolean areMutuallyExclusive(Type t1, Type t2) {
+        return mutuallyExclusiveInterfaces.stream().filter(exclusiveTypesSet -> areMutuallyExclusiveInterfaces(t1, t2, exclusiveTypesSet)).findFirst().isPresent();
     }
 
     public boolean isNothing() {
@@ -59,19 +108,8 @@ public final class TypeExpr {
     }
 
     public static TypeExpr atom(Type t) {
-        return new TypeExpr(Collections.singleton(Collections.singleton(t)));
-    }
-
-    public TypeExpr map(Function<Type, Type> typeMapper) {
-        Set<Set<? extends Type>> newDisjNormForm = disjNormForm.stream().map(conj -> conj.stream().map(typeMapper).collect(Collectors.toSet())).collect(Collectors.toSet());
-        return new TypeExpr(newDisjNormForm);
-    }
-
-    public TypeExpr filter(Predicate<Type> filterPred) {
-        Set<Set<? extends Type>> newDisjNormForm = disjNormForm.stream().map(conjSet -> {
-            return conjSet.stream().filter(filterPred).collect(Collectors.toSet());
-        }).filter(newConjSet -> !newConjSet.isEmpty()).collect(Collectors.toSet());
-        return new TypeExpr(newDisjNormForm);
+        Samples<?> samples = new Samples<>(t.getTypeName(), Collections.emptySet(), Collections.emptySet(), x -> TypeAndInstanceCheck.isInstance(t, x));
+        return new TypeExpr(Collections.singleton(Collections.singleton(t)), samples);
     }
 
     public boolean contains(Type tp) {
@@ -79,15 +117,15 @@ public final class TypeExpr {
     }
 
     public TypeExpr or(TypeExpr te) {
-        Set<Set<? extends Type>> newDisjNormForm = new HashSet<>(this.disjNormForm);
+        Set<Set<Type>> newDisjNormForm = new HashSet<>(this.disjNormForm);
         newDisjNormForm.addAll(te.disjNormForm);
-        return new TypeExpr(newDisjNormForm);
+        return new TypeExpr(newDisjNormForm, samples.or(te.samples));
     }
 
     public TypeExpr and(TypeExpr te) {
-        Set<Set<? extends Type>> newDisjNormForm = new HashSet<>();
+        Set<Set<Type>> newDisjNormForm = new HashSet<>();
 
-        for (Set<? extends Type> conj1 : this.disjNormForm) {
+        for (Set<Type> conj1 : this.disjNormForm) {
             for (Set<? extends Type> conj2 : te.disjNormForm) {
                 Set<Type> newConj = new HashSet<>(conj1);
                 newConj.addAll(conj2);
@@ -95,12 +133,71 @@ public final class TypeExpr {
             }
         }
 
-        return new TypeExpr(newDisjNormForm);
+        return new TypeExpr(newDisjNormForm, samples.and(te.samples));
     }
 
-    public static TypeExpr union(Set<? extends Type> types) {
-        Set<Set<? extends Type>> disjNormForm = types.stream().map(t -> Collections.singleton(t)).collect(Collectors.toSet());
-        return new TypeExpr(disjNormForm);
+    public TypeExpr lower() {
+        return lower(new Object());
+    }
+
+    public TypeExpr removeWildcards() {
+        Set<Set<Type>> newDisjNormForm = new HashSet<>();
+
+        for (Set<Type> conj : this.disjNormForm) {
+            newDisjNormForm.add(removeWildcardsFromConj(conj));
+        }
+
+        return new TypeExpr(newDisjNormForm, samples);
+    }
+
+    private static Set<Type> removeWildcardsFromConj(Set<Type> conj) {
+        Set<Type> newConj = new HashSet<>();
+
+        for (Type t : conj) {
+            if (t instanceof Not) {
+                Type neg = ((Not<?>) t).getNegated();
+                if (!(neg instanceof UpperBoundsConjunction && ((UpperBoundsConjunction) neg).isWildcard())) {
+                    newConj.add(t);
+                } // the negation degenerates to Object.class as long as the negated type is a
+                  // wildcard type
+            } else if (t instanceof UpperBoundsConjunction) {
+                Set<Type> flattened = ((UpperBoundsConjunction) t).flatten();
+                flattened = removeWildcardsFromConj(flattened);
+                newConj.addAll(flattened);
+            } else {
+                newConj.add(t);
+            }
+        }
+
+        return newConj;
+    }
+
+    public TypeExpr positiveSamples(Object... sampleValues) {
+        return new TypeExpr(disjNormForm, samples.addPositiveSamples(sampleValues));
+    }
+
+    public TypeExpr negativeSamples(Object... sampleValues) {
+        return new TypeExpr(disjNormForm, samples.addNegativeSamples(sampleValues));
+    }
+
+    public TypeExpr lower(Object typeRepr) {
+        Set<Set<Type>> newDisjNormForm = new HashSet<>();
+
+        for (Set<Type> conj : disjNormForm) {
+            UpperBoundsConjunction upperConj = UpperBoundsConjunction.create(conj.stream()).asWildcard(typeRepr);
+            newDisjNormForm.add(Collections.singleton(upperConj));
+        }
+
+        return new TypeExpr(newDisjNormForm, samples);
+    }
+
+    public static TypeExpr union(Set<Type> types) {
+        Set<Set<Type>> disjNormForm = types.stream().map(t -> Collections.singleton(t)).collect(Collectors.toSet());
+
+        Predicate<Type> isInstancePred = x -> types.stream().filter(t -> TypeAndInstanceCheck.isInstance(t, x)).findFirst().isPresent();
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Samples<?> samples = new Samples(types.toString(), Collections.emptySet(), Collections.emptySet(), isInstancePred);
+        return new TypeExpr(disjNormForm, samples);
     }
 
     public static TypeExpr union(Class<?>... types) {
@@ -116,34 +213,58 @@ public final class TypeExpr {
         }
         // !(A.B | C.D) = !(A.B).!(C.D) = (!A | !B).(!C | !D) = !A.!C | !A.!D | !B.!C | !B.!D
         // !(!A.!B | !C.!D) = !(!A.!B).!(!C.!D) = (A | B).(C | D) = A.C | A.D | B.C | B.D
-        Set<TypeExpr> asUnions = disjNormForm.stream().map(conj -> union(conj)).collect(Collectors.toSet());
+        Set<TypeExpr> asUnions = disjNormForm.stream().map(conj -> union(negateTypes(conj))).collect(Collectors.toSet());
         TypeExpr conj = asUnions.stream().reduce((res, te) -> res.and(te)).orElse(NOTHING);
-        return conj.map(t -> Not.negateType(t));
+        return new TypeExpr(conj.disjNormForm, samples.swap()); // add the negated samples
     }
 
-    public Set<Type> normalize() {
-        return disjNormForm.stream().map(conj -> normalize(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
+    private static Set<Type> negateTypes(Set<Type> types) {
+        return types.stream().map(t -> Not.negateType(t)).collect(Collectors.toSet());
+    }
+
+    public TypeExpr normalize() {
+        Set<Set<Type>> conjunctionsNormalized = disjNormForm.stream().map(conj -> normalizeConjunctionSet(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
+        return new TypeExpr(conjunctionsNormalized, samples);
+    }
+
+    public Set<Type> toNormalizedConjunctionSet() {
+        Set<Type> conjunctionsNormalized = disjNormForm.stream().map(conj -> normalizeConjunction(conj)).filter(t -> !t.equals(Not.NOTHING)).collect(Collectors.toSet());
+        return conjunctionsNormalized;
+        // return squashDisjunctions(conjunctionsNormalized);
     }
 
     public Set<Class<?>> toClasses() {
-        return normalize().stream().filter(t -> t instanceof Class).map(t -> (Class<?>) t).collect(Collectors.toSet());
+        return toNormalizedConjunctionSet().stream().filter(t -> t instanceof Class).map(t -> (Class<?>) t).collect(Collectors.toSet());
     }
 
-    private static Type normalize(Set<? extends Type> conj) {
+    static Type normalizeConjunction(Set<Type> conj) {
+        Set<Type> moreSpecific = normalizeConjunctionSet(conj);
+        if (moreSpecific.isEmpty()) {
+            return Not.NOTHING;
+        } else if (moreSpecific.size() == 1) {
+            Type t = moreSpecific.iterator().next();
+            return t;
+        } else {
+            UpperBoundsConjunction ub = UpperBoundsConjunction.create(moreSpecific.stream());
+            return ub;
+        }
+    }
+
+    static Set<Type> normalizeConjunctionSet(Set<Type> conj) {
         Type[] conjArray = conj.toArray(new Type[conj.size()]);
         Set<Type> lessSpecific = new HashSet<>();
 
         for (int i = 0; i < conj.size(); i++) {
             for (int j = i + 1; j < conj.size(); j++) {
 
-                switch (CastUtils.Casts.isConvertible(conjArray[i], conjArray[j], true)) {
+                switch (CastUtils.Casts.isConvertible(conjArray[i], conjArray[j], false)) {
                     case none:
                         // a contradiction found
-                        return Not.NOTHING;
+                        return Collections.emptySet();
                     case potential:
                         break;
                     case partial:
-                        if (CastUtils.Casts.isConvertible(conjArray[j], conjArray[i], true) == Cast.Coverage.full) {
+                        if (CastUtils.Casts.isConvertible(conjArray[j], conjArray[i], false) == Cast.Coverage.full) {
                             lessSpecific.add(conjArray[i]);
                         }
                         break;
@@ -154,20 +275,30 @@ public final class TypeExpr {
             }
         }
 
-        HashSet<Type> moreSpecific = new HashSet<>(conj);
+        Set<Type> moreSpecific = new HashSet<>(conj);
         moreSpecific.removeAll(lessSpecific);
+        moreSpecific = moreSpecific.stream().map(t -> t instanceof TypeAndInstanceCheck ? ((TypeAndInstanceCheck) t).normalize() : t).collect(Collectors.toSet());
+        return moreSpecific;
+    }
 
-        if (moreSpecific.size() == 1) {
-            Type t = moreSpecific.iterator().next();
-            return t;
-        } else {
-            assert !moreSpecific.isEmpty();
-            return new TypeConjunction(moreSpecific);
+    static boolean isContradiction(Set<Type> conj) {
+        Type[] conjArray = conj.toArray(new Type[conj.size()]);
+        for (int i = 0; i < conj.size(); i++) {
+            for (int j = i + 1; j < conj.size(); j++) {
+
+                switch (CastUtils.Casts.isConvertible(conjArray[i], conjArray[j], true)) {
+                    case none:
+                        // a contradiction found
+                        return true;
+                }
+            }
         }
+
+        return false;
     }
 
     public Set<Class<?>> classify() {
-        return normalize().stream().map(t -> classify(t)).filter(ot -> ot.isPresent()).map(ot -> ot.get()).collect(Collectors.toSet());
+        return toNormalizedConjunctionSet().stream().map(t -> classify(t)).filter(ot -> ot.isPresent()).map(ot -> ot.get()).collect(Collectors.toSet());
     }
 
     private static Optional<Class<?>> classify(Type t) {
@@ -180,7 +311,7 @@ public final class TypeExpr {
     }
 
     public boolean isInstance(Object x) {
-        return normalize().stream().filter(t -> {
+        return toNormalizedConjunctionSet().stream().filter(t -> {
             if (t instanceof TypeAndInstanceCheck) {
                 return ((TypeAndInstanceCheck) t).isInstance(x);
             } else {
@@ -191,7 +322,7 @@ public final class TypeExpr {
     }
 
     public Cast.Coverage isConvertibleFrom(Type from, boolean includeImplicits) {
-        return normalize().stream().map(t -> CastUtils.Casts.isConvertible(from, t, includeImplicits)).reduce((res, cvg) -> res.or(cvg)).orElse(Cast.Coverage.none);
+        return toNormalizedConjunctionSet().stream().map(t -> CastUtils.Casts.isConvertible(from, t, includeImplicits)).reduce((res, cvg) -> res.or(cvg)).orElse(Cast.Coverage.none);
     }
 
     @Override
