@@ -35,11 +35,11 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen.CastPairListNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen.DropAttributesNodeGen;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -61,13 +61,12 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -96,7 +95,7 @@ public abstract class AsVector extends RBuiltinNode {
     @Specialization
     protected Object asVector(VirtualFrame frame, Object x, String mode) {
         // TODO given dispatch = INTERNAL_GENERIC, this should not be necessary
-        // However, removing it causes unit test failures
+        // However, INTERNAL_GENERIC is not handled for INTERNAL builtins
         RStringVector clazz = classHierarchy.execute(x);
         if (hasClassProfile.profile(clazz != null)) {
             // Note: this dispatch takes care of factor, because there is as.vector.factor
@@ -121,43 +120,7 @@ public abstract class AsVector extends RBuiltinNode {
 
         public abstract Object execute(Object x, String mode);
 
-        private final ConditionProfile hasAttributes = ConditionProfile.createBinaryProfile();
         private final ConditionProfile indirectMatchProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile vectorProfile = BranchProfile.create();
-        private final ConditionProfile listProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile languageProfile = BranchProfile.create();
-        private final BranchProfile symbolProfile = BranchProfile.create();
-        private final BranchProfile expressionProfile = BranchProfile.create();
-
-        private Object dropAttributesIfNeeded(Object o) {
-            Object res = o;
-            if (res instanceof RAttributable && hasAttributes.profile(((RAttributable) res).getAttributes() != null)) {
-                // the assertion should hold because of how cast works and it's only used for
-                // vectors (as per as.vector docs)
-                if (res instanceof RExpression) {
-                    expressionProfile.enter();
-                    return res;
-                } else if (res instanceof RAbstractVector) {
-                    vectorProfile.enter();
-                    if (listProfile.profile(res instanceof RAbstractListVector)) {
-                        // attributes are not dropped for list results
-                        return res;
-                    } else {
-                        return ((RAbstractVector) res).copyDropAttributes();
-                    }
-                } else if (res instanceof RLanguage) {
-                    languageProfile.enter();
-                    return RDataFactory.createLanguage(((RLanguage) res).getRep());
-                } else if (res instanceof RSymbol) {
-                    symbolProfile.enter();
-                    return RDataFactory.createSymbol(((RSymbol) res).getName());
-                } else {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RInternalError.unimplemented("drop attributes for " + res.getClass().getSimpleName());
-                }
-            }
-            return res;
-        }
 
         protected static CastNode createCast(RType type) {
             if (type != null) {
@@ -201,8 +164,49 @@ public abstract class AsVector extends RBuiltinNode {
         protected Object asVector(Object x, String mode,
                         @Cached("mode") String cachedMode,
                         @Cached("fromMode(cachedMode)") RType type,
-                        @Cached("createCast(type)") CastNode cast) {
-            return dropAttributesIfNeeded(cast == null ? x : cast.execute(x));
+                        @Cached("createCast(type)") CastNode cast,
+                        @Cached("create()") DropAttributesNode drop) {
+            return drop.execute(cast == null ? x : cast.execute(x));
+        }
+
+        public abstract static class DropAttributesNode extends Node {
+
+            public abstract Object execute(Object o);
+
+            public static DropAttributesNode create() {
+                return DropAttributesNodeGen.create();
+            }
+
+            protected static boolean hasAttributes(Class<? extends RAbstractAtomicVector> clazz, RAbstractAtomicVector o) {
+                return clazz.cast(o).getAttributes() != null;
+            }
+
+            @Specialization(guards = {"o.getClass() == oClass", "hasAttributes(oClass, o)"})
+            protected RAbstractVector dropCached(RAbstractAtomicVector o,
+                            @Cached("o.getClass()") Class<? extends RAbstractAtomicVector> oClass) {
+                return oClass.cast(o).copyDropAttributes();
+            }
+
+            @Specialization(replaces = "dropCached", guards = "o.getAttributes() != null")
+            protected RAbstractVector drop(RAbstractAtomicVector o) {
+                return o.copyDropAttributes();
+            }
+
+            @Specialization(guards = "o.getAttributes() != null")
+            protected static RLanguage drop(RLanguage o) {
+                return RDataFactory.createLanguage(o.getRep());
+            }
+
+            @Specialization(guards = "o.getAttributes() != null")
+            protected static RSymbol drop(RSymbol o) {
+                return RDataFactory.createSymbol(o.getName());
+            }
+
+            @Fallback
+            protected Object drop(Object o) {
+                // includes RAbstractListVector, RExpression, RPairList
+                return o;
+            }
         }
 
         protected abstract static class CastPairListNode extends CastNode {

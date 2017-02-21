@@ -36,7 +36,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -48,12 +47,10 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -105,7 +102,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
@@ -218,17 +214,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (explicitArgs != null) {
             return (RArgsValuesAndNames) explicitArgs.execute(frame);
         }
-        RArgsValuesAndNames varArgs;
         if (lookupVarArgs == null) {
-            varArgs = null;
+            return null;
         } else {
-            try {
-                varArgs = lookupVarArgs.executeRArgsValuesAndNames(frame);
-            } catch (UnexpectedResultException e) {
+            Object varArgs = lookupVarArgs.execute(frame);
+            if (!(varArgs instanceof RArgsValuesAndNames)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
             }
+            return (RArgsValuesAndNames) varArgs;
         }
-        return varArgs;
     }
 
     protected FunctionDispatch createUninitializedCall() {
@@ -606,7 +601,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class FunctionDispatch extends Node {
 
         /**

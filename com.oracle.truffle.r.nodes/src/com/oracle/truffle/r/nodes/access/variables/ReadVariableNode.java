@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -930,7 +930,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 /*
  * This is RRuntime.checkType in the node form.
  */
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 abstract class CheckTypeNode extends RBaseNode {
 
     public abstract boolean executeBoolean(Object o);

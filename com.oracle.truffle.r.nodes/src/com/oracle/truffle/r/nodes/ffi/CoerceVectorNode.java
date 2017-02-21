@@ -55,22 +55,22 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization(guards = "value.isS4()")
-    Object doS4Object(RTypedValue value, int mode) {
+    Object doS4Object(@SuppressWarnings("unused") RTypedValue value, @SuppressWarnings("unused") int mode) {
         throw RError.nyi(RError.NO_CALLER, "Rf_coerceVector for S4 objects.");
     }
 
     // Note: caches should cover all valid possibilities
     @Specialization(guards = {"!isS4Object(value)", "isNotList(value)", "isValidMode(mode)", "cachedMode == mode"}, limit = "99")
-    Object doCached(Object value, int mode,
-                    @Cached("mode") int cachedMode,
+    Object doCached(Object value, @SuppressWarnings("unused") int mode,
+                    @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                     @Cached("createCastNode(cachedMode)") CastNode castNode) {
         return castNode.execute(value);
     }
 
     // Lists are coerced with only preserved names unlike other types
     @Specialization(guards = {"!isS4Object(value)", "isValidMode(mode)", "cachedMode == mode"}, limit = "99")
-    Object doCached(RList value, int mode,
-                    @Cached("mode") int cachedMode,
+    Object doCached(RList value, @SuppressWarnings("unused") int mode,
+                    @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                     @Cached("createCastNodeForList(cachedMode)") CastNode castNode) {
         return castNode.execute(value);
     }
@@ -120,7 +120,7 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
             case VECSXP:
                 return CastListNode.createForRFFI(true, forList, forList);
             case EXPRSXP:
-                return CastExpressionNode.createForRFFI(false, false, false);
+                return CastExpressionNode.createForRFFI();
             case INTSXP:
                 return CastIntegerNode.createForRFFI(true, preserveDims, preserveAttrs);
             case REALSXP:
@@ -141,7 +141,7 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
     private static final class CastNullNode extends CastNode {
         @Override
         @TruffleBoundary
-        public Object execute(@SuppressWarnings("unused") Object value) {
+        public Object execute(Object value) {
             if (value instanceof RList) {
                 throw RError.error(RError.NO_CALLER, Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, "list", "coerceVectorList");
             } else {

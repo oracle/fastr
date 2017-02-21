@@ -256,7 +256,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
-    public RShareable copy() {
+    public RSharingAttributeStorage copy() {
         RPairList result = new RPairList();
         Object original = this;
         while (!isNull(original)) {
@@ -280,9 +280,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
-    public RShareable materializeToShareable() {
-        RInternalError.shouldNotReachHere();
-        return null;
+    public RPairList materialize() {
+        return this;
     }
 
     @Override

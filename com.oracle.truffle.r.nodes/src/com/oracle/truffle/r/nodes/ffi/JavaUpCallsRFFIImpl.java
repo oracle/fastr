@@ -580,7 +580,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (x instanceof RShareable) {
             return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
         } else if (x instanceof RSequence) {
-            return ((RSequence) x).materializeToShareable();
+            return ((RSequence) x).materialize();
         } else {
             return ((RExternalPtr) x).copy();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,5 +75,16 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
             incRefCount();
         }
         return this;
+    }
+
+    @Override
+    public abstract RSharingAttributeStorage copy();
+
+    /**
+     * Verifies that the given object either is and instance of RShareable and
+     * RSharingAttributeStorage or an instance of neither of them.
+     */
+    public static void verify(Object value) {
+        assert (value instanceof RShareable) == (value instanceof RSharingAttributeStorage) : "unexpected RShareable that is not RSharingAttributeStorage: " + value;
     }
 }

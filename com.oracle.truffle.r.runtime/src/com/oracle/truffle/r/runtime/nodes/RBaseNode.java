@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -237,10 +238,9 @@ public abstract class RBaseNode extends Node {
         return value instanceof RAbstractStringVector;
     }
 
-    /*
-     * No isXyz functions for abstract vector classes (RAbstractIntVector, etc.), because they do
-     * not honor implicit casts and can thus lead to unexpected behavior.
-     */
+    protected static boolean isRAbstractListVector(Object value) {
+        return value instanceof RAbstractListVector;
+    }
 
     protected static boolean isRList(Object value) {
         return value instanceof RList;

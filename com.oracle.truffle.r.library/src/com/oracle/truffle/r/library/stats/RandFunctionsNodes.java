@@ -22,7 +22,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -30,7 +29,6 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.ConvertToLen
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction1NodeGen;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction2NodeGen;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction3NodeGen;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -99,7 +97,6 @@ public final class RandFunctionsNodes {
      * result vector, and similar. The random function is provided as implementation of
      * {@link RandFunction3_Double}.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     protected abstract static class RandFunctionExecutorBase extends Node {
         static final class RandGenerationNodeData {
             final BranchProfile nanResult = BranchProfile.create();
@@ -155,7 +152,6 @@ public final class RandFunctionsNodes {
         }
     }
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     protected abstract static class RandFunctionIntExecutorNode extends RandFunctionExecutorBase {
         @Child private RandFunction3_Double function;
 
@@ -201,7 +197,6 @@ public final class RandFunctionsNodes {
         }
     }
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     protected abstract static class RandFunctionDoubleExecutorNode extends RandFunctionExecutorBase {
         @Child private RandFunction3_Double function;
 

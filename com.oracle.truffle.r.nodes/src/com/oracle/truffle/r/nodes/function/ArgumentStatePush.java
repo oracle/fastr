@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,12 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -43,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 /**
  * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class ArgumentStatePush extends Node {
 
     public abstract void executeObject(VirtualFrame frame, Object shareable);
@@ -107,17 +103,13 @@ public abstract class ArgumentStatePush extends Node {
         }
     }
 
-    @Specialization
-    public void transitionState(RShareable shareable) {
-        throw RInternalError.shouldNotReachHere("unexpected RShareable that is not RSharingAttributeStorage: " + shareable.getClass());
-    }
-
     @Specialization(guards = "!isShareable(o)")
     public void transitionStateNonShareable(@SuppressWarnings("unused") Object o) {
         // do nothing
     }
 
     protected boolean isShareable(Object o) {
-        return o instanceof RShareable;
+        RSharingAttributeStorage.verify(o);
+        return o instanceof RSharingAttributeStorage;
     }
 }

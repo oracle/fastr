@@ -27,11 +27,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
@@ -53,7 +51,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * rules. It implements two different paths: one for arguments provided as an
  * {@link CallArgumentsNode}, i.e., unevaluated arguments, and another path for evaluated arguments.
  */
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class PrepareArguments extends Node {
 
     protected static final int CACHE_SIZE = 8;

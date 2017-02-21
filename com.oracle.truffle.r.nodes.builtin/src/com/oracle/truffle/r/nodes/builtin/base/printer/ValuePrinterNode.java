@@ -63,7 +63,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -522,11 +521,6 @@ public final class ValuePrinterNode extends RBaseNode {
 
         @Override
         public RTypedValue getNonShared() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public RShareable materializeToShareable() {
             throw RInternalError.shouldNotReachHere();
         }
 

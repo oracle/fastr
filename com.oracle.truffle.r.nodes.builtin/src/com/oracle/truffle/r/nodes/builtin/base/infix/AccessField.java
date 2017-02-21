@@ -31,11 +31,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -52,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 @NodeChild(value = "arguments", type = RNode[].class)
 abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
@@ -86,7 +83,6 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 }
 
 @RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class AccessField extends RBuiltinNode {
 
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);

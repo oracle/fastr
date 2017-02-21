@@ -108,8 +108,10 @@ public abstract class CastExpressionNode extends CastBaseNode {
         return RDataFactory.createExpression(new Object[]{obj});
     }
 
-    public static CastExpressionNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        // RFFI coercion to list unlike others does not preserve names it seems
+    /**
+     * RFFI coercion to list unlike others does not preserve names it seems.
+     */
+    public static CastExpressionNode createForRFFI() {
         return CastExpressionNodeGen.create(false, false, false, true);
     }
 

@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
@@ -48,7 +47,7 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     RTypedValue getNonShared();
 
-    RShareable materializeToShareable();
+    RAbstractContainer materialize();
 
     Object getDataAtAsObject(int index);
 

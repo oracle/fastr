@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -184,7 +184,7 @@ abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
 }
 
 @RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 public abstract class Subscript extends RBuiltinNode {
 
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)

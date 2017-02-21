@@ -130,17 +130,18 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected String toString(RContext context, Object value) {
-        // Btw debugger passes result of TruffleRLanguage.findMetaObject() to this method too
-        if (value instanceof String) {
-            return (String) value;
-        }
-        if (value instanceof RPromise) {
-            RPromise promise = (RPromise) value;
+        // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
+        Object unwrapped = value;
+        if (unwrapped instanceof RPromise) {
+            RPromise promise = (RPromise) unwrapped;
             if (promise.isEvaluated()) {
-                value = promise.getValue();
+                unwrapped = promise.getValue();
             }
         }
-        return RRuntime.toString(value);
+        if (unwrapped instanceof String) {
+            return (String) unwrapped;
+        }
+        return RRuntime.toString(unwrapped);
     }
 
     @Override

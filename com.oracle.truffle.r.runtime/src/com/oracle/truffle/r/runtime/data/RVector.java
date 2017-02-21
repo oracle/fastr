@@ -779,11 +779,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return implicitClassHeader;
     }
 
-    @Override
-    public final RShareable materializeToShareable() {
-        return materialize();
-    }
-
     public static void verifyDimensions(int vectorLength, int[] newDimensions, RBaseNode invokingNode) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {

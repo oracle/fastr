@@ -19,7 +19,7 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
  * subtly different (more permissive error-wise) that {@link CastDoubleNode}. Non-castable values
  * return {@code NA}.
  */
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
 
     public abstract double execute(Object obj);

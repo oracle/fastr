@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -294,13 +294,12 @@ public abstract class PromiseNode extends RNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 lookupVarArgs = insert(ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
             }
-            RArgsValuesAndNames varArgsAndNames;
-            try {
-                varArgsAndNames = lookupVarArgs.executeRArgsValuesAndNames(frame);
-            } catch (UnexpectedResultException e) {
-                throw RInternalError.shouldNotReachHere(e, "'...' should always be represented by RArgsValuesAndNames");
+            Object varArgs = lookupVarArgs.execute(frame);
+            if (!(varArgs instanceof RArgsValuesAndNames)) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
             }
-            return varArgsAndNames;
+            return (RArgsValuesAndNames) varArgs;
         }
 
         @Override

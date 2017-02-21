@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,13 +28,12 @@ import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.internal.DSLOptions;
 import com.oracle.truffle.api.dsl.internal.DSLOptions.DSLGenerator;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -49,12 +48,27 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  *
  * @see RNode
  */
-@TypeSystem({boolean.class, byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class,
-                RRawVector.class, RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REmpty.class, REnvironment.class, RExpression.class,
-                MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
-                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RSymbol.class, RPromise.class, RLanguage.class,
-                RPairList.class, RExternalPtr.class, RS4Object.class, RAbstractContainer.class, RAttributable.class, RArgsValuesAndNames.class, RTypedValue.class, RType.class, Object[].class})
-@DSLOptions(defaultGenerator = DSLGenerator.DEFAULT)
+@TypeSystem({
+                byte.class, RAbstractLogicalVector.class,
+                int.class, RAbstractIntVector.class,
+                double.class, RAbstractDoubleVector.class,
+                String.class, RAbstractStringVector.class,
+                RRaw.class, RAbstractRawVector.class,
+                RComplex.class, RAbstractComplexVector.class,
+                RAbstractListVector.class,
+                RNull.class,
+                RExpression.class,
+                RPromise.class,
+                RMissing.class,
+                RPairList.class,
+                RSymbol.class,
+                RLanguage.class,
+                RFunction.class,
+                REnvironment.class,
+                RAbstractContainer.class,
+                RArgsValuesAndNames.class
+})
+@DSLOptions(defaultGenerator = DSLGenerator.FLAT)
 public class RTypes {
 
     @TypeCheck(RNull.class)
@@ -110,56 +124,6 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RIntVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RDoubleVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RLogicalVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RComplexVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RRawVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RStringVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RIntSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RDoubleSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RList vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RAbstractVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
     public static RAbstractVector toAbstractVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
@@ -190,83 +154,13 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractVector toAbstractVector(RIntVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RDoubleVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RLogicalVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RComplexVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RRawVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RStringVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RIntSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RDoubleSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RList vector) {
-        return vector;
-    }
-
-    @ImplicitCast
     public static RAbstractIntVector toAbstractIntVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
     @ImplicitCast
-    public static RAbstractIntVector toAbstractIntVector(RIntSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractIntVector toAbstractIntVector(RIntVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
     public static RAbstractDoubleVector toAbstractDoubleVector(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
-    }
-
-    @ImplicitCast
-    public static RAbstractDoubleVector toAbstractDoubleVector(RDoubleSequence vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractDoubleVector toAbstractDoubleVector(RDoubleVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
-    public static RAbstractComplexVector toAbstractComplexVector(RComplexVector vector) {
-        return vector;
     }
 
     @ImplicitCast
@@ -280,18 +174,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractLogicalVector toAbstractLogicalVector(RLogicalVector vector) {
-        return vector;
-    }
-
-    @ImplicitCast
     public static RAbstractRawVector toAbstractRawVector(RRaw vector) {
         return RDataFactory.createRawVectorFromScalar(vector);
-    }
-
-    @ImplicitCast
-    public static RAbstractRawVector toAbstractRawVector(RRawVector vector) {
-        return vector;
     }
 
     @ImplicitCast
@@ -300,8 +184,33 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractStringVector toAbstractStringVector(RStringVector vector) {
-        return vector;
+    public static RAbstractAtomicVector toAbstractAtomicVector(int value) {
+        return RDataFactory.createIntVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(double value) {
+        return RDataFactory.createDoubleVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(byte value) {
+        return RDataFactory.createLogicalVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(RComplex value) {
+        return RDataFactory.createComplexVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(String value) {
+        return RDataFactory.createStringVectorFromScalar(value);
     }
 
     @ImplicitCast

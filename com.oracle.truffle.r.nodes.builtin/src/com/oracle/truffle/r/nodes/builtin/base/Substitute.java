@@ -73,7 +73,7 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization(guards = {"list.getNames() == null || list.getNames().getLength() == 0"})
-    protected Object doSubstitute(RPromise expr, RList list) {
+    protected Object doSubstitute(RPromise expr, @SuppressWarnings("unused") RList list) {
         return doSubstituteWithEnv(expr, SubstituteDirect.createNewEnvironment());
     }
 

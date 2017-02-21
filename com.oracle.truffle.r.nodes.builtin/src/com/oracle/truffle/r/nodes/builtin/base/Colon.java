@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -35,13 +36,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.Colon.ColonCastNode;
+import com.oracle.truffle.r.nodes.builtin.base.Colon.ColonInternal;
 import com.oracle.truffle.r.nodes.builtin.base.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.ColonNodeGen.ColonInternalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
@@ -49,10 +52,33 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = ":", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE)
+@NodeChild(value = "left", type = RNode.class)
+@NodeChild(value = "right", type = RNode.class)
+abstract class ColonSpecial extends RNode {
+
+    @Child private ColonCastNode leftCast = ColonCastNodeGen.create();
+    @Child private ColonCastNode rightCast = ColonCastNodeGen.create();
+    @Child private ColonInternal internal = ColonInternalNodeGen.create();
+
+    @Specialization
+    protected Object colon(Object left, Object right) {
+        return internal.execute(leftCast.execute(left), rightCast.execute(right));
+    }
+}
+
+// javac fails without fully qualified name
+@com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ":", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE)
 public abstract class Colon extends RBuiltinNode {
+
+    public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
+        if (signature.getNonNullCount() == 0 && arguments.length == 2 && !inReplacement) {
+            return ColonSpecialNodeGen.create(arguments[0], arguments[1]);
+        }
+        return null;
+    }
 
     @Child private ColonCastNode leftCast = ColonCastNodeGen.create();
     @Child private ColonCastNode rightCast = ColonCastNodeGen.create();
@@ -155,6 +181,7 @@ public abstract class Colon extends RBuiltinNode {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     abstract static class ColonCastNode extends CastNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();

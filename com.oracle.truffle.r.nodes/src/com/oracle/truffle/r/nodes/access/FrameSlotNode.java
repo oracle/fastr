@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.find
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -38,11 +37,9 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends RBaseNode {
 
     public abstract boolean hasValue(Frame frame);

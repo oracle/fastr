@@ -28,18 +28,16 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -53,7 +51,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 abstract class ReplacementNode extends OperatorNode {
 
     protected final RSyntaxElement lhs;
@@ -139,7 +136,7 @@ abstract class ReplacementNode extends OperatorNode {
             if ("slot".equals(symbol) || "@".equals(symbol)) {
                 // this is pretty gross, but at this point seems like the only way to get setClass
                 // to work properly
-                argNodes[0] = GetNonSharedNodeGen.create(argNodes[0].asRNode());
+                argNodes[0] = new GetNonSharedNode.GetNonSharedSyntaxNode(argNodes[0].asRNode());
             }
             newSyntaxLHS = builder.lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
         } else {

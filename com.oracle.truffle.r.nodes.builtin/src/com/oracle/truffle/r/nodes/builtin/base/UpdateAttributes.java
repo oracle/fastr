@@ -30,6 +30,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
@@ -43,6 +45,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -51,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -115,20 +117,22 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttributes(RAbstractContainer abstractContainer, @SuppressWarnings("unused") RNull list) {
-        RAbstractContainer resultVector = (RAbstractContainer) abstractContainer.getNonShared();
+    protected RAbstractContainer updateAttributes(RAbstractContainer abstractContainer, @SuppressWarnings("unused") RNull list,
+                    @Cached("create()") GetNonSharedNode nonShared) {
+        RAbstractContainer resultVector = ((RAbstractContainer) nonShared.execute(abstractContainer)).materialize();
         resultVector.resetAllAttributes(true);
         return resultVector;
     }
 
     @Specialization
-    protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list) {
+    protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list,
+                    @Cached("create()") GetNonSharedNode nonShared) {
         Object listNamesObject = getNamesNode.getNames(list);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (numAttributesProfile.profile(list.getLength() == 0)) {
             result.resetAllAttributes(true);
         } else {
@@ -239,54 +243,40 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         return res;
     }
 
-    protected static boolean isAbstractContainer(Object value) {
-        return RTypesGen.isImplicitRAbstractContainer(value);
-    }
-
     /**
      * All other, non-performance centric, {@link RAttributable} types, or error case for RNull
      * value.
      */
-    @Specialization(guards = {"!isAbstractContainer(o)"})
+    @Fallback
     @TruffleBoundary
-    protected Object doOtherNull(Object o, @SuppressWarnings("unused") RNull operand) {
+    protected Object doOtherNull(Object o, Object operand) {
         checkAttributable(o);
         Object obj = getNonShared(o);
         RAttributable attrObj = (RAttributable) obj;
         attrObj.removeAllAttributes();
-        attrObj.setClassAttr(null);
-        return obj;
-    }
 
-    /**
-     * All other, non-performance centric, {@link RAttributable} types, or error case for list
-     * value.
-     */
-    @Specialization(guards = {"!isAbstractContainer(o)"})
-    @TruffleBoundary
-    protected Object doOtherList(Object o, RList operand) {
-        checkAttributable(o);
-        Object obj = getNonShared(o);
-        RAttributable attrObj = (RAttributable) obj;
-        attrObj.removeAllAttributes();
-        RStringVector listNames = operand.getNames();
-        if (listNames == null) {
-            throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
-        }
-        for (int i = 0; i < operand.getLength(); i++) {
-            String attrName = listNames.getDataAt(i);
-            if (attrName == null) {
+        if (operand == RNull.instance) {
+            attrObj.setClassAttr(null);
+        } else {
+            RList list = (RList) operand;
+            RStringVector listNames = list.getNames();
+            if (listNames == null) {
                 throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
             }
-            if (RRuntime.CLASS_ATTR_KEY.equals(attrName)) {
-                Object attrValue = operand.getDataAt(i);
-                if (attrValue == null) {
-                    throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
+            for (int i = 0; i < list.getLength(); i++) {
+                String attrName = listNames.getDataAt(i);
+                if (attrName == null) {
+                    throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
                 }
-
-                attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
-            } else {
-                attrObj.setAttr(attrName.intern(), operand.getDataAt(i));
+                if (RRuntime.CLASS_ATTR_KEY.equals(attrName)) {
+                    Object attrValue = list.getDataAt(i);
+                    if (attrValue == null) {
+                        throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
+                    }
+                    attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
+                } else {
+                    attrObj.setAttr(attrName.intern(), list.getDataAt(i));
+                }
             }
         }
         return obj;

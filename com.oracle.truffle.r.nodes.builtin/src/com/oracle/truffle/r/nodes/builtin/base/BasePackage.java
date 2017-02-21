@@ -226,7 +226,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
         add(Col.class, ColNodeGen::create);
-        add(Colon.class, ColonNodeGen::create);
+        add(Colon.class, ColonNodeGen::create, Colon::special);
         add(ColMeans.class, ColMeansNodeGen::create);
         add(ColSums.class, ColSumsNodeGen::create);
         add(Combine.class, CombineNodeGen::create);

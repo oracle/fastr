@@ -108,10 +108,6 @@ public abstract class RBuiltinDescriptor {
         return signature;
     }
 
-    public int[] getNonEvalArgs() {
-        return nonEvalArgs;
-    }
-
     public boolean isAlwaysSplit() {
         return alwaysSplit;
     }
@@ -146,5 +142,11 @@ public abstract class RBuiltinDescriptor {
 
     public RSpecialFactory getSpecialCall() {
         return specialCall;
+    }
+
+    @Override
+    public String toString() {
+        return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
+                        Arrays.toString(nonEvalArgs) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
     }
 }

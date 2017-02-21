@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
-
 /**
  * Distinguishes what R considers an "atomic" vector, e.g. {@code integer()} from other "vectors",
  * e.g., {@code list()}. Specifically these are the FastR atomic vector types:
@@ -36,8 +33,6 @@ import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
  * <li>{@link RAbstractStringVector}</li>
  * <li>{@link RAbstractRawVector}</li>
  * </ul>
- *
- * N.B. To use this in a {@link Specialization} you must use {@link RTypesFlatLayout}.
  */
 public interface RAbstractAtomicVector extends RAbstractVector {
 

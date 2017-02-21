@@ -30,12 +30,12 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypesFlatLayout;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
-@TypeSystemReference(RTypesFlatLayout.class)
+@TypeSystemReference(RTypes.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     private static final CharSXPWrapper CharSXPWrapper_NA = CharSXPWrapper.create(RRuntime.STRING_NA);
 

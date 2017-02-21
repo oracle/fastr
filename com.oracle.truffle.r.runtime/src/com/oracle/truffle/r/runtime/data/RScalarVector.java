@@ -88,11 +88,6 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
-    public RShareable materializeToShareable() {
-        return materialize().materializeToShareable();
-    }
-
-    @Override
     public RStringVector getNames() {
         return null;
     }

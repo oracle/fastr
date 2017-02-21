@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertValue;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -31,10 +32,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -48,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-@TypeSystemReference(EmptyTypeSystemFlatLayout.class)
 public abstract class UpdateSubset extends RBuiltinNode {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSET, false);
@@ -63,9 +61,9 @@ public abstract class UpdateSubset extends RBuiltinNode {
             ProfiledValue vector = profile(args[0]);
             ConvertIndex index = convertIndex(args[1]);
             if (args.length == 3) {
-                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, args[2]);
+                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, convertValue(args[2]));
             } else {
-                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), args[3]);
+                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), convertValue(args[3]));
             }
         }
         return null;

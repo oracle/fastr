@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode.isMatrix;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -50,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -80,6 +83,10 @@ public abstract class MatMult extends RBuiltinNode {
     @Child protected GetDimAttributeNode getBDimsNode = GetDimAttributeNode.create();
     @Child protected SetDimAttributeNode setDimsNode = SetDimAttributeNode.create();
 
+    @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getADimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getBDimNamesNode = GetDimNamesAttributeNode.create();
+
     protected abstract Object executeObject(Object a, Object b);
 
     private final NACheck na;
@@ -97,7 +104,7 @@ public abstract class MatMult extends RBuiltinNode {
         return MatMultNodeGen.create(true);
     }
 
-    @Specialization(guards = "bothZeroDim(a, b, getADimsNode, getBDimsNode)")
+    @Specialization(guards = "bothZeroDim(a, b)")
     protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         int r = getBDimsNode.getDimensions(b)[1];
         int c = getADimsNode.getDimensions(a)[0];
@@ -144,9 +151,8 @@ public abstract class MatMult extends RBuiltinNode {
     private final BranchProfile incompleteProfile = BranchProfile.create();
     @CompilationFinal private boolean seenLargeMatrix;
 
-    private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols, SetDimNamesAttributeNode setDimNamesNode,
-                    GetDimNamesAttributeNode getADimNamesNode, GetDimNamesAttributeNode getBDimNamesNode) {
-        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+    private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
+        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
     }
 
     /**
@@ -167,7 +173,7 @@ public abstract class MatMult extends RBuiltinNode {
      * @return the result vector
      */
     public RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
-                    int bColStride, boolean mirrored, SetDimNamesAttributeNode setDimNamesNode, GetDimNamesAttributeNode getADimNamesNode, GetDimNamesAttributeNode getBDimNamesNode) {
+                    int bColStride, boolean mirrored) {
         if (aCols != bRows) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -273,23 +279,33 @@ public abstract class MatMult extends RBuiltinNode {
         }
     }
 
-    @Specialization
+    @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
+    protected RDoubleVector multiplyDouble(RAbstractDoubleVector a, RAbstractDoubleVector b,
+                    @Cached("a.getClass()") Class<? extends RAbstractDoubleVector> aClass,
+                    @Cached("b.getClass()") Class<? extends RAbstractDoubleVector> bClass,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return doubleMultiply(aClass.cast(a), bClass.cast(b), aIsMatrix, bIsMatrix, lengthEquals);
+    }
+
+    @Specialization(replaces = "multiplyDouble")
     protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractDoubleVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
-        if (aIsMatrix.profile(a.isMatrix())) {
-            if (bIsMatrix.profile(b.isMatrix())) {
-                int[] aDimensions = getADimsNode.getDimensions(a);
-                int[] bDimensions = getBDimsNode.getDimensions(b);
-                return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1], setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        return doubleMultiply(a, b, aIsMatrix, bIsMatrix, lengthEquals);
+    }
+
+    private RDoubleVector doubleMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix, ConditionProfile lengthEquals) {
+        int[] aDimensions = getADimsNode.getDimensions(a);
+        int[] bDimensions = getBDimsNode.getDimensions(b);
+        if (aIsMatrix.profile(isMatrix(aDimensions))) {
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
             } else {
-                int[] aDim = getADimsNode.getDimensions(a);
-                int aRows = aDim[0];
-                int aCols = aDim[1];
+                int aRows = aDimensions[0];
+                int aCols = aDimensions[1];
                 int bRows;
                 int bCols;
                 if (lengthEquals.profile(aCols == b.getLength())) {
@@ -299,13 +315,12 @@ public abstract class MatMult extends RBuiltinNode {
                     bRows = 1;
                     bCols = b.getLength();
                 }
-                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
             }
         } else {
-            if (bIsMatrix.profile(b.isMatrix())) {
-                int[] bDim = getBDimsNode.getDimensions(b);
-                int bRows = bDim[0];
-                int bCols = bDim[1];
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                int bRows = bDimensions[0];
+                int bCols = bDimensions[1];
                 int aRows;
                 int aCols;
                 if (lengthEquals.profile(bRows == a.getLength())) {
@@ -315,7 +330,7 @@ public abstract class MatMult extends RBuiltinNode {
                     aRows = a.getLength();
                     aCols = 1;
                 }
-                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
             } else {
                 if (a.getLength() != b.getLength()) {
                     errorProfile.enter();
@@ -339,22 +354,35 @@ public abstract class MatMult extends RBuiltinNode {
 
     // complex-complex
 
-    @Specialization
+    @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
+    protected RComplexVector multiplyComplex(RAbstractComplexVector a, RAbstractComplexVector b,
+                    @Cached("a.getClass()") Class<? extends RAbstractComplexVector> aClass,
+                    @Cached("b.getClass()") Class<? extends RAbstractComplexVector> bClass,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return complexMultiply(aClass.cast(a), bClass.cast(b), aIsMatrix, bIsMatrix);
+    }
+
+    @Specialization(replaces = "multiplyComplex")
     protected RComplexVector multiply(RAbstractComplexVector a, RAbstractComplexVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        if (aIsMatrix.profile(a.isMatrix())) {
-            if (bIsMatrix.profile(b.isMatrix())) {
-                int[] aDim = getADimsNode.getDimensions(a);
-                int[] bDim = getBDimsNode.getDimensions(b);
-                final int aCols = aDim[1];
-                final int bRows = bDim[0];
+        return complexMultiply(a, b, aIsMatrix, bIsMatrix);
+    }
+
+    private RComplexVector complexMultiply(RAbstractComplexVector a, RAbstractComplexVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix) {
+        int[] aDimensions = getADimsNode.getDimensions(a);
+        int[] bDimensions = getBDimsNode.getDimensions(b);
+        if (aIsMatrix.profile(isMatrix(aDimensions))) {
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                final int aCols = aDimensions[1];
+                final int bRows = bDimensions[0];
                 if (aCols != bRows) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                final int aRows = aDim[0];
-                final int bCols = bDim[1];
+                final int aRows = aDimensions[0];
+                final int bCols = bDimensions[1];
                 double[] result = new double[(aRows * bCols) << 1];
                 na.enable(a);
                 na.enable(b);
@@ -372,9 +400,8 @@ public abstract class MatMult extends RBuiltinNode {
                 }
                 return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
             } else {
-                int[] aDim = getADimsNode.getDimensions(a);
-                final int aCols = aDim[1];
-                final int aRows = aDim[0];
+                final int aCols = aDimensions[1];
+                final int aRows = aDimensions[0];
                 if (aCols != 1 && aCols != b.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -407,10 +434,9 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             }
         } else {
-            if (bIsMatrix.profile(b.isMatrix())) {
-                int[] bDim = getBDimsNode.getDimensions(b);
-                final int bRows = bDim[0];
-                final int bCols = bDim[1];
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                final int bRows = bDimensions[0];
+                final int bCols = bDimensions[1];
                 if (bRows != 1 && bRows != a.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -460,22 +486,35 @@ public abstract class MatMult extends RBuiltinNode {
 
     // int-int
 
-    @Specialization
+    @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
+    protected RIntVector multiplyInt(RAbstractIntVector a, RAbstractIntVector b,
+                    @Cached("a.getClass()") Class<? extends RAbstractIntVector> aClass,
+                    @Cached("b.getClass()") Class<? extends RAbstractIntVector> bClass,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+        return intMultiply(aClass.cast(a), bClass.cast(b), aIsMatrix, bIsMatrix);
+    }
+
+    @Specialization(replaces = "multiplyInt")
     protected RIntVector multiply(RAbstractIntVector a, RAbstractIntVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        if (aIsMatrix.profile(a.isMatrix())) {
-            if (bIsMatrix.profile(b.isMatrix())) {
-                int[] aDim = getADimsNode.getDimensions(a);
-                int[] bDim = getBDimsNode.getDimensions(b);
-                final int aCols = aDim[1];
-                final int bRows = bDim[0];
+        return intMultiply(a, b, aIsMatrix, bIsMatrix);
+    }
+
+    private RIntVector intMultiply(RAbstractIntVector a, RAbstractIntVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix) {
+        int[] aDimensions = getADimsNode.getDimensions(a);
+        int[] bDimensions = getBDimsNode.getDimensions(b);
+        if (aIsMatrix.profile(isMatrix(aDimensions))) {
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                int aCols = aDimensions[1];
+                int bRows = bDimensions[0];
                 if (aCols != bRows) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                final int aRows = aDim[0];
-                final int bCols = bDim[1];
+                int aRows = aDimensions[0];
+                int bCols = bDimensions[1];
                 int[] result = new int[aRows * bCols];
                 na.enable(a);
                 na.enable(b);
@@ -491,9 +530,8 @@ public abstract class MatMult extends RBuiltinNode {
                 }
                 return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{aRows, bCols});
             } else {
-                int[] aDim = getADimsNode.getDimensions(a);
-                final int aCols = aDim[1];
-                final int aRows = aDim[0];
+                final int aCols = aDimensions[1];
+                final int aRows = aDimensions[0];
                 if (aCols != 1 && aCols != b.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -524,10 +562,9 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             }
         } else {
-            int[] bDim = getBDimsNode.getDimensions(b);
-            if (bIsMatrix.profile(b.isMatrix())) {
-                final int bCols = bDim[1];
-                final int bRows = bDim[0];
+            if (bIsMatrix.profile(isMatrix(bDimensions))) {
+                final int bCols = bDimensions[1];
+                final int bRows = bDimensions[0];
                 if (bRows != 1 && bRows != a.getLength()) {
                     errorProfile.enter();
                     throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
@@ -578,7 +615,7 @@ public abstract class MatMult extends RBuiltinNode {
     protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(RClosures.createLogicalToIntVector(aOriginal), RClosures.createLogicalToIntVector(bOriginal), aIsMatrix, bIsMatrix);
+        return intMultiply(RClosures.createLogicalToIntVector(aOriginal), RClosures.createLogicalToIntVector(bOriginal), aIsMatrix, bIsMatrix);
     }
 
     // to int
@@ -587,104 +624,52 @@ public abstract class MatMult extends RBuiltinNode {
     protected RIntVector multiply(RAbstractLogicalVector a, RAbstractIntVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(RClosures.createLogicalToIntVector(a), b, aIsMatrix, bIsMatrix);
+        return intMultiply(RClosures.createLogicalToIntVector(a), b, aIsMatrix, bIsMatrix);
     }
 
     @Specialization
     protected RIntVector multiply(RAbstractIntVector a, RAbstractLogicalVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(a, RClosures.createLogicalToIntVector(b), aIsMatrix, bIsMatrix);
+        return intMultiply(a, RClosures.createLogicalToIntVector(b), aIsMatrix, bIsMatrix);
+    }
+
+    // to double
+
+    @Specialization(guards = {"!isRAbstractComplexVector(a)"})
+    protected RDoubleVector multiply(RAbstractAtomicVector a, RAbstractDoubleVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+        return doubleMultiply((RAbstractDoubleVector) a.castSafe(RType.Double, isNAProfile), b, aIsMatrix, bIsMatrix, lengthEquals);
+    }
+
+    @Specialization(guards = {"!isRAbstractComplexVector(b)"})
+    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractAtomicVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+        return doubleMultiply(a, (RAbstractDoubleVector) b.castSafe(RType.Double, isNAProfile), aIsMatrix, bIsMatrix, lengthEquals);
     }
 
     // to complex
 
     @Specialization
-    protected RComplexVector multiply(RAbstractIntVector a, RAbstractComplexVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(RClosures.createIntToComplexVector(a), b, aIsMatrix, bIsMatrix);
-    }
-
-    @Specialization
-    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractIntVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(a, RClosures.createIntToComplexVector(b), aIsMatrix, bIsMatrix);
-    }
-
-    @Specialization
-    protected RComplexVector multiply(RAbstractLogicalVector a, RAbstractComplexVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(RClosures.createLogicalToComplexVector(a), b, aIsMatrix, bIsMatrix);
-    }
-
-    @Specialization
-    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractLogicalVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(a, RClosures.createLogicalToComplexVector(b), aIsMatrix, bIsMatrix);
-    }
-
-    @Specialization
-    protected RComplexVector multiply(RAbstractDoubleVector a, RAbstractComplexVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(RClosures.createDoubleToComplexVector(a), b, aIsMatrix, bIsMatrix);
-    }
-
-    @Specialization
-    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractDoubleVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return multiply(a, RClosures.createDoubleToComplexVector(b), aIsMatrix, bIsMatrix);
-    }
-
-    // to double
-
-    @Specialization
-    protected RDoubleVector multiply(RAbstractIntVector a, RAbstractDoubleVector b,
+    protected RComplexVector multiply(RAbstractAtomicVector a, RAbstractComplexVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
-        return multiply(RClosures.createIntToDoubleVector(a), b, aIsMatrix, bIsMatrix, lengthEquals, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+        return complexMultiply((RAbstractComplexVector) a.castSafe(RType.Complex, isNAProfile), b, aIsMatrix, bIsMatrix);
     }
 
     @Specialization
-    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractIntVector b,
+    protected RComplexVector multiply(RAbstractComplexVector a, RAbstractAtomicVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
-        return multiply(a, RClosures.createIntToDoubleVector(b), aIsMatrix, bIsMatrix, lengthEquals, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
-    }
-
-    @Specialization
-    protected RDoubleVector multiply(RAbstractLogicalVector a, RAbstractDoubleVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
-        return multiply(RClosures.createLogicalToDoubleVector(a), b, aIsMatrix, bIsMatrix, lengthEquals, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
-    }
-
-    @Specialization
-    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractLogicalVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getBDimNamesNode) {
-        return multiply(a, RClosures.createLogicalToDoubleVector(b), aIsMatrix, bIsMatrix, lengthEquals, setDimNamesNode, getADimNamesNode, getBDimNamesNode);
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+        return complexMultiply(a, (RAbstractComplexVector) b.castSafe(RType.Complex, isNAProfile), aIsMatrix, bIsMatrix);
     }
 
     // errors
@@ -697,11 +682,11 @@ public abstract class MatMult extends RBuiltinNode {
 
     // guards
 
-    protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b, GetDimAttributeNode getADimsNode, GetDimAttributeNode getBDimsNode) {
+    protected boolean bothZeroDim(RAbstractVector a, RAbstractVector b) {
         return hasZeroDim(a, getADimsNode) && hasZeroDim(b, getBDimsNode);
     }
 
-    protected static boolean hasZeroDim(RAbstractVector v, GetDimAttributeNode getDimsNode) {
+    protected boolean hasZeroDim(RAbstractVector v, GetDimAttributeNode getDimsNode) {
         int[] dims = getDimsNode.getDimensions(v);
         if (dims == null || dims.length == 0) {
             return false;

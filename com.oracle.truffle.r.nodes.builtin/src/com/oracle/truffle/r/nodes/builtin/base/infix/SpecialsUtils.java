@@ -26,17 +26,18 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -64,7 +65,6 @@ class SpecialsUtils {
     /**
      * Common code shared between specials doing subset/subscript related operation.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class SubscriptSpecialCommon extends RNode {
 
         protected final boolean inReplacement;
@@ -90,7 +90,6 @@ class SpecialsUtils {
         }
     }
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class SubscriptSpecial2Common extends SubscriptSpecialCommon {
 
         protected SubscriptSpecial2Common(boolean inReplacement) {
@@ -115,7 +114,6 @@ class SpecialsUtils {
     /**
      * Common code shared between specials accessing/updating fields.
      */
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     abstract static class ListFieldSpecialBase extends RNode {
 
         @Child private ClassHierarchyNode hierarchyNode = ClassHierarchyNode.create();
@@ -172,7 +170,6 @@ class SpecialsUtils {
 
     @NodeInfo(cost = NodeCost.NONE)
     @NodeChild(value = "delegate", type = RNode.class)
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class ConvertIndex extends RNode {
 
         protected abstract RNode getDelegate();
@@ -210,11 +207,52 @@ class SpecialsUtils {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
+    @NodeChild(value = "delegate", type = RNode.class)
+    public abstract static class ConvertValue extends RNode {
+
+        protected abstract RNode getDelegate();
+
+        @Specialization
+        protected static int convert(int value) {
+            return value;
+        }
+
+        @Specialization
+        protected static double convert(double value) {
+            return value;
+        }
+
+        @Specialization(guards = "value.getLength() == 1")
+        protected static int convertIntVector(RIntVector value) {
+            return value.getDataAt(0);
+        }
+
+        @Specialization(guards = "value.getLength() == 1")
+        protected static double convertDoubleVector(RDoubleVector value) {
+            return value.getDataAt(0);
+        }
+
+        @Specialization(replaces = {"convertIntVector", "convertDoubleVector"})
+        protected Object convert(Object value) {
+            return value;
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return getDelegate().asRSyntaxNode();
+        }
+    }
+
     public static ProfiledValue profile(RNode value) {
         return new ProfiledValue(value);
     }
 
     public static ConvertIndex convertIndex(RNode value) {
         return ConvertIndexNodeGen.create(value);
+    }
+
+    public static ConvertValue convertValue(RNode value) {
+        return ConvertValueNodeGen.create(value);
     }
 }

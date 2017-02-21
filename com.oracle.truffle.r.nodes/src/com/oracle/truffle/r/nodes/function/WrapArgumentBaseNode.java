@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -65,10 +64,10 @@ public abstract class WrapArgumentBaseNode extends RNode {
     }
 
     public Object execute(VirtualFrame frame, Object result) {
+        RSharingAttributeStorage.verify(result);
         if (isShareable.profile(result instanceof RSharingAttributeStorage)) {
             return handleShareable(frame, (RSharingAttributeStorage) result);
         } else {
-            assert !(result instanceof RShareable) : "unexpected RShareable that is not a subclass of RSharingAttributeStorage";
             return result;
         }
     }

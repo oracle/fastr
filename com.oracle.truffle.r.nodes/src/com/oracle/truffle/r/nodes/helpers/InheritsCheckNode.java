@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -47,6 +48,10 @@ public final class InheritsCheckNode extends Node {
     public InheritsCheckNode(String checkedClazz) {
         this.checkedClazz = checkedClazz;
         assert RType.fromMode(checkedClazz) == null : "Class '" + checkedClazz + "' cannot be checked by InheritsCheckNode";
+    }
+
+    public static InheritsCheckNode createFactor() {
+        return new InheritsCheckNode(RRuntime.CLASS_FACTOR);
     }
 
     public boolean execute(Object value) {

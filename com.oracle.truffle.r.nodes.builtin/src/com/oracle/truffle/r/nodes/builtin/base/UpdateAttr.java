@@ -33,10 +33,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.EmptyTypeSystemFlatLayout;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -49,6 +47,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -79,7 +78,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Child private InternStringNode intern = InternStringNodeGen.create();
 
-    @TypeSystemReference(EmptyTypeSystemFlatLayout.class)
     public abstract static class InternStringNode extends Node {
 
         public abstract String execute(String value);
@@ -139,9 +137,10 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value,
-                    @Cached("create()") RemoveAttributeNode removeAttrNode) {
+                    @Cached("create()") RemoveAttributeNode removeAttrNode,
+                    @Cached("create()") GetNonSharedNode nonShared) {
         String internedName = intern.execute(name);
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             if (setDimNode == null) {
@@ -183,10 +182,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "!nullValue(value)")
-    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
+    @Specialization(guards = "!isRNull(value)")
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value,
+                    @Cached("create()") GetNonSharedNode nonShared) {
         String internedName = intern.execute(name);
-        RAbstractContainer result = (RAbstractContainer) container.getNonShared();
+        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
@@ -226,12 +226,6 @@ public abstract class UpdateAttr extends RBuiltinNode {
         }
 
         return result;
-    }
-
-    // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
-    // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
-    protected boolean nullValue(Object value) {
-        return value == RNull.instance;
     }
 
     /**
