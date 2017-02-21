@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.DEFAULT_PACKAGES;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.HELP;
@@ -43,7 +44,6 @@ import com.oracle.truffle.r.runtime.RVersionNumber;
  * to R, as evidenced by the script {@code print(commandArgs())}. We don't implement it quite that
  * way but the effect is similar.
  *
- * TODO support {@code --default-packages} option.
  */
 public class RscriptCommand {
     // CheckStyle: stop system..print check
@@ -76,6 +76,14 @@ public class RscriptCommand {
                 }
                 options.setValue(FILE, arguments[firstNonOptionArgIndex]);
             }
+        }
+        String defaultPackagesArg = options.getString(DEFAULT_PACKAGES);
+        String defaultPackagesEnv = System.getenv("R_DEFAULT_PACKAGES");
+        if (defaultPackagesArg == null && defaultPackagesEnv == null) {
+            defaultPackagesArg = "datasets,utils,grDevices,graphics,stats";
+        }
+        if (defaultPackagesEnv == null) {
+            options.setValue(DEFAULT_PACKAGES, defaultPackagesArg);
         }
         // copy up to non-option args
         int rx = 1;

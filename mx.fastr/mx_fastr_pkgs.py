@@ -30,7 +30,7 @@ by the environment variable 'FASTR_GRAALVM' being set. (GRAALVM_FASTR is also ac
 Evidently in case 2, there is the potential for a version mismatch between FastR and GNU R, and this is checked.
 
 In either case all the output is placed in the fastr suite dir. Separate directories are used for FastR and GNU R package installs
-and tests, namely 'lib.install.cran.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
+and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
 '''
 from os.path import join, relpath
 import shutil, os, re
@@ -79,10 +79,10 @@ def _graalvm():
 
 def _create_libinstall(rvm, test_installed):
     '''
-    Create lib.install.cran.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
+    Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
     If use_installed_pkgs is True, assume lib.install exists and is populated (development)
     '''
-    libinstall = join(_fastr_suite_dir(), "lib.install.cran." + rvm)
+    libinstall = join(_fastr_suite_dir(), "lib.install.packages." + rvm)
     if not test_installed:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
@@ -100,18 +100,18 @@ def _log_step(state, step, rvariant):
     if not quiet:
         print "{0} {1} with {2}".format(state, step, rvariant)
 
-def _cran_test_project():
-    return 'com.oracle.truffle.r.test.cran'
+def _packages_test_project():
+    return 'com.oracle.truffle.r.test.packages'
 
-def _cran_test_project_dir():
-    return mx.project(_cran_test_project()).dir
+def _packages_test_project_dir():
+    return mx.project(_packages_test_project()).dir
 
 def installpkgs(args):
     _installpkgs(args)
 
 def _installpkgs_script():
-    cran_test = _cran_test_project_dir()
-    return join(cran_test, 'r', 'install.cran.packages.R')
+    packages_test = _packages_test_project_dir()
+    return join(packages_test, 'r', 'install.packages.R')
 
 def _installpkgs(args, **kwargs):
     '''
@@ -141,7 +141,7 @@ def pkgtest(args):
         global quiet
         quiet = True
 
-    install_args = args
+    install_args = list(args)
 
     class OutputCapture:
         def __init__(self):
@@ -212,7 +212,7 @@ def pkgtest(args):
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
-    # Currently installpkgs does not set a return code (in install.cran.packages.R)
+    # Currently installpkgs does not set a return code (in install.packages.packages.R)
     rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
@@ -230,7 +230,7 @@ def pkgtest(args):
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
-        _gnur_install_test(ok_pkgs, gnur_libinstall, gnur_install_tmp)
+        _gnur_install_test(_args_to_forward_to_gnur(args), ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
@@ -297,7 +297,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             test_info[pkg_name] = TestStatus()
         for f in files:
             ext = os.path.splitext(f)[1]
-            if f == 'test_time' or ext == '.R' or ext == '.prev':
+            if f == 'test_time' or ext == '.R' or ext == '.Rin' or ext == '.prev':
                 continue
             # suppress .pdf's for now (we can't compare them)
             if ext == '.pdf':
@@ -314,7 +314,25 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             relfile = relpath(absfile, pkg_testdir)
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
-def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
+def _args_to_forward_to_gnur(args):
+    forwarded_args = ['--repos', '--run-mode']
+    result = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in forwarded_args:
+            result.append(arg)
+            i = i + 1
+            result.append(args[i])
+        i = i + 1
+    return result
+
+def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
+    '''
+    Install/test with GNU R  exactly those packages that installe3d correctly with FastR.
+    N.B. That means that regardless of how the packages were specified to pkgtest
+    we always use a --pkg-filelist' arg to GNU R
+    '''
     gnur_packages = join(_fastr_suite_dir(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
@@ -328,11 +346,11 @@ def _gnur_install_test(pkgs, gnur_libinstall, gnur_install_tmp):
     args = []
     if _graalvm():
         args += [_gnur_rscript()]
+    # forward any explicit args to pkgtest
     args += [_installpkgs_script()]
+    args += forwarded_args
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
-# GNU R will abort the entire run otherwise if a failure occurs
-#    args += ['--run-mode', 'internal']
     args += ['--ignore-blacklist']
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
@@ -445,6 +463,20 @@ def _find_end(content):
     # not all files have a Time elapsed:
     return len(content) - 1
 
+def _find_line(gnur_line, fastr_content, fastr_i):
+    '''
+    Search forward in fastr_content from fastr_i searching for a match with gnur_line.
+    Do not match empty lines!
+    '''
+    if gnur_line == '\n':
+        return -1
+    while fastr_i < len(fastr_content):
+        fastr_line = fastr_content[fastr_i]
+        if fastr_line == gnur_line:
+            return fastr_i
+        fastr_i = fastr_i + 1
+    return -1
+
 def _fuzzy_compare(gnur_content, fastr_content):
     gnur_start = _find_start(gnur_content)
     gnur_end = _find_end(gnur_content)
@@ -452,20 +484,55 @@ def _fuzzy_compare(gnur_content, fastr_content):
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
         return -1
-    gnur_start = gnur_start + 1 # Gnu has extra empty line
+    gnur_i = gnur_start + 1 # Gnu has extra empty line
+    fastr_i = fastr_start
     result = 0
-    i = gnur_start
-    while i + gnur_start < gnur_end:
-        gnur_line = gnur_content[i + gnur_start]
-        if i + fastr_start >= fastr_len:
+    while gnur_i < gnur_end:
+        gnur_line = gnur_content[gnur_i]
+        if fastr_i >= fastr_len:
             result = 1
             break
 
-        fastr_line = fastr_content[i + fastr_start]
+        fastr_line = fastr_content[fastr_i]
         if gnur_line != fastr_line:
-            result = 1
-            break
-        i = i + 1
+            # we are fuzzy on Error/Warning as FastR often differs
+            # in the context/format of the error/warniong message AND GnuR is sometimes
+            # inconsistent over which error message it uses. Unlike the unit test environment,
+            # we cannot tag tests in any way, so we simply check that FastR does report
+            # an error. We then scan forward to try to get the files back in sync, as the
+            # the number of error/warning lines may differ.
+            if gnur_line.startswith(('Error', 'Warning')):
+                to_match = 'Error' if gnur_line.startswith('Error') else 'Warning'
+                if not fastr_line.startswith(to_match):
+                    result = 1
+                    break
+                else:
+                    # skip until lines match (or not)
+                    gnur_i = gnur_i + 1
+                    fastr_i = fastr_i + 1
+                    ni = -1
+                    while gnur_i < gnur_end:
+                        ni = _find_line(gnur_content[gnur_i], fastr_content, fastr_i)
+                        if ni > 0:
+                            break
+                        gnur_i = gnur_i + 1
+                    if ni > 0:
+                        fastr_i = ni
+                        continue
+                    else:
+                        result = 1
+                        break
+            else:
+                # genuine difference
+                result = 1
+                break
+        gnur_i = gnur_i + 1
+        fastr_i = fastr_i + 1
     return result
 
-
+def pkgtest_cmp(args):
+    with open(args[0]) as f:
+        gnur_content = f.readlines()
+    with open(args[1]) as f:
+        fastr_content = f.readlines()
+    _fuzzy_compare(gnur_content, fastr_content)

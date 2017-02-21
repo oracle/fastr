@@ -10,8 +10,7 @@ The unit testing works by executing the R test and the comparing the output with
 The unit tests reside mainly in the `com.oracle.truffle.r.test` project, with a smaller number in the and `com.oracle.truffle.r.nodes.test` project. To execute the unit tests use the `mx junit` command. The standard set of unit tests is available via the `mx junitdefault` command and the following additional variants are available:
 
 1. `mx junitsimple`: everything except the package tests and the `com.oracle.truffle.r.nodes.test`
-2. `mx junitnopkgs`: everything except the package tests
-3. `mx junit --tests list`: `list` is a comma-separated list of test patterns, where a pattern is a package or class. For example to just run the "builtin" tests run `mx junit --tests com.oracle.truffle.r.test.builtins`.
+2. `mx junit --tests list`: `list` is a comma-separated list of test patterns, where a pattern is a package or class. For example to just run the "builtin" tests run `mx junit --tests com.oracle.truffle.r.test.builtins`.
 
 As with most FastR `mx` commands, additional parameters can be passed to the underlying FastR process using the `--J` option. For example to debug a unit test under an IDE, it is important to disable the internal timeout mechanism that detects looping tests, vis:
 
@@ -55,16 +54,16 @@ Package developers can provide tests in several ways. To enable the full set of 
 
 ### Package Installation and Testing
 
-Package installation and testing is partly handled by a R script `install_cran_packages.R` in the `com.oracle.truffle.r.test.cran` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install_cran_packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
+Package installation and testing is partly handled by a R script `install.packages.R` in the `com.oracle.truffle.r.test.packages` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install.packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
 
-#### The install_cran_packages.R script
+#### The install.packages.R script
 
 While normally run with FastR using the `mx installpkgs` wrapper, this script can be used standalone using `Rscript`, thereby allowing to to be used by GNU R also.
 The command has a rather daunting set of options but, for normal use, most of these do not need to be set.
 
 ##### Usage
 
-    mx installpkgs [--contriburl url] [--cran-mirror url]
+    mx installpkgs [--repos list] [--cran-mirror url]
                    [--verbose | -v] [-V]
                    [--dryrun]
                    [--no-install | -n]
@@ -94,24 +93,20 @@ Key concepts are discussed below.
 
 ##### Package Blacklist
 
-There are many packages that cannot be installed due to either missing functionality or fundamental limitations in FastR and this set is seeded from a a DCF file, `initial.package.blacklist`, in the `com.oracle.truffle.r.test.cran` project. `install_cran_packages` operates in two modes, either creating a complete blacklist from an initial blacklist or reading a previously created blacklist file. In the latter case, if the blacklist file does not exist, it will be created. The complete blacklist file can specified in three ways:
+There are many packages that cannot be installed due to either missing functionality or fundamental limitations in FastR and this set is seeded from a a DCF file, `initial.package.blacklist`, in the `com.oracle.truffle.r.test.packages` project. `install.packages` operates in two modes, either creating a complete blacklist from an initial blacklist or reading a previously created blacklist file. In the latter case, if the blacklist file does not exist, it will be created. The complete blacklist file can specified in three ways:
 
-1. using the command line argument `--blacklist-file`
-2. from the environment variable `PACKAGE_BLACKLIST`
-3. the file `package.blacklist`
-
-The alternatives are tried in order. So, usually, this is all automatic.
+1. using the command line argument `--blacklist-file`; if omitted defaults to the file `package.blacklist`
 
 ##### CRAN Mirror
-Packages are downloaded and installed from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install_cran_packages` has a number of ways of specifying a mirror, including the use of a "local mirror" in the file system. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with the command line argument `--cran-mirror` or the environment variable `CRAN_MIRROR`.  When running locally a file system copy of a CRAN mirror containing just the `src/contrib` directory can be used by either setting the command line argument `--contrib-url` or the `LOCAL_CRAN_REPO` environment variable to a file: URL, e.g. `file:///users/mjj/cran/LOCAL_REPO/src/contrib`.
+Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list, that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with the command line argument `--cran-mirror` or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. The BioConductor repo can be added by setting `--repos BIOC`. It also implies `CRAN`.
 
 ##### Installation Directory
-The directory in which to install the package can be specified either by setting the `R_LIBS_USER` environment variable or with the `--lib` command line argument. The former is recommended and indeed required for running tests after installation.
+The directory in which to install the package can be specified either by setting the `R_LIBS_USER` environment variable or with the `--lib` command line argument. The former is recommended and indeed required for running tests after installation (the testing system does not honor the `--lib` argument).
 
 ##### Specifying packages to Install
-If the `--pkg-filelist` argument is provided then the associated file should contain a list of packages to install, one per line. Otherwise if a package pattern argument is given, then all packages matching the (R) regular expression are candidates for installation, otherwise all available packages are candidates, computed by invoking the `available.packages()` function. The candidate set can be adjusted with additional options.  The `--use-installed.pkgs` option will cause `install_cran_packages` to analyze the package installation directory for existing successfully installed packages and remove those from the candidate set. Some convenience options implicitly set `--pkg-filelist`, namely:
+If the `--pkg-filelist` argument is provided then the associated file should contain a list of packages to install, one per line. Otherwise if a package pattern argument is given, then all packages matching the (R) regular expression are candidates for installation, otherwise all available packages are candidates, computed by invoking the `available.packages()` function. The candidate set can be adjusted with additional options.  The `--use-installed.pkgs` option will cause `install.packages` to analyze the package installation directory for existing successfully installed packages and remove those from the candidate set. Some convenience options implicitly set `--pkg-filelist`, namely:
 
-    --ok-only: sets it to the file `com.oracle.truffle.r.test.cran.ok.packages`. This file is a list of packages that are known to install.
+    --ok-only: sets it to the file `com.oracle.truffle.r.test.packages.ok.packages`. This file is a list of packages that are known to install.
 
 N.B. The is file is updated only occasionally. Regressions, bug fixes, can render it inaccurate.
 
@@ -125,18 +120,18 @@ Finally, the `--invert-pkgset` option starts with the set from `available.packag
 N.B. By default the candidate set is always reduced by omitting any package in the package blacklist set, but this can be turned off by setting `--ignore-blacklist`. N.B. also that `--pkg-filelist` and `--pkg-pattern` are mutually exclusive.
 
 ##### Installing Dependent Packages:
-`install_cran_packages` installs the list of requested packages one by one. By default `utils::install.packages` always installs dependent packages, even if the dependent package has already been installed. This can be particularly wasteful if the package fails to install. Setting `--install-dependents-first` causes `install_cran_packages` to analyse the dependents and install them one by one first, aborting the installation of the depending package if any fail.
+`install.packages` installs the list of requested packages one by one. By default `utils::install.packages` always installs dependent packages, even if the dependent package has already been installed. This can be particularly wasteful if the package fails to install. Setting `--install-dependents-first` causes `install.packages` to analyse the dependents and install them one by one first, aborting the installation of the depending package if any fail.
 
 ##### Run Mode
-GNU R uses R/Rscript sub-processes in the internals of package installation and testing, but multiple package installations (e.g. using `--pkg-filelist`) would normally be initiated from a single top-level R process. This assumes that the package installation process itself is robust. This mode is defined as the `internal` mode variant of the `--run-mode` option. Since FastR is still under development, in `internal` mode a failure of FastR during a single package installation would abort the entire `install_cran_packages` execution. Therefore by default `install_cran_packages` runs each installation in  a separate FastR sub-process, referred to as `system` mode (because the R `system` function is used to launch the sub-process).
+GNU R uses R/Rscript sub-processes in the internals of package installation and testing, but multiple package installations (e.g. using `--pkg-filelist`) would normally be initiated from a single top-level R process. This assumes that the package installation process itself is robust. This mode is defined as the `internal` mode variant of the `--run-mode` option. Since FastR is still under development, in `internal` mode a failure of FastR during a single package installation would abort the entire `install.packages` execution. Therefore by default `install.packages` runs each installation in  a separate FastR sub-process, referred to as `system` mode (because the R `system` function is used to launch the sub-process).
 
-When running `install_cran_packages` under GNU R, it makes sense to set `--run-mode internal`.
+When running `install.packages` under GNU R, it makes sense to set `--run-mode internal`.
 
 ##### Use with GNU R
 
 Basic usage is:
 
-    $ Rscript $FASTR_HOME/fastr/com.oracle.truffle.r.test.cran/r/install.cran.packages.R --run-mode internal [options]
+    $ Rscript $FASTR_HOME/fastr/com.oracle.truffle.r.test.packages/r/install.packages.R --run-mode internal [options]
 
 where `FASTR_HOME` is the location of the FastR source.
 
@@ -157,11 +152,11 @@ Testing packages requires that they are first installed, so all of the above is 
 
 #### Examples
 
-    $ export R_LIBS_USER=`pwd`/lib.install.cran
+    $ export R_LIBS_USER=`pwd`/lib.install.packages
 
     $ mx installpkgs --pkg-pattern '^A3$'
 
-Install the A3 package (and its dependents) in `$R_LIBS_USER`, creating the `package.blacklist` file first if it does not exist. The dependents (xtable, pbapply) will be installed implicitly by the  underlying R install.packages function
+Install the `A3` package (and its dependents) in `$R_LIBS_USER`, creating the `package.blacklist` file first if it does not exist. The dependents (`xtable`, `pbapply`) will be installed implicitly by the  underlying R install.packages function
 
     $ mx installpkgs --install-dependents-first--pkg-pattern '^A3$'
 
@@ -177,7 +172,7 @@ Install exactly those packages (and their dependents) specified, one per line, i
 
     $ mx installpkgs --ok-only --invert-pkgset --random-count 100
 
-Install 100 randomly chosen packages that are not in the file `com.oracle.truffle.r.test.cran/ok.packages`.
+Install 100 randomly chosen packages that are not in the file `com.oracle.truffle.r.test.packages/ok.packages`.
 
     $ mx installpkgs --ignore-blacklist '^Rcpp$'
 
@@ -193,6 +188,6 @@ To debug why a test fails requires first that the package is installed locally p
 
     $ FASTR_LOG_SYSTEM=1 mx installpkgs '^digest$'
 
-First, note that, by default,  the `installpkgs` command itself introduces an extra level on sub-process in order to avoid a failure from aborting the entire install command when installing/testing multiple packages. You can see this by setting the environment variable `FASTR_LOG_SYSTEM` to any value. The first sub-process logged will be running the command `com.oracle.truffle.r.test.cran/r/install.package.R` and the second will be the one running `R CMD INSTALL --install-tests` of the digest package. For ease of debugging you can set the `--run-mode` option to `internal`, which executes the first phase of the install in the process running `installpkgs`. Similar considerations apply to the testing phase. By default a sub-process is used to run the `com.oracle.truffle.r.test.cran/r/test.package.R script`, which then runs the actual test using a sub-process to invoke `R CMD BATCH`. Again the first sub-process can be avoided using `--run-mode internal`. N.B. If you run the tests for `digest` you will see that there are four separate sub-processes used to run different tests. The latter three are the specific tests for digest that were made available by installing with `--install-tests`. Not all packages have such additional tests. Note that there is no way to avoid the tests being run in sub-processes so setting the `-d` option to the `installpkgs` command will have no effect on those. Instead set the environment variable `MX_R_GLOBAL_ARGS=-d` which will cause the sub-processes to run under the debugger. Note that you will not (initially) see the `Listening for transport dt_socket at address: 8000` message on the console, but activating the debug launch from the IDE will connect to the sub-process.
+First, note that, by default,  the `installpkgs` command itself introduces an extra level on sub-process in order to avoid a failure from aborting the entire install command when installing/testing multiple packages. You can see this by setting the environment variable `FASTR_LOG_SYSTEM` to any value. The first sub-process logged will be running the command `com.oracle.truffle.r.test.packages/r/install.package.R` and the second will be the one running `R CMD INSTALL --install-tests` of the digest package. For ease of debugging you can set the `--run-mode` option to `internal`, which executes the first phase of the install in the process running `installpkgs`. Similar considerations apply to the testing phase. By default a sub-process is used to run the `com.oracle.truffle.r.test.packages/r/test.package.R script`, which then runs the actual test using a sub-process to invoke `R CMD BATCH`. Again the first sub-process can be avoided using `--run-mode internal`. N.B. If you run the tests for `digest` you will see that there are four separate sub-processes used to run different tests. The latter three are the specific tests for digest that were made available by installing with `--install-tests`. Not all packages have such additional tests. Note that there is no way to avoid the tests being run in sub-processes so setting the `-d` option to the `installpkgs` command will have no effect on those. Instead set the environment variable `MX_R_GLOBAL_ARGS=-d` which will cause the sub-processes to run under the debugger. Note that you will not (initially) see the `Listening for transport dt_socket at address: 8000` message on the console, but activating the debug launch from the IDE will connect to the sub-process.
 
 

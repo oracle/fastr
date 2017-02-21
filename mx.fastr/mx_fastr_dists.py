@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -131,18 +131,7 @@ class FastRTestNativeProject(FastRProjectAdapter):
         results = []
 
         self._get_files(join('packages', 'recommended'), results)
-
-        fastr_packages = []
-        fastr_packages_dir = join(self.dir, 'packages')
-        for root, dirs, _ in os.walk(fastr_packages_dir):
-            for d in dirs:
-                if d == 'recommended':
-                    continue
-                if os.path.isdir(join(root, d)):
-                    fastr_packages.append(d)
-            break
-        for p in fastr_packages:
-            results.append(join(fastr_packages_dir, p, 'lib', p + '.tar'))
+        self._get_files(join('packages', 'repo'), results)
 
         results.append(join(self.dir, 'urand', 'lib', 'liburand.so'))
         return results

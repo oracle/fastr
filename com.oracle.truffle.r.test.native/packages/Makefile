@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 SUBDIRS = testrffi vanilla tests4
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
 R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
-GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
+export GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
 GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
 
 # We have to copy the GNU R recommended packages into this project
