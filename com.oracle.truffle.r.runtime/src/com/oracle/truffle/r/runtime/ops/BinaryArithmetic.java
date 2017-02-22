@@ -630,8 +630,8 @@ public abstract class BinaryArithmetic extends Operation {
             if (mult == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 mult = insert(new Multiply());
-                cpow2 = insert(new CPow2());
             }
+            ensurePow2();
         }
 
         protected void ensurePow2() {

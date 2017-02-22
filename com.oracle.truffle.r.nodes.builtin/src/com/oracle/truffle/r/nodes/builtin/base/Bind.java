@@ -614,6 +614,9 @@ public abstract class Bind extends RBaseNode {
                     if (lookup == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         lookup = insert(S3FunctionLookupNode.create(false, false));
+                    }
+                    if (getBaseEnv == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
                         getBaseEnv = insert(GetBaseEnvFrameNode.create());
                     }
                     Result r = lookup.execute(frame, type.toString(), clazz, null, frame.materialize(), getBaseEnv.execute());

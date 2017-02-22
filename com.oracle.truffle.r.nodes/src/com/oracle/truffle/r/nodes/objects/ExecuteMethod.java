@@ -40,6 +40,9 @@ final class ExecuteMethod extends RBaseNode {
         if (collectArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
+        }
+        if (callMatcher == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callMatcher = insert(CallMatcherNode.create(false));
         }
 
