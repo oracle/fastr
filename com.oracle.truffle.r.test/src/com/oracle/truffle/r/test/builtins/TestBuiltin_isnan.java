@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,7 @@ public class TestBuiltin_isnan extends TestBase {
 
     @Test
     public void testisnan2() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:7, .Names = c('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')));is.nan(argv[[1]]);");
+        assertEval("argv <- list(structure(1:7, .Names = c('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')));is.nan(argv[[1]]);");
     }
 
     @Test
@@ -34,7 +34,7 @@ public class TestBuiltin_isnan extends TestBase {
 
     @Test
     public void testisnan4() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NaN, .Dim = c(1L, 1L)));is.nan(argv[[1]]);");
+        assertEval("argv <- list(structure(NaN, .Dim = c(1L, 1L)));is.nan(argv[[1]]);");
     }
 
     @Test
@@ -49,7 +49,7 @@ public class TestBuiltin_isnan extends TestBase {
 
     @Test
     public void testisnan7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:3, .Dim = c(3L, 1L)));is.nan(argv[[1]]);");
+        assertEval("argv <- list(structure(1:3, .Dim = c(3L, 1L)));is.nan(argv[[1]]);");
     }
 
     @Test
@@ -59,6 +59,6 @@ public class TestBuiltin_isnan extends TestBase {
 
     @Test
     public void testisnan10() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 1, 1, 1, 1, 1), .Dim = 1:3));is.nan(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1), .Dim = 1:3));is.nan(argv[[1]]);");
     }
 }

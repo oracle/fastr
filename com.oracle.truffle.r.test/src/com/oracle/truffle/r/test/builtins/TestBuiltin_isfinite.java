@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite3() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(485.051413351662, .Names = 'value'));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(485.051413351662, .Names = 'value'));is.finite(argv[[1]]);");
     }
 
     @Test
@@ -65,7 +65,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite10() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(-32.6915744137254, -24.6945405669482, -24.6945405669482, -357.79068676373), .Dim = c(2L, 2L)));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-32.6915744137254, -24.6945405669482, -24.6945405669482, -357.79068676373), .Dim = c(2L, 2L)));is.finite(argv[[1]]);");
     }
 
     @Test
@@ -80,8 +80,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite13() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-0.560475646552213+0i, 0.7424437487+0.205661411508856i, 1.39139505579429-0.26763356813179i, 0.928710764113827-0.221714979045717i, -0.46926798541295+1.18846175213664i, 0.7424437487-0.205661411508856i, 0.460916205989202+0i, -0.452623703774585+0.170604003753717i, -0.094501186832143+0.54302538277632i, -0.331818442379127+0.612232958468282i, 1.39139505579429+0.26763356813179i, -0.452623703774585-0.170604003753717i, 0.400771450594052+0i, -0.927967220342259+0.479716843914174i, -0.790922791530657+0.043092176305418i, 0.928710764113827+0.221714979045717i, -0.094501186832143-0.54302538277632i, -0.927967220342259-0.479716843914174i, 0.701355901563686+0i, -0.600841318509537+0.213998439984336i, -0.46926798541295-1.18846175213664i, -0.331818442379127-0.612232958468282i, -0.790922791530657-0.043092176305418i, -0.600841318509537-0.213998439984336i, -0.625039267849257+0i), .Dim = c(5L, 5L)));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-0.560475646552213+0i, 0.7424437487+0.205661411508856i, 1.39139505579429-0.26763356813179i, 0.928710764113827-0.221714979045717i, -0.46926798541295+1.18846175213664i, 0.7424437487-0.205661411508856i, 0.460916205989202+0i, -0.452623703774585+0.170604003753717i, -0.094501186832143+0.54302538277632i, -0.331818442379127+0.612232958468282i, 1.39139505579429+0.26763356813179i, -0.452623703774585-0.170604003753717i, 0.400771450594052+0i, -0.927967220342259+0.479716843914174i, -0.790922791530657+0.043092176305418i, 0.928710764113827+0.221714979045717i, -0.094501186832143-0.54302538277632i, -0.927967220342259-0.479716843914174i, 0.701355901563686+0i, -0.600841318509537+0.213998439984336i, -0.46926798541295-1.18846175213664i, -0.331818442379127-0.612232958468282i, -0.790922791530657-0.043092176305418i, -0.600841318509537-0.213998439984336i, -0.625039267849257+0i), .Dim = c(5L, 5L)));is.finite(argv[[1]]);");
     }
 
     @Test
@@ -96,7 +95,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite16() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));is.finite(argv[[1]]);");
     }
 
     @Test
@@ -111,13 +110,12 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));is.finite(argv[[1]]);");
     }
 
     @Test
     public void testisfinite20() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(100L, 0L, NA, NA, NA, 3L, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(c(100L, 0L, NA, NA, NA, 3L, NA), .Names = c(' 100', '-1e-13', ' Inf', '-Inf', ' NaN', '3.14', '  NA')));is.finite(argv[[1]]);");
     }
 
     @Test
@@ -127,7 +125,7 @@ public class TestBuiltin_isfinite extends TestBase {
 
     @Test
     public void testisfinite22() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:7, .Dim = c(1L, 7L)));is.finite(argv[[1]]);");
+        assertEval("argv <- list(structure(1:7, .Dim = c(1L, 7L)));is.finite(argv[[1]]);");
     }
 
     @Test

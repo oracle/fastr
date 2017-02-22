@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -79,5 +80,10 @@ public abstract class TypeofNode extends UnaryNode {
     @Specialization(replaces = {"doCachedTyped"})
     protected static RType doGenericTyped(RTypedValue operand) {
         return operand.getRType();
+    }
+
+    public static RType getTypeof(Object operand) {
+        CompilerAsserts.neverPartOfCompilation();
+        return ((RTypedValue) RRuntime.asAbstractVector(operand)).getRType();
     }
 }

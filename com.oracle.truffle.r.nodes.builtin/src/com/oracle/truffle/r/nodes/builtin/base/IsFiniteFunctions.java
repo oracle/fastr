@@ -29,12 +29,13 @@ import java.util.Arrays;
 import java.util.function.DoublePredicate;
 import java.util.function.IntPredicate;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -53,6 +54,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public class IsFiniteFunctions {
 
     public abstract static class Adapter extends RBuiltinNode {
+
+        @Child private GetDimAttributeNode getDims = GetDimAttributeNode.create();
+        @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+
         @FunctionalInterface
         protected interface ComplexPredicate {
             boolean test(RComplex x);
@@ -78,22 +83,16 @@ public class IsFiniteFunctions {
             return doFunConstant(x, RRuntime.LOGICAL_FALSE);
         }
 
-        @Child private TypeofNode typeofNode;
-
         @Fallback
+        @TruffleBoundary
         protected Object doIsFiniteOther(Object x) {
-            if (typeofNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                typeofNode = insert(TypeofNodeGen.create());
-            }
-            String type = typeofNode.execute(x).getName();
-            throw RError.error(this, RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
+            throw RError.error(this, RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, TypeofNode.getTypeof(x).getName());
         }
 
         protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {
             byte[] b = new byte[x.getLength()];
             Arrays.fill(b, value);
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
         }
 
         protected RLogicalVector doFunDouble(RAbstractDoubleVector x, DoublePredicate fun) {
@@ -101,7 +100,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
         }
 
         protected RLogicalVector doFunLogical(RAbstractLogicalVector x, LogicalPredicate fun) {
@@ -109,7 +108,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
         }
 
         protected RLogicalVector doFunInt(RAbstractIntVector x, IntPredicate fun) {
@@ -117,7 +116,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
         }
 
         protected RLogicalVector doFunComplex(RAbstractComplexVector x, ComplexPredicate fun) {
@@ -125,7 +124,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
         }
     }
 
