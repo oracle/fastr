@@ -15,6 +15,8 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -819,11 +821,27 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal2 extends CallRFFIAdapter {
         private static final Object CALL = "call";
-        private static final Object OP = "op";
         private static final Object RHO = "rho";
+        /**
+         * This argument for the native function should be SPECIALSXP reprenting the .External2
+         * builtin. In GnuR SPECIALSXP is index into the table of builtins. External2 and External
+         * are in fact one native function with two entries in this table, the "op" argument is used
+         * to determine whether the call was made to .External or .External2. The actual code of the
+         * native function that is eventually invoked will always get SPECIALSXP reprenting the
+         * .External2, becuase functions exported as .External do not take the "op" argument.
+         */
+        @CompilationFinal private static Object op = null;
 
         static {
             Casts.noCasts(DotExternal2.class);
+        }
+
+        private static Object getOp() {
+            if (op == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                op = RContext.lookupBuiltin(".External2");
+            }
+            return op;
         }
 
         @Override
@@ -866,8 +884,7 @@ public class CallAndExternalFunctions {
                         @Cached("symbol") RList cached,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            // TODO: provide proper values for the CALL, OP and RHO parameters
-            return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Specialization
@@ -886,8 +903,7 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            // TODO: provide proper values for the CALL, OP and RHO parameters
-            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, OP, list, RHO});
+            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Fallback
