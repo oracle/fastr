@@ -434,6 +434,12 @@ public class ResultTypesAnalyserTest {
     }
 
     @Test
+    public void testAllowMissing() {
+        arg.allowMissing().mustBe(stringValue());
+        assertTypes(RMissing.class, String.class, RAbstractStringVector.class);
+    }
+
+    @Test
     public void testTwoWildcardTypes() {
         arg.mustBe((instanceOf(String.class).and(mark(length(10), "l10").or(mark(length(20), "l20")))));
         assertTypes(atom(String.class).lower(m("l10")).or(atom(String.class).lower(m("l20"))));

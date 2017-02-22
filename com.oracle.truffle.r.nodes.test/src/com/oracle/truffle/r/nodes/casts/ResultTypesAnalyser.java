@@ -131,6 +131,8 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<AltTypeExpr> imple
 
     }
 
+    private static final TypeExpr NOT_NULL_NOT_MISSING = atom(RNull.class).not().and(atom(RMissing.class).not());
+
     public static TypeExpr analyse(PipelineStep<?, ?> firstStep) {
         return analyse(firstStep, AltTypeExpr.create()).merge();
     }
@@ -222,8 +224,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<AltTypeExpr> imple
         if (visitTrueBranch) {
             if (step.isReturns()) {
                 AltTypeExpr returnedType = trueBranchResultTypes(step, inputType, filterRes);
-                inputType.addAlt(returnedType.merge());
-                return inputType;
+                return inputType.addAlt(returnedType.merge());
             } else {
                 return trueBranchResultTypes(step, inputType, filterRes);
             }
@@ -326,7 +327,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<AltTypeExpr> imple
         if (filter.getType2() != null) {
             resTp = resTp.or(atom(filter.getType2()));
         }
-        return resTp.and(atom(RNull.class).not().and(atom(RMissing.class).not()));
+        return resTp.and(NOT_NULL_NOT_MISSING);
     }
 
     @Override
@@ -377,7 +378,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<AltTypeExpr> imple
 
     @Override
     public TypeExpr visit(MatrixFilter<?> filter, TypeExpr previous) {
-        return previous.lower(filter);
+        return previous.lower(filter).and(NOT_NULL_NOT_MISSING);
     }
 
     @Override
@@ -437,17 +438,17 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<AltTypeExpr> imple
 
     @Override
     public TypeExpr visit(VectorSize vectorSize, byte operation, TypeExpr previous) {
-        return previous;
+        return previous.and(NOT_NULL_NOT_MISSING);
     }
 
     @Override
     public TypeExpr visit(ElementAt elementAt, byte operation, TypeExpr previous) {
-        return previous;
+        return previous.and(NOT_NULL_NOT_MISSING);
     }
 
     @Override
     public TypeExpr visit(Dim dim, byte operation, TypeExpr previous) {
-        return previous;
+        return previous.and(NOT_NULL_NOT_MISSING);
     }
 
 }
