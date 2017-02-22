@@ -61,6 +61,19 @@ sexp = '''#ifdef FASTR
 typedef void *SEXP;
 #define DATAPTR(x)\t\tR_DATAPTR(x)
 void *(R_DATAPTR)(SEXP x);
+
+#define IS_BYTES IS_BYTES
+#define IS_LATIN1 IS_LATIN1
+#define IS_ASCII IS_ASCII
+#define IS_UTF8 IS_UTF8
+#define ENC_KNOWN ENC_KNOWN
+
+Rboolean IS_BYTES(SEXP x);
+Rboolean IS_LATIN1(SEXP x);
+Rboolean IS_ASCII(SEXP x);
+Rboolean IS_UTF8(SEXP x);
+Rboolean ENC_KNOWN(SEXP x);
+
 #else
 '''
 use_internals_begin = '''#if defined (USE_RINTERNALS_DEFS) && (defined (USE_RINTERNALS) || defined (FASTR))

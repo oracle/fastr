@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -545,3 +545,4 @@ Rboolean IS_BYTES(SEXP x) { return FALSE; }
 Rboolean IS_LATIN1(SEXP x) { return FALSE; }
 Rboolean IS_ASCII(SEXP x) { return FALSE; }
 Rboolean IS_UTF8(SEXP x) { return TRUE; }
+Rboolean ENC_KNOWN(SEXP x) { return TRUE; }
