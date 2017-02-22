@@ -72,6 +72,8 @@ void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
 // Rare case where an operation changes the internal
 // data and thus the old C array should be invalidated
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
+// Should be called before up calling to arbitrary code, e.g. Rf_eval,
+// to copy back the arrays into their Java counterparts
 void updateNativeArrays(JNIEnv *env);
 
 SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
