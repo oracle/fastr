@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
@@ -80,14 +80,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
-import com.oracle.truffle.r.nodes.casts.FilterSamplerFactory;
-import com.oracle.truffle.r.nodes.casts.MapperSamplerFactory;
 import com.oracle.truffle.r.nodes.casts.Samples;
-import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -130,10 +125,6 @@ public class CastBuilderTest {
     private PreinitialPhaseBuilder arg;
 
     static {
-        if (TEST_SAMPLING) {
-            PipelineConfig.setFilterFactory(FilterSamplerFactory.INSTANCE);
-            PipelineConfig.setMapperFactory(MapperSamplerFactory.INSTANCE);
-        }
         CastNode.testingMode();
     }
 
@@ -886,6 +877,7 @@ public class CastBuilderTest {
      * Casts given object using the configured pipeline in {@link #arg}.
      */
     private Object cast(Object a) {
+        CastNode.clearLastWarning();
         NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.execute(args[0]));
         return argCastNodeHandle.call(a);
     }
@@ -940,22 +932,12 @@ public class CastBuilderTest {
         testPipeline(false);
     }
 
-    private TypeExpr resultTypes() {
-        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(getCastNode());
-        return sampler.resultTypes();
-    }
-
     private void testPipeline(boolean emptyPositiveSamplesAllowed) {
         if (!TEST_SAMPLING) {
             return;
         }
 
-        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(getCastNode());
-        Samples<?> samples = sampler.collectSamples();
-        if (!emptyPositiveSamplesAllowed) {
-            Assert.assertFalse(samples.positiveSamples().isEmpty());
-        }
-        testPipeline(samples);
+        // TODO:
     }
 
     private CastNode getCastNode() {
@@ -992,6 +974,6 @@ public class CastBuilderTest {
      * Just so that we do not have to build the annotation instance by hand.
      */
     @RBuiltin(kind = RBuiltinKind.PRIMITIVE, name = "forTestingOnly", parameterNames = {"x"}, behavior = RBehavior.PURE)
-    private static class DummyBuiltin {
+    static class DummyBuiltin {
     }
 }

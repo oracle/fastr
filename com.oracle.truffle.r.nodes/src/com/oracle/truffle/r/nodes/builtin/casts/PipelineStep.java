@@ -48,38 +48,38 @@ public abstract class PipelineStep<T, R> {
         return this;
     }
 
-    public abstract <D> D accept(PipelineStepVisitor<D> visitor);
+    public abstract <D> D accept(PipelineStepVisitor<D> visitor, D previous);
 
-    public <D> D acceptPipeline(PipelineStepVisitor<D> visitor) {
+    public <D> D acceptPipeline(PipelineStepVisitor<D> visitor, D initial) {
         PipelineStep<?, ?> curStep = this;
-        D result = null;
+        D result = initial;
         while (curStep != null) {
-            result = curStep.accept(visitor);
+            result = curStep.accept(visitor, result);
             curStep = curStep.getNext();
         }
         return result;
     }
 
     public interface PipelineStepVisitor<T> {
-        T visit(FindFirstStep<?, ?> step);
+        T visit(FindFirstStep<?, ?> step, T previous);
 
-        T visit(CoercionStep<?, ?> step);
+        T visit(CoercionStep<?, ?> step, T previous);
 
-        T visit(MapStep<?, ?> step);
+        T visit(MapStep<?, ?> step, T previous);
 
-        T visit(MapIfStep<?, ?> step);
+        T visit(MapIfStep<?, ?> step, T previous);
 
-        T visit(FilterStep<?, ?> step);
+        T visit(FilterStep<?, ?> step, T previous);
 
-        T visit(NotNAStep<?> step);
+        T visit(NotNAStep<?> step, T previous);
 
-        T visit(DefaultErrorStep<?> step);
+        T visit(DefaultErrorStep<?> step, T previous);
 
-        T visit(DefaultWarningStep<?> step);
+        T visit(DefaultWarningStep<?> step, T previous);
 
-        T visit(BoxPrimitiveStep<?> step);
+        T visit(BoxPrimitiveStep<?> step, T previous);
 
-        T visit(AttributableCoercionStep<?> step);
+        T visit(AttributableCoercionStep<?> step, T previous);
     }
 
     /**
@@ -105,8 +105,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -117,8 +117,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -127,8 +127,8 @@ public abstract class PipelineStep<T, R> {
      */
     public static final class BoxPrimitiveStep<T> extends PipelineStep<T, T> {
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -155,8 +155,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -192,8 +192,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -246,8 +246,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -266,8 +266,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -283,8 +283,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -321,8 +321,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -353,8 +353,8 @@ public abstract class PipelineStep<T, R> {
         }
 
         @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 }

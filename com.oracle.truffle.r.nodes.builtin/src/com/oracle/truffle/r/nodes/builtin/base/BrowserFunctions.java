@@ -101,8 +101,8 @@ public class BrowserFunctions {
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
 
-        static {
-            Casts casts = new Casts(RetrieveAdapter.class);
+        protected static void casts(Class<? extends RetrieveAdapter> builtinClass) {
+            Casts casts = new Casts(builtinClass);
             casts.arg("n").asIntegerVector().findFirst(0).mustBe(gt(0), Message.POSITIVE_CONTEXTS);
         }
 
@@ -118,6 +118,10 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserText extends RetrieveAdapter {
 
+        static {
+            casts(BrowserText.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object browserText(int n) {
@@ -128,6 +132,10 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserCondition extends RetrieveAdapter {
 
+        static {
+            casts(BrowserCondition.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object browserCondition(int n) {
@@ -137,6 +145,10 @@ public class BrowserFunctions {
 
     @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
+
+        static {
+            casts(BrowserSetDebug.class);
+        }
 
         @Specialization
         @TruffleBoundary

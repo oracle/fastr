@@ -36,11 +36,12 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Not;
-import com.oracle.truffle.r.nodes.casts.TypeConjunction;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
+import com.oracle.truffle.r.nodes.casts.UpperBoundsConjunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -48,14 +49,18 @@ public class TypeExprTest {
 
     @Test
     public void testNormalize() {
-        Assert.assertEquals(toSet(String.class), union(String.class).normalize());
-        Assert.assertEquals(toSet(String.class, Integer.class), union(String.class, Integer.class).normalize());
-        Assert.assertEquals(toSet(RIntSequence.class), atom(RIntSequence.class).and(atom(RSequence.class)).normalize());
-        Assert.assertEquals(toSet(String.class), atom(String.class).and(atom(RNull.class).not()).normalize());
-        Assert.assertEquals(toSet(TypeConjunction.create(negateType(String.class), negateType(Integer.class))),
-                        atom(String.class).not().and(atom(Integer.class).not()).normalize());
-        Assert.assertEquals(toSet(), atom(String.class).not().and(atom(String.class)).normalize());
-        Assert.assertEquals(toSet(TypeConjunction.create(RAbstractIntVector.class, RAbstractStringVector.class)), atom(RAbstractIntVector.class).and(atom(RAbstractStringVector.class)).normalize());
+        Assert.assertEquals(toSet(String.class), union(String.class).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(String.class, Integer.class), union(String.class, Integer.class).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(RIntSequence.class), atom(RIntSequence.class).and(atom(RSequence.class)).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(String.class), atom(String.class).and(atom(RNull.class).not()).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(UpperBoundsConjunction.create(negateType(String.class), negateType(Integer.class))),
+                        atom(String.class).not().and(atom(Integer.class).not()).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(), atom(String.class).not().and(atom(String.class)).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(UpperBoundsConjunction.create(Runnable.class, RAbstractStringVector.class)),
+                        atom(Runnable.class).and(atom(RAbstractStringVector.class)).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(RAbstractStringVector.class), atom(UpperBoundsConjunction.fromType(RAbstractStringVector.class)).toNormalizedConjunctionSet());
+        Assert.assertEquals(toSet(UpperBoundsConjunction.create(RAbstractStringVector.class, Runnable.class)),
+                        atom(UpperBoundsConjunction.fromType(Runnable.class)).and(atom(UpperBoundsConjunction.fromType(RAbstractStringVector.class))).toNormalizedConjunctionSet());
     }
 
     @Test
@@ -72,6 +77,21 @@ public class TypeExprTest {
         Assert.assertFalse(CastUtils.Casts.existsConvertibleActualType(from, RNull.class, false));
         Assert.assertTrue(CastUtils.Casts.existsConvertibleActualType(from, String.class, false));
         Assert.assertTrue(CastUtils.Casts.existsConvertibleActualType(from, Integer.class, false));
+    }
+
+    @Test
+    public void testLower() {
+        TypeExpr te = atom(String.class);
+        Assert.assertEquals(toSet(UpperBoundsConjunction.fromType(String.class).asWildcard("a")), te.lower("a").toNormalizedConjunctionSet());
+        te = atom(String.class).or(atom(RNull.class));
+        Assert.assertEquals(toSet(UpperBoundsConjunction.fromType(String.class).asWildcard("a"), UpperBoundsConjunction.fromType(RNull.class).asWildcard("a")),
+                        te.lower("a").toNormalizedConjunctionSet());
+        te = atom(Runnable.class).and(atom(RAbstractStringVector.class));
+        Set<Type> exp = toSet(UpperBoundsConjunction.create(Runnable.class, RAbstractStringVector.class).asWildcard("a"));
+        Assert.assertEquals(exp, te.lower("a").toNormalizedConjunctionSet());
+
+        te = atom(RAbstractIntVector.class).and(atom(RAbstractDoubleVector.class).lower());
+        Assert.assertTrue(te.isNothing());
     }
 
     private static Set<Type> toSet(Type... classes) {

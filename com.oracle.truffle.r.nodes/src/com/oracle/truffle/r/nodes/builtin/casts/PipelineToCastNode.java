@@ -153,7 +153,7 @@ public final class PipelineToCastNode {
         CastNode prevCastNode = null;
         PipelineStep<?, ?> currCastStep = firstStep;
         while (currCastStep != null) {
-            CastNode node = currCastStep.accept(nodeFactory);
+            CastNode node = currCastStep.accept(nodeFactory, prevCastNode);
             if (node != null) {
                 if (prevCastNode == null) {
                     prevCastNode = node;
@@ -207,66 +207,66 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(FindFirstStep<?, ?> step) {
+        public CastNode visit(FindFirstStep<?, ?> step, CastNode previous) {
             assert !canBeOptimized || targetType != null : "There must be a coercion step before find first";
             findFirstStep = step;
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(CoercionStep<?, ?> step) {
+        public CastNode visit(CoercionStep<?, ?> step, CastNode previous) {
             canBeOptimized(step.type);
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(MapStep<?, ?> step) {
+        public CastNode visit(MapStep<?, ?> step, CastNode previous) {
             cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(MapIfStep<?, ?> step) {
+        public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
             cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(FilterStep<?, ?> step) {
+        public CastNode visit(FilterStep<?, ?> step, CastNode previous) {
             targetType = checkFilter(step.getFilter());
             if (targetType == null) {
                 canBeOptimized = false;
             }
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(NotNAStep<?> step) {
+        public CastNode visit(NotNAStep<?> step, CastNode previous) {
             // TODO: we can remember that we saw not NA and do this check in the BypassNode
             canBeOptimized = false;
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(DefaultErrorStep<?> step) {
-            return inner.visit(step);
+        public CastNode visit(DefaultErrorStep<?> step, CastNode previous) {
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(DefaultWarningStep<?> step) {
-            return inner.visit(step);
+        public CastNode visit(DefaultWarningStep<?> step, CastNode previous) {
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(BoxPrimitiveStep<?> step) {
+        public CastNode visit(BoxPrimitiveStep<?> step, CastNode previous) {
             canBeOptimized = false;
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         @Override
-        public CastNode visit(AttributableCoercionStep<?> step) {
+        public CastNode visit(AttributableCoercionStep<?> step, CastNode previous) {
             cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step);
+            return inner.visit(step, previous);
         }
 
         private void cannotBeOptimizedBeforeFindFirst() {
@@ -352,24 +352,24 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(DefaultErrorStep<?> step) {
+        public CastNode visit(DefaultErrorStep<?> step, CastNode previous) {
             defaultError = step.getDefaultMessage();
             return null;
         }
 
         @Override
-        public CastNode visit(DefaultWarningStep<?> step) {
+        public CastNode visit(DefaultWarningStep<?> step, CastNode previous) {
             defaultWarning = step.getDefaultMessage();
             return null;
         }
 
         @Override
-        public CastNode visit(BoxPrimitiveStep<?> step) {
+        public CastNode visit(BoxPrimitiveStep<?> step, CastNode previous) {
             return BoxPrimitiveNode.create();
         }
 
         @Override
-        public CastNode visit(FindFirstStep<?, ?> step) {
+        public CastNode visit(FindFirstStep<?, ?> step, CastNode previous) {
             boxPrimitives = false;
 
             // See FindFirstStep documentation on how it should be interpreted
@@ -391,7 +391,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(FilterStep<?, ?> step) {
+        public CastNode visit(FilterStep<?, ?> step, CastNode previous) {
             ArgumentFilter<?, ?> filter = filterFactory.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
             return FilterNode.create(filter, step.isWarning(), msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), boxPrimitives, ResultForArg.TRUE.equals(step.getFilter().resultForNull()),
@@ -399,7 +399,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(NotNAStep<?> step) {
+        public CastNode visit(NotNAStep<?> step, CastNode previous) {
             if (step.getReplacement() == null) {
                 MessageData msg = getDefaultErrorIfNull(step.getMessage());
                 return NonNANodeGen.create(msg.getCallObj(), msg.getMessage(), msg.getMessageArgs(), step.getReplacement());
@@ -414,7 +414,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(CoercionStep<?, ?> step) {
+        public CastNode visit(CoercionStep<?, ?> step, CastNode previous) {
             boxPrimitives = true;
 
             RType type = step.getType();
@@ -443,17 +443,17 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public CastNode visit(AttributableCoercionStep<?> step) {
+        public CastNode visit(AttributableCoercionStep<?> step, CastNode previous) {
             return CastToAttributableNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
         }
 
         @Override
-        public CastNode visit(MapStep<?, ?> step) {
+        public CastNode visit(MapStep<?, ?> step, CastNode previous) {
             return MapNode.create(mapperFactory.createMapper(step.getMapper()));
         }
 
         @Override
-        public CastNode visit(MapIfStep<?, ?> step) {
+        public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
             ArgumentFilter<?, ?> condition = filterFactory.createFilter(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
@@ -490,16 +490,16 @@ public final class PipelineToCastNode {
 
         @Override
         public ArgumentFilter<?, ?> createFilter(Filter<?, ?> filter) {
-            return filter.accept(this);
+            return filter.accept(this, null);
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(TypeFilter<?, ?> filter) {
+        public ArgumentFilter<?, ?> visit(TypeFilter<?, ?> filter, ArgumentFilter<?, ?> previous) {
             return filter.getInstanceOfLambda();
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(RTypeFilter<?> filter) {
+        public ArgumentFilter<?, ?> visit(RTypeFilter<?> filter, ArgumentFilter<?, ?> previous) {
             if (filter.getType() == RType.Integer) {
                 return x -> x instanceof Integer || x instanceof RAbstractIntVector;
             } else if (filter.getType() == RType.Double) {
@@ -518,15 +518,15 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(CompareFilter<?> filter) {
-            return filter.getSubject().accept(this, filter.getOperation());
+        public ArgumentFilter<?, ?> visit(CompareFilter<?> filter, ArgumentFilter<?, ?> previous) {
+            return filter.getSubject().accept(this, filter.getOperation(), previous);
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
-        public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter) {
-            ArgumentFilter leftFilter = filter.getLeft().accept(this);
-            ArgumentFilter rightFilter = filter.getRight().accept(this);
+        public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter, ArgumentFilter<?, ?> previous) {
+            ArgumentFilter leftFilter = filter.getLeft().accept(this, previous);
+            ArgumentFilter rightFilter = filter.getRight().accept(this, previous);
             return (ArgumentTypeFilter<Object, Object>) arg -> {
                 if (!leftFilter.test(arg)) {
                     return false;
@@ -538,9 +538,9 @@ public final class PipelineToCastNode {
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
-        public ArgumentFilter<?, ?> visit(OrFilter<?> filter) {
-            ArgumentFilter leftFilter = filter.getLeft().accept(this);
-            ArgumentFilter rightFilter = filter.getRight().accept(this);
+        public ArgumentFilter<?, ?> visit(OrFilter<?> filter, ArgumentFilter<?, ?> previous) {
+            ArgumentFilter leftFilter = filter.getLeft().accept(this, previous);
+            ArgumentFilter rightFilter = filter.getRight().accept(this, previous);
             return (ArgumentTypeFilter<Object, Object>) arg -> {
                 if (leftFilter.test(arg)) {
                     return true;
@@ -552,53 +552,53 @@ public final class PipelineToCastNode {
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         @Override
-        public ArgumentFilter<?, ?> visit(NotFilter<?> filter) {
-            ArgumentFilter toNegate = filter.getFilter().accept(this);
+        public ArgumentFilter<?, ?> visit(NotFilter<?> filter, ArgumentFilter<?, ?> previous) {
+            ArgumentFilter toNegate = filter.getFilter().accept(this, previous);
             return (ArgumentFilter<Object, Object>) arg -> !toNegate.test(arg);
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(NullFilter filter) {
+        public ArgumentFilter<?, ?> visit(NullFilter filter, ArgumentFilter<?, ?> previous) {
             return (ArgumentFilter<Object, Object>) arg -> false;
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(MissingFilter filter) {
+        public ArgumentFilter<?, ?> visit(MissingFilter filter, ArgumentFilter<?, ?> previous) {
             return (ArgumentFilter<Object, Object>) arg -> false;
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(MatrixFilter<?> filter) {
-            return filter.acceptOperation(this);
+        public ArgumentFilter<?, ?> visit(MatrixFilter<?> filter, ArgumentFilter<?, ?> previous) {
+            return filter.acceptOperation(this, null);
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(DoubleFilter filter) {
-            return filter.acceptOperation(this);
+        public ArgumentFilter<?, ?> visit(DoubleFilter filter, ArgumentFilter<?, ?> previous) {
+            return filter.acceptOperation(this, null);
         }
 
         @Override
-        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsMatrix() {
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsMatrix(ArgumentFilter<RAbstractVector, RAbstractVector> previous) {
             return RAbstractVector::isMatrix;
         }
 
         @Override
-        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsSquareMatrix() {
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visitIsSquareMatrix(ArgumentFilter<RAbstractVector, RAbstractVector> previous) {
             return x -> x.isMatrix() && x.getDimensions()[0] == x.getDimensions()[1];
         }
 
         @Override
-        public ArgumentFilter<Double, Double> visitIsFinite() {
+        public ArgumentFilter<Double, Double> visitIsFinite(ArgumentFilter<Double, Double> previous) {
             return x -> !Double.isInfinite(x);
         }
 
         @Override
-        public ArgumentFilter<Double, Double> visitIsFractional() {
+        public ArgumentFilter<Double, Double> visitIsFractional(ArgumentFilter<Double, Double> previous) {
             return x -> !RRuntime.isNAorNaN(x) && !Double.isInfinite(x) && x != Math.floor(x);
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(ScalarValue scalarValue, byte operation) {
+        public ArgumentFilter<?, ?> visit(ScalarValue scalarValue, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     switch (scalarValue.type) {
@@ -668,7 +668,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<?, ?> visit(NATest naTest, byte operation) {
+        public ArgumentFilter<?, ?> visit(NATest naTest, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     switch (naTest.type) {
@@ -691,7 +691,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<String, String> visit(StringLength stringLength, byte operation) {
+        public ArgumentFilter<String, String> visit(StringLength stringLength, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     return arg -> arg.length() == stringLength.length;
@@ -714,7 +714,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(VectorSize vectorSize, byte operation) {
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(VectorSize vectorSize, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     return arg -> arg.getLength() == vectorSize.size;
@@ -737,7 +737,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(ElementAt elementAt, byte operation) {
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(ElementAt elementAt, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     switch (elementAt.type) {
@@ -759,7 +759,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(Dim dim, byte operation) {
+        public ArgumentFilter<RAbstractVector, RAbstractVector> visit(Dim dim, byte operation, ArgumentFilter<?, ?> previous) {
             switch (operation) {
                 case CompareFilter.EQ:
                     return v -> v.isMatrix() && v.getDimensions().length > dim.dimIndex && v.getDimensions()[dim.dimIndex] == dim.dimSize;
@@ -785,22 +785,22 @@ public final class PipelineToCastNode {
 
         @Override
         public ArgumentMapper<Object, Object> createMapper(Mapper<?, ?> mapper) {
-            return mapper.accept(this);
+            return mapper.accept(this, null);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Object, Object> visit(MapToValue<?, ?> mapper) {
+        public ValuePredicateArgumentMapper<Object, Object> visit(MapToValue<?, ?> mapper, ValuePredicateArgumentMapper<Object, Object> previous) {
             final Object value = mapper.getValue();
             return ValuePredicateArgumentMapper.fromLambda(x -> value);
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Object, Object> visit(MapByteToBoolean mapper) {
+        public ValuePredicateArgumentMapper<Object, Object> visit(MapByteToBoolean mapper, ValuePredicateArgumentMapper<Object, Object> previous) {
             return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical((Byte) x));
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Object, Object> visit(MapDoubleToInt mapper) {
+        public ValuePredicateArgumentMapper<Object, Object> visit(MapDoubleToInt mapper, ValuePredicateArgumentMapper<Object, Object> previous) {
             final NACheck naCheck = NACheck.create();
             return ValuePredicateArgumentMapper.fromLambda(x -> {
                 double d = (Double) x;
@@ -810,7 +810,7 @@ public final class PipelineToCastNode {
         }
 
         @Override
-        public ValuePredicateArgumentMapper<Object, Object> visit(MapToCharAt mapper) {
+        public ValuePredicateArgumentMapper<Object, Object> visit(MapToCharAt mapper, ValuePredicateArgumentMapper<Object, Object> previous) {
             final int defaultValue = mapper.getDefaultValue();
             final int index = mapper.getIndex();
             return ValuePredicateArgumentMapper.fromLambda(x -> {

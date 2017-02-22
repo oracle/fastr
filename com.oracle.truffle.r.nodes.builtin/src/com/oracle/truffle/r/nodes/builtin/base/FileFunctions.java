@@ -425,8 +425,8 @@ public class FileFunctions {
 
     private abstract static class FileLinkAdaptor extends RBuiltinNode {
 
-        static {
-            Casts casts = new Casts(FileLinkAdaptor.class);
+        protected static void casts(Class<? extends FileLinkAdaptor> builtinClass) {
+            Casts casts = new Casts(builtinClass);
             casts.arg("from").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
             casts.arg("to").mustBe(stringValue(), RError.Message.INVALID_SECOND_FILENAME).asStringVector();
         }

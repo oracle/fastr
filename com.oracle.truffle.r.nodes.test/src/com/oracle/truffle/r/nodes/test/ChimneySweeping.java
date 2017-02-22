@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,8 +44,9 @@ import org.junit.Assert;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.nodes.casts.CastNodeSampler;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.casts.Samples;
+import com.oracle.truffle.r.nodes.casts.SamplesCollector;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.DiagConfig;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.RIntBuiltinDiagFactory;
 import com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics.SingleBuiltinDiagnostics;
@@ -167,7 +169,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             // these values are not determined via the pipeline static type analysis
             config.performPipelineSelfTest = config.missingAndNullSamplesOnly ? false : !Arrays.stream(args).filter(arg -> NO_SELF_TEST_ARG.equals(arg)).findFirst().isPresent();
             config.maxSweeps = Arrays.stream(args).filter(arg -> arg.startsWith(MAX_SWEEPS_ARG)).map(x -> Integer.parseInt(x.split("=")[1])).findFirst().orElse(Integer.MAX_VALUE);
-            return RBuiltinDiagnostics.initDiagConfig(config, args);
+            return RBuiltinDiagnostics.initDiagConfig(config, args, false);
         }
 
         private static Optional<String> getSweepMode(String[] args) {
@@ -202,10 +204,12 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
-    private final List<Samples<?>> argSamples;
     private final ChimneySweepingSuite diagSuite;
-    private final Set<RList> validArgsList;
     private final RBuiltinKind kind;
+
+    private List<Samples<?>> argSamples;
+    private Set<RList> validArgsList;
+    private CastNode[] castNodes;
 
     private final Set<List<String>> printedOutputPairs = new HashSet<>();
     private final Set<String> printedErrors = new HashSet<>();
@@ -213,13 +217,22 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     ChimneySweeping(ChimneySweepingSuite diagSuite, RIntBuiltinDiagFactory builtinFactory) {
         super(diagSuite, builtinFactory);
+        this.diagSuite = diagSuite;
+        this.kind = builtinFactory.getBuiltinKind();
+    }
+
+    @Override
+    SingleBuiltinDiagnostics init() throws Throwable {
+        super.init();
+
+        this.castNodes = builtinFactory.getCastNodes();
 
         print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinNodeClass().getName() + ") ***");
 
-        this.kind = builtinFactory.getBuiltinKind();
-        this.diagSuite = diagSuite;
         this.validArgsList = extractValidArgsForBuiltin();
         this.argSamples = createSamples();
+
+        return this;
     }
 
     @Override
@@ -250,6 +263,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         DefaultArgsExtractor defArgExt = new DefaultArgsExtractor(diagSuite.fastRSession, msg -> print(1, msg));
         Map<String, Samples<?>> defaultArgs = defArgExt.extractDefaultArgs(builtinName);
 
+        PipelineBuilder[] plBuilders = casts.getPipelineBuilders();
+
         List<Samples<?>> as = new ArrayList<>();
         for (int i = 0; i < argLength; i++) {
             Samples samples;
@@ -257,18 +272,18 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
             if (diagSuite.diagConfig.missingAndNullSamplesOnly) {
                 samples = Samples.anything(RNull.instance).or(Samples.anything(RMissing.instance));
             } else {
-                CastNode cn;
-                if (i < castNodes.length) {
-                    cn = castNodes[i];
+                PipelineBuilder plBuilder;
+                if (i < plBuilders.length) {
+                    plBuilder = plBuilders[i];
                 } else {
-                    cn = null;
+                    plBuilder = null;
                 }
                 try {
-                    if (cn == null) {
+                    if (plBuilder == null) {
                         samples = Samples.anything();
                     } else {
-                        CastNodeSampler<CastNode> sampler = CastNodeSampler.createSampler(cn);
-                        samples = sampler.collectSamples();
+                        Set<Object> sampleSet = SamplesCollector.collect(plBuilder.getFirstStep());
+                        samples = new Samples<>("", sampleSet, Collections.emptySet(), x -> sampleSet.contains(x));
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error in sample generation from argument " + i, e);
@@ -373,7 +388,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     private RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
         try {
             Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
-            RList args = (RList) eval.get();
+            Object res = eval.get();
+            // TODO: do not use reflection here
+            Method getter = res.getClass().getDeclaredMethod("getDelegate");
+            getter.setAccessible(true);
+            RList args = (RList) getter.invoke(res);
             return args;
         } catch (Exception e) {
             print(1, "Warning: Cannot parse arguments: " + argsExpr);

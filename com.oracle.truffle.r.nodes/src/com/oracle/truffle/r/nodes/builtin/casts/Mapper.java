@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,16 +29,16 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
  */
 public abstract class Mapper<T, R> {
 
-    public abstract <D> D accept(MapperVisitor<D> visitor);
+    public abstract <D> D accept(MapperVisitor<D> visitor, D previous);
 
     public interface MapperVisitor<D> {
-        D visit(MapToValue<?, ?> mapper);
+        D visit(MapToValue<?, ?> mapper, D previous);
 
-        D visit(MapByteToBoolean mapper);
+        D visit(MapByteToBoolean mapper, D previous);
 
-        D visit(MapDoubleToInt mapper);
+        D visit(MapDoubleToInt mapper, D previous);
 
-        D visit(MapToCharAt mapper);
+        D visit(MapToCharAt mapper, D previous);
     }
 
     public static final class MapToValue<T, R> extends Mapper<T, R> {
@@ -53,8 +53,8 @@ public abstract class Mapper<T, R> {
         }
 
         @Override
-        public <D> D accept(MapperVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(MapperVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -67,8 +67,8 @@ public abstract class Mapper<T, R> {
         }
 
         @Override
-        public <D> D accept(MapperVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(MapperVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -80,8 +80,8 @@ public abstract class Mapper<T, R> {
         }
 
         @Override
-        public <D> D accept(MapperVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(MapperVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 
@@ -103,8 +103,8 @@ public abstract class Mapper<T, R> {
         }
 
         @Override
-        public <D> D accept(MapperVisitor<D> visitor) {
-            return visitor.visit(this);
+        public <D> D accept(MapperVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
         }
     }
 }

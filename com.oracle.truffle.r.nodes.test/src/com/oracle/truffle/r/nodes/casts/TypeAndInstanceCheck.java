@@ -28,46 +28,72 @@ import java.util.Optional;
 
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast.Coverage;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.nodes.casts.CastUtils.Casts;
 
 public interface TypeAndInstanceCheck {
     boolean isInstance(Object x);
 
+    static boolean isInstance(Type t, Object x) {
+        if (t instanceof Class) {
+            return ((Class<?>) t).isInstance(x);
+        } else if (t instanceof TypeAndInstanceCheck) {
+            return ((TypeAndInstanceCheck) t).isInstance(x);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
     Optional<Class<?>> classify();
 
+    Type normalize();
+
     static Coverage coverage(Type from, Type to, boolean includeImplicits) {
-        assert (to instanceof Not || to instanceof Class);
         assert (from instanceof Not || from instanceof Class);
+        assert (to instanceof Not || to instanceof Class);
 
         if (Not.negateType(to).equals(from)) {
             return Coverage.none;
         }
 
-        boolean toPositive = !Not.isNegative(to);
         boolean fromPositive = !Not.isNegative(from);
-        Class<?> positiveToCls = (Class<?>) CastUtils.Casts.boxType(Not.getPositiveType(to));
-        Class<?> positiveFromCls = (Class<?>) CastUtils.Casts.boxType(Not.getPositiveType(from));
-
+        boolean toPositive = !Not.isNegative(to);
+        Type posFrom = Not.getPositiveType(from);
+        Type posTo = Not.getPositiveType(to);
         Cast.Coverage positiveCoverage;
-        if (((Class<?>) positiveToCls).isAssignableFrom(positiveFromCls)) {
-            positiveCoverage = Cast.Coverage.full;
-        } else if (((Class<?>) positiveFromCls).isAssignableFrom(positiveToCls)) {
-            positiveCoverage = Cast.Coverage.partial;
-        } else if (positiveToCls.isInterface() && (positiveFromCls.isInterface() || !(Modifier.isFinal(positiveFromCls.getModifiers()) || !Modifier.isAbstract(positiveFromCls.getModifiers())))) {
-            positiveCoverage = Cast.Coverage.potential;
-        } else if (positiveFromCls.isInterface() && (positiveToCls.isInterface() || !(Modifier.isFinal(positiveToCls.getModifiers()) || !Modifier.isAbstract(positiveToCls.getModifiers())))) {
-            positiveCoverage = Cast.Coverage.potential;
+        if (posFrom instanceof UpperBoundsConjunction) {
+            positiveCoverage = ((UpperBoundsConjunction) posFrom).coverageTo(posTo, includeImplicits);
+            return positiveCoverage.transpose(posFrom, posTo, fromPositive, toPositive);
+        } else if (posTo instanceof UpperBoundsConjunction) {
+            positiveCoverage = ((UpperBoundsConjunction) posTo).coverageFrom(UpperBoundsConjunction.fromType(posFrom), includeImplicits);
+            return positiveCoverage.transpose(posFrom, posTo, fromPositive, toPositive);
         } else {
-            positiveCoverage = Cast.Coverage.none;
+            Class<?> positiveFromCls = (Class<?>) CastUtils.Casts.boxType(posFrom);
+            Class<?> positiveToCls = (Class<?>) CastUtils.Casts.boxType(posTo);
+
+            if (TypeExpr.areMutuallyExclusive(positiveToCls, positiveFromCls)) {
+                positiveCoverage = Cast.Coverage.none;
+            } else if (((Class<?>) positiveToCls).isAssignableFrom(positiveFromCls)) {
+                positiveCoverage = Cast.Coverage.full;
+            } else if (((Class<?>) positiveFromCls).isAssignableFrom(positiveToCls)) {
+                positiveCoverage = Cast.Coverage.partial;
+            } else if (positiveToCls.isInterface() && (positiveFromCls.isInterface() || !(Modifier.isFinal(positiveFromCls.getModifiers()) || !Modifier.isAbstract(positiveFromCls.getModifiers())))) {
+                positiveCoverage = Cast.Coverage.potential;
+            } else if (positiveFromCls.isInterface() && (positiveToCls.isInterface() || !(Modifier.isFinal(positiveToCls.getModifiers()) || !Modifier.isAbstract(positiveToCls.getModifiers())))) {
+                positiveCoverage = Cast.Coverage.potential;
+            } else {
+                positiveCoverage = Cast.Coverage.none;
+            }
+
+            Cast.Coverage implicitCvrg = Cast.Coverage.none;
+            if (includeImplicits && Casts.hasImplicitCast(positiveFromCls, positiveToCls)) {
+                implicitCvrg = Cast.Coverage.potential;
+            }
+
+            positiveCoverage = implicitCvrg.or(positiveCoverage);
+
+            return positiveCoverage.transpose(positiveFromCls, positiveToCls, fromPositive, toPositive);
         }
 
-        Cast.Coverage implicitCvrg = Cast.Coverage.none;
-        if (includeImplicits && Casts.hasImplicitCast(positiveFromCls, positiveToCls)) {
-            implicitCvrg = Cast.Coverage.potential;
-        }
-
-        positiveCoverage = implicitCvrg.or(positiveCoverage);
-
-        return positiveCoverage.transpose(positiveFromCls, positiveToCls, fromPositive, toPositive);
     }
 }

@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public class RExpression extends RListBase implements RAbstractVector {
+public final class RExpression extends RListBase implements RAbstractVector {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getClazz());
 

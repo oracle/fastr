@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.casts;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -49,13 +50,13 @@ public final class Samples<T> {
         return (Samples<T>) NOTHING;
     }
 
-    private final Set<? extends T> posSamples;
-    private final Set<?> negSamples;
+    private final Set<Object> posSamples;
+    private final Set<Object> negSamples;
     private final Predicate<Object> posMembership;
     private final Predicate<Object> negMembership;
     private final String name;
 
-    public Samples(String name, Set<? extends T> positiveSamples, Set<?> negativeSamples, Predicate<Object> posMembership) {
+    public Samples(String name, Set<Object> positiveSamples, Set<Object> negativeSamples, Predicate<Object> posMembership) {
         this.name = name;
         this.posSamples = positiveSamples;
         this.negSamples = negativeSamples;
@@ -63,7 +64,7 @@ public final class Samples<T> {
         this.negMembership = CastUtils.instrument(this.posMembership.negate(), "neg(" + name + ")");
     }
 
-    private Samples(String name, Set<? extends T> positiveSamples, Set<?> negativeSamples, Predicate<Object> posMembership, Predicate<Object> negMembership) {
+    private Samples(String name, Set<Object> positiveSamples, Set<Object> negativeSamples, Predicate<Object> posMembership, Predicate<Object> negMembership) {
         this.name = name;
         this.posSamples = positiveSamples;
         this.negSamples = negativeSamples;
@@ -71,11 +72,23 @@ public final class Samples<T> {
         this.negMembership = CastUtils.instrument(negMembership, "neg(" + name + ")");
     }
 
-    public Set<? extends T> positiveSamples() {
+    public Samples<T> addPositiveSamples(Object... sampleValues) {
+        Set<Object> newPosSamples = new HashSet<>(Arrays.asList(sampleValues));
+        newPosSamples.addAll(posSamples);
+        return new Samples<>(name, newPosSamples, negSamples, posMembership, negMembership);
+    }
+
+    public Samples<T> addNegativeSamples(Object... sampleValues) {
+        Set<Object> newNegSamples = new HashSet<>(Arrays.asList(sampleValues));
+        newNegSamples.addAll(negSamples);
+        return new Samples<>(name, posSamples, newNegSamples, posMembership, negMembership);
+    }
+
+    public Set<Object> positiveSamples() {
         return posSamples;
     }
 
-    public Set<?> negativeSamples() {
+    public Set<Object> negativeSamples() {
         return negSamples;
     }
 
@@ -85,11 +98,11 @@ public final class Samples<T> {
         return all;
     }
 
-    public <R> Samples<R> map(Function<T, R> posMapper, Function<Object, Object> negMapper, Function<Object, Optional<T>> posUnmapper, Function<Object, Optional<Object>> negUnmapper) {
-        Set<R> mappedPositive = positiveSamples().stream().map(posMapper).collect(Collectors.toSet());
+    public <R> Samples<R> map(Function<Object, R> posMapper, Function<Object, Object> negMapper, Function<Object, Optional<Object>> posUnmapper, Function<Object, Optional<Object>> negUnmapper) {
+        Set<Object> mappedPositive = positiveSamples().stream().map(posMapper).collect(Collectors.toSet());
         Set<Object> mappedNegative = negativeSamples().stream().map(negMapper).collect(Collectors.toSet());
         return new Samples<>(name + ".map", mappedPositive, mappedNegative, x -> {
-            Optional<T> um = posUnmapper.apply(x);
+            Optional<Object> um = posUnmapper.apply(x);
             return um.isPresent() ? posMembership.test(um.get()) : false;
         }, x -> {
             Optional<Object> um = negUnmapper.apply(x);
@@ -102,14 +115,13 @@ public final class Samples<T> {
     }
 
     public Samples<T> filter(Predicate<Object> newPosCondition, Predicate<Object> newNegCondition) {
-        Set<T> newPositive = positiveSamples().stream().filter(newPosCondition).collect(Collectors.toSet());
+        Set<Object> newPositive = positiveSamples().stream().filter(newPosCondition).collect(Collectors.toSet());
         Set<Object> newNegative = negativeSamples().stream().filter(newNegCondition).collect(Collectors.toSet());
         return new Samples<>(name + ".filter", newPositive, newNegative, x -> posMembership.test(x) && newPosCondition.test(x),
                         x -> negMembership.test(x) && newNegCondition.test(x));
     }
 
-    @SuppressWarnings("unchecked")
-    public Samples<T> and(Samples<? extends T> other) {
+    public Samples<T> and(Samples<?> other) {
         String newName = "and(" + name + "," + other.name + ")";
 
         Set<Object> negativeUnion = new HashSet<>(other.negativeSamples());
@@ -126,10 +138,9 @@ public final class Samples<T> {
         Predicate<Object> newPosCondition = CastUtils.instrument(posMembership.and(other.posMembership), "and-pos");
         positiveUnion.removeIf(CastUtils.instrument(newPosCondition.negate(), "pruningPosUnion:" + newName));
 
-        return new Samples<>(newName, (Set<T>) positiveUnion, negativeUnion, newPosCondition, newNegCondition);
+        return new Samples<>(newName, positiveUnion, negativeUnion, newPosCondition, newNegCondition);
     }
 
-    @SuppressWarnings("unchecked")
     public Samples<T> or(Samples<?> other) {
         String newName = "or(" + name + "," + other.name + ")";
 
@@ -147,7 +158,7 @@ public final class Samples<T> {
         Predicate<Object> newPosCondition = CastUtils.instrument(posMembership.or(other.posMembership), "or-neg");
         positiveUnion.removeIf(CastUtils.instrument(newPosCondition.negate(), "pruningPosUnion:" + newName));
 
-        return new Samples<>(newName, (Set<T>) positiveUnion, negativeUnion, newPosCondition, newNegCondition);
+        return new Samples<>(newName, positiveUnion, negativeUnion, newPosCondition, newNegCondition);
     }
 
     public Samples<Object> swap() {

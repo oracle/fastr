@@ -70,7 +70,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     private ForwardingAnalysisResult altResult = null;
 
     public ForwardingAnalysisResult analyse(PipelineStep<?, ?> firstStep) {
-        firstStep.acceptPipeline(this);
+        firstStep.acceptPipeline(this, null);
         ForwardingAnalysisResult mainRes = result;
         if (altResult != null) {
             mainRes = mainRes.or(altResult);
@@ -87,7 +87,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     }
 
     @Override
-    public ForwardingAnalysisResult visit(FindFirstStep<?, ?> step) {
+    public ForwardingAnalysisResult visit(FindFirstStep<?, ?> step, ForwardingAnalysisResult previous) {
         ForwardingAnalysisResult localRes = new ForwardingAnalysisResult().blockAll().setForwardedType(step.getElementClass(), FORWARDED);
         if (step.getDefaultValue() == RNull.instance) {
             // see CoercedPhaseBuilder.findFirstOrNull()
@@ -98,7 +98,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     }
 
     @Override
-    public ForwardingAnalysisResult visit(CoercionStep<?, ?> step) {
+    public ForwardingAnalysisResult visit(CoercionStep<?, ?> step, ForwardingAnalysisResult previous) {
         ForwardingAnalysisResult localRes = new ForwardingAnalysisResult().blockAll().setForwardedType(step.getType(), FORWARDED);
         if (step.preserveNonVector) {
             // i.e. preserve NULL and MISSING
@@ -109,35 +109,35 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     }
 
     @Override
-    public ForwardingAnalysisResult visit(MapStep<?, ?> step) {
+    public ForwardingAnalysisResult visit(MapStep<?, ?> step, ForwardingAnalysisResult previous) {
         ForwardingAnalysisResult localRes = step.getMapper().accept(new Mapper.MapperVisitor<ForwardingAnalysisResult>() {
 
             @Override
-            public ForwardingAnalysisResult visit(MapToValue<?, ?> mapper) {
+            public ForwardingAnalysisResult visit(MapToValue<?, ?> mapper, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return ForwardingAnalysisResult.INVALID;
             }
 
             @Override
-            public ForwardingAnalysisResult visit(MapByteToBoolean mapper) {
+            public ForwardingAnalysisResult visit(MapByteToBoolean mapper, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll().setForwardedType(RType.Logical, new Forwarded(mapper));
             }
 
             @Override
-            public ForwardingAnalysisResult visit(MapDoubleToInt mapper) {
+            public ForwardingAnalysisResult visit(MapDoubleToInt mapper, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return ForwardingAnalysisResult.INVALID;
             }
 
             @Override
-            public ForwardingAnalysisResult visit(MapToCharAt mapper) {
+            public ForwardingAnalysisResult visit(MapToCharAt mapper, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return ForwardingAnalysisResult.INVALID;
             }
-        });
+        }, previous);
         result = result.and(localRes);
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(MapIfStep<?, ?> mapIfStep) {
+    public ForwardingAnalysisResult visit(MapIfStep<?, ?> mapIfStep, ForwardingAnalysisResult previous) {
         // analyze the true branch
         ForwardingAnalysisResult trueBranchFwdRes;
         PipelineStep<?, ?> trueBranchFirstStep = new FilterStep<>(mapIfStep.getFilter(), null, false);
@@ -167,11 +167,11 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     }
 
     @Override
-    public ForwardingAnalysisResult visit(FilterStep<?, ?> step) {
+    public ForwardingAnalysisResult visit(FilterStep<?, ?> step, ForwardingAnalysisResult previous) {
         class ForwardedValuesFilterVisitor implements Filter.FilterVisitor<ForwardingAnalysisResult> {
 
             @Override
-            public ForwardingAnalysisResult visit(TypeFilter<?, ?> filter) {
+            public ForwardingAnalysisResult visit(TypeFilter<?, ?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 ForwardingAnalysisResult res = new ForwardingAnalysisResult().blockAll();
                 if (filter.getExtraCondition() == null) {
                     res = res.setForwardedType(filter.getType1(), FORWARDED);
@@ -182,31 +182,31 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
             }
 
             @Override
-            public ForwardingAnalysisResult visit(RTypeFilter<?> filter) {
+            public ForwardingAnalysisResult visit(RTypeFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll().setForwardedType(filter.getType(), FORWARDED);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(CompareFilter<?> filter) {
+            public ForwardingAnalysisResult visit(CompareFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return filter.getSubject().accept(new Filter.CompareFilter.SubjectVisitor<ForwardingAnalysisResult>() {
 
                     @Override
-                    public ForwardingAnalysisResult visit(ScalarValue scalarValue, byte operation) {
+                    public ForwardingAnalysisResult visit(ScalarValue scalarValue, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         return new ForwardingAnalysisResult().blockAll().setForwardedType(scalarValue.type, UNKNOWN);
                     }
 
                     @Override
-                    public ForwardingAnalysisResult visit(NATest naTest, byte operation) {
+                    public ForwardingAnalysisResult visit(NATest naTest, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         return new ForwardingAnalysisResult().blockAll().setForwardedType(naTest.type, UNKNOWN);
                     }
 
                     @Override
-                    public ForwardingAnalysisResult visit(StringLength stringLength, byte operation) {
+                    public ForwardingAnalysisResult visit(StringLength stringLength, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         return new ForwardingAnalysisResult().blockAll().setForwardedType(RType.Character, UNKNOWN);
                     }
 
                     @Override
-                    public ForwardingAnalysisResult visit(VectorSize vectorSize, byte operation) {
+                    public ForwardingAnalysisResult visit(VectorSize vectorSize, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         if (vectorSize.size == 0 && operation == CompareFilter.EQ) {
                             return new ForwardingAnalysisResult().blockAll().setNull(FORWARDED);
                         } else if (vectorSize.size == 1 && (operation == CompareFilter.EQ || operation == CompareFilter.GT || operation == CompareFilter.GE)) {
@@ -221,7 +221,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
                     }
 
                     @Override
-                    public ForwardingAnalysisResult visit(ElementAt elementAt, byte operation) {
+                    public ForwardingAnalysisResult visit(ElementAt elementAt, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         if (elementAt.index == 0) {
                             return new ForwardingAnalysisResult().blockAll().setForwardedType(elementAt.type, UNKNOWN);
                         } else {
@@ -230,86 +230,86 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
                     }
 
                     @Override
-                    public ForwardingAnalysisResult visit(Dim dim, byte operation) {
+                    public ForwardingAnalysisResult visit(Dim dim, byte operation, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                         return new ForwardingAnalysisResult().blockAll();
                     }
-                }, filter.getOperation());
+                }, filter.getOperation(), previous);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(AndFilter<?, ?> filter) {
+            public ForwardingAnalysisResult visit(AndFilter<?, ?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 ForwardedValuesFilterVisitor leftVis = new ForwardedValuesFilterVisitor();
                 ForwardedValuesFilterVisitor rightVis = new ForwardedValuesFilterVisitor();
-                ForwardingAnalysisResult leftResult = filter.getLeft().accept(leftVis);
-                ForwardingAnalysisResult rightResult = filter.getRight().accept(rightVis);
+                ForwardingAnalysisResult leftResult = filter.getLeft().accept(leftVis, previous);
+                ForwardingAnalysisResult rightResult = filter.getRight().accept(rightVis, previous);
                 return leftResult.and(rightResult);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(OrFilter<?> filter) {
+            public ForwardingAnalysisResult visit(OrFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 ForwardedValuesFilterVisitor leftVis = new ForwardedValuesFilterVisitor();
                 ForwardedValuesFilterVisitor rightVis = new ForwardedValuesFilterVisitor();
-                ForwardingAnalysisResult leftResult = filter.getLeft().accept(leftVis);
-                ForwardingAnalysisResult rightResult = filter.getRight().accept(rightVis);
+                ForwardingAnalysisResult leftResult = filter.getLeft().accept(leftVis, previous);
+                ForwardingAnalysisResult rightResult = filter.getRight().accept(rightVis, previous);
                 return leftResult.or(rightResult);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(NotFilter<?> filter) {
+            public ForwardingAnalysisResult visit(NotFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 ForwardedValuesFilterVisitor vis = new ForwardedValuesFilterVisitor();
-                return filter.getFilter().accept(vis).not();
+                return filter.getFilter().accept(vis, previous).not();
             }
 
             @Override
-            public ForwardingAnalysisResult visit(MatrixFilter<?> filter) {
+            public ForwardingAnalysisResult visit(MatrixFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().forwardAll();
             }
 
             @Override
-            public ForwardingAnalysisResult visit(DoubleFilter filter) {
+            public ForwardingAnalysisResult visit(DoubleFilter filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll().setForwardedType(RType.Double, UNKNOWN);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(NullFilter filter) {
+            public ForwardingAnalysisResult visit(NullFilter filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll().setNull(FORWARDED);
             }
 
             @Override
-            public ForwardingAnalysisResult visit(MissingFilter filter) {
+            public ForwardingAnalysisResult visit(MissingFilter filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll().setMissing(FORWARDED);
             }
         }
-        ForwardingAnalysisResult localRes = step.getFilter().accept(new ForwardedValuesFilterVisitor());
+        ForwardingAnalysisResult localRes = step.getFilter().accept(new ForwardedValuesFilterVisitor(), previous);
         result = result.and(localRes);
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(NotNAStep<?> step) {
+    public ForwardingAnalysisResult visit(NotNAStep<?> step, ForwardingAnalysisResult previous) {
         result = result.and(new ForwardingAnalysisResult().unknownAll().setNull(FORWARDED).setMissing(FORWARDED));
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(DefaultErrorStep<?> step) {
+    public ForwardingAnalysisResult visit(DefaultErrorStep<?> step, ForwardingAnalysisResult previous) {
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(DefaultWarningStep<?> step) {
+    public ForwardingAnalysisResult visit(DefaultWarningStep<?> step, ForwardingAnalysisResult previous) {
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(BoxPrimitiveStep<?> step) {
+    public ForwardingAnalysisResult visit(BoxPrimitiveStep<?> step, ForwardingAnalysisResult previous) {
         // TODO
         result = ForwardingAnalysisResult.INVALID;
         return result;
     }
 
     @Override
-    public ForwardingAnalysisResult visit(AttributableCoercionStep<?> step) {
+    public ForwardingAnalysisResult visit(AttributableCoercionStep<?> step, ForwardingAnalysisResult previous) {
         // TODO
         result = ForwardingAnalysisResult.INVALID;
         return result;

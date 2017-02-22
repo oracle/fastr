@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -93,6 +94,11 @@ public abstract class CastComplexNode extends CastBaseNode {
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
+    }
+
+    @Specialization
+    protected RMissing doMissing(@SuppressWarnings("unused") RMissing operand) {
+        return RMissing.instance;
     }
 
     @Specialization
