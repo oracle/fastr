@@ -35,8 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts;
@@ -57,6 +59,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class RBuiltinDiagnostics {
 
@@ -278,24 +281,29 @@ public class RBuiltinDiagnostics {
         return sb.toString();
     }
 
+    private static String toGenNodeName(String name) {
+        if (name.endsWith("Node")) {
+            return name + "Gen";
+        } else {
+            return name + "NodeGen";
+        }
+    }
+
     private static Class<?> toNodeGenClass(Class<?> nodeCls) throws ClassNotFoundException {
         String nodeGenClsName;
         if (nodeCls.getEnclosingClass() == null) {
-            nodeGenClsName = nodeCls.getName() + "NodeGen";
+            nodeGenClsName = toGenNodeName(nodeCls.getName());
         } else {
+            String enclClsName = nodeCls.getEnclosingClass().getName();
+            String enclosingClsSuffix = RBaseNode.class.isAssignableFrom(nodeCls.getEnclosingClass()) ? (enclClsName.endsWith("Node") ? "Gen" : "NodeGen") : "Factory";
             String[] split = nodeCls.getName().split("\\.");
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < split.length; i++) {
                 String s = split[i];
                 if (i == split.length - 1) {
                     String[] lastSplit = s.split("\\$");
-                    sb.append(lastSplit[0] + "Factory$");
-                    sb.append(lastSplit[1]);
-                    if (s.endsWith("Node")) {
-                        sb.append("Gen");
-                    } else {
-                        sb.append("NodeGen");
-                    }
+                    sb.append(lastSplit[0] + enclosingClsSuffix + "$");
+                    sb.append(toGenNodeName(lastSplit[1]));
                 } else {
                     sb.append(s);
                 }
@@ -360,7 +368,15 @@ public class RBuiltinDiagnostics {
 
             argResultSets = createArgResultSets();
 
-            this.specMethods = CastUtils.getAnnotatedMethods(builtinFactory.getBuiltinNodeClass(), Specialization.class);
+            List<Method> specs = CastUtils.getAnnotatedMethods(builtinFactory.getBuiltinNodeClass(), Specialization.class);
+            this.specMethods = new ArrayList<>(specs);
+            // N.B. The fallback method cannot be found by the Fallback annotation since
+            // this annotation has the CLASS retention policy. Nonetheless, the fallback method can
+            // be determined throught the fallback node in the generated class.
+            Optional<Method> fallback = findFallbackMethod(toNodeGenClass(bltnCls));
+            if (fallback.isPresent()) {
+                this.specMethods.add(fallback.get());
+            }
 
             this.convResultTypePerSpec = createConvResultTypePerSpecialization();
             this.nonCoveredArgsSet = combineArguments();
@@ -579,6 +595,34 @@ public class RBuiltinDiagnostics {
             i++;
         }
         return typeName(m.getReturnType()) + " " + m.getName() + "(" + sb + ")";
+    }
+
+    private static Optional<Method> findFallbackMethod(Class<?> genBltnClass) {
+        Optional<Class<?>> fallbackNodeCls = Arrays.stream(genBltnClass.getDeclaredClasses()).filter(c -> "FallbackNode_".equals(c.getSimpleName())).findFirst();
+        return fallbackNodeCls.flatMap(fc -> findFallbackMethodFromAnnot(fc, genBltnClass.getSuperclass()));
+    }
+
+    private static Optional<Method> findFallbackMethodFromAnnot(Class<?> fallbackNodeClass, Class<?> bltnCls) {
+        GeneratedBy genByAnnot = fallbackNodeClass.getAnnotation(GeneratedBy.class);
+        assert genByAnnot != null;
+        String fallbackName = genByAnnot.methodName();
+
+        return findMethod(bltnCls, dm -> {
+            return dm.getAnnotation(Specialization.class) == null && fallbackName.startsWith(dm.getName() + "(");
+        });
+    }
+
+    private static Optional<Method> findMethod(Class<?> clazz, Predicate<Method> filter) {
+        Optional<Method> res = Arrays.asList(clazz.getDeclaredMethods()).stream().filter(filter).findFirst();
+        if (res.isPresent()) {
+            return res;
+        }
+
+        if (clazz.getSuperclass() != Object.class) {
+            return findMethod(clazz.getSuperclass(), filter);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public interface RBuiltinDiagFactory {
