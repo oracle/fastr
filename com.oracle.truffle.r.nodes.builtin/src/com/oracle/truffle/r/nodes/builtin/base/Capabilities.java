@@ -46,7 +46,7 @@ public abstract class Capabilities extends RBuiltinNode {
         http_fttp(true, "http/ftp"),
         sockets(true, null),
         libxml(false, null),
-        fifo(false, null),
+        fifo(true, null),
         cledit(false, null),
         iconv(false, null),
         nls(false, "NLS"),

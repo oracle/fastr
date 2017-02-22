@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -47,15 +46,13 @@ public class SocketConnections {
         protected final boolean server;
         protected final String host;
         protected final int port;
-        protected final boolean blocking;
         protected final int timeout;
 
         public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout) throws IOException {
-            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read);
+            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read, blocking);
             this.server = server;
             this.host = host;
             this.port = port;
-            this.blocking = blocking;
             this.timeout = timeout;
             openNonLazyConnection();
         }
@@ -75,7 +72,6 @@ public class SocketConnections {
     private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
         private Socket socket;
         private SocketChannel socketChannel;
-        protected InputStream inputStream;
         protected OutputStream outputStream;
         protected final RSocketConnection thisBase;
 
@@ -87,7 +83,7 @@ public class SocketConnections {
         protected void openStreams(Socket socketArg) throws IOException {
             this.socket = socketArg;
             this.socketChannel = socket.getChannel();
-            if (thisBase.blocking) {
+            if (thisBase.isBlocking()) {
                 // Java (int) timeouts do not meet the POSIX standard of 31 days
                 long millisTimeout = ((long) thisBase.timeout) * 1000;
                 if (millisTimeout > Integer.MAX_VALUE) {
@@ -97,13 +93,7 @@ public class SocketConnections {
             } else {
                 socketChannel.configureBlocking(false);
             }
-            inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
-        }
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return ReadWriteHelper.readLinesHelper(inputStream, n, warn, skipNul);
         }
 
         @Override

@@ -95,12 +95,12 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep);
+        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl);
+        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
     }
 
 }

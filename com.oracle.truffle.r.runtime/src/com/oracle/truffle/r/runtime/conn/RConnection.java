@@ -67,6 +67,12 @@ public abstract class RConnection implements AutoCloseable {
 
     private LinkedList<String> pushBack;
 
+    /**
+     * Indicates that the last line read operation was incomplete.<br>
+     * This is only relevant for connections in text and non-blocking mode.
+     */
+    private boolean incomplete = false;
+
     public abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
 
     private String readOneLineWithPushBack(String[] res, int ind, @SuppressWarnings("unused") boolean warn, @SuppressWarnings("unused") boolean skipNul) {
@@ -349,5 +355,12 @@ public abstract class RConnection implements AutoCloseable {
      * Returns {@code true} iff this connection is open.
      */
     public abstract boolean isOpen();
+
+    /**
+     * Returns {@code true} iff the last read operation was blocked or there is unflushed output.
+     */
+    public boolean isIncomplete() {
+        return incomplete;
+    }
 
 }

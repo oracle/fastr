@@ -62,7 +62,7 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(getInputStream(), n, warn, skipNul);
+        return ReadWriteHelper.readLinesHelper(getInputStream(), n, warn, skipNul, base.getSummaryDescription(), base.getEncoding());
     }
 
     @Override

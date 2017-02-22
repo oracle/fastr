@@ -278,6 +278,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.WriteBin.class, ConnectionFunctionsFactory.WriteBinNodeGen::create);
         add(ConnectionFunctions.WriteChar.class, ConnectionFunctionsFactory.WriteCharNodeGen::create);
         add(ConnectionFunctions.WriteLines.class, ConnectionFunctionsFactory.WriteLinesNodeGen::create);
+        add(ConnectionFunctions.IsIncomplete.class, ConnectionFunctionsFactory.IsIncompleteNodeGen::create);
         add(Contributors.class, ContributorsNodeGen::create);
         add(CopyDFAttr.class, CopyDFAttrNodeGen::create);
         add(Crossprod.class, CrossprodNodeGen::create);

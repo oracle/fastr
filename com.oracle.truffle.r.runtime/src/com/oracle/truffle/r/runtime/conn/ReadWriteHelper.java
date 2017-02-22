@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -27,7 +28,7 @@ public class ReadWriteHelper {
      * @param warn TODO
      * @param skipNul TODO
      */
-    public static String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
+    public static String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul, String description, Charset encoding) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
         byte[] buffer = new byte[64];
@@ -49,9 +50,9 @@ public class ReadWriteHelper {
                      * refactoring is needed to be able to reliably access the "name" for the
                      * warning.
                      */
-                    lines.add(new String(buffer, 0, totalRead));
+                    lines.add(new String(buffer, 0, totalRead, encoding));
                     if (warn) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, description);
                     }
                 }
                 break;
@@ -68,7 +69,7 @@ public class ReadWriteHelper {
                 }
             }
             if (lineEnd) {
-                lines.add(new String(buffer, 0, totalRead));
+                lines.add(new String(buffer, 0, totalRead, encoding));
                 if (n > 0 && lines.size() == n) {
                     break;
                 }
@@ -83,17 +84,17 @@ public class ReadWriteHelper {
         return result;
     }
 
-    public static void writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep) throws IOException {
+    public static void writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
         for (int i = 0; i < lines.getLength(); i++) {
             final String line = lines.getDataAt(i);
-            writeStringHelper(out, line, false);
-            writeStringHelper(out, sep, false);
+            writeStringHelper(out, line, false, encoding);
+            writeStringHelper(out, sep, false, encoding);
         }
     }
 
-    public static void writeStringHelper(WritableByteChannel out, String s, boolean nl) throws IOException {
-        final byte[] bytes = s.getBytes();
-        final byte[] lineSepBytes = nl ? System.lineSeparator().getBytes() : null;
+    public static void writeStringHelper(WritableByteChannel out, String s, boolean nl, Charset encoding) throws IOException {
+        final byte[] bytes = s.getBytes(encoding);
+        final byte[] lineSepBytes = nl ? System.lineSeparator().getBytes(encoding) : null;
 
         ByteBuffer buf = ByteBuffer.allocate(bytes.length + (nl ? lineSepBytes.length : 0));
         buf.put(bytes);
@@ -197,7 +198,7 @@ public class ReadWriteHelper {
     /**
      * TODO probably, this method belongs to {@link ConnectionSupport}
      */
-    public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+    public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
         long position = channel.position();
         switch (seekMode) {
             case ENQUIRE:

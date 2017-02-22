@@ -29,6 +29,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -491,6 +492,18 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
+    /**
+     * @author fa
+     *
+     */
+    /**
+     * @author fa
+     *
+     */
+    /**
+     * @author fa
+     *
+     */
     public abstract static class BaseRConnection extends RConnection {
 
         /**
@@ -525,7 +538,59 @@ public class ConnectionSupport {
          */
         private int descriptor;
 
+        private boolean blocking = true;
+
+        /**
+         * The encoding to use to read or to write to the connection.
+         */
+        private Charset encoding;
+
         private ConnectionClass conClass;
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param blocking Indicates if this connection has been openend in blocking mode.
+         * @param encoding The encoding used to read from or to write to the connection.
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking, Charset encoding) throws IOException {
+            this(conClass, new OpenMode(modeString, defaultModeForLazy));
+            if (conClass != ConnectionClass.Internal) {
+                this.descriptor = getContextStateImpl().setConnection(this);
+            }
+            this.blocking = blocking;
+            this.encoding = encoding;
+        }
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param blocking Indicates if this connection has been openend in blocking mode.
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking) throws IOException {
+            this(conClass, modeString, defaultModeForLazy, blocking, null);
+        }
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param encoding The encoding used to read from or to write to the connection.
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, Charset encoding) throws IOException {
+            this(conClass, modeString, defaultModeForLazy, true, encoding);
+        }
 
         /**
          * The constructor for every connection class except {@link StdConnections}.
@@ -536,10 +601,7 @@ public class ConnectionSupport {
          *
          */
         protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
-            this(conClass, new OpenMode(modeString, defaultModeForLazy));
-            if (conClass != ConnectionClass.Internal) {
-                this.descriptor = getContextStateImpl().setConnection(this);
-            }
+            this(conClass, modeString, defaultModeForLazy, true, Charset.defaultCharset());
         }
 
         /**
@@ -615,6 +677,17 @@ public class ConnectionSupport {
         @Override
         public boolean isTextMode() {
             return getOpenMode().isText();
+        }
+
+        public boolean isBlocking() {
+            return blocking;
+        }
+
+        /**
+         * Returns the original encoding string.
+         */
+        public Charset getEncoding() {
+            return encoding;
         }
 
         @Override
@@ -817,12 +890,12 @@ public class ConnectionSupport {
     abstract static class BasePathRConnection extends BaseRConnection {
         protected final String path;
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString) throws IOException {
-            this(path, connectionClass, modeString, AbstractOpenMode.Read);
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, Charset encoding) throws IOException {
+            this(path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode) throws IOException {
-            super(connectionClass, modeString, defaultLazyOpenMode);
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, Charset encoding) throws IOException {
+            super(connectionClass, modeString, defaultLazyOpenMode, encoding);
             this.path = Utils.tildeExpand(path);
         }
 
@@ -830,5 +903,18 @@ public class ConnectionSupport {
         public String getSummaryDescription() {
             return path;
         }
+    }
+
+    /**
+     * Converts between character set names of iconv and Java.
+     *
+     * @param encoding The iconv name of the character set to use.
+     * @return The Java name of the character set to use.
+     */
+    public static String convertEncodingName(String encoding) {
+        if (encoding == null || encoding.isEmpty() || "native.enc".equals(encoding)) {
+            return Charset.defaultCharset().name();
+        }
+        return encoding;
     }
 }

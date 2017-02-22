@@ -27,7 +27,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
@@ -43,13 +48,24 @@ public class FifoConnections {
         private final String path;
 
         public FifoRConnection(String path, String open, boolean blocking, String encoding) throws IOException {
-            super(ConnectionClass.FIFO, open, AbstractOpenMode.Read);
+            super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, blocking);
             this.path = path;
             openNonLazyConnection();
         }
 
         @Override
         protected void createDelegateConnection() throws IOException {
+            final DelegateRConnection delegate;
+            if (isBlocking()) {
+                delegate = createBlockingDelegate();
+            } else {
+
+                delegate = createNonBlockingDelegate();
+            }
+            setDelegate(delegate);
+        }
+
+        private DelegateRConnection createBlockingDelegate() throws IOException {
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
@@ -58,7 +74,6 @@ public class FifoConnections {
                     break;
                 case Write:
                 case WriteBinary:
-                    delegate = new FifoWriteConnection(this, path);
                     delegate = new FifoWriteConnection(this, path);
                     break;
                 case ReadAppend:
@@ -71,7 +86,31 @@ public class FifoConnections {
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
-            setDelegate(delegate);
+            return delegate;
+        }
+
+        private DelegateRConnection createNonBlockingDelegate() throws IOException {
+            DelegateRConnection delegate = null;
+            switch (getOpenMode().abstractOpenMode) {
+                case Read:
+                case ReadBinary:
+                    delegate = new FifoReadNonBlockingRConnection(this, path);
+                    break;
+                case Write:
+                case WriteBinary:
+                    delegate = new FifoWriteNonBlockingRConnection(this, path);
+                    break;
+                case ReadAppend:
+                case ReadWrite:
+                case ReadWriteBinary:
+                case ReadWriteTrunc:
+                case ReadWriteTruncBinary:
+                    delegate = new FifoReadWriteNonBlockingRConnection(this, path);
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
+            }
+            return delegate;
         }
 
         @Override
@@ -134,7 +173,7 @@ public class FifoConnections {
 
         protected FifoReadWriteConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            this.raf = createAndOpenFifo(path, "w");
+            this.raf = createAndOpenFifo(path, "rw");
         }
 
         @Override
@@ -149,20 +188,80 @@ public class FifoConnections {
 
     }
 
+    static class FifoReadNonBlockingRConnection extends DelegateReadRConnection {
+        private final FileChannel channel;
+
+        protected FifoReadNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
+            super(base);
+            channel = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
+    private static class FifoWriteNonBlockingRConnection extends DelegateWriteRConnection {
+        private final FileChannel channel;
+
+        FifoWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
+            super(base);
+            channel = createAndOpenNonBlockingFifo(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
+    private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteRConnection {
+        private final FileChannel channel;
+
+        FifoReadWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
+            super(base);
+            channel = createAndOpenNonBlockingFifo(path, StandardOpenOption.WRITE, StandardOpenOption.READ);
+        }
+
+        @Override
+        public SeekableByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+
+    }
+
     private static final String MKFIFO_ERROR_FILE_EXISTS = "File exists";
 
     private static RandomAccessFile createAndOpenFifo(String path, String mode) throws IOException {
-        RandomAccessFile pipeFile = null;
-        try {
-            pipeFile = new RandomAccessFile(path, mode);
-        } catch (FileNotFoundException e) {
+        if (!Files.exists(Paths.get(path))) {
             // try to create fifo on demand
             createNamedPipe(path);
-
-            // re-try opening
-            pipeFile = new RandomAccessFile(path, mode);
         }
-        return pipeFile;
+        return new RandomAccessFile(path, mode);
+    }
+
+    private static FileChannel createAndOpenNonBlockingFifo(String path, OpenOption... openOptions) throws IOException {
+        if (!Files.exists(Paths.get(path))) {
+            // try to create fifo on demand
+            createNamedPipe(path);
+        }
+        return FileChannel.open(Paths.get(path), openOptions);
     }
 
     /**
@@ -188,8 +287,9 @@ public class FifoConnections {
                 readThread.join();
                 String msg = new String(Arrays.copyOf(readThread.getData(), readThread.getTotalRead()));
 
-                // ignore if file already exists
-                if (!msg.endsWith(MKFIFO_ERROR_FILE_EXISTS)) {
+                // if the message is not empty and it is not the "file exists" error, then throw
+                // error
+                if (!msg.isEmpty() && !msg.endsWith(MKFIFO_ERROR_FILE_EXISTS)) {
                     throw new IOException(msg);
                 }
             }

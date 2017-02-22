@@ -134,7 +134,7 @@ public class RawConnections {
 
         @Override
         public byte[] readBinChars() throws IOException {
-            // acquire copy from buffer without advancing the cursor
+            // acquire copy from buffer without advancing the cursorskipNul
             final byte[] buffer = channel.getBufferFromCursor();
             int i = 0;
             while (i < buffer.length && buffer[i] != (byte) 0) {

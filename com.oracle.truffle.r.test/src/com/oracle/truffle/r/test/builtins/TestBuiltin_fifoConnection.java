@@ -50,6 +50,8 @@ public class TestBuiltin_fifoConnection extends TestBase {
 
     @Test
     public void testFifoOpenInexisting() {
+        assertEval("capabilities(\"fifo\")");
+
         Assert.assertFalse(Files.exists(TEMP_FIFOS.get(0)));
         assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\"); close(zz); }");
     }

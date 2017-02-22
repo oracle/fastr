@@ -53,6 +53,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -69,6 +71,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
@@ -209,8 +212,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        @SuppressWarnings("unused")
-        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, String method, boolean raw) {
+        protected RAbstractIntVector file(String description, String openArg, @SuppressWarnings("unused") boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
             String open = openArg;
             // TODO handle http/ftp prefixes and redirect and method
             String path = removeFileURLPrefix(description);
@@ -226,10 +228,13 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                return new FileRConnection(path, open).asVector();
+                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+                return new FileRConnection(path, open, charset).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -259,9 +264,12 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector zzFile(RAbstractStringVector description, String open, String encoding, int compression) {
             try {
-                return new CompressedRConnection(description.getDataAt(0), open, cType, encoding, compression).asVector();
+                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+                return new CompressedRConnection(description.getDataAt(0), open, cType, charset, compression).asVector();
             } catch (IOException ex) {
                 throw reportError(description.getDataAt(0), ex);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
 
@@ -1226,6 +1234,22 @@ public abstract class ConnectionFunctions {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
+        }
+    }
+
+    @RBuiltin(name = "isIncomplete", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class IsIncomplete extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(IsIncomplete.class);
+            CastsHelper.connection(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected boolean isIncomplete(int con) {
+
+            return RConnection.fromIndex(con).isIncomplete();
         }
     }
 }

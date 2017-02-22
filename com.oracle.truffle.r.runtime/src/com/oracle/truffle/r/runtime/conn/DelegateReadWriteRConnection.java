@@ -51,7 +51,7 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(getInputStream(), n, warn, skipNul);
+        return ReadWriteHelper.readLinesHelper(getInputStream(), n, warn, skipNul, base.getSummaryDescription(), base.getEncoding());
     }
 
     @Override
@@ -95,12 +95,12 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep);
+        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl);
+        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
     }
 
 }

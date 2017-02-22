@@ -834,7 +834,8 @@ public final class RError extends RuntimeException {
         VECTOR_IS_TOO_LARGE("vector is too large"),
         SEEK_NOT_RELEVANT_FOR_TEXT_CON("seek is not relevant for text connection"),
         SEEK_NOT_ENABLED("'seek' not enabled for this connection"),
-        CANNOT_OPEN_FIFO("cannot open fifo '%s'");
+        CANNOT_OPEN_FIFO("cannot open fifo '%s'"),
+        UNSUPPORTED_ENCODING_CONVERSION("unsupported conversion from '%s' to '%s'");
 
         public final String message;
         final boolean hasArgs;
