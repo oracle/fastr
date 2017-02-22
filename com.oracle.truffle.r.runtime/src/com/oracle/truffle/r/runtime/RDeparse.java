@@ -930,7 +930,6 @@ public class RDeparse {
                                 break;
 
                             default: {
-                                opts = SIMPLEDEPARSE;
                                 if (attrName.contains(" ")) {
                                     append('"');
                                     append(attrName);
