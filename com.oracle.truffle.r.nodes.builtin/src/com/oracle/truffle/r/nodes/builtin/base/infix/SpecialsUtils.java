@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -223,13 +224,15 @@ class SpecialsUtils {
             return value;
         }
 
-        @Specialization(guards = "value.getLength() == 1")
-        protected static int convertIntVector(RIntVector value) {
+        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null"})
+        protected static int convertIntVector(RIntVector value,
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode) {
             return value.getDataAt(0);
         }
 
-        @Specialization(guards = "value.getLength() == 1")
-        protected static double convertDoubleVector(RDoubleVector value) {
+        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null"})
+        protected static double convertDoubleVector(RDoubleVector value,
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode) {
             return value.getDataAt(0);
         }
 
