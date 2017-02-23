@@ -29,5 +29,4 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryNode extends RBaseNode {
 
-    public abstract Object execute(Object value);
 }

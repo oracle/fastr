@@ -39,7 +39,6 @@ public final class IsFactorNode extends UnaryNode {
         return inheritsCheck.execute(x);
     }
 
-    @Override
     public Object execute(Object value) {
         return executeIsFactor(value);
     }
