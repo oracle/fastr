@@ -85,9 +85,9 @@ final class PositionCharacterLookupNode extends Node {
 
     private RError noDimNames() {
         if (mode.isSubset()) {
-            return RError.error(this, Message.NO_ARRAY_DIMNAMES);
+            throw RError.error(this, Message.NO_ARRAY_DIMNAMES);
         } else {
-            return RError.error(this, Message.SUBSCRIPT_BOUNDS);
+            throw RError.error(this, Message.SUBSCRIPT_BOUNDS);
         }
     }
 }

@@ -100,7 +100,7 @@ public final class Wilcox {
 
     private static RError couldNotAllocateError() {
         // GnuR seems to be reporting the same number regardless of the actual size?
-        return RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE, "18446744071562067968", 4);
+        throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE, "18446744071562067968", 4);
     }
 
     private static double cwilcox(double[][][] w, int kIn, int m, int n) {

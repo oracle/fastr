@@ -625,10 +625,10 @@ public class LaFunctions {
             }
             int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
-                RError.error(this, RError.Message.LAPACK_INVALID_VALUE, -info, "dgesv");
+                throw RError.error(this, RError.Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
             if (info > 0) {
-                RError.error(this, RError.Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
+                throw RError.error(this, RError.Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
             }
             if (tol > 0) {
                 double anorm = dlangeNode.execute('1', n, n, avals, n, null);
@@ -636,7 +636,7 @@ public class LaFunctions {
                 double[] rcond = new double[1];
                 dgeconNode.execute('1', n, avals, n, anorm, rcond, work, ipiv);
                 if (rcond[0] < tol) {
-                    RError.error(this, RError.Message.SYSTEM_COMP_SINGULAR, rcond[0]);
+                    throw RError.error(this, RError.Message.SYSTEM_COMP_SINGULAR, rcond[0]);
                 }
             }
             return b;

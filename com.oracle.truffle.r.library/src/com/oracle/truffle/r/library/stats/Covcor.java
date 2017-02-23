@@ -100,14 +100,14 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         } else if (getDimsNode.isMatrix(y)) {
             if (nrows(y) != n) {
                 error.enter();
-                error("incompatible dimensions");
+                throw error("incompatible dimensions");
             }
             ncy = ncols(y);
             ansmat = true;
         } else {
             if (y.getLength() != n) {
                 error.enter();
-                error("incompatible dimensions");
+                throw error("incompatible dimensions");
             }
             ncy = 1;
         }
@@ -125,7 +125,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
         if (emptyErr && x.getLength() == 0) {
             error.enter();
-            error("'x' is empty");
+            throw error("'x' is empty");
         }
 
         double[] answerData = new double[ncx * ncy];
@@ -195,7 +195,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             for (i = 0; i < n; i++) {
                 if (Double.isNaN(x.getDataAt(j * n + i))) {
                     if (naFail) {
-                        error("missing observations in cov/cor");
+                        throw error("missing observations in cov/cor");
                     } else {
                         ind.updateDataAt(i, 0, check);
                     }
@@ -215,7 +215,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             for (i = 0; i < n; i++) {
                 if (Double.isNaN(x.getDataAt(j * n + i))) {
                     if (naFail) {
-                        error("missing observations in cov/cor");
+                        throw error("missing observations in cov/cor");
                     } else {
                         ind.updateDataAt(i, 0, check);
                     }
@@ -228,7 +228,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             for (i = 0; i < n; i++) {
                 if (Double.isNaN(y.getDataAt(j * n + i))) {
                     if (naFail) {
-                        error("missing observations in cov/cor");
+                        throw error("missing observations in cov/cor");
                     } else {
                         ind.updateDataAt(i, 0, check);
                     }
@@ -737,8 +737,8 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void error(String message) {
-        RError.error(NO_CALLER, Message.GENERIC, message);
+    private static RuntimeException error(String message) {
+        throw RError.error(NO_CALLER, Message.GENERIC, message);
     }
 
     private boolean checkNAs(double... xs) {

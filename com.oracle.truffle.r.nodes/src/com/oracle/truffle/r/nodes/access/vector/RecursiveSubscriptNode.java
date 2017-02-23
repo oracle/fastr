@@ -51,11 +51,11 @@ abstract class RecursiveSubscriptNode extends Node {
 
     protected final RError indexingFailed(int i) {
         errorBranch.enter();
-        return RError.error(this, RError.Message.RECURSIVE_INDEXING_FAILED, i);
+        throw RError.error(this, RError.Message.RECURSIVE_INDEXING_FAILED, i);
     }
 
     protected final RError noSuchIndex(int i) {
         errorBranch.enter();
-        return RError.error(this, RError.Message.NO_SUCH_INDEX, i);
+        throw RError.error(this, RError.Message.NO_SUCH_INDEX, i);
     }
 }

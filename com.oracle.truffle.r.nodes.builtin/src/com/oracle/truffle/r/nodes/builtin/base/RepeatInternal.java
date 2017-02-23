@@ -82,7 +82,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
             int timesValue = times.getDataAt(0);
             if (timesValue < 0) {
                 errorProfile.enter();
-                RError.error(this, RError.Message.INVALID_VALUE, "times");
+                throw RError.error(this, RError.Message.INVALID_VALUE, "times");
             }
             int count = timesValue * valueLength;
             result = arrayConstructor.apply(count);
@@ -98,7 +98,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
                 int data = times.getDataAt(i);
                 if (data < 0) {
                     errorProfile.enter();
-                    RError.error(this, RError.Message.INVALID_VALUE, "times");
+                    throw RError.error(this, RError.Message.INVALID_VALUE, "times");
                 }
                 count += data;
             }

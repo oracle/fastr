@@ -121,7 +121,7 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         CompilerAsserts.neverPartOfCompilation();
         RArgsValuesAndNames varArgs = ReadVariableNode.lookupVarArgs(frame);
         if (varArgs == null) {
-            RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
         }
         return varArgs;
     }

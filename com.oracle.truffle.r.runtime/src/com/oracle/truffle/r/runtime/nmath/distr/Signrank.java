@@ -66,7 +66,7 @@ public final class Signrank {
     }
 
     private static RError couldNotAllocateError() {
-        return RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE, "18446744073172680704", 8);
+        throw RError.error(RError.SHOW_CALLER, CALLOC_COULD_NOT_ALLOCATE, "18446744073172680704", 8);
     }
 
     private static double csignrank(double[] w, int kIn, int n) {
