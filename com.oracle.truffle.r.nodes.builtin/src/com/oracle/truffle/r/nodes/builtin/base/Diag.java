@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -38,10 +39,8 @@ public abstract class Diag extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Diag.class);
-        casts.arg("x").allowNull().mapIf(complexValue().not(), asDoubleVector());
-
+        casts.arg("x").mustNotBeMissing().returnIf(nullValue()).mapIf(complexValue().not(), asDoubleVector());
         casts.arg("nrow").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "nrow").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "nrow");
-
         casts.arg("ncol").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "ncol").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "ncol");
     }
 

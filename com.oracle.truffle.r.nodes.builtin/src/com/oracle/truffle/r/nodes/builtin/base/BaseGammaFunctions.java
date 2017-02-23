@@ -49,6 +49,12 @@ public class BaseGammaFunctions {
 
     @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Gamma extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Gamma.class);
+            casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENTS_PASSED, 0, "'gamma'", 1).mustBe(numericValue(), RError.Message.NON_NUMERIC_MATH).asDoubleVector().findFirst();
+        }
+
         @Specialization
         @TruffleBoundary
         protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
@@ -141,16 +147,6 @@ public class BaseGammaFunctions {
                 RError.warning(this, RError.Message.NAN_PRODUCED);
             }
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
-        }
-
-        @Specialization
-        protected RDoubleVector digamma(RAbstractIntVector x) {
-            return digamma(RClosures.createIntToDoubleVector(x));
-        }
-
-        @Specialization
-        protected RDoubleVector digamma(RAbstractLogicalVector x) {
-            return digamma(RClosures.createLogicalToDoubleVector(x));
         }
     }
 

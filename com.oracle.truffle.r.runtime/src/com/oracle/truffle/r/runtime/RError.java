@@ -767,6 +767,7 @@ public final class RError extends RuntimeException {
         INVALID_ARG_OF_LENGTH("invalid %s argument of length %d"),
         INVALID_ARG("invalid %s argument"),
         INVALID_FILENAME_PATTERN("invalid filename pattern"),
+        INVALID_FILENAME_SPECIFICATION("invalid filename specification"),
         INVALID_FILE_EXT("invalid file extension"),
         NO("no '%s'"),
         APPLIES_TO_VECTORS("%s applies only to vectors"),

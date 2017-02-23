@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -37,7 +39,7 @@ public abstract class GetText extends RBuiltinNode {
     static {
         Casts casts = new Casts(GetText.class);
         casts.arg("domain").asStringVector().findFirst("");
-        casts.arg("args").asStringVector();
+        casts.arg("args").mustNotBeMissing(SHOW_CALLER, Message.ARGUMENT_EMPTY, 2).asStringVector();
     }
 
     @Specialization

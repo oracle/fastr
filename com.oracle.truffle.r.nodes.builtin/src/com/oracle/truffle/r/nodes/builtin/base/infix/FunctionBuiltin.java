@@ -32,6 +32,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = READS_FRAME)
 public abstract class FunctionBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(FunctionBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();
