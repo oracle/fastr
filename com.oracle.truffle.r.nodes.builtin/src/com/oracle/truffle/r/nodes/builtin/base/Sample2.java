@@ -50,8 +50,8 @@ public abstract class Sample2 extends RBuiltinNode {
         Casts casts = new Casts(Sample2.class);
         casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER,
                         INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(gte(0.0)).mustBe(isFinite());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().defaultError(SHOW_CALLER, INVALID_ARGUMENT,
-                        "size").notNA().mustBe(gte0());
+        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().notNA(SHOW_CALLER, INVALID_ARGUMENT,
+                        "size").mustBe(gte0(), SHOW_CALLER, INVALID_ARGUMENT, "size");
     }
 
     @Specialization(guards = "x > MAX_INT")

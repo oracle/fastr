@@ -73,53 +73,9 @@ public abstract class PipelineStep<T, R> {
 
         T visit(NotNAStep<?> step, T previous);
 
-        T visit(DefaultErrorStep<?> step, T previous);
-
-        T visit(DefaultWarningStep<?> step, T previous);
-
         T visit(BoxPrimitiveStep<?> step, T previous);
 
         T visit(AttributableCoercionStep<?> step, T previous);
-    }
-
-    /**
-     * Changes the current default error, which is used by steps/filters that do not have error
-     * message set explicitly.
-     */
-    public abstract static class DefaultMessageStep<T> extends PipelineStep<T, T> {
-        private final MessageData defaultMessage;
-
-        public DefaultMessageStep(MessageData defaultMessage) {
-            this.defaultMessage = defaultMessage;
-        }
-
-        public MessageData getDefaultMessage() {
-            return defaultMessage;
-        }
-    }
-
-    public static final class DefaultErrorStep<T> extends DefaultMessageStep<T> {
-
-        public DefaultErrorStep(MessageData defaultMessage) {
-            super(defaultMessage);
-        }
-
-        @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
-            return visitor.visit(this, previous);
-        }
-    }
-
-    public static final class DefaultWarningStep<T> extends DefaultMessageStep<T> {
-
-        public DefaultWarningStep(MessageData defaultMessage) {
-            super(defaultMessage);
-        }
-
-        @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
-            return visitor.visit(this, previous);
-        }
     }
 
     /**
@@ -165,8 +121,8 @@ public abstract class PipelineStep<T, R> {
      * the vector is empty, the message is used as a warning. If only default value is provided,
      * then if the vector is empty, the default value is returned without any warning. If the
      * default value is not provided, then error is raised if the vector is empty, the error message
-     * chosen in the following order: provided message, explicitly set default error message using
-     * {@link PipelineStep.DefaultErrorStep}, default find first message.
+     * chosen in the following order: provided message, explicitly set default error message,
+     * default find first message.
      */
     public static final class FindFirstStep<V, E> extends PipelineStep<V, E> {
         private final MessageData error;

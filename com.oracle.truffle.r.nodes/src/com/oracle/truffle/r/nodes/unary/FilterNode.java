@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -29,62 +30,45 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class FilterNode extends CastNode {
 
-    private final ArgumentFilter filter;
-    private final RError.Message message;
-    private final RBaseNode callObj;
-    private final Object[] messageArgs;
-    private final boolean boxPrimitives;
+    private final ArgumentFilter<Object, Object> filter;
+    private final MessageData message;
     private final boolean isWarning;
     private final boolean resultForNull;
     private final boolean resultForMissing;
 
     private final BranchProfile warningProfile = BranchProfile.create();
-    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-    @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNodeGen.create();
+    @Child private BoxPrimitiveNode boxPrimitiveNode;
 
-    protected FilterNode(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives, boolean resultForNull,
-                    boolean resultForMissing) {
+    protected FilterNode(ArgumentFilter<Object, Object> filter, boolean isWarning, MessageData message, boolean boxPrimitives, boolean resultForNull, boolean resultForMissing) {
         this.filter = filter;
         this.isWarning = isWarning;
-        this.callObj = callObj == null ? this : callObj;
+        assert message != null;
         this.message = message;
-        this.messageArgs = messageArgs;
-        this.boxPrimitives = boxPrimitives;
+        this.boxPrimitiveNode = boxPrimitives ? BoxPrimitiveNodeGen.create() : null;
         this.resultForNull = resultForNull;
         this.resultForMissing = resultForMissing;
     }
 
-    public static FilterNode create(ArgumentFilter<?, ?> filter, boolean isWarning, RBaseNode callObj, RError.Message message, Object[] messageArgs, boolean boxPrimitives, boolean resultForNull,
-                    boolean resultForMissing) {
-        return FilterNodeGen.create(filter, isWarning, callObj, message, messageArgs, boxPrimitives, resultForNull, resultForMissing);
-    }
-
-    public ArgumentFilter getFilter() {
-        return filter;
-    }
-
-    public boolean isWarning() {
-        return isWarning;
+    public static FilterNode create(ArgumentFilter<Object, Object> filter, boolean isWarning, MessageData message, boolean boxPrimitives, boolean resultForNull, boolean resultForMissing) {
+        return FilterNodeGen.create(filter, isWarning, message, boxPrimitives, resultForNull, resultForMissing);
     }
 
     private void handleMessage(Object x) {
         if (isWarning) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, callObj, message, messageArgs);
+                handleArgumentWarning(x, message);
             }
         } else {
-            handleArgumentError(x, callObj, message, messageArgs);
+            throw handleArgumentError(x, message);
         }
     }
 
@@ -104,12 +88,9 @@ public abstract class FilterNode extends CastNode {
         return x;
     }
 
-    protected static boolean isNotNullOrMissing(Object x) {
-        return x != RNull.instance && x != RMissing.instance;
-    }
-
-    @Specialization(guards = "isNotNullOrMissing(x)")
-    public Object executeRest(Object x) {
+    @Specialization(guards = {"!isRNull(x)", "!isRMissing(x)"})
+    public Object executeRest(Object x,
+                    @Cached("createBinaryProfile()") ConditionProfile conditionProfile) {
         if (!conditionProfile.profile(evalCondition(valueProfile.profile(x)))) {
             handleMessage(x);
         }
@@ -117,7 +98,7 @@ public abstract class FilterNode extends CastNode {
     }
 
     protected boolean evalCondition(Object x) {
-        Object y = boxPrimitives ? boxPrimitiveNode.execute(x) : x;
+        Object y = boxPrimitiveNode != null ? boxPrimitiveNode.execute(x) : x;
         return filter.test(y);
     }
 }

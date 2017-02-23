@@ -54,7 +54,7 @@ public abstract class Substitute extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Substitute.class);
-        casts.arg(1).allowNullAndMissing().defaultError(INVALID_ENVIRONMENT_SPECIFIED).mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
+        casts.arg(1).defaultError(INVALID_ENVIRONMENT_SPECIFIED).allowNullAndMissing().mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
     }
 
     @Specialization

@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -54,30 +55,9 @@ public abstract class CastNode extends UnaryNode {
         lastWarning = null;
     }
 
-    @TruffleBoundary
-    protected static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
-        if (isTesting) {
-            throw new IllegalArgumentException(String.format(message.message, substituteArgPlaceholder(arg, messageArgs)));
-        } else {
-            throw RError.error(callObj, message, substituteArgPlaceholder(arg, messageArgs));
-        }
-    }
-
-    @TruffleBoundary
-    protected static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
-        if (message == null) {
-            return;
-        }
-
-        if (isTesting) {
-            lastWarning = String.format(message.message, substituteArgPlaceholder(arg, messageArgs));
-        } else {
-            RError.warning(callObj, message, substituteArgPlaceholder(arg, messageArgs));
-        }
-    }
-
     @SuppressWarnings({"unchecked"})
-    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
+    private static Object[] substituteArgs(Object arg, MessageData message) {
+        Object[] messageArgs = message.getMessageArgs();
         Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
 
         for (int i = 0; i < messageArgs.length; i++) {
@@ -86,7 +66,31 @@ public abstract class CastNode extends UnaryNode {
                 newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
             }
         }
-
         return newMsgArgs;
+    }
+
+    private RBaseNode getCallObj(MessageData message) {
+        return message.getCallObj() == null ? this : message.getCallObj();
+    }
+
+    @TruffleBoundary
+    protected RuntimeException handleArgumentError(Object arg, MessageData message) {
+        if (isTesting) {
+            throw new IllegalArgumentException(String.format(message.getMessage().message, substituteArgs(arg, message)));
+        } else {
+            throw RError.error(getCallObj(message), message.getMessage(), substituteArgs(arg, message));
+        }
+    }
+
+    @TruffleBoundary
+    protected void handleArgumentWarning(Object arg, MessageData message) {
+        if (message == null) {
+            return;
+        }
+        if (isTesting) {
+            lastWarning = String.format(message.getMessage().message, substituteArgs(arg, message));
+        } else {
+            RError.warning(getCallObj(message), message.getMessage(), substituteArgs(arg, message));
+        }
     }
 }

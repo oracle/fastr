@@ -324,7 +324,7 @@ public class CastBuilderTest {
     @Test
     public void testFindFirstWithDefaultError() {
         // findFirst takes the explicitly specified default error from pipeline
-        arg.asIntegerVector().defaultError(SHOW_CALLER, RError.Message.SEED_NOT_VALID_INT).findFirst();
+        arg.defaultError(SHOW_CALLER, RError.Message.SEED_NOT_VALID_INT).asIntegerVector().findFirst();
         assertCastFail(RNull.instance, Message.SEED_NOT_VALID_INT.message);
     }
 

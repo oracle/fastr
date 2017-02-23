@@ -292,7 +292,7 @@ public final class CastBuilder {
         }
 
         public static <T, R extends T> PipelineStep<T, R> mustBe(Filter<T, R> argFilter) {
-            return mustBe(argFilter, null, null);
+            return new FilterStep<>(argFilter, null, false);
         }
 
         public static <T> PipelineStep<T, T> shouldBe(Filter<T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
@@ -300,7 +300,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, T> shouldBe(Filter<T, ? extends T> argFilter) {
-            return shouldBe(argFilter, null, null);
+            return new FilterStep<>(argFilter, null, true);
         }
 
         public static <T, R> PipelineStep<T, R> map(Mapper<T, R> mapper) {
@@ -440,7 +440,7 @@ public final class CastBuilder {
          * call for {@code xyzElement()}.
          */
         public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder(callObj, message, messageArgs);
+            return new FindFirstNodeBuilder(new MessageData(callObj, message, messageArgs));
         }
 
         /**
@@ -448,7 +448,7 @@ public final class CastBuilder {
          * call for {@code xyzElement()}.
          */
         public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder(null, message, messageArgs);
+            return new FindFirstNodeBuilder(new MessageData(null, message, messageArgs));
         }
 
         /**
@@ -456,7 +456,7 @@ public final class CastBuilder {
          * call for {@code xyzElement()}.
          */
         public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst() {
-            return new FindFirstNodeBuilder(null, null, null);
+            return new FindFirstNodeBuilder(null);
         }
 
         public static <T> PipelineStep<T, T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {

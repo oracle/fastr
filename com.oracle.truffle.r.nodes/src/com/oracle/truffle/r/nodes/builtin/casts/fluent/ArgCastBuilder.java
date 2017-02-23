@@ -46,21 +46,6 @@ public class ArgCastBuilder<T, THIS> {
         return builder;
     }
 
-    public THIS defaultError(RBaseNode callObj, RError.Message message, Object... args) {
-        pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
-        return (THIS) this;
-    }
-
-    public THIS defaultError(RError.Message message, Object... args) {
-        defaultError(null, message, args);
-        return (THIS) this;
-    }
-
-    public THIS defaultWarning(RBaseNode callObj, RError.Message message, Object... args) {
-        pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
-        return (THIS) this;
-    }
-
     public THIS shouldBe(Filter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
         pipelineBuilder().appendShouldBeStep(argFilter, message, messageArgs);
         return (THIS) this;

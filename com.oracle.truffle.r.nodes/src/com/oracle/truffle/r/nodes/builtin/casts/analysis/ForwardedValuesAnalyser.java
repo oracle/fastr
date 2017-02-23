@@ -52,8 +52,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -288,16 +286,6 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
     @Override
     public ForwardingAnalysisResult visit(NotNAStep<?> step, ForwardingAnalysisResult previous) {
         result = result.and(new ForwardingAnalysisResult().unknownAll().setNull(FORWARDED).setMissing(FORWARDED));
-        return result;
-    }
-
-    @Override
-    public ForwardingAnalysisResult visit(DefaultErrorStep<?> step, ForwardingAnalysisResult previous) {
-        return result;
-    }
-
-    @Override
-    public ForwardingAnalysisResult visit(DefaultWarningStep<?> step, ForwardingAnalysisResult previous) {
         return result;
     }
 

@@ -31,8 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -128,14 +126,6 @@ public final class PipelineBuilder {
 
     public void appendShouldBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
         append(new FilterStep<>(argFilter, createMessage(callObj, message, messageArgs), true));
-    }
-
-    public void appendDefaultWarningStep(RBaseNode callObj, Message message, Object[] args) {
-        append(new DefaultWarningStep<>(createMessage(callObj, message, args)));
-    }
-
-    public void appendDefaultErrorStep(RBaseNode callObj, Message message, Object[] args) {
-        append(new DefaultErrorStep<>(createMessage(callObj, message, args)));
     }
 
     private static MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {

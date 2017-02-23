@@ -357,13 +357,8 @@ public final class SeqFunctions {
         }
 
         CastNode createLengthResultCast() {
-            // @formatter:off
-            return newCastBuilder().asIntegerVector(false, false, false).
-                    defaultError(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED).
-                    findFirst().
-                    mustBe(gte(0).and(notIntNA())).
-                    buildCastNode();
-            // @formatter:on
+            return newCastBuilder().defaultError(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED).asIntegerVector(false, false, false).findFirst().mustBe(
+                            gte(0).and(notIntNA())).buildCastNode();
         }
     }
 

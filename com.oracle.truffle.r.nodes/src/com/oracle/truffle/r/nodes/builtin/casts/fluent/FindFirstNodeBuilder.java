@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -33,25 +32,20 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Allows to convert find first into a valid step when used in {@code chain}, for example
  * {@code chain(findFirst().stringElement())}.
  */
 public final class FindFirstNodeBuilder {
-    private final RBaseNode callObj;
-    private final Message message;
-    private final Object[] messageArgs;
+    private final MessageData message;
 
-    public FindFirstNodeBuilder(RBaseNode callObj, Message message, Object[] messageArgs) {
-        this.callObj = callObj;
+    public FindFirstNodeBuilder(MessageData message) {
         this.message = message;
-        this.messageArgs = messageArgs;
     }
 
     private <V, E> PipelineStep<V, E> create(Class<?> elementClass, Object defaultValue) {
-        return new FindFirstStep<>(defaultValue, elementClass, new MessageData(callObj, message, messageArgs));
+        return new FindFirstStep<>(defaultValue, elementClass, message);
     }
 
     public PipelineStep<RAbstractLogicalVector, Byte> logicalElement() {

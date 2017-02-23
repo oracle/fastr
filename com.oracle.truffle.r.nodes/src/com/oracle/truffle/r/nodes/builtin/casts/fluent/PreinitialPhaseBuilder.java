@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Adds methods to {@link InitialPhaseBuilder} that allow to set up the pipeline configuration.
- * Invocation of some methods means that the pre-initilization phase has been finishes, i.e.
+ * Invocation of some methods means that the pre-initialization phase has been finishes, i.e.
  * pipeline fully configured, those methods return this object cast to {@link InitialPhaseBuilder}
  * so that user then cannot invoke methods that change the pipeline configuration. Any method from
  * {@link InitialPhaseBuilder} returns that type, so once the user steps outside the configuration,
@@ -98,23 +98,18 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
         return returnIf(nullValue().or(missingValue()));
     }
 
-    @Override
     public PreinitialPhaseBuilder defaultError(RBaseNode callObj, RError.Message message, Object... args) {
         pipelineBuilder().getPipelineConfig().setDefaultError(new MessageData(callObj, message, args));
-        pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
         return this;
     }
 
-    @Override
     public PreinitialPhaseBuilder defaultError(Message message, Object... args) {
         defaultError(null, message, args);
         return this;
     }
 
-    @Override
     public PreinitialPhaseBuilder defaultWarning(RBaseNode callObj, Message message, Object... args) {
         pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(callObj, message, args));
-        pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
         return this;
     }
 }

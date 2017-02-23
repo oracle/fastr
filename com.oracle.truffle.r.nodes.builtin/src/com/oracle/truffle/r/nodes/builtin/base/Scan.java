@@ -110,7 +110,7 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("sep").allowNull().mustBe(stringValue()).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("dec").allowNull().defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
+        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).allowNull().mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
                         RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
         casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapNull(constant("")).mustBe(stringValue()).asStringVector().findFirst("");

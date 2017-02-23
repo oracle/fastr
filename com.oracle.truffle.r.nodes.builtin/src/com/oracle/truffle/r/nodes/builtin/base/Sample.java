@@ -58,8 +58,8 @@ public abstract class Sample extends RBuiltinNode {
         casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
                         chain(asDoubleVector()).with(findFirst().doubleElement()).with(mustBe(isFinite(), SHOW_CALLER, VECTOR_SIZE_NA_NAN)).with(
                                         mustBe(lt(4.5e15), SHOW_CALLER, VECTOR_SIZE_TOO_LARGE)).end()).asIntegerVector().findFirst().mustBe(gte0());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().defaultError(SHOW_CALLER,
-                        INVALID_ARGUMENT, "size").notNA().mustBe(gte0());
+        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().notNA(SHOW_CALLER,
+                        INVALID_ARGUMENT, "size").mustBe(gte0(), SHOW_CALLER, INVALID_ARGUMENT, "size");
         casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
         casts.arg("prob").asDoubleVector();
     }

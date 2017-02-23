@@ -574,7 +574,7 @@ public abstract class Filter<T, R extends T> {
      * The <code>FALSE</code>, resp. <code>TRUE</code>, indicates that the filter will always return
      * <code>false</code>, resp. <code>true</code>, for the given input value.
      * <p>
-     * The <code>UNSUPPORTED</code> indicates that the the given input value is out of the filter's
+     * The <code>UNDEFINED</code> indicates that the the given input value is out of the filter's
      * domain.
      *
      * @see Filter#resultForNull()

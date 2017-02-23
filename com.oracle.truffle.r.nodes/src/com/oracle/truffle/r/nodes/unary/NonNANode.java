@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -36,26 +36,22 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class NonNANode extends CastNode {
 
-    private final RBaseNode callObj;
-    private final RError.Message message;
-    private final Object[] messageArgs;
+    private final MessageData message;
     private final Object naReplacement;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected NonNANode(RBaseNode callObj, RError.Message message, Object[] messageArgs, Object naReplacement) {
-        this.callObj = callObj == null ? this : callObj;
+    protected NonNANode(MessageData message, Object naReplacement) {
         this.message = message;
-        this.messageArgs = messageArgs;
         this.naReplacement = naReplacement;
+        assert message != null || naReplacement != null;
     }
 
     protected NonNANode(Object naReplacement) {
-        this(null, null, null, naReplacement);
+        this(null, naReplacement);
     }
 
     public Object getNAReplacement() {
@@ -66,12 +62,11 @@ public abstract class NonNANode extends CastNode {
         if (naReplacement != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(arg, callObj, message, messageArgs);
+                handleArgumentWarning(arg, message);
             }
             return naReplacement;
         } else {
-            handleArgumentError(arg, callObj, message, messageArgs);
-            return null;
+            throw handleArgumentError(arg, message);
         }
     }
 

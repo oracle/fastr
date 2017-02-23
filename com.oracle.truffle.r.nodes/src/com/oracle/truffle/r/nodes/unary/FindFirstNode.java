@@ -24,36 +24,31 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class FindFirstNode extends CastNode {
 
     private final Class<?> elementClass;
-    private final RBaseNode callObj;
-    private final RError.Message message;
-    private final Object[] messageArgs;
+    private final MessageData message;
     private final Object defaultValue;
 
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    protected FindFirstNode(Class<?> elementClass, RBaseNode callObj, RError.Message message, Object[] messageArgs, Object defaultValue) {
-        this.callObj = callObj == null ? this : callObj;
+    protected FindFirstNode(Class<?> elementClass, MessageData message, Object defaultValue) {
         this.elementClass = elementClass;
         this.defaultValue = defaultValue;
         this.message = message;
-        this.messageArgs = messageArgs;
     }
 
     protected FindFirstNode(Class<?> elementClass, Object defaultValue) {
-        this(elementClass, null, null, null, defaultValue);
+        this(elementClass, null, defaultValue);
     }
 
-    public static FindFirstNode create(Class<?> elementClass, RBaseNode callObj, RError.Message message, Object... args) {
-        return FindFirstNodeGen.create(elementClass, callObj, message, args, null);
+    public static FindFirstNode create(Class<?> elementClass, MessageData message) {
+        return FindFirstNodeGen.create(elementClass, message, null);
     }
 
     public Class<?> getElementClass() {
@@ -88,12 +83,11 @@ public abstract class FindFirstNode extends CastNode {
         if (defaultValue != null) {
             if (message != null) {
                 warningProfile.enter();
-                handleArgumentWarning(x, callObj, message, messageArgs);
+                handleArgumentWarning(x, message);
             }
             return defaultValue;
         } else {
-            handleArgumentError(x, callObj, message, messageArgs);
-            return null;
+            throw handleArgumentError(x, message);
         }
     }
 
