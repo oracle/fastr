@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -13,10 +14,13 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection.SeekMode;
 import com.oracle.truffle.r.runtime.conn.RConnection.SeekRWMode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.sun.istack.internal.NotNull;
+
+import sun.nio.cs.StreamDecoder;
 
 public class ReadWriteHelper {
 
@@ -28,7 +32,7 @@ public class ReadWriteHelper {
      * @param warn TODO
      * @param skipNul TODO
      */
-    public static String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul, String description, Charset encoding) throws IOException {
+    public static String[] readLinesHelper(BaseRConnection conn, InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
         byte[] buffer = new byte[64];
@@ -50,9 +54,9 @@ public class ReadWriteHelper {
                      * refactoring is needed to be able to reliably access the "name" for the
                      * warning.
                      */
-                    lines.add(new String(buffer, 0, totalRead, encoding));
+                    lines.add(new String(buffer, 0, totalRead, conn.getEncoding()));
                     if (warn) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, description);
+                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, conn.getSummaryDescription());
                     }
                 }
                 break;
@@ -69,13 +73,13 @@ public class ReadWriteHelper {
                 }
             }
             if (lineEnd) {
-                lines.add(new String(buffer, 0, totalRead, encoding));
+                lines.add(new String(buffer, 0, totalRead, conn.getEncoding()));
                 if (n > 0 && lines.size() == n) {
                     break;
                 }
                 totalRead = 0;
             } else {
-                buffer = ConnectionSupport.checkBuffer(buffer, totalRead);
+                buffer = ReadWriteHelper.checkBuffer(buffer, totalRead);
                 buffer[totalRead++] = (byte) (ch & 0xFF);
             }
         }
@@ -84,11 +88,26 @@ public class ReadWriteHelper {
         return result;
     }
 
+    public static void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
+        for (int i = 0; i < lines.getLength(); i++) {
+            final String line = lines.getDataAt(i);
+            writeStringHelper(out, line, false, encoding);
+            writeStringHelper(out, sep, false, encoding);
+        }
+    }
+
     public static void writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
         for (int i = 0; i < lines.getLength(); i++) {
             final String line = lines.getDataAt(i);
             writeStringHelper(out, line, false, encoding);
             writeStringHelper(out, sep, false, encoding);
+        }
+    }
+
+    public static void writeStringHelper(OutputStream out, String s, boolean nl, Charset encoding) throws IOException {
+        out.write(s.getBytes(encoding));
+        if (nl) {
+            out.write(System.lineSeparator().getBytes(encoding));
         }
     }
 
@@ -104,6 +123,32 @@ public class ReadWriteHelper {
 
         buf.rewind();
         out.write(buf);
+    }
+
+    /**
+     * Writes characters in binary mode (without any re-encoding) to the provided channel.
+     *
+     * @param out The output stream (must not be {@code null}.
+     * @param s The character string to write (must not be {@code null}).
+     * @param pad The number of null characters to append to the characters.
+     * @param eos The end-of-string terminator (may be {@code null}).
+     * @throws IOException
+     */
+    public static void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
+
+        out.write(s.getBytes());
+        if (pad > 0) {
+            for (int i = 0; i < pad; i++) {
+                out.write(0);
+            }
+        }
+        if (eos != null) {
+            if (eos.length() > 0) {
+                out.write(eos.getBytes());
+            }
+            // function writeChar is defined to append the null character if eos != null
+            out.write(0);
+        }
     }
 
     /**
@@ -149,6 +194,29 @@ public class ReadWriteHelper {
     }
 
     /**
+     * Reads null-terminated character strings from a {@link ReadableByteChannel}.
+     */
+    public static byte[] readBinCharsHelper(ReadableByteChannel channel) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(1);
+        int numRead = channel.read(buf);
+        if (numRead <= 0) {
+            return null;
+        }
+        int totalRead = 0;
+        byte[] buffer = new byte[64];
+        while (true) {
+            buffer = ReadWriteHelper.checkBuffer(buffer, totalRead);
+            buffer[totalRead++] = (byte) (buf.get() & 0xFF);
+            if (numRead == 0) {
+                break;
+            }
+            buf.clear();
+            numRead = channel.read(buf);
+        }
+        return buffer;
+    }
+
+    /**
      * Reads null-terminated character strings from a {@link InputStream}.
      */
     public static byte[] readBinCharsHelper(InputStream in) throws IOException {
@@ -159,7 +227,7 @@ public class ReadWriteHelper {
         int totalRead = 0;
         byte[] buffer = new byte[64];
         while (true) {
-            buffer = ConnectionSupport.checkBuffer(buffer, totalRead);
+            buffer = ReadWriteHelper.checkBuffer(buffer, totalRead);
             buffer[totalRead++] = (byte) (ch & 0xFF);
             if (ch == 0) {
                 break;
@@ -181,18 +249,78 @@ public class ReadWriteHelper {
         return totalRead;
     }
 
-    public static String readCharHelper(int nchars, ReadableByteChannel channel, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(nchars);
-        channel.read(buf);
+    /**
+     * Reads a specified amount of characters.
+     *
+     * @param nchars Number of characters to read.
+     * @param in The encoded byte stream.
+     * @return The read string.
+     * @throws IOException
+     */
+    public static String readCharHelper(int nchars, Reader in) throws IOException {
+        char[] chars = new char[nchars];
+        in.read(chars);
         int j = 0;
-        for (; j < buf.position(); j++) {
+        for (; j < chars.length; j++) {
             // strings end at 0
-            if (buf.get(j) == 0) {
+            if (chars[j] == 0) {
                 break;
             }
         }
 
-        return new String(buf.array(), 0, j);
+        return new String(chars, 0, j);
+    }
+
+    /**
+     * Reads a specified amount of bytes.
+     *
+     * @param nchars The number of bytes to read.
+     * @param in The input stream.
+     * @return The read string.
+     * @throws IOException
+     */
+    public static String readCharHelper(int nchars, InputStream in) throws IOException {
+        byte[] buf = new byte[nchars];
+        in.read(buf);
+        int j = 0;
+        for (; j < buf.length; j++) {
+            // strings end at 0
+            if (buf[j] == 0) {
+                break;
+            }
+        }
+
+        return new String(buf, 0, j);
+    }
+
+    public static String readCharHelper(int nchars, ReadableByteChannel channel, boolean useBytes) throws IOException {
+        if (useBytes) {
+            ByteBuffer buf = ByteBuffer.allocate(nchars);
+            channel.read(buf);
+            int j = 0;
+            for (; j < buf.position(); j++) {
+                // strings end at 0
+                if (buf.get(j) == 0) {
+                    break;
+                }
+            }
+
+            return new String(buf.array(), 0, j);
+        } else {
+            // we need a decoder
+            StreamDecoder decoder = StreamDecoder.forDecoder(channel, Charset.defaultCharset().newDecoder(), nchars);
+            char[] chars = new char[nchars];
+            decoder.read(chars);
+            int j = 0;
+            for (; j < chars.length; j++) {
+                // strings end at 0
+                if (chars[j] == 0) {
+                    break;
+                }
+            }
+
+            return new String(chars, 0, j);
+        }
     }
 
     /**
@@ -216,5 +344,24 @@ public class ReadWriteHelper {
 
         }
         return position;
+    }
+
+    /**
+     * Enlarges the buffer if necessary.
+     */
+    private static byte[] checkBuffer(byte[] buffer, int n) {
+        if (n > buffer.length - 1) {
+            byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
+            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+            return newBuffer;
+        } else {
+            return buffer;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static String[] readLinesNonBlockHelper(BaseRConnection conn, ReadableByteChannel channel, int n, boolean warn, boolean skipNul, String summaryDescription, Charset encoding) {
+
+        throw RInternalError.unimplemented();
     }
 }

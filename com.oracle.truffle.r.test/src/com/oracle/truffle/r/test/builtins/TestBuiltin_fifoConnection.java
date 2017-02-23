@@ -53,13 +53,13 @@ public class TestBuiltin_fifoConnection extends TestBase {
         assertEval("capabilities(\"fifo\")");
 
         Assert.assertFalse(Files.exists(TEMP_FIFOS.get(0)));
-        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\"); close(zz); }");
+        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\", blocking = TRUE); close(zz); }");
     }
 
     @Test(timeout = 100)
     public void testFifoOpenNonBlocking() {
         Assert.assertFalse(Files.exists(TEMP_FIFOS.get(0)));
-        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\"); close(zz); }");
+        assertEval(Ignored.ImplementationError, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\"); close(zz); }");
     }
 
     @AfterClass

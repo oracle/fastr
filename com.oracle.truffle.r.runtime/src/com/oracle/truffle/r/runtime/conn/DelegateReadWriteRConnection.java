@@ -2,16 +2,17 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.Channels;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
+/**
+ * A blocking connection for reading and writing.
+ */
 abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     protected DelegateReadWriteRConnection(BaseRConnection base) {
@@ -35,12 +36,17 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
-        return ReadWriteHelper.readCharHelper(nchars, getChannel(), useBytes);
+        if (useBytes) {
+            return ReadWriteHelper.readCharHelper(nchars, getInputStream());
+        } else {
+            final InputStreamReader isr = new InputStreamReader(getInputStream(), base.getEncoding());
+            return ReadWriteHelper.readCharHelper(nchars, isr);
+        }
     }
 
     @Override
     public int readBin(ByteBuffer buffer) throws IOException {
-        return getChannel().read(buffer);
+        return getInputStream().read(buffer.array());
     }
 
     @Override
@@ -51,7 +57,7 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(getInputStream(), n, warn, skipNul, base.getSummaryDescription(), base.getEncoding());
+        return ReadWriteHelper.readLinesHelper(base, getInputStream(), n, warn, skipNul);
     }
 
     @Override
@@ -60,21 +66,15 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     }
 
     @Override
-    public OutputStream getOutputStream() {
-        throw RInternalError.shouldNotReachHere();
-    }
+    public abstract OutputStream getOutputStream();
 
     @Override
-    public abstract ByteChannel getChannel();
-
-    @Override
-    public InputStream getInputStream() {
-        return Channels.newInputStream(getChannel());
-    }
+    public abstract InputStream getInputStream();
 
     @Override
     public void close() throws IOException {
-        getChannel().close();
+        getInputStream().close();
+        getOutputStream().close();
     }
 
     @Override
@@ -85,22 +85,22 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeBin(ByteBuffer buffer) throws IOException {
-        getChannel().write(buffer);
+        getOutputStream().write(buffer.array());
     }
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getChannel(), s, pad, eos);
+        ReadWriteHelper.writeCharHelper(getOutputStream(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        ReadWriteHelper.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
+        ReadWriteHelper.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
     }
 
 }

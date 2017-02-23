@@ -26,10 +26,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -206,11 +203,6 @@ public class TestConnections extends TestBase {
         final Path utf8File1 = TEMP_FILES.get(2);
         assertEval("{ wline <- \"Hellö\"; fin <- file(\"" + utf8File1 +
                         "\", \"w+\", encoding = \"UTF-8\"); writeLines(wline, fin); seek(fin, 0); rline <- readLines(fin, 1); close(fin); c(wline, rline, wline == rline) }");
-    }
-
-    private static String determineFileEncoding(final Path utf8File1) throws FileNotFoundException {
-        InputStreamReader r = new InputStreamReader(new FileInputStream(utf8File1.toFile()));
-        return r.getEncoding().toLowerCase();
     }
 
     /**

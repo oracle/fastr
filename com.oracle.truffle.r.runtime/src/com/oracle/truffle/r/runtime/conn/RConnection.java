@@ -30,7 +30,6 @@ import java.util.LinkedList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -268,14 +267,14 @@ public abstract class RConnection implements AutoCloseable {
     /**
      * Support for {@code seek} Internal. Also clears push back lines.
      */
-    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+    public final long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
         if (isSeekable()) {
             // discard any push back strings
             pushBackClear();
-
-            return seekInternal(offset, seekMode, seekRWMode);
         }
-        throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_ENABLED);
+        // Do not throw error at this position, since the error messages varies depending on the
+        // connection.
+        return seekInternal(offset, seekMode, seekRWMode);
     }
 
     /**
@@ -361,6 +360,10 @@ public abstract class RConnection implements AutoCloseable {
      */
     public boolean isIncomplete() {
         return incomplete;
+    }
+
+    protected void setIncomplete(boolean b) {
+        this.incomplete = b;
     }
 
 }

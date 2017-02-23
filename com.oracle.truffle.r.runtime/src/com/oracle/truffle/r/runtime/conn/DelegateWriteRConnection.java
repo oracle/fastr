@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -66,41 +64,36 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     @Override
     public void flush() throws IOException {
-        // channels don't need any flushing
+        getOutputStream().flush();
     }
 
     @Override
     public void close() throws IOException {
         flush();
-        getChannel().close();
+        getOutputStream().close();
     }
 
     @Override
-    public abstract WritableByteChannel getChannel();
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        return Channels.newOutputStream(getChannel());
-    }
+    public abstract OutputStream getOutputStream() throws IOException;
 
     @Override
     public void writeBin(ByteBuffer buffer) throws IOException {
-        getChannel().write(buffer);
+        getOutputStream().write(buffer.array());
     }
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getChannel(), s, pad, eos);
+        ReadWriteHelper.writeCharHelper(getOutputStream(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        ReadWriteHelper.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
+        ReadWriteHelper.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
     }
 
 }

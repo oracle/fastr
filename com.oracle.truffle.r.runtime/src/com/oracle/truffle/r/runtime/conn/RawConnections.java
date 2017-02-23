@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Objects;
@@ -115,7 +114,7 @@ public class RawConnections {
 
     }
 
-    static class RawReadRConnection extends DelegateReadRConnection {
+    static class RawReadRConnection extends DelegateReadNonBlockRConnection {
         private SeekableMemoryByteChannel channel;
 
         RawReadRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) {
@@ -164,7 +163,7 @@ public class RawConnections {
         }
     }
 
-    private static class RawWriteBinaryConnection extends DelegateWriteRConnection {
+    private static class RawWriteBinaryConnection extends DelegateWriteNonBlockRConnection {
         private final SeekableMemoryByteChannel channel;
 
         RawWriteBinaryConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
@@ -177,16 +176,6 @@ public class RawConnections {
                     RInternalError.shouldNotReachHere();
                 }
             }
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            channel.write(buffer);
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return channel.getOutputStream();
         }
 
         @Override
@@ -205,7 +194,7 @@ public class RawConnections {
         }
     }
 
-    private static class RawReadWriteConnection extends DelegateReadWriteRConnection {
+    private static class RawReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
 
         private final SeekableMemoryByteChannel channel;
 

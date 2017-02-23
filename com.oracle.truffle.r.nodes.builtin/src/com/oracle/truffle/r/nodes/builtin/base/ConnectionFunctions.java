@@ -210,7 +210,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(File.class);
             CastsHelper.description(casts);
             CastsHelper.open(casts);
-            casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
+            CastsHelper.blocking(casts);
             CastsHelper.encoding(casts);
             CastsHelper.method(casts);
             CastsHelper.raw(casts);
@@ -1252,7 +1252,8 @@ public abstract class ConnectionFunctions {
 
             String open = openArg;
             try {
-                return new FifoRConnection(path, open, blocking, encoding).asVector();
+                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+                return new FifoRConnection(path, open, blocking, charset).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);

@@ -171,7 +171,7 @@ public class StdConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
     }

@@ -26,11 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -103,11 +98,6 @@ public class PipeConnections {
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
-            return Channels.newChannel(in);
-        }
-
-        @Override
         public InputStream getInputStream() {
             return in;
         }
@@ -130,11 +120,6 @@ public class PipeConnections {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
             out = p.getOutputStream();
-        }
-
-        @Override
-        public WritableByteChannel getChannel() {
-            return Channels.newChannel(out);
         }
 
         @Override
@@ -166,11 +151,6 @@ public class PipeConnections {
         }
 
         @Override
-        public ByteChannel getChannel() {
-            return new ReadableWriteableChannel(Channels.newChannel(in), Channels.newChannel(out));
-        }
-
-        @Override
         public InputStream getInputStream() {
             return in;
         }
@@ -183,40 +163,6 @@ public class PipeConnections {
         @Override
         public boolean isSeekable() {
             return false;
-        }
-
-    }
-
-    private static class ReadableWriteableChannel implements ByteChannel {
-
-        private final ReadableByteChannel rb;
-        private final WritableByteChannel wb;
-
-        public ReadableWriteableChannel(ReadableByteChannel rb, WritableByteChannel wb) {
-            super();
-            this.rb = rb;
-            this.wb = wb;
-        }
-
-        @Override
-        public int read(ByteBuffer dst) throws IOException {
-            return rb.read(dst);
-        }
-
-        @Override
-        public boolean isOpen() {
-            return rb.isOpen() && wb.isOpen();
-        }
-
-        @Override
-        public void close() throws IOException {
-            rb.close();
-            wb.close();
-        }
-
-        @Override
-        public int write(ByteBuffer src) throws IOException {
-            return wb.write(src);
         }
 
     }

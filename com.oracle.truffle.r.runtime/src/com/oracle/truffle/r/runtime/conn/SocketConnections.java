@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -59,7 +60,16 @@ public class SocketConnections {
 
         @Override
         protected void createDelegateConnection() throws IOException {
-            DelegateRConnection delegate = server ? new RServerSocketConnection(this) : new RClientSocketConnection(this);
+            DelegateRConnection delegate;
+            if (server) {
+                delegate = new RServerSocketConnection(this);
+            } else {
+                if (isBlocking()) {
+                    delegate = new RClientSocketConnection(this);
+                } else {
+                    delegate = new RClientSocketNonBlockConnection(this);
+                }
+            }
             setDelegate(delegate);
         }
 
@@ -71,7 +81,7 @@ public class SocketConnections {
 
     private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
         private Socket socket;
-        private SocketChannel socketChannel;
+        protected InputStream inputStream;
         protected OutputStream outputStream;
         protected final RSocketConnection thisBase;
 
@@ -82,7 +92,6 @@ public class SocketConnections {
 
         protected void openStreams(Socket socketArg) throws IOException {
             this.socket = socketArg;
-            this.socketChannel = socket.getChannel();
             if (thisBase.isBlocking()) {
                 // Java (int) timeouts do not meet the POSIX standard of 31 days
                 long millisTimeout = ((long) thisBase.timeout) * 1000;
@@ -90,9 +99,8 @@ public class SocketConnections {
                     millisTimeout = Integer.MAX_VALUE;
                 }
                 socket.setSoTimeout((int) millisTimeout);
-            } else {
-                socketChannel.configureBlocking(false);
             }
+            inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
         }
 
@@ -107,8 +115,38 @@ public class SocketConnections {
         }
 
         @Override
+        public InputStream getInputStream() {
+            return inputStream;
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
+            return outputStream;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
+    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteNonBlockRConnection {
+        private Socket socket;
+        private SocketChannel socketChannel;
+
+        protected RSocketReadWriteNonBlockConnection(RSocketConnection base) {
+            super(base);
+        }
+
+        protected void openStreams(Socket socketArg) throws IOException {
+            this.socket = socketArg;
+            this.socketChannel = socket.getChannel();
+            socketChannel.configureBlocking(false);
+        }
+
+        @Override
         public void close() throws IOException {
-            // TODO(fa) I'm not sure if socket.close() is the same as channel.close()
+            socketChannel.close();
             socket.close();
         }
 
@@ -151,6 +189,15 @@ public class SocketConnections {
     private static class RClientSocketConnection extends RSocketReadWriteConnection {
 
         RClientSocketConnection(RSocketConnection base) throws IOException {
+            super(base);
+            SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
+            openStreams(socketChannel.socket());
+        }
+    }
+
+    private static class RClientSocketNonBlockConnection extends RSocketReadWriteNonBlockConnection {
+
+        RClientSocketNonBlockConnection(RSocketConnection base) throws IOException {
             super(base);
             SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
             openStreams(socketChannel.socket());

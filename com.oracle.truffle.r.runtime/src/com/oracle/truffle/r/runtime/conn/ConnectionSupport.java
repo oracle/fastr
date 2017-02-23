@@ -107,7 +107,7 @@ public class ConnectionSupport {
             for (int i = 0; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
                 if (ref != null) {
-                    BaseRConnection con = ref.get();
+                    RConnection con = ref.get();
                     if (con != null) {
                         list.add(i);
                     }
@@ -399,11 +399,6 @@ public class ConnectionSupport {
 
         @Override
         public boolean isSeekable() {
-            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -874,16 +869,6 @@ public class ConnectionSupport {
             return ((DelegateReadRConnection) conn).base;
         } else {
             throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    static byte[] checkBuffer(byte[] buffer, int n) {
-        if (n > buffer.length - 1) {
-            byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
-            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-            return newBuffer;
-        } else {
-            return buffer;
         }
     }
 

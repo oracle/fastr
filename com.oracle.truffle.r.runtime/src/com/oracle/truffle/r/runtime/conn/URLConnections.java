@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -76,16 +74,6 @@ public class URLConnections {
         @Override
         public InputStream getInputStream() {
             return inputStream;
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
-        }
-
-        @Override
-        public ReadableByteChannel getChannel() {
-            return Channels.newChannel(inputStream);
         }
 
         @Override

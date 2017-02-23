@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
@@ -47,8 +49,8 @@ public class FifoConnections {
 
         private final String path;
 
-        public FifoRConnection(String path, String open, boolean blocking, String encoding) throws IOException {
-            super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, blocking);
+        public FifoRConnection(String path, String open, boolean blocking, Charset encoding) throws IOException {
+            super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, blocking, encoding);
             this.path = path;
             openNonLazyConnection();
         }
@@ -128,11 +130,6 @@ public class FifoConnections {
         }
 
         @Override
-        public SeekableByteChannel getChannel() {
-            return raf.getChannel();
-        }
-
-        @Override
         public void close() throws IOException {
             raf.close();
         }
@@ -141,9 +138,15 @@ public class FifoConnections {
         public boolean isSeekable() {
             return false;
         }
+
+        @Override
+        public InputStream getInputStream() {
+            // TODO Auto-generated method stub
+            return null;
+        }
     }
 
-    private static class FifoWriteConnection extends DelegateWriteRConnection {
+    private static class FifoWriteConnection extends DelegateWriteNonBlockRConnection {
         private final RandomAccessFile raf;
 
         FifoWriteConnection(BaseRConnection base, String path) throws IOException {
@@ -167,7 +170,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoReadWriteConnection extends DelegateReadWriteRConnection {
+    private static class FifoReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
 
         private final RandomAccessFile raf;
 
@@ -177,18 +180,18 @@ public class FifoConnections {
         }
 
         @Override
-        public SeekableByteChannel getChannel() {
-            return raf.getChannel();
-        }
-
-        @Override
         public boolean isSeekable() {
             return false;
         }
 
+        @Override
+        public ByteChannel getChannel() {
+            return raf.getChannel();
+        }
+
     }
 
-    static class FifoReadNonBlockingRConnection extends DelegateReadRConnection {
+    static class FifoReadNonBlockingRConnection extends DelegateReadNonBlockRConnection {
         private final FileChannel channel;
 
         protected FifoReadNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
@@ -207,7 +210,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoWriteNonBlockingRConnection extends DelegateWriteRConnection {
+    private static class FifoWriteNonBlockingRConnection extends DelegateWriteNonBlockRConnection {
         private final FileChannel channel;
 
         FifoWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
@@ -226,7 +229,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteRConnection {
+    private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteNonBlockRConnection {
         private final FileChannel channel;
 
         FifoReadWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
