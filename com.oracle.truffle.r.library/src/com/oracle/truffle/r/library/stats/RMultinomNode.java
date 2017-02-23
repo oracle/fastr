@@ -12,6 +12,9 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_IN_PROB_VECTOR;
@@ -52,7 +55,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         Casts casts = new Casts(RMultinomNode.class);
         casts.arg(0).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_FIRST_ARGUMENT_NAME, "n");
         casts.arg(1).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_SECOND_ARGUMENT_NAME, "size");
-        casts.arg(2).asDoubleVector();
+        casts.arg(2).mustBe(missingValue().not(), SHOW_CALLER, Message.ARGUMENT_MISSING, "prob").mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
     }
 
     @Specialization

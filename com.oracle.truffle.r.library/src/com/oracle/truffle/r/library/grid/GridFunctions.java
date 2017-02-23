@@ -17,7 +17,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.stats.Cdist;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -35,6 +37,11 @@ public class GridFunctions {
 
     public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
         @Child GridRFFI.InitGridNode initGridNode = RFFIFactory.getRFFI().getGridRFFI().createInitGridNode();
+
+        static {
+            Casts casts = new Casts(InitGrid.class);
+            casts.arg(0).mustBe(REnvironment.class);
+        }
 
         @Specialization
         @TruffleBoundary

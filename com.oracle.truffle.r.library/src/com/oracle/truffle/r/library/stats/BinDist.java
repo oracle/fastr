@@ -15,6 +15,9 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
@@ -39,8 +42,8 @@ public abstract class BinDist extends RExternalBuiltinNode.Arg5 {
 
     static {
         Casts casts = new Casts(BinDist.class);
-        casts.arg(0).asDoubleVector();
-        casts.arg(1).asDoubleVector();
+        casts.arg(0).mustBe(missingValue().not()).returnIf(nullValue(), emptyDoubleVector()).asDoubleVector();
+        casts.arg(1).mustBe(missingValue().not()).returnIf(nullValue(), emptyDoubleVector()).asDoubleVector();
         casts.arg(2).asDoubleVector().findFirst();
         casts.arg(3).asDoubleVector().findFirst();
         casts.arg(4).asIntegerVector().findFirst().mustBe(gt0().and(intNA().not()), NO_CALLER, Message.INVALID_ARGUMENT, "n");

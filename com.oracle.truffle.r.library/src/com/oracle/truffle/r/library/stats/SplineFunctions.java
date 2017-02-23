@@ -50,8 +50,8 @@ public class SplineFunctions {
                             chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).end(),
                             chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).with(
                                             Predef.shouldBe(integerValue(), NO_CALLER, NA_INTRODUCED_COERCION)).end());
-            casts.arg(1).allowMissing().asDoubleVector();
-            casts.arg(2).allowMissing().asDoubleVector();
+            casts.arg(1).mustNotBeMissing().asDoubleVector();
+            casts.arg(2).mustNotBeMissing().asDoubleVector();
         }
 
         @Specialization

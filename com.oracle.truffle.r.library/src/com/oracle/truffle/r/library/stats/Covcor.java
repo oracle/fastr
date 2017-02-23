@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
@@ -48,8 +49,8 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(Covcor.class);
-        casts.arg(0).mustNotBeNull(SHOW_CALLER, Message.IS_NULL, "x").asDoubleVector();
-        casts.arg(1).asDoubleVector();
+        casts.arg(0).mustNotBeMissing().mustBe(nullValue().not(), SHOW_CALLER, Message.IS_NULL, "x").asDoubleVector();
+        casts.arg(1).mustNotBeMissing().asDoubleVector();
         casts.arg(2).asIntegerVector().findFirst().mustBe(eq(4), Message.NYI, "covcor: other method than 4 not implemented.");
         casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
     }
