@@ -49,6 +49,7 @@ import static com.oracle.truffle.r.runtime.conn.StdConnections.getStdout;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
@@ -76,6 +77,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
+import com.oracle.truffle.r.runtime.conn.PipeConnections.PipeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
@@ -195,6 +197,10 @@ public abstract class ConnectionFunctions {
         private static void method(Casts casts) {
             casts.arg("method").asStringVector().findFirst();
         }
+
+        static void blockingNotSupported(Casts casts) {
+            casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
+        }
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
@@ -214,8 +220,23 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector file(String description, String openArg, @SuppressWarnings("unused") boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
             String open = openArg;
-            // TODO handle http/ftp prefixes and redirect and method
-            String path = removeFileURLPrefix(description);
+
+            // check if the description is an URL and dispatch if necessary
+            String path = description;
+            try {
+                URL url = new URL(description);
+                if (!"file".equals(url.getProtocol())) {
+                    return new URLRConnection(description, open).asVector();
+                } else {
+                    path = removeFileURLPrefix(description);
+                }
+            } catch (MalformedURLException e) {
+                // ignore and try to open file
+            } catch (IOException e) {
+                RError.warning(this, RError.Message.UNABLE_TO_RESOLVE, e.getMessage());
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+
             if (path.length() == 0) {
                 // special case, temp file opened in "w+" or "w+b" only
                 if (open.length() == 0) {
@@ -537,7 +558,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector isOpen(int con, int rw) {
-            BaseRConnection baseCon = getBaseConnection(RConnection.fromIndex(con));
+            RConnection baseCon = getBaseConnection(RConnection.fromIndex(con));
             boolean result = baseCon.isOpen();
             switch (rw) {
                 case 0:
@@ -567,7 +588,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object close(int con, @SuppressWarnings("unused") String type) {
-            BaseRConnection connection = RConnection.fromIndex(con);
+            RConnection connection = RConnection.fromIndex(con);
             try {
                 connection.closeAndDestroy();
             } catch (IOException ex) {
@@ -1143,7 +1164,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector getConnection(int what) {
-            BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
+            RConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
             if (con == null) {
                 throw error(RError.Message.NO_SUCH_CONNECTION, what);
             } else {
@@ -1219,7 +1240,9 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(Fifo.class);
             CastsHelper.description(casts);
             CastsHelper.open(casts);
-            CastsHelper.blocking(casts);
+            // We cannot support non-blocking because Java does simply not allow to open a file or
+            // named pipe in non-blocking mode.
+            CastsHelper.blockingNotSupported(casts);
             CastsHelper.encoding(casts);
         }
 
@@ -1230,6 +1253,31 @@ public abstract class ConnectionFunctions {
             String open = openArg;
             try {
                 return new FifoRConnection(path, open, blocking, encoding).asVector();
+            } catch (IOException ex) {
+                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+        }
+    }
+
+    @RBuiltin(name = "pipe", kind = INTERNAL, parameterNames = {"description", "open", "encoding"}, behavior = IO)
+    public abstract static class Pipe extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Pipe.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            CastsHelper.encoding(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector pipe(String path, String openArg, String encoding) {
+
+            String open = openArg;
+            try {
+                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+                return new PipeRConnection(path, open, charset).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
