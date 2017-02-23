@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyList;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalFalse;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSet;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -57,7 +59,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
 // TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
@@ -77,7 +78,7 @@ public abstract class Unique extends RBuiltinNode {
         // values or a (single) logical value
         // TODO: coercion error must be handled by specialization as it depends on type of x (much
         // like in duplicated)
-        casts.arg("incomparables").mapNull(emptyList()).asVector(true);
+        casts.arg("incomparables").mustBe(logicalValue()).asLogicalVector().findFirst().mustBe(logicalFalse(), Message.GENERIC, "Handling of 'incomparables' parameter in unique is not implemented.");
         casts.arg("fromLast").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         // currently not supported and not tested, but NA is a correct value (the same for empty
         // vectors) whereas 0 is not (throws an error)
@@ -86,13 +87,13 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RNull doUnique(RNull vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RNull doUnique(RNull vec, byte incomparables, byte fromLast, int nmax) {
         return vec;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RStringVector doUnique(RAbstractStringVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSet<String> set = new NonRecursiveHashSet<>(vec.getLength());
             String[] data = new String[vec.getLength()];
@@ -145,9 +146,7 @@ public abstract class Unique extends RBuiltinNode {
 
         public int[] toArray() {
             int[] newArray = new int[index];
-            for (int i = 0; i < index; i++) {
-                newArray[i] = backingArray[i];
-            }
+            System.arraycopy(backingArray, 0, newArray, 0, index);
             return newArray;
         }
     }
@@ -176,9 +175,7 @@ public abstract class Unique extends RBuiltinNode {
 
         public double[] toArray() {
             double[] newArray = new double[index];
-            for (int i = 0; i < index; i++) {
-                newArray[i] = backingArray[i];
-            }
+            System.arraycopy(backingArray, 0, newArray, 0, index);
             return newArray;
         }
     }
@@ -208,9 +205,7 @@ public abstract class Unique extends RBuiltinNode {
 
         public double[] toArray() {
             double[] newArray = new double[index];
-            for (int i = 0; i < index; i++) {
-                newArray[i] = backingArray[i];
-            }
+            System.arraycopy(backingArray, 0, newArray, 0, index);
             return newArray;
         }
     }
@@ -239,16 +234,14 @@ public abstract class Unique extends RBuiltinNode {
 
         public byte[] toArray() {
             byte[] newArray = new byte[index];
-            for (int i = 0; i < index; i++) {
-                newArray[i] = backingArray[i];
-            }
+            System.arraycopy(backingArray, 0, newArray, 0, index);
             return newArray;
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector doUnique(RAbstractIntVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
             int[] data = new int[16];
@@ -277,7 +270,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "lengthOne(list)")
-    protected RList doUniqueL1(RList list, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RList doUniqueL1(RList list, byte incomparables, byte fromLast, int nmax) {
         return (RList) list.copyDropAttributes();
     }
 
@@ -294,7 +287,7 @@ public abstract class Unique extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!lengthOne(list)")
     @TruffleBoundary
-    protected RList doUnique(RList list, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RList doUnique(RList list, byte incomparables, byte fromLast, int nmax) {
         /*
          * Brute force, as manual says: Using this for lists is potentially slow, especially if the
          * elements are not atomic vectors (see vector) or differ only in their attributes. In the
@@ -373,7 +366,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RDoubleVector doUnique(RAbstractDoubleVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetDouble set = new NonRecursiveHashSetDouble(vec.getLength());
             double[] data = new double[vec.getLength()];
@@ -399,7 +392,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RLogicalVector doUnique(RAbstractLogicalVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, int nmax) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i);
@@ -412,7 +405,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RComplexVector doUnique(RAbstractComplexVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSet<RComplex> set = new NonRecursiveHashSet<>(vec.getLength());
             double[] data = new double[vec.getLength() * 2];
@@ -439,7 +432,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RRawVector doUnique(RAbstractRawVector vec, RAbstractVector incomparables, byte fromLast, int nmax) {
+    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, int nmax) {
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSet<RRaw> set = new NonRecursiveHashSet<>(vec.getLength());
             byte[] data = new byte[vec.getLength()];

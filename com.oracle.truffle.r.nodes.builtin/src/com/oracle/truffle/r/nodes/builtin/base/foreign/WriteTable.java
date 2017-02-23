@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
@@ -68,7 +69,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         // dec
         casts.arg(8).mustBe(stringValue()).asStringVector().findFirst().mustBe(Predef.length(1), RError.Message.GENERIC, "'dec' must be a single character");
         // quote
-        casts.arg(9).mustNotBeNull().asIntegerVector();
+        casts.arg(9).mustNotBeMissing().mustBe(nullValue().not()).asIntegerVector();
         // qmethod
         casts.arg(10).mustNotBeNull().asLogicalVector().findFirst().notNA().map(toBoolean());
     }
@@ -105,9 +106,6 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
                 }
 
                 for (int i = 0; i < nr; i++) {
-                    if (i % 1000 == 999) {
-                        // R_CheckUserInterrupt();
-                    }
                     if (!(rnames instanceof RNull)) {
                         con.writeString(encodeElement2((RAbstractStringVector) rnames, i, quoteRn, qmethod, cdec), false);
                         con.writeString(csep, false);
@@ -195,7 +193,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         if (!quote) {
             return p0;
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append('"');
         for (int i = 0; i < p0.length(); i++) {
             char p = p0.charAt(i);
@@ -234,7 +232,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         } else if (o instanceof String) {
             String v = (String) o;
             return RRuntime.isNA(v) ? cna : encodeStringElement(v, quote, qmethod);
-        } else if (o instanceof Double) {
+        } else if (o instanceof RComplex) {
             RComplex v = (RComplex) o;
             return RRuntime.isNA(v) ? cna : ComplexVectorPrinter.encodeComplex(v);
         } else if (o instanceof RRaw) {

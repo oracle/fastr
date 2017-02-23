@@ -58,9 +58,14 @@ public class BaseGammaFunctions {
 
     @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class TriGamma extends RBuiltinNode {
+        static {
+            Casts.noCasts(TriGamma.class);
+        }
+
         @Specialization
         @TruffleBoundary
         protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
+            // Note: this is actually unimplemented even in GnuR
             throw RError.nyi(this, "trigamma");
         }
     }

@@ -11,6 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -20,7 +24,7 @@ public abstract class CairoProps extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(CairoProps.class);
-        casts.arg(0).asIntegerVector();
+        casts.arg(0).returnIf(nullValue().or(missingValue()), emptyIntegerVector()).asIntegerVector();
     }
 
     @Specialization

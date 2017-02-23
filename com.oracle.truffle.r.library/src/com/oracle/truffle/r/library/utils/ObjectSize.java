@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.library.utils;
 
+import static com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts.noCasts;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -37,14 +39,14 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
  */
 public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
 
+    static {
+        noCasts(ObjectSize.class);
+    }
+
     private static class MyIgnoreObjectHandler implements RObjectSize.IgnoreObjectHandler {
         @Override
         public boolean ignore(Object rootObject, Object obj) {
-            if (obj == RNull.instance) {
-                return true;
-            } else {
-                return false;
-            }
+            return obj == RNull.instance;
         }
     }
 

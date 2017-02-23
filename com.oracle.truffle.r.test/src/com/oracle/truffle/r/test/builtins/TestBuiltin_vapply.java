@@ -42,6 +42,10 @@ public class TestBuiltin_vapply extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, c(TRUE), USE.NAMES=logical()) }");
         assertEval(Output.IgnoreErrorContext, "{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, c(TRUE), USE.NAMES=\"42\") }");
         assertEval("{ vapply(c(\"foo\", \"bar\"), function(x) FALSE, c(TRUE), USE.NAMES=42) }");
+
+        assertEval("{ vapply(quote(a), function(x) 42, 1); }");
+        assertEval(Output.IgnoreErrorContext, "{ vapply(quote(a), function(x) quote(b), quote(a)); }");
+        assertEval("{ vapply(c(1,2,3), 42, 1); }");
     }
 
     @Test

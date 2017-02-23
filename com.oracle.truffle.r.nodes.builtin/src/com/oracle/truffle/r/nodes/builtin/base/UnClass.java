@@ -35,7 +35,7 @@ public abstract class UnClass extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(UnClass.class);
-        casts.arg("x").asAttributable(true, true, true);
+        casts.arg("x").mustNotBeMissing().asAttributable(true, true, true);
     }
 
     @Specialization
