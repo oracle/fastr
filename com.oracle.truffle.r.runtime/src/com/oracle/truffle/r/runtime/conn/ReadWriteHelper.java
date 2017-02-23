@@ -56,7 +56,7 @@ public class ReadWriteHelper {
                      */
                     lines.add(new String(buffer, 0, totalRead, conn.getEncoding()));
                     if (warn) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, conn.getSummaryDescription());
+                        RError.warning(RError.SHOW_CALLER, RError.Message.INCOMPLETE_FINAL_LINE, conn.getSummaryDescription());
                     }
                 }
                 break;
