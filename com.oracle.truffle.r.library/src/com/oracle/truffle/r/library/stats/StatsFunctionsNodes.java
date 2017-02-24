@@ -13,6 +13,10 @@
 package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -359,7 +363,9 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Approx.class);
-            casts.arg(2).asDoubleVector();
+            casts.arg(0).mustBe(instanceOf(RDoubleVector.class));
+            casts.arg(1).mustBe(instanceOf(RDoubleVector.class));
+            casts.arg(2).mustBe(missingValue().not()).mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
             casts.arg(3).asIntegerVector().findFirst();
             casts.arg(4).asDoubleVector().findFirst();
             casts.arg(5).asDoubleVector().findFirst();
@@ -367,7 +373,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f) {
+        protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f) {
             int nx = x.getLength();
             int nout = v.getLength();
             double[] yout = new double[nout];

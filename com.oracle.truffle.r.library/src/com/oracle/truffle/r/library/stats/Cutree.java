@@ -10,6 +10,9 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -24,8 +27,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Cutree.class);
-        casts.arg(0).asIntegerVector();
-        casts.arg(1).asIntegerVector();
+        casts.arg(0).mustNotBeMissing().mapIf(nullValue(), emptyIntegerVector()).asIntegerVector();
+        casts.arg(1).mustNotBeMissing().mapIf(nullValue(), emptyIntegerVector()).asIntegerVector();
     }
 
     @Specialization

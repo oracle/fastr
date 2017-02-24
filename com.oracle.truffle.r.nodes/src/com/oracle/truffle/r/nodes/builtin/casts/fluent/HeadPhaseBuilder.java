@@ -56,7 +56,7 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public <S extends T, R> HeadPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
+    public <S extends T, R> HeadPhaseBuilder<T> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, true);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }

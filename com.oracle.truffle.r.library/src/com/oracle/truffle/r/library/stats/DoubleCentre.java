@@ -10,10 +10,14 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
@@ -21,7 +25,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(DoubleCentre.class);
-        casts.arg(0).asDoubleVector();
+        casts.arg(0).mustBe(missingValue().not()).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "REAL()", "numeric", "NULL").asDoubleVector();
     }
 
     @Specialization

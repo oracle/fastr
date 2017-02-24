@@ -12,6 +12,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 
@@ -39,7 +41,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(Cdist.class);
-        casts.arg(0).asDoubleVector();
+        casts.arg(0).mustBe(nullValue().not(), RError.Message.VECTOR_IS_TOO_LARGE).mustBe(missingValue().not()).asDoubleVector();
         casts.arg(1).asIntegerVector().findFirst();
         casts.arg(2).mustBe(instanceOf(RList.class));
         casts.arg(3).asDoubleVector().findFirst();
@@ -61,13 +63,15 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         DynamicObject resultAttrs = result.initAttributes();
 
         RStringVector names = (RStringVector) getNamesAttrNode.execute(list);
-        for (int i = 0; i < names.getLength(); i++) {
-            String name = names.getDataAt(i);
-            Object listValue = list.getDataAt(i);
-            if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                setClassAttrNode.execute(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
-            } else {
-                setAttrNode.execute(resultAttrs, name, listValue);
+        if (names != null) {
+            for (int i = 0; i < names.getLength(); i++) {
+                String name = names.getDataAt(i);
+                Object listValue = list.getDataAt(i);
+                if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+                    setClassAttrNode.execute(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
+                } else {
+                    setAttrNode.execute(resultAttrs, name, listValue);
+                }
             }
         }
 

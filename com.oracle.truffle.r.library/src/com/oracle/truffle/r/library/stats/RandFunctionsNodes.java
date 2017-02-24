@@ -13,6 +13,8 @@
 
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
@@ -260,9 +262,9 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction3Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
-            casts.arg(3).asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
+            casts.arg(2).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
+            casts.arg(3).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "c").asDoubleVector();
         }
 
         @Specialization
@@ -290,8 +292,8 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction2Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
+            casts.arg(2).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
         }
 
         @Specialization
@@ -319,7 +321,7 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction1Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
         }
 
         @Specialization
